@@ -50,7 +50,6 @@ TBRWarning <- function (parent, child, error) {
 #' 
 #' @family tree rearrangement functions
 #' @seealso [`RootedTBR()`]: useful when the position of the root node should be retained.
-#' @importFrom ape root
 #' @importFrom TreeTools DescendantEdges Preorder
 #' @export
 TBR <- function(tree, edgeToBreak = NULL, mergeEdges = NULL) {

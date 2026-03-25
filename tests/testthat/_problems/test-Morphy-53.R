@@ -42,7 +42,7 @@ dataset <- MatrixToPhyDat(matrix(c(0, 0, 1, 1, 1, 1, 1,
 constraint <- MatrixToPhyDat(matrix(c(0, 0, 1, "?", 1, 1,
                                         1, 1, 1,   1, 0, 0), ncol = 2,
                                       dimnames = list(letters[1:6], NULL)))
-cons <- consensus(Morphy(dataset, constraint = constraint),
+cons <- Consensus(Morphy(dataset, constraint = constraint),
                     rooted = TRUE)
 expect_true(as.Splits(as.logical(c(0, 0, 1, 1, 1)), letters[c(1:3, 5:6)]) %in% 
                 as.Splits(DropTip(cons, c("d", "g"))))

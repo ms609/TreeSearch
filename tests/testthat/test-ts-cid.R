@@ -103,14 +103,14 @@ test_that("C++ search improves over majority-rule consensus", {
 })
 
 
-# --- CIDConsensus R wrapper ---------------------------------------------------
+# --- InfoConsensus R wrapper ---------------------------------------------------
 
-test_that("CIDConsensus runs end-to-end", {
+test_that("InfoConsensus runs end-to-end", {
   set.seed(4291)
-  result <- CIDConsensus(smallTrees,
-                         maxReplicates = 2L, targetHits = 1L,
-                         neverDrop = TRUE, collapse = FALSE,
-                         verbosity = 0L)
+  result <- InfoConsensus(smallTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = TRUE, collapse = FALSE,
+                          verbosity = 0L)
 
   expect_s3_class(result, "phylo")
   expect_true(!is.null(attr(result, "score")))
@@ -120,37 +120,37 @@ test_that("CIDConsensus runs end-to-end", {
   expect_equal(NTip(result), 12L)
 })
 
-test_that("CIDConsensus score matches mean(MutualClusteringInfo)", {
+test_that("InfoConsensus score matches mean(MutualClusteringInfo)", {
   set.seed(4291)
-  result <- CIDConsensus(smallTrees,
-                         maxReplicates = 2L, targetHits = 1L,
-                         neverDrop = TRUE, collapse = FALSE,
-                         verbosity = 0L)
+  result <- InfoConsensus(smallTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = TRUE, collapse = FALSE,
+                          verbosity = 0L)
 
   r_mci <- mean(MutualClusteringInfo(result, smallTrees))
   expect_equal(attr(result, "score"), r_mci, tolerance = 1e-6)
 })
 
-test_that("CIDConsensus with collapse improves or equals binary", {
+test_that("InfoConsensus with collapse improves or equals binary", {
   set.seed(4291)
-  noColl <- CIDConsensus(smallTrees,
-                         maxReplicates = 2L, targetHits = 1L,
-                         neverDrop = TRUE, collapse = FALSE,
-                         verbosity = 0L)
+  noColl <- InfoConsensus(smallTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = TRUE, collapse = FALSE,
+                          verbosity = 0L)
   set.seed(4291)
-  coll <- CIDConsensus(smallTrees,
-                       maxReplicates = 2L, targetHits = 1L,
-                       neverDrop = TRUE, collapse = TRUE,
-                       verbosity = 0L)
+  coll <- InfoConsensus(smallTrees,
+                        maxReplicates = 2L, targetHits = 1L,
+                        neverDrop = TRUE, collapse = TRUE,
+                        verbosity = 0L)
 
   # Higher MCI = better; collapse should improve or equal
   expect_true(attr(coll, "score") >=
                 attr(noColl, "score") - sqrt(.Machine$double.eps))
 })
 
-test_that("CIDConsensus rejects bad input", {
-  expect_error(CIDConsensus(as.phylo(1, 10)), "multiPhylo")
-  expect_error(CIDConsensus(c(as.phylo(1, 10))), "at least 2")
+test_that("InfoConsensus rejects bad input", {
+  expect_error(InfoConsensus(as.phylo(1, 10)), "multiPhylo")
+  expect_error(InfoConsensus(c(as.phylo(1, 10))), "at least 2")
 })
 
 
@@ -251,15 +251,15 @@ test_that("Small tree gracefully skips sectors", {
   expect_true(is.finite(result$best_score))
 })
 
-test_that("CIDConsensus R wrapper with sectors enabled", {
+test_that("InfoConsensus R wrapper with sectors enabled", {
   set.seed(7341)
   trees20 <- as.phylo(sample.int(200, 30), nTip = 20)
 
   set.seed(6612)
-  result <- CIDConsensus(trees20,
-                         maxReplicates = 3L, targetHits = 2L,
-                         neverDrop = TRUE, collapse = FALSE,
-                         verbosity = 0L)
+  result <- InfoConsensus(trees20,
+                          maxReplicates = 3L, targetHits = 2L,
+                          neverDrop = TRUE, collapse = FALSE,
+                          verbosity = 0L)
 
   expect_s3_class(result, "phylo")
   expect_true(is.finite(attr(result, "score")))

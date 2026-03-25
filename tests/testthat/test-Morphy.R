@@ -47,7 +47,7 @@ test_that("Constraints work", {
                                         1, 1, 1,   1, 0, 0), ncol = 2,
                                       dimnames = list(letters[1:6], NULL)))
   # T-039 fixed: column-major indexing in build_constraint + Wagner guards
-  cons <- consensus(Morphy(dataset, constraint = constraint),
+  cons <- Consensus(Morphy(dataset, constraint = constraint),
                     rooted = TRUE)
   # Avoid %in%.Splits — S3 dispatch breaks in testthat's cloned namespace
   # (test_check / R CMD check). Compare bipartitions as plain logical vectors.

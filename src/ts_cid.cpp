@@ -102,7 +102,7 @@ lap_cost lap_solve(int dim, LapMatrix& cost,
   }
 
   for (int f = 0; f < n_free; ++f) {
-    int i1 = free_rows[f]; int j1 = -1; lap_cost min_val = LAP_BIG;
+    int i1 = free_rows[f]; int j1 = -1;
     for (int j = 0; j < dim; ++j) { d[j] = cost(i1, j) - v[j]; pred[j] = i1; col_list[j] = j; }
     int low = 0, up = 0;
     while (true) {

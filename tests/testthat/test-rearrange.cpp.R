@@ -1,21 +1,21 @@
 library("TreeTools")
 
 test_that("TBR errors", {
-  tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+  tr <- Preorder(RootTree(TreeTools::BalancedTree(7), "t1"))
   expect_equal(0, length(expect_warning(TreeSearch:::all_tbr(tr$edge, -1))))
   expect_equal(0, length(expect_warning(TreeSearch:::all_tbr(tr$edge, 1))))
   expect_equal(0, length(expect_warning(TreeSearch:::all_tbr(tr$edge, 111))))
 })
 
 test_that("SPR errors", {
-  tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+  tr <- Preorder(RootTree(TreeTools::BalancedTree(7), "t1"))
   expect_equal(0, length(expect_warning(TreeSearch:::all_spr(tr$edge, -1))))
   expect_equal(0, length(expect_warning(TreeSearch:::all_spr(tr$edge, 1))))
   expect_equal(0, length(expect_warning(TreeSearch:::all_spr(tr$edge, 111))))
 })
 
 test_that("TBR working", {
-  tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+  tr <- Preorder(RootTree(TreeTools::BalancedTree(7), "t1"))
 
   # Move single tip
   expect_equal(8, length(x <- TreeSearch:::all_tbr(tr$edge, 12)))
@@ -39,7 +39,7 @@ test_that("TBR working", {
   expect_equal(58, length(unique(x <- TreeSearch:::all_tbr(tr$edge, integer(0))))) # 58 not formally calculated
   expect_equal(58, length(TBRMoves(tr)))
   
-  tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
+  tr <- Preorder(RootTree(TreeTools::BalancedTree(14), "t1"))
   desc <- TreeTools::CladeSizes(tr)
   
   external <- c(3, 6, 7, 11, 12, 13, 17, 18, 20, 21, 24:26)
@@ -68,7 +68,7 @@ test_that("SPR works", {
   t2 <- as.phylo(518, 7) # (t1, ((t2, t3), ((t4, t5), (t6, t7))))
   expect_equal(8, length(TreeSearch:::all_spr(t2$edge, 2)))
   
-  tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+  tr <- Preorder(RootTree(TreeTools::BalancedTree(7), "t1"))
 
   # Move single tip
   expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 12)))
@@ -95,7 +95,7 @@ test_that("SPR works", {
                uniqueMoves)
   expect_equal(uniqueMoves, length(SPRMoves(tr)))
   
-  tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
+  tr <- Preorder(RootTree(TreeTools::BalancedTree(14), "t1"))
   tr$edge
   desc <- TreeTools::CladeSizes(tr)
   
@@ -121,7 +121,7 @@ test_that("SPR works", {
 })
 
 if (FALSE) test_that("SPR works", {
-  testTree <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
+  testTree <- Preorder(RootTree(TreeTools::BalancedTree(7), "t1"))
   plot(testTree); nodelabels(); edgelabels()
   edge <- testTree$edge
   
@@ -136,7 +136,7 @@ if (FALSE) test_that("SPR works", {
     test.tr$edge <- spr(edge, m)
     plot(test.tr)
     
-    oldWay <- SortTree(root(SPR(testTree, p1, r1), 't1', resolve.root = TRUE))
+    oldWay <- SortTree(RootTree(SPR(testTree, p1, r1), "t1"))
     expect_equal(oldWay, SortTree(test.tr))
   }
   Test(0, 1, 5)

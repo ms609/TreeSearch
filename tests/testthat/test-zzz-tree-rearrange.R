@@ -58,7 +58,7 @@ test_that("NNI works", {
 
 
 test_that("SPR works", {
-  testTree <- Preorder(root(BalancedTree(7), 1, resolve.root = TRUE))
+  testTree <- Preorder(RootTree(BalancedTree(7), 1))
   edge <- testTree[["edge"]]
   expect_equal(TreeSearch:::spr(edge, 66), cSPR(testTree, 66)$edge)
   
@@ -66,7 +66,7 @@ test_that("SPR works", {
     test.tr <- testTree
     test.tr$edge <- TreeSearch:::spr(edge, m)
     
-    oldWay <- SortTree(root(SPR(testTree, p1, r1), "t1", resolve.root = TRUE))
+    oldWay <- SortTree(RootTree(SPR(testTree, p1, r1), "t1"))
     expect_equal(oldWay, SortTree(test.tr))
   }
   Test(0, 1, 5)
@@ -225,7 +225,7 @@ test_that("RootedSPR fails", {
 test_that("SPR is special case of TBR", {
   expect_equal(SPR(tree11, 3, 9), TBR(tree11, 3, c(3, 9)))
   expect_equal(SPR(tree11, 12, 9), TBR(tree11, 12, c(12, 9)))
-  expect_equal(root(SPR(tree11, 1, 14), letters[1:5], resolve.root=TRUE), TBR(tree11, 1, c(1, 14)))
+  expect_equal(RootTree(SPR(tree11, 1, 14), letters[1:5]), TBR(tree11, 1, c(1, 14)))
   expect_error(SPR(tree11, 1, 6))
 })
 

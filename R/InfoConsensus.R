@@ -1,4 +1,4 @@
-#' Consensus tree maximizing Mutual Clustering Information
+#' Information-theoretic consensus tree
 #'
 #' Find a consensus tree that maximizes the mean Mutual Clustering
 #' Information (MCI) with a set of input trees, using a driven search with
@@ -6,7 +6,7 @@
 #'
 #' Unlike the majority-rule consensus, which minimizes Robinson-Foulds
 #' distance and can be highly unresolved when phylogenetic signal is low,
-#' `CIDConsensus()` finds a more resolved tree that maximizes a finer-grained
+#' `InfoConsensus()` finds a more resolved tree that maximizes a finer-grained
 #' information-theoretic measure of agreement with the input trees.
 #'
 #' The search uses MRP (Matrix Representation with Parsimony) characters
@@ -26,21 +26,13 @@
 #'
 #' @param trees An object of class `multiPhylo`: the input trees.
 #'   All trees must share the same tip labels.
-#' @param metric Distance function with signature `f(tree1, tree2)` returning
-#'   a numeric vector of distances.
-#'   Default: [`ClusteringInfoDistance`][TreeDist::ClusteringInfoDistance].
-#'   Used for collapse/resolve and rogue phases only; the core search
-#'   always uses MCI via the C++ engine.
-#' @param start A `phylo` tree to start the search from, or `NULL`
-#'   (default) to use random Wagner trees (recommended).
-#'   When provided, the starting tree is resolved with
-#'   [`MakeTreeBinary()`][TreeTools::MakeTreeBinary] if non-binary.
 #' @param maxReplicates Integer: maximum number of independent search
 #'   replicates.  Each replicate starts from a different random Wagner tree.
 #' @param targetHits Integer: stop after finding the best score this many
 #'   times independently.
 #' @param maxSeconds Numeric: timeout in seconds (0 = no timeout).
 #' @param nThreads Integer: number of threads for inter-replicate parallelism.
+#'   Defaults to `getOption("mc.cores", 1L)`.
 #' @param collapse Logical: if `TRUE` (default), run a collapse/resolve
 #'   refinement phase after the binary search.  This can produce a
 #'   non-binary result when collapsing a split improves the mean MCI.
@@ -65,10 +57,9 @@
 #'   (default) only evaluates the single best MRP-screened candidate per
 #'   clip.  Values > 0 relax the screening threshold, allowing candidates
 #'   whose MRP score exceeds the current best by up to this fraction (e.g.,
-#'   `0.02` = 2\% tolerance).  Higher values improve search quality at the
+#'   `0.02` = $2%$ tolerance).  Higher values improve search quality at the
 #'   cost of more MCI evaluations per step.
 #' @param verbosity Integer controlling console output (0 = silent).
-#' @param \dots Additional arguments (currently unused).
 #'
 #' @return A tree of class `phylo` with attributes:
 #' - `"score"`: mean MCI between the consensus and the input trees
@@ -82,8 +73,8 @@
 #' trees <- as.phylo(1:30, nTip = 12)
 #'
 #' # Quick search
-#' result <- CIDConsensus(trees, maxReplicates = 3L, targetHits = 2L,
-#'                        neverDrop = TRUE, verbosity = 0)
+#' result <- InfoConsensus(trees, maxReplicates = 3L, targetHits = 2L,
+#'                         neverDrop = TRUE, verbosity = 0)
 #' plot(result)
 #' attr(result, "score")
 #'
@@ -94,6 +85,9 @@
 #'
 #' @seealso [MaximizeParsimony()] uses the same driven search engine for
 #'   parsimony.
+#' @seealso [TreeDist::TransferDistance()] and [Quartet::QuartetConsensus()]
+#'   for alternative consensus methods.
+#' % TODO: add \insertCite reference for Smith 2026 when available in TreeDist
 #'
 #' @references
 #' \insertRef{Smith2020}{TreeSearch}
@@ -101,24 +95,20 @@
 #' @importFrom TreeDist ClusteringInfoDistance ClusteringEntropy
 #'   MutualClusteringInfoSplits
 #' @importFrom TreeTools as.Splits Consensus MakeTreeBinary NTip RenumberEdges
-#' @importFrom ape drop.tip
 #' @family custom search functions
 #' @export
-CIDConsensus <- function(trees,
-                         metric = ClusteringInfoDistance,
-                         start = NULL,
-                         maxReplicates = 100L,
-                         targetHits = 10L,
-                         maxSeconds = 0,
-                         nThreads = 1L,
-                         collapse = TRUE,
-                         neverDrop = FALSE,
-                         maxDrop = ceiling(NTip(trees[[1]]) / 10),
-                         control = SearchControl(),
-                         screeningK = 7,
-                         screeningTolerance = 0,
-                         verbosity = 1L,
-                         ...) {
+InfoConsensus <- function(trees,
+                          maxReplicates = 100L,
+                          targetHits = 10L,
+                          maxSeconds = 0,
+                          nThreads = getOption("mc.cores", 1L),
+                          collapse = TRUE,
+                          neverDrop = FALSE,
+                          maxDrop = ceiling(NTip(trees[[1]]) / 10),
+                          control = SearchControl(),
+                          screeningK = 7,
+                          screeningTolerance = 0,
+                          verbosity = 1L) {
   if (!inherits(trees, "multiPhylo")) {
     stop("`trees` must be an object of class 'multiPhylo'.")
   }
@@ -139,41 +129,48 @@ CIDConsensus <- function(trees,
   }
   
   # Phase 1: C++ driven search
-  result <- .CIDDrivenSearch(trees, tipLabels, nTip, start,
+  result <- .CIDDrivenSearch(trees, tipLabels, nTip,
                               maxReplicates, targetHits, maxSeconds,
                               nThreads, control,
                               screeningK, screeningTolerance,
                               verbosity)
   
-  # Phase 2: Collapse/resolve refinement (R-level, uses metric)
+  # Phase 2: Collapse/resolve refinement
   if (collapse) {
-    cidData <- .MakeCIDData(trees, metric, tipLabels)
+    cidData <- .MakeCIDData(trees, tipLabels)
     result <- .CollapseRefine(result, cidData, verbosity)
   }
   
-  # Phase 3: rogue taxon dropping (R-level)
+  # Phase 3: rogue taxon dropping
   if (!isTRUE(neverDrop)) {
     cidData <- if (exists("cidData", inherits = FALSE)) {
       cidData
     } else {
-      .MakeCIDData(trees, metric, tipLabels)
+      .MakeCIDData(trees, tipLabels)
     }
     result <- .RogueRefine(result, cidData, neverDrop, maxDrop,
                            "ratchet",       # method for re-optimization
                            5L, 3L,          # light ratchet for re-opt
                            100L, 10L, collapse,
-                           verbosity, ...)
+                           verbosity)
   }
   
-  # Convert internal score to user-facing:
-  # CID path: negate -MCI to positive MCI (higher = better)
-  # Non-CID metric: leave as-is (lower = better)
+  # Convert internal score (negated MCI) to user-facing positive MCI
   internalScore <- attr(result, "score")
-  if (!is.null(internalScore) && identical(metric, ClusteringInfoDistance)) {
+  if (!is.null(internalScore)) {
     attr(result, "score") <- -internalScore
   }
   
   result
+}
+
+
+#' @rdname InfoConsensus
+#' @description `CIDConsensus()` is a deprecated alias for `InfoConsensus()`.
+#' @export
+CIDConsensus <- function(trees, ...) {
+  .Deprecated("InfoConsensus")
+  InfoConsensus(trees, ...)
 }
 
 
@@ -190,15 +187,11 @@ CIDConsensus <- function(trees,
 .TopologySearch <- function(tree, cidData, method,
                             ratchIter, ratchHits,
                             searchIter, searchHits, collapse,
-                            verbosity, ...) {
+                            verbosity) {
   tipLabels <- cidData$tipLabels
   nTip <- cidData$nTip
 
-  splitMats <- if (cidData$isCID) {
-    cidData$inputSplitsRaw
-  } else {
-    lapply(cidData$trees, function(tr) unclass(as.Splits(tr, tipLabels)))
-  }
+  splitMats <- cidData$inputSplitsRaw
 
   # C++ engine expects a binary tree; resolve any polytomies
   startTree <- if (ape::is.binary(tree)) tree else MakeTreeBinary(tree)
@@ -236,7 +229,7 @@ CIDConsensus <- function(trees,
 # Phase 1: C++ driven search with MCI scoring.
 # Converts input trees to split matrices and calls the C++ engine.
 # Returns tree with attr("score") = positive MCI (higher = better).
-.CIDDrivenSearch <- function(trees, tipLabels, nTip, start,
+.CIDDrivenSearch <- function(trees, tipLabels, nTip,
                               maxReplicates, targetHits,
                               maxSeconds, nThreads, control,
                               screeningK, screeningTolerance,
@@ -245,13 +238,6 @@ CIDConsensus <- function(trees,
   splitMats <- lapply(trees, function(tr) {
     unclass(as.Splits(tr, tipLabels))
   })
-  
-  # Optional starting tree as edge matrix
-  startEdge <- NULL
-  if (!is.null(start)) {
-    start <- MakeTreeBinary(start)
-    startEdge <- start[["edge"]]
-  }
   
   # Extract SearchControl parameters
   ctrl <- control
@@ -292,8 +278,7 @@ CIDConsensus <- function(trees,
     wagnerStarts = .NullOr(ctrl[["wagnerStarts"]], 1L),
     nThreads = nThreads,
     screeningK = screeningK,
-    screeningTolerance = screeningTolerance,
-    startEdge = startEdge
+    screeningTolerance = screeningTolerance
   )
   
   # Convert best tree from edge matrix to phylo
@@ -317,28 +302,20 @@ CIDConsensus <- function(trees,
 
 
 # Build CID dataset.
-# Uses an environment for reference semantics (CIDBootstrap needs to swap
-# the tree list temporarily). S3 class "cidData" with a names() method
-# so that TreeSearch/Ratchet can call names(dataset) to get tip labels.
-#
-# For CID (the default metric), precomputes input tree splits and
-.MakeCIDData <- function(trees, metric, tipLabels) {
+# Uses an environment for reference semantics. S3 class "cidData" with a
+# names() method so that TreeSearch/Ratchet can call names(dataset) to get
+# tip labels.  Precomputes input tree splits and clustering entropies.
+.MakeCIDData <- function(trees, tipLabels) {
   env <- new.env(parent = emptyenv())
   env$trees <- trees
-  env$metric <- metric
   env$tipLabels <- tipLabels
   env$nTip <- length(tipLabels)
   
-  # Precompute splits and entropies for the default CID path
-  isCID <- identical(metric, ClusteringInfoDistance)
-  env$isCID <- isCID
-  if (isCID) {
-    inputSplits <- lapply(trees, as.Splits, tipLabels)
-    env$inputCE <- vapply(inputSplits, ClusteringEntropy, double(1))
-    env$meanInputCE <- mean(env$inputCE)
-    # Store raw (unclass'd) split matrices for direct C++ access
-    env$inputSplitsRaw <- lapply(inputSplits, unclass)
-  }
+  inputSplits <- lapply(trees, as.Splits, tipLabels)
+  env$inputCE <- vapply(inputSplits, ClusteringEntropy, double(1))
+  env$meanInputCE <- mean(env$inputCE)
+  # Store raw (unclass'd) split matrices for direct C++ access
+  env$inputSplitsRaw <- lapply(inputSplits, unclass)
   
   class(env) <- "cidData"
   env
@@ -348,15 +325,10 @@ CIDConsensus <- function(trees,
 names.cidData <- function(x) x$tipLabels
 
 
-# CID-based TreeScorer: score candidate against all input trees.
-# Dispatches to the fast precomputed path for CID, generic for others.
-.CIDScorer <- function(parent, child, dataset, ...) {
-  if (dataset$isCID) {
-    .CIDScoreFast(parent, child, dataset)
-  } else {
-    candidate <- .EdgeListToPhylo(parent, child, dataset$tipLabels)
-    mean(dataset$metric(candidate, dataset$trees))
-  }
+# Score candidate tree against all input trees using MCI.
+# Returns negated mean MCI (lower = better).
+.CIDScorer <- function(parent, child, dataset) {
+  .CIDScoreFast(parent, child, dataset)
 }
 
 
@@ -391,23 +363,19 @@ names.cidData <- function(x) x$tipLabels
   idx <- sample.int(nTree, replace = TRUE)
   cidData$trees <- origTrees[idx]
   
-  # Also resample precomputed data for fast CID path
-  if (cidData$isCID) {
-    origSplitsRaw <- cidData$inputSplitsRaw
-    origCE <- cidData$inputCE
-    origMeanCE <- cidData$meanInputCE
-    cidData$inputSplitsRaw <- origSplitsRaw[idx]
-    cidData$inputCE <- origCE[idx]
-    cidData$meanInputCE <- mean(origCE[idx])
-    on.exit({
-      cidData$trees <- origTrees
-      cidData$inputSplitsRaw <- origSplitsRaw
-      cidData$inputCE <- origCE
-      cidData$meanInputCE <- origMeanCE
-    })
-  } else {
-    on.exit(cidData$trees <- origTrees)
-  }
+  # Also resample precomputed splits/entropies
+  origSplitsRaw <- cidData$inputSplitsRaw
+  origCE <- cidData$inputCE
+  origMeanCE <- cidData$meanInputCE
+  cidData$inputSplitsRaw <- origSplitsRaw[idx]
+  cidData$inputCE <- origCE[idx]
+  cidData$meanInputCE <- mean(origCE[idx])
+  on.exit({
+    cidData$trees <- origTrees
+    cidData$inputSplitsRaw <- origSplitsRaw
+    cidData$inputCE <- origCE
+    cidData$meanInputCE <- origMeanCE
+  })
   
   res <- EdgeListSearch(edgeList[1:2], cidData,
                         TreeScorer = .CIDScorer,
@@ -521,9 +489,8 @@ names.cidData <- function(x) x$tipLabels
 .RogueRefine <- function(tree, cidData, neverDrop, maxDrop,
                          method, ratchIter, ratchHits,
                          searchIter, searchHits, collapse,
-                         verbosity, ...) {
+                         verbosity) {
   originalTrees <- cidData$trees
-  originalMetric <- cidData$metric
   allTipLabels <- cidData$tipLabels
   bestScore <- .ScoreTree(tree, cidData)
   currentTips <- tree[["tip.label"]]
@@ -558,8 +525,7 @@ names.cidData <- function(x) x$tipLabels
     droppable <- setdiff(currentTips, protected)
     if (length(droppable) == 0L) break
     prescreenScores <- .PrescreenMarginalNID(
-      tree, cidData, droppable, originalTrees, allTipLabels, droppedTips,
-      originalMetric
+      tree, cidData, droppable, originalTrees, allTipLabels, droppedTips
     )
     candidates <- names(sort(prescreenScores))
     for (tip in candidates) {
@@ -569,9 +535,8 @@ names.cidData <- function(x) x$tipLabels
       reducedTips <- setdiff(currentTips, tip)
       allDropped <- c(droppedTips, tip)
       reducedInputTrees <- .PruneTrees(originalTrees, allDropped)
-      reducedCidData <- .MakeCIDData(reducedInputTrees, originalMetric,
-                                     reducedTips)
-      reducedTree <- drop.tip(tree, tip)
+      reducedCidData <- .MakeCIDData(reducedInputTrees, reducedTips)
+      reducedTree <- DropTip(tree, tip)
       nReducedTips <- length(reducedTips)
       if (nReducedTips < 5L) {
         reoptResult <- reducedTree
@@ -581,12 +546,12 @@ names.cidData <- function(x) x$tipLabels
           reducedTree, reducedCidData, method,
           max(1L, ratchIter %/% 2L), ratchHits,
           searchIter, searchHits, collapse,
-          max(0L, verbosity - 1L), ...)
+          max(0L, verbosity - 1L))
       } else {
         reoptResult <- .TopologySearch(
           reducedTree, reducedCidData, "nni",
           1L, 1L, searchIter, searchHits, collapse,
-          max(0L, verbosity - 1L), ...)
+          max(0L, verbosity - 1L))
       }
       newScore <- attr(reoptResult, "score")
       if (is.null(newScore)) newScore <- .ScoreTree(reoptResult, reducedCidData)
@@ -618,8 +583,7 @@ names.cidData <- function(x) x$tipLabels
         tip <- droppedTips[idx]
         insertion <- .BestInsertion(
           tree, tip, originalTrees,
-          droppedTips[-idx],
-          originalMetric
+          droppedTips[-idx]
         )
         if (insertion$score < bestScore - sqrt(.Machine[["double.eps"]])) {
           tree <- insertion$tree
@@ -653,13 +617,13 @@ names.cidData <- function(x) x$tipLabels
 
 .PrescreenMarginalNID <- function(tree, cidData, droppable,
                                   originalTrees, allTipLabels,
-                                  alreadyDropped, metric) {
+                                  alreadyDropped) {
   vapply(droppable, function(tip) {
     reducedTips <- setdiff(tree[["tip.label"]], tip)
     allDropped <- c(alreadyDropped, tip)
     reducedInputTrees <- .PruneTrees(originalTrees, allDropped)
-    reducedCidData <- .MakeCIDData(reducedInputTrees, metric, reducedTips)
-    reducedTree <- drop.tip(tree, tip)
+    reducedCidData <- .MakeCIDData(reducedInputTrees, reducedTips)
+    reducedTree <- DropTip(tree, tip)
     .ScoreTree(reducedTree, reducedCidData)
   }, double(1))
 }
@@ -667,7 +631,7 @@ names.cidData <- function(x) x$tipLabels
 
 .PruneTrees <- function(trees, tipsToDrop) {
   if (length(tipsToDrop) == 0L) return(trees)
-  pruned <- lapply(trees, drop.tip, tip = tipsToDrop)
+  pruned <- lapply(trees, DropTip, tip = tipsToDrop)
   class(pruned) <- "multiPhylo"
   pruned
 }
@@ -691,14 +655,14 @@ names.cidData <- function(x) x$tipLabels
 
 
 .BestInsertion <- function(tree, tipLabel, originalTrees,
-                           otherDropped, metric) {
+                           otherDropped) {
   currentTips <- c(tree[["tip.label"]], tipLabel)
   if (length(otherDropped) > 0L) {
     inputTrees <- .PruneTrees(originalTrees, otherDropped)
   } else {
     inputTrees <- originalTrees
   }
-  testCidData <- .MakeCIDData(inputTrees, metric, currentTips)
+  testCidData <- .MakeCIDData(inputTrees, currentTips)
   nEdge <- nrow(tree[["edge"]])
   bestScore <- Inf
   bestTree <- NULL

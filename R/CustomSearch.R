@@ -180,7 +180,7 @@ TreeSearch <- function (tree, dataset,
                         stopAtPeak = FALSE, stopAtPlateau = 0L,
                         verbosity = 1L, ...) {
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
-    stop("tree must be bifurcating; try rooting with ape::root")
+    stop("tree must be bifurcating; try rooting with RootTree()")
   }
   tree <- RenumberTips(tree, names(dataset))
   edgeList <- tree[["edge"]]

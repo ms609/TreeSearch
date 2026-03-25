@@ -1,8 +1,8 @@
 # Tier 2: skipped on CRAN; see tests/testing-strategy.md
 skip_on_cran()
 
-library(TreeTools)
-library(TreeDist)
+library("TreeTools")
+library("TreeDist")
 
 # Helpers -------------------------------------------------------------------
 
@@ -119,24 +119,24 @@ test_that(".CIDBootstrap restores original trees", {
 })
 
 
-# CIDConsensus — core tests ------------------------------------------------
+# InfoConsensus — core tests ------------------------------------------------
 
-test_that("CIDConsensus rejects non-multiPhylo input", {
-  expect_error(CIDConsensus(as.phylo(1, 10)),
+test_that("InfoConsensus rejects non-multiPhylo input", {
+  expect_error(InfoConsensus(as.phylo(1, 10)),
                "multiPhylo")
 })
 
-test_that("CIDConsensus rejects single tree", {
-  expect_error(CIDConsensus(c(as.phylo(1, 10))),
+test_that("InfoConsensus rejects single tree", {
+  expect_error(InfoConsensus(c(as.phylo(1, 10))),
                "at least 2")
 })
 
-test_that("CIDConsensus runs and returns valid result", {
+test_that("InfoConsensus runs and returns valid result", {
   set.seed(5103)
-  result <- CIDConsensus(smallTrees,
-                         maxReplicates = 3L, targetHits = 2L,
-                         neverDrop = TRUE, collapse = FALSE,
-                         verbosity = 0L)
+  result <- InfoConsensus(smallTrees,
+                          maxReplicates = 3L, targetHits = 2L,
+                          neverDrop = TRUE, collapse = FALSE,
+                          verbosity = 0L)
 
   expect_s3_class(result, "phylo")
   expect_equal(NTip(result), 12L)
@@ -145,27 +145,25 @@ test_that("CIDConsensus runs and returns valid result", {
   expect_true(resultScore >= 0)
 })
 
-test_that("CIDConsensus score attribute is set", {
+test_that("InfoConsensus score attribute is set", {
   set.seed(9241)
-  result <- CIDConsensus(smallTrees,
-                         maxReplicates = 2L, targetHits = 1L,
-                         neverDrop = TRUE, collapse = FALSE,
-                         verbosity = 0L)
+  result <- InfoConsensus(smallTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = TRUE, collapse = FALSE,
+                          verbosity = 0L)
 
   expect_true(!is.null(attr(result, "score")))
   expect_true(is.numeric(attr(result, "score")))
   expect_true(attr(result, "score") >= 0)
 })
 
-test_that("CIDConsensus accepts custom starting tree", {
-  startTree <- as.phylo(42, 12)
-
-  set.seed(8820)
-  result <- CIDConsensus(smallTrees, start = startTree,
-                         maxReplicates = 2L, targetHits = 1L,
-                         neverDrop = TRUE, collapse = FALSE,
-                         verbosity = 0L)
-
+test_that("CIDConsensus deprecated alias works", {
+  lifecycle::expect_deprecated(
+    result <- CIDConsensus(smallTrees,
+                           maxReplicates = 2L, targetHits = 1L,
+                           neverDrop = TRUE, collapse = FALSE,
+                           verbosity = 0L)
+  )
   expect_s3_class(result, "phylo")
 })
 
@@ -363,19 +361,19 @@ test_that(".CollapseRefine returns valid phylo", {
 })
 
 
-# CIDConsensus with collapse --------------------------------------------------
+# InfoConsensus with collapse -------------------------------------------------
 
-test_that("CIDConsensus collapse=TRUE produces equal-or-better score", {
+test_that("InfoConsensus collapse=TRUE produces equal-or-better score", {
   set.seed(7799)
-  resultNoCollapse <- CIDConsensus(smallTrees,
-                                   maxReplicates = 2L, targetHits = 1L,
-                                   neverDrop = TRUE, collapse = FALSE,
-                                   verbosity = 0L)
+  resultNoCollapse <- InfoConsensus(smallTrees,
+                                    maxReplicates = 2L, targetHits = 1L,
+                                    neverDrop = TRUE, collapse = FALSE,
+                                    verbosity = 0L)
   set.seed(7799)
-  resultCollapse <- CIDConsensus(smallTrees,
-                                 maxReplicates = 2L, targetHits = 1L,
-                                 neverDrop = TRUE, collapse = TRUE,
-                                 verbosity = 0L)
+  resultCollapse <- InfoConsensus(smallTrees,
+                                  maxReplicates = 2L, targetHits = 1L,
+                                  neverDrop = TRUE, collapse = TRUE,
+                                  verbosity = 0L)
 
   # Higher MCI = better; collapse should improve or equal
   expect_true(attr(resultCollapse, "score") >=
@@ -386,8 +384,7 @@ test_that("CIDConsensus collapse=TRUE produces equal-or-better score", {
 # --- MCI scoring (.CIDScoreFast) -------------------------------------------
 
 test_that("Internal MCI score is negative (negated mean MCI)", {
-  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
-                          smallTrees[[1]]$tip.label)
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   tr <- smallTrees[[1]]
   edge <- tr$edge
   score <- .CIDScorer(edge[, 1], edge[, 2], cidData)
@@ -430,8 +427,7 @@ test_that(".PruneTrees returns unchanged on empty drop set", {
 # --- .ScoreTree -------------------------------------------------------------
 
 test_that(".ScoreTree matches .CIDScorer on edge vectors", {
-  cidData <- .MakeCIDData(smallTrees, ClusteringInfoDistance,
-                          smallTrees[[1]]$tip.label)
+  cidData <- .MakeCIDData(smallTrees, smallTrees[[1]]$tip.label)
   tr <- smallTrees[[1]]
   edge <- tr$edge
   expect_equal(.ScoreTree(tr, cidData),
@@ -449,10 +445,10 @@ test_that("Rogue taxon correctly identified in toy example", {
   class(rogue_trees) <- "multiPhylo"
 
   set.seed(2891)
-  result <- CIDConsensus(rogue_trees,
-                         maxReplicates = 3L, targetHits = 2L,
-                         neverDrop = FALSE,
-                         verbosity = 0L)
+  result <- InfoConsensus(rogue_trees,
+                          maxReplicates = 3L, targetHits = 2L,
+                          neverDrop = FALSE,
+                          verbosity = 0L)
   expect_equal(attr(result, "droppedTips"), "r")
   expect_false("r" %in% result$tip.label)
 })
@@ -462,10 +458,10 @@ test_that("Rogue taxon correctly identified in toy example", {
 
 test_that("neverDrop = TRUE prevents rogue dropping", {
   set.seed(4817)
-  result <- CIDConsensus(smallTrees,
-                         maxReplicates = 2L, targetHits = 1L,
-                         neverDrop = TRUE,
-                         verbosity = 0L)
+  result <- InfoConsensus(smallTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = TRUE,
+                          verbosity = 0L)
   expect_null(attr(result, "droppedTips"))
   expect_equal(NTip(result), 12L)
 })
@@ -478,10 +474,10 @@ test_that("neverDrop protects specified tips", {
   class(rogue_trees) <- "multiPhylo"
 
   set.seed(2891)
-  result <- CIDConsensus(rogue_trees,
-                         maxReplicates = 3L, targetHits = 2L,
-                         neverDrop = c("r", "a"),
-                         verbosity = 0L)
+  result <- InfoConsensus(rogue_trees,
+                          maxReplicates = 3L, targetHits = 2L,
+                          neverDrop = c("r", "a"),
+                          verbosity = 0L)
   expect_true("r" %in% result$tip.label)
   expect_true("a" %in% result$tip.label)
 })
@@ -491,11 +487,11 @@ test_that("neverDrop protects specified tips", {
 
 test_that("maxDrop limits the number of dropped tips", {
   set.seed(4817)
-  result <- CIDConsensus(smallTrees,
-                         maxReplicates = 2L, targetHits = 1L,
-                         neverDrop = FALSE,
-                         maxDrop = 1L,
-                         verbosity = 0L)
+  result <- InfoConsensus(smallTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = FALSE,
+                          maxDrop = 1L,
+                          verbosity = 0L)
   nDropped <- length(attr(result, "droppedTips"))
   expect_true(nDropped <= 1L)
 })

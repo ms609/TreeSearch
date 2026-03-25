@@ -12,6 +12,6 @@ tree11 <- read.tree(text = "((((a, b), (c, d)), e), ((f, (g, (h, i))), (j, k)));
 attr(tree5a, 'order') <- attr(tree5b, 'order') <- attr(tree8, 'order') <- attr(tree11, 'order') <- 'preorder'
 
 # test -------------------------------------------------------------------------
-testTree <- Preorder(root(BalancedTree(7), 1, resolve.root = TRUE))
+testTree <- Preorder(RootTree(BalancedTree(7), 1))
 edge <- testTree[["edge"]]
 expect_equal(spr(edge, 66), cSPR(testTree, 66)$edge)

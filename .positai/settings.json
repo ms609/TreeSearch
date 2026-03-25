@@ -11,7 +11,8 @@
       "*.cpp": "allow",
       "*.R": "allow",
       "*.c": "allow",
-      "*/NAMESPACE": "allow"
+      "*/NAMESPACE": "allow",
+      "*/DESCRIPTION": "allow"
     },
     "bash": {
       "cd C:/Users/pjjg18/GitHub/TreeSearch": "allow",

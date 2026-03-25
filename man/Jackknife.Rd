@@ -85,8 +85,8 @@ Other split support functions:
 \code{\link{SiteConcordance}}
 
 Other custom search functions: 
-\code{\link{CIDConsensus}()},
 \code{\link{EdgeListSearch}()},
+\code{\link{InfoConsensus}()},
 \code{\link{MorphyBootstrap}()},
 \code{\link{SuccessiveApproximations}()}
 }
