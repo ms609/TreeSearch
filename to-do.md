@@ -68,11 +68,8 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 
-### Shiny App
-
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-219 | P3 | OPEN | — | **[Shiny] Dataset dropdown hover state missing.** No background change on mouseover — no visual indication item is selectable. | From a001.md. CSS fix. |
 
 ### Standing Tasks
 

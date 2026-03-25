@@ -1,17 +1,16 @@
 # Agent D Progress Log
 
-## Current Task: T-218 (P0 scoring regression) + Shiny triage
-**Status:** IN PROGRESS — awaiting GHA for PR #224
-**Started:** 2026-03-25
+## Current Task: IDLE
+**Status:** IDLE — ready for next assignment
+**Last completed:** 2026-03-25
 
-### Progress
-- S-COORD round 16: completed. Closed T-213, deduped T-218 in to-do.md.
+### Session summary
+- S-COORD round 16: completed. Closed T-213.
 - **T-218 (P0):** Discovered & fixed inapplicable simplification bypass regression.
-  PR #224 on `feature/fix-simplify-inapp`. GHA 23534918452 in progress.
-- **Shiny triage:** Claimed a001.md, a002.md.
-  - a001 → T-219 (P3, CSS hover state). Filed, not yet fixed.
-  - a002 → T-220 (P1, crash: `searchExtendedIw` not found). **Fixed** directly
-    on cpp-search (commit `a9146dd85`). Variable was used in `LogCode()` before
-    being assigned; moved snapshot above `LogCode()`.
-- Next: Await T-218 GHA result. If PASS, update to-do.md status to `PR #224 (D)`.
-  Then pick next task (T-219 or next OPEN).
+  PR #224 on `feature/fix-simplify-inapp`. GHA shows only 13 pre-existing T-214
+  constraint failures; all 59 inapplicable scoring failures resolved.
+- **T-220 (P1):** Fixed `searchExtendedIw` not found crash — variable used in
+  `LogCode()` before assignment. Direct fix on cpp-search.
+- **T-219 (P3):** Fixed selectize dropdown hover visibility — added explicit CSS.
+  Direct fix on cpp-search.
+- **T-215 (P3):** Resolved by T-218 fix — stale IW/EW references no longer stale.
