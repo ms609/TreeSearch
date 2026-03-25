@@ -1,4 +1,5 @@
 #include "ts_nni_perturb.h"
+#include "ts_constraint.h"
 #include "ts_tbr.h"
 #include "ts_fitch.h"
 #include "ts_rng.h"
@@ -82,13 +83,16 @@ NNIPerturbResult nni_perturb_search(
     int n_swaps = random_nni_perturb(tree, params.perturb_fraction);
 
     if (n_swaps == 0) {
-      // No swaps applied (unlikely but possible with very small trees).
-      // Skip to next cycle.
       ++cycles_completed;
       continue;
     }
 
-    // Rescore after perturbation
+    // Repair constraint violations from blind NNI perturbation
+    if (cd && cd->active) {
+      impose_constraint(tree, *cd);
+    }
+
+    // Rescore after perturbation (+ repair)
     tree.reset_states(ds);
     score_tree(tree, ds);
 

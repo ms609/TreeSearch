@@ -482,7 +482,7 @@ MaximizeParsimony <- function(
     )
     morphyArgs <- dots
     morphyArgs$dataset <- dataset
-    if (!missing(tree)) morphyArgs$tree <- tree
+    if (!missing(tree) && !is.null(tree)) morphyArgs$tree <- tree
     if (!missing(concavity)) morphyArgs$concavity <- concavity
     if (!missing(constraint)) morphyArgs$constraint <- constraint
     if (!missing(verbosity)) morphyArgs$verbosity <- verbosity
@@ -547,7 +547,7 @@ MaximizeParsimony <- function(
 
   # --- Progress callback: build default cli bar if needed ---
   if (is.null(progressCallback) && verbosity >= 1L && interactive()) {
-    pb_env <- new.env(parent = baseenv())
+    pb_env <- new.env(parent = environment())
     pb_env$id <- cli::cli_progress_bar(
       total = as.integer(maxReplicates),
       format = paste0(
@@ -717,7 +717,7 @@ MaximizeParsimony <- function(
   # Formula: max(10, ceiling(nTip * nChar / 5000)) where nChar = sum(weight).
   # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
   # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
-  if (!missing(maxReplicates) && nTip >= 30L) {
+  if (!missing(maxReplicates) && nTip >= 30L && verbosity > 0L) {
     nChars <- sum(weight)
     minReps <- pmax(10L, ceiling(nTip * nChars / 5000L))
     if (maxReplicates < minReps) {
@@ -789,96 +789,39 @@ MaximizeParsimony <- function(
   }
 
   # --- Run C++ driven search ---
-  # Read all control fields from the resolved control object
-  ctrl <- control
-  searchArgs <- list(
-    contrast = contrast,
-    tip_data = tip_data,
-    weight = weight,
-    levels = levels,
+  # searchControl: the resolved SearchControl object (already type-coerced)
+  # runtimeConfig: session-level params not in SearchControl
+  runtimeConfig <- list(
     maxReplicates = as.integer(maxReplicates),
     targetHits = as.integer(targetHits),
-    tbrMaxHits = as.integer(ctrl$tbrMaxHits),
-    ratchetCycles = as.integer(ctrl$ratchetCycles),
-    ratchetPerturbProb = as.double(ctrl$ratchetPerturbProb),
-    ratchetPerturbMode = as.integer(ctrl$ratchetPerturbMode),
-    ratchetPerturbMaxMoves = as.integer(ctrl$ratchetPerturbMaxMoves),
-    ratchetAdaptive = as.logical(ctrl$ratchetAdaptive),
-    driftCycles = as.integer(ctrl$driftCycles),
-    driftAfdLimit = as.integer(ctrl$driftAfdLimit),
-    driftRfdLimit = as.double(ctrl$driftRfdLimit),
-    xssRounds = as.integer(ctrl$xssRounds),
-    xssPartitions = as.integer(ctrl$xssPartitions),
-    rssRounds = as.integer(ctrl$rssRounds),
-    cssRounds = as.integer(ctrl$cssRounds),
-    cssPartitions = as.integer(ctrl$cssPartitions),
-    sectorMinSize = as.integer(ctrl$sectorMinSize),
-    sectorMaxSize = as.integer(ctrl$sectorMaxSize),
-    fuseInterval = as.integer(ctrl$fuseInterval),
-    fuseAcceptEqual = as.logical(ctrl$fuseAcceptEqual),
-    poolMaxSize = as.integer(ctrl$poolMaxSize),
-    poolSuboptimal = as.double(ctrl$poolSuboptimal),
     maxSeconds = as.double(maxSeconds),
-    tabuSize = as.integer(ctrl$tabuSize),
-    wagnerStarts = as.integer(ctrl$wagnerStarts),
     verbosity = as.integer(verbosity),
+    nThreads = as.integer(nThreads),
+    startEdge = if (userTree) tree[["edge"]] else NULL,
+    progressCallback = progressCallback
+  )
+
+  # scoringConfig: scoring method params
+  scoringConfig <- list(
     min_steps = if (is.finite(concavity)) minSteps else integer(0),
     concavity = as.double(concavity),
     xpiwe = useXpiwe,
     xpiwe_r = as.double(xpiwe_r),
     xpiwe_max_f = as.double(xpiwe_max_f),
     obs_count = if (useXpiwe) obsCount else integer(0),
-    progressCallback = progressCallback,
-    nThreads = as.integer(nThreads),
-    startEdge = if (userTree) tree[["edge"]] else NULL,
-    sprFirst = as.logical(ctrl$sprFirst),
-    nniFirst = as.logical(
-      if (is.null(ctrl$nniFirst)) FALSE
-      else ctrl$nniFirst),
-    consensusStableReps = as.integer(
-      if (is.null(ctrl$consensusStableReps)) 0L
-      else ctrl$consensusStableReps),
-    adaptiveLevel = as.logical(
-      if (is.null(ctrl$adaptiveLevel)) FALSE
-      else ctrl$adaptiveLevel),
-    consensusConstrain = as.logical(
-      if (is.null(ctrl$consensusConstrain)) FALSE
-      else ctrl$consensusConstrain),
-    nniPerturbCycles = as.integer(
-      if (is.null(ctrl$nniPerturbCycles)) 0L
-      else ctrl$nniPerturbCycles),
-    nniPerturbFraction = as.double(
-      if (is.null(ctrl$nniPerturbFraction)) 0.5
-      else ctrl$nniPerturbFraction),
-    wagnerBias = as.integer(
-      if (is.null(ctrl$wagnerBias)) 0L
-      else ctrl$wagnerBias),
-    wagnerBiasTemp = as.double(
-      if (is.null(ctrl$wagnerBiasTemp)) 0.3
-      else ctrl$wagnerBiasTemp),
-    outerCycles = as.integer(
-      if (is.null(ctrl$outerCycles)) 1L
-      else ctrl$outerCycles),
-    maxOuterResets = as.integer(
-      if (is.null(ctrl$maxOuterResets)) 0L
-      else ctrl$maxOuterResets),
-    adaptiveStart = as.logical(
-      if (is.null(ctrl$adaptiveStart)) FALSE
-      else ctrl$adaptiveStart),
-    enumTimeFraction = as.double(
-      if (is.null(ctrl$enumTimeFraction)) 0.1
-      else ctrl$enumTimeFraction),
-    annealConfig = if (isTRUE(as.integer(ctrl$annealPhases) > 0L)) {
-      list(
-        phases = as.integer(ctrl$annealPhases),
-        tStart = as.double(if (is.null(ctrl$annealTStart)) 20 else ctrl$annealTStart),
-        tEnd = as.double(if (is.null(ctrl$annealTEnd)) 0 else ctrl$annealTEnd),
-        movesPerPhase = as.integer(if (is.null(ctrl$annealMovesPerPhase)) 0L else ctrl$annealMovesPerPhase)
-      )
-    }
+    infoAmounts = profileArgs$infoAmounts
   )
-  result <- do.call(ts_driven_search, c(searchArgs, consArgs, profileArgs,
-                                        hsjArgs, xformArgs))
+
+  # constraintConfig / hsjConfig / xformConfig: NULL when empty
+  constraintConfig <- if (length(consArgs) > 0L) consArgs
+  hsjConfig <- if (length(hsjArgs) > 0L) hsjArgs
+  xformConfig <- if (length(xformArgs) > 0L) xformArgs
+
+  result <- ts_driven_search(
+    contrast, tip_data, weight, levels,
+    control, runtimeConfig, scoringConfig,
+    constraintConfig, hsjConfig, xformConfig
+  )
 
   # --- Reconstruct phylo from edge matrices ---
   treeTpl <- tree

@@ -119,6 +119,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       r$searchTotalReps <- 0L
       r$bestSearchScore  <- NULL
       r$searchLastImprovedRep <- NULL
+      r$searchConsensusStable <- FALSE
+      r$searchTimedOut <- FALSE
       DisplayTreeScores()
     })
 
@@ -128,6 +130,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       r$searchTotalReps <- 0L
       r$bestSearchScore  <- NULL
       r$searchLastImprovedRep <- NULL
+      r$searchConsensusStable <- FALSE
+      r$searchTimedOut <- FALSE
       DisplayTreeScores()
     }, ignoreInit = TRUE)
 
@@ -143,7 +147,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # Dynamic help text for hierarchy detection (shown inside config modal)
     output$hierarchyInfo <- renderUI({
       inp <- input$inapplicable
-      if (is.null(inp) || identical(inp, "brazeau")) return(NULL)
+      if (is.null(inp) || identical(inp, "bgs")) return(NULL)
       chars <- r$chars
       if (is.null(chars) || length(chars) == 0L) {
         return(helpText(
@@ -415,8 +419,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observe({
       result <- tryCatch(
         profilePrepTask$result(),
-        shiny.silent.error = function(e) req(FALSE),
         error = function(e) {
+          if (inherits(e, "shiny.silent.error")) stop(e)
           LogMsg("Profile data preparation failed: ", conditionMessage(e))
           NULL
         }
@@ -441,10 +445,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         if (!is.null(result)) {
           profileDataset(result)
           profileDataHash(r$dataHash)
-          Notification("Profile scores ready \u2014 click Search to start",
-                       type = "message", duration = 5)
+          # Auto-start the search that was deferred for profile preparation.
+          # StartSearch() will see that profileDataHash matches and proceed
+          # directly to the search without re-preparing.
+          StartSearch()
+        } else {
+          DisplayTreeScores()
         }
-        DisplayTreeScores()
       })
     })
 
@@ -531,10 +538,16 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         length(r$trees), " sampled",
         score
       )
+      stopReason <- if (isTRUE(r$searchConsensusStable)) {
+        "consensus"
+      } else if (isTRUE(r$searchTimedOut)) {
+        "timeout"
+      }
       confText <- SearchConfidenceText(r$searchTotalHits, r$searchTotalReps,
                                         r$searchCount,
                                         nTopologies = length(r$allTrees),
-                                        lastImprovedRep = r$searchLastImprovedRep)
+                                        lastImprovedRep = r$searchLastImprovedRep,
+                                        stopReason = stopReason)
       html <- if (!is.null(confText)) {
         nS <- r$searchCount
         tooltip <- paste0(
@@ -607,7 +620,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             )
           }
           # Inapplicable handling (non-Brazeau requires hierarchy)
-          if (!is.null(hierarchy) && !identical(inapplicable, "brazeau")) {
+          if (!is.null(hierarchy) && !identical(inapplicable, "bgs")) {
             args$hierarchy    <- hierarchy
             args$inapplicable <- inapplicable
             if (identical(inapplicable, "hsj")) {
@@ -661,9 +674,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       searchNThreads <- if (length(input$nThreads)) as.integer(input$nThreads) else 1L
 
       # Inapplicable handling
-      searchInapplicable <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      searchInapplicable <- if (length(input$inapplicable)) input$inapplicable else "bgs"
       searchHsjAlpha     <- if (length(input$hsjAlpha)) as.double(input$hsjAlpha) else 1.0
-      searchHierarchy <- if (!identical(searchInapplicable, "brazeau") &&
+      searchHierarchy <- if (!identical(searchInapplicable, "bgs") &&
                              !is.null(r$chars) && length(r$chars) > 0L) {
         tryCatch(
           withCallingHandlers(
@@ -677,7 +690,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       }
 
       # Non-Brazeau methods require a detected hierarchy; abort early
-      if (!identical(searchInapplicable, "brazeau") && is.null(searchHierarchy)) {
+      if (!identical(searchInapplicable, "bgs") && is.null(searchHierarchy)) {
         methodLabel <- switch(searchInapplicable,
                               hsj   = "Hopkins & St. John (HSJ)",
                               xform = "X-transformation (Goloboff)",
@@ -762,6 +775,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       LogMsg("StartSearch()")
       PutData(r$dataset[SearchTips()])
       PutTree(startTree)
+      # Snapshot reactive values for the async task
+      searchDataset <- r$dataset[SearchTips()]
+      searchConcavity <- concavity()
+      searchExtendedIw <- extendedIw()
       LogComment("Search for optimal trees", 1)
       LogCode(c(
         "newTrees <- MaximizeParsimony(",
@@ -785,17 +802,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           paste0("  control = SearchControl(poolSuboptimal = ", searchPoolSub, "),"),
         if (searchNThreads > 1L)
           paste0("  nThreads = ", searchNThreads, "L,"),
-        if (!identical(searchInapplicable, "brazeau") && !is.null(searchHierarchy))
+        if (!identical(searchInapplicable, "bgs") && !is.null(searchHierarchy))
           paste0("  inapplicable = \"", searchInapplicable, "\","),
         if (identical(searchInapplicable, "hsj") && !is.null(searchHierarchy) &&
             searchHsjAlpha != 1.0)
           paste0("  hsj_alpha = ", searchHsjAlpha, ","),
         "  verbosity = 0",
         ")"))
-      # Snapshot reactive values for the async task
-      searchDataset <- r$dataset[SearchTips()]
-      searchConcavity <- concavity()
-      searchExtendedIw <- extendedIw()
 
       searchTask$invoke(
         searchDataset, startTree, searchConcavity, searchExtendedIw,
@@ -888,7 +901,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         updateSliderInput(session, "nThreads", value = input$nThreads)
       }
       # Sync inapplicable selector and show/hide hsjAlpha accordingly
-      inapplicable_cur <- if (length(input$inapplicable)) input$inapplicable else "brazeau"
+      inapplicable_cur <- if (length(input$inapplicable)) input$inapplicable else "bgs"
       updateSelectInput(session, "inapplicable", selected = inapplicable_cur)
       updateNumericInput(session, "hsjAlpha",
                          value = if (length(input$hsjAlpha)) input$hsjAlpha else 1.0)
@@ -896,7 +909,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       # Initialise all modal inputs from current values so that opening the
       # modal does not fire observeEvent(input$concavity) or
       # observeEvent(input$implied.weights), which reset the run counters.
-      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "on"
+      cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "xpiwe"
       cur_concavity <- if (length(input$concavity))       input$concavity       else 1L
       cur_strategy  <- if (length(input$strategy))        input$strategy        else "auto"
       cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 100L
@@ -904,6 +917,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       cur_timeout   <- if (length(input$timeout))         input$timeout         else 5
       cur_epsilon   <- if (length(input$epsilon))         input$epsilon         else 0
       cur_threads   <- if (length(input$nThreads))        input$nThreads        else max(1L, floor(nCores / 2L))
+      # Concavity slider should start hidden unless weighting mode uses it
+      concavityInput <- sliderInput(ns("concavity"), "Concavity constant",
+                                    min = 0L, max = 3L, pre = "10^",
+                                    value = cur_concavity)
+      if (!cur_weights %in% c("xpiwe", "on")) {
+        concavityInput <- hidden(concavityInput)
+      }
       showModal(modalDialog(
         easyClose = TRUE,
         fluidPage(column(6,
@@ -911,10 +931,9 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                      list("Implied (extended)" = "xpiwe",
                           "Implied" = "on", "Profile" = "prof",
                           "Equal" = "off"), cur_weights),
-          sliderInput(ns("concavity"), "Concavity constant", min = 0L,
-                     max = 3L, pre = "10^", value = cur_concavity),
+          concavityInput,
           selectInput(ns("inapplicable"), "Inapplicable characters",
-                      list("Brazeau et al. (default)" = "brazeau",
+                      list("Brazeau et al. (default)" = "bgs",
                            "Hopkins & St. John (HSJ)"  = "hsj",
                            "X-transformation (Goloboff)" = "xform"),
                       inapplicable_cur),
@@ -968,14 +987,21 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # Only searchTask$result() should be a reactive dependency;
     # isolate everything else to prevent reactive cascade re-runs.
     observe({
+      # Use a single `error` handler rather than separate `shiny.silent.error`
+      # + `error` handlers. With two handlers, `req(FALSE)` thrown inside the
+      # `shiny.silent.error` handler is caught by the sibling `error` handler
+      # (R's tryCatch does not fully unwind before sibling handlers), causing
+      # the isolate block below to run prematurely (notification removed,
+      # cancel hidden) while the search task is still running.
       newTrees <- tryCatch(
         searchTask$result(),
-        shiny.silent.error = function(e) {
-          # ExtendedTask throws shiny.silent.error (class "shiny.output.progress"
-          # subclass) when status is "initial" or "running" — not a real error.
-          req(FALSE)
-        },
         error = function(e) {
+          if (inherits(e, "shiny.silent.error")) {
+            # ExtendedTask signals shiny.silent.error when status is "initial"
+            # or "running". Re-throw so Shiny's observer wrapper terminates
+            # this cycle cleanly; the observer will re-fire on task completion.
+            stop(e)
+          }
           msg <- conditionMessage(e)
           if (nzchar(msg)) {
             Notification(paste("Search error:", msg), type = "error")
@@ -1030,6 +1056,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         newHits     <- if (is.null(newHitsRaw)) 0L else as.integer(newHitsRaw)
         newReps     <- if (is.null(newRepsRaw)) 0L else as.integer(newRepsRaw)
         newLastImp  <- attr(newTrees, "last_improved_rep")
+        r$searchConsensusStable <- isTRUE(attr(newTrees, "consensus_stable"))
+        r$searchTimedOut <- isTRUE(attr(newTrees, "timed_out"))
         prevCount <- length(r$allTrees)
         treesToStore <- if (
           !is.null(newScore) && !is.null(r$bestSearchScore) &&
@@ -1045,7 +1073,25 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           nwk <- vapply(combined, function(t) {
             write.tree(ape::ladderize(t))
           }, character(1L))
-          combined[!duplicated(nwk)]
+          combined <- combined[!duplicated(nwk)]
+          # Filter out trees exceeding current poolSuboptimal threshold
+          tol <- tolerance()
+          if (tol < Inf && length(combined) > 1L) {
+            conc <- concavity()
+            ds <- if (identical(conc, "profile")) profileDataset() else r$dataset
+            if (!is.null(ds)) {
+              sc <- tryCatch(
+                TreeLength(RootTree(combined, 1), ds,
+                           concavity = conc, extended_iw = extendedIw()),
+                error = function(e) NULL
+              )
+              if (!is.null(sc)) {
+                combined <- combined[sc <= min(sc) + tol +
+                                       sqrt(.Machine$double.eps)]
+              }
+            }
+          }
+          combined
         } else {
           LogComment("New or improved score: replacing trees")
           r$bestSearchScore  <- newScore
@@ -1088,6 +1134,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       r$searchTotalReps <- 0L
       r$bestSearchScore <- NULL
       r$searchLastImprovedRep <- NULL
+      r$searchConsensusStable <- FALSE
+      r$searchTimedOut <- FALSE
       r$searchCount <- 0L
       nTip <- length(r$dataset)
       nChar <- sum(attr(r$dataset, "weight", exact = TRUE))
@@ -1124,6 +1172,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       scores            = scores,
       concavity         = concavity,
       extendedIw        = extendedIw,
+      weighting         = weighting,
       DisplayTreeScores = DisplayTreeScores
     )
   })

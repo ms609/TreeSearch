@@ -27,7 +27,8 @@ namespace ts {
 enum class ClipZone : int {
   UNCONSTRAINED = 0,  // clip tips don't interact with this split
   MUST_INSIDE   = 1,  // all clip tips inside split → regraft inside
-  MUST_OUTSIDE  = 2   // all clip tips outside split → regraft outside
+  MUST_OUTSIDE  = 2,  // all clip tips outside split → regraft outside
+  FORBIDDEN     = 3   // clip straddles split AND rest straddles → no valid regraft
 };
 
 struct ConstraintData {
@@ -123,6 +124,19 @@ ConstraintData build_constraint_from_bitsets(
 // Returns true if constraint is violated.
 bool violates_constraint_posthoc(const TreeState& tree,
                                  const ConstraintData& cd);
+
+// --- Post-hoc repair ---
+
+// Compute per-node subtree tip bitmasks via postorder traversal.
+// Returns array of size n_node * n_words.
+// For tips: bit[t] = 1. For internal nodes: OR of children.
+std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words);
+
+// Repair constraint violations by minimal SPR moves.
+// After return, all constraint splits are displayed and
+// update_constraint() has been called. Caller must rescore.
+// Returns the number of SPR moves performed (0 if tree was valid).
+int impose_constraint(TreeState& tree, ConstraintData& cd);
 
 } // namespace ts
 

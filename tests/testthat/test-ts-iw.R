@@ -72,11 +72,11 @@ iw_ref <- list(
 
 # Hard-coded per-pattern step counts (pectinate tree)
 steps_ref <- list(
-  # Recomputed 2026-03-19 (T-131) after T-113 NA ambiguity bit-stripping fix
+  # Recomputed 2026-03-25 (T-218) after genuine-inapp classification fix
   Vinther2008 = as.integer(c(0, 2, 1, 2, 1, 1, 1, 2, 1, 2, 3, 2, 3, 2, 2,
                   4, 4, 3, 3, 5, 2, 2, 2, 0, 3, 3, 3, 5, 3, 2, 2, 4, 2,
-                  4, 3, 2, 2, 4, 3, 1, 0, 3, 0, 6, 2, 2, 2, 4, 3, 2)),
-  Aria2015 = as.integer(c(2, 7, 2, 2, 9, 2, 3, 3, 6, 2, 4, 3, 2, 5, 2, 2,
+                  4, 3, 2, 2, 4, 3, 0, 0, 3, 0, 6, 2, 2, 2, 4, 3, 2)),
+  Aria2015 = as.integer(c(2, 7, 2, 2, 8, 2, 3, 3, 6, 2, 4, 3, 2, 5, 2, 2,
                3, 2, 1, 3, 4, 5, 6, 4, 2, 3, 17, 8, 5, 2, 1, 2, 2, 2, 3,
                2, 6, 2, 4, 3, 2, 3, 5, 2, 1, 5, 5, 8, 3, 2))
 )

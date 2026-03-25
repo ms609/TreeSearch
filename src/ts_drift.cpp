@@ -593,6 +593,27 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       continue;
     }
 
+    // Post-hoc constraint validation: TBR rerooting can break
+    // splits classified as UNCONSTRAINED during clip phase.
+    if (constrained) {
+      tree.build_postorder();
+      map_constraint_nodes(tree, *cd);
+      bool violation = false;
+      for (int _s = 0; _s < cd->n_splits; ++_s) {
+        if (cd->constraint_node[_s] < 0) {
+          violation = true;
+          break;
+        }
+      }
+      if (violation) {
+        drift_restore_topology(tree, snap);
+        tree.build_postorder();
+        drift_full_rescore(tree, ds);
+        update_constraint(tree, *cd);
+        continue;
+      }
+    }
+
     int n_before = n_accepted;
 
     if (delta_score < -eps) {

@@ -55,6 +55,7 @@ test_that("treespace_server returns expected reactive list", {
       distMeth     = reactive("cid"),
       plotFormat    = reactive("cons"),
       distances    = stub_distances,
+      mapLines     = reactive(c("hull", "mst")),
       LogDistances = stub_LogDistances,
       log_fns      = stub_log_fns
     ),
@@ -87,6 +88,7 @@ test_that("saveDetails returns correct metadata per plot format", {
       distMeth     = reactive("rf"),
       plotFormat    = reactive("space"),
       distances    = stub_distances,
+      mapLines     = reactive(c("hull", "mst")),
       LogDistances = stub_LogDistances,
       log_fns      = stub_log_fns
     ),
@@ -116,6 +118,7 @@ test_that("saveDetails for non-space format has tree prefix", {
       distMeth     = reactive("cid"),
       plotFormat    = reactive("cons"),
       distances    = stub_distances,
+      mapLines     = reactive(character(0)),
       LogDistances = stub_LogDistances,
       log_fns      = stub_log_fns
     ),

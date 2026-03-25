@@ -113,7 +113,12 @@ ReplicateResult run_single_replicate(
         break;
       }
       case StartStrategy::RANDOM_TREE:
-        random_topology_tree(result.tree, ds);
+        if (cd && cd->active) {
+          // Fall back to constraint-aware Wagner when constraints active
+          random_wagner_tree(result.tree, ds, cd);
+        } else {
+          random_topology_tree(result.tree, ds);
+        }
         break;
       default:  // WAGNER_RANDOM (and pool-based fallback)
         random_wagner_tree(result.tree, ds, cd);
@@ -317,9 +322,9 @@ ReplicateResult run_single_replicate(
 
     // 4b. NNI perturbation (topology-space escape)
     // Skip when constraints are active: random_nni_perturb() doesn't
-    // enforce constraints, and a constraint-violating tree can't be
-    // repaired by TBR (cn=-1 blocks all constraint-relevant moves).
-    if (nni_perturb_per > 0 && (!cd || !cd->active)) {
+    // enforce constraints. impose_constraint() repairs violations
+    // after perturbation, so this is now safe under constraints.
+    if (nni_perturb_per > 0) {
       NNIPerturbParams np;
       np.n_cycles = nni_perturb_per;
       np.perturb_fraction = params.nni_perturb_fraction;
@@ -603,8 +608,30 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
-    // Use adaptive_params for the replicate (cycles may differ from original)
-    const DrivenParams& rep_params = params.adaptive_level
+    // Adaptive ratchet taper (T-182): reduce perturbation probability as
+    // the pool stabilizes.  High hit rate = stable pool = gentler perturbation
+    // for finer local exploration.  Resets to base when a new best is found.
+    if (params.ratchet_taper && rep > 0 && pool.size() > 0) {
+      double stability = (result.replicates_completed > 0)
+          ? static_cast<double>(pool.hits_to_best()) /
+            result.replicates_completed
+          : 0.0;
+      double taper_factor = std::max(
+          params.ratchet_taper_floor,
+          1.0 - params.ratchet_taper_strength * stability);
+      adaptive_params.ratchet_perturb_prob =
+          params.ratchet_perturb_prob * taper_factor;
+
+      if (params.verbosity >= 2 && !has_callback) {
+        Rprintf("  Ratchet taper: stability=%.2f, prob=%.3f (base=%.3f)\n",
+                stability, adaptive_params.ratchet_perturb_prob,
+                params.ratchet_perturb_prob);
+      }
+    }
+
+    // Use adaptive_params when any per-replicate adaptation is active
+    const DrivenParams& rep_params =
+        (params.adaptive_level || params.ratchet_taper)
         ? adaptive_params : params;
 
     // Conflict-guided sector selection: compute pool split frequencies
@@ -753,17 +780,35 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
       double fused_score = score_tree(fused, ds);
 
-      bool fuse_ok = true;
+      // Check and repair constraint violations on fused tree.
+      // impose_constraint() is heuristic — verify the repair succeeded
+      // and discard the tree if it still violates.
+      bool fused_ok = true;
       if (cd && cd->active) {
-        fuse_ok = !violates_constraint_posthoc(fused, *cd);
+        map_constraint_nodes(fused, *cd);
+        bool viol = false;
+        for (int _s = 0; _s < cd->n_splits; ++_s) {
+          if (cd->constraint_node[_s] < 0) { viol = true; break; }
+        }
+        if (viol) {
+          impose_constraint(fused, *cd);
+          fused.build_postorder();
+          fused.reset_states(ds);
+          fused_score = score_tree(fused, ds);
+          // Verify repair succeeded
+          map_constraint_nodes(fused, *cd);
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) { fused_ok = false; break; }
+          }
+        }
       }
-      if (fuse_ok) {
+      if (fused_ok) {
         std::vector<uint8_t> fused_collapsed;
         compute_collapsed_flags(fused, ds, fused_collapsed);
         pool.add_collapsed(fused, fused_score, fused_collapsed);
       }
 
-      if (fused_score < best_before) {
+      if (fused_ok && fused_score < best_before) {
         pool.set_hits_to_best(0);
         result.last_improved_rep = rep1;
         report("fuse", 1, fused_score, rep1);

@@ -964,12 +964,7 @@ Morphy <- function(dataset, tree,
   }
 
   # Driven search params for resampling context (light search per replicate)
-  searchBase <- list(
-    contrast = contrast,
-    tip_data = tip_data,
-    levels = levels,
-    maxReplicates = as.integer(max(ratchIter, 5L)),
-    targetHits = 2L,
+  resampleControl <- SearchControl(
     tbrMaxHits = as.integer(max(tbrIter, 1L)),
     ratchetCycles = as.integer(max(ratchIter, 3L)),
     driftCycles = 0L,
@@ -978,10 +973,25 @@ Morphy <- function(dataset, tree,
     cssRounds = 0L,
     fuseInterval = 0L,
     poolMaxSize = 1L,
-    poolSuboptimal = 0.0,
+    poolSuboptimal = 0.0
+  )
+  resampleRuntime <- list(
+    maxReplicates = as.integer(max(ratchIter, 5L)),
+    targetHits = 2L,
+    maxSeconds = 0.0,
     verbosity = 0L,
+    nThreads = 1L,
+    startEdge = NULL,
+    progressCallback = NULL
+  )
+  resampleScoring <- list(
     min_steps = integer(0),
-    concavity = as.double(concavity)
+    concavity = as.double(concavity),
+    xpiwe = FALSE,
+    xpiwe_r = 0.5,
+    xpiwe_max_f = 5.0,
+    obs_count = integer(0),
+    infoAmounts = profileArgs$infoAmounts
   )
 
   trees <- vector("list", nReplicates)
@@ -1024,12 +1034,16 @@ Morphy <- function(dataset, tree,
     }
 
     # Call ts_driven_search with resampled weights
-    args <- c(
-      searchBase,
-      list(weight = as.integer(resamp$non_hierarchy_weights)),
-      consArgs, profileArgs, repHsj, repXform
+    constraintCfg <- if (length(consArgs) > 0L) consArgs
+    hsjCfg <- if (length(repHsj) > 0L) repHsj
+    xformCfg <- if (length(repXform) > 0L) repXform
+
+    result <- ts_driven_search(
+      contrast, tip_data,
+      as.integer(resamp$non_hierarchy_weights), levels,
+      resampleControl, resampleRuntime, resampleScoring,
+      constraintCfg, hsjCfg, xformCfg
     )
-    result <- do.call(ts_driven_search, args)
 
     # Extract best tree
     if (result$pool_size > 0L && length(result$trees) > 0L) {
@@ -1312,18 +1326,19 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
 #'
 #' @return Opens a Shiny application; does not return a value.
 #' @seealso [`MaximizeParsimony()`], [`Morphy()`]
-#' @importFrom shiny runApp
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @export
 EasyTrees <- function () {#nocov start
   needed <- c("cluster", "future", "PlotTools", "promises",
-              "protoclust", "Rogue", "shinyjs")
+              "protoclust", "Rogue", "shiny", "shinyjs")
   missing <- needed[!vapply(needed, requireNamespace,
                             logical(1L), quietly = TRUE)]
   if (length(missing)) {
-    message("Installing packages required by EasyTrees(): ",
-            paste(missing, collapse = ", "))
-    utils::install.packages(missing)
+    stop("EasyTrees() requires additional packages: ",
+         paste(missing, collapse = ", "), ".\n",
+         "Install with: install.packages(",
+         paste0("\"", missing, "\"", collapse = ", "), ")",
+         call. = FALSE)
   }
   shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
 }

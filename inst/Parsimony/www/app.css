@@ -126,3 +126,19 @@ input#readxlSkip, input#readxlSkipCols {
   float: left;
   margin-right: 2%;
 }
+
+/* Selectize hover styling (T-219 base, T-227 refinements) */
+.selectize-dropdown [data-selectable].option:hover {
+  background-color: #dde6ed;
+}
+/* Keyboard navigation highlight — only when dropdown has focus */
+.selectize-dropdown [data-selectable].option.active:not(:hover) {
+  background-color: #eef2f6;
+}
+/* Selected item retains its distinct look on hover */
+.selectize-dropdown [data-selectable].option.selected,
+.selectize-dropdown [data-selectable].option.selected:hover,
+.selectize-dropdown [data-selectable].option.selected.active {
+  background-color: #3a7bd5;
+  color: #fff;
+}

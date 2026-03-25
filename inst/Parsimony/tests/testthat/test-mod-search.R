@@ -31,9 +31,7 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     "runs"
   }
   topo_note <- if (!is.null(nTopologies) && nTopologies == 1L) {
-    " [single topology in pool \u2014 limited independence]"
-  } else if (!is.null(nTopologies) && nTopologies > 1L) {
-    paste0(" [", nTopologies, " distinct topologies in pool]")
+    " [single topology \u2014 limited independence]"
   } else {
     ""
   }
@@ -43,8 +41,8 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     ""
   }
   rugged_note <- if (K / R < 0.3 && R >= 5L) {
-    paste0(" Rugged landscape: only ", round(100 * K / R), "% of runs found ",
-           "the best score \u2014 consider increasing replicates.")
+    paste0(" Hit rate low (", round(100 * K / R),
+           "%) \u2014 more replicates may help.")
   } else {
     ""
   }
@@ -287,20 +285,20 @@ test_that("SearchConfidenceText uses binomial bound (T-163)", {
 
   # Ruggedness flag: K/R < 0.3 and R >= 5
   txt_rugged <- SearchConfidenceText(1, 10)
-  expect_match(txt_rugged, "Rugged landscape")
-  expect_match(txt_rugged, "10%.*of runs")
+  expect_match(txt_rugged, "Hit rate low")
+  expect_match(txt_rugged, "10%")
 
   # No ruggedness flag when K/R >= 0.3
   txt_smooth <- SearchConfidenceText(4, 10)
-  expect_false(grepl("Rugged", txt_smooth))
+  expect_false(grepl("Hit rate low", txt_smooth))
 
   # Single topology warning
   txt_single <- SearchConfidenceText(5, 10, nTopologies = 1L)
   expect_match(txt_single, "single topology.*limited independence")
 
-  # Multiple topologies info
+  # No topology note for multiple trees (redundant with "trees in memory")
   txt_multi <- SearchConfidenceText(5, 10, nTopologies = 3L)
-  expect_match(txt_multi, "3 distinct topologies")
+  expect_false(grepl("topolog", txt_multi))
 
   # Last-improved replicate info
   txt_traj <- SearchConfidenceText(5, 10, lastImprovedRep = 7L)
@@ -309,6 +307,18 @@ test_that("SearchConfidenceText uses binomial bound (T-163)", {
   # nSearches label
   txt_multi_search <- SearchConfidenceText(5, 10, nSearches = 3L)
   expect_match(txt_multi_search, "across 3 searches")
+
+  # Stop reason: consensus stable
+  txt_cons <- SearchConfidenceText(4, 90, stopReason = "consensus")
+  expect_match(txt_cons, "consensus stable")
+
+  # Stop reason: timeout
+  txt_time <- SearchConfidenceText(4, 90, stopReason = "timeout")
+  expect_match(txt_time, "time limit")
+
+  # No stop reason
+  txt_none <- SearchConfidenceText(4, 90, stopReason = NULL)
+  expect_false(grepl("stopped", txt_none, ignore.case = TRUE))
 })
 
 test_that("FormatMissProb displays probability thresholds correctly", {

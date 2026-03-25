@@ -28,6 +28,7 @@ struct SimplifiedPattern {
   int original_index;                   // pattern index (into original arrays)
   int precomputed_steps;                // topology-independent step offset
   bool informative;                     // false → skip entirely
+  bool has_genuine_inapp;               // true → some tip has genuine "-" (not just "?")
   std::vector<uint32_t> tip_tokens;     // simplified token bitmask per tip
   int n_states_remaining;               // number of applicable states after simplification
 };

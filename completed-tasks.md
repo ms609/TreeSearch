@@ -4,6 +4,21 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-25
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-226 | [Shiny] Tree space sequence mode: arrows + index labels | A | Kept feature. Replaced `lines()` with `arrows()`, added "Tree index" plotting symbol option. Commit `dbf593f1b`. |
+| T-233 | [Shiny] Search summary text too verbose | A | Removed redundant topology count, shortened ruggedness warning. Commit `efbe77ab5`. |
+| T-236 | [Shiny] Auto-start search after profile prep | A | `StartSearch()` called from profile prep result observer instead of showing "click Search" notification. Commit `cfb38b070`. |
+| T-237 | [Shiny] Concavity slider visible in profile mode after dataset switch | A | Modal re-open didn't re-apply visibility. Fix: conditionally wrap in `hidden()` before `showModal()`. Commit `3903e3fce`. |
+| T-238 | [Shiny] Search & profile notifications disappear prematurely | A | `tryCatch` sibling handler bug: `req(FALSE)` in `shiny.silent.error` handler caught by sibling `error` handler. Fix: single `error` handler with `inherits()` check + `stop(e)` re-throw. Commit `609241b65`. (Originally filed as T-235; renumbered to avoid collision with SPR bug.) |
+| T-213 | Implement impose_constraint() for post-hoc topology repair | D (cleanup) | Already on cpp-search (a666918ed, PR #223). 88 tests pass. Formal closeout during S-COORD. |
+| T-220 | [Shiny] Crash: searchExtendedIw not found when clicking Continue | D | Variable used in LogCode() before assignment. Moved snapshot above LogCode(). Direct fix on cpp-search. |
+| T-229 | [Bug] XFORM scoring used IW path for non-hierarchy chars | D | `fitch_score_ew()` missing `ScoringMode::XFORM` in EW branch. MaxP scores wrong (3 vs 7). 1-line fix. S-RED focus 1. |
+| T-219 | [Shiny] Dataset dropdown hover state visible | D | Selectize default hover (#f5f5f5) near-invisible on white. Added explicit hover CSS (#dde6ed). |
+| T-211 | Stale `final_` in temper candidate scoring | C | Analyzed: conservative-only. Stale `final_` after clip/evaluate/restore biases Boltzmann screening but not verified acceptance (`temper_full_rescore` gates all accepted moves). Fix would require per-candidate full rescore or save/restore of all `final_` arrays — cost exceeds negligible SA benefit. Closed as not worth fixing. |
+
 ## 2026-03-24
 
 | ID | Description | Agent | Notes |
@@ -253,9 +268,46 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | — | Collapsed dedup in parallel search path | — | ThreadSafePool::add_collapsed() + worker thread + fuse_round updated. 3648beb9 |
 | — | Cross-replicate consensus constraint tightening | — | Opt-in consensusConstrain=TRUE: after ≥5 reps, lock pool strict consensus as topological constraints. Clears on new best score. build_constraint_from_bitsets(), extract_consensus_splits(). 09f69915 |
 | — | Strategy preset tuning | — | default: wagnerStarts=3, sprFirst=TRUE, adaptiveLevel=TRUE. thorough: sprFirst=TRUE. Bundled in 09f69915 |
-EOF 2>&1
 
 ## 2026-03-23
 | T-188 | Biased Wagner addition — API integration | Human+AI | `wagnerBias` (0=random, 1=Goloboff, 2=entropy) + `wagnerBiasTemp` in `SearchControl()` and `ts_driven_search`. First Wagner start uses biased order; remaining starts use random for diversity. Goloboff 2014 §3.3. Benchmarked: 80% Wagner→TBR gap reduction at 174t; marginal on ≤88t. |
 | T-189 | Outer search cycle loop | Human+AI | `outerCycles` param in `SearchControl()`. Wraps [XSS+RSS+CSS → Ratchet → NNI-perturb → Drift → TBR] in outer loop, distributing cycles evenly. Matches TNT xmult pattern (Goloboff 1999 §2.3). `thorough` preset defaults to `outerCycles=2`. Backward-compatible: default=1. |
 | T-184 | `maxTime` → `maxSeconds` alias | Human+AI | Already implemented in b8e56e2b. `maxTime` intercepted before `.morphyParams` check, mapped to `maxSeconds` with deprecation warning, routed to C++ engine. Verified: timings attribute present, Morphy() not called. |
+
+## 2026-03-24 (evening)
+| T-209 | NNI perturbation constraint guard | E | Gate on `(!cd || !cd->active)`. PR #220 merged. |
+| T-206 | Outer cycle reset cap / maxOuterResets | E+A | Cap resets to maxOuterResets (default 3). PR #218 merged. |
+| T-210 | SA best-tree tracking across phases | C | `anneal_search()` saves/restores best tree at phase boundaries. Commit `e204d0a0` on feature/pt-eval. |
+| T-182 | Adaptive ratchet perturbation probability | G+E+A | hitRate-based tapering. PR #221 created. |
+
+## 2026-03-25
+| T-208 | random_topology_tree ignores constraints | G+A | WAGNER_RANDOM fallback. Cherry-picked to cpp-search (24427c9a). PR #219 closed. |
+| T-211 | Stale final_ in temper candidate scoring | C | Closed: conservative-only impact, not worth fixing. |
+
+## 2026-03-25 (morning)
+| T-215 | cli progress bar `::` resolution fix | A | `pb_env` parent `baseenv()` → `environment()` in `MaximizeParsimony()`. Commit 908860d25. |
+| T-216 | Shiny app `"brazeau"` → `"bgs"` | A | 8 occurrences in `mod_search.R` (comparisons, defaults, selectInput value). Commit 908860d25. |
+| T-217 | `tree = NULL` in `MaximizeParsimony()` Morphy path | A | Added `!is.null(tree)` guard on Morphy delegation (line 485). Main path already correct. Commit 908860d25. |
+| T-218 | Simplification transforms corrupt NA scoring | A | Full fix: `has_genuine_inapp` flag in `SimplifiedPattern` gates Phase 1 on genuine `-` only; `?`-only characters use Fitch (transforms safe). `build_dataset()` uses flag instead of token scanning. Initial conservative fix `08054102f`, full fix `c32e213bd`. |
+| T-221 | [Shiny] Crash loop in cluster consensus concordance | B | `LabelConcordance()` guard `!is.null()` → `inherits(, "phylo")`. Commit `bc5313c22`. |
+| T-222 | [Shiny] "Align tips" does nothing in Characters on trees | B | `Display` callback always set edge.length=1; now NULL when tipsRight checked. Commit `b23580823`. |
+| T-223 | [Shiny] Tree plot left-aligned with excess white space | B | Display now sets edge.length=NULL (cladogram) to fill width. "Align tips" checkbox now redundant. Commit `280aa446d`. |
+| T-224 | [Shiny] `.ts_driven_search_raw` not found | B | Already fixed by T-214 (commit `62658709d`): renamed broken callers from af7601b refactor. |
+| T-225 | [Shiny] Tree space Connect shows nothing | B | `mapLines` checkbox was unnamespaced; module couldn't see it. Passed as reactive parameter. Commit `14277d04f`. |
+| T-228 | [Shiny] Modal shows "Implied" not "Implied (extended)" | B | Fallback `"on"` → `"xpiwe"` to match reactive default. Commit `63e86f237`. |
+| T-227 | [Shiny] Dataset dropdown hover polish | B | `:hover` pseudo-class for hover, `.selected` retains blue bg on hover. Commit `fd401ec81`. |
+| S-COORD | Coordination review round 18 | B | Created coordination.md (local). PR #210 GHA in flight. No unresolved bugs on cpp-search. 3 OPEN P3 tasks deferred. |
+
+## 2026-03-25 (afternoon)
+| T-214 | Multi-split constraints not enforced during TBR search | C | RANDOM_TREE falls back to Wagner when constrained; fuse uses direct map_constraint_nodes check. 26/26 + 806/806 tests pass. GHA 23542642164 PASS (both platforms). Commit `3f8792c5f`. |
+| T-231 | [Shiny] Search stopping criteria mismatch | C | Root cause: consensus stability stopping preempts targetHits without explanation. Fix: capture `consensus_stable`/`timed_out` from search result, pass `stopReason` to `SearchConfidenceText()`. User now sees "Search stopped: consensus tree unchanged across recent replicates." Commit `e411117b4`. |
+| S-RED | Red-team review focus 2: Search topology invariants | C | Reviewed ts_tbr.cpp, ts_drift.cpp, ts_search.cpp, ts_tree.h/.cpp (2856 lines). Found T-235: SPR stale state arrays after rejected regraft (NA/IW screening degradation, low practical impact). TBR/drift/NNI topology invariants verified correct. |
+| T-230 | [Shiny] Replicate-count warning when verbosity=0 | B | Gate behind verbosity > 0L. Stale-install part already fixed by T-214. Commit a37984dfa. |
+| T-234 | [Shiny] Context-dependent references | D | references_server now takes weighting reactive; Goloboff1993 shown for IW/XPIWE, Goloboff2014 for XPIWE only. Standing refs always shown. 3 new tests. Commit `4cfb37e12`. |
+| T-235 | [Bug] SPR stale state after rejected regraft | B | full_rescore after spr_unclip on rejection path. Commit aafeed219. 78 tests pass. |
+| T-226 | [Shiny] Remove "Trees in sequence" connect mode | B | Pool order is arbitrary under C++ search; option removed from UI. Commit 898e5e03c. |
+TASKEOF 2>&1
+| S-COORD | Coordination review round 19 | D | T-214 GHA passed (23542642164). T-212 unblocked, re-dispatched by B. T-233/T-236/T-237 completed by A. Shiny bug backlog cleared (5 triaged this session, all resolved). 3 OPEN specific tasks remain. Updated S-PR notes. |
+EOF 2>&1
+| S-RED | Red-team review focus 3: Ratchet & perturbation | D | Reviewed ts_ratchet.cpp (244), ts_sector.cpp (1007), ts_fuse.cpp (522). All 9 scenarios verified correct. Perturbation save/restore (IW/XPIWE), sector acceptance logic, fuse node mapping, root-structure validation all correct. No bugs found. |
+EOF 2>&1

@@ -269,6 +269,39 @@ test_that("MaximizeParsimony() supports IW natively", {
   expect_true(attr(result, "score") > 0)
 })
 
+test_that("Ratchet taper runs without error and finds valid score", {
+  result <- ts_driven(med_ds, maxReplicates = 6L, targetHits = 4L,
+                      ratchetCycles = 3L, ratchetTaper = TRUE)
+  expect_true(is.list(result))
+  expect_true(result$best_score > 0)
+  expect_true(result$replicates >= 1L)
+})
+
+test_that("Ratchet taper produces comparable scores to non-taper", {
+  set.seed(6183)
+  no_taper <- ts_driven(small_ds, maxReplicates = 8L, targetHits = 4L,
+                        ratchetCycles = 3L, ratchetTaper = FALSE)
+  set.seed(6183)
+  with_taper <- ts_driven(small_ds, maxReplicates = 8L, targetHits = 4L,
+                          ratchetCycles = 3L, ratchetTaper = TRUE)
+  # Taper should not make things dramatically worse (within 2 steps)
+  expect_lte(with_taper$best_score, no_taper$best_score + 2)
+})
+
+test_that("Ratchet taper works with adaptive level", {
+  result <- ts_driven(med_ds, maxReplicates = 6L, targetHits = 4L,
+                      ratchetCycles = 3L, ratchetTaper = TRUE,
+                      adaptiveLevel = TRUE)
+  expect_true(result$best_score > 0)
+})
+
+test_that("SearchControl includes ratchetTaper", {
+  ctrl <- SearchControl(ratchetTaper = TRUE)
+  expect_true(ctrl$ratchetTaper)
+  ctrl2 <- SearchControl()
+  expect_false(ctrl2$ratchetTaper)
+})
+
 test_that("MaximizeParsimony2() is deprecated alias", {
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
