@@ -75,7 +75,6 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-223 | P3 | ASSIGNED (B) | — | **[Shiny] Tree plot left-aligned with excess white space.** "Characters on trees" display; tree doesn't use full plot width. Hypothesis: plot reserves space for pectinate topology. Sun dataset, trees 6 & 8 (not 5, 7). | From a004. |
 
 ### Standing Tasks
 

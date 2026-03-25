@@ -285,4 +285,5 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | T-218 | Simplification transforms corrupt NA scoring | A | Commit `a48bfc4ad` let `?` tokens through Transforms 2/3 (not NA-safe). Fix: revert transform bypass, add conservative constant-char removal inside Phase 1 for `?`-only chars. Supersedes D's simple revert PR #224. Commit `08054102f`. |
 | T-221 | [Shiny] Crash loop in cluster consensus concordance | B | `LabelConcordance()` guard `!is.null()` → `inherits(, "phylo")`. Commit `bc5313c22`. |
 | T-222 | [Shiny] "Align tips" does nothing in Characters on trees | B | `Display` callback always set edge.length=1; now NULL when tipsRight checked. Commit `b23580823`. |
+| T-223 | [Shiny] Tree plot left-aligned with excess white space | B | Display now sets edge.length=NULL (cladogram) to fill width. "Align tips" checkbox now redundant. Commit `280aa446d`. |
 TASKEOF 2>&1
