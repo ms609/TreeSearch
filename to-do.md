@@ -46,7 +46,7 @@ best-tree restart) is highly effective under EW at 125+ tips. See
 |----|-----|--------|--------|-------------|-------|
 | T-196 | P2 | PR #215 (M) | — | **[Bug] `extract_divided_steps` wrong for NA+IW.** Four static copies read `local_cost` for NA blocks instead of three-pass correction. Conservative (final `score_tree()` always correct), but suboptimal move selection. | Found by S-RED focus 10. Fix committed on `feature/parallel-temper` (`6dc28a2`); arrives with PT PR #215. |
 | T-210 | P2 | PR #222 (C) | — | **[Bug] SA doesn't save best-found topology.** Fix: `anneal_search` tracks/restores best tree at phase boundaries. | On `feature/pt-eval` (TS-PTeval). In T-207 PR #222. |
-| T-214 | P2 | ASSIGNED (C) | — | **[Bug] Multi-split constraints not enforced during TBR search.** Single-split constraints work; two or more splits → second split violated on 10-tip trees. Both default and RANDOM_TREE strategies affected. | Found by C during T-212. T-213's impose_constraint() may address this post-hoc. |
+| T-214 | P2 | PARKED (C, GHA 23540183235) | — | **[Bug] Multi-split constraints not enforced during TBR search.** Fix: RANDOM_TREE falls back to Wagner when constrained; fuse uses direct map_constraint_nodes check with verified repair. | 26/26 + 806/806 constraint tests pass locally. |
 
 ### Testing & Constraint Handling
 
