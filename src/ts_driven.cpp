@@ -313,9 +313,9 @@ ReplicateResult run_single_replicate(
 
     // 4b. NNI perturbation (topology-space escape)
     // Skip when constraints are active: random_nni_perturb() doesn't
-    // enforce constraints, and a constraint-violating tree can't be
-    // repaired by TBR (cn=-1 blocks all constraint-relevant moves).
-    if (nni_perturb_per > 0 && (!cd || !cd->active)) {
+    // enforce constraints. impose_constraint() repairs violations
+    // after perturbation, so this is now safe under constraints.
+    if (nni_perturb_per > 0) {
       NNIPerturbParams np;
       np.n_cycles = nni_perturb_per;
       np.perturb_fraction = params.nni_perturb_fraction;
@@ -712,11 +712,14 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
       double fused_score = score_tree(fused, ds);
 
-      bool fuse_ok = true;
-      if (cd && cd->active) {
-        fuse_ok = !violates_constraint_posthoc(fused, *cd);
+      // Repair constraint violations rather than discarding fused tree
+      if (cd && cd->active &&
+          violates_constraint_posthoc(fused, *cd)) {
+        impose_constraint(fused, *cd);
+        fused.reset_states(ds);
+        fused_score = score_tree(fused, ds);
       }
-      if (fuse_ok) {
+      {
         std::vector<uint8_t> fused_collapsed;
         compute_collapsed_flags(fused, ds, fused_collapsed);
         pool.add_collapsed(fused, fused_score, fused_collapsed);
