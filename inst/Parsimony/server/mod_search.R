@@ -441,10 +441,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         if (!is.null(result)) {
           profileDataset(result)
           profileDataHash(r$dataHash)
-          Notification("Profile scores ready \u2014 click Search to start",
-                       type = "message", duration = 5)
+          # Auto-start the search that was deferred for profile preparation.
+          # StartSearch() will see that profileDataHash matches and proceed
+          # directly to the search without re-preparing.
+          StartSearch()
+        } else {
+          DisplayTreeScores()
         }
-        DisplayTreeScores()
       })
     })
 
@@ -534,7 +537,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       confText <- SearchConfidenceText(r$searchTotalHits, r$searchTotalReps,
                                         r$searchCount,
                                         nTopologies = length(r$allTrees),
-                                        lastImprovedRep = r$searchLastImprovedRep)
+                                        lastImprovedRep = r$searchLastImprovedRep,
+                                        consensusStable = r$searchConsensusStable)
       html <- if (!is.null(confText)) {
         nS <- r$searchCount
         tooltip <- paste0(
@@ -1043,6 +1047,15 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         newHits     <- if (is.null(newHitsRaw)) 0L else as.integer(newHitsRaw)
         newReps     <- if (is.null(newRepsRaw)) 0L else as.integer(newRepsRaw)
         newLastImp  <- attr(newTrees, "last_improved_rep")
+        r$searchConsensusStable <- isTRUE(attr(newTrees, "consensus_stable"))
+        # Capture stop reason from C++ engine
+        r$searchStopReason <- if (isTRUE(attr(newTrees, "consensus_stable"))) {
+          "consensus"
+        } else if (isTRUE(attr(newTrees, "timed_out"))) {
+          "timeout"
+        } else {
+          NULL
+        }
         prevCount <- length(r$allTrees)
         treesToStore <- if (
           !is.null(newScore) && !is.null(r$bestSearchScore) &&
