@@ -238,7 +238,6 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           mataset <- t(mataset)
 
           maxInformative <- 0L
-          cappedAny <- FALSE
 
           for (j in seq_len(ncol(mataset))) {
             col <- mataset[, j]
@@ -252,14 +251,6 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             singletonTokens <- as.integer(names(tab[!informative]))
             if (length(singletonTokens) > 0L) {
               mataset[mataset[, j] %in% singletonTokens, j] <- qmLevel[1]
-            }
-
-            if (nInf > 5L) {
-              sortedInf <- sort(tab[informative], decreasing = TRUE)
-              toRemove <- as.integer(names(sortedInf)[6:length(sortedInf)])
-              mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
-              nInf <- 5L
-              cappedAny <- TRUE
             }
 
             maxInformative <- max(maxInformative, nInf)

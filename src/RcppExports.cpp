@@ -196,6 +196,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// mc_fitch_scores
+IntegerVector mc_fitch_scores(IntegerVector state_counts, int n_mc);
+RcppExport SEXP _TreeSearch_mc_fitch_scores(SEXP state_countsSEXP, SEXP n_mcSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type state_counts(state_countsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_mc(n_mcSEXP);
+    rcpp_result_gen = Rcpp::wrap(mc_fitch_scores(state_counts, n_mc));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ts_fitch_score
 double ts_fitch_score(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerVector min_steps, double concavity, Nullable<NumericMatrix> infoAmounts, bool xpiwe, double xpiwe_r, double xpiwe_max_f, IntegerVector obs_count);
 RcppExport SEXP _TreeSearch_ts_fitch_score(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP infoAmountsSEXP, SEXP xpiweSEXP, SEXP xpiwe_rSEXP, SEXP xpiwe_max_fSEXP, SEXP obs_countSEXP) {

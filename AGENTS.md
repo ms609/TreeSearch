@@ -1226,6 +1226,16 @@ Profiling baselines in `.positai/expertise/profiling.md`. Phase distribution
 Per-candidate indirect scoring is at memory-throughput limit (~23 ns at
 75 tips).
 
+## VTune driver scripts — dry-run first
+
+**Always test a VTune driver script with plain `Rscript` before launching
+VTune.** Software-sampling overhead can be 5–20×; if the bare script takes
+30 s, VTune may need 10 min. Target < 5 s bare run for a lite driver.
+
+MaddisonSlatkin is exponential in tip count — even n=20 with k=3 can take
+seconds per call. Use small n (≤ 15 for k=3, ≤ 12 for k=4, ≤ 9 for k=5)
+and few iterations for VTune drivers.
+
 ### Ratchet tuning validation (2026-03-22)
 
 Full 14-dataset comparison, optimized vs original defaults (10s budget,
