@@ -148,3 +148,66 @@ test_that("T-213: IW scoring + NNI perturbation + constraints", {
                 info = paste("tree", i))
   }
 })
+
+# ----- Root-child move in impose_constraint -----
+# When fuse produces a tree where constraint tips span the root, fixing the
+# violation requires moving a root child. This tests the topology_spr helper
+# that handles the root-child case (previously skipped by spr_clip guard).
+
+test_that("impose_constraint repairs root-child violations (8 tips)", {
+  ds8 <- phangorn::phyDat(
+    matrix(c("0","0","0","0","1","1","1","1",
+             "0","1","0","1","0","1","0","1",
+             "0","0","1","1","0","0","1","1"),
+           nrow = 8, dimnames = list(paste0("t", 1:8), NULL)),
+    type = "USER", levels = c("0", "1")
+  )
+  # Constraint requires {t1,t2,t3,t4} on one side — violations likely
+  # when fuse produces trees splitting this group across the root.
+  cons8 <- ape::read.tree(text = "((t1,t2,t3,t4),(t5,t6,t7,t8));")
+
+  n_ok <- 0L
+  n_total <- 0L
+  for (s in c(1147L, 2258L, 3369L, 4470L, 5581L)) {
+    set.seed(s)
+    result <- MaximizeParsimony(
+      ds8, constraint = cons8,
+      maxReplicates = 6L, verbosity = 0L,
+      control = SearchControl(adaptiveStart = TRUE)
+    )
+    for (i in seq_along(result)) {
+      n_total <- n_total + 1L
+      if (check_constraint(result[[i]], cons8)) n_ok <- n_ok + 1L
+    }
+  }
+  expect_equal(n_ok, n_total,
+               info = paste(n_ok, "/", n_total, "satisfy constraint"))
+})
+
+test_that("impose_constraint repairs root-child violations (12 tips, nested)", {
+  set.seed(6293)
+  ds12 <- phangorn::phyDat(
+    matrix(sample(0:1, 12 * 6, replace = TRUE),
+           nrow = 12, dimnames = list(paste0("t", 1:12), NULL)),
+    type = "USER", levels = c("0", "1")
+  )
+  # Nested constraint: {t1..t6} and within it {t1,t2,t3}
+  cons12 <- ape::read.tree(text = "((t1,t2,t3),(t4,t5,t6),(t7,t8,t9,t10,t11,t12));")
+
+  n_ok <- 0L
+  n_total <- 0L
+  for (s in c(7104L, 8215L, 9326L)) {
+    set.seed(s)
+    result <- MaximizeParsimony(
+      ds12, constraint = cons12,
+      maxReplicates = 4L, verbosity = 0L, nThreads = 2L,
+      control = SearchControl(adaptiveStart = TRUE)
+    )
+    for (i in seq_along(result)) {
+      n_total <- n_total + 1L
+      if (check_constraint(result[[i]], cons12)) n_ok <- n_ok + 1L
+    }
+  }
+  expect_equal(n_ok, n_total,
+               info = paste(n_ok, "/", n_total, "satisfy constraint"))
+})
