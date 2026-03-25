@@ -64,6 +64,11 @@ void ThreadSafePool::extract_into(TreePool& out) {
   for (const auto& e : entries) {
     out.add(e.tree, e.score);
   }
+  // Propagate the actual independent-hit count.  The add() calls above
+  // only count one hit per distinct topology; the internal pool tracks
+  // the true number of independent replicate hits (including duplicates
+  // that matched best_score but were deduped).
+  out.set_hits_to_best(pool_.hits_to_best());
 }
 
 // --- Worker thread function ---
