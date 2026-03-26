@@ -16,14 +16,19 @@
 
 namespace ts {
 
-// Portable popcount for uint64_t
+// Hardware POPCNT via inline asm (no -mpopcnt flag needed).
+// Same approach as TreeDist::popcnt64 — emits the instruction directly,
+// avoiding the software Hamming weight fallback that __builtin_popcountll
+// compiles to without -mpopcnt.
 inline int popcount64(uint64_t x) {
-#if defined(__GNUC__) || defined(__clang__)
-  return __builtin_popcountll(x);
-#elif defined(_MSC_VER)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
+  uint64_t result;
+  __asm__ ("popcnt %1, %0" : "=r" (result) : "r" (x));
+  return static_cast<int>(result);
+#elif defined(_MSC_VER) && defined(_M_X64)
   return static_cast<int>(__popcnt64(x));
 #else
-  // Fallback: Hamming weight
+  // Fallback: software Hamming weight (non-x86-64 platforms)
   x = x - ((x >> 1) & 0x5555555555555555ULL);
   x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
   return static_cast<int>(
