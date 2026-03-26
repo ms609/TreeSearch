@@ -19,6 +19,7 @@ SearchControl(
   ratchetPerturbMode = 0L,
   ratchetPerturbMaxMoves = 5L,
   ratchetAdaptive = FALSE,
+  ratchetTaper = FALSE,
   nniPerturbCycles = 0L,
   nniPerturbFraction = 0.5,
   driftCycles = 2L,
@@ -36,10 +37,11 @@ SearchControl(
   poolMaxSize = 100L,
   poolSuboptimal = 0,
   consensusStableReps = 0L,
-  perturbStopFactor = 0L,
+  perturbStopFactor = 2L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
-  annealPhases = 0L,
+  annealCycles = 0L,
+  annealPhases = 5L,
   annealTStart = 20,
   annealTEnd = 0,
   annealMovesPerPhase = 0L,
@@ -100,6 +102,14 @@ cycle (0 = automatic).}
 \item{ratchetAdaptive}{Logical; adjust perturbation probability based on
 within-replicate escape rate?}
 
+\item{ratchetTaper}{Logical; taper ratchet perturbation probability across
+replicates as the pool stabilizes?  When \code{TRUE}, early replicates use
+the full \code{ratchetPerturbProb}; later replicates (with high hit rates)
+use a reduced probability for finer local exploration.  The effective
+probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
+where \code{hitRate} is the fraction of replicates that found the current
+best score.  Default \code{FALSE}.}
+
 \item{nniPerturbCycles}{Integer; number of stochastic NNI-perturbation
 cycles per replicate.  Each cycle randomly applies NNI swaps to a
 fraction of internal branches, then runs TBR to find a new local
@@ -153,10 +163,15 @@ stops when either criterion is met first.}
 
 \item{perturbStopFactor}{Integer; stop after
 \code{nTip * perturbStopFactor} consecutive replicates that fail to improve
-the best score.  0 (default) disables this criterion.
+the best score.  0 disables this criterion.
+Default 2, which provides 2.4--6.9\ifelse{html}{×}{x} speedup on
+converged searches with no score degradation.
+Complementary to \code{targetHits}: on hard landscapes where few replicates
+independently find the best score, \code{perturbStopFactor} fires first;
+on easy landscapes, \code{targetHits} fires first.
 Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
-per-replicate granularity.  Small values (1--3) are typical.}
+per-replicate granularity.}
 
 \item{adaptiveLevel}{Logical; dynamically scale ratchet and drift effort
 based on the observed hit rate?  When \code{TRUE}, easy landscapes
@@ -170,6 +185,13 @@ best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
+
+\item{annealCycles}{Integer; number of simulated annealing perturbation
+cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
+via scheduled SA cooling, then reconverges with TBR.  If the result
+improves on the best, it becomes the new starting point.  Effective at
+escaping deep basins under equal-weights parsimony at \eqn{\ge}100 tips.
+0 (default) disables SA perturbation.}
 
 \item{annealPhases}{Integer; number of temperature steps in the linear
 cooling schedule per SA cycle (default 5).}
@@ -195,21 +217,6 @@ equal-score topologies).  The main search loop exits at
 \code{maxSeconds * (1 - enumTimeFraction)}.  Set to 0 to disable the reserve
 (pre-v1.6 behaviour: enumeration skipped if the main loop times out).
 Default: \code{0.1} (10\%).}
-
-\item{ratchetTaper}{Logical; taper ratchet perturbation probability across
-replicates as the pool stabilizes?  When \code{TRUE}, early replicates use
-the full \code{ratchetPerturbProb}; later replicates (with high hit rates)
-use a reduced probability for finer local exploration.  The effective
-probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
-where \code{hitRate} is the fraction of replicates that found the current
-best score.  Default \code{FALSE}.}
-
-\item{annealCycles}{Integer; number of simulated annealing perturbation
-cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
-via scheduled SA cooling, then reconverges with TBR.  If the result
-improves on the best, it becomes the new starting point.  Effective at
-escaping deep basins under equal-weights parsimony at \eqn{\ge}100 tips.
-0 (default) disables SA perturbation.}
 }
 \value{
 A named list of class \code{"SearchControl"}.
