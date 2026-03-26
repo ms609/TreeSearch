@@ -1,8 +1,8 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** IDLE
-- **Status:** T-254 complete. Drift provides zero score, MPT, or diversity benefit and costs 10–22% of replicates. T-255 unblocked.
+- **Task:** T-255 — Reduce drift in default and thorough presets
+- **Status:** Starting. Set driftCycles=0 in default; reduce from 12 to 0 in thorough.
 
 ### T-254 — Drift MPT diversity experiment — DONE
 - driftCycles=0 vs 2 on Wortley2006 (37t), Zhu2013 (75t), Geisler2001 (68t)

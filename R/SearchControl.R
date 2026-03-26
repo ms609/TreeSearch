@@ -185,7 +185,7 @@ SearchControl <- function(
     nniPerturbCycles = 0L,
     nniPerturbFraction = 0.5,
     # Drift
-    driftCycles = 2L,
+    driftCycles = 0L,
     driftAfdLimit = 5L,
     driftRfdLimit = 0.15,
     # Sectorial

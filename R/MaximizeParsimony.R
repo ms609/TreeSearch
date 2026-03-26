@@ -118,7 +118,7 @@
     tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
-    driftCycles = 2L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    driftCycles = 0L,
     xssRounds = 3L, xssPartitions = 4L,
     rssRounds = 1L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
@@ -133,7 +133,7 @@
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
     nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
-    driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    driftCycles = 0L,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
@@ -321,8 +321,8 @@
 #'       character patterns; `"default"` otherwise.}
 #'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
 #'       sectorial. Good for small datasets or quick surveys.}
-#'     \item{`"default"`}{Balanced: 12 ratchet + 2 drift + sectorial + fusing.}
-#'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
+#'     \item{`"default"`}{Balanced: 12 ratchet + sectorial + fusing.}
+#'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, adaptive
 #'       perturbation, extra sectorial rounds, NNI perturbation, outer cycle
 #'       loop. Best for datasets with 65-119 tips and 100+ character patterns.}
 #'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
