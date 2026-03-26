@@ -33,6 +33,25 @@
 #' @param maxSeconds Numeric: timeout in seconds (0 = no timeout).
 #' @param nThreads Integer: number of threads for inter-replicate parallelism.
 #'   Defaults to `getOption("mc.cores", 1L)`.
+#' @param treeSample Controls how many input trees are used during Phase 1
+#'   (driven search).  CID verification cost scales linearly with the number
+#'   of input trees, so with large tree sets (hundreds or thousands of trees),
+#'   using a representative subsample for the search phase and verifying
+#'   against the full set afterwards can be faster without sacrificing quality.
+#'
+#'   - `"auto"` (default): automatically selects a subsample size based on
+#'     the number of tips.  Benchmarking on a 1449-taxon mammal bootstrap
+#'     dataset (Lemoine _et al._ 2018) showed that consensus quality
+#'     (measured as full-set MCI) saturates at 50--100 input trees and can
+#'     _degrade_ with larger subsamples under fixed time budgets, because
+#'     the additional CID cost displaces search replicates.  The auto
+#'     heuristic is: `min(T, max(50, 2 * n_tip))`, capped at `T`.
+#'   - An integer: use exactly this many trees (sampled without replacement).
+#'   - `Inf` or `NULL`: use all trees (no subsampling).
+#'
+#'   Subsampling applies only to Phase 1.  Phases 2 (collapse/resolve) and 3
+#'   (rogue taxon dropping) always score against the **full** input tree set,
+#'   and the returned `score` attribute reflects the full-set MCI.
 #' @param collapse Logical: if `TRUE` (default), run a collapse/resolve
 #'   refinement phase after the binary search.  This can produce a
 #'   non-binary result when collapsing a split improves the mean MCI.
@@ -102,6 +121,7 @@ InfoConsensus <- function(trees,
                           targetHits = 2L,
                           maxSeconds = 0,
                           nThreads = getOption("mc.cores", 1L),
+                          treeSample = "auto",
                           collapse = TRUE,
                           neverDrop = FALSE,
                           maxDrop = min(5L, ceiling(NTip(trees[[1]]) / 10)),
@@ -128,25 +148,56 @@ InfoConsensus <- function(trees,
     }
   }
   
-  # Phase 1: C++ driven search
-  result <- .CIDDrivenSearch(trees, tipLabels, nTip,
+  nTree <- length(trees)
+  
+  # --- Tree subsampling for Phase 1 ---
+  # CID verification cost is O(T * n_tip) per candidate. With large tree
+  # sets, this dominates wall time and displaces search replicates.
+  # Benchmarking (mammals 1449-taxon bootstrap, 1000 trees, 50-/100-tip
+  # subsets, 60-/120-s budgets) showed:
+  #   - MCI quality saturates at T_sub ~ 50-100, regardless of tip count
+  #   - At 100 tips, quality *degrades* beyond T_sub ~ 100 under fixed
+  #     time budgets (CID cost displaces exploration)
+  #   - MRP split deduplication makes the Fitch screening layer insensitive
+  #     to T (97% dedup at T=1000), so the bottleneck is CID verification
+  # Heuristic: use min(T, max(50, 2 * n_tip)) trees for Phase 1.
+  # Phases 2-3 always use the full set.
+  searchTrees <- .SubsampleTrees(trees, nTree, nTip, treeSample, verbosity)
+  
+  # Phase 1: C++ driven search (on subsample if applicable)
+  result <- .CIDDrivenSearch(searchTrees, tipLabels, nTip,
                               maxReplicates, targetHits, maxSeconds,
                               nThreads, control,
                               screeningK, screeningTolerance,
                               verbosity)
   
-  # Phase 2: Collapse/resolve refinement
-  if (collapse) {
+  # Phases 2-3 use the full tree set for accurate scoring.
+  # Re-score Phase 1 result against full set if we subsampled.
+  subsampled <- length(searchTrees) < nTree
+  if (subsampled) {
     cidData <- .MakeCIDData(trees, tipLabels)
+    subScore <- attr(result, "score")
+    fullScore <- .ScoreTree(result, cidData)
+    attr(result, "score") <- fullScore
+    if (verbosity > 0L) {
+      message("  Subsample MCI: ", signif(-subScore, 6),
+              " -> full-set MCI: ", signif(-fullScore, 6),
+              " (", nTree, " trees)")
+    }
+  }
+  
+  # Phase 2: Collapse/resolve refinement (full tree set)
+  if (collapse) {
+    if (!exists("cidData", inherits = FALSE)) {
+      cidData <- .MakeCIDData(trees, tipLabels)
+    }
     result <- .CollapseRefine(result, cidData, verbosity)
   }
   
-  # Phase 3: rogue taxon dropping
+  # Phase 3: rogue taxon dropping (full tree set)
   if (!isTRUE(neverDrop)) {
-    cidData <- if (exists("cidData", inherits = FALSE)) {
-      cidData
-    } else {
-      .MakeCIDData(trees, tipLabels)
+    if (!exists("cidData", inherits = FALSE)) {
+      cidData <- .MakeCIDData(trees, tipLabels)
     }
     result <- .RogueRefine(result, cidData, neverDrop, maxDrop,
                            "ratchet",       # method for re-optimization
@@ -172,6 +223,46 @@ InfoConsensus <- function(trees,
 
 # Null-coalesce (base R %||% requires R >= 4.4)
 .NullOr <- function(x, default) if (is.null(x)) default else x
+
+
+# Select a subsample of input trees for Phase 1 search.
+#
+# With large tree sets, CID verification O(T * n_tip) per candidate
+# dominates wall time. Subsampling to T_sub trees for the search phase
+# preserves quality (the unique split landscape saturates early) while
+# freeing time for more search replicates.
+#
+# Returns: multiPhylo of at most tSub trees (random without replacement).
+.SubsampleTrees <- function(trees, nTree, nTip, treeSample, verbosity) {
+  # Resolve treeSample to an integer target
+  if (is.null(treeSample) || (is.numeric(treeSample) && is.infinite(treeSample))) {
+    return(trees) # No subsampling
+  }
+  
+  if (identical(treeSample, "auto")) {
+    # Heuristic: min(T, max(50, 2 * nTip)).
+    # At 50 tips, T_sub = 100; at 100 tips, T_sub = 200; at 25 tips, T_sub = 50.
+    # Benchmark showed quality saturates by T_sub ~ 50-100 regardless of
+    # tip count; the 2*nTip term provides a safety margin for larger trees
+    # where the split landscape is richer.
+    tSub <- min(nTree, max(50L, 2L * nTip))
+  } else if (is.numeric(treeSample) && length(treeSample) == 1L) {
+    tSub <- min(nTree, max(2L, as.integer(treeSample)))
+  } else {
+    stop("`treeSample` must be \"auto\", a positive integer, Inf, or NULL.",
+         call. = FALSE)
+  }
+  
+  if (tSub >= nTree) return(trees)
+  
+  if (verbosity > 0L) {
+    message("  Subsampling ", tSub, " of ", nTree,
+            " input trees for Phase 1 search")
+  }
+  
+  idx <- sample.int(nTree, tSub)
+  trees[idx]
+}
 
 
 # Light re-optimization via the C++ driven search.
