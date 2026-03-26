@@ -111,8 +111,7 @@
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 5L, fuseAcceptEqual = FALSE,
     tabuSize = 0L, wagnerStarts = 1L,
-    nniFirst = TRUE, sprFirst = FALSE,
-    consensusStableReps = 3L
+    nniFirst = TRUE, sprFirst = FALSE
   ),
   default = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
@@ -125,7 +124,6 @@
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
     tabuSize = 100L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE, adaptiveLevel = TRUE,
-    consensusStableReps = 3L,
     maxOuterResets = 2L
   ),
   thorough = SearchControl(
@@ -142,7 +140,6 @@
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 2L,
     maxOuterResets = 3L,
-    consensusStableReps = 3L,
     adaptiveStart = TRUE
   ),
   # Large-tree preset (>=120 tips): at 180 tips each TBR convergence takes
@@ -181,7 +178,7 @@
     wagnerBias = 1L, wagnerBiasTemp = 0.3,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 1L,
-    consensusStableReps = 2L
+    consensusStableReps = 0L
   )
 )
 

@@ -1,16 +1,22 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** T-260 — Per-evaluation overhead profiling (VTune)
-- **Status:** IN PROGRESS. Building with symbols, writing driver, collecting hotspots.
+- **Status:** Working on ASAN vector OOB bug investigation.
 
-### T-260 — Per-evaluation overhead profiling
-- Goal: profile TBR per-evaluation overhead to find why TreeSearch evaluates 1.5–3.6× fewer rearrangements/s than TNT
-- VTune 2025.10 at `C:/Program Files (x86)/Intel/oneAPI/vtune/latest`
-- Steps: build with symbols → driver script → VTune hotspot collection → analysis
+### ASAN vector OOB fix — DONE (2026-03-26)
+- Root cause: `total_words == 0` when all characters are parsimony-uninformative
+  (each state has <2 tips). Simplification removes all patterns, leaving
+  `prelim`/`final_`/etc vectors empty. `compute_collapsed_flags`,
+  `save_node_state`, and other code accessed `vector[0]` on empty vectors.
+- Fix: early returns in TBR, SPR, NNI, drift, ratchet, and collapsed-flags
+  when `total_words == 0`.
+- Test fix: updated test-ts-collapsed.R datasets to have >=2 tips per state.
+- Commit: 6505803f on cpp-search.
+- Verified locally with `_GLIBCXX_ASSERTIONS` — 73 tests pass (char-ordering + collapsed).
+- Bug was pre-existing on cpp-search, NOT specific to AVX2 branch (PR #233).
 
-### Previous: T-255 — Reduce drift from presets — PARKED
-- GHA 23591874696 in progress. Fixed test-ts-anneal.R:106 (7dc2ed96).
+### S-COORD Round 27 — DONE
+- Fixed R 4.1 `%||%` compat bug in `test-ts-anneal.R` (58fc2552).
 
-### Previous: S-RED focus 7 — recently landed code — DONE
-- Reviewed T-258, PR #230, T-255. No bugs. 624 targeted tests pass.
+### T-265 — RESOLVED (scoring method confound)
+### Previous: S-RED Focus 8, T-261+T-262, T-255, T-260

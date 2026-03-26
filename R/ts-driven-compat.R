@@ -132,15 +132,17 @@ ts_driven_search <- function(
   )
 
   # Anneal config: fold into SearchControl if provided
+  # Use if/is.null instead of %||% for R < 4.4 compatibility
+  .or <- function(x, default) if (is.null(x)) default else x
   if (!is.null(annealConfig)) {
-    phases <- as.integer(annealConfig$phases %||% 5L)
+    phases <- as.integer(.or(annealConfig$phases, 5L))
     # Backward compat: if phases > 0 but cycles not specified, default to 1
-    sc$annealCycles <- as.integer(annealConfig$cycles %||%
-                                    if (phases > 0L) 1L else 0L)
+    sc$annealCycles <- as.integer(.or(annealConfig$cycles,
+                                      if (phases > 0L) 1L else 0L))
     sc$annealPhases <- phases
-    sc$annealTStart <- as.double(annealConfig$tStart %||% 20)
-    sc$annealTEnd <- as.double(annealConfig$tEnd %||% 0)
-    sc$annealMovesPerPhase <- as.integer(annealConfig$movesPerPhase %||% 0L)
+    sc$annealTStart <- as.double(.or(annealConfig$tStart, 20))
+    sc$annealTEnd <- as.double(.or(annealConfig$tEnd, 0))
+    sc$annealMovesPerPhase <- as.integer(.or(annealConfig$movesPerPhase, 0L))
   }
 
   rt <- list(
