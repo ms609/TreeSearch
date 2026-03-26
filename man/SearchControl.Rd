@@ -34,6 +34,7 @@ SearchControl(
   sectorMaxSize = 50L,
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
+  intraFuse = FALSE,
   poolMaxSize = 100L,
   poolSuboptimal = 0,
   consensusStableReps = 0L,
@@ -148,6 +149,10 @@ sizes for sectorial search.}
 \item{fuseInterval}{Integer; fuse pool trees every \emph{n} replicates.}
 
 \item{fuseAcceptEqual}{Logical; accept equally-scoring fused trees?}
+
+\item{intraFuse}{Logical; fuse the current tree against pool donors
+within each replicate, after TBR polish.  This approximates TNT's
+within-replicate fusing pattern. Default: \code{FALSE}.}
 
 \item{poolMaxSize}{Integer; maximum trees retained in the pool.}
 

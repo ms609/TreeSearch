@@ -68,6 +68,8 @@ static void compute_subtree_sizes(const TreeState& tree,
 SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
                         std::function<bool()> check_timeout) {
   double best_score = score_tree(tree, ds);
+  // No informative characters: all trees have the same score.
+  if (ds.total_words == 0) return {best_score, 0, 0};
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -197,6 +199,8 @@ static void collect_destination_edges(
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
                         std::function<bool()> check_timeout) {
   double best_score = full_rescore(tree, ds);
+  // No informative characters: all trees have the same score.
+  if (ds.total_words == 0) return {best_score, 0, 0};
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;

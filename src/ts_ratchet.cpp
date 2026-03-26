@@ -130,6 +130,9 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                              std::function<bool()> check_timeout) {
   const bool use_iw = std::isfinite(ds.concavity);
 
+  // No informative characters: nothing to perturb.
+  if (ds.total_words == 0) return {score_tree(tree, ds), 0, 0, 0, 0.0};
+
   // Initial TBR to get a baseline
   TBRParams search_params;
   search_params.accept_equal = false;

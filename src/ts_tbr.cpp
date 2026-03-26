@@ -526,6 +526,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      std::function<bool()> check_timeout) {
   double best_score = full_rescore(tree, ds);
 
+  // No informative characters: all trees have the same score.
+  if (ds.total_words == 0) {
+    return {best_score, 0, 0, 0, true};
+  }
+
   // Initialize constraint mapping if active
   bool constrained = cd && cd->active;
   if (constrained) {

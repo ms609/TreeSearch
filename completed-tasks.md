@@ -352,3 +352,18 @@ EOF 2>&1
 ENDOFAPPEND 2>&1
 | T-258 | Intra-replicate fusing | F | Added `intraFuse` param to SearchControl/DrivenParams. Fuses current tree against pool donors after TBR polish (step 6b). Disabled in parallel mode (already has between-replicate fusing). Critical fix: `build_postorder()` + `reset_states()` after `tree_fuse()` to prevent segfault from stale state arrays. 221 tests pass. Merged directly to cpp-search (`924bfb35`). Benchmark script: `dev/benchmarks/bench_intra_fuse.R`. |
 | T-243 | FlatBlock metadata, flat EW indirect functions, TBR prefetch | E | PR #230 merged to cpp-search. Confirmed 1.4% speedup at 180 tips on Hamilton (median 11.538→11.360s, p=0.001, n=10). TS-HotLoop worktree removed. |
+
+## 2026-03-26 (afternoon)
+| T-255 | Reduce drift in default and thorough presets | E | Set `driftCycles=0` in default and thorough presets. T-254 confirmed drift has zero score, MPT, or diversity benefit and costs 10–22% of replicates. GHA 23598220226 PASS (ARM64 + Windows, 0 errors, 0 warnings). Also fixed: SearchControl.Rd codoc mismatch (0152daa3), flaky timeout test perturbStopFactor (161e0e1b). |
+| T-260 | VTune TBR per-evaluation overhead profiling | E | Dikow2009 88t, EW, 1000 TBR passes, 30.96s CPU. Top hotspots: StateSnapshot save/restore 14.6%, reset_states zeroing 9.1%, fitch_na_score 29.2%. Non-scoring overhead = 37.8%. Filed T-261/T-262/T-263. Write-up: `dev/benchmarks/vtune_tbr_analysis.md`. |
+EOF 2>&1
+| T-261 | Eliminate std::fill zeroing in reset_states() | E | Removed 5 redundant std::fill(0) calls from reset_states() in ts_tree.cpp. Audited all Fitch scoring passes to confirm every array entry written before read. PR #232, merged to cpp-search. |
+| T-262 | Bulk memcpy for tip state loading | E | Replaced element-by-element tip copy with std::memcpy() in load_tip_states(). Combined T-261+T-262 = 8.6% TBR speedup (Dikow2009, 88t). PR #232, merged to cpp-search. |
+EOF 2>&1
+
+## 2026-03-26
+
+| T-265 | Per-replicate search quality regression — RESOLVED as scoring method confound | E | T-249/T-264 compared Brazeau-scored TreeSearch to EW-scored TNT. Apparent mean gap +17.8 steps; actual EW-vs-EW gap +2.2 steps. 5/11 datasets at 0 gap. R2-equiv/R2-modern/auto preset all find identical Brazeau scores — no preset or engine regression. Also found stale .agent-E library caused T-249 early termination artifact. |
+| T-249 | TNT comparison round 3 — validated | E | Hamilton job 16596844 results validated. Large apparent gaps were scoring method confound (Brazeau vs EW). Future TNT comparisons must use fitch_mode() for apples-to-apples. |
+| T-264 | consensusStableReps fix — verified | E | GHA 23600674681 passed both platforms. Scoring confound resolved; fix is correct. |
+ENDMARK 2>&1

@@ -529,14 +529,15 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
-| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
-| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 0 drift, XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), consensus-stop 2, Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
+| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, Wagner×3, NNI-first, adaptive level |
+| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
 
-`sprint`/`default`/`thorough` set `consensusStableReps = 3`; `large` sets
-`consensusStableReps = 2` (faster convergence detection since replicates at
-120+ tips take 30–90s each).
+**T-264 (2026-03-26):** `consensusStableReps` removed from all presets
+(disabled, 0). The previous setting of 3 caused catastrophic early
+termination — the search stopped after 3 replicates with unchanged
+consensus, using only 7–20% of the time budget on most datasets.
 
 **Large preset design rationale (T-179, 2026-03-24):** At 180 tips, each TBR
 convergence takes ~5–7s, making phases like NNI-perturbation (~5.5s/cycle) and
@@ -601,10 +602,11 @@ when conflict variation is negligible.
 
 ### Consensus-stability stopping
 
-After each replicate, if `consensus_stable_reps > 0` (default 3 in all
-presets), the pool's strict consensus hash is compared to the previous
-replicate's. If unchanged for `consensus_stable_reps` consecutive
-replicates, the search terminates early. `compute_consensus_hash()` uses
+After each replicate, if `consensus_stable_reps > 0` (disabled in all
+presets since T-264; available via `SearchControl(consensusStableReps=N)`),
+the pool's strict consensus hash is compared to the previous replicate's.
+If unchanged for `consensus_stable_reps` consecutive replicates, the
+search terminates early. `compute_consensus_hash()` uses
 XOR of per-split FNV-1a hashes for O(pool × splits) cost.
 
 ### Adaptive search level
@@ -1113,6 +1115,15 @@ isolate the escape-effectiveness question.
 ≤88 tips. Algorithmic choices (e.g. TBR vs NNI warmup, ratchet cycle counts)
 that are optimal at 88 tips may be suboptimal at 180+. The 180-taxon dataset
 should be added to the benchmark suite as a separate tier (T-181).
+
+**Brazeau vs EW scoring confound (T-265, 2026-03-26):** TreeSearch
+uses the Brazeau et al. (2019) inapplicable algorithm by default,
+which penalizes inapplicable-to-applicable transitions. TNT treats
+`-` as `?` (standard EW Fitch). On 11 gap datasets, the apparent
+mean gap was +17.8 steps; the actual EW-vs-EW gap is only +2.2 steps
+(5 datasets at 0 gap). **All TNT comparisons MUST use `fitch_mode()`
+to convert inapplicable to missing** for apples-to-apples scoring.
+`fitch_mode()` is defined in `bench_intra_fuse.R` and `bench_t265_regression.R`.
 
 **`maxTime` confound (2026-03-23):** Initial 180-taxon testing used
 `maxTime` (legacy Morphy parameter), which silently delegated to the
