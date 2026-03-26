@@ -262,6 +262,56 @@ for default; wagnerStarts=3, sprFirst=TRUE for thorough) against old presets
   base, 1.5× scaling creates 30 ratchet + 18 drift per hard replicate,
   causing 3–4× slowdowns for only 2–3 step improvement (benchmarked separately).
 
+### 180-tip large-preset baselines: 2026-03-26 by Agent E (Hamilton HPC, EPYC 7702)
+
+Dataset: mbank_X30754 (180 taxa, 425 chars, 418 patterns, 40% missing, 20% inapplicable).
+Strategy: auto → "large" preset. 5 seeds per budget, single-threaded.
+
+**Score quality by budget (median, 5 seeds):**
+
+| Budget | Median score | Range | Reps/seed |
+|--------|:-----------:|:-----:|:---------:|
+| 30s | 1202 | 1189–1214 | ~1.5 |
+| 60s | 1190 | 1190–1202 | ~3 |
+| 120s | 1185 | 1171–1189 | ~6 |
+
+Per-replicate time: median 17.3s (range 13.7–21.2s). MPT enumeration adds
+0–2 steps beyond best single-replicate score.
+
+**Phase distribution (rep 1, 30s budget, 5-seed averages):**
+
+| Phase | % time | Mean ms | Steps/s | Hit rate |
+|-------|:------:|--------:|:-------:|:--------:|
+| TBR | 43.6% | 7313 | 91.4 | 5/5 (661 steps avg) |
+| Ratchet | 32.2% | 5390 | 4.5 | 5/5 (26.6 steps avg) |
+| SA (anneal) | 7.4% | 1241 | 0.8 | 7/50 (14%, 1.3 steps) |
+| XSS | 5.4% | 897 | 13.8 | 4/5 |
+| Wagner+NNI | 4.7% | 790 | — | starting point |
+| RSS | 3.2% | 530 | 4.8 | 3/5 |
+| CSS | 2.5% | 424 | 11.2 | 2/5 |
+| Final TBR | 1.0% | 174 | 5.2 | 1/5 |
+
+**SA (simulated annealing) phase is the least productive:** 7.4% of time,
+14% hit rate (7/50 reps improved by 1.3 steps on average). Efficiency =
+0.8 steps/s, far below ratchet (4.5) or XSS (13.8). annealCycles=3,
+annealPhases=5 may be overtuned. Reducing could save ~1.2s/rep → 1 extra
+replicate per ~17s saved.
+
+**Comparison with earlier Intel desktop baselines (T-179, pre-T-206):**
+
+| Budget | Intel (pre-T-206) | EPYC (post-T-206) | Delta |
+|--------|:-:|:-:|:-:|
+| 30s | 1276 | 1202 | −74 |
+| 60s | 1255 | 1190 | −65 |
+| 120s | 1250 | 1185 | −65 |
+
+The 65–74 step gap is **primarily due to T-206** (outer cycle reset cap),
+not hardware. T-206 was merged 2026-03-24 19:27; the Intel baselines were
+recorded at 12:56 the same day (pre-T-206). Without the reset cap, each
+replicate performed 3–5 pipeline cycles (~51–85s) vs ~17s with cap=0.
+At 120s budget: ~2 replicates pre-T-206 vs ~6 post-T-206. Hardware
+differences (Intel desktop vs EPYC 7702) are a secondary factor.
+
 ## What to Profile
 
 Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated
