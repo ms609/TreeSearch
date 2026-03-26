@@ -1243,6 +1243,12 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.adaptive_start        = as<bool>(ctrl["adaptiveStart"]);
   params.enum_time_fraction    = as<double>(ctrl["enumTimeFraction"]);
 
+  // Convergence tolerance
+  if (ctrl.containsElementNamed("scoreTol"))
+    params.score_tol           = as<double>(ctrl["scoreTol"]);
+  if (ctrl.containsElementNamed("plateauReps"))
+    params.plateau_reps        = as<int>(ctrl["plateauReps"]);
+
   // Simulated annealing perturbation (PCSA)
   params.anneal_cycles          = as<int>(ctrl["annealCycles"]);
   params.anneal_phases          = as<int>(ctrl["annealPhases"]);
@@ -2672,6 +2678,8 @@ List ts_cid_consensus(
     int nThreads = 1,
     double screeningK = 7.0,
     double screeningTolerance = 0.0,
+    double scoreTol = 0.0,
+    int plateauReps = 0,
     Nullable<IntegerMatrix> startEdge = R_NilValue,
     Nullable<Function> progressCallback = R_NilValue)
 {
@@ -2782,6 +2790,8 @@ List ts_cid_consensus(
   params.verbosity = verbosity;
   params.tabu_size = tabuSize;
   params.wagner_starts = wagnerStarts;
+  params.score_tol = scoreTol;
+  params.plateau_reps = plateauReps;
 
   // Starting tree edge matrix (optional)
   if (startEdge.isNotNull()) {

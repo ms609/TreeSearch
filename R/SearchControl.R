@@ -74,6 +74,16 @@
 #'   Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 #'   \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
 #'   per-replicate granularity.
+#' @param scoreTol Numeric; minimum score improvement to count as meaningful
+#'   for convergence detection.  Default 0 (any strict improvement counts).
+#'   When positive, improvements smaller than `scoreTol` do not reset the
+#'   unsuccessful-replicate counter, allowing `perturbStopFactor` and
+#'   `plateauReps` to detect convergence in continuous-score modes (e.g. CID).
+#' @param plateauReps Integer; stop after this many consecutive replicates
+#'   without meaningful improvement (as determined by `scoreTol`).
+#'   0 disables this criterion (default).
+#'   Unlike `perturbStopFactor` (which scales with tree size), this is an
+#'   absolute count suitable for small replicate budgets.
 #' @param adaptiveLevel Logical; dynamically scale ratchet and drift effort
 #'   based on the observed hit rate?  When `TRUE`, easy landscapes
 #'   (high hit rate) trigger reduced effort per replicate, while hard
@@ -208,6 +218,8 @@ SearchControl <- function(
     # Stopping criteria
     consensusStableReps = 0L,
     perturbStopFactor = 2L,
+    scoreTol = 0,
+    plateauReps = 0L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
     # Simulated annealing perturbation (PCSA, T-207)
@@ -259,6 +271,8 @@ SearchControl <- function(
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
       perturbStopFactor = as.integer(perturbStopFactor),
+      scoreTol = as.double(scoreTol),
+      plateauReps = as.integer(plateauReps),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
       annealCycles = as.integer(annealCycles),
@@ -291,7 +305,7 @@ print.SearchControl <- function(x, ...) {
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
-                    "adaptiveLevel",
+                    "scoreTol", "plateauReps", "adaptiveLevel",
                     "consensusConstrain", "adaptiveStart")
   )
   cat("SearchControl object\n")

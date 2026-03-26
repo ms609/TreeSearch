@@ -802,8 +802,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type n_draws(n_drawsSEXP);
     rcpp_result_gen = Rcpp::wrap(ts_test_strategy_tracker(seed, n_draws));
 // ts_cid_consensus
-List ts_cid_consensus(List splitMatrices, IntegerVector nTip, LogicalVector normalize, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int ratchetPerturbMode, bool ratchetAdaptive, int driftCycles, int driftAfdLimit, double driftRfdLimit, int xssRounds, int xssPartitions, int rssRounds, int cssRounds, int cssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal, double maxSeconds, int verbosity, int tabuSize, int wagnerStarts, int nThreads, double screeningK, double screeningTolerance, Nullable<IntegerMatrix> startEdge, Nullable<Function> progressCallback);
-RcppExport SEXP _TreeSearch_ts_cid_consensus(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP normalizeSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP ratchetPerturbModeSEXP, SEXP ratchetAdaptiveSEXP, SEXP driftCyclesSEXP, SEXP driftAfdLimitSEXP, SEXP driftRfdLimitSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP rssRoundsSEXP, SEXP cssRoundsSEXP, SEXP cssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP, SEXP maxSecondsSEXP, SEXP verbositySEXP, SEXP tabuSizeSEXP, SEXP wagnerStartsSEXP, SEXP nThreadsSEXP, SEXP screeningKSEXP, SEXP screeningToleranceSEXP, SEXP startEdgeSEXP, SEXP progressCallbackSEXP) {
+List ts_cid_consensus(List splitMatrices, IntegerVector nTip, LogicalVector normalize, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int ratchetPerturbMode, bool ratchetAdaptive, int driftCycles, int driftAfdLimit, double driftRfdLimit, int xssRounds, int xssPartitions, int rssRounds, int cssRounds, int cssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal, double maxSeconds, int verbosity, int tabuSize, int wagnerStarts, int nThreads, double screeningK, double screeningTolerance, double scoreTol, int plateauReps, Nullable<IntegerMatrix> startEdge, Nullable<Function> progressCallback);
+RcppExport SEXP _TreeSearch_ts_cid_consensus(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP normalizeSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP ratchetPerturbModeSEXP, SEXP ratchetAdaptiveSEXP, SEXP driftCyclesSEXP, SEXP driftAfdLimitSEXP, SEXP driftRfdLimitSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP rssRoundsSEXP, SEXP cssRoundsSEXP, SEXP cssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP, SEXP maxSecondsSEXP, SEXP verbositySEXP, SEXP tabuSizeSEXP, SEXP wagnerStartsSEXP, SEXP nThreadsSEXP, SEXP screeningKSEXP, SEXP screeningToleranceSEXP, SEXP scoreTolSEXP, SEXP plateauRepsSEXP, SEXP startEdgeSEXP, SEXP progressCallbackSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -838,9 +838,38 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type nThreads(nThreadsSEXP);
     Rcpp::traits::input_parameter< double >::type screeningK(screeningKSEXP);
     Rcpp::traits::input_parameter< double >::type screeningTolerance(screeningToleranceSEXP);
+    Rcpp::traits::input_parameter< double >::type scoreTol(scoreTolSEXP);
+    Rcpp::traits::input_parameter< int >::type plateauReps(plateauRepsSEXP);
     Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type startEdge(startEdgeSEXP);
     Rcpp::traits::input_parameter< Nullable<Function> >::type progressCallback(progressCallbackSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_cid_consensus(splitMatrices, nTip, normalize, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, tabuSize, wagnerStarts, nThreads, screeningK, screeningTolerance, startEdge, progressCallback));
+    rcpp_result_gen = Rcpp::wrap(ts_cid_consensus(splitMatrices, nTip, normalize, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, tabuSize, wagnerStarts, nThreads, screeningK, screeningTolerance, scoreTol, plateauReps, startEdge, progressCallback));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_cid_score_trees
+NumericVector ts_cid_score_trees(List splitMatrices, int nTip, List candidateEdges);
+RcppExport SEXP _TreeSearch_ts_cid_score_trees(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP candidateEdgesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type splitMatrices(splitMatricesSEXP);
+    Rcpp::traits::input_parameter< int >::type nTip(nTipSEXP);
+    Rcpp::traits::input_parameter< List >::type candidateEdges(candidateEdgesSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_cid_score_trees(splitMatrices, nTip, candidateEdges));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_cid_prescreen_rogue
+NumericVector ts_cid_prescreen_rogue(List splitMatrices, int nTip, IntegerMatrix candidateEdge, IntegerVector droppableTips);
+RcppExport SEXP _TreeSearch_ts_cid_prescreen_rogue(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP candidateEdgeSEXP, SEXP droppableTipsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type splitMatrices(splitMatricesSEXP);
+    Rcpp::traits::input_parameter< int >::type nTip(nTipSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type candidateEdge(candidateEdgeSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type droppableTips(droppableTipsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_cid_prescreen_rogue(splitMatrices, nTip, candidateEdge, droppableTips));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -873,33 +902,6 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type n_draws(n_drawsSEXP);
     rcpp_result_gen = Rcpp::wrap(ts_test_strategy_tracker(seed, n_draws));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ts_cid_score_trees
-NumericVector ts_cid_score_trees(List splitMatrices, int nTip, List candidateEdges);
-RcppExport SEXP _TreeSearch_ts_cid_score_trees(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP candidateEdgesSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type splitMatrices(splitMatricesSEXP);
-    Rcpp::traits::input_parameter< int >::type nTip(nTipSEXP);
-    Rcpp::traits::input_parameter< List >::type candidateEdges(candidateEdgesSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_cid_score_trees(splitMatrices, nTip, candidateEdges));
-    return rcpp_result_gen;
-END_RCPP
-}
-// ts_cid_prescreen_rogue
-NumericVector ts_cid_prescreen_rogue(List splitMatrices, int nTip, IntegerMatrix candidateEdge, IntegerVector droppableTips);
-RcppExport SEXP _TreeSearch_ts_cid_prescreen_rogue(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP candidateEdgeSEXP, SEXP droppableTipsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type splitMatrices(splitMatricesSEXP);
-    Rcpp::traits::input_parameter< int >::type nTip(nTipSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type candidateEdge(candidateEdgeSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type droppableTips(droppableTipsSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_cid_prescreen_rogue(splitMatrices, nTip, candidateEdge, droppableTips));
     return rcpp_result_gen;
 END_RCPP
 }

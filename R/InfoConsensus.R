@@ -277,7 +277,9 @@ InfoConsensus <- function(trees,
     wagnerStarts = .NullOr(ctrl[["wagnerStarts"]], 1L),
     nThreads = nThreads,
     screeningK = screeningK,
-    screeningTolerance = screeningTolerance
+    screeningTolerance = screeningTolerance,
+    scoreTol = .NullOr(ctrl[["scoreTol"]], 0.001),
+    plateauReps = .NullOr(ctrl[["plateauReps"]], 3L)
   )
   
   # Convert best tree from edge matrix to phylo

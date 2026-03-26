@@ -168,6 +168,20 @@ struct DrivenParams {
   // replicates that fail to improve the best score.  Resets on
   // every improvement.
   int perturb_stop_factor = 0;
+
+  // Minimum score improvement to count as meaningful (for convergence
+  // detection).  Default 0.0 = any strict improvement counts.  When > 0,
+  // improvements smaller than score_tol do not reset the unsuccessful-
+  // replicate counter.  Useful for continuous-score modes like CID where
+  // trivially small improvements can prevent convergence detection.
+  double score_tol = 0.0;
+
+  // Plateau stopping: stop after this many consecutive replicates without
+  // meaningful improvement.  0 = disabled.  Unlike perturb_stop_factor
+  // (which scales as nTip * factor), this is an absolute count suitable
+  // for small replicate budgets.
+  int plateau_reps = 0;
+
   // Adaptive search level.
   // When true, dynamically scale ratchet_cycles and drift_cycles based
   // on the hit rate (fraction of replicates that find the current best
@@ -256,6 +270,7 @@ struct DrivenResult {
   int last_improved_rep;         // 1-based replicate that last improved score (0 = not tracked)
   bool timed_out;                // true if search ended due to timeout
   bool consensus_stable;         // true if stopped by consensus stability
+  bool plateau_stop;             // true if stopped by plateau_reps
   PhaseTimings timings;          // cumulative across all replicates
 
   // Per-strategy diagnostics (populated when adaptive_start is true)

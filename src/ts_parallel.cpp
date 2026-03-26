@@ -382,7 +382,7 @@ DrivenResult parallel_driven_search(
     if (perturb_stop_limit > 0) {
       int done = replicates_done.load(std::memory_order_relaxed);
       double cur_best = shared_pool.best_score();
-      if (cur_best < last_known_best) {
+      if (cur_best < last_known_best - params.score_tol) {
         last_known_best = cur_best;
         reps_at_last_improvement = done;
       }
@@ -397,6 +397,32 @@ DrivenResult parallel_driven_search(
         break;
       }
     }
+
+    // Plateau stopping (absolute count, parallel path)
+    if (params.plateau_reps > 0) {
+      int done = replicates_done.load(std::memory_order_relaxed);
+      double cur_best = shared_pool.best_score();
+      // Reuse last_known_best tracking from perturbation stop above;
+      // if perturb_stop_limit == 0, we need our own tracking.
+      if (perturb_stop_limit == 0) {
+        if (cur_best < last_known_best - params.score_tol) {
+          last_known_best = cur_best;
+          reps_at_last_improvement = done;
+        }
+      }
+      if (done - reps_at_last_improvement >= params.plateau_reps) {
+        stop_flag.store(true, std::memory_order_relaxed);
+        if (params.verbosity >= 1) {
+          Rprintf("Stopped: %d consecutive replicates without meaningful "
+                  "improvement (plateau_reps %d, score_tol %.4g)\n",
+                  done - reps_at_last_improvement, params.plateau_reps,
+                  params.score_tol);
+        }
+        result.plateau_stop = true;
+        break;
+      }
+    }
+
     // Progress reporting
     if (params.verbosity >= 1) {
       auto st = shared_pool.status();

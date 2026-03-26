@@ -312,3 +312,53 @@ test_that("InfoConsensus R wrapper with sectors enabled", {
   expect_true(is.finite(attr(result, "score")))
   expect_equal(NTip(result), 20L)
 })
+
+# --- Plateau stopping for CID ------------------------------------------------
+
+test_that("Plateau stopping exits early on identical trees", {
+  # With identical input trees, CID = 0 for the optimal tree. Every replicate
+
+  # converges to the same score, so no replicate improves on the previous best.
+  # plateauReps = 2 should trigger after 2 consecutive non-improving replicates,
+  # well before maxReplicates = 10.
+  set.seed(4297)
+  tree <- RandomTree(15)
+  identicalTrees <- rep(list(tree), 10)
+  class(identicalTrees) <- "multiPhylo"
+  tipLabels <- tree$tip.label
+  splitMats <- lapply(identicalTrees, function(tr) {
+    unclass(as.Splits(tr, tipLabels))
+  })
+
+  result <- ts_cid_consensus(
+    splitMatrices = splitMats,
+    nTip = 15L,
+    normalize = FALSE,
+    maxReplicates = 10L,
+    targetHits = 100L,    # disable hit-count stopping
+    tbrMaxHits = 1L,
+    ratchetCycles = 0L,
+    driftCycles = 0L,
+    xssRounds = 0L,
+    rssRounds = 0L,
+    cssRounds = 0L,
+    fuseInterval = 0L,
+    poolMaxSize = 100L,
+    poolSuboptimal = 0.0,
+    maxSeconds = 60.0,
+    verbosity = 0L,
+    tabuSize = 100L,
+    wagnerStarts = 1L,
+    nThreads = 1L,
+    screeningK = 7.0,
+    screeningTolerance = 0.0,
+    scoreTol = 0.001,
+    plateauReps = 2L
+  )
+
+  # Should exit well before 10 replicates
+  expect_lt(result[["replicates"]], 10L)
+  # First replicate sets the baseline; replicates 2 and 3 don't improve
+  # → plateau fires after rep 3 at latest
+  expect_lte(result[["replicates"]], 4L)
+})
