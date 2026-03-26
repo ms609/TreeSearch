@@ -78,6 +78,12 @@
 #'   whose MRP score exceeds the current best by up to this fraction (e.g.,
 #'   `0.02` = $2%$ tolerance).  Higher values improve search quality at the
 #'   cost of more MCI evaluations per step.
+#' @param screeningTopK Integer: number of top MRP-screened candidates to
+#'   evaluate via full MCI scoring per TBR clip.  Default `1` uses the
+#'   single best MRP candidate (original behaviour).  Values > 1 (e.g., `5`)
+#'   score the top-k MRP candidates and accept the one with the best MCI,
+#'   catching moves where MRP and MCI rankings disagree.  Cost scales
+#'   linearly with `screeningTopK`.
 #' @param verbosity Integer controlling console output (0 = silent).
 #'
 #' @return A tree of class `phylo` with attributes:
@@ -128,6 +134,7 @@ InfoConsensus <- function(trees,
                           control = SearchControl(),
                           screeningK = 7,
                           screeningTolerance = 0,
+                          screeningTopK = 1L,
                           verbosity = 1L) {
   if (!inherits(trees, "multiPhylo")) {
     stop("`trees` must be an object of class 'multiPhylo'.")
@@ -168,7 +175,7 @@ InfoConsensus <- function(trees,
   result <- .CIDDrivenSearch(searchTrees, tipLabels, nTip,
                               maxReplicates, targetHits, maxSeconds,
                               nThreads, control,
-                              screeningK, screeningTolerance,
+                              screeningK, screeningTolerance, screeningTopK,
                               verbosity)
   
   # Phases 2-3 use the full tree set for accurate scoring.
@@ -318,6 +325,7 @@ InfoConsensus <- function(trees,
                               maxReplicates, targetHits,
                               maxSeconds, nThreads, control,
                               screeningK, screeningTolerance,
+                              screeningTopK,
                               verbosity) {
   # Convert input trees to split matrices (RawMatrix format)
   splitMats <- lapply(trees, function(tr) {
@@ -369,6 +377,7 @@ InfoConsensus <- function(trees,
     nThreads = nThreads,
     screeningK = screeningK,
     screeningTolerance = screeningTolerance,
+    screeningTopK = screeningTopK,
     scoreTol = .NullOr(ctrl[["scoreTol"]], 1e-5),
     plateauReps = .NullOr(ctrl[["plateauReps"]], 3L)
   )

@@ -58,7 +58,7 @@ extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_ts_hsj_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_sankoff_test(SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_cid_consensus(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_cid_consensus(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_cid_score_trees(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_cid_prescreen_rogue(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_mc_fitch_scores(SEXP, SEXP);
@@ -136,7 +136,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_MaddisonSlatkin_clear_cache", (DL_FUNC) &_TreeSearch_MaddisonSlatkin_clear_cache, 0},
   {"_TreeSearch_ts_hsj_score", (DL_FUNC) &_TreeSearch_ts_hsj_score, 9},
   {"_TreeSearch_ts_sankoff_test", (DL_FUNC) &_TreeSearch_ts_sankoff_test, 5},
-  {"_TreeSearch_ts_cid_consensus", (DL_FUNC) &_TreeSearch_ts_cid_consensus, 35},
+  {"_TreeSearch_ts_cid_consensus", (DL_FUNC) &_TreeSearch_ts_cid_consensus, 36},
   {"_TreeSearch_ts_cid_score_trees", (DL_FUNC) &_TreeSearch_ts_cid_score_trees, 3},
   {"_TreeSearch_ts_cid_prescreen_rogue", (DL_FUNC) &_TreeSearch_ts_cid_prescreen_rogue, 4},
   {"_TreeSearch_ts_wagner_bias_bench", (DL_FUNC) &_TreeSearch_ts_wagner_bias_bench, 10},

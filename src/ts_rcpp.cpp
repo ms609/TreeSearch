@@ -2678,6 +2678,7 @@ List ts_cid_consensus(
     int nThreads = 1,
     double screeningK = 7.0,
     double screeningTolerance = 0.0,
+    int screeningTopK = 1,
     double scoreTol = 0.0,
     int plateauReps = 0,
     Nullable<IntegerMatrix> startEdge = R_NilValue,
@@ -2702,6 +2703,7 @@ List ts_cid_consensus(
   cid_data.mrp_concavity = (screeningK <= 0.0 || !R_finite(screeningK))
       ? HUGE_VAL : screeningK;
   cid_data.screening_tolerance = std::max(0.0, screeningTolerance);
+  cid_data.cid_top_k = std::max(1, screeningTopK);
   cid_data.tree_splits.resize(n_trees);
   cid_data.tree_ce.resize(n_trees);
   cid_data.tree_weights.assign(n_trees, 1.0);

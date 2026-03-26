@@ -152,6 +152,11 @@ struct CidData {
   // MRP screening parameters.
   double mrp_concavity = 7.0;
   double screening_tolerance = 0.0;
+  // Number of top MRP candidates to CID-score per TBR clip.
+  // 1 = current single-best behaviour; >1 enables batch CID evaluation
+  // of the top-k MRP candidates, allowing the search to find moves
+  // where CID and MRP rankings disagree.
+  int cid_top_k = 1;
 
   // --- MRP dedup reverse index (populated by build_mrp_dataset) ---
   // mrp_split_trees[i] = list of input tree indices containing unique
