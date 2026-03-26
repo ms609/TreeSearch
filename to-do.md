@@ -32,10 +32,7 @@
 
 ### Bugs
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-
-| T-242 | P1 | PARKED (C, GHA 23545987517†) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. GHA failure is stale (pre-T-214); cpp-search passes on 23547582438. Investigation task — GHA status doesn't resolve it. |
+(no open bugs)
 
 
 
@@ -68,22 +65,22 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 |----|-----|--------|--------|-------------|-------|
 
 | T-252 | P3 | OPEN | — | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | Uses `benchmark_mbank_sample()` in `bench_framework.R`. |
-| T-253 | P3 | OPEN | T-249, T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | Depends on T-249 (updated gaps) and T-252 (broader baseline). |
+| T-253 | P3 | OPEN | T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | T-249 complete: EW gaps are 0–7 steps (mean 2.2) across 11 hard datasets at 120s. 5 datasets optimal. Remaining blocker: T-252 (broader baseline). **NB:** always compare like-for-like scoring (Fitch vs Fitch); Brazeau scores are inherently higher. |
 
 ### Strategy Tuning (from T-251 trajectory analysis)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 
-| T-257 | P3 | OPEN | — | **Post-ratchet sectorial search pass.** Add a second sectorial search pass after ratchet in the pipeline: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR] instead of [XSS+RSS+CSS → Ratchet → Drift → TBR]. TNT interleaves sectorial search throughout each replicate; this is a lightweight approximation. | T-256 found extra sectorial rounds don't improve scores, but `nodrift_3x` config was best (mean gap 4.9 vs 5.3) due to more replicates. A post-ratchet sectorial pass may still help if it's cheap enough to not cut into replicate count. Needs careful cost/benefit analysis. |
+| T-257 | P3 | PARKED (F, GHA 23607823258) | — | **Post-ratchet sectorial search pass.** Add a second sectorial search pass after ratchet in the pipeline: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR] instead of [XSS+RSS+CSS → Ratchet → Drift → TBR]. TNT interleaves sectorial search throughout each replicate; this is a lightweight approximation. | T-256 found extra sectorial rounds don't improve scores, but `nodrift_3x` config was best (mean gap 4.9 vs 5.3) due to more replicates. A post-ratchet sectorial pass may still help if it's cheap enough to not cut into replicate count. Needs careful cost/benefit analysis. |
 
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 by E (focus 8: T-264, PR #232, T-255). All verified correct. subtree_actives non-NA positions confirmed safe (init to 0, never written, all reads guarded by has_inapplicable). Budget utilization confirmed: Agnarsson2004 uses 94% at 5s. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 (focus 9: Wagner & addition trees). ts_wagner.h/.cpp (595 lines) + ts_constraint.h/.cpp (880 lines) reviewed. Latent stale-reference in impose_one_pass() noted (negligible severity, mitigated by retry loops). 902 constraint tests + 80 adversarial tests pass. No bugs filed. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 27). Fixed R 4.1 %||% compat in test-ts-anneal.R. Windows covr MaddisonSlatkin failure is instrumentation artifact (main check clean). Hamilton unreachable. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by E. 6 open PRs: #233 (T-246 AVX2, MERGEABLE, CI in progress), #231 (T-263 selective-snapshot, MERGEABLE, CI failures from pre-fix base — needs rebase for SearchControl.Rd + timeout test fixes), #216 (native-search, MERGEABLE, 25 commits behind), #213 (CID consensus, MERGEABLE, 15 behind), #210 (cpp-search→main, MERGEABLE), #178 (stale, CONFLICTING, Aug 2025 — recommend close). All feature PRs are MERGEABLE but CI is UNSTABLE due to stale bases. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 round 29. Closed T-242 (display bug, already fixed). T-257 GHA doc mismatch (tests pass). 2 unblocked OPEN → standing at P1. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by F. 6 open PRs. Updated 4 feature PRs with cpp-search base merges (all clean): #233 (AVX2, 23 behind → merged), #231 (selective-snapshot, 25 behind → merged), #216 (native-search, 36 behind → merged), #213 (CID consensus, 26 behind → merged). #210 (cpp-search→main, MERGEABLE). #178 (stale, CONFLICTING, Aug 2025 — recommend close). No review comments on any PR. CI re-triggered on all updated PRs. |
 
