@@ -534,7 +534,7 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
 | thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 4 drift (AFD 5, RFD 0.15), XSS(3)+RSS(2)+CSS(1), consensus-stop 2, Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), consensus-stop 2, Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
 
 `sprint`/`default`/`thorough` set `consensusStableReps = 3`; `large` sets
 `consensusStableReps = 2` (faster convergence detection since replicates at
@@ -547,6 +547,17 @@ drift (~4s/cycle) extremely expensive. Systematic benchmarking on mbank_X30754
 with outerCycles=1 and a single biased Wagner start outperforms the thorough
 preset by 4–7 steps (median) at 30–60s budgets and ties at 120s, while
 consistently completing more replicates.
+
+**Post-T-206 Hamilton HPC baselines (2026-03-26, EPYC 7702, 5 seeds):**
+30s median=1202 (range 1189–1214), 60s median=1190 (1190–1202), 120s
+median=1185 (1171–1189). Per-replicate median 17.3s (cf. ~60s pre-T-206).
+The 65–74 step improvement over pre-T-206 Intel baselines is primarily
+from the outer cycle reset cap (maxOuterResets=0), not hardware.
+Phase distribution: TBR 43.6%, Ratchet 32.2%, SA 7.4% (14% hit rate,
+0.8 steps/s — least productive phase). T-248 benchmarked annealCycles
+0/1/3: AC=1 (400ms/rep, 40% hit rate) is most cost-effective; AC=3
+(1370ms/rep, 21% hit rate) showed no significant score gain (p>0.5,
+n=5 seeds). Large preset reduced to annealCycles=1.
 
 All presets set `nniFirst = TRUE` (NNI warmup before TBR) and
 `sprFirst = FALSE` (SPR is counterproductive when NNI is active —
