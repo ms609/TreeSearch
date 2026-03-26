@@ -49,14 +49,12 @@ void TreeState::init_from_edge(
 }
 
 void TreeState::load_tip_states(const DataSet& ds) {
-  for (int tip = 0; tip < n_tip; ++tip) {
-    size_t base = static_cast<size_t>(tip) * total_words;
-    for (int w = 0; w < total_words; ++w) {
-      prelim[base + w] = ds.tip_states[base + w];
-      // Tips: final = preliminary (observed states, unchanged by uppass)
-      final_[base + w] = ds.tip_states[base + w];
-    }
-  }
+  // T-262: bulk memcpy replaces per-element loop.  Tip states occupy the
+  // first n_tip * total_words entries of prelim/final_ (contiguous).
+  size_t tip_bytes = static_cast<size_t>(n_tip) * total_words * sizeof(uint64_t);
+  std::memcpy(prelim.data(), ds.tip_states.data(), tip_bytes);
+  std::memcpy(final_.data(), ds.tip_states.data(), tip_bytes);
+
   // Initialise tip subtree_actives: applicable states only (NA word = 0).
   // For {-,X} tips, applicable state bits are preserved here; the
   // tip uppass (Pass 2) will clear them if the tip resolves as NA.
@@ -265,11 +263,16 @@ void TreeState::restore_saved_states() {
 }
 
 void TreeState::reset_states(const DataSet& ds) {
-  std::fill(prelim.begin(), prelim.end(), 0ULL);
-  std::fill(final_.begin(), final_.end(), 0ULL);
-  std::fill(down2.begin(), down2.end(), 0ULL);
-  std::fill(subtree_actives.begin(), subtree_actives.end(), 0ULL);
-  std::fill(local_cost.begin(), local_cost.end(), 0ULL);
+  // T-261: std::fill zeroing removed.  Every array entry that is read by
+  // score_tree() / fitch_na_score() is written before it is read:
+  //   prelim    — internals: pass 1 (bottom-up); tips: load_tip_states
+  //   final_    — root: pass 2 init; internals: pass 2 uppass;
+  //               tips: pass 2 tip loop (NA) or load_tip_states (non-NA)
+  //   down2     — only NA blocks; tips: pass 2 tip loop;
+  //               internals: pass 3 (bottom-up)
+  //   subtree_a — only NA blocks; tips: load_tip_states + pass 2 update;
+  //               internals: pass 1 + pass 3
+  //   local_cost— only standard blocks; written in pass 1
   load_tip_states(ds);
 }
 

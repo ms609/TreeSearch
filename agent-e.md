@@ -1,16 +1,23 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** T-260 — Per-evaluation overhead profiling (VTune)
-- **Status:** IN PROGRESS. Building with symbols, writing driver, collecting hotspots.
+- **Status:** IDLE.
 
-### T-260 — Per-evaluation overhead profiling
-- Goal: profile TBR per-evaluation overhead to find why TreeSearch evaluates 1.5–3.6× fewer rearrangements/s than TNT
-- VTune 2025.10 at `C:/Program Files (x86)/Intel/oneAPI/vtune/latest`
-- Steps: build with symbols → driver script → VTune hotspot collection → analysis
+### S-COORD Round 27 — DONE (2026-03-26 16:30 GMT)
+- Fixed R 4.1 `%||%` compat bug in `test-ts-anneal.R` (58fc2552).
+- Windows covr MaddisonSlatkin failure: instrumentation artifact, main check clean.
+- Hamilton unreachable from this session; job 16597206 status unknown.
+- 9 queued + 4 in-progress GHA runs; fix commit pushed.
 
-### Previous: T-255 — Reduce drift from presets — PARKED
-- GHA 23591874696 in progress. Fixed test-ts-anneal.R:106 (7dc2ed96).
+### T-265 — RESOLVED (scoring method confound)
+- Apparent gap was Brazeau vs EW scoring mismatch, not engine regression.
+- Mean EW-vs-EW gap: +2.2 steps (5/11 datasets at 0 gap).
+- Hamilton job 16597206 running for fuller confirmation.
 
-### Previous: S-RED focus 7 — recently landed code — DONE
-- Reviewed T-258, PR #230, T-255. No bugs. 624 targeted tests pass.
+### S-COORD Round 25–26 — DONE
+Updated coordination.md, task queue, S-PR. T-264 GHA ARM64 passed, Windows in progress.
+
+### S-RED Focus 8 — DONE
+### Previous: T-261+T-262 — PR #232 MERGED
+### Previous: T-255 — Reduce drift — DONE
+### Previous: T-260 — VTune profiling — DONE
