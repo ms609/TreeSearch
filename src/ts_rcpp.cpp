@@ -1226,6 +1226,7 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.css_partitions  = as<int>(ctrl["cssPartitions"]);
   params.sector_min_size = as<int>(ctrl["sectorMinSize"]);
   params.sector_max_size = as<int>(ctrl["sectorMaxSize"]);
+  params.post_ratchet_sectorial = as<bool>(ctrl["postRatchetSectorial"]);
 
   // Fuse / pool
   params.fuse_interval      = as<int>(ctrl["fuseInterval"]);
