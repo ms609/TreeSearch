@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-254 | Drift MPT diversity experiment | E | driftCycles=0 vs 2 on 3 datasets (Wortley2006/Zhu2013/Geisler2001), 3 seeds, 30s+120s budgets. Drift provides zero score, MPT, or diversity benefit. Costs 10–22% of replicates. On Wortley2006, no-drift finds 4 MPTs vs 1–3 with drift. Mean RF identical on larger datasets. Unblocks T-255. Write-up: `dev/benchmarks/drift_mpt_analysis.md`. |
 | — | maxReplicates default → 96 (multiple of 48 for parallel efficiency) | F | API: 100→96. Shiny: default 96, slider min=48/max=960/step=48. Issue triaged directly (no T-number). Commit `13501b1a`. |
 | T-251 | TNT trajectory analysis on gap datasets | E | 3 gap datasets (Geisler2001 +5–9, Zhu2013 +4–6, Wortley2006 +3–4), 30s, 3 seeds. Drift 30–170× less efficient than next-worst phase (16–23% of time, <1% improvement). TNT 1.5–3.6× eval/s throughput despite 32-bit scalar — per-eval overhead negates SIMD. TNT does ~67% sectorial search; TS does one pass (6–10% time). Recommendations: eliminate drift from default, increase sectorial rounds. Write-up: `dev/benchmarks/tnt_trajectory_analysis.md`. |
 | T-250 | TNT Fitch kernel disassembly | E | TNT=32-bit i386, zero SIMD, 64KB LUT popcount. TreeSearch has ~4× throughput advantage (128-bit SSE2 vs 32-bit scalar). TNT's 3-5× convergence speed is strategic not implementation. Write-up: `dev/benchmarks/tnt_disassembly_analysis.md`. |

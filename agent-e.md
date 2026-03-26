@@ -2,7 +2,30 @@
 
 ## Current Task
 - **Task:** IDLE
-- **Status:** T-248 done, S-COORD done. T-243 PARKED (PR #230, GHA 23582386358 queued).
+- **Status:** T-254 complete. Drift provides zero score, MPT, or diversity benefit and costs 10–22% of replicates. T-255 unblocked.
+
+### T-254 — Drift MPT diversity experiment — DONE
+- driftCycles=0 vs 2 on Wortley2006 (37t), Zhu2013 (75t), Geisler2001 (68t)
+- 3 seeds × 2 budgets (30s, 120s), with and without consensus stopping
+- Primary finding: drift provides zero benefit on all metrics (score, MPT count, topological diversity)
+- Wortley2006: no-drift consistently finds 4 MPTs, drift finds 1–3 (median 2)
+- Geisler2001/Zhu2013: mean RF identical (7.3 vs 7.4; 11.6 vs 10.2)
+- Drift consumes 15–19% of wall time, reducing replicates by 10–22%
+- With consensus stopping, drift delays stabilization without improving the answer
+- Recommendation: set driftCycles=0 in default and thorough presets (T-255 unblocked)
+- Write-up: `dev/benchmarks/drift_mpt_analysis.md`
+
+### T-251 — TNT trajectory analysis — DONE
+
+### T-250 — TNT Fitch kernel disassembly — DONE
+- TNT is a 32-bit i386 binary with zero SIMD (no SSE2, no AVX) and table-based popcount (64KB LUT, 16-bit halves)
+- TreeSearch uses 64-bit x86-64 with SSE2 128-bit pand/por and software Hamming weight popcount
+- TreeSearch has ~4× raw Fitch throughput advantage over TNT (128 bits/iter vs 32 bits/iter)
+- Neither uses hardware popcnt (potential minor optimization: `-mpopcnt` compile flag)
+- **Key finding:** TNT's 3-5× convergence speed advantage is STRATEGIC, not implementation-level
+- TNT evaluates fewer total candidates to reach the same score — the gap is in search heuristics
+- T-251 (trajectory analysis) elevated in priority; T-246 (AVX2) still worthwhile but not the primary bottleneck
+- Write-up: `dev/benchmarks/tnt_disassembly_analysis.md`
 
 ### S-COORD round 21 — DONE
 - Closed 4 Shiny tasks (T-232, T-239, T-240, T-241) — all re-validated by GHA 23547582438 (cpp-search PASS)

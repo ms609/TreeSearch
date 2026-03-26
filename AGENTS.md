@@ -1171,6 +1171,14 @@ Ranked by priority:
    `thorough` preset defaults to `outerCycles=2`. Matches TNT xmult
    pattern. Goloboff 1999 §2.3. Needs benchmarking to validate
    improvement on standard datasets.
+10. ~~Drift MPT diversity experiment~~ — **Done** (T-254): Drift
+    (`driftCycles=2`) provides zero score benefit, zero MPT enumeration
+    benefit, zero topological diversity benefit, and costs 10–22% of
+    replicates. On Wortley2006, no-drift consistently finds 4 MPTs vs
+    1–3 with drift. On Geisler2001/Zhu2013, mean pairwise RF is
+    identical (7.3 vs 7.4; 11.6 vs 10.2). Drift delays consensus
+    stability without improving the answer. **Recommendation:** set
+    `driftCycles=0` in default and thorough presets (T-255).
 
 ## Benchmarks and profiling
 
