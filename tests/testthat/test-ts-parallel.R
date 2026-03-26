@@ -71,20 +71,23 @@ test_that("Parallel search (2 threads) produces valid trees with correct scores"
 
 test_that("Parallel search respects timeout", {
   skip_on_cran()
-  ds <- make_ts_data(vinther)
+  # Use a larger dataset so each replicate takes long enough to trigger
+  # timeout reliably on fast hardware (23-tip Vinther completes <1ms/rep)
+  agnarsson <- inapplicable.phyData[["Agnarsson2004"]]
+  ds_lg <- make_ts_data(agnarsson)
   t0 <- proc.time()["elapsed"]
   result <- TreeSearch:::ts_driven_search(
-    contrast = ds$contrast, tip_data = ds$tip_data,
-    weight = ds$weight, levels = ds$levels,
+    contrast = ds_lg$contrast, tip_data = ds_lg$tip_data,
+    weight = ds_lg$weight, levels = ds_lg$levels,
     maxReplicates = 1000L, targetHits = 999L,
-    maxSeconds = 1.0, verbosity = 0L,
+    maxSeconds = 2.0, verbosity = 0L,
     nThreads = 2L
   )
   elapsed <- proc.time()["elapsed"] - t0
 
   expect_true(result$timed_out)
   # Should finish within a reasonable time (timeout + overhead)
-  expect_true(elapsed < 10.0)
+  expect_true(elapsed < 15.0)
 })
 
 # --- 4. Edge cases ---
