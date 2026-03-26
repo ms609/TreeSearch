@@ -340,7 +340,10 @@
 #'   `strategy = "sprint", control = SearchControl(ratchetCycles = 10L)` uses
 #'   sprint defaults for everything except `ratchetCycles`.
 #' @param maxReplicates Integer: maximum number of independent search
-#'   replicates (default: 100).
+#'   replicates (default: 96).
+#'   The default is a multiple of 48 (= LCM(12, 16)) so that replicates
+#'   divide evenly across common 12- or 16-core machines when running in
+#'   parallel.
 #'   For large or complex datasets a higher value improves the chance of
 #'   finding all MPTs.  A rough minimum is
 #'   `max(10, ceiling(NTip * NChar / 5000))`, where `NChar = sum(weight)`.
@@ -437,7 +440,7 @@ MaximizeParsimony <- function(
     hsj_alpha = 1.0,
     constraint,
     strategy = "auto",
-    maxReplicates = 100L,
+    maxReplicates = 96L,
     targetHits = max(10L, as.integer(NTip(dataset) / 5)),
     maxSeconds = 0,
     nThreads = 1L,
