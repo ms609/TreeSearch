@@ -11,6 +11,10 @@ void compute_collapsed_flags(
 
   collapsed.assign(tree.n_node, 0);
 
+  // If all characters were simplified away (total_words == 0), there's
+  // nothing to evaluate — leave all edges uncollapsed.
+  if (tree.total_words == 0) return;
+
   // Detect whether any block has inapplicable characters.
   bool has_na = false;
   for (int b = 0; b < ds.n_blocks; ++b) {
