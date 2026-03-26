@@ -1116,6 +1116,15 @@ isolate the escape-effectiveness question.
 that are optimal at 88 tips may be suboptimal at 180+. The 180-taxon dataset
 should be added to the benchmark suite as a separate tier (T-181).
 
+**Brazeau vs EW scoring confound (T-265, 2026-03-26):** TreeSearch
+uses the Brazeau et al. (2019) inapplicable algorithm by default,
+which penalizes inapplicable-to-applicable transitions. TNT treats
+`-` as `?` (standard EW Fitch). On 11 gap datasets, the apparent
+mean gap was +17.8 steps; the actual EW-vs-EW gap is only +2.2 steps
+(5 datasets at 0 gap). **All TNT comparisons MUST use `fitch_mode()`
+to convert inapplicable to missing** for apples-to-apples scoring.
+`fitch_mode()` is defined in `bench_intra_fuse.R` and `bench_t265_regression.R`.
+
 **`maxTime` confound (2026-03-23):** Initial 180-taxon testing used
 `maxTime` (legacy Morphy parameter), which silently delegated to the
 R-loop `Morphy()` engine. The C++ driven search (via `maxSeconds`) is
