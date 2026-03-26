@@ -34,10 +34,6 @@
       "*": "allow"
     },
     "external_directory": {
-      "C:\\Users\\pjjg18\\GitHub\\TreeDist/*": "allow",
-      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\R/*": "allow",
-      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\src/*": "allow",
-      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\vignettes/*": "allow",
       "C:/Users/pjjg18/GitHub/TreeDist/*": "allow",
       "C:/Users/pjjg18/GitHub/TreeDist/R/*": "allow",
       "C:/Users/pjjg18/GitHub/TreeDist/src/*": "allow",
