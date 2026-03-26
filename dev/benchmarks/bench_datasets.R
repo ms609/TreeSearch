@@ -32,6 +32,34 @@ LARGE_BENCHMARK_NAMES <- c(
   "mbank_X30754"    # 180 tips, 425 chars, 40% missing, 20% inapplicable
 )
 
+#' Convert a phyDat to Fitch-mode (inapplicable treated as missing)
+#'
+#' Modifies the contrast matrix so inapplicable tokens ("-") behave as
+#' fully ambiguous ("?").  This makes TreeSearch's Fitch scorer match
+#' TNT's default behavior, enabling fair score comparisons.
+#'
+#' Background: TreeSearch's CharacterLength/TreeLength use the Brazeau
+#' et al. (2019) algorithm for inapplicable characters, which gives
+#' higher (more correct) step counts than Fitch.  TNT always uses Fitch
+#' (treating "-" as missing).  This function bridges the gap for
+#' benchmarking purposes only.
+#'
+#' @param dataset A phyDat object
+#' @return A phyDat with modified contrast (inapplicable rows set to all-1)
+fitch_mode <- function(dataset) {
+  contrast <- attr(dataset, "contrast")
+  levels <- attr(dataset, "levels")
+  inapp_col <- match("-", levels)
+  if (is.na(inapp_col)) return(dataset)
+  for (i in seq_len(nrow(contrast))) {
+    if (contrast[i, inapp_col] == 1 && sum(contrast[i, ]) == 1) {
+      contrast[i, ] <- 1
+    }
+  }
+  attr(dataset, "contrast") <- contrast
+  dataset
+}
+
 #' Prepare raw data for C++ bridge from a phyDat object
 #' @param dataset A phyDat object
 #' @return List with contrast, tip_data, weight, levels

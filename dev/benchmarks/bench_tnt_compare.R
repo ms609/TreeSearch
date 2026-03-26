@@ -16,7 +16,7 @@
 library(TreeSearch)
 library(TreeTools)
 
-source("inst/benchmarks/bench_datasets.R")
+source("dev/benchmarks/bench_datasets.R")
 
 # ---- Configuration ----
 
@@ -242,6 +242,12 @@ run_treesearch <- function(ds, timeout_s = 30, seed = 1, hits = 5,
 #' @param seeds Numeric vector of seeds
 #' @param hits Convergence criterion
 #' @param reps Maximum replicates per search
+#' @param use_fitch If TRUE, apply fitch_mode() to datasets before scoring.
+#'   This makes TreeSearch treat inapplicable tokens as missing, matching
+#'   TNT's default behavior.  Without this, TreeSearch uses the Brazeau
+#'   et al. (2019) algorithm for inapplicable characters, which gives
+#'   higher step counts than TNT's Fitch scorer.  See
+#'   dev/benchmarks/iw_search_quality_analysis.md for details.
 #' @return data.frame with one row per dataset × weighting × timeout × seed
 run_comparison <- function(dataset_names = BENCHMARK_NAMES,
                            weightings = "EW",
@@ -249,12 +255,23 @@ run_comparison <- function(dataset_names = BENCHMARK_NAMES,
                            timeout_s = 30,
                            seeds = 1:3,
                            hits = 5L,
-                           reps = 20L) {
+                           reps = 20L,
+                           use_fitch = FALSE) {
   check_tnt()
 
+  if (use_fitch) cat("** Fitch mode: inapplicable treated as missing **\n")
   cat("Exporting datasets to TNT format...\n")
   data_files <- export_datasets_tnt(dataset_names)
-  datasets <- load_benchmark_datasets()
+
+  # Load datasets; optionally convert to Fitch-mode for fair TNT comparison
+  datasets <- list()
+  for (nm in dataset_names) {
+    ds <- TreeSearch::inapplicable.phyData[[nm]]
+    if (is.null(ds)) next
+    if (use_fitch) ds <- fitch_mode(ds)
+    datasets[[nm]] <- prepare_ts_data(ds)
+  }
+
   # Keep only datasets that exported successfully
   ok <- nchar(data_files) > 0
   dataset_names <- dataset_names[ok]
@@ -353,7 +370,8 @@ tnt_compare_medium <- function() {
 }
 
 #' Full comparison: all 14 datasets, EW + IW(k=3), 10s + 30s
-tnt_compare_full <- function() {
+#' @param use_fitch See [run_comparison()].
+tnt_compare_full <- function(use_fitch = FALSE) {
   run_comparison(
     dataset_names = BENCHMARK_NAMES,
     weightings = c("EW", "IW"),
@@ -361,7 +379,8 @@ tnt_compare_full <- function() {
     timeout_s = c(10, 30),
     seeds = 1:3,
     hits = 5L,
-    reps = 20L
+    reps = 20L,
+    use_fitch = use_fitch
   )
 }
 
