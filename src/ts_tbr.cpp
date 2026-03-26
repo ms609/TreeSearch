@@ -788,6 +788,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           }
 
           for (int ei = 0; ei < n_main; ++ei) {
+            // Prefetch vroot data for a future iteration.
+            // At 180 tips vroot_cache is ~140 KB (L2); prefetch hides
+            // the ~10-cycle L2 latency. No-op on small trees (L1-resident).
+            if (ei + 2 < n_main) {
+#if defined(__GNUC__) || defined(__clang__)
+              __builtin_prefetch(
+                  &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words],
+                  0, 0);
+#elif defined(_MSC_VER) && defined(TS_SIMD_SSE2)
+              _mm_prefetch(reinterpret_cast<const char*>(
+                  &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words]),
+                  _MM_HINT_T0);
+#endif
+            }
             auto& [above, below] = main_edges[ei];
             if (above == nz && below == ns) continue;
             if (sector_mask && !(*sector_mask)[below]) continue;
@@ -829,9 +843,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                   ? static_cast<int>(best_candidate - divided_length + 1)
                   : INT_MAX;
               int extra = fitch_indirect_length_cached(
-                  virtual_prelim.data(),
-                  &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
-                  ds, cutoff);
+                        virtual_prelim.data(),
+                        &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                        ds, cutoff);
               candidate = divided_length + extra;
             }
             ++n_evaluated;
