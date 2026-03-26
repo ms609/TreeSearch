@@ -3,10 +3,15 @@
 # Runs the same morphological datasets through both TreeSearch (C++ driven
 # search) and TNT 1.6, comparing score quality and wall-clock time.
 #
+# *** DO NOT RUN FULL BENCHMARKS LOCALLY. ***
+# Use Hamilton HPC for multi-dataset or multi-seed runs.
+# Local runs are only for smoke tests (1-2 datasets, short timeouts).
+# See .positai/expertise/hamilton.md for dispatch workflow.
+#
 # Usage:
-#   source("inst/benchmarks/bench_tnt_compare.R")
-#   results <- tnt_compare_smoke()        # quick: 2 datasets, EW, 5s
-#   results <- tnt_compare_full()         # all 14 datasets, EW+IW, 10s+30s
+#   source("dev/benchmarks/bench_tnt_compare.R")
+#   results <- tnt_compare_smoke()        # quick: 2 datasets, EW, 5s (OK local)
+#   results <- tnt_compare_full()         # all 14 datasets — USE HAMILTON
 #   save_comparison(results)
 #
 # Prerequisites:
@@ -152,7 +157,7 @@ run_tnt <- function(script_path, dir = STAGING_DIR, timeout_s = 120) {
 
   score <- NA_real_
   score_match <- regmatches(out_text,
-                            regexpr("Best score:\\s+([0-9]+[.][0-9]+)", out_text))
+                            regexpr("Best score:\\s+([0-9]+\\.?[0-9]*)", out_text))
   if (length(score_match) == 1) {
     score <- as.numeric(sub("Best score:\\s+", "", score_match))
   }
@@ -194,40 +199,49 @@ run_tnt <- function(script_path, dir = STAGING_DIR, timeout_s = 120) {
 
 # ---- TreeSearch helpers ----
 
-#' Run a TreeSearch driven search
+#' Run a TreeSearch driven search via MaximizeParsimony
 #'
-#' @param ds Prepared dataset (from prepare_ts_data)
+#' Uses the user-facing API with strategy presets ("auto" by default),
+#' so benchmark results reflect what a real user would get.
+#'
+#' @param raw_dataset phyDat object (raw, possibly fitch_mode-transformed)
 #' @param timeout_s Timeout in seconds
 #' @param seed RNG seed
-#' @param hits Convergence hits
+#' @param hits Convergence hits (targetHits)
 #' @param reps Maximum replicates
+#' @param concavity Concavity constant (Inf for equal weights)
+#' @param strategy Strategy preset to use
 #' @return List with score, n_trees, wall_s, replicates, hits
-run_treesearch <- function(ds, timeout_s = 30, seed = 1, hits = 5,
-                           reps = 20) {
+run_treesearch <- function(raw_dataset, timeout_s = 30, seed = 1, hits = 5,
+                           reps = 20, concavity = Inf, strategy = "auto") {
   set.seed(seed)
   t0 <- proc.time()
   result <- tryCatch(
-    TreeSearch:::ts_driven_search(
-      ds$contrast, ds$tip_data, ds$weight, ds$levels,
+    TreeSearch::MaximizeParsimony(
+      raw_dataset,
+      concavity = concavity,
       maxReplicates = as.integer(reps),
       targetHits = as.integer(hits),
       maxSeconds = as.double(timeout_s),
+      strategy = strategy,
       verbosity = 0L,
       nThreads = 1L
     ),
     error = function(e) {
-      list(best_score = NA_real_, pool_size = NA_integer_,
-           replicates = NA_integer_, hits_to_best = NA_integer_)
+      warning("TreeSearch error on dataset: ", conditionMessage(e))
+      structure(list(), class = "multiPhylo",
+                score = NA_real_, pool_size = NA_integer_,
+                replicates = NA_integer_, hits_to_best = NA_integer_)
     }
   )
   wall_s <- as.double((proc.time() - t0)[3])
 
   list(
-    score = result$best_score,
-    n_trees = result$pool_size,
+    score = attr(result, "score"),
+    n_trees = length(result),
     wall_s = wall_s,
-    replicates = result$replicates,
-    hits = result$hits_to_best
+    replicates = attr(result, "replicates"),
+    hits = attr(result, "hits_to_best")
   )
 }
 
@@ -263,13 +277,18 @@ run_comparison <- function(dataset_names = BENCHMARK_NAMES,
   cat("Exporting datasets to TNT format...\n")
   data_files <- export_datasets_tnt(dataset_names)
 
-  # Load datasets; optionally convert to Fitch-mode for fair TNT comparison
-  datasets <- list()
+  # Load raw phyDat objects; optionally convert to Fitch-mode
+  raw_datasets <- list()
+  dataset_info <- list()
   for (nm in dataset_names) {
     ds <- TreeSearch::inapplicable.phyData[[nm]]
     if (is.null(ds)) next
     if (use_fitch) ds <- fitch_mode(ds)
-    datasets[[nm]] <- prepare_ts_data(ds)
+    raw_datasets[[nm]] <- ds
+    dataset_info[[nm]] <- list(
+      n_taxa = length(ds),
+      n_chars = sum(attr(ds, "weight"))
+    )
   }
 
   # Keep only datasets that exported successfully
@@ -282,7 +301,8 @@ run_comparison <- function(dataset_names = BENCHMARK_NAMES,
   idx <- 0L
 
   for (nm in dataset_names) {
-    ds <- datasets[[nm]]
+    ds_raw <- raw_datasets[[nm]]
+    info <- dataset_info[[nm]]
     data_basename <- paste0(nm, ".tnt")
 
     for (wt in weightings) {
@@ -303,10 +323,11 @@ run_comparison <- function(dataset_names = BENCHMARK_NAMES,
             )
             tnt_res <- run_tnt(script, timeout_s = tmo + 30)
 
-            # --- TreeSearch ---
+            # --- TreeSearch (via MaximizeParsimony with strategy presets) ---
             conc_arg <- if (wt == "IW") k else Inf
             ts_res <- run_treesearch(
-              ds, timeout_s = tmo, seed = seed, hits = hits, reps = reps
+              ds_raw, timeout_s = tmo, seed = seed, hits = hits, reps = reps,
+              concavity = conc_arg
             )
 
             cat(sprintf("TNT=%.1f (%.1fs) TS=%.1f (%.1fs)\n",
@@ -315,8 +336,8 @@ run_comparison <- function(dataset_names = BENCHMARK_NAMES,
 
             rows[[idx]] <- data.frame(
               dataset = nm,
-              n_taxa = ds$n_taxa,
-              n_chars = sum(ds$weight),
+              n_taxa = info$n_taxa,
+              n_chars = info$n_chars,
               weighting = wt,
               concavity = if (is.na(k)) NA_real_ else k,
               timeout_s = tmo,
