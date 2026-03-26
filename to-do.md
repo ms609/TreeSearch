@@ -84,6 +84,6 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 by E (focus 8: T-264, PR #232, T-255). All verified correct. subtree_actives non-NA positions confirmed safe (init to 0, never written, all reads guarded by has_inapplicable). Budget utilization confirmed: Agnarsson2004 uses 94% at 5s. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 23). Fixed T-248 anneal test stale assertion (annealCycles 3→1). Updated T-255 GHA. Task queue healthy. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 25). T-264 fix validated on ARM64. T-261/T-262 merged. AGENTS.md updated. 3 unblocked OPEN tasks. 6 PRs open. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by E. 6 open PRs: #233 (T-246 AVX2, MERGEABLE, CI in progress), #231 (T-263 selective-snapshot, MERGEABLE, CI failures from pre-fix base — needs rebase for SearchControl.Rd + timeout test fixes), #216 (native-search, MERGEABLE, 25 commits behind), #213 (CID consensus, MERGEABLE, 15 behind), #210 (cpp-search→main, MERGEABLE), #178 (stale, CONFLICTING, Aug 2025 — recommend close). All feature PRs are MERGEABLE but CI is UNSTABLE due to stale bases. |
 
