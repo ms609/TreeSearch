@@ -561,6 +561,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   while (keep_going && !timed_out) {
     keep_going = false;
 
+    // Optimization #7: save state snapshot once per pass, not per candidate.
+    // After a rejected move, state_snap.restore() returns the tree to exactly
+    // the state saved here. The per-candidate save was redundant: consecutive
+    // rejections all restore to the same state. Re-saving only happens when
+    // the while loop restarts after an accepted move.
+    save_topology(tree, snap);
+    state_snap.save(tree);
+    states_valid = true;
+
     // Optimization #6: only reshuffle when the previous pass found no
     // improvement. After an accepted move, retry with the same ordering
     // (the topology changed, so previously-failing clips may now succeed).
@@ -873,10 +882,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       bool accepted = false;
 
       if (!dominated && best_above >= 0) {
-        save_topology(tree, snap);
-        // Save full state arrays so we can restore without full_rescore
-        state_snap.save(tree);
-        states_valid = true;
+        // Topology and state snapshot already saved at the top of the
+        // while loop (optimization #7). No per-candidate save needed.
 
         bool ok = apply_tbr_move(tree, clip_node,
                                   best_reroot_parent, best_reroot_child,
