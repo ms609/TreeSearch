@@ -4,6 +4,10 @@
 #' Trees may be scored using equal weights, implied weights
 #' \insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
+#' When using implied weights (`concavity` is finite), extended implied
+#' weighting \insertCite{Goloboff2014}{TreeSearch} is applied by default,
+#' adjusting per-character concavity for missing entries.
+#' Set `extended_iw = FALSE` for standard implied weighting.
 #' Inapplicable characters are handled using the algorithm of
 #' \insertCite{Brazeau2019;textual}{TreeSearch} by default, or
 #' alternatively using the hierarchical scoring of

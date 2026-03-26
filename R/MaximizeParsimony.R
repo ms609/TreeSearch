@@ -237,6 +237,10 @@
 #'
 #' Implied weighting is supported natively: set `concavity` to a numeric
 #' value (e.g.\sspace{}10).
+#' By default, the extended implied weighting correction of
+#' \insertCite{Goloboff2014;textual}{TreeSearch} is applied, adjusting
+#' per-character concavity according to the proportion of missing entries.
+#' Set `extended_iw = FALSE` for standard (uncorrected) implied weighting.
 #' Profile parsimony (`concavity = "profile"`) is supported natively:
 #' characters are simplified to binary (max 2 informative states),
 #' inapplicable tokens are treated as ambiguous, and per-character
