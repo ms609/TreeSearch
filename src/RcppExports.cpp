@@ -801,6 +801,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< int >::type n_draws(n_drawsSEXP);
     rcpp_result_gen = Rcpp::wrap(ts_test_strategy_tracker(seed, n_draws));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ts_cid_consensus
 List ts_cid_consensus(List splitMatrices, IntegerVector nTip, LogicalVector normalize, int maxReplicates, int targetHits, int tbrMaxHits, int ratchetCycles, double ratchetPerturbProb, int ratchetPerturbMode, bool ratchetAdaptive, int driftCycles, int driftAfdLimit, double driftRfdLimit, int xssRounds, int xssPartitions, int rssRounds, int cssRounds, int cssPartitions, int sectorMinSize, int sectorMaxSize, int fuseInterval, bool fuseAcceptEqual, int poolMaxSize, double poolSuboptimal, double maxSeconds, int verbosity, int tabuSize, int wagnerStarts, int nThreads, double screeningK, double screeningTolerance, double scoreTol, int plateauReps, Nullable<IntegerMatrix> startEdge, Nullable<Function> progressCallback);
 RcppExport SEXP _TreeSearch_ts_cid_consensus(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP normalizeSEXP, SEXP maxReplicatesSEXP, SEXP targetHitsSEXP, SEXP tbrMaxHitsSEXP, SEXP ratchetCyclesSEXP, SEXP ratchetPerturbProbSEXP, SEXP ratchetPerturbModeSEXP, SEXP ratchetAdaptiveSEXP, SEXP driftCyclesSEXP, SEXP driftAfdLimitSEXP, SEXP driftRfdLimitSEXP, SEXP xssRoundsSEXP, SEXP xssPartitionsSEXP, SEXP rssRoundsSEXP, SEXP cssRoundsSEXP, SEXP cssPartitionsSEXP, SEXP sectorMinSizeSEXP, SEXP sectorMaxSizeSEXP, SEXP fuseIntervalSEXP, SEXP fuseAcceptEqualSEXP, SEXP poolMaxSizeSEXP, SEXP poolSuboptimalSEXP, SEXP maxSecondsSEXP, SEXP verbositySEXP, SEXP tabuSizeSEXP, SEXP wagnerStartsSEXP, SEXP nThreadsSEXP, SEXP screeningKSEXP, SEXP screeningToleranceSEXP, SEXP scoreTolSEXP, SEXP plateauRepsSEXP, SEXP startEdgeSEXP, SEXP progressCallbackSEXP) {
