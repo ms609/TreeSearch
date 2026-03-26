@@ -52,6 +52,15 @@
 | T-245 | P3 | OPEN | T-243 | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
 | T-246 | P3 | OPEN | T-243 | **AVX2 runtime dispatch for Fitch bit ops.** Widen `ts_simd.h` from SSE2 (128-bit) to AVX2 (256-bit) with runtime detection (`__builtin_cpu_supports("avx2")`) and SSE2 fallback. Estimated 5–10% on datasets with many states or character blocks. | EPYC 7702 supports AVX2. Can be done independently of T-245. Less invasive than batching. |
 
+### TNT Comparison & Strategy Learning
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-249 | P3 | OPEN | — | **Rerun TNT comparison on current cpp-search HEAD.** Round 2 data (120s, 3 seeds) predates NNI warmup, ratchet tuning, biased Wagner, outer cycle loop, and SA tuning. Update `round2_hard.csv` with current engine to measure remaining gaps. | Existing gaps: Geisler2001 +5, Wortley2006/Zhu2013 +3, Zanol2014 +2. TNT converges 3–5× faster on most datasets. |
+| T-251 | P3 | OPEN | T-249 | **TNT trajectory analysis on gap datasets.** Run TNT with verbose logging on Geisler2001, Zhu2013, Wortley2006 (largest score gaps). Parse logs for score-at-time, phase transitions, ratchet escape magnitudes. Compare to TreeSearch phase timing to identify which phase TNT does better. | Depends on T-249 to confirm which gaps persist. |
+| T-252 | P3 | OPEN | T-251 | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | Uses `benchmark_mbank_sample()` in `bench_framework.R`. |
+| T-253 | P3 | OPEN | T-251, T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | Depends on T-249 (updated gaps) and T-252 (broader baseline). |
+
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |

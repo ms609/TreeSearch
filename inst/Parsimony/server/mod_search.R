@@ -645,7 +645,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       searchMaxRep    <- if (length(input$maxReplicates)) {
         as.integer(input$maxReplicates)
       } else {
-        100L
+        96L
       }
       searchTargetHits <- if (length(input$targetHits)) {
         as.integer(input$targetHits)
@@ -903,7 +903,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "xpiwe"
       cur_concavity <- if (length(input$concavity))       input$concavity       else 1L
       cur_strategy  <- if (length(input$strategy))        input$strategy        else "auto"
-      cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 100L
+      cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 96L
       cur_hits      <- if (length(input$targetHits))      input$targetHits      else 10L
       cur_timeout   <- if (length(input$timeout))         input$timeout         else 5
       cur_epsilon   <- if (length(input$epsilon))         input$epsilon         else 0
@@ -954,7 +954,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           sliderInput(ns("timeout"), "Maximum run duration", min = 1,
                       max = 60, value = cur_timeout, post = "min", step = 1),
           sliderInput(ns("maxReplicates"), "Maximum independent runs",
-                      min = 1L, max = 500L, value = cur_maxRep, step = 1L),
+                      min = 48L, max = 960L, value = cur_maxRep, step = 48L),
           helpText("Limits each individual search. Clicking \u2018Continue\u2019",
                    "starts a fresh search; the results panel shows the",
                    "cumulative total across all continued searches.")
