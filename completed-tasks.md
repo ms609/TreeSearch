@@ -8,6 +8,8 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| — | maxReplicates default → 96 (multiple of 48 for parallel efficiency) | F | API: 100→96. Shiny: default 96, slider min=48/max=960/step=48. Issue triaged directly (no T-number). Commit `13501b1a`. |
+| T-251 | TNT trajectory analysis on gap datasets | E | 3 gap datasets (Geisler2001 +5–9, Zhu2013 +4–6, Wortley2006 +3–4), 30s, 3 seeds. Drift 30–170× less efficient than next-worst phase (16–23% of time, <1% improvement). TNT 1.5–3.6× eval/s throughput despite 32-bit scalar — per-eval overhead negates SIMD. TNT does ~67% sectorial search; TS does one pass (6–10% time). Recommendations: eliminate drift from default, increase sectorial rounds. Write-up: `dev/benchmarks/tnt_trajectory_analysis.md`. |
 | T-250 | TNT Fitch kernel disassembly | E | TNT=32-bit i386, zero SIMD, 64KB LUT popcount. TreeSearch has ~4× throughput advantage (128-bit SSE2 vs 32-bit scalar). TNT's 3-5× convergence speed is strategic not implementation. Write-up: `dev/benchmarks/tnt_disassembly_analysis.md`. |
 | T-248 | SA phase tuning for large preset | E | Hamilton benchmark (mbank_X30754 180t, 5 seeds, 30s/60s). annealCycles=1 (400ms/rep, 40% hit rate) most cost-effective; AC=3 (1370ms/rep, 21% hit rate) no significant score gain (p>0.5). Reduced large preset from AC=3 to AC=1, saves ~1s/rep (~6%). |
 | T-232 | [Shiny] "Tips to show" bounces back on decrement | D | Fix committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
