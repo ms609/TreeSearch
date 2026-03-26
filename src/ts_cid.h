@@ -153,9 +153,14 @@ struct CidData {
   double mrp_concavity = 7.0;
   double screening_tolerance = 0.0;
 
-  // Block boundaries: mrp_tree_block_start[i] = first CharBlock index
-  // for input tree i. mrp_tree_block_start[n_trees] = total blocks.
-  std::vector<int> mrp_tree_block_start;
+  // --- MRP dedup reverse index (populated by build_mrp_dataset) ---
+  // mrp_split_trees[i] = list of input tree indices containing unique
+  // MRP character i.  Used by sync_cid_weights_from_mrp() to map
+  // ratchet perturbations back to per-tree CID weights.
+  std::vector<std::vector<int>> mrp_split_trees;
+  // mrp_tree_n_splits[t] = total original splits in input tree t
+  // (denominator for per-tree weight normalization).
+  std::vector<int> mrp_tree_n_splits;
 
   // --- Precomputed constants (populated by prepare_cid_data) ---
   double lg2_n = 0.0;           // log2(n_tips)

@@ -542,19 +542,69 @@ double cid_score(TreeState& tree, const CidData& cd) {
 
 // ==========================================================================
 // build_mrp_dataset: construct MRP binary characters for Fitch screening
+//
+// Deduplicates splits across input trees: each unique bipartition becomes
+// one MRP character with pattern_freq = number of trees containing it.
+// Splits are already canonicalized (tip 0 in partition 0) by both
+// compute_splits_cid() and the R->C++ bridge.
 // ==========================================================================
 
 DataSet build_mrp_dataset(CidData& cd) {
   int n_tips = cd.n_tips;
   int n_bins = cd.n_bins;
 
-  int total_chars = 0;
+  // --- Phase 1: collect unique splits with deduplication ---
+
+  struct UniqueSplitInfo {
+    int freq = 0;
+    std::vector<int> trees;
+  };
+
+  // Contiguous storage: unique_split_data[idx * n_bins .. (idx+1) * n_bins)
+  std::vector<uint64_t> unique_split_data;
+  std::vector<UniqueSplitInfo> unique_info;
+  std::unordered_multimap<uint64_t, int> hash_to_idx;
+
+  cd.mrp_tree_n_splits.assign(cd.n_trees, 0);
+
   for (int t = 0; t < cd.n_trees; ++t) {
-    total_chars += cd.tree_splits[t].n_splits;
+    const CidSplitSet& ss = cd.tree_splits[t];
+    cd.mrp_tree_n_splits[t] = ss.n_splits;
+
+    for (int s = 0; s < ss.n_splits; ++s) {
+      const uint64_t* sp = ss.split(s);
+      uint64_t h = hash_split_key(sp, n_bins);
+
+      // Check existing entries with this hash
+      int found = -1;
+      auto range = hash_to_idx.equal_range(h);
+      for (auto it = range.first; it != range.second; ++it) {
+        int idx = it->second;
+        const uint64_t* existing = &unique_split_data[
+            static_cast<size_t>(idx) * n_bins];
+        if (std::memcmp(sp, existing,
+                        sizeof(uint64_t) * n_bins) == 0) {
+          found = idx;
+          break;
+        }
+      }
+
+      if (found >= 0) {
+        unique_info[found].freq++;
+        unique_info[found].trees.push_back(t);
+      } else {
+        int new_idx = static_cast<int>(unique_info.size());
+        unique_split_data.insert(unique_split_data.end(),
+                                 sp, sp + n_bins);
+        unique_info.push_back({1, {t}});
+        hash_to_idx.emplace(h, new_idx);
+      }
+    }
   }
 
-  int n_blocks = (total_chars + MAX_CHARS_PER_BLOCK - 1) / MAX_CHARS_PER_BLOCK;
-  if (n_blocks == 0) n_blocks = 1;
+  int total_chars = static_cast<int>(unique_info.size());
+
+  // --- Phase 2: build CharBlocks from unique splits ---
 
   DataSet ds;
   ds.n_tips = n_tips;
@@ -565,36 +615,36 @@ DataSet build_mrp_dataset(CidData& cd) {
   static constexpr int N_STATES = 2;
 
   ds.blocks.clear();
-  cd.mrp_tree_block_start.clear();
-  cd.mrp_tree_block_start.reserve(cd.n_trees + 1);
 
-  int char_idx = 0;
-  int block_idx = 0;
-
-  for (int t = 0; t < cd.n_trees; ++t) {
-    cd.mrp_tree_block_start.push_back(block_idx);
-    int n_splits = cd.tree_splits[t].n_splits;
-    for (int s = 0; s < n_splits; ++s) {
-      if (char_idx % MAX_CHARS_PER_BLOCK == 0) {
-        CharBlock blk;
-        blk.n_chars = 0;
-        blk.n_states = N_STATES;
-        blk.weight = 1;
-        blk.has_inapplicable = false;
-        blk.active_mask = 0;
-        blk.upweight_mask = 0;
-        std::memset(blk.pattern_index, 0, sizeof(blk.pattern_index));
-        ds.blocks.push_back(blk);
-        ++block_idx;
-      }
-      int local_idx = char_idx % MAX_CHARS_PER_BLOCK;
-      ds.blocks.back().n_chars = local_idx + 1;
-      ds.blocks.back().active_mask |= (uint64_t(1) << local_idx);
-      ds.blocks.back().pattern_index[local_idx] = char_idx;
-      ++char_idx;
+  for (int c = 0; c < total_chars; ++c) {
+    if (c % MAX_CHARS_PER_BLOCK == 0) {
+      CharBlock blk;
+      blk.n_chars = 0;
+      blk.n_states = N_STATES;
+      blk.weight = 1;
+      blk.has_inapplicable = false;
+      blk.active_mask = 0;
+      blk.upweight_mask = 0;
+      std::memset(blk.pattern_index, 0, sizeof(blk.pattern_index));
+      ds.blocks.push_back(blk);
     }
+    int local_idx = c % MAX_CHARS_PER_BLOCK;
+    ds.blocks.back().n_chars = local_idx + 1;
+    ds.blocks.back().active_mask |= (uint64_t(1) << local_idx);
+    ds.blocks.back().pattern_index[local_idx] = c;
   }
-  cd.mrp_tree_block_start.push_back(block_idx);
+  if (ds.blocks.empty()) {
+    // Edge case: no splits at all
+    CharBlock blk;
+    blk.n_chars = 0;
+    blk.n_states = N_STATES;
+    blk.weight = 1;
+    blk.has_inapplicable = false;
+    blk.active_mask = 0;
+    blk.upweight_mask = 0;
+    std::memset(blk.pattern_index, 0, sizeof(blk.pattern_index));
+    ds.blocks.push_back(blk);
+  }
 
   ds.n_blocks = static_cast<int>(ds.blocks.size());
   ds.total_words = ds.n_blocks * N_STATES;
@@ -603,48 +653,59 @@ DataSet build_mrp_dataset(CidData& cd) {
     ds.block_word_offset[b] = b * N_STATES;
   }
 
+  // --- Phase 3: build tip_states from unique splits ---
+
   size_t tip_state_size = static_cast<size_t>(n_tips) * ds.total_words;
   ds.tip_states.assign(tip_state_size, 0);
 
-  char_idx = 0;
   int blk_i = 0;
-  for (int t = 0; t < cd.n_trees; ++t) {
-    const CidSplitSet& ss = cd.tree_splits[t];
-    for (int s = 0; s < ss.n_splits; ++s) {
-      int local_idx = char_idx % MAX_CHARS_PER_BLOCK;
-      uint64_t bit = uint64_t(1) << local_idx;
-      if (local_idx == 0 && char_idx > 0) ++blk_i;
-      int word_off = ds.block_word_offset[blk_i];
-      for (int tip = 0; tip < n_tips; ++tip) {
-        size_t base = static_cast<size_t>(tip) * ds.total_words + word_off;
-        int word_in_split = tip / 64;
-        int bit_in_word = tip % 64;
-        bool in_split = (word_in_split < n_bins) &&
-            ((ss.data[static_cast<size_t>(s) * n_bins + word_in_split]
-              >> bit_in_word) & 1);
-        if (in_split) {
-          ds.tip_states[base + 1] |= bit;
-        } else {
-          ds.tip_states[base + 0] |= bit;
-        }
+  for (int c = 0; c < total_chars; ++c) {
+    int local_idx = c % MAX_CHARS_PER_BLOCK;
+    uint64_t bit = uint64_t(1) << local_idx;
+    if (local_idx == 0 && c > 0) ++blk_i;
+    int word_off = ds.block_word_offset[blk_i];
+
+    const uint64_t* split_data = &unique_split_data[
+        static_cast<size_t>(c) * n_bins];
+
+    for (int tip = 0; tip < n_tips; ++tip) {
+      size_t base = static_cast<size_t>(tip) * ds.total_words + word_off;
+      int word_in_split = tip / 64;
+      int bit_in_word = tip % 64;
+      bool in_split = (word_in_split < n_bins) &&
+          ((split_data[word_in_split] >> bit_in_word) & 1);
+      if (in_split) {
+        ds.tip_states[base + 1] |= bit;
+      } else {
+        ds.tip_states[base + 0] |= bit;
       }
-      ++char_idx;
     }
   }
+
+  // --- Phase 4: metadata ---
 
   ds.n_patterns = total_chars;
   ds.ew_offset = 0;
   ds.precomputed_steps.assign(total_chars, 0);
   ds.min_steps.assign(total_chars, 1);
-  ds.pattern_freq.assign(total_chars, 1);
 
-  // Populate IW weight arrays required by compute_iw() / compute_weighted_score().
-  // Binary MRP characters have min_steps = 1, so eff_k and phi use the
-  // standard IW formula: eff_k = concavity, phi = 1.0 (no XPIWE correction).
-  // If concavity is not finite (EW mode), fill with 0 / 1 as a safe default.
+  // pattern_freq = number of input trees containing each unique split
+  ds.pattern_freq.resize(total_chars);
+  for (int c = 0; c < total_chars; ++c) {
+    ds.pattern_freq[c] = unique_info[c].freq;
+  }
+
+  // IW weight arrays: binary MRP characters have min_steps = 1.
   double k = std::isfinite(ds.concavity) ? ds.concavity : 0.0;
   ds.eff_k.assign(total_chars, k);
   ds.phi.assign(total_chars, 1.0);
+
+  // --- Phase 5: populate CidData reverse index ---
+
+  cd.mrp_split_trees.resize(total_chars);
+  for (int c = 0; c < total_chars; ++c) {
+    cd.mrp_split_trees[c] = std::move(unique_info[c].trees);
+  }
 
   return ds;
 }
@@ -665,20 +726,28 @@ void restore_cid_weights(CidData& cd) {
 }
 
 void sync_cid_weights_from_mrp(CidData& cd, const DataSet& ds) {
+  // Map MRP perturbation (active/upweight masks) back to per-tree CID
+  // weights using the dedup reverse index.
+  std::fill(cd.tree_weights.begin(), cd.tree_weights.end(), 0.0);
+
+  for (int p = 0; p < ds.n_patterns; ++p) {
+    int blk = p / MAX_CHARS_PER_BLOCK;
+    int bit = p % MAX_CHARS_PER_BLOCK;
+    bool active = ds.blocks[blk].active_mask & (uint64_t(1) << bit);
+    bool upweighted = ds.blocks[blk].upweight_mask & (uint64_t(1) << bit);
+    double contrib = (active ? 1.0 : 0.0) + (upweighted ? 1.0 : 0.0);
+    if (contrib > 0.0) {
+      for (int t : cd.mrp_split_trees[p]) {
+        cd.tree_weights[t] += contrib;
+      }
+    }
+  }
+
   cd.weight_sum = 0.0;
   for (int t = 0; t < cd.n_trees; ++t) {
-    int b_start = cd.mrp_tree_block_start[t];
-    int b_end = cd.mrp_tree_block_start[t + 1];
-    int total_chars = 0;
-    int active_chars = 0;
-    for (int b = b_start; b < b_end; ++b) {
-      total_chars += ds.blocks[b].n_chars;
-      active_chars += popcount64(ds.blocks[b].active_mask);
-      active_chars += popcount64(ds.blocks[b].upweight_mask);
+    if (cd.mrp_tree_n_splits[t] > 0) {
+      cd.tree_weights[t] /= cd.mrp_tree_n_splits[t];
     }
-    cd.tree_weights[t] = (total_chars > 0)
-        ? static_cast<double>(active_chars) / total_chars
-        : 0.0;
     cd.weight_sum += cd.tree_weights[t];
   }
 }

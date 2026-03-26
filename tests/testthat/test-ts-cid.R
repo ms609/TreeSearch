@@ -251,6 +251,53 @@ test_that("Small tree gracefully skips sectors", {
   expect_true(is.finite(result$best_score))
 })
 
+# --- MRP split deduplication ---------------------------------------------------
+
+test_that("MRP dedup: identical trees produce correct consensus", {
+  ref <- as.phylo(42, nTip = 12)
+  identicalTrees <- rep(list(ref), 50)
+  class(identicalTrees) <- "multiPhylo"
+
+  set.seed(5891)
+  result <- InfoConsensus(identicalTrees,
+                          maxReplicates = 2L, targetHits = 1L,
+                          neverDrop = TRUE, collapse = FALSE,
+                          verbosity = 0L)
+
+  expect_s3_class(result, "phylo")
+  # R score is positive (higher = better); should be > 0 for matching trees
+  expect_true(attr(result, "score") > 0)
+
+  # Verify result is topologically correct using CID
+  resultCID <- ClusteringInfoDistance(result, ref)
+  expect_equal(resultCID, 0, tolerance = 1e-6)
+})
+
+test_that("MRP dedup: duplicated trees give same result as unique", {
+  set.seed(4027)
+  baseTrees <- as.phylo(sample.int(200, 10), nTip = 15)
+
+  # Duplicate each tree 5x
+  dupTrees <- rep(baseTrees, each = 5)
+  class(dupTrees) <- "multiPhylo"
+
+  set.seed(9134)
+  resultDup <- InfoConsensus(dupTrees,
+                             maxReplicates = 3L, targetHits = 2L,
+                             neverDrop = TRUE, collapse = FALSE,
+                             verbosity = 0L)
+
+  set.seed(9134)
+  resultOrig <- InfoConsensus(baseTrees,
+                              maxReplicates = 3L, targetHits = 2L,
+                              neverDrop = TRUE, collapse = FALSE,
+                              verbosity = 0L)
+
+  # Scores should be identical (same mean MCI — duplicates don't change the mean)
+  expect_equal(attr(resultDup, "score"), attr(resultOrig, "score"),
+               tolerance = 1e-6)
+})
+
 test_that("InfoConsensus R wrapper with sectors enabled", {
   set.seed(7341)
   trees20 <- as.phylo(sample.int(200, 30), nTip = 20)
