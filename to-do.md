@@ -52,8 +52,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-243 | P2 | PARKED (E, GHA 23581391502) | — | **Merge `feature/hot-loop-opt` to `cpp-search`.** FlatBlock struct, flat EW indirect functions, TBR prefetch. Confirmed 1.4% speedup at 180 tips on Hamilton (median 11.538→11.360s, p=0.001, n=10). | PR #230 open. Fixed pre-existing Rd/spelling issues; re-dispatched GHA. |
-| T-248 | P3 | ASSIGNED (E) | — | **SA (annealing) phase tuning for large preset.** Hamilton benchmark (T-244) shows SA is 7.4% of time with 14% hit rate (0.8 steps/s vs ratchet 4.5). annealCycles=3, annealPhases=5 may be overtuned. Reducing could save ~1.2s/rep → 1 extra replicate per ~17s. | Benchmark on mbank_X30754 with annealCycles=1 or annealCycles=0 to quantify. |
+| T-243 | P2 | PARKED (E, GHA 23582386358) | — | **Merge `feature/hot-loop-opt` to `cpp-search`.** FlatBlock struct, flat EW indirect functions, TBR prefetch. Confirmed 1.4% speedup at 180 tips on Hamilton (median 11.538→11.360s, p=0.001, n=10). | PR #230 open. Fixed pre-existing Rd/spelling issues (TREE's, speedup, ratchetTaper/annealCycles usage); re-dispatched GHA. |
+
 | T-245 | P3 | OPEN | T-243 | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
 | T-246 | P3 | OPEN | T-243 | **AVX2 runtime dispatch for Fitch bit ops.** Widen `ts_simd.h` from SSE2 (128-bit) to AVX2 (256-bit) with runtime detection (`__builtin_cpu_supports("avx2")`) and SSE2 fallback. Estimated 5–10% on datasets with many states or character blocks. | EPYC 7702 supports AVX2. Can be done independently of T-245. Less invasive than batching. |
 

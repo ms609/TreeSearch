@@ -4,6 +4,14 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-26
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-248 | SA phase tuning for large preset | E | Hamilton benchmark (mbank_X30754 180t, 5 seeds, 30s/60s). annealCycles=1 (400ms/rep, 40% hit rate) most cost-effective; AC=3 (1370ms/rep, 21% hit rate) no significant score gain (p>0.5). Reduced large preset from AC=3 to AC=1, saves ~1s/rep (~6%). |
+| T-247 | XPIWE search quality investigation (Vinther2008) | E | NOT A BUG. Score discrepancy (3.84382 vs TNT 3.79283) is entirely from different inapplicable handling (Brazeau three-pass vs standard Fitch). TNT's tree scores EW=80 in TreeSearch vs 78 in TNT (2-step inapplicable difference). TreeSearch's tree (EW=79) is genuinely better under three-pass scoring. XPIWE implementation verified correct: uses eff_k in all scoring paths. |
+| T-244 | Full-pipeline 180-tip benchmark on Hamilton | E | Large preset on EPYC 7702. Median scores: 30s=1202, 60s=1190, 120s=1185. Per-rep median 17.3s. SA phase identified as least productive (7.4% time, 14% hit rate). 65-74 step improvement over pre-T-206 Intel baselines. |
+
 ## 2026-03-25
 
 | ID | Description | Agent | Notes |
@@ -322,3 +330,7 @@ EOF 2>&1
 | T-240 | [Shiny] Pool suboptimal filter not applied mid-search | D | Accumulation path deduped but didn't filter by tolerance. Added TreeLength rescore + filter on combined trees. Commit `340d78381`. |
 EOF 2>&1
 | S-RED | Red-team review focus 4: Parallelism & RNG | D | Found and fixed parallel consensus stability bug: idle polls incremented unchanged counter causing premature termination. Also noted R_CheckUserInterrupt/longjmp fragility. 9 items verified, 1 bug fixed. |
+| T-208 | random_constrained_tree() — constraint-aware random topology | A | Builds topology respecting all constraint splits. Orders splits smallest→largest, assigns tips to tightest enclosing split, resolves randomly. PR #229. |
+| T-211 | impose_constraint() bail-out, return value, root-child bugs | A | Three fixes: threshold n_tip/4→n_tip, return -1 on bail-out, new topology_spr() for root-child moves. PR #229. |
+| T-187 | Perturbation-count stopping rule (perturbStopFactor) | D+Z | IQ-TREE-style stopping rule. Benchmarked across 10 datasets: PSF=2 gives 2.4–6.9x speedup with 0 score loss. Default changed from 0 to 2. PR #226 merged. |
+ENDOFAPPEND 2>&1

@@ -1,8 +1,13 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** T-248 — SA (annealing) phase tuning for large preset
-- **Status:** Starting. T-243 PARKED (PR #230, GHA 23581391502 — fixed Rd/spelling issues).
+- **Task:** IDLE (picking next task)
+- **Status:** T-248 complete (annealCycles 3→1). T-243 PARKED (PR #230, GHA 23581391502).
+
+### T-248 — SA phase tuning — DONE
+- Hamilton benchmark: AC=0/1/3 × 30s/60s, 5 seeds each, mbank_X30754 (180t)
+- AC=1: 400ms/rep, 40% hit rate. AC=3: 1370ms/rep, 21% hit rate. No significant score difference (p>0.5).
+- Changed large preset annealCycles from 3 to 1. Saves ~1s/rep (~6% of 17s).
 
 ### T-247 — XPIWE search quality investigation — DONE (not a bug)
 - Score discrepancy (3.84382 vs TNT 3.79283) from different inapplicable handling
