@@ -1,3 +1,8 @@
+> **Before starting work in this directory, read [`../AGENTS.md`](../AGENTS.md)**
+> for multi-agent coordination rules, build/test infrastructure, GHA workflows,
+> and worktree discipline. That file is the authoritative reference for all
+> cross-package agent operations.
+
 # TreeSearch Multi-Agent Development Notes
 
 ## Build isolation — tarball workflow (mandatory)

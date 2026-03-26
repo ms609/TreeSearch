@@ -70,20 +70,27 @@ export_datasets_tnt <- function(dataset_names = BENCHMARK_NAMES,
 #' @return Path to the .run script file
 write_tnt_script <- function(data_file, weighting = "EW", concavity = 3,
                              timeout_s = 30, seed = 1, hits = 5, reps = 20,
+                             xpiwe = FALSE,
                              dir = STAGING_DIR) {
   hh <- timeout_s %/% 3600
   mm <- (timeout_s %% 3600) %/% 60
   ss <- timeout_s %% 60
   timeout_str <- sprintf("%d:%02d:%02d", hh, mm, ss)
 
+  # piwe must be set BEFORE proc so TNT reads data in IW mode.
+  # xpiwe= (no arg) activates extended IW AFTER proc.
+  # xpiwe=K with a number causes a "No command!" parse error in TNT 1.6.
+  commands <- "mxram 1024;"
+  if (weighting == "IW" || xpiwe) {
+    commands <- c(commands, sprintf("piwe=%d;", concavity))
+  }
   commands <- c(
-    "mxram 1024;",
+    commands,
     sprintf("proc %s;", data_file),
     sprintf("rseed %d;", seed)
   )
-
-  if (weighting == "IW") {
-    commands <- c(commands, sprintf("piwe=%d;", concavity))
+  if (xpiwe) {
+    commands <- c(commands, "xpiwe=;")
   }
 
   commands <- c(
