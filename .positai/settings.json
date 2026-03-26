@@ -49,7 +49,10 @@
       "r-package-profiling": "allow"
     },
     "webfetch": {
-      "https://repo.r-wasm.org/*": "allow"
+      "https://repo.r-wasm.org/*": "allow",
+      "https://agentskills.io/*": "allow",
+      "https://platform.claude.com/*": "allow",
+      "https://github.com/*": "allow",
       "C:\\Users\\pjjg18\\GitHub\\TreeDist/*": "allow",
       "C:\\Users\\pjjg18\\GitHub\\TreeDist\\R/*": "allow",
       "C:\\Users\\pjjg18\\GitHub\\TreeDist\\src/*": "allow",
@@ -59,9 +62,6 @@
       "../TreeDist/*": "allow",
       "../consense/*": "allow",
       "/tmp/*": "allow"
-    },
-    "skill": {
-      "quarto-authoring": "allow"
     }
   }
 }
