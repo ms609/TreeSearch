@@ -35,6 +35,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-242 | P1 | PARKED (C, GHA 23545987517) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. Investigate whether this is a genuine regression or expected IW behaviour. |
+| T-247 | P2 | OPEN | — | **[Investigate] XPIWE search quality: TreeSearch suboptimal vs TNT on Vinther2008.** TNT finds 3.79283 (piwe=3, xpiwe(); TreeSearch finds 3.80000 (same as standard IW). On the optimal IW tree, no character has both missing data and h≥2, so XPIWE=IW locally — but XPIWE should explore a different landscape during search (intermediate trees DO differ). TreeSearch may not be using XPIWE-adjusted scores during candidate evaluation, or the search may simply not escape the IW basin. | Filed by F. Verify on larger datasets (Agnarsson, Zhu) where XPIWE correction bites harder. Check C++ `score_tree()` path uses `eff_k` during TBR/SPR candidate screening. |
 
 
 
@@ -46,6 +47,15 @@
 | T-240 | P2 | PARKED (D, GHA 23544604214†) | — | **[Shiny] Pool suboptimal filter not applied when changed mid-search.** After search, changing "Keep if suboptimal by" from ≤6 to ≤2 or ≤0 doesn't filter existing pool trees. | From a.17. Fix committed. GHA failed pre-T-214; awaiting re-validation. |
 | T-239 | P3 | PARKED (D, GHA 23545538742†) | — | **[Shiny] Cluster consensus: highlight edges unique to a cluster.** Heatmap colouring: emphasize "unique to cluster" vs "in 5/6 clusters". Agnarsson (6 clusters) is testbed. | From a.07. Feature committed. GHA failed pre-T-214; awaiting re-validation. |
 | T-241 | P3 | PARKED (D, GHA 23545261957†) | — | **[Shiny] Show cluster assignment next to tree selector.** Add "(cluster X)" in cluster colour after "Tree to plot" label. | From a.19. Feature committed. GHA failed pre-T-214; awaiting re-validation. |
+
+### Performance Optimization (180+ tips)
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-243 | P2 | PARKED (E, GHA 23580149481) | — | **Merge `feature/hot-loop-opt` to `cpp-search`.** FlatBlock struct, flat EW indirect functions, TBR prefetch. Confirmed 1.4% speedup at 180 tips on Hamilton (median 11.538→11.360s, p=0.001, n=10). | PR #230 open. GHA dispatched. |
+| T-244 | P2 | ASSIGNED (E) | T-243 | **Full-pipeline 180-tip benchmark on Hamilton.** Run `large` preset with ratchet/drift/sectorial enabled on `mbank_X30754` (180t, 418 patterns). Validate phase distribution and strategy preset tuning under realistic conditions on EPYC vs Intel desktop. | Hamilton infra ready at `/nobackup/pjjg18/ts-bench/`. Use lib-baseline. Compare with AGENTS.md baselines. |
+| T-245 | P3 | OPEN | T-243 | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
+| T-246 | P3 | OPEN | T-243 | **AVX2 runtime dispatch for Fitch bit ops.** Widen `ts_simd.h` from SSE2 (128-bit) to AVX2 (256-bit) with runtime detection (`__builtin_cpu_supports("avx2")`) and SSE2 fallback. Estimated 5–10% on datasets with many states or character blocks. | EPYC 7702 supports AVX2. Can be done independently of T-245. Less invasive than batching. |
 
 ### Standing Tasks
 
