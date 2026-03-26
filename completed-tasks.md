@@ -8,6 +8,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
+| T-250 | TNT Fitch kernel disassembly | E | TNT=32-bit i386, zero SIMD, 64KB LUT popcount. TreeSearch has ~4× throughput advantage (128-bit SSE2 vs 32-bit scalar). TNT's 3-5× convergence speed is strategic not implementation. Write-up: `dev/benchmarks/tnt_disassembly_analysis.md`. |
 | T-248 | SA phase tuning for large preset | E | Hamilton benchmark (mbank_X30754 180t, 5 seeds, 30s/60s). annealCycles=1 (400ms/rep, 40% hit rate) most cost-effective; AC=3 (1370ms/rep, 21% hit rate) no significant score gain (p>0.5). Reduced large preset from AC=3 to AC=1, saves ~1s/rep (~6%). |
 | T-232 | [Shiny] "Tips to show" bounces back on decrement | D | Fix committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
 | T-240 | [Shiny] Pool suboptimal filter not applied mid-search | D | Fix committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
