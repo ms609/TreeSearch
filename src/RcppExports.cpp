@@ -876,3 +876,16 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_cid_score_trees
+NumericVector ts_cid_score_trees(List splitMatrices, int nTip, List candidateEdges);
+RcppExport SEXP _TreeSearch_ts_cid_score_trees(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP candidateEdgesSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type splitMatrices(splitMatricesSEXP);
+    Rcpp::traits::input_parameter< int >::type nTip(nTipSEXP);
+    Rcpp::traits::input_parameter< List >::type candidateEdges(candidateEdgesSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_cid_score_trees(splitMatrices, nTip, candidateEdges));
+    return rcpp_result_gen;
+END_RCPP
+}

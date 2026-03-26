@@ -214,3 +214,7 @@ ts_cid_consensus <- function(splitMatrices, nTip, normalize, maxReplicates = 100
     .Call(`_TreeSearch_ts_cid_consensus`, splitMatrices, nTip, normalize, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, tabuSize, wagnerStarts, nThreads, screeningK, screeningTolerance, startEdge, progressCallback)
 }
 
+ts_cid_score_trees <- function(splitMatrices, nTip, candidateEdges) {
+    .Call(`_TreeSearch_ts_cid_score_trees`, splitMatrices, nTip, candidateEdges)
+}
+

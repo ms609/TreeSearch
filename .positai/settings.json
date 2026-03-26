@@ -24,6 +24,7 @@
       "cd /c/Users/pjjg18/GitHub/TreeSearch": "allow",
       "Rscript -e \"roxygen2::roxygenise(load_code = roxygen2::load_installed)\" 2>&1": "allow",
       "tail *": "allow",
+      "cd \"C:/Users/pjjg18/GitHub/TreeSearch-a\"": "allow",
       "Rscript -e \".libPaths(c('.agent-A', .libPaths())); roxygen2::roxygenise(load_code = roxygen2::load_installed)\" 2>&1": "allow",
       "git *": "allow"
     },
@@ -33,6 +34,10 @@
       "*": "allow"
     },
     "external_directory": {
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist/*": "allow",
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\R/*": "allow",
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\src/*": "allow",
+      "C:\\Users\\pjjg18\\GitHub\\TreeDist\\vignettes/*": "allow",
       "C:/Users/pjjg18/GitHub/TreeDist/*": "allow",
       "C:/Users/pjjg18/GitHub/TreeDist/R/*": "allow",
       "C:/Users/pjjg18/GitHub/TreeDist/src/*": "allow",

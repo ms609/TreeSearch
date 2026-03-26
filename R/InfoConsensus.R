@@ -98,13 +98,13 @@
 #' @family custom search functions
 #' @export
 InfoConsensus <- function(trees,
-                          maxReplicates = 100L,
-                          targetHits = 10L,
+                          maxReplicates = 20L,
+                          targetHits = 3L,
                           maxSeconds = 0,
                           nThreads = getOption("mc.cores", 1L),
                           collapse = TRUE,
                           neverDrop = FALSE,
-                          maxDrop = ceiling(NTip(trees[[1]]) / 10),
+                          maxDrop = min(5L, ceiling(NTip(trees[[1]]) / 10)),
                           control = SearchControl(),
                           screeningK = 7,
                           screeningTolerance = 0,
@@ -248,11 +248,11 @@ InfoConsensus <- function(trees,
     maxReplicates = maxReplicates,
     targetHits = targetHits,
     tbrMaxHits = .NullOr(ctrl[["tbrMaxHits"]], 1L),
-    ratchetCycles = .NullOr(ctrl[["ratchetCycles"]], 10L),
-    ratchetPerturbProb = .NullOr(ctrl[["ratchetPerturbProb"]], 0.04),
+    ratchetCycles = .NullOr(ctrl[["ratchetCycles"]], 5L),
+    ratchetPerturbProb = .NullOr(ctrl[["ratchetPerturbProb"]], 0.25),
     ratchetPerturbMode = .NullOr(ctrl[["ratchetPerturbMode"]], 0L),
     ratchetAdaptive = .NullOr(ctrl[["ratchetAdaptive"]], FALSE),
-    driftCycles = .NullOr(ctrl[["driftCycles"]], 6L),
+    driftCycles = .NullOr(ctrl[["driftCycles"]], 3L),
     driftAfdLimit = .NullOr(ctrl[["driftAfdLimit"]], 3L),
     driftRfdLimit = .NullOr(ctrl[["driftRfdLimit"]], 0.1),
     xssRounds = .NullOr(ctrl[["xssRounds"]], if (useSectors) 3L else 0L),
@@ -320,27 +320,12 @@ names.cidData <- function(x) x$tipLabels
 
 
 # Score candidate tree against all input trees using MCI.
-# Returns negated mean MCI (lower = better).
-.CIDScorer <- function(parent, child, dataset) {
-  .CIDScoreFast(parent, child, dataset)
-}
-
-
-# Fast MCI scorer using precomputed input splits.
 # Returns negated mean MCI (lower = better), consistent with C++ cid_score().
-.CIDScoreFast <- function(parent, child, dataset) {
-  nTip <- dataset$nTip
-  candidate <- .EdgeListToPhylo(parent, child, dataset$tipLabels)
-  candSp <- as.Splits(candidate, dataset$tipLabels)
-  inputSplitsRaw <- dataset$inputSplitsRaw
-  nTree <- length(inputSplitsRaw)
-  
-  mciSum <- 0
-  for (i in seq_len(nTree)) {
-    mciSum <- mciSum + MutualClusteringInfoSplits(candSp, inputSplitsRaw[[i]],
-                                                  nTip)
-  }
-  -mciSum / nTree
+# Delegates to ts_cid_score_trees for the optimised C++ path (precomputed
+# hash index, log2 values, bounded early exit, persistent scratch buffers).
+.CIDScorer <- function(parent, child, dataset) {
+  ts_cid_score_trees(dataset$inputSplitsRaw, dataset$nTip,
+                     list(cbind(parent, child)))[1L]
 }
 
 
@@ -386,90 +371,90 @@ names.cidData <- function(x) x$tipLabels
 # Iteratively tries collapsing each internal edge; accepts if score improves.
 # Then tries resolving each polytomy; accepts if score improves.
 # Repeats until no improvement.
+#
+# All collapse/resolve candidates per pass are batch-scored in a single
+# ts_cid_score_trees() call, amortising CidData construction (hash-index
+# build, log2 precomputation) across the candidate set.
 .CollapseRefine <- function(tree, cidData, verbosity = 0L) {
   tipLabels <- cidData$tipLabels
-  nTip <- cidData$nTip
-  edge <- tree[["edge"]]
-  parent <- edge[, 1]
-  child <- edge[, 2]
-  
-  bestScore <- .CIDScorer(parent, child, cidData)
-  
+  nTip      <- cidData$nTip
+  splitMats <- cidData$inputSplitsRaw
+  edge   <- tree[["edge"]]
+  parent <- edge[, 1L]
+  child  <- edge[, 2L]
+
+  bestScore <- ts_cid_score_trees(splitMats, nTip, list(edge))[1L]
+
   if (verbosity > 0L) {
     message("  - Collapse/resolve refinement. Starting MCI: ",
             signif(-bestScore, 6))
   }
-  
+
   improved <- TRUE
   while (improved) {
     improved <- FALSE
-    
-    # --- Collapse pass: try removing each internal edge ---
+
+    # --- Collapse pass: batch-score all collapse candidates ---
     internalEdges <- which(child > nTip)
     if (length(internalEdges) > 0L) {
-      for (i in rev(seq_along(internalEdges))) {
-        edgeIdx <- internalEdges[i]
-        candidate <- .CollapseSpecificEdge(parent, child, edgeIdx, nTip)
-        candScore <- .CIDScorer(candidate[[1]], candidate[[2]], cidData)
-        if (candScore < bestScore - sqrt(.Machine[["double.eps"]])) {
-          parent <- candidate[[1]]
-          child <- candidate[[2]]
-          bestScore <- candScore
-          improved <- TRUE
-          if (verbosity > 1L) {
-            message("    * Collapsed edge -> MCI ", signif(-bestScore, 6))
-          }
-          # Recompute internal edges since topology changed
-          break
+      candidates <- lapply(internalEdges, function(idx) {
+        cand <- .CollapseSpecificEdge(parent, child, idx, nTip)
+        cbind(cand[[1L]], cand[[2L]])
+      })
+      scores  <- ts_cid_score_trees(splitMats, nTip, candidates)
+      bestIdx <- which.min(scores)
+      if (scores[[bestIdx]] < bestScore - sqrt(.Machine[["double.eps"]])) {
+        bestEdge  <- candidates[[bestIdx]]
+        parent    <- bestEdge[, 1L]
+        child     <- bestEdge[, 2L]
+        bestScore <- scores[[bestIdx]]
+        improved  <- TRUE
+        if (verbosity > 1L) {
+          message("    * Collapsed edge -> MCI ", signif(-bestScore, 6))
         }
+        next
       }
-      if (improved) next
     }
-    
-    # --- Resolve pass: try resolving each polytomy ---
-    degrees <- tabulate(parent, nbins = max(parent))
+
+    # --- Resolve pass: batch-score all resolve candidates ---
+    degrees   <- tabulate(parent, nbins = max(parent))
     polyNodes <- which(degrees > 2L)
     if (length(polyNodes) > 0L) {
+      candidates <- list()
       for (node in polyNodes) {
         childEdges <- which(parent == node)
-        nChildren <- length(childEdges)
+        nChildren  <- length(childEdges)
         if (nChildren <= 2L) next
-        
-        # Try all pairs of children as candidates for a new clade
-        bestResolve <- NULL
-        bestResolveScore <- bestScore
-        for (a in 1:(nChildren - 1L)) {
-          for (b in (a + 1L):nChildren) {
-            candidate <- .ResolveSpecificPair(
-              parent, child, node,
-              childEdges[c(a, b)], nTip
-            )
-            candScore <- .CIDScorer(candidate[[1]], candidate[[2]], cidData)
-            if (candScore < bestResolveScore - sqrt(.Machine[["double.eps"]])) {
-              bestResolve <- candidate
-              bestResolveScore <- candScore
-            }
+        for (a in seq_len(nChildren - 1L)) {
+          for (b in seq(a + 1L, nChildren)) {
+            cand <- .ResolveSpecificPair(parent, child, node,
+                                         childEdges[c(a, b)], nTip)
+            candidates <- c(candidates, list(cbind(cand[[1L]], cand[[2L]])))
           }
         }
-        if (!is.null(bestResolve)) {
-          parent <- bestResolve[[1]]
-          child <- bestResolve[[2]]
-          bestScore <- bestResolveScore
-          improved <- TRUE
+      }
+      if (length(candidates) > 0L) {
+        scores  <- ts_cid_score_trees(splitMats, nTip, candidates)
+        bestIdx <- which.min(scores)
+        if (scores[[bestIdx]] < bestScore - sqrt(.Machine[["double.eps"]])) {
+          bestEdge  <- candidates[[bestIdx]]
+          parent    <- bestEdge[, 1L]
+          child     <- bestEdge[, 2L]
+          bestScore <- scores[[bestIdx]]
+          improved  <- TRUE
           if (verbosity > 1L) {
             message("    * Resolved polytomy -> MCI ", signif(-bestScore, 6))
           }
-          break
         }
       }
     }
   }
-  
+
   if (verbosity > 0L) {
     message("  - Collapse/resolve complete. Final MCI: ",
             signif(-bestScore, 6))
   }
-  
+
   result <- .EdgeListToPhylo(parent, child, tipLabels)
   attr(result, "score") <- bestScore
   result
@@ -521,11 +506,13 @@ names.cidData <- function(x) x$tipLabels
     prescreenScores <- .PrescreenMarginalNID(
       tree, cidData, droppable, originalTrees, allTipLabels, droppedTips
     )
-    candidates <- names(sort(prescreenScores))
+    # Only pursue tips whose prescreen score beats current best; cap at top 3
+    # so each rogue-drop iteration does at most 3 expensive re-optimisations.
+    orderedScores <- sort(prescreenScores)
+    belowThreshold <- orderedScores < bestScore - sqrt(.Machine[["double.eps"]])
+    candidates <- names(orderedScores)[belowThreshold][seq_len(
+      min(3L, sum(belowThreshold)))]
     for (tip in candidates) {
-      if (prescreenScores[tip] >= bestScore - sqrt(.Machine[["double.eps"]])) {
-        break
-      }
       reducedTips <- setdiff(currentTips, tip)
       allDropped <- c(droppedTips, tip)
       reducedInputTrees <- .PruneTrees(originalTrees, allDropped)
@@ -609,16 +596,25 @@ names.cidData <- function(x) x$tipLabels
 }
 
 
+# Pre-screen rogue candidates.
+# For each tip in `droppable`, scores the pruned current tree against pruned
+# input trees.  Uses ts_cid_score_trees() rather than the R-loop
+# MutualClusteringInfoSplits path, gaining the C++ hash-index exact match,
+# precomputed log2 values, and bounded early exit.
+# Each tip still needs its own CidData build (input trees differ per drop),
+# but the inner per-input-tree loop runs entirely in C++.
 .PrescreenMarginalNID <- function(tree, cidData, droppable,
                                   originalTrees, allTipLabels,
                                   alreadyDropped) {
   vapply(droppable, function(tip) {
     reducedTips <- setdiff(tree[["tip.label"]], tip)
-    allDropped <- c(alreadyDropped, tip)
+    allDropped  <- c(alreadyDropped, tip)
     reducedInputTrees <- .PruneTrees(originalTrees, allDropped)
-    reducedCidData <- .MakeCIDData(reducedInputTrees, reducedTips)
+    splitMats <- lapply(reducedInputTrees,
+                        function(tr) unclass(as.Splits(tr, reducedTips)))
     reducedTree <- DropTip(tree, tip)
-    .ScoreTree(reducedTree, reducedCidData)
+    ts_cid_score_trees(splitMats, length(reducedTips),
+                       list(reducedTree[["edge"]]))[1L]
   }, double(1))
 }
 
@@ -632,8 +628,8 @@ names.cidData <- function(x) x$tipLabels
 
 
 .ScoreTree <- function(tree, cidData) {
-  edge <- tree[["edge"]]
-  .CIDScorer(edge[, 1], edge[, 2], cidData)
+  ts_cid_score_trees(cidData$inputSplitsRaw, cidData$nTip,
+                     list(tree[["edge"]]))[1L]
 }
 
 
@@ -648,27 +644,31 @@ names.cidData <- function(x) x$tipLabels
 }
 
 
+# Try inserting tipLabel at every edge of tree; return the best position.
+# Batch-scores all insertion candidates in a single ts_cid_score_trees() call
+# so CidData is built once (not once per insertion position).
 .BestInsertion <- function(tree, tipLabel, originalTrees,
                            otherDropped) {
   currentTips <- c(tree[["tip.label"]], tipLabel)
-  if (length(otherDropped) > 0L) {
-    inputTrees <- .PruneTrees(originalTrees, otherDropped)
+  inputTrees  <- if (length(otherDropped) > 0L) {
+    .PruneTrees(originalTrees, otherDropped)
   } else {
-    inputTrees <- originalTrees
+    originalTrees
   }
   testCidData <- .MakeCIDData(inputTrees, currentTips)
-  nEdge <- nrow(tree[["edge"]])
-  bestScore <- Inf
-  bestTree <- NULL
-  for (i in seq_len(nEdge)) {
-    candidate <- .InsertTipAtEdge(tree, tipLabel, i)
-    score <- .ScoreTree(candidate, testCidData)
-    if (score < bestScore) {
-      bestScore <- score
-      bestTree <- candidate
-    }
-  }
-  list(tree = bestTree, score = bestScore, cidData = testCidData)
+  splitMats   <- testCidData$inputSplitsRaw
+  nTip        <- length(currentTips)
+
+  nEdge      <- nrow(tree[["edge"]])
+  candidates <- lapply(seq_len(nEdge),
+                       function(i) .InsertTipAtEdge(tree, tipLabel, i)[["edge"]])
+
+  scores  <- ts_cid_score_trees(splitMats, nTip, candidates)
+  bestIdx <- which.min(scores)
+
+  bestEdge <- candidates[[bestIdx]]
+  bestTree <- .EdgeListToPhylo(bestEdge[, 1L], bestEdge[, 2L], currentTips)
+  list(tree = bestTree, score = scores[[bestIdx]], cidData = testCidData)
 }
 
 

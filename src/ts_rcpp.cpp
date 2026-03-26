@@ -2853,3 +2853,291 @@ List ts_cid_consensus(
     Named("timed_out") = result.timed_out
   );
 }
+// ---------------------------------------------------------------------------
+// ts_cid_score_trees: batch CID scoring of candidate trees.
+//
+// Given a set of input trees (same format as ts_cid_consensus) and a list
+// of candidate tree edge matrices, scores each candidate and returns a
+// NumericVector of negated mean MCI values (lower = better consensus),
+// consistent with the C++ cid_score() convention.
+//
+// CidData is built once and reused across all candidates — amortising the
+// prepare_cid_data() hash-index and log2 precomputation across the batch.
+// This is the primary entry point for R-side scoring in phases 2 and 3 of
+// InfoConsensus() (collapse/resolve refinement, rogue prescreening, and
+// tip insertion).
+// ---------------------------------------------------------------------------
+
+// Topology-only TreeState from a 1-based R edge matrix (two int vectors).
+// Sets up parent/left/right/postorder; leaves Fitch state arrays empty.
+// Sufficient for cid_score(), which only accesses topology fields.
+static ts::TreeState cid_tree_from_edge(const int* ep, const int* ec,
+                                         int n_edge, int n_tip)
+{
+  ts::TreeState tree;
+  tree.n_tip = n_tip;
+  tree.n_internal = n_tip - 1;
+  tree.n_node = 2 * n_tip - 1;
+  tree.total_words = 0;
+  tree.n_blocks = 0;
+
+  tree.parent.assign(tree.n_node, -1);
+  tree.left.assign(tree.n_internal, -1);
+  tree.right.assign(tree.n_internal, -1);
+
+  for (int i = 0; i < n_edge; ++i) {
+    int p = ep[i] - 1;   // convert to 0-based
+    int c = ec[i] - 1;
+    tree.parent[c] = p;
+    int pi = p - n_tip;
+    if (tree.left[pi] == -1) {
+      tree.left[pi] = c;
+    } else {
+      tree.right[pi] = c;
+    }
+  }
+  tree.parent[n_tip] = n_tip;  // root is its own parent
+  tree.build_postorder();
+  return tree;
+}
+
+// Build CidData from a list of R raw split matrices.
+// Extracted as a helper shared by ts_cid_score_trees and ts_cid_consensus.
+static ts::CidData cid_data_from_splits(const Rcpp::List& splitMatrices,
+                                         int n_tip)
+{
+  int n_trees = splitMatrices.size();
+  int n_bins  = (n_tip + 63) / 64;
+  int unset   = (n_tip % 64) ? 64 - (n_tip % 64) : 0;
+  uint64_t last_mask = unset ? (~uint64_t(0)) >> unset : ~uint64_t(0);
+
+  ts::CidData cd;
+  cd.n_trees   = n_trees;
+  cd.n_tips    = n_tip;
+  cd.n_bins    = n_bins;
+  cd.normalize = false;
+  cd.mrp_concavity       = HUGE_VAL;
+  cd.screening_tolerance = 0.0;
+  cd.tree_splits.resize(n_trees);
+  cd.tree_ce.resize(n_trees);
+  cd.tree_weights.assign(n_trees, 1.0);
+  cd.weight_sum = static_cast<double>(n_trees);
+
+  for (int t = 0; t < n_trees; ++t) {
+    RawMatrix rm = Rcpp::as<RawMatrix>(splitMatrices[t]);
+    int n_splits    = rm.nrow();
+    int n_r_cols    = rm.ncol();
+    ts::CidSplitSet& ss = cd.tree_splits[t];
+    ss.n_splits = n_splits;
+    ss.n_bins   = n_bins;
+    ss.data.assign(static_cast<size_t>(n_splits) * n_bins, 0);
+    ss.in_split.resize(n_splits, 0);
+
+    for (int s = 0; s < n_splits; ++s) {
+      uint64_t* sp = &ss.data[static_cast<size_t>(s) * n_bins];
+      for (int col = 0; col < n_r_cols; ++col) {
+        int word     = col / 8;
+        int byte_pos = col % 8;
+        if (word < n_bins) {
+          sp[word] |= static_cast<uint64_t>(
+              static_cast<unsigned char>(rm(s, col))) << (byte_pos * 8);
+        }
+      }
+      // Canonical form: ensure tip 0 is in partition 0
+      if (sp[0] & 1) {
+        for (int w = 0; w < n_bins - 1; ++w) sp[w] = ~sp[w];
+        if (n_bins > 0) sp[n_bins - 1] ^= last_mask;
+      }
+      int cnt = 0;
+      for (int w = 0; w < n_bins; ++w) cnt += ts::popcount64(sp[w]);
+      ss.in_split[s] = cnt;
+    }
+    cd.tree_ce[t] = ts::clustering_entropy(ss, n_tip);
+  }
+  cd.mean_tree_ce = 0.0;
+  for (int t = 0; t < n_trees; ++t) cd.mean_tree_ce += cd.tree_ce[t];
+  if (n_trees > 0) cd.mean_tree_ce /= n_trees;
+
+  ts::prepare_cid_data(cd);
+  return cd;
+}
+
+// [[Rcpp::export]]
+NumericVector ts_cid_score_trees(
+    List splitMatrices,
+    int nTip,
+    List candidateEdges)
+{
+  if (splitMatrices.size() == 0)
+    Rcpp::stop("ts_cid_score_trees: no input trees provided.");
+
+  ts::CidData cd = cid_data_from_splits(splitMatrices, nTip);
+
+  int n_cand = candidateEdges.size();
+  NumericVector result(n_cand, R_PosInf);
+
+  for (int i = 0; i < n_cand; ++i) {
+    IntegerMatrix edge = Rcpp::as<IntegerMatrix>(candidateEdges[i]);
+    int n_edge = edge.nrow();
+    // Copy columns into contiguous vectors for cid_tree_from_edge
+    std::vector<int> ep(n_edge), ec(n_edge);
+    for (int j = 0; j < n_edge; ++j) {
+      ep[j] = edge(j, 0);
+      ec[j] = edge(j, 1);
+    }
+    ts::TreeState tree = cid_tree_from_edge(ep.data(), ec.data(), n_edge, nTip);
+    result[i] = ts::cid_score(tree, cd);
+  }
+  return result;
+}
+
+// --- Wagner bias benchmark ---
+//
+// For each of n_reps random seeds, builds a Wagner tree under the specified
+// biasing criterion and optionally runs TBR to the local optimum.  Returns
+// per-replicate Wagner scores (and TBR scores if run_tbr = TRUE) so that
+// callers can compare average starting-tree quality across criteria.
+//
+// bias:        0 = RANDOM, 1 = GOLOBOFF, 2 = ENTROPY
+// temperature: softmax temperature (0 = greedy; applied to [0,1]-normalised
+//              scores so the parameter is dataset-independent)
+// n_reps:      number of trees to build
+// run_tbr:     if TRUE, run TBR convergence and record its score too
+
+// [[Rcpp::export]]
+List ts_wagner_bias_bench(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps,
+    double concavity,
+    int    bias,
+    double temperature,
+    int    n_reps,
+    bool   run_tbr)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::BiasedWagnerParams wp;
+  wp.bias        = static_cast<ts::WagnerBias>(bias);
+  wp.temperature = temperature;
+
+  NumericVector wagner_scores(n_reps, NA_REAL);
+  NumericVector tbr_scores(n_reps, NA_REAL);
+  // Per-tip Goloboff and entropy scores (computed once)
+  NumericVector goloboff_scores_r(ds.n_tips, NA_REAL);
+  NumericVector entropy_scores_r(ds.n_tips, NA_REAL);
+  {
+    auto gs = ts::wagner_goloboff_scores(ds);
+    auto es = ts::wagner_entropy_scores(ds);
+    for (int t = 0; t < ds.n_tips; ++t) {
+      goloboff_scores_r[t] = gs[t];
+      entropy_scores_r[t]  = es[t];
+    }
+  }
+
+  for (int rep = 0; rep < n_reps; ++rep) {
+    ts::TreeState tree;
+    ts::biased_wagner_tree(tree, ds, wp, nullptr);
+    wagner_scores[rep] = ts::score_tree(tree, ds);
+
+    if (run_tbr) {
+      ts::TBRParams tp;
+      ts::tbr_search(tree, ds, tp, nullptr, nullptr, nullptr, nullptr);
+      tbr_scores[rep] = ts::score_tree(tree, ds);
+    }
+  }
+
+  return List::create(
+    Named("wagner_score")    = wagner_scores,
+    Named("tbr_score")       = tbr_scores,
+    Named("goloboff_scores") = goloboff_scores_r,
+    Named("entropy_scores")  = entropy_scores_r
+  );
+}
+
+
+// Parallel tempering functions (ts_stochastic_tbr, ts_parallel_temper)
+// removed — live on feature/parallel-temper branch.
+
+// [[Rcpp::export]]
+List ts_test_strategy_tracker(int seed, int n_draws) {
+  using ts::StrategyTracker;
+  using ts::StartStrategy;
+  using ts::N_STRAT;
+
+  StrategyTracker tracker;
+  std::mt19937 rng(seed);
+
+  // 1. Draw `n_draws` strategies and count selections
+  IntegerVector counts(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng);
+    counts[static_cast<int>(s)]++;
+  }
+
+  // 2. Record initial alpha/beta
+  NumericVector alpha_init(N_STRAT), beta_init(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_init[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_init[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 3. Update: arm 0 gets 5 successes, arm 1 gets 5 failures
+  for (int i = 0; i < 5; ++i) {
+    tracker.update(StartStrategy::WAGNER_RANDOM, true);
+    tracker.update(StartStrategy::WAGNER_GOLOBOFF, false);
+  }
+
+  NumericVector alpha_after_update(N_STRAT), beta_after_update(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_update[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_update[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 4. Decay
+  tracker.decay(0.5);
+  NumericVector alpha_after_decay(N_STRAT), beta_after_decay(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_decay[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_decay[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 5. Post-update selection distribution (arm 0 should dominate)
+  IntegerVector counts_biased(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng);
+    counts_biased[static_cast<int>(s)]++;
+  }
+
+  // 6. Round-robin
+  auto rr = StrategyTracker::round_robin(12);
+  IntegerVector round_robin_seq(12);
+  for (int i = 0; i < 12; ++i) {
+    round_robin_seq[i] = static_cast<int>(rr[i]);
+  }
+
+  // 7. Strategy names
+  CharacterVector names(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    names[i] = ts::strategy_name(static_cast<StartStrategy>(i));
+  }
+
+  return List::create(
+    Named("n_strategies") = N_STRAT,
+    Named("strategy_names") = names,
+    Named("initial_counts") = counts,
+    Named("alpha_init") = alpha_init,
+    Named("beta_init") = beta_init,
+    Named("alpha_after_update") = alpha_after_update,
+    Named("beta_after_update") = beta_after_update,
+    Named("alpha_after_decay") = alpha_after_decay,
+    Named("beta_after_decay") = beta_after_decay,
+    Named("biased_counts") = counts_biased,
+    Named("round_robin") = round_robin_seq
+  );
+}
+
