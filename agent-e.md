@@ -1,8 +1,13 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** IDLE (picking next task)
-- **Status:** T-248 complete (annealCycles 3→1). T-243 PARKED (PR #230, GHA 23581391502).
+- **Task:** IDLE
+- **Status:** T-248 done, S-COORD done. T-243 PARKED (PR #230, GHA 23582386358 queued).
+
+### S-COORD round 21 — DONE
+- Closed 4 Shiny tasks (T-232, T-239, T-240, T-241) — all re-validated by GHA 23547582438 (cpp-search PASS)
+- Updated T-242 note (GHA failure is stale, investigation task)
+- Updated S-PR: #230 pending, #216 stale GHA, #178/#106 recommend closing
 
 ### T-248 — SA phase tuning — DONE
 - Hamilton benchmark: AC=0/1/3 × 30s/60s, 5 seeds each, mbank_X30754 (180t)
