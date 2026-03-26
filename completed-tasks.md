@@ -347,3 +347,8 @@ EOF 2>&1
 ENDOFAPPEND 2>&1
 | T-258 | Intra-replicate fusing | F | Added `intraFuse` param to SearchControl/DrivenParams. Fuses current tree against pool donors after TBR polish (step 6b). Disabled in parallel mode (already has between-replicate fusing). Critical fix: `build_postorder()` + `reset_states()` after `tree_fuse()` to prevent segfault from stale state arrays. 221 tests pass. Merged directly to cpp-search (`924bfb35`). Benchmark script: `dev/benchmarks/bench_intra_fuse.R`. |
 | T-243 | FlatBlock metadata, flat EW indirect functions, TBR prefetch | E | PR #230 merged to cpp-search. Confirmed 1.4% speedup at 180 tips on Hamilton (median 11.538→11.360s, p=0.001, n=10). TS-HotLoop worktree removed. |
+
+## 2026-03-26 (afternoon)
+| T-255 | Reduce drift in default and thorough presets | E | Set `driftCycles=0` in default and thorough presets. T-254 confirmed drift has zero score, MPT, or diversity benefit and costs 10–22% of replicates. GHA 23598220226 PASS (ARM64 + Windows, 0 errors, 0 warnings). Also fixed: SearchControl.Rd codoc mismatch (0152daa3), flaky timeout test perturbStopFactor (161e0e1b). |
+| T-260 | VTune TBR per-evaluation overhead profiling | E | Dikow2009 88t, EW, 1000 TBR passes, 30.96s CPU. Top hotspots: StateSnapshot save/restore 14.6%, reset_states zeroing 9.1%, fitch_na_score 29.2%. Non-scoring overhead = 37.8%. Filed T-261/T-262/T-263. Write-up: `dev/benchmarks/vtune_tbr_analysis.md`. |
+EOF 2>&1
