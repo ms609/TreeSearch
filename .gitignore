@@ -54,3 +54,6 @@ test_output.txt
 /.builds
 .positai
 /.gha-results
+/.tnt-bench
+/.vtune*
+/vtune*

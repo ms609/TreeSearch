@@ -1,12 +1,16 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Task:** T-255 — Reduce drift in default and thorough presets
-- **Status:** PARKED. Fixed test-ts-anneal.R:106 (annealCycles 3→1, missed by T-248). GHA 23591874696 dispatched. Previous run 23590522833 failed on this one test only (10928 pass, 1 fail).
+- **Task:** T-260 — Per-evaluation overhead profiling (VTune)
+- **Status:** IN PROGRESS. Building with symbols, writing driver, collecting hotspots.
 
-### T-254 — Drift MPT diversity experiment — DONE
-- driftCycles=0 vs 2 on Wortley2006 (37t), Zhu2013 (75t), Geisler2001 (68t)
-- 3 seeds × 2 budgets (30s, 120s), with and without consensus stopping
-- Primary finding: drift provides zero benefit on all metrics (score, MPT count, topological diversity)
-- Recommendation: set driftCycles=0 in default and thorough presets (T-255 unblocked)
-- Write-up: `dev/benchmarks/drift_mpt_analysis.md`
+### T-260 — Per-evaluation overhead profiling
+- Goal: profile TBR per-evaluation overhead to find why TreeSearch evaluates 1.5–3.6× fewer rearrangements/s than TNT
+- VTune 2025.10 at `C:/Program Files (x86)/Intel/oneAPI/vtune/latest`
+- Steps: build with symbols → driver script → VTune hotspot collection → analysis
+
+### Previous: T-255 — Reduce drift from presets — PARKED
+- GHA 23591874696 in progress. Fixed test-ts-anneal.R:106 (7dc2ed96).
+
+### Previous: S-RED focus 7 — recently landed code — DONE
+- Reviewed T-258, PR #230, T-255. No bugs. 624 targeted tests pass.
