@@ -278,7 +278,7 @@ InfoConsensus <- function(trees,
     nThreads = nThreads,
     screeningK = screeningK,
     screeningTolerance = screeningTolerance,
-    scoreTol = .NullOr(ctrl[["scoreTol"]], 0.001),
+    scoreTol = .NullOr(ctrl[["scoreTol"]], 1e-5),
     plateauReps = .NullOr(ctrl[["plateauReps"]], 3L)
   )
   
