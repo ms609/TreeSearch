@@ -45,7 +45,10 @@
       "r-package-profiling": "allow"
     },
     "webfetch": {
-      "https://repo.r-wasm.org/*": "allow"
+      "https://repo.r-wasm.org/*": "allow",
+      "https://agentskills.io/*": "allow",
+      "https://platform.claude.com/*": "allow",
+      "https://github.com/*": "allow"
     }
   }
 }

@@ -219,7 +219,7 @@ git stash pop                                  # restore code work
 
 ### Coordination files live on `cpp-search` only
 
-`to-do.md`, `issues.md`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
+`to-do.md`, `u.nnn`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
 and `AGENTS.md` are **never committed on feature branches**. When an agent
 working on a feature branch needs to log progress or claim a task, they commit
 those changes directly to `cpp-search` (coordination-only commit), keeping the
@@ -298,31 +298,17 @@ On `/assign X`:
       written.
    f. Repeat for all claimed files before moving on. **Do not start
       working a task until all pending reports are triaged.**
-3. Check `issues.md` **before** `to-do.md`:
-   a. If `issues.md` contains any unclaimed issues (blocks whose first line
-      does **not** start with `CLAIMED`), **claim the bottom-most unclaimed
-      issue** by prepending `CLAIMED (X):` to its first line.
-   b. Triage the claimed issue: determine what needs doing, then add one or
-      more discrete tasks to `to-do.md` (assign appropriate IDs and
-      priorities — issues may be P0). Begin work on the first task.
-   c. Once the `to-do.md` tasks are created, delete the entire issue block
-      (including its `---` separator) from `issues.md`.
-   d. **While `issues.md` still has unclaimed issues, triaging them takes
-      priority over picking up existing `to-do.md` tasks** (an issue may
-      contain a P0).
-4. If `issues.md` is empty or all issues are already claimed, claim the next
-   OPEN task from `to-do.md` as before.
+3. **Triage user issues** (`u.*` files) before `to-do.md`. See the
+   parent `../AGENTS.md` "User issue files" section for the full protocol
+   (scan → claim via rename → triage → delete). While untriaged issues
+   remain, triaging takes priority over `to-do.md` tasks (an issue may
+   contain a P0).
+4. If no untriaged issues, claim the next OPEN task from `to-do.md`.
 
 Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
-> **Concurrency guard (issues.md):** Only the bottom-most *unclaimed* issue
-> may be claimed. Because agents always target the bottom and mark it
-> `CLAIMED (X)` immediately, two agents will never parse the same issue. If
-> an agent sees the bottom issue is already `CLAIMED`, it moves up to the
-> next unclaimed one.
->
-> **Concurrency guard (aXXX.md / a.XXX):** Atomic rename (`mv aXXX.md
-> aXXX.claimed-X.md`) ensures exactly one agent wins each file. NTFS
+> **Concurrency guard (u.nnn / a.XXX):** Atomic rename (`mv u.001
+> u.001.claimed-X`) ensures exactly one agent wins each file. NTFS
 > rename is atomic; losers see "file not found" and skip.
 
 ### During work
@@ -405,13 +391,25 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | File | Purpose |
 |------|---------|
 | `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
-| `issues.md` | Human-entered issues (agents triage → `to-do.md`) |
+| `u.nnn` | User issue files (agents triage → `to-do.md`, then delete) |
 | `to-do.md` | Task queue (active/open tasks only) |
 | `completed-tasks.md` | Archive of completed tasks |
 | `coordination.md` | Strategic plan |
 | `agent-X.md` | Agent progress log |
 | `AGENTS.md` | Conventions + architecture reference |
 | `.positai/expertise/*.md` | Standing task methodology |
+
+## User-level Posit Assistant skills
+
+The user has Posit Assistant skills installed at `~/.positai/skills/`.
+**Load these with the `skill` tool before starting relevant work:**
+
+| Skill name | When to load |
+|------------|-------------|
+| `r-package-profiling` | Profiling, benchmarking, VTune, A/B comparison, hotspot analysis |
+| `hamilton-hpc` | Hamilton HPC, SLURM jobs, SSH, remote benchmarking |
+
+Example: `skill(skill: "hamilton-hpc")` before any Hamilton dispatch work.
 
 ## Test file conventions
 
@@ -531,14 +529,15 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
-| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
-| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 0 drift, XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), consensus-stop 2, Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
+| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, Wagner×3, NNI-first, adaptive level |
+| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
 
-`sprint`/`default`/`thorough` set `consensusStableReps = 3`; `large` sets
-`consensusStableReps = 2` (faster convergence detection since replicates at
-120+ tips take 30–90s each).
+**T-264 (2026-03-26):** `consensusStableReps` removed from all presets
+(disabled, 0). The previous setting of 3 caused catastrophic early
+termination — the search stopped after 3 replicates with unchanged
+consensus, using only 7–20% of the time budget on most datasets.
 
 **Large preset design rationale (T-179, 2026-03-24):** At 180 tips, each TBR
 convergence takes ~5–7s, making phases like NNI-perturbation (~5.5s/cycle) and
@@ -603,10 +602,11 @@ when conflict variation is negligible.
 
 ### Consensus-stability stopping
 
-After each replicate, if `consensus_stable_reps > 0` (default 3 in all
-presets), the pool's strict consensus hash is compared to the previous
-replicate's. If unchanged for `consensus_stable_reps` consecutive
-replicates, the search terminates early. `compute_consensus_hash()` uses
+After each replicate, if `consensus_stable_reps > 0` (disabled in all
+presets since T-264; available via `SearchControl(consensusStableReps=N)`),
+the pool's strict consensus hash is compared to the previous replicate's.
+If unchanged for `consensus_stable_reps` consecutive replicates, the
+search terminates early. `compute_consensus_hash()` uses
 XOR of per-split FNV-1a hashes for O(pool × splits) cost.
 
 ### Adaptive search level
@@ -1115,6 +1115,15 @@ isolate the escape-effectiveness question.
 ≤88 tips. Algorithmic choices (e.g. TBR vs NNI warmup, ratchet cycle counts)
 that are optimal at 88 tips may be suboptimal at 180+. The 180-taxon dataset
 should be added to the benchmark suite as a separate tier (T-181).
+
+**Brazeau vs EW scoring confound (T-265, 2026-03-26):** TreeSearch
+uses the Brazeau et al. (2019) inapplicable algorithm by default,
+which penalizes inapplicable-to-applicable transitions. TNT treats
+`-` as `?` (standard EW Fitch). On 11 gap datasets, the apparent
+mean gap was +17.8 steps; the actual EW-vs-EW gap is only +2.2 steps
+(5 datasets at 0 gap). **All TNT comparisons MUST use `fitch_mode()`
+to convert inapplicable to missing** for apples-to-apples scoring.
+`fitch_mode()` is defined in `bench_intra_fuse.R` and `bench_t265_regression.R`.
 
 **`maxTime` confound (2026-03-23):** Initial 180-taxon testing used
 `maxTime` (legacy Morphy parameter), which silently delegated to the

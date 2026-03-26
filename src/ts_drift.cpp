@@ -720,6 +720,10 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
                          ConstraintData* cd,
                          std::function<bool()> check_timeout) {
   double best_score = drift_full_rescore(tree, ds);
+
+  // No informative characters: all trees have the same score.
+  if (ds.total_words == 0) return {best_score, 0, 0};
+
   int total_drift_moves = 0;
   int total_tbr_moves = 0;
 
