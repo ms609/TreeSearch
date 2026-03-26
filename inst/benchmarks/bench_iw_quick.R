@@ -66,14 +66,16 @@ run_tnt <- function(data_file, timeout_s, seed, hits, reps, concavity) {
   hh <- timeout_s %/% 3600
   mm <- (timeout_s %% 3600) %/% 60
   ss <- timeout_s %% 60
-  # piwe must be set BEFORE proc; xpiwe= (no arg) activates extended mode AFTER proc.
-  # xpiwe=K causes a "No command!" parse error in TNT 1.6.
+  # piwe must be set BEFORE proc so data is read with IW on.
+  # xpiwe( activates per-character concavity (Goloboff 2014 XPIWE).
+  # Do NOT use xpiwe(...) — the ) is a separate sub-option that reverts to
+  # single concavity, silently undoing the correction.
   commands <- c(
     "mxram 1024;",
     sprintf("piwe=%d;", concavity),
     sprintf("proc %s;", data_file),
     sprintf("rseed %d;", seed),
-    "xpiwe=;",
+    "xpiwe(;",
     sprintf("timeout %d:%02d:%02d;", hh, mm, ss),
     sprintf("xmult=hits %d replic %d;", hits, reps),
     "best;", "quit;"

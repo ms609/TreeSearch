@@ -90,7 +90,9 @@ write_tnt_script <- function(data_file, weighting = "EW", concavity = 3,
     sprintf("rseed %d;", seed)
   )
   if (xpiwe) {
-    commands <- c(commands, "xpiwe=;")
+    # xpiwe( enables per-character concavity (Goloboff 2014).
+    # Do NOT add ) — it's a separate sub-option that reverts to single-K.
+    commands <- c(commands, "xpiwe(;")
   }
 
   commands <- c(
