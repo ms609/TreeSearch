@@ -352,3 +352,6 @@ ENDOFAPPEND 2>&1
 | T-255 | Reduce drift in default and thorough presets | E | Set `driftCycles=0` in default and thorough presets. T-254 confirmed drift has zero score, MPT, or diversity benefit and costs 10–22% of replicates. GHA 23598220226 PASS (ARM64 + Windows, 0 errors, 0 warnings). Also fixed: SearchControl.Rd codoc mismatch (0152daa3), flaky timeout test perturbStopFactor (161e0e1b). |
 | T-260 | VTune TBR per-evaluation overhead profiling | E | Dikow2009 88t, EW, 1000 TBR passes, 30.96s CPU. Top hotspots: StateSnapshot save/restore 14.6%, reset_states zeroing 9.1%, fitch_na_score 29.2%. Non-scoring overhead = 37.8%. Filed T-261/T-262/T-263. Write-up: `dev/benchmarks/vtune_tbr_analysis.md`. |
 EOF 2>&1
+| T-261 | Eliminate std::fill zeroing in reset_states() | E | Removed 5 redundant std::fill(0) calls from reset_states() in ts_tree.cpp. Audited all Fitch scoring passes to confirm every array entry written before read. PR #232, merged to cpp-search. |
+| T-262 | Bulk memcpy for tip state loading | E | Replaced element-by-element tip copy with std::memcpy() in load_tip_states(). Combined T-261+T-262 = 8.6% TBR speedup (Dikow2009, 88t). PR #232, merged to cpp-search. |
+EOF 2>&1
