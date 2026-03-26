@@ -34,7 +34,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-264 | P0 | PARKED (F, GHA 23600674681) | — | **[Bug] `consensusStableReps = 3` causes catastrophic early termination.** Fix committed to cpp-search (23e9f57b). GHA validation in progress. | From T-249 analysis. Fix by F: removed consensusStableReps from presets (falls back to 0 = disabled). |
+| T-264 | P0 | PARKED (F, GHA 23600674681 + Hamilton 16597096) | — | **[Bug] `consensusStableReps = 3` causes catastrophic early termination.** Fix committed to cpp-search (23e9f57b). GHA validation + Hamilton verification (8 worst datasets, 120s, 3 seeds) in progress. | From T-249 analysis. Fix by F: removed consensusStableReps from presets (falls back to 0 = disabled). |
 | T-242 | P1 | PARKED (C, GHA 23545987517†) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. GHA failure is stale (pre-T-214); cpp-search passes on 23547582438. Investigation task — GHA status doesn't resolve it. |
 
 
@@ -60,7 +60,7 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-245 | P3 | OPEN | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
-| T-246 | P3 | PARKED (F, GHA 23598736410) | — | **AVX2 runtime dispatch for Fitch bit ops.** Widen `ts_simd.h` from SSE2 (128-bit) to AVX2 (256-bit) with runtime detection (`__builtin_cpu_supports("avx2")`) and SSE2 fallback. Estimated 5–10% on datasets with many states or character blocks. | EPYC 7702 supports AVX2. Can be done independently of T-245. Less invasive than batching. |
+| T-246 | P3 | PR #233 (F) | — | **AVX2 runtime dispatch for Fitch bit ops.** Widen `ts_simd.h` from SSE2 (128-bit) to AVX2 (256-bit) with runtime detection (`__builtin_cpu_supports("avx2")`) and SSE2 fallback. Estimated 5–10% on datasets with many states or character blocks. | EPYC 7702 supports AVX2. Can be done independently of T-245. Less invasive than batching. |
 
 ### TNT Comparison & Strategy Learning
 
@@ -82,7 +82,7 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | ASSIGNED (E) | — | **Standing: Red-team review** | Focus 8: T-264 consensus-stop fix, PR #232 merge, T-255 drift removal. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 by E (focus 8: T-264, PR #232, T-255). All verified correct. subtree_actives non-NA positions confirmed safe (init to 0, never written, all reads guarded by has_inapplicable). Budget utilization confirmed: Agnarsson2004 uses 94% at 5s. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 23). Fixed T-248 anneal test stale assertion (annealCycles 3→1). Updated T-255 GHA. Task queue healthy. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by F (S-COORD round 22). Open PRs: #216 (native-search, rebased, CI re-triggered), #213 (CID-consensus, rebased, CI re-triggered). #210 (draft cpp-search→main). #178/#106 stale+CONFLICTING — recommend closing. #230 merged. |
