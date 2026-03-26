@@ -1230,6 +1230,7 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   // Fuse / pool
   params.fuse_interval      = as<int>(ctrl["fuseInterval"]);
   params.fuse_accept_equal  = as<bool>(ctrl["fuseAcceptEqual"]);
+  params.intra_fuse         = as<bool>(ctrl["intraFuse"]);
   params.pool_max_size      = as<int>(ctrl["poolMaxSize"]);
   params.pool_suboptimal    = as<double>(ctrl["poolSuboptimal"]);
 

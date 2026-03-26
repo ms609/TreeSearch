@@ -275,3 +275,37 @@ test_that("Constrained Wagner tree works with multiple seeds", {
     expect_equal(nrow(result$edge), 8L, info = paste("seed", s))
   }
 })
+
+# --- Intra-replicate fusing (T-258) ---
+
+test_that("intraFuse runs without error", {
+  set.seed(8517)
+  result <- MaximizeParsimony(ds, strategy = "sprint",
+                              maxReplicates = 5L, targetHits = 2L,
+                              maxSeconds = 3, intraFuse = TRUE,
+                              verbosity = 0L, nThreads = 1L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+  expect_lte(attr(result, "score"), 100)  # should find reasonable score
+})
+
+test_that("intraFuse with dataset size change does not crash", {
+  ds_large <- inapplicable.phyData[["Agnarsson2004"]]  # 62 tips
+  ds_small <- inapplicable.phyData[["Vinther2008"]]     # 23 tips
+
+  # Run on larger dataset first with intra-fuse
+  set.seed(9014)
+  r1 <- MaximizeParsimony(ds_large, strategy = "sprint",
+                          maxReplicates = 3L, targetHits = 2L,
+                          maxSeconds = 3, intraFuse = TRUE,
+                          verbosity = 0L, nThreads = 1L)
+  expect_true(is.finite(attr(r1, "score")))
+
+  # Then run on smaller dataset with intra-fuse (regression test for segfault)
+  set.seed(9015)
+  r2 <- MaximizeParsimony(ds_small, strategy = "sprint",
+                          maxReplicates = 3L, targetHits = 2L,
+                          maxSeconds = 3, intraFuse = TRUE,
+                          verbosity = 0L, nThreads = 1L)
+  expect_true(is.finite(attr(r2, "score")))
+})

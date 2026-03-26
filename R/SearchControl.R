@@ -51,6 +51,9 @@
 #'   sizes for sectorial search.
 #' @param fuseInterval Integer; fuse pool trees every _n_ replicates.
 #' @param fuseAcceptEqual Logical; accept equally-scoring fused trees?
+#' @param intraFuse Logical; fuse the current tree against pool donors
+#'   within each replicate, after TBR polish.  This approximates TNT's
+#'   within-replicate fusing pattern. Default: `FALSE`.
 #' @param poolMaxSize Integer; maximum trees retained in the pool.
 #' @param poolSuboptimal Numeric; retain trees that are this many steps
 #'   worse than the best tree.  0 (default) keeps only optimal trees.
@@ -199,6 +202,7 @@ SearchControl <- function(
     # Fuse / pool
     fuseInterval = 3L,
     fuseAcceptEqual = FALSE,
+    intraFuse = FALSE,
     poolMaxSize = 100L,
     poolSuboptimal = 0,
     # Stopping criteria
@@ -250,6 +254,7 @@ SearchControl <- function(
       sectorMaxSize = as.integer(sectorMaxSize),
       fuseInterval = as.integer(fuseInterval),
       fuseAcceptEqual = as.logical(fuseAcceptEqual),
+      intraFuse = as.logical(intraFuse),
       poolMaxSize = as.integer(poolMaxSize),
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
@@ -283,7 +288,7 @@ print.SearchControl <- function(x, ...) {
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",
                      "sectorMinSize", "sectorMaxSize"),
-    "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
+    "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
                     "adaptiveLevel",

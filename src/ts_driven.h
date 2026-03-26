@@ -79,8 +79,16 @@ struct DrivenParams {
   int sector_max_size = 50;
 
   // Tree fusing
-  int fuse_interval = 3;         // fuse every N replicates
+  int fuse_interval = 3;         // fuse every N replicates (between-replicate)
   bool fuse_accept_equal = false;
+
+  // Intra-replicate fusing (T-258).
+  // When true, fuse the current tree against pool donors after TBR polish
+  // in each outer cycle.  TNT fuses within each replicate; this approximates
+  // that pattern.  The pool is read-only — the fused tree replaces the
+  // current replicate tree but is only added to the pool after the replicate
+  // completes.  Requires pool.size() >= 2 to have meaningful donors.
+  bool intra_fuse = false;
 
   // Pool
   int pool_max_size = 100;
@@ -282,7 +290,8 @@ ReplicateResult run_single_replicate(
     int verbosity,
     TreeState* starting_tree = nullptr,
     const SplitFrequencyTable* split_freq = nullptr,
-    StartStrategy strategy = StartStrategy::WAGNER_RANDOM);
+    StartStrategy strategy = StartStrategy::WAGNER_RANDOM,
+    const TreePool* pool = nullptr);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

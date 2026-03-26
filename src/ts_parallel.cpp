@@ -151,9 +151,11 @@ void worker_thread(WorkerContext ctx) {
     }
 
     // Run the replicate pipeline (verbosity=0 for parallel)
+    // pool=nullptr: intra-fuse disabled in parallel mode (between-replicate
+    // fusing via ThreadSafePool::fuse_round() is already active)
     ReplicateResult rep_result = run_single_replicate(
         ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr,
-        nullptr, rep_strat);
+        nullptr, rep_strat, nullptr);
 
     if (ctx.stop_flag->load(std::memory_order_relaxed)) break;
 

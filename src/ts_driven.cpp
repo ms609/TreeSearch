@@ -57,7 +57,8 @@ ReplicateResult run_single_replicate(
     int verbosity,
     TreeState* starting_tree,
     const SplitFrequencyTable* split_freq,
-    StartStrategy strategy)
+    StartStrategy strategy,
+    const TreePool* pool)
 {
   ReplicateResult result;
   result.interrupted = false;
@@ -437,6 +438,31 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
+    // 6b. Intra-replicate fusing (T-258).
+    // After TBR polish, fuse the current tree against pool donors.
+    // The pool is read-only; the fused tree replaces the current replicate
+    // tree.  This approximates TNT's within-replicate fusing pattern.
+    // tree_fuse() runs TBR internally after each improvement round, so
+    // no extra TBR pass is needed here.
+    if (params.intra_fuse && pool && pool->size() >= 1) {
+      FuseParams fp;
+      fp.accept_equal = params.fuse_accept_equal;
+      fp.max_rounds = 3;  // brief: just grab low-hanging improvements
+      tree_fuse(result.tree, ds, *pool, fp);
+
+      // Rebuild state arrays: tree_fuse may have modified the topology
+      // and the internal TBR uses a separate scoring path.
+      result.tree.build_postorder();
+      result.tree.reset_states(ds);
+
+      result.timings.fuse_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g\n",
+                outer_label("Intra-fuse").c_str(),
+                score_tree(result.tree, ds));
+      }
+    }
+
     // If this cycle improved the score and resets are allowed, reset the
     // counter to exploit the new basin.
     const double score_after_cycle = score_tree(result.tree, ds);
@@ -713,7 +739,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
         ds, rep_params, rep_cd, check_timeout, params.verbosity, start_ptr,
-        sft_ptr, rep_strategy);
+        sft_ptr, rep_strategy, &pool);
 
     result.timings += rep_result.timings;
 
