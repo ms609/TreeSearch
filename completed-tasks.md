@@ -355,3 +355,10 @@ EOF 2>&1
 | T-261 | Eliminate std::fill zeroing in reset_states() | E | Removed 5 redundant std::fill(0) calls from reset_states() in ts_tree.cpp. Audited all Fitch scoring passes to confirm every array entry written before read. PR #232, merged to cpp-search. |
 | T-262 | Bulk memcpy for tip state loading | E | Replaced element-by-element tip copy with std::memcpy() in load_tip_states(). Combined T-261+T-262 = 8.6% TBR speedup (Dikow2009, 88t). PR #232, merged to cpp-search. |
 EOF 2>&1
+
+## 2026-03-26
+
+| T-265 | Per-replicate search quality regression — RESOLVED as scoring method confound | E | T-249/T-264 compared Brazeau-scored TreeSearch to EW-scored TNT. Apparent mean gap +17.8 steps; actual EW-vs-EW gap +2.2 steps. 5/11 datasets at 0 gap. R2-equiv/R2-modern/auto preset all find identical Brazeau scores — no preset or engine regression. Also found stale .agent-E library caused T-249 early termination artifact. |
+| T-249 | TNT comparison round 3 — validated | E | Hamilton job 16596844 results validated. Large apparent gaps were scoring method confound (Brazeau vs EW). Future TNT comparisons must use fitch_mode() for apples-to-apples. |
+| T-264 | consensusStableReps fix — verified | E | GHA 23600674681 passed both platforms. Scoring confound resolved; fix is correct. |
+ENDMARK 2>&1

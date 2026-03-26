@@ -34,7 +34,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-264 | P0 | PARKED (F, GHA 23600674681 + Hamilton 16597096) | — | **[Bug] `consensusStableReps = 3` causes catastrophic early termination.** Fix committed to cpp-search (23e9f57b). GHA validation + Hamilton verification (8 worst datasets, 120s, 3 seeds) in progress. | From T-249 analysis. Fix by F: removed consensusStableReps from presets (falls back to 0 = disabled). |
+
 | T-242 | P1 | PARKED (C, GHA 23545987517†) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. GHA failure is stale (pre-T-214); cpp-search passes on 23547582438. Investigation task — GHA status doesn't resolve it. |
 
 
@@ -66,7 +66,7 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-249 | P3 | HAMILTON (F, job 16596844) | — | **Rerun TNT comparison on current cpp-search HEAD.** Round 2 data (120s, 3 seeds) predates NNI warmup, ratchet tuning, biased Wagner, outer cycle loop, and SA tuning. Update `round2_hard.csv` with current engine to measure remaining gaps. **Run on Hamilton.** | Partial results (5 gap datasets, local smoke run): gaps +3 to +6 steps, essentially unchanged from R2. Benchmark infra fixed: score regex handles integers, `run_treesearch()` now uses `MaximizeParsimony()` API with strategy presets. Scripts in `dev/benchmarks/run_t249_*.R`. |
+
 | T-252 | P3 | OPEN | — | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | Uses `benchmark_mbank_sample()` in `bench_framework.R`. |
 | T-253 | P3 | OPEN | T-249, T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | Depends on T-249 (updated gaps) and T-252 (broader baseline). |
 
