@@ -2991,6 +2991,112 @@ NumericVector ts_cid_score_trees(
   return result;
 }
 
+// ---------------------------------------------------------------------------
+// ts_cid_prescreen_rogue: batch CID prescreen for rogue taxon detection.
+//
+// For each tip in droppableTips, computes the CID score of the candidate
+// tree (with that tip masked out) against the input trees (with that tip
+// masked out).  All masking is done via bit operations on pre-built split
+// data, avoiding R-level DropTip/as.Splits overhead.
+//
+// Returns a NumericVector of negated mean MCI values (lower = better).
+// ---------------------------------------------------------------------------
+
+// Mask a split set by clearing one tip's bit and removing resulting trivial
+// splits.  Writes into `dst` (which is cleared first).  Does NOT build
+// hash_index or lg2 vectors -- the O(n^2) fallback in mutual_clustering_info
+// handles complement matching.  `n_tip` is the original (pre-mask) tip count.
+static void mask_splits(const ts::CidSplitSet& src, int drop_word,
+                         uint64_t drop_mask, int drop_bit_in_word,
+                         int n_tip, ts::CidSplitSet& dst) {
+  int wps = src.n_bins;
+  dst.n_bins = wps;
+  dst.data.clear();
+  dst.in_split.clear();
+  dst.lg2_in.clear();
+  dst.lg2_out.clear();
+  dst.hash_index.clear();
+
+  int reduced = n_tip - 1;
+  for (int s = 0; s < src.n_splits; ++s) {
+    const uint64_t* sp = src.split(s);
+    int count = src.in_split[s];
+
+    bool tip_in = (sp[drop_word] >> drop_bit_in_word) & 1;
+    int new_count = tip_in ? count - 1 : count;
+    int complement = reduced - new_count;
+
+    if (new_count <= 1 || complement <= 1) continue;
+
+    size_t off = dst.data.size();
+    dst.data.resize(off + wps);
+    uint64_t* dp = &dst.data[off];
+    std::memcpy(dp, sp, sizeof(uint64_t) * wps);
+    dp[drop_word] &= drop_mask;
+    dst.in_split.push_back(new_count);
+  }
+  dst.n_splits = static_cast<int>(dst.in_split.size());
+}
+
+// [[Rcpp::export]]
+NumericVector ts_cid_prescreen_rogue(
+    List splitMatrices,
+    int nTip,
+    IntegerMatrix candidateEdge,
+    IntegerVector droppableTips)
+{
+  if (splitMatrices.size() == 0)
+    Rcpp::stop("ts_cid_prescreen_rogue: no input trees provided.");
+  if (droppableTips.size() == 0)
+    return NumericVector(0);
+
+  // Build CidData from full input trees (once)
+  ts::CidData cd = cid_data_from_splits(splitMatrices, nTip);
+
+  // Build candidate tree and compute its splits
+  int n_edge = candidateEdge.nrow();
+  std::vector<int> ep(n_edge), ec(n_edge);
+  for (int j = 0; j < n_edge; ++j) {
+    ep[j] = candidateEdge(j, 0);
+    ec[j] = candidateEdge(j, 1);
+  }
+  ts::TreeState cand_tree = cid_tree_from_edge(
+      ep.data(), ec.data(), n_edge, nTip);
+  ts::CidSplitSet full_cand;
+  std::vector<uint64_t> tip_bits_work;
+  ts::compute_splits_cid(cand_tree, tip_bits_work, full_cand);
+
+  int n_drop = droppableTips.size();
+  int n_trees = cd.n_trees;
+  int reduced = nTip - 1;
+  NumericVector result(n_drop);
+
+  ts::LapScratch lap_scratch;
+  ts::CidSplitSet masked_cand;
+  ts::CidSplitSet masked_input;
+
+  for (int d = 0; d < n_drop; ++d) {
+    int drop_tip_0 = droppableTips[d] - 1;  // R 1-indexed -> C++ 0-indexed
+    int drop_word = drop_tip_0 / 64;
+    int drop_bit_in_word = drop_tip_0 % 64;
+    uint64_t drop_mask = ~(1ULL << drop_bit_in_word);
+
+    mask_splits(full_cand, drop_word, drop_mask, drop_bit_in_word,
+                nTip, masked_cand);
+
+    double mci_sum = 0.0;
+    for (int t = 0; t < n_trees; ++t) {
+      mask_splits(cd.tree_splits[t], drop_word, drop_mask, drop_bit_in_word,
+                  nTip, masked_input);
+      mci_sum += ts::mutual_clustering_info(
+          masked_cand, masked_input, reduced, lap_scratch);
+    }
+    result[d] = -mci_sum / n_trees;
+  }
+  return result;
+}
+
+
 // --- Wagner bias benchmark ---
 //
 // For each of n_reps random seeds, builds a Wagner tree under the specified

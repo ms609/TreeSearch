@@ -889,3 +889,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_cid_prescreen_rogue
+NumericVector ts_cid_prescreen_rogue(List splitMatrices, int nTip, IntegerMatrix candidateEdge, IntegerVector droppableTips);
+RcppExport SEXP _TreeSearch_ts_cid_prescreen_rogue(SEXP splitMatricesSEXP, SEXP nTipSEXP, SEXP candidateEdgeSEXP, SEXP droppableTipsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type splitMatrices(splitMatricesSEXP);
+    Rcpp::traits::input_parameter< int >::type nTip(nTipSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type candidateEdge(candidateEdgeSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type droppableTips(droppableTipsSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_cid_prescreen_rogue(splitMatrices, nTip, candidateEdge, droppableTips));
+    return rcpp_result_gen;
+END_RCPP
+}

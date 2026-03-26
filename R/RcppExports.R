@@ -218,3 +218,9 @@ ts_cid_score_trees <- function(splitMatrices, nTip, candidateEdges) {
     .Call(`_TreeSearch_ts_cid_score_trees`, splitMatrices, nTip, candidateEdges)
 }
 
+ts_cid_prescreen_rogue <- function(splitMatrices, nTip, candidateEdge,
+                                    droppableTips) {
+    .Call(`_TreeSearch_ts_cid_prescreen_rogue`, splitMatrices, nTip,
+          candidateEdge, droppableTips)
+}
+

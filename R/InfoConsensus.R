@@ -98,8 +98,8 @@
 #' @family custom search functions
 #' @export
 InfoConsensus <- function(trees,
-                          maxReplicates = 20L,
-                          targetHits = 3L,
+                          maxReplicates = 5L,
+                          targetHits = 2L,
                           maxSeconds = 0,
                           nThreads = getOption("mc.cores", 1L),
                           collapse = TRUE,
@@ -150,7 +150,7 @@ InfoConsensus <- function(trees,
     }
     result <- .RogueRefine(result, cidData, neverDrop, maxDrop,
                            "ratchet",       # method for re-optimization
-                           5L, 3L,          # light ratchet for re-opt
+                           2L, 2L,          # light ratchet for re-opt
                            100L, 10L, collapse,
                            verbosity)
   }
@@ -241,6 +241,11 @@ InfoConsensus <- function(trees,
   # where TBR alone converges quickly.
   useSectors <- nTip >= 20L
   
+  # CID scoring is ~50-100x more expensive per evaluation than parsimony,
+
+  # so use lighter search parameters than the parsimony defaults.
+  # Each replicate takes ~10-25s at 50 tips; 10 replicates is usually
+  # sufficient for CID landscape convergence.
   result <- ts_cid_consensus(
     splitMatrices = splitMats,
     nTip = nTip,
@@ -248,17 +253,17 @@ InfoConsensus <- function(trees,
     maxReplicates = maxReplicates,
     targetHits = targetHits,
     tbrMaxHits = .NullOr(ctrl[["tbrMaxHits"]], 1L),
-    ratchetCycles = .NullOr(ctrl[["ratchetCycles"]], 5L),
+    ratchetCycles = .NullOr(ctrl[["ratchetCycles"]], 2L),
     ratchetPerturbProb = .NullOr(ctrl[["ratchetPerturbProb"]], 0.25),
     ratchetPerturbMode = .NullOr(ctrl[["ratchetPerturbMode"]], 0L),
     ratchetAdaptive = .NullOr(ctrl[["ratchetAdaptive"]], FALSE),
-    driftCycles = .NullOr(ctrl[["driftCycles"]], 3L),
+    driftCycles = .NullOr(ctrl[["driftCycles"]], 1L),
     driftAfdLimit = .NullOr(ctrl[["driftAfdLimit"]], 3L),
     driftRfdLimit = .NullOr(ctrl[["driftRfdLimit"]], 0.1),
-    xssRounds = .NullOr(ctrl[["xssRounds"]], if (useSectors) 3L else 0L),
+    xssRounds = .NullOr(ctrl[["xssRounds"]], if (useSectors) 1L else 0L),
     xssPartitions = .NullOr(ctrl[["xssPartitions"]], 4L),
-    rssRounds = .NullOr(ctrl[["rssRounds"]], if (useSectors) 3L else 0L),
-    cssRounds = .NullOr(ctrl[["cssRounds"]], if (useSectors) 2L else 0L),
+    rssRounds = .NullOr(ctrl[["rssRounds"]], if (useSectors) 1L else 0L),
+    cssRounds = .NullOr(ctrl[["cssRounds"]], 0L),
     cssPartitions = .NullOr(ctrl[["cssPartitions"]], 4L),
     sectorMinSize = .NullOr(ctrl[["sectorMinSize"]], 6L),
     sectorMaxSize = .NullOr(ctrl[["sectorMaxSize"]], 50L),
@@ -465,6 +470,10 @@ names.cidData <- function(x) x$tipLabels
 # --- Phase 3: Rogue taxon dropping and restoration -------------------------
 
 # Greedy rogue dropping followed by greedy restoration.
+# Uses C++ prescreen (ts_cid_prescreen_rogue) for the first iteration
+# (no tips yet dropped); subsequent iterations use R-level pruning.
+# Accepts drops based on prescreen score alone (no per-candidate
+# re-optimization), then does one light re-optimization at the end.
 .RogueRefine <- function(tree, cidData, neverDrop, maxDrop,
                          method, ratchIter, ratchHits,
                          searchIter, searchHits, collapse,
@@ -506,52 +515,46 @@ names.cidData <- function(x) x$tipLabels
     prescreenScores <- .PrescreenMarginalNID(
       tree, cidData, droppable, originalTrees, allTipLabels, droppedTips
     )
-    # Only pursue tips whose prescreen score beats current best; cap at top 3
-    # so each rogue-drop iteration does at most 3 expensive re-optimisations.
-    orderedScores <- sort(prescreenScores)
-    belowThreshold <- orderedScores < bestScore - sqrt(.Machine[["double.eps"]])
-    candidates <- names(orderedScores)[belowThreshold][seq_len(
-      min(3L, sum(belowThreshold)))]
-    for (tip in candidates) {
+    # Accept the single best drop directly (no per-candidate re-optimization)
+    bestIdx <- which.min(prescreenScores)
+    if (prescreenScores[bestIdx] < bestScore - sqrt(.Machine[["double.eps"]])) {
+      tip <- names(prescreenScores)[bestIdx]
       reducedTips <- setdiff(currentTips, tip)
       allDropped <- c(droppedTips, tip)
       reducedInputTrees <- .PruneTrees(originalTrees, allDropped)
       reducedCidData <- .MakeCIDData(reducedInputTrees, reducedTips)
-      reducedTree <- DropTip(tree, tip)
-      nReducedTips <- length(reducedTips)
-      if (nReducedTips < 5L) {
-        reoptResult <- reducedTree
-        attr(reoptResult, "score") <- .ScoreTree(reducedTree, reducedCidData)
-      } else if (nReducedTips >= 8L && method == "ratchet") {
-        reoptResult <- .TopologySearch(
-          reducedTree, reducedCidData, method,
-          max(1L, ratchIter %/% 2L), ratchHits,
-          searchIter, searchHits, collapse,
-          max(0L, verbosity - 1L))
-      } else {
-        reoptResult <- .TopologySearch(
-          reducedTree, reducedCidData, "nni",
-          1L, 1L, searchIter, searchHits, collapse,
-          max(0L, verbosity - 1L))
-      }
-      newScore <- attr(reoptResult, "score")
-      if (is.null(newScore)) newScore <- .ScoreTree(reoptResult, reducedCidData)
-      if (newScore < bestScore - sqrt(.Machine[["double.eps"]])) {
-        tree <- reoptResult
-        bestScore <- newScore
-        currentTips <- reducedTips
-        cidData <- reducedCidData
-        droppedTips <- allDropped
-        improved <- TRUE
-        if (verbosity > 0L) {
-          message("    * Dropped '", tip, "' -> MCI ",
-                  signif(-bestScore, 6),
-                  " (", length(currentTips), " tips)")
-        }
-        break
+      tree <- DropTip(tree, tip)
+      # Score the pruned tree on the properly pruned input trees
+      bestScore <- .ScoreTree(tree, reducedCidData)
+      currentTips <- reducedTips
+      cidData <- reducedCidData
+      droppedTips <- allDropped
+      improved <- TRUE
+      if (verbosity > 0L) {
+        message("    * Dropped '", tip, "' -> MCI ",
+                signif(-bestScore, 6),
+                " (", length(currentTips), " tips)")
       }
     }
   }
+
+  # Light re-optimization after all drops are decided
+  if (length(droppedTips) > 0L && length(currentTips) >= 8L) {
+    if (verbosity > 0L) {
+      message("  - Re-optimizing after rogue removal")
+    }
+    reoptResult <- .TopologySearch(
+      tree, cidData, "ratchet",
+      max(1L, ratchIter %/% 2L), ratchHits,
+      searchIter, searchHits, collapse,
+      max(0L, verbosity - 1L))
+    reoptScore <- attr(reoptResult, "score")
+    if (!is.null(reoptScore) && reoptScore < bestScore) {
+      tree <- reoptResult
+      bestScore <- reoptScore
+    }
+  }
+
   if (length(droppedTips) > 0L) {
     if (verbosity > 0L) {
       message("  - Restore phase: trying to re-insert ",
@@ -596,16 +599,26 @@ names.cidData <- function(x) x$tipLabels
 }
 
 
-# Pre-screen rogue candidates.
-# For each tip in `droppable`, scores the pruned current tree against pruned
-# input trees.  Uses ts_cid_score_trees() rather than the R-loop
-# MutualClusteringInfoSplits path, gaining the C++ hash-index exact match,
-# precomputed log2 values, and bounded early exit.
-# Each tip still needs its own CidData build (input trees differ per drop),
-# but the inner per-input-tree loop runs entirely in C++.
+# Pre-screen rogue candidates via C++ bit-masking.
+# For each tip in `droppable`, masks out the tip from pre-built split data
+# and scores in C++ -- no R-level DropTip/as.Splits needed.
+# When tips have already been dropped, falls back to the R-level path.
 .PrescreenMarginalNID <- function(tree, cidData, droppable,
                                   originalTrees, allTipLabels,
                                   alreadyDropped) {
+  if (length(alreadyDropped) == 0L) {
+    # Fast C++ path: mask each tip from the full split data
+    tipLabels <- cidData$tipLabels
+    dropIdx <- match(droppable, tipLabels)
+    scores <- ts_cid_prescreen_rogue(
+      cidData$inputSplitsRaw, cidData$nTip,
+      tree[["edge"]], dropIdx
+    )
+    names(scores) <- droppable
+    return(scores)
+  }
+
+  # Fallback: tips already dropped, need pruned input trees
   vapply(droppable, function(tip) {
     reducedTips <- setdiff(tree[["tip.label"]], tip)
     allDropped  <- c(alreadyDropped, tip)
