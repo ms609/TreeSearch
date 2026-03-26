@@ -219,7 +219,7 @@ git stash pop                                  # restore code work
 
 ### Coordination files live on `cpp-search` only
 
-`to-do.md`, `issues.md`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
+`to-do.md`, `u.nnn`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
 and `AGENTS.md` are **never committed on feature branches**. When an agent
 working on a feature branch needs to log progress or claim a task, they commit
 those changes directly to `cpp-search` (coordination-only commit), keeping the
@@ -298,31 +298,17 @@ On `/assign X`:
       written.
    f. Repeat for all claimed files before moving on. **Do not start
       working a task until all pending reports are triaged.**
-3. Check `issues.md` **before** `to-do.md`:
-   a. If `issues.md` contains any unclaimed issues (blocks whose first line
-      does **not** start with `CLAIMED`), **claim the bottom-most unclaimed
-      issue** by prepending `CLAIMED (X):` to its first line.
-   b. Triage the claimed issue: determine what needs doing, then add one or
-      more discrete tasks to `to-do.md` (assign appropriate IDs and
-      priorities — issues may be P0). Begin work on the first task.
-   c. Once the `to-do.md` tasks are created, delete the entire issue block
-      (including its `---` separator) from `issues.md`.
-   d. **While `issues.md` still has unclaimed issues, triaging them takes
-      priority over picking up existing `to-do.md` tasks** (an issue may
-      contain a P0).
-4. If `issues.md` is empty or all issues are already claimed, claim the next
-   OPEN task from `to-do.md` as before.
+3. **Triage user issues** (`u.*` files) before `to-do.md`. See the
+   parent `../AGENTS.md` "User issue files" section for the full protocol
+   (scan → claim via rename → triage → delete). While untriaged issues
+   remain, triaging takes priority over `to-do.md` tasks (an issue may
+   contain a P0).
+4. If no untriaged issues, claim the next OPEN task from `to-do.md`.
 
 Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
-> **Concurrency guard (issues.md):** Only the bottom-most *unclaimed* issue
-> may be claimed. Because agents always target the bottom and mark it
-> `CLAIMED (X)` immediately, two agents will never parse the same issue. If
-> an agent sees the bottom issue is already `CLAIMED`, it moves up to the
-> next unclaimed one.
->
-> **Concurrency guard (aXXX.md / a.XXX):** Atomic rename (`mv aXXX.md
-> aXXX.claimed-X.md`) ensures exactly one agent wins each file. NTFS
+> **Concurrency guard (u.nnn / a.XXX):** Atomic rename (`mv u.001
+> u.001.claimed-X`) ensures exactly one agent wins each file. NTFS
 > rename is atomic; losers see "file not found" and skip.
 
 ### During work
@@ -405,7 +391,7 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | File | Purpose |
 |------|---------|
 | `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
-| `issues.md` | Human-entered issues (agents triage → `to-do.md`) |
+| `u.nnn` | User issue files (agents triage → `to-do.md`, then delete) |
 | `to-do.md` | Task queue (active/open tasks only) |
 | `completed-tasks.md` | Archive of completed tasks |
 | `coordination.md` | Strategic plan |
