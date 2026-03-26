@@ -82,7 +82,7 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 by E (focus 7: T-258 intra-fuse, PR #230 hot-loop-opt, T-255 drift elimination). Clean — no bugs. 624 targeted tests pass. |
+| S-RED | dyn | ASSIGNED (E) | — | **Standing: Red-team review** | Focus 8: T-264 consensus-stop fix, PR #232 merge, T-255 drift removal. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 23). Fixed T-248 anneal test stale assertion (annealCycles 3→1). Updated T-255 GHA. Task queue healthy. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by F (S-COORD round 22). Open PRs: #216 (native-search, rebased, CI re-triggered), #213 (CID-consensus, rebased, CI re-triggered). #210 (draft cpp-search→main). #178/#106 stale+CONFLICTING — recommend closing. #230 merged. |
