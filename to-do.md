@@ -65,7 +65,7 @@
 |----|-----|--------|--------|-------------|-------|
 | T-255 | P2 | PARKED (E, GHA 23591874696) | — | **Reduce drift in default and thorough presets.** T-254 confirmed drift has zero score, MPT, or diversity benefit and costs 10–22% of replicates. Set `driftCycles=0` in default; reduce from 12 to 0 in thorough. Reallocate saved time to extra replicates. | Anneal test fix committed (7dc2ed96). GHA 23591874696 in progress. |
 | T-257 | P3 | OPEN | — | **Post-ratchet sectorial search pass.** Add a second sectorial search pass after ratchet in the pipeline: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR] instead of [XSS+RSS+CSS → Ratchet → Drift → TBR]. TNT interleaves sectorial search throughout each replicate; this is a lightweight approximation. | T-256 found extra sectorial rounds don't improve scores, but `nodrift_3x` config was best (mean gap 4.9 vs 5.3) due to more replicates. A post-ratchet sectorial pass may still help if it's cheap enough to not cut into replicate count. Needs careful cost/benefit analysis. |
-| T-260 | P3 | DONE (E) | — | **Per-evaluation overhead profiling.** T-251 found TreeSearch evaluates 1.5–3.6× fewer rearrangements/second than TNT despite wider SIMD. Profile the per-evaluation overhead: undo stack management (PreallocUndo grow/shrink), incremental scoring setup, collapsed-flag recomputation. Identify the top 2–3 hotspots. | Overlaps T-245 (TBR batching) and T-246 (AVX2) but targets different bottleneck (overhead, not throughput). VTune 2025.10 available locally at `C:/Program Files (x86)/Intel/oneAPI/vtune/latest`. Use software sampling (`-knob sampling-mode=sw`). Use a TBR-only workload at 68+ tips. |
+
 
 ### Standing Tasks
 
