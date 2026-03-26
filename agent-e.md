@@ -2,7 +2,37 @@
 
 ## Current Task
 - **Task:** IDLE
-- **Status:** IDLE
+- **Status:** T-248 done, S-COORD done. T-243 PARKED (PR #230, GHA 23582386358 queued).
+
+### S-COORD round 21 — DONE
+- Closed 4 Shiny tasks (T-232, T-239, T-240, T-241) — all re-validated by GHA 23547582438 (cpp-search PASS)
+- Updated T-242 note (GHA failure is stale, investigation task)
+- Updated S-PR: #230 pending, #216 stale GHA, #178/#106 recommend closing
+
+### T-248 — SA phase tuning — DONE
+- Hamilton benchmark: AC=0/1/3 × 30s/60s, 5 seeds each, mbank_X30754 (180t)
+- AC=1: 400ms/rep, 40% hit rate. AC=3: 1370ms/rep, 21% hit rate. No significant score difference (p>0.5).
+- Changed large preset annealCycles from 3 to 1. Saves ~1s/rep (~6% of 17s).
+
+### T-247 — XPIWE search quality investigation — DONE (not a bug)
+- Score discrepancy (3.84382 vs TNT 3.79283) from different inapplicable handling
+- TreeSearch: Brazeau three-pass → EW=80 on TNT's tree, EW=79 on its own tree
+- TNT: standard Fitch → EW=78 on its tree
+- XPIWE implementation verified correct: eff_k flows through compute_iw, precompute_iw_delta, indirect_iw_length
+- Search confirms XPIWE uses different intermediate scores from IW (verbosity=3 shows different convergence paths)
+
+### T-244 — Full-pipeline 180-tip benchmark — DONE
+- Ran large preset on Hamilton HPC (EPYC 7702) at 30/60/120s budgets, 5 seeds each
+- Median scores: 30s=1202, 60s=1190, 120s=1185 (cf. Intel pre-T-206: 1276/1255/1250)
+- 65-74 step improvement primarily from T-206 (outer cycle reset cap), not hardware
+- Per-replicate: median 17.3s (vs pre-T-206 ~60s due to unlimited resets)
+- Phase: TBR 43.6%, Ratchet 32.2%, SA 7.4% (least productive: 14% hit, 0.8 steps/s)
+- SA (annealing) is potential optimization target — annealCycles/Phases may be overtuned
+- Updated profiling.md with baselines
+
+### T-243 — hot-loop-opt PR — PARKED
+- PR #230 open. GHA 23580149481 failed on pre-existing spelling/doc issues.
+- Commented on PR. Changes are pure C++ — no new failures introduced.
 
 ### T-209 — NNI perturbation constraint guard — DONE
 - Found via S-RED focus 2 (search topology invariants).

@@ -150,10 +150,10 @@
   # - Fewer perturbation cycles: ratchet 12, drift 4 (vs thorough 20/12)
   # - No NNI-perturbation: at ~5.5s/cycle, it dominates the budget; ratchet
   #   provides more diverse escapes per unit time at large-tree scale
-  # - Annealing replaces drift: linear cooling T=20→0 over 5 phases uses
-  #   stochastic TBR with Boltzmann acceptance — cheaper per-cycle than
-  #   drift (O(n) moves vs O(n²) drift acceptance checks) and naturally
-  #   schedules exploration→exploitation
+  # - Annealing (1 cycle) replaces drift: linear cooling T=20→0 over 5
+  #   phases uses stochastic TBR with Boltzmann acceptance — cheaper
+  #   per-cycle than drift. 1 cycle (400ms) captures 40% hit rate at
+  #   180 tips; 3 cycles (1370ms) showed no significant score gain (T-248)
   # - No outer-cycle interleaving: outerCycles=1 avoids re-running expensive
   #   XSS/RSS/CSS after ratchet (saves ~10s per repeated sectorial pass)
   # - Single biased-Wagner start: saves ~2.6s vs 3 random starts; biased
@@ -172,7 +172,7 @@
     ratchetAdaptive = TRUE,
     nniPerturbCycles = 0L,
     driftCycles = 0L,
-    annealCycles = 3L, annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
+    annealCycles = 1L, annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
     xssRounds = 3L, xssPartitions = 6L,
     rssRounds = 2L, cssRounds = 1L, cssPartitions = 6L,
     sectorMinSize = 8L, sectorMaxSize = 100L,
@@ -332,8 +332,8 @@
 #'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
 #'       counts scaled for expensive per-replicate cost, no NNI
 #'       perturbation, single biased Wagner start (Goloboff 2014), larger
-#'       sector sizes, simulated annealing instead of drift (linear
-#'       cooling from T=20 to T=0 over 5 phases).  Empirically matches
+#'       sector sizes, 1-cycle simulated annealing instead of drift
+#'       (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 #'       or exceeds `"thorough"` at 180 tips across all time budgets.}
 #'   All presets enable consensus-stability stopping: the search stops early
 #'   if the strict consensus of best-score trees has been unchanged for
