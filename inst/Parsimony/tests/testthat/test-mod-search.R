@@ -19,12 +19,43 @@ FormatMissProb <- function(prob) {
   else if (pct >= 0.01) "<0.1%"
   else "<0.01%"
 }
-SearchConfidenceText <- function(K, R) {
+SearchConfidenceText <- function(K, R, nSearches = 1L,
+                                 nTopologies = NULL,
+                                 lastImprovedRep = NULL) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
-  prob_miss <- exp(-K)
-  paste0(K, " of ", R, " runs hit best score. ",
+  K <- min(K, R)
+  prob_miss <- if (K < R) (1 - K / R) ^ R else exp(-K)
+  runs_label <- if (!is.null(nSearches) && nSearches > 1L) {
+    paste0("total runs across ", nSearches, " searches")
+  } else {
+    "runs"
+  }
+  topo_note <- if (!is.null(nTopologies) && nTopologies == 1L) {
+    " [single topology \u2014 limited independence]"
+  } else {
+    ""
+  }
+  trajectory_note <- if (!is.null(lastImprovedRep) && R > 1L) {
+    paste0(" Last improvement: replicate ", lastImprovedRep, ".")
+  } else {
+    ""
+  }
+  rugged_note <- if (K / R < 0.3 && R >= 5L) {
+    paste0(" Hit rate low (", round(100 * K / R),
+           "%) \u2014 more replicates may help.")
+  } else {
+    ""
+  }
+  small_sample_note <- if (K == R && R <= 5L) {
+    paste0(" \u2014 increase \u2018Stop when N runs hit best\u2019 for a ",
+           "tighter estimate")
+  } else {
+    ""
+  }
+  paste0(K, " of ", R, " ", runs_label, " hit best score. ",
          "Probability that a better score exists: ",
-         FormatMissProb(prob_miss))
+         FormatMissProb(prob_miss),
+         topo_note, trajectory_note, rugged_note, small_sample_note)
 }
 PutData <- PutTree <- function(...) invisible(NULL)
 logging <- FALSE
@@ -221,35 +252,73 @@ test_that("DisplayTreeScores renders updated confidence text (T-090)", {
       expect_match(html, "8 of 100 runs hit best score")
       expect_match(html, "1 trees in memory")
       expect_match(html, "title=")
-      expect_match(html, "exp\\(-K\\) where K = 8")
+      expect_match(html, "\\(1 - K/R\\)\\^R where K = 8")
     }
   )
 })
 
-test_that("SearchConfidenceText uses exp(-K) formula (T-098)", {
+test_that("SearchConfidenceText uses binomial bound (T-163)", {
   # NULL cases
-
   expect_null(SearchConfidenceText(NULL, 10))
   expect_null(SearchConfidenceText(0, 10))
   expect_null(SearchConfidenceText(5, 0))
 
-  # K = R = 3: old formula gave 0 -> "<0.01%"; new gives exp(-3) ~ 5%
+  # K = R = 3: falls back to exp(-3) ~ 5%
   txt <- SearchConfidenceText(3, 3)
   expect_match(txt, "3 of 3 runs hit best score")
   expect_match(txt, "~5%")
   expect_match(txt, "better score exists")
+  # Small sample nudge
+  expect_match(txt, "tighter estimate")
 
-  # K = 1: exp(-1) ~ 37%
+  # K = 1, R = 10: (1 - 1/10)^10 = 0.9^10 ~ 35%
   txt1 <- SearchConfidenceText(1, 10)
-  expect_match(txt1, "~37%")
+  expect_match(txt1, "~35%")
 
-  # K = 10: exp(-10) ~ 0.005% -> "<0.01%"
+  # K = R = 10: exp(-10) ~ 0.005% -> "<0.01%"
   txt10 <- SearchConfidenceText(10, 10)
   expect_match(txt10, "<0.01%")
 
-  # K = 5: exp(-5) ~ 0.67% -> "<1%"
+  # K = 5, R = 20: (1 - 5/20)^20 = 0.75^20 ~ 0.32% -> "<1%"
   txt5 <- SearchConfidenceText(5, 20)
   expect_match(txt5, "<1%")
+
+  # Ruggedness flag: K/R < 0.3 and R >= 5
+  txt_rugged <- SearchConfidenceText(1, 10)
+  expect_match(txt_rugged, "Hit rate low")
+  expect_match(txt_rugged, "10%")
+
+  # No ruggedness flag when K/R >= 0.3
+  txt_smooth <- SearchConfidenceText(4, 10)
+  expect_false(grepl("Hit rate low", txt_smooth))
+
+  # Single topology warning
+  txt_single <- SearchConfidenceText(5, 10, nTopologies = 1L)
+  expect_match(txt_single, "single topology.*limited independence")
+
+  # No topology note for multiple trees (redundant with "trees in memory")
+  txt_multi <- SearchConfidenceText(5, 10, nTopologies = 3L)
+  expect_false(grepl("topolog", txt_multi))
+
+  # Last-improved replicate info
+  txt_traj <- SearchConfidenceText(5, 10, lastImprovedRep = 7L)
+  expect_match(txt_traj, "Last improvement: replicate 7")
+
+  # nSearches label
+  txt_multi_search <- SearchConfidenceText(5, 10, nSearches = 3L)
+  expect_match(txt_multi_search, "across 3 searches")
+
+  # Stop reason: consensus stable
+  txt_cons <- SearchConfidenceText(4, 90, stopReason = "consensus")
+  expect_match(txt_cons, "consensus stable")
+
+  # Stop reason: timeout
+  txt_time <- SearchConfidenceText(4, 90, stopReason = "timeout")
+  expect_match(txt_time, "time limit")
+
+  # No stop reason
+  txt_none <- SearchConfidenceText(4, 90, stopReason = NULL)
+  expect_false(grepl("stopped", txt_none, ignore.case = TRUE))
 })
 
 test_that("FormatMissProb displays probability thresholds correctly", {

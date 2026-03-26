@@ -9,10 +9,14 @@ test_that("SearchControl() returns correct class and structure", {
   ctrl <- SearchControl()
   expect_s3_class(ctrl, "SearchControl")
   expect_true(is.list(ctrl))
-  expect_equal(ctrl$ratchetCycles, 5L)
+  expect_equal(ctrl$ratchetCycles, 12L)
   expect_equal(ctrl$driftCycles, 2L)
   expect_equal(ctrl$poolSuboptimal, 0)
   expect_false(ctrl$sprFirst)
+  expect_equal(ctrl$ratchetPerturbProb, 0.25)
+  expect_equal(ctrl$ratchetPerturbMaxMoves, 5L)
+  expect_equal(ctrl$driftAfdLimit, 5L)
+  expect_equal(ctrl$driftRfdLimit, 0.15)
 })
 
 test_that("SearchControl() accepts custom values", {
@@ -85,13 +89,14 @@ test_that("Explicit control overrides strategy preset", {
 
 test_that("poolSuboptimal via control collects suboptimal trees", {
   set.seed(8472)
+  # Use unlimited outer resets for consistent search depth across platforms
   r_strict <- MaximizeParsimony(
     ds, maxReplicates = 3L, targetHits = 1L, verbosity = 0L,
-    control = SearchControl(poolSuboptimal = 0)
+    control = SearchControl(poolSuboptimal = 0, maxOuterResets = -1L)
   )
   r_sub <- MaximizeParsimony(
     ds, maxReplicates = 3L, targetHits = 1L, verbosity = 0L,
-    control = SearchControl(poolSuboptimal = 5)
+    control = SearchControl(poolSuboptimal = 5, maxOuterResets = -1L)
   )
   expect_gte(length(r_sub), length(r_strict))
 })

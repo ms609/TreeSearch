@@ -4,10 +4,10 @@
     "consensus-concordance": "none",
     "consensus-consP": 1,
     "consensus-excludedTip": "",
-    "consensus-keepNTips": 0,
+    "consensus-keepNTips": 62,
     "consensus-mapDisplay": null,
     "consensus-neverDrop": null,
-    "consensus-outgroup": null,
+    "consensus-outgroup": "Argiope",
     "consensus-plottedChar": 1,
     "consensus-searchChar": "",
     "consensus-whichTree": 0,
@@ -92,7 +92,7 @@
       ]
     },
     "search-results": {
-      "html": "23 trees in memory: 23 sampled with scores 34.7693 to 38.2276 (k = 10)",
+      "html": "23 trees in memory: 23 sampled with scores 34.2596 to 37.6545 (k = 10)",
       "deps": [
 
       ]

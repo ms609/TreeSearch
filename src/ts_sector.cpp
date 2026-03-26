@@ -4,13 +4,178 @@
 #include "ts_ratchet.h"
 #include "ts_wagner.h"
 #include "ts_rng.h"
+#include "ts_splits.h"
+#include "ts_pool.h"
 
 #include <algorithm>
 #include <random>
 #include <vector>
+#include <cstring>
 #include <R.h>
 
 namespace ts {
+
+// ---- From-above state computation for exact HTU ----
+//
+// Compute from_above[sector_root]: the Fitch state-set that the rest of
+// the tree sends down to the sector boundary, EXCLUDING the sector's own
+// contribution. Using this as the HTU state-set (instead of final_[parent])
+// makes the sector score a better predictor of the full-tree impact.
+//
+// Algorithm: walk from root down to sector_root, computing fitch_join
+// at each step. O(depth × total_words) — negligible.
+
+static void compute_from_above_for_sector(
+    const TreeState& tree, const DataSet& ds,
+    int sector_root,
+    std::vector<uint64_t>& from_above_out) {
+  int tw = tree.total_words;
+  from_above_out.resize(tw);
+
+  // 1. Find path from sector_root to root (walk up via parent)
+  std::vector<int> path;
+  for (int cur = sector_root; ; cur = tree.parent[cur]) {
+    path.push_back(cur);
+    if (cur == tree.n_tip) break; // reached root
+  }
+  // path = [sector_root, ..., root]
+  // Reverse to get [root, ..., sector_root]
+  std::reverse(path.begin(), path.end());
+
+  // 2. Seed: from_above[root] = all states (fully ambiguous)
+  // All bits set for each state word within each block.
+  std::vector<uint64_t> from_above_cur(tw);
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    int off = ds.block_word_offset[b];
+    uint64_t mask = ds.blocks[b].active_mask;
+    for (int s = 0; s < ds.blocks[b].n_states; ++s) {
+      from_above_cur[off + s] = mask;
+    }
+  }
+
+  // 3. Walk down the path, computing from_above at each child step
+  for (size_t i = 0; i + 1 < path.size(); ++i) {
+    int node = path[i];
+    int next = path[i + 1]; // child on the path
+
+    // Find sibling of `next` under `node`
+    int ni = node - tree.n_tip;
+    int sib = (tree.left[ni] == next) ? tree.right[ni] : tree.left[ni];
+
+    // from_above[next] = fitch_join(from_above[node], prelim[sib])
+    // fitch_join: per-block, compute intersection; where empty, use union.
+    const uint64_t* sib_prelim =
+        &tree.prelim[static_cast<size_t>(sib) * tw];
+
+    std::vector<uint64_t> new_from_above(tw);
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      int off = ds.block_word_offset[b];
+      int ns = ds.blocks[b].n_states;
+      uint64_t any_isect = 0;
+      for (int s = 0; s < ns; ++s) {
+        any_isect |= (from_above_cur[off + s] & sib_prelim[off + s]);
+      }
+      uint64_t no_isect = ~any_isect & ds.blocks[b].active_mask;
+      for (int s = 0; s < ns; ++s) {
+        uint64_t isect = from_above_cur[off + s] & sib_prelim[off + s];
+        uint64_t uni = from_above_cur[off + s] | sib_prelim[off + s];
+        new_from_above[off + s] = (isect & any_isect) | (uni & no_isect);
+      }
+    }
+    from_above_cur = std::move(new_from_above);
+  }
+
+  std::memcpy(from_above_out.data(), from_above_cur.data(),
+              tw * sizeof(uint64_t));
+}
+
+// ---- Conflict-guided sector selection ----
+//
+// For each internal node (except root), compute how "conflicted" it is:
+// the fraction of best-score pool trees that do NOT contain this node's split.
+// Returns per-node values in [0, 1]: 0 = unanimous, 1 = absent from all pool
+// trees. Tips and root get 0. When sft has <2 trees, returns all zeros.
+//
+// Also propagates max-descendant conflict upward: sector_conflict[node] =
+// max conflict score among all nodes in node's subtree. This gives each
+// eligible sector root a score reflecting the most uncertain region it contains.
+
+static void compute_node_conflict(
+    const TreeState& tree,
+    const SplitFrequencyTable& sft,
+    std::vector<double>& node_conflict,
+    std::vector<double>& sector_conflict) {
+  int nn = tree.n_node;
+  node_conflict.assign(nn, 0.0);
+  sector_conflict.assign(nn, 0.0);
+  if (sft.n_trees < 2) return;
+
+  int n_tip = tree.n_tip;
+  int wps = (n_tip + 63) / 64;
+  int trailing = n_tip % 64;
+  uint64_t trail_mask = (trailing != 0) ? ((1ULL << trailing) - 1) : ~0ULL;
+
+  // Build tip membership bitsets (same as compute_splits, but we also need
+  // the node mapping so we do it in-place rather than calling compute_splits).
+  size_t total = static_cast<size_t>(nn) * wps;
+  std::vector<uint64_t> tip_bits(total, 0);
+
+  for (int t = 0; t < n_tip; ++t) {
+    tip_bits[static_cast<size_t>(t) * wps + t / 64] = 1ULL << (t % 64);
+  }
+
+  int root = n_tip;
+  int root_right = tree.right[0];
+
+  // Temporary buffer for canonicalized split
+  std::vector<uint64_t> canon(wps);
+
+  for (int node : tree.postorder) {
+    int ni = node - n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    uint64_t* dst = &tip_bits[static_cast<size_t>(node) * wps];
+    const uint64_t* lbits = &tip_bits[static_cast<size_t>(lc) * wps];
+    const uint64_t* rbits = &tip_bits[static_cast<size_t>(rc) * wps];
+    for (int w = 0; w < wps; ++w) {
+      dst[w] = lbits[w] | rbits[w];
+    }
+
+    // Skip root and root_right (same exclusions as compute_splits)
+    if (node == root || node == root_right) continue;
+
+    // Check for trivial splits
+    int count = 0;
+    for (int w = 0; w < wps; ++w) {
+      count += ts::popcount64(dst[w]);
+    }
+    if (count <= 1 || count >= n_tip - 1) continue;
+
+    // Canonicalize: ensure bit 0 is clear
+    bool flip = (dst[0] & 1ULL) != 0;
+    for (int w = 0; w < wps; ++w) {
+      canon[w] = flip ? ~dst[w] : dst[w];
+    }
+    canon[wps - 1] &= trail_mask;
+
+    // Look up frequency in pool
+    uint64_t sh = hash_single_split(canon.data(), wps);
+    auto it = sft.freq.find(sh);
+    int freq = (it != sft.freq.end()) ? it->second : 0;
+    node_conflict[node] = 1.0 - static_cast<double>(freq) / sft.n_trees;
+  }
+
+  // Propagate max-descendant conflict upward (postorder)
+  for (int t = 0; t < n_tip; ++t) sector_conflict[t] = 0.0;
+  for (int node : tree.postorder) {
+    int ni = node - n_tip;
+    sector_conflict[node] = std::max({
+        node_conflict[node],
+        sector_conflict[tree.left[ni]],
+        sector_conflict[tree.right[ni]]
+    });
+  }
+}
 
 // ---- Clade topology snapshot ----
 // Saves only the internal nodes within a clade (sector) for fast undo.
@@ -265,6 +430,8 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   rd.data.min_steps = ds.min_steps;
   rd.data.pattern_freq = ds.pattern_freq;
   rd.data.concavity = ds.concavity;
+  rd.data.eff_k = ds.eff_k;
+  rd.data.phi = ds.phi;
 
   // Copy scoring mode and simplification metadata
   rd.data.scoring_mode = ds.scoring_mode;
@@ -288,14 +455,18 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
     }
   }
 
-  // HTU pseudo-tip: use final_ states from parent of sector_root
+  // HTU pseudo-tip: use from_above[sector_root] — the Fitch state-set
+  // that the rest of the tree sends down to the sector boundary, excluding
+  // the sector's own contribution. This gives a better HTU approximation
+  // than final_[parent], which circularly includes the sector's states.
   {
-    size_t src_base =
-        static_cast<size_t>(htu_full_node) * tree.total_words;
+    std::vector<uint64_t> from_above_sr;
+    compute_from_above_for_sector(tree, ds, sector_root, from_above_sr);
+
     size_t dst_base =
         static_cast<size_t>(htu_sector_idx) * ds.total_words;
     for (int w = 0; w < ds.total_words; ++w) {
-      rd.data.tip_states[dst_base + w] = tree.final_[src_base + w];
+      rd.data.tip_states[dst_base + w] = from_above_sr[w];
     }
   }
 
@@ -511,10 +682,36 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     return result;
   }
 
+  // Conflict-guided weighting: if pool frequency data is available,
+  // bias random sector selection toward high-conflict regions.
+  std::vector<double> pick_weights;
+  bool use_weighted = false;
+  if (params.split_freq && params.split_freq->n_trees >= 2) {
+    std::vector<double> node_conf, sector_conf;
+    compute_node_conflict(tree, *params.split_freq, node_conf, sector_conf);
+
+    pick_weights.resize(eligible.size());
+    double max_w = 0.0;
+    for (size_t i = 0; i < eligible.size(); ++i) {
+      // Blend: base weight 1.0 + conflict bonus (up to 3.0 extra).
+      // Ensures even low-conflict sectors get some chance.
+      pick_weights[i] = 1.0 + 3.0 * sector_conf[eligible[i]];
+      if (pick_weights[i] > max_w) max_w = pick_weights[i];
+    }
+    // Only use weighted selection if there is meaningful variation
+    use_weighted = (max_w > 1.5);
+  }
+
   for (int pick = 0; pick < n_picks; ++pick) {
-    // Pick a random eligible node
-    int idx = std::uniform_int_distribution<int>(
-        0, static_cast<int>(eligible.size()) - 1)(rng);
+    int idx;
+    if (use_weighted) {
+      std::discrete_distribution<int> dist(pick_weights.begin(),
+                                           pick_weights.end());
+      idx = dist(rng);
+    } else {
+      idx = std::uniform_int_distribution<int>(
+          0, static_cast<int>(eligible.size()) - 1)(rng);
+    }
     int sector_root = eligible[idx];
 
     // State arrays are guaranteed valid: either from the initial
@@ -575,6 +772,16 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
           }
         }
         if (eligible.empty()) break;
+
+        // Recompute conflict weights for new topology
+        if (use_weighted) {
+          std::vector<double> nc, sc;
+          compute_node_conflict(tree, *params.split_freq, nc, sc);
+          pick_weights.resize(eligible.size());
+          for (size_t i = 0; i < eligible.size(); ++i) {
+            pick_weights[i] = 1.0 + 3.0 * sc[eligible[i]];
+          }
+        }
       } else if (new_score == result.best_score && params.accept_equal) {
         // Equal score accepted — topology changed but score didn't
       } else {
@@ -622,6 +829,8 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
   bool constrained = cd && cd->active && cd->has_posthoc;
 
   for (int round = 0; round < params.xss_rounds; ++round) {
+    double score_before_round = result.best_score;
+
     // Pick a random number of partitions around the target
     int n_parts = params.n_partitions;
     // Add some randomness: ±1
@@ -701,6 +910,8 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       }
     }
 
+    // Adaptive: skip remaining rounds if this one found no improvement
+    if (result.best_score >= score_before_round) break;
     if (ts::check_interrupt()) break;
   }
 
@@ -747,6 +958,8 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
   std::vector<bool> sector_mask;
 
   for (int round = 0; round < n_rounds; ++round) {
+    double score_before_round = result.best_score;
+
     std::vector<int> sectors = xss_partition(tree, params.n_partitions);
 
     for (int sector_root : sectors) {
@@ -783,6 +996,8 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
       }
     }
 
+    // Adaptive: skip remaining rounds if this one found no improvement
+    if (result.best_score >= score_before_round) break;
     if (ts::check_interrupt()) break;
   }
 

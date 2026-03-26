@@ -1,0 +1,4 @@
+timeout 0:00:10;
+xmult=hits 5 replic 20;
+best;
+quit;

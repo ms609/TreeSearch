@@ -8,10 +8,73 @@
 #include <memory>
 #include <cstring>
 #include <array>
+#include <deque>
+#include <chrono>
 
 using namespace Rcpp;
 
 static const double NEG_INF = -std::numeric_limits<double>::infinity();
+
+// ============================================================================
+// Precomputed lookup tables for fast log-sum-exp operations.
+// Replaces repeated exp() / log1p() calls in inner loops.
+// ============================================================================
+struct FastLSETables {
+  static constexpr int N = 4096;
+  static constexpr double MAX_D = 36.75;   // exp(-36.75) < 2^-53
+  static constexpr double SCALE = N / MAX_D;
+
+  double exp_neg[N + 2];        // exp(-d) for d in [0, MAX_D]
+  double log1p_exp_neg[N + 2];  // log(1 + exp(-d)) for d in [0, MAX_D]
+
+  FastLSETables() {
+    for (int i = 0; i <= N; ++i) {
+      double d = i / SCALE;
+      exp_neg[i] = std::exp(-d);
+      log1p_exp_neg[i] = std::log1p(std::exp(-d));
+    }
+    exp_neg[N + 1] = 0.0;
+    log1p_exp_neg[N + 1] = 0.0;
+  }
+};
+static const FastLSETables FAST_LSE;
+
+// Fast exp(-d) for d >= 0.  Returns 0 when d >= MAX_D.
+static inline double fast_exp_neg(double d) {
+  if (d >= FastLSETables::MAX_D) return 0.0;
+  double idx = d * FastLSETables::SCALE;
+  int i = (int)idx;
+  double f = idx - i;
+  return FAST_LSE.exp_neg[i] + f * (FAST_LSE.exp_neg[i + 1] - FAST_LSE.exp_neg[i]);
+}
+
+// Fast log(1 + exp(-d)) for d >= 0.  Returns 0 when d >= MAX_D.
+static inline double fast_log1p_exp_neg(double d) {
+  if (d >= FastLSETables::MAX_D) return 0.0;
+  double idx = d * FastLSETables::SCALE;
+  int i = (int)idx;
+  double f = idx - i;
+  return FAST_LSE.log1p_exp_neg[i]
+       + f * (FAST_LSE.log1p_exp_neg[i + 1] - FAST_LSE.log1p_exp_neg[i]);
+}
+
+// Inline log-sum-exp accumulation: target = log(exp(target) + exp(v)).
+// Uses exact log1p/exp (not the fast lookup tables) because rounding errors
+// in the sequential log-domain path compound through every subsequent call.
+static inline void lse_update(double& target, double v) {
+  if (!(v > NEG_INF)) return;
+  if (!(target > NEG_INF)) {
+    target = v;
+  } else {
+    double d = target - v;
+    if (d >= 0.0) {
+      target += std::log1p(std::exp(-d));
+    } else {
+      target = v + std::log1p(std::exp(d));
+    }
+  }
+}
+
 constexpr int MAX_STATES_OPT = 32;
 // ---------- replace existing StateKey definition ----------
 struct StateKey {
@@ -429,39 +492,37 @@ struct LogPKeyOptHash {
 // ============================================================================
 
 struct LSEAccumulator {
-  long double maxv;
-  long double acc; 
+  double maxv;
+  double acc;
   bool empty;
-  
-  LSEAccumulator() : maxv(-std::numeric_limits<long double>::infinity()), acc(0.0L), empty(true) {}
-  
-  inline void add(long double v) {
-    if (!std::isfinite((double)v)) return;
-    
+
+  LSEAccumulator() : maxv(NEG_INF), acc(0.0), empty(true) {}
+
+  inline void add(double v) {
+    if (!(v > NEG_INF)) return;
+
     if (empty) {
       maxv = v;
-      acc = 1.0L;
+      acc = 1.0;
       empty = false;
+    } else if (v > maxv) {
+      acc = acc * fast_exp_neg(v - maxv) + 1.0;
+      maxv = v;
     } else {
-      if (v > maxv) {
-        acc = acc * expl(maxv - v);
-        maxv = v;
-      }
-      acc += expl(v - maxv);
+      acc += fast_exp_neg(maxv - v);
     }
   }
-  
+
   inline double result() const {
     if (empty) return NEG_INF;
-    long double res = maxv + logl(acc);
-    return (double)res;
+    return maxv + std::log(acc);
   }
 };
 
 static inline double log_prod_sum_4(double v1, double v2, double v3, double v4) {
-  if (!std::isfinite(v1) || !std::isfinite(v2) || 
-      !std::isfinite(v3) || !std::isfinite(v4)) return NEG_INF;
-      return (double)((long double)v1 + (long double)v2 + (long double)v3 + (long double)v4);
+  if (!(v1 > NEG_INF) || !(v2 > NEG_INF) ||
+      !(v3 > NEG_INF) || !(v4 > NEG_INF)) return NEG_INF;
+  return v1 + v2 + v3 + v4;
 }
 
 static inline int sum_int(const std::vector<int>& v) {
@@ -596,7 +657,9 @@ struct ValidDrawsCache {
       }
       
       // Safety check for the fixed array size (unlikely to be hit)
-      if (out.count >= 256) throw std::runtime_error("FixedDraws array capacity exceeded.");
+      if (out.count >= 256) throw std::runtime_error(
+        "Column has too many taxa/state combinations for the exact solver. "
+        "Use StepInformation(approx = 'mc') to approximate with Monte Carlo.");
       
       DrawPair dp;
       dp.drawn = StateKey(drawn);
@@ -676,11 +739,11 @@ public:
     const int n = leaves.sum();
     
     double bal = (n == 2*m) ? std::log(0.5) : 0.0;
-    long double lc = 0.0L;
+    double lc = 0.0;
     for (int i = 0; i < leaves.len; ++i) {
       lc += lchoose_log(leaves.data[i], drawn.data[i]);
     }
-    double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
+    double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + lc;
     cache.emplace(std::move(key), val);
     return val;
   }
@@ -724,6 +787,91 @@ inline uint64_t pack_leaves(const std::vector<int> &v) {
   return h;
 }
 // ============================================================================
+// Open-addressing flat hash map (no stable iterator/reference guarantees).
+// Probe layer (hashes + indices) is separate from the entries vector for
+// cache-efficient linear probing.  hash == 0 means empty slot.
+// Pre-reserve before use; never exceeds reserved capacity.
+// ============================================================================
+template<typename K, typename V, typename H = std::hash<K>>
+class OAFlatMap {
+public:
+  struct Entry { K key; V value; };
+
+private:
+  // Separate probe layer for fast linear probing (8 bytes/slot vs ~300 bytes).
+  std::vector<uint64_t> hashes_;   // 0 = empty; stored hash is raw_hash | 1
+  std::vector<uint32_t> indices_;  // index into entries_
+  std::vector<Entry>    entries_;
+  size_t                mask_{0};
+  H                     hasher_{};
+
+  size_t probe_slot(uint64_t h, const K& key) const noexcept {
+    size_t slot = h & mask_;
+    while (hashes_[slot] != 0) {
+      if (hashes_[slot] == h && entries_[indices_[slot]].key == key) return slot;
+      slot = (slot + 1) & mask_;
+    }
+    return slot;
+  }
+
+public:
+  OAFlatMap() = default;
+
+  // Reserve for up to n entries.  Sets table capacity to next power-of-2 >= 2n
+  // (keeping load factor <= 0.5).  Must be called before any emplace/find.
+  void reserve(size_t n) {
+    size_t cap = 16;
+    while (cap < 2 * n) cap <<= 1;
+    mask_ = cap - 1;
+    hashes_.assign(cap, 0u);
+    indices_.resize(cap);
+    entries_.clear();
+    entries_.reserve(n);
+  }
+
+  // Returns pointer to value if found, nullptr otherwise.
+  // Pointer is stable as long as entries_ doesn't reallocate (see reserve()).
+  V* find_value(const K& key) noexcept {
+    if (entries_.capacity() == 0) return nullptr;
+    uint64_t h = (uint64_t)hasher_(key) | 1u;
+    size_t slot = probe_slot(h, key);
+    if (hashes_[slot] == 0) return nullptr;
+    return &entries_[indices_[slot]].value;
+  }
+
+  // Insert with default-constructed V{} if key absent.
+  // Returns (entry_ptr, inserted).  entry_ptr is stable (see reserve()).
+  std::pair<Entry*, bool> emplace_default(const K& key) {
+    uint64_t h = (uint64_t)hasher_(key) | 1u;
+    size_t slot = probe_slot(h, key);
+    if (hashes_[slot] != 0)
+      return {&entries_[indices_[slot]], false};
+    uint32_t idx = (uint32_t)entries_.size();
+    entries_.push_back({key, V{}});
+    hashes_[slot] = h;
+    indices_[slot] = idx;
+    return {&entries_[idx], true};
+  }
+
+  // Insert with explicit value (move semantics).
+  // Returns (entry_ptr, inserted).  entry_ptr is stable (see reserve()).
+  std::pair<Entry*, bool> emplace(K key, V value) {
+    uint64_t h = (uint64_t)hasher_(key) | 1u;
+    size_t slot = probe_slot(h, key);
+    if (hashes_[slot] != 0)
+      return {&entries_[indices_[slot]], false};
+    uint32_t idx = (uint32_t)entries_.size();
+    entries_.push_back({std::move(key), std::move(value)});
+    hashes_[slot] = h;
+    indices_[slot] = idx;
+    return {&entries_[idx], true};
+  }
+
+  size_t size()  const noexcept { return entries_.size(); }
+  void   clear()                { std::fill(hashes_.begin(), hashes_.end(), 0u); entries_.clear(); }
+};
+
+// ============================================================================
 // Template wrapper to dispatch to specialized implementations
 // ============================================================================
 
@@ -737,7 +885,7 @@ class SolverT {
   int presentBits;
   
   // Specialized caches
-  std::unordered_map<KeyType, FixedProbList, HashType> logB_cache;
+  OAFlatMap<KeyType, FixedProbList, HashType> logB_cache;
 
   // Vectorized logP cache: key = (token, leaves) → vector over all step counts.
   // Eliminates the s dimension from the cache key, giving ~s_max× fewer entries.
@@ -756,11 +904,21 @@ class SolverT {
       return (std::size_t)h;
     }
   };
-  std::unordered_map<LogPVecKey, std::vector<double>,
-                     LogPVecKeyHash> logPVec_cache;
+  // Stable-reference store for LogPVec results.
+  // std::deque push_back does NOT invalidate existing element references,
+  // so callers may hold const std::vector<double>& across further inserts.
+  std::deque<std::vector<double>>              pv_store;
+  OAFlatMap<LogPVecKey, uint32_t, LogPVecKeyHash> logPVec_idx;
 
   // Global s_max for this solver instance (set at first run() call)
   int s_max_global = 0;
+
+  // Time budget: abort if computation exceeds this many seconds.
+  // Legitimate computations complete in <2s; blowups take >100s.
+  static constexpr double TIME_BUDGET_S = 2.0;
+  std::chrono::steady_clock::time_point start_time;
+  bool budget_exceeded = false;
+  std::vector<double> bailout_vec;  // filled with NEG_INF at c_size
     
     // Specialized ValidDraws cache
     struct DrawPairT {
@@ -808,6 +966,7 @@ class SolverT {
     
     void recDraws(const std::vector<int>& leaves, std::vector<int>& drawn, 
                   int idx, int n, int half, int curSum, FixedDrawsT& out) {
+      if (budget_exceeded) return;
       if (idx == (int)leaves.size()) {
         if (curSum == 0 || curSum > half) return;
         if (curSum * 2 == n) {
@@ -820,7 +979,9 @@ class SolverT {
         }
         
         if (out.count >= 256) 
-          throw std::runtime_error("FixedDraws array capacity exceeded.");
+          throw std::runtime_error(
+            "Column has too many taxa/state combinations for the exact solver. "
+            "Use StepInformation(approx = 'mc') to approximate with Monte Carlo.");
         
         DrawPairT dp;
         dp.drawn = KeyType(drawn);
@@ -854,21 +1015,29 @@ class SolverT {
       LogRDKeyOpt key{drawn, leaves};
       auto it = logRD_cache.find(key);
       if (it != logRD_cache.end()) return it->second;
-      
+
       const int m = drawn.sum();
       const int n = leaves.sum();
-      
+
       double bal = (n == 2*m) ? std::log(0.5) : 0.0;
-      long double lc = 0.0L;
+      double lc = 0.0;
       for (int i = 0; i < leaves.len; ++i) {
         lc += lchoose_log(leaves.data[i], drawn.data[i]);
       }
-      double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + (double)lc;
+      double val = bal + lnRooted(m) + lnRooted(n - m) - lnRooted(n) + lc;
       logRD_cache.emplace(std::move(key), val);
       return val;
     }
     
     double LogB(int token0, const KeyType& leaves) {
+      if (budget_exceeded) return NEG_INF;
+      {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration<double>(now - start_time).count() > TIME_BUDGET_S) {
+          budget_exceeded = true;
+          return NEG_INF;
+        }
+      }
       const int n = leaves.sum();
       
       if (n == 1) {
@@ -887,72 +1056,68 @@ class SolverT {
       }
       
       if ((token_mask(token0) & ~presentBits) != 0) return NEG_INF;
-      
-      auto it = logB_cache.find(leaves);
-      if (it == logB_cache.end()) {
-        it = logB_cache.emplace(leaves, FixedProbList{}).first;
+
+      // Cache lookup: no reference held across recursion (safe for OAFlatMap).
+      {
+        FixedProbList* fpl = logB_cache.find_value(leaves);
+        if (fpl) {
+          double v = (*fpl)[token0];
+          if (!std::isnan(v)) return v;  // computed (finite or NEG_INF)
+        }
       }
-      
-      double& slot = it->second[token0];
-      if (std::isfinite(slot)) return slot;
-      if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
-      
+
       const auto& drawpairs = getValidDraws(leaves);
       LSEAccumulator outerAcc;
-      
-      for (uint8_t i = 0; i < drawpairs.count; ++i) {
+
+      for (uint8_t i = 0; i < drawpairs.count && !budget_exceeded; ++i) {
         const auto& dp = drawpairs.draws[i];
         const KeyType& drawn = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
         int m = dp.m;
-        
+
         double balancedCorrection = (2*m == n) ? std::log(2.0) : 0.0;
         if (drawn == undrawn) balancedCorrection -= std::log(2.0);
-        
+
         LSEAccumulator innerAcc;
         for (const auto& pr : pairs.noStep[token0]) {
+          if (budget_exceeded) break;
           double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-          innerAcc.add((long double)val);
+          innerAcc.add(val);
         }
         for (const auto& pr : pairs.yesStep[token0]) {
+          if (budget_exceeded) break;
           double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-          innerAcc.add((long double)val);
+          innerAcc.add(val);
         }
         double innerSum = innerAcc.result();
-        
+
         double acc = balancedCorrection + computeLogRD(drawn, leaves) + innerSum;
-        outerAcc.add((long double)acc);
+        outerAcc.add(acc);
       }
-      slot = outerAcc.result();
-      return slot;
+      double result = outerAcc.result();
+      // Insert after all recursion is complete (no dangling reference risk).
+      logB_cache.emplace_default(leaves).first->value[token0] = result;
+      return result;
     }
     
-    // Log-space convolution: C[s] = LogSumExp_r( A[r] + B[s-r] )
-    // Only iterates over the active (finite) range of each operand.
-    static std::vector<double> logconv(
+    // Log-space convolution: C[s] = LogSumExp_r( A[r] + B[s-r] ).
+    // Writes into caller-provided buffer C (must be pre-filled with NEG_INF).
+    void logconv(
         const std::vector<double>& A, int a_lo, int a_hi,
         const std::vector<double>& B, int b_lo, int b_hi,
-        int c_size) {
-      std::vector<double> C(c_size, NEG_INF);
+        double* C, int c_size) {
       for (int r = a_lo; r <= a_hi; ++r) {
+        if (budget_exceeded) return;
         const double va = A[r];
-        if (!std::isfinite(va)) continue;
+        if (!(va > NEG_INF)) continue;
         for (int q = b_lo; q <= b_hi; ++q) {
           const double vb = B[q];
-          if (!std::isfinite(vb)) continue;
+          if (!(vb > NEG_INF)) continue;
           const int s = r + q;
           if (s >= c_size) break;
-          const double v = va + vb;
-          // Inline log-sum-exp update: C[s] = log(exp(C[s]) + exp(v))
-          if (!std::isfinite(C[s])) {
-            C[s] = v;
-          } else {
-            double mx = std::max(C[s], v);
-            C[s] = mx + std::log1p(std::exp(std::min(C[s], v) - mx));
-          }
+          lse_update(C[s], va + vb);
         }
       }
-      return C;
     }
 
     // Returns LogPVec for (leaves, token0): a vector of length (s_max+1)
@@ -961,27 +1126,36 @@ class SolverT {
     // The vector is indexed from 0; entries before the min possible step
     // count are NEG_INF.
     const std::vector<double>& LogPVec(const KeyType& leaves, int token0) {
-      static const std::vector<double> empty_neg_inf;
       const int n = leaves.sum();
       const int s_max = s_max_global;
       const int c_size = s_max + 1;
 
+      // Budget guard: check wall clock every call (~20ns overhead)
+      if (budget_exceeded) return bailout_vec;
+      {
+        auto now = std::chrono::steady_clock::now();
+        if (std::chrono::duration<double>(now - start_time).count() > TIME_BUDGET_S) {
+          budget_exceeded = true;
+          return bailout_vec;
+        }
+      }
+
       // --- Base case n == 1 ---
       if (n == 1) {
         LogPVecKey key(token0, leaves);
-        auto it = logPVec_cache.find(key);
-        if (it != logPVec_cache.end()) return it->second;
+        if (uint32_t* ip = logPVec_idx.find_value(key)) return pv_store[*ip];
         std::vector<double> v(c_size, NEG_INF);
         if (leaves.get(token0) == 1) v[0] = 0.0;
-        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
-        return ins.first->second;
+        uint32_t idx = (uint32_t)pv_store.size();
+        pv_store.push_back(std::move(v));
+        logPVec_idx.emplace(std::move(key), idx);
+        return pv_store[idx];
       }
 
       // --- Base case n == 2 ---
       if (n == 2) {
         LogPVecKey key(token0, leaves);
-        auto it = logPVec_cache.find(key);
-        if (it != logPVec_cache.end()) return it->second;
+        if (uint32_t* ip = logPVec_idx.find_value(key)) return pv_store[*ip];
         std::vector<double> v(c_size, NEG_INF);
         int twice = -1, a = -1, b = -1;
         for (int i = 0; i < leaves.len; ++i) {
@@ -996,30 +1170,39 @@ class SolverT {
           needed = D.step_at(a, b) ? 1 : 0;
         }
         if (needed <= s_max) v[needed] = 0.0;
-        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
-        return ins.first->second;
+        uint32_t idx = (uint32_t)pv_store.size();
+        pv_store.push_back(std::move(v));
+        logPVec_idx.emplace(std::move(key), idx);
+        return pv_store[idx];
       }
 
       // --- Cache lookup ---
       LogPVecKey key(token0, leaves);
       {
-        auto it = logPVec_cache.find(key);
-        if (it != logPVec_cache.end()) return it->second;
+        if (uint32_t* ip = logPVec_idx.find_value(key)) return pv_store[*ip];
       }
 
       double denom = LogB(token0, leaves);
-      if (!std::isfinite(denom)) {
+      if (!(denom > NEG_INF)) {
         std::vector<double> v(c_size, NEG_INF);
-        auto ins = logPVec_cache.emplace(std::move(key), std::move(v));
-        return ins.first->second;
+        uint32_t idx = (uint32_t)pv_store.size();
+        pv_store.push_back(std::move(v));
+        logPVec_idx.emplace(std::move(key), idx);
+        return pv_store[idx];
       }
 
       // Accumulator: outer[s] = LogSumExp over all draw partitions
       std::vector<double> outerVec(c_size, NEG_INF);
 
+      // Reusable buffers — allocated once per LogPVec call, reset each draw pair.
+      // Recursive LogPVec calls get their own stack-frame copies (safe).
+      std::vector<double> noStepVec(c_size);
+      std::vector<double> yesStepVec(c_size);
+      std::vector<double> conv_buf(c_size);
+
       const auto& drawpairs = getValidDraws(leaves);
 
-      for (uint8_t i = 0; i < drawpairs.count; ++i) {
+      for (uint8_t i = 0; i < drawpairs.count && !budget_exceeded; ++i) {
         const auto& dp = drawpairs.draws[i];
         const KeyType& drawn   = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
@@ -1028,91 +1211,84 @@ class SolverT {
         double rdCorr = computeLogRD(drawn, leaves) +
                         (((m + m == n) && !(drawn == undrawn)) ? std::log(2.0) : 0.0);
 
-        // Active ranges: min steps = 0 (all tips same state possible),
-        // max steps = n_subtree - 1.
         const int d_lo = 0;
         const int d_hi = std::min(drawn.sum() - 1,   s_max);
         const int u_lo = 0;
         const int u_hi = std::min(undrawn.sum() - 1, s_max);
 
-        // noStep pairs: convolve LogPVec(drawn,a) with LogPVec(undrawn,b)
-        std::vector<double> noStepVec(c_size, NEG_INF);
+        // Pre-fetch FixedProbList* for drawn/undrawn once per draw pair.
+        const FixedProbList* fpl_d = nullptr;
+        const FixedProbList* fpl_u = nullptr;
+        {
+          const auto& all_no  = pairs.noStep[token0];
+          const auto& all_yes = pairs.yesStep[token0];
+          if (!all_no.empty()) {
+            LogPVec(drawn,   all_no[0].a);
+            LogPVec(undrawn, all_no[0].b);
+          } else if (!all_yes.empty()) {
+            LogPVec(drawn,   all_yes[0].a);
+            LogPVec(undrawn, all_yes[0].b);
+          }
+          fpl_d = logB_cache.find_value(drawn);
+          fpl_u = logB_cache.find_value(undrawn);
+        }
+
+        // noStep pairs
+        std::fill(noStepVec.begin(), noStepVec.end(), NEG_INF);
         for (const auto& pr : pairs.noStep[token0]) {
+          if (budget_exceeded) break;
           const std::vector<double>& A = LogPVec(drawn,   pr.a);
           const std::vector<double>& B = LogPVec(undrawn, pr.b);
-          double logBa = LogB(pr.a, drawn);
-          double logBb = LogB(pr.b, undrawn);
-          if (!std::isfinite(logBa) || !std::isfinite(logBb)) continue;
+          double logBa = fpl_d ? (*fpl_d)[pr.a] : LogB(pr.a, drawn);
+          double logBb = fpl_u ? (*fpl_u)[pr.b] : LogB(pr.b, undrawn);
+          if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
           double pairScale = logBa + logBb;
-          // C = conv(A, B), then add pairScale; merge into noStepVec
-          auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
+          std::fill(conv_buf.begin(), conv_buf.end(), NEG_INF);
+          logconv(A, d_lo, d_hi, B, u_lo, u_hi, conv_buf.data(), c_size);
           for (int s = 0; s < c_size; ++s) {
-            if (!std::isfinite(C[s])) continue;
-            double v = C[s] + pairScale;
-            if (!std::isfinite(noStepVec[s])) {
-              noStepVec[s] = v;
-            } else {
-              double mx = std::max(noStepVec[s], v);
-              noStepVec[s] = mx + std::log1p(std::exp(std::min(noStepVec[s], v) - mx));
-            }
+            if (!(conv_buf[s] > NEG_INF)) continue;
+            lse_update(noStepVec[s], conv_buf[s] + pairScale);
           }
         }
 
-        // yesStep pairs: same convolution but shifted by 1 (one extra step consumed)
-        std::vector<double> yesStepVec(c_size, NEG_INF);
+        // yesStep pairs (shifted by 1)
+        std::fill(yesStepVec.begin(), yesStepVec.end(), NEG_INF);
         if (!pairs.yesStep[token0].empty()) {
           for (const auto& pr : pairs.yesStep[token0]) {
+            if (budget_exceeded) break;
             const std::vector<double>& A = LogPVec(drawn,   pr.a);
             const std::vector<double>& B = LogPVec(undrawn, pr.b);
-            double logBa = LogB(pr.a, drawn);
-            double logBb = LogB(pr.b, undrawn);
-            if (!std::isfinite(logBa) || !std::isfinite(logBb)) continue;
+            double logBa = fpl_d ? (*fpl_d)[pr.a] : LogB(pr.a, drawn);
+            double logBb = fpl_u ? (*fpl_u)[pr.b] : LogB(pr.b, undrawn);
+            if (!(logBa > NEG_INF) || !(logBb > NEG_INF)) continue;
             double pairScale = logBa + logBb;
-            auto C = logconv(A, d_lo, d_hi, B, u_lo, u_hi, c_size);
-            // Shift by 1: C_shifted[s] = C[s-1]
+            std::fill(conv_buf.begin(), conv_buf.end(), NEG_INF);
+            logconv(A, d_lo, d_hi, B, u_lo, u_hi, conv_buf.data(), c_size);
             for (int s = c_size - 1; s >= 1; --s) {
-              if (!std::isfinite(C[s - 1])) continue;
-              double v = C[s - 1] + pairScale;
-              if (!std::isfinite(yesStepVec[s])) {
-                yesStepVec[s] = v;
-              } else {
-                double mx = std::max(yesStepVec[s], v);
-                yesStepVec[s] = mx + std::log1p(std::exp(std::min(yesStepVec[s], v) - mx));
-              }
+              if (!(conv_buf[s - 1] > NEG_INF)) continue;
+              lse_update(yesStepVec[s], conv_buf[s - 1] + pairScale);
             }
           }
         }
 
-        // Combine noStep and yesStep, add rdCorr, merge into outerVec
+        // Combine noStep + yesStep, add rdCorr, merge into outerVec
         for (int s = 0; s < c_size; ++s) {
-          double combined;
-          bool ns = std::isfinite(noStepVec[s]);
-          bool ys = std::isfinite(yesStepVec[s]);
-          if (!ns && !ys) continue;
-          else if (!ys) combined = noStepVec[s];
-          else if (!ns) combined = yesStepVec[s];
-          else {
-            double mx = std::max(noStepVec[s], yesStepVec[s]);
-            combined = mx + std::log1p(std::exp(std::min(noStepVec[s], yesStepVec[s]) - mx));
-          }
-          double v = rdCorr + combined;
-          if (!std::isfinite(outerVec[s])) {
-            outerVec[s] = v;
-          } else {
-            double mx = std::max(outerVec[s], v);
-            outerVec[s] = mx + std::log1p(std::exp(std::min(outerVec[s], v) - mx));
-          }
+          double combined = noStepVec[s];
+          lse_update(combined, yesStepVec[s]);
+          if (!(combined > NEG_INF)) continue;
+          lse_update(outerVec[s], rdCorr + combined);
         }
       }
 
       // Subtract denom (LogB normaliser)
       for (int s = 0; s < c_size; ++s) {
-        if (std::isfinite(outerVec[s])) outerVec[s] -= denom;
+        if ((outerVec[s] > NEG_INF)) outerVec[s] -= denom;
       }
 
-      LogPVecKey key2(token0, leaves);
-      auto ins = logPVec_cache.emplace(std::move(key2), std::move(outerVec));
-      return ins.first->second;
+      uint32_t idx = (uint32_t)pv_store.size();
+      pv_store.push_back(std::move(outerVec));
+      logPVec_idx.emplace(std::move(key), idx);
+      return pv_store[idx];
     }
     
 public:
@@ -1120,18 +1296,15 @@ public:
           LnRootedCache& lnr)
     : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
 
-    logB_cache.reserve(16384);
-    logB_cache.max_load_factor(0.5f);
-
-    logPVec_cache.reserve(8192);
-    logPVec_cache.max_load_factor(0.5f);
+    logB_cache.reserve(8192);    // OAFlatMap: capacity 16384, load <= 0.5
+    logPVec_idx.reserve(4096);   // OAFlatMap: capacity 8192, load <= 0.5
 
     logRD_cache.reserve(1024);
     validDraws_cache.reserve(256);
   }
 
   // Run over a vector of step counts.  All counts share the same solver
-  // instance so the logPVec_cache is populated once and reused.
+  // instance so pv_store/logPVec_idx are populated once and reused.
   void runAll(const std::vector<int>& steps_vec, const KeyType& states,
               double* out) {
     if (steps_vec.empty()) return;
@@ -1140,30 +1313,45 @@ public:
     int s_max = *std::max_element(steps_vec.begin(), steps_vec.end());
     s_max_global = s_max;
     const int c_size = s_max + 1;
+    bailout_vec.assign(c_size, NEG_INF);
+    start_time = std::chrono::steady_clock::now();
+    budget_exceeded = false;
 
     // Compute LogB and LogPVec for each root token
     // LogPVec will recursively fill the cache for all sub-configurations
     std::vector<double> rootLogB(D.nStates);
     for (int token0 = 0; token0 < D.nStates; ++token0) {
       rootLogB[token0] = LogB(token0, states);
+      if (budget_exceeded) break;
+    }
+
+    if (budget_exceeded) {
+      Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+                    "results will be NA. Consider reducing to binary.",
+                    TIME_BUDGET_S);
+      for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
+      return;
     }
 
     // Combine: log P(s steps | character) = LogSumExp_token(LogB(token) + LogPVec(token)[s])
     std::vector<double> combined(c_size, NEG_INF);
     for (int token0 = 0; token0 < D.nStates; ++token0) {
       const double lb = rootLogB[token0];
-      if (!std::isfinite(lb)) continue;
+      if (!(lb > NEG_INF)) continue;
       const std::vector<double>& pv = LogPVec(states, token0);
+      if (budget_exceeded) break;
       for (int s = 0; s < c_size; ++s) {
-        if (!std::isfinite(pv[s])) continue;
-        double v = lb + pv[s];
-        if (!std::isfinite(combined[s])) {
-          combined[s] = v;
-        } else {
-          double mx = std::max(combined[s], v);
-          combined[s] = mx + std::log1p(std::exp(std::min(combined[s], v) - mx));
-        }
+        if (!(pv[s] > NEG_INF)) continue;
+        lse_update(combined[s], lb + pv[s]);
       }
+    }
+
+    if (budget_exceeded) {
+      Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+                    "results will be NA. Consider reducing to binary.",
+                    TIME_BUDGET_S);
+      for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
+      return;
     }
 
     for (int i = 0; i < (int)steps_vec.size(); ++i) {
@@ -1215,8 +1403,8 @@ class Solver {
     // 3. Check for computed value
     // Use operator[] on our new struct
     double& slot = it->second[token0]; 
-    if (std::isfinite(slot)) return slot;
-    if (std::isnan(slot) == false && !std::isfinite(slot)) return slot;
+    if ((slot > NEG_INF)) return slot;
+    if (std::isnan(slot) == false && !(slot > NEG_INF)) return slot;
     
     // 4. Compute
     const auto& drawpairs = validDraws.get(leaves);
@@ -1234,16 +1422,16 @@ class Solver {
       LSEAccumulator innerAcc;
       for (const auto& pr : pairs.noStep[token0]) {
         double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-        innerAcc.add((long double)val);
+        innerAcc.add(val);
       }
       for (const auto& pr : pairs.yesStep[token0]) {
         double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
-        innerAcc.add((long double)val);
+        innerAcc.add(val);
       }
       double innerSum = innerAcc.result();
       
       double acc = balancedCorrection + logRD.compute(drawn, leaves) + innerSum;
-      outerAcc.add((long double)acc);
+      outerAcc.add(acc);
     }
     slot = outerAcc.result();
     return slot;
@@ -1279,7 +1467,7 @@ class Solver {
     if (it != logP_cache.end()) return it->second;
     
     double denom = LogB(token0, leaves);
-    if (!std::isfinite(denom)) {
+    if (!(denom > NEG_INF)) {
       logP_cache.emplace(std::move(key), denom);
       return denom;
     }
@@ -1307,9 +1495,9 @@ class Solver {
             LogP(s - r, undrawn, pr.b),
             LogB(pr.b, undrawn)
           );
-          pairAcc.add((long double)t);
+          pairAcc.add(t);
         }
-        noStepAcc.add((long double)pairAcc.result());
+        noStepAcc.add(pairAcc.result());
       }
       double noStepSum = noStepAcc.result();
       
@@ -1326,20 +1514,20 @@ class Solver {
               LogP(s - r - 1, undrawn, pr.b),
               LogB(pr.b, undrawn)
             );
-            pairAcc.add((long double)t);
+            pairAcc.add(t);
           }
-          yesStepAcc.add((long double)pairAcc.result());
+          yesStepAcc.add(pairAcc.result());
         }
         yesStepSum = yesStepAcc.result();
       }
       
       LSEAccumulator bothAcc;
-      bothAcc.add((long double)noStepSum);
-      bothAcc.add((long double)yesStepSum);
+      bothAcc.add(noStepSum);
+      bothAcc.add(yesStepSum);
       double combined = bothAcc.result();
       
       double inner = logRD.compute(drawn, leaves) + sizeCorrection + combined;
-      outerAcc.add((long double)inner);
+      outerAcc.add(inner);
     }
     
     double result = outerAcc.result() - denom;
@@ -1367,19 +1555,63 @@ public:
       double b = LogB(token0, states);
       double p = LogP(steps, states, token0);
       double val;
-      if (!std::isfinite(p) || !std::isfinite(p)) {
+      if (!(p > NEG_INF) || !(p > NEG_INF)) {
         val = NEG_INF;
       } else {
         val = b + p;
       }
-      acc.add((long double)val);
+      acc.add(val);
     }
     return acc.result();
   }
 };
+// ============================================================================
+// Carter et al. (1990) closed form for 2-token (binary) characters.
+// Avoids the exponential recursive algorithm when nTokens == 2.
+// ============================================================================
+
+// Log of the double factorial: log(n!!) for odd n >= 1.
+// 0!! = 1!! = 1 → returns 0.0.
+static double logDoubleFact(int n) {
+  if (n <= 1) return 0.0;
+  double s = 0.0;
+  for (int i = 3; i <= n; i += 2) s += std::log((double)i);
+  return s;
+}
+
+// log(N(n, m)) helper from Carter et al. (1990).
+static double logN_carter(int n_val, int m_val) {
+  if (n_val < m_val) return NEG_INF;
+  int nMinusM = n_val - m_val;
+  return R::lgammafn(n_val + nMinusM)     // lfactorial(n + nMinusM - 1)
+       - R::lgammafn(nMinusM + 1.0)       // lfactorial(nMinusM)
+       - R::lgammafn(m_val)               // lfactorial(m - 1)
+       - nMinusM * std::log(2.0);
+}
+
+// log(count of unrooted trees with exactly m steps) for a binary character
+// with a tips in state 0 and b tips in state 1.  Requires a,b >= 1, m >= 1.
+static double logCarter1_cpp(int m, int a, int b) {
+  int n = a + b;
+  int twoN = 2 * n;
+  int twoM = 2 * m;
+  double denom_arg = twoN - twoM - m;
+  if (denom_arg <= 0) return NEG_INF;
+  return std::log(denom_arg)
+       + R::lgammafn(m)                   // lfactorial(m - 1)
+       + logDoubleFact(twoN - 5)
+       + logN_carter(a, m)
+       + logN_carter(b, m)
+       - logDoubleFact(twoN - twoM - 1);
+}
+
 //' @rdname Carter1
 //' @examples
-//' MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2)) * TreeTools::NUnrooted(7)
+//' # Log-probability that a 3-state character (2 "0", 3 "1", 2 "2") needs
+//' # exactly 2 steps on a random 7-leaf tree:
+//' logp <- MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2))
+//' # Convert to an expected number of trees:
+//' exp(logp) * TreeTools::NUnrooted(7)
 //' 
 //' @export
 // [[Rcpp::export]]
@@ -1391,7 +1623,8 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   int nTokens = (int)std::floor(std::log2((double)len)) + 1;
   
   if (nTokens < 2 || nTokens > 5) {
-    stop("MaddisonSlatkin() supports 2-5 tokens (3-31 states).");
+    stop("MaddisonSlatkin() exact solver supports 2-5 tokens. "
+         "For more tokens, use StepInformation(approx = 'mc').");
   }
   
   int nLevels = nTokens;
@@ -1465,6 +1698,25 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   if (valid_steps.empty()) return out;
 
   std::vector<double> results(valid_steps.size());
+
+  // 2-token shortcut: use Carter et al. (1990) O(1) closed form when only
+  // pure states are observed (no ambiguous "{0,1}" tips).
+  if (nTokens == 2 && leavesVec[2] == 0 &&
+      leavesVec[0] > 0 && leavesVec[1] > 0) {
+    int a = leavesVec[0];
+    int b = leavesVec[1];
+    double lnTotal = logDoubleFact(2 * (a + b) - 5); // LnUnrooted(n)
+    for (int i = 0; i < (int)valid_steps.size(); ++i) {
+      int m = valid_steps[i];
+      // Both states present ⇒ minimum steps = 1; Carter formula needs m >= 1.
+      results[i] = (m < 1) ? NEG_INF
+                            : logCarter1_cpp(m, a, b) - lnTotal;
+    }
+    for (int i = 0; i < (int)valid_idx.size(); ++i) {
+      out[valid_idx[i]] = results[i];
+    }
+    return out;
+  }
 
   // DISPATCH based on nTokens — call runAll() once for all step counts
   if (nTokens == 2) {

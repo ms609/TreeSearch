@@ -1,4 +1,5 @@
 #include "ts_drift.h"
+#include "ts_collapsed.h"
 #include "ts_constraint.h"
 #include "ts_fitch.h"
 #include "ts_tbr.h"
@@ -20,26 +21,6 @@ namespace ts {
 static double drift_full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
   return score_tree(tree, ds);
-}
-
-// Extract per-character step counts from local_cost only (standard Fitch).
-// Same as TBR's extract_divided_steps helper.
-static void drift_extract_divided_steps(
-    const TreeState& tree, const DataSet& ds,
-    std::vector<int>& char_steps) {
-  std::fill(char_steps.begin(), char_steps.end(), 0);
-  for (int node : tree.postorder) {
-    for (int b = 0; b < ds.n_blocks; ++b) {
-      const CharBlock& blk = ds.blocks[b];
-      uint64_t mask =
-          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
-      while (mask) {
-        int c = ts::ctz64(mask);
-        char_steps[blk.pattern_index[c]] += 1;
-        mask &= mask - 1;
-      }
-    }
-  }
 }
 
 static void drift_collect_main_edges(
@@ -369,6 +350,11 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     clip_candidates.push_back(node);
   }
 
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).
+  std::vector<uint8_t> collapsed;
+  compute_collapsed_flags(tree, ds, collapsed);
+
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
 
@@ -407,6 +393,10 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
   for (int clip_node : clip_candidates) {
     if (tree.parent[clip_node] == tree.n_tip) continue;
+
+    // Skip collapsed edges (zero-length, provably unimprovable).
+    if (!collapsed.empty() && collapsed[clip_node])
+      continue;
 
     // --- Phase 1: Clip + indirect evaluation ---
 
@@ -451,12 +441,22 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     // Weighted scoring (IW or profile): precompute base score and deltas
     double base_iw = 0.0;
     if (use_iw) {
-      drift_extract_divided_steps(tree, ds, divided_steps);
+      std::fill(divided_steps.begin(), divided_steps.end(), 0);
+      extract_char_steps(tree, ds, divided_steps);
       base_iw = compute_weighted_score(ds, divided_steps);
       precompute_weighted_delta(ds, divided_steps, iw_delta);
     }
 
     drift_collect_main_edges(tree, main_edges);
+    // Partial shuffle: seed bound with diverse sample
+    {
+      int ne = static_cast<int>(main_edges.size());
+      int k = std::min(20, ne);
+      for (int i = 0; i < k; ++i) {
+        std::uniform_int_distribution<int> dist(i, ne - 1);
+        std::swap(main_edges[i], main_edges[dist(rng)]);
+      }
+    }
 
     // Constraint: classify this clip
     if (constrained) classify_clip_constraints(tree, clip_node, *cd);
@@ -473,6 +473,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     for (auto& [above, below] : main_edges) {
       if (above == nz && below == ns) continue;
       if (constrained && regraft_violates_constraint(below, *cd)) continue;
+      // Collapsed-region regraft merging: skip interior collapsed edges.
+      if (!collapsed.empty() && collapsed[below])
+        continue;
       double candidate;
       if (has_na) {
         if (use_iw) {
@@ -521,6 +524,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
         for (auto& [above, below] : main_edges) {
           if (above == nz && below == ns) continue;
           if (constrained && regraft_violates_constraint(below, *cd))
+            continue;
+          // Collapsed-region regraft merging (same as SPR loop).
+          if (!collapsed.empty() && collapsed[below])
             continue;
           double candidate;
           if (has_na) {
@@ -586,6 +592,29 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       drift_full_rescore(tree, ds);
       continue;
     }
+
+    // Post-hoc constraint validation: TBR rerooting can break
+    // splits classified as UNCONSTRAINED during clip phase.
+    if (constrained) {
+      tree.build_postorder();
+      map_constraint_nodes(tree, *cd);
+      bool violation = false;
+      for (int _s = 0; _s < cd->n_splits; ++_s) {
+        if (cd->constraint_node[_s] < 0) {
+          violation = true;
+          break;
+        }
+      }
+      if (violation) {
+        drift_restore_topology(tree, snap);
+        tree.build_postorder();
+        drift_full_rescore(tree, ds);
+        update_constraint(tree, *cd);
+        continue;
+      }
+    }
+
+    int n_before = n_accepted;
 
     if (delta_score < -eps) {
       // Improvement: always accept
@@ -662,6 +691,11 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       }
     }
 
+    // Recompute collapsed regions after any accepted move.
+    if (n_accepted > n_before) {
+      compute_collapsed_flags(tree, ds, collapsed);
+    }
+
     if (n_accepted >= max_changes) break;
 
     if (ts::check_interrupt()) break;
@@ -716,7 +750,8 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       eq_params.max_hits = 100;  // generous for equal-score exploration
       eq_params.tabu_size = params.tabu_size;
 
-      TBRResult eq_result = tbr_search(tree, ds, eq_params, cd);
+      TBRResult eq_result = tbr_search(tree, ds, eq_params, cd,
+                                        nullptr, nullptr, check_timeout);
       total_drift_moves += eq_result.n_accepted;
     }
 
@@ -727,7 +762,8 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
     search_params.max_hits = params.max_hits;
     search_params.tabu_size = params.tabu_size;
 
-    TBRResult search_result = tbr_search(tree, ds, search_params, cd);
+    TBRResult search_result = tbr_search(tree, ds, search_params, cd,
+                                          nullptr, nullptr, check_timeout);
     total_tbr_moves += search_result.n_accepted;
 
     // Update best if improved

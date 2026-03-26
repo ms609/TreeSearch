@@ -27,9 +27,8 @@
 #' @return Returns a tree with class \code{phylo} (if \code{returnAll = FALSE}) or 
 #'         a set of trees, with class \code{multiPhylo} (if \code{returnAll = TRUE}).
 #'
-#' @references
-#' The algorithm is summarized in
-#'  \insertRef{Felsenstein2004}{TreeSearch}
+#' @references \insertCite{Felsenstein2004}{TreeSearch}
+#' \insertAllCited{}
 #' 
 #' 
 #' @examples

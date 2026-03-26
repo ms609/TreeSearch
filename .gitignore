@@ -50,6 +50,6 @@ src/Makevars.win
 test*.txt
 test_output.txt
 /pdf
-
-# TNT benchmark staging
-.tnt-bench/
+/.builds
+.positai
+/.gha-results

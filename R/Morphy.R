@@ -497,6 +497,10 @@ Morphy <- function(dataset, tree,
   pNextTbr <- 0.33
   profile <- .UseProfile(concavity)
   iw <- is.finite(concavity)
+  if (iw && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
   constrained <- !missing(constraint)
   startTime <- Sys.time()
   stopTime <- startTime + as.difftime(maxTime, units = "mins")
@@ -926,7 +930,7 @@ Morphy <- function(dataset, tree,
 
 # Hierarchy-aware resampling: generates hierarchical weights per replicate
 # and calls ts_driven_search with HSJ/xform scoring.
-# This is an internal helper called from Resample() when inapplicable != "brazeau".
+# This is an internal helper called from Resample() when inapplicable != "bgs".
 .ResampleHierarchy <- function(dataset, hierarchy, inapplicable, hsj_alpha,
                                method_idx, proportion, nReplicates,
                                contrast, tip_data, weight, levels, nTip,
@@ -960,12 +964,7 @@ Morphy <- function(dataset, tree,
   }
 
   # Driven search params for resampling context (light search per replicate)
-  searchBase <- list(
-    contrast = contrast,
-    tip_data = tip_data,
-    levels = levels,
-    maxReplicates = as.integer(max(ratchIter, 5L)),
-    targetHits = 2L,
+  resampleControl <- SearchControl(
     tbrMaxHits = as.integer(max(tbrIter, 1L)),
     ratchetCycles = as.integer(max(ratchIter, 3L)),
     driftCycles = 0L,
@@ -974,10 +973,25 @@ Morphy <- function(dataset, tree,
     cssRounds = 0L,
     fuseInterval = 0L,
     poolMaxSize = 1L,
-    poolSuboptimal = 0.0,
+    poolSuboptimal = 0.0
+  )
+  resampleRuntime <- list(
+    maxReplicates = as.integer(max(ratchIter, 5L)),
+    targetHits = 2L,
+    maxSeconds = 0.0,
     verbosity = 0L,
+    nThreads = 1L,
+    startEdge = NULL,
+    progressCallback = NULL
+  )
+  resampleScoring <- list(
     min_steps = integer(0),
-    concavity = as.double(concavity)
+    concavity = as.double(concavity),
+    xpiwe = FALSE,
+    xpiwe_r = 0.5,
+    xpiwe_max_f = 5.0,
+    obs_count = integer(0),
+    infoAmounts = profileArgs$infoAmounts
   )
 
   trees <- vector("list", nReplicates)
@@ -1020,12 +1034,16 @@ Morphy <- function(dataset, tree,
     }
 
     # Call ts_driven_search with resampled weights
-    args <- c(
-      searchBase,
-      list(weight = as.integer(resamp$non_hierarchy_weights)),
-      consArgs, profileArgs, repHsj, repXform
+    constraintCfg <- if (length(consArgs) > 0L) consArgs
+    hsjCfg <- if (length(repHsj) > 0L) repHsj
+    xformCfg <- if (length(repXform) > 0L) repXform
+
+    result <- ts_driven_search(
+      contrast, tip_data,
+      as.integer(resamp$non_hierarchy_weights), levels,
+      resampleControl, resampleRuntime, resampleScoring,
+      constraintCfg, hsjCfg, xformCfg
     )
-    result <- do.call(ts_driven_search, args)
 
     # Extract best tree
     if (result$pool_size > 0L && length(result$trees) > 0L) {
@@ -1091,11 +1109,20 @@ Morphy <- function(dataset, tree,
 #' character is one unit, and each top-level hierarchy block (primary +
 #' all dependents) is one unit.  See [`CharacterHierarchy()`].
 #' @param inapplicable Character string specifying the inapplicable-character
-#' handling method: `"brazeau"` (default), `"hsj"`, or `"xform"`.
+#' handling method: `"bgs"` (default), `"hsj"`, or `"xform"`.
+#' Case-insensitive; `"brazeau"` is accepted as an alias for `"bgs"`.
 #' See [`MaximizeParsimony()`] and `vignette("inapplicable")` for details.
 #' @param hsj_alpha Numeric in \[0, 1\] controlling the weight of secondary
 #' character variation in HSJ scoring.  Default `1.0`.  Only used when
 #' `inapplicable = "hsj"`.
+#' @param extended_iw Logical; if `TRUE` (default), use extended implied
+#' weighting (XPIWE; \insertCite{Goloboff2014;textual}{TreeSearch}),
+#' which adjusts per-character concavity for missing entries.
+#' Ignored when `concavity = Inf` or `"profile"`.
+#' @param xpiwe_r Numeric; proportion of homoplasy assumed in missing entries.
+#' Default `0.5`.  Only used when `extended_iw = TRUE`.
+#' @param xpiwe_max_f Numeric; maximum extrapolation factor.
+#' Default `5`.  Only used when `extended_iw = TRUE`.
 #'
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
 #' per resample replicate.
@@ -1108,8 +1135,11 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      tolerance = sqrt(.Machine[["double.eps"]]),
                      constraint, verbosity = 2L,
                      nReplicates = 1L, nThreads = 1L,
-                     hierarchy = NULL, inapplicable = "brazeau",
+                     hierarchy = NULL, inapplicable = "bgs",
                      hsj_alpha = 1.0,
+                     extended_iw = TRUE,
+                     xpiwe_r = 0.5,
+                     xpiwe_max_f = 5,
                      ...) {
 
   if (!inherits(dataset, "phyDat")) {
@@ -1137,8 +1167,10 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   }
 
   # --- Validate inapplicable-handling parameters ---
-  inapplicable <- match.arg(inapplicable, c("brazeau", "hsj", "xform"))
-  if (inapplicable != "brazeau") {
+  inapplicable <- tolower(inapplicable)
+  if (inapplicable == "brazeau") inapplicable <- "bgs"
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
            "\". See ?CharacterHierarchy.")
@@ -1156,16 +1188,20 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   # Profile parsimony: prepare data
   useProfile <- identical(concavity, "profile")
   if (useProfile) {
-    if (inapplicable != "brazeau") {
+    if (inapplicable != "bgs") {
       stop("Profile parsimony is not currently supported with inapplicable = \"",
            inapplicable, "\".")
     }
     dataset <- PrepareDataProfile(dataset)
     concavity <- Inf
   }
-  if (is.finite(concavity) && inapplicable != "brazeau") {
+  if (is.finite(concavity) && inapplicable != "bgs") {
     stop("Implied weighting is not currently supported with inapplicable = \"",
          inapplicable, "\".")
+  }
+  if (is.finite(concavity) && concavity <= 0) {
+    stop("`concavity` must be positive (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
   }
 
   # C++ engine path
@@ -1193,10 +1229,10 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   }
 
   # --- Hierarchy-aware resampling path ---
-  # When inapplicable != "brazeau", resample at the unit level (free chars +
+  # When inapplicable != "bgs", resample at the unit level (free chars +
   # hierarchy blocks) and run driven_search per replicate with HSJ/xform
   # scoring.
-  if (inapplicable != "brazeau" && !is.null(hierarchy)) {
+  if (inapplicable != "bgs" && !is.null(hierarchy)) {
     return(.ResampleHierarchy(
       dataset = dataset, hierarchy = hierarchy, inapplicable = inapplicable,
       hsj_alpha = hsj_alpha, method_idx = method_idx, proportion = proportion,
@@ -1207,6 +1243,12 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
       consArgs = consArgs, profileArgs = profileArgs,
       tree = if (!missing(tree)) tree else NULL
     ))
+  }
+
+  # XPIWE: compute per-pattern observed-taxa counts
+  useXpiwe <- isTRUE(extended_iw) && is.finite(concavity) && !useProfile
+  if (useXpiwe) {
+    obsCount <- .ObsCount(dataset)
   }
 
   searchArgs <- list(
@@ -1222,7 +1264,11 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     ratchetCycles = as.integer(max(ratchIter, 3L)),
     min_steps = if (is.finite(concavity))
       as.integer(MinimumLength(dataset, compress = TRUE)) else integer(0),
-    concavity = as.double(concavity)
+    concavity = as.double(concavity),
+    xpiwe = useXpiwe,
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    obs_count = if (useXpiwe) obsCount else integer(0)
   )
 
   if (nReplicates > 1L) {
@@ -1280,18 +1326,19 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
 #'
 #' @return Opens a Shiny application; does not return a value.
 #' @seealso [`MaximizeParsimony()`], [`Morphy()`]
-#' @importFrom shiny runApp
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @export
 EasyTrees <- function () {#nocov start
   needed <- c("cluster", "future", "PlotTools", "promises",
-              "protoclust", "Rogue", "shinyjs")
+              "protoclust", "Rogue", "shiny", "shinyjs")
   missing <- needed[!vapply(needed, requireNamespace,
                             logical(1L), quietly = TRUE)]
   if (length(missing)) {
-    message("Installing packages required by EasyTrees(): ",
-            paste(missing, collapse = ", "))
-    utils::install.packages(missing)
+    stop("EasyTrees() requires additional packages: ",
+         paste(missing, collapse = ", "), ".\n",
+         "Install with: install.packages(",
+         paste0("\"", missing, "\"", collapse = ", "), ")",
+         call. = FALSE)
   }
   shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
 }

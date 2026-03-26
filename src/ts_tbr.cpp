@@ -1,5 +1,6 @@
 #include "ts_tbr.h"
 #include "ts_fitch.h"
+#include "ts_collapsed.h"
 #include "ts_rng.h"
 #include "ts_tabu.h"
 #include "ts_splits.h"
@@ -34,27 +35,6 @@ static uint64_t fast_hash(const uint64_t* data, int n_words) {
 static double full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
   return score_tree(tree, ds);
-}
-
-// Extract per-character step counts using standard Fitch local_cost only.
-// For NA blocks this gives standard (not three-pass) steps — acceptable
-// as a heuristic for indirect IW evaluation; full rescore verifies.
-static void extract_divided_steps(
-    const TreeState& tree, const DataSet& ds,
-    std::vector<int>& char_steps) {
-  std::fill(char_steps.begin(), char_steps.end(), 0);
-  for (int node : tree.postorder) {
-    for (int b = 0; b < ds.n_blocks; ++b) {
-      const CharBlock& blk = ds.blocks[b];
-      uint64_t mask =
-          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
-      while (mask) {
-        int c = ts::ctz64(mask);
-        char_steps[blk.pattern_index[c]] += 1;
-        mask &= mask - 1;
-      }
-    }
-  }
 }
 
 // Collect (parent, child) edge pairs reachable from root of main tree.
@@ -424,6 +404,8 @@ static bool apply_tbr_move(
   return true;
 }
 
+// --- Edge length computation ---
+
 // --- Subtree size computation ---
 
 // Compute the number of tips in the subtree below each node.
@@ -471,7 +453,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const TBRParams& params,
                      ConstraintData* cd,
                      const std::vector<bool>* sector_mask,
-                     TreePool* collect_pool) {
+                     TreePool* collect_pool,
+                     std::function<bool()> check_timeout) {
   double best_score = full_rescore(tree, ds);
 
   // Initialize constraint mapping if active
@@ -481,6 +464,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   }
   int n_accepted = 0;
   int n_evaluated = 0;
+  int n_zero_skipped = 0;
   int hits = 1;
   const bool use_iw = std::isfinite(ds.concavity);
   // Floating-point tolerance for score equality
@@ -506,6 +490,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   for (int node = 0; node < tree.n_node; ++node) {
     if (node == tree.n_tip) continue;
     clip_candidates.push_back(node);
+  }
+
+  // Collapsed flags: edges that provably cannot yield an improvement
+  // (clip skipping + regraft merging).  Disabled during MPT enumeration
+  // (collect_pool) where equal-score topologies are collected.
+  std::vector<uint8_t> collapsed;
+  if (!collect_pool) {
+    compute_collapsed_flags(tree, ds, collapsed);
   }
 
   std::vector<std::pair<int,int>> main_edges;
@@ -560,8 +552,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   bool keep_going = true;
   bool states_valid = true;  // track whether state arrays are current
   bool need_shuffle = true;  // optimization #6: defer reshuffle
+  // Poll timeout every n_tip clips to avoid overhead on small trees
+  // while ensuring responsiveness on large ones.
+  const int timeout_interval = std::max(tree.n_tip, 50);
+  int clips_since_timeout_check = 0;
+  bool timed_out = false;
 
-  while (keep_going) {
+  while (keep_going && !timed_out) {
     keep_going = false;
 
     // Optimization #6: only reshuffle when the previous pass found no
@@ -585,6 +582,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // For each edge, only clip the side with fewer tips.
       int clip_size = subtree_sizes[clip_node];
       if (clip_size > tree.n_tip / 2) continue;
+
+      // Skip collapsed edges: zero-length edge where clipping provably
+      // cannot improve the score. Works for EW, IW, Profile, and NA.
+      // Disabled during MPT enumeration (collapsed is empty).
+      if (!collapsed.empty() && collapsed[clip_node]) {
+        ++n_zero_skipped;
+        continue;
+      }
 
       // --- Phase 1: Clip + indirect evaluation ---
 
@@ -634,12 +639,26 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // For weighted scoring (IW or profile): precompute base score and deltas
       double base_iw = 0.0;
       if (use_iw) {
-        extract_divided_steps(tree, ds, divided_steps);
+        std::fill(divided_steps.begin(), divided_steps.end(), 0);
+        extract_char_steps(tree, ds, divided_steps);
         base_iw = compute_weighted_score(ds, divided_steps);
         precompute_weighted_delta(ds, divided_steps, iw_delta);
       }
 
       collect_main_edges(tree, main_edges);
+      // Partial shuffle: seed the first few evaluation positions with edges
+      // from across the tree so the bounded indirect scoring gets a tight
+      // cutoff early.  Full O(n) shuffle has non-trivial overhead relative
+      // to the per-candidate scoring cost; partial Fisher-Yates for a small
+      // prefix keeps overhead negligible.
+      {
+        int ne = static_cast<int>(main_edges.size());
+        int k = std::min(20, ne);
+        for (int i = 0; i < k; ++i) {
+          std::uniform_int_distribution<int> dist(i, ne - 1);
+          std::swap(main_edges[i], main_edges[dist(rng)]);
+        }
+      }
 
       // Constraint: classify this clip against each constraint split
       if (constrained) {
@@ -659,6 +678,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         if (above == nz && below == ns) continue;
         if (sector_mask && !(*sector_mask)[below]) continue;
         if (constrained && regraft_violates_constraint(below, *cd)) continue;
+
+        // Collapsed-region regraft merging: skip interior collapsed edges.
+        // If collapsed[below] == 1, the edge (above, below) is zero-length
+        // and lies inside a collapsed region.  The boundary edge entering the
+        // region (where collapsed[below] == 0 but the node is in the region)
+        // is always evaluated, and it dominates interior positions because
+        // its vroot includes states from outside the region.
+        if (!collapsed.empty() && collapsed[below]) {
+          continue;
+        }
+
         double candidate;
         if (has_na) {
           // NA-aware indirect with early termination
@@ -763,6 +793,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             if (sector_mask && !(*sector_mask)[below]) continue;
             if (constrained && regraft_violates_constraint(below, *cd))
               continue;
+            // Collapsed-region regraft merging (same as SPR loop above).
+            if (!collapsed.empty() && collapsed[below]) {
+              continue;
+            }
             double candidate;
             if (has_na) {
               if (use_iw) {
@@ -843,6 +877,29 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         tree.build_postorder_prealloc(work_stack);
         double actual = full_rescore(tree, ds);
 
+        // Post-hoc constraint validation: TBR rerooting can break
+        // splits that were classified as UNCONSTRAINED during the
+        // clip phase (the rerooting changes which constraint tips
+        // end up on which side of the attachment edge).  Reject
+        // any move that introduces a constraint violation.
+        if (constrained) {
+          map_constraint_nodes(tree, *cd);
+          bool violation = false;
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) {
+              violation = true;
+              break;
+            }
+          }
+          if (violation) {
+            restore_topology(tree, snap);
+            state_snap.restore(tree);
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+            continue;
+          }
+        }
+
         // Compute topology hash for tabu checking
         uint64_t tree_hash = 0;
         if (tabu.active()) {
@@ -858,7 +915,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           accepted = true;
           keep_going = true;
           states_valid = true;
-          if (constrained) update_constraint(tree, *cd);
+          if (constrained) {
+            compute_dfs_timestamps(tree, *cd);
+          }
           if (collect_pool) collect_pool->add(tree, actual);
         } else if (std::fabs(actual - best_score) <= eps
                    && params.accept_equal
@@ -876,7 +935,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           accepted = true;
           keep_going = true;
           states_valid = true;
-          if (constrained) update_constraint(tree, *cd);
+          if (constrained) {
+            compute_dfs_timestamps(tree, *cd);
+          }
           if (collect_pool) collect_pool->add(tree, actual);
         }
 
@@ -889,6 +950,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       if (keep_going) {
+        // Recompute collapsed regions after the accepted move (states are
+        // valid from full_rescore in the accept path above).
+        if (!collapsed.empty()) {
+          compute_collapsed_flags(tree, ds, collapsed);
+        }
         // Optimization #6: don't reshuffle after acceptance — the topology
         // changed near this clip, so re-trying the same ordering focuses
         // on the productive region.
@@ -901,6 +967,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       if (ts::check_interrupt()) break;
+      ++clips_since_timeout_check;
+      if (check_timeout && clips_since_timeout_check >= timeout_interval) {
+        clips_since_timeout_check = 0;
+        if (check_timeout()) { timed_out = true; break; }
+      }
     }
 
     if (params.max_accepted_changes > 0
@@ -921,7 +992,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   bool converged = !(params.max_accepted_changes > 0
                      && n_accepted >= params.max_accepted_changes);
 
-  return TBRResult{best_score, n_accepted, n_evaluated, converged};
+  return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
+                   converged};
 }
 
 } // namespace ts

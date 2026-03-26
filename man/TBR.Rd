@@ -96,8 +96,8 @@ tree <- rtree(20, br=NULL)
 TBR(tree)
 }
 \references{
-The \acronym{TBR} algorithm is summarized in
-\insertRef{Felsenstein2004}{TreeSearch}
+\insertCite{Felsenstein2004}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
 \code{\link[=RootedTBR]{RootedTBR()}}: useful when the position of the root node should be retained.

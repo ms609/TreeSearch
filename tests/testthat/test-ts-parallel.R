@@ -198,7 +198,42 @@ test_that("MaximizeParsimony with nThreads > 1 works end-to-end", {
   }
 })
 
-# --- 8. Pool suboptimal in parallel ---
+# --- 8. Parallel hits_to_best matches serial ---
+
+test_that("Parallel hits_to_best tracks independent replicate hits", {
+  skip_on_cran()
+  # Bug (T-242): extract_into() rebuilt hits_to_best from pool entries,
+
+  # losing the real count.  A 1-topology pool always reported 1 hit.
+  agn <- inapplicable.phyData[["Agnarsson2004"]]
+  ds <- make_ts_data(agn)
+
+  set.seed(6291)
+  r_serial <- TreeSearch:::ts_driven_search(
+    contrast = ds$contrast, tip_data = ds$tip_data,
+    weight = ds$weight, levels = ds$levels,
+    maxReplicates = 15L, targetHits = 15L,
+    verbosity = 0L, nThreads = 1L
+  )
+
+  set.seed(6291)
+  r_par <- TreeSearch:::ts_driven_search(
+    contrast = ds$contrast, tip_data = ds$tip_data,
+    weight = ds$weight, levels = ds$levels,
+    maxReplicates = 15L, targetHits = 15L,
+    verbosity = 0L, nThreads = 2L
+  )
+
+  # Parallel hits should be in the same ballpark as serial, not 1
+  expect_true(r_par$hits_to_best >= 2,
+              info = paste("Parallel hits:", r_par$hits_to_best,
+                           "Serial hits:", r_serial$hits_to_best))
+  # And serial should also have multiple hits on this dataset
+  expect_true(r_serial$hits_to_best >= 2)
+})
+
+# --- 9. Pool suboptimal in parallel ---
+
 
 test_that("Pool suboptimal collection works in parallel", {
   skip_on_cran()

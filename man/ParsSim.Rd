@@ -110,8 +110,8 @@ dataset_taxon <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L,
 
 }
 \references{
-Goloboff, P.A. (2018).
-\doi{10.1111/cla.12205}
+\insertCite{Goloboff2018}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
 Other tree scoring: 

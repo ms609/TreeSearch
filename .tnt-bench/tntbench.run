@@ -1,0 +1,8 @@
+mxram 1024;
+proc Aguado2009.tnt;
+rseed 3;
+xpiwe=10;
+timeout 0:00:30;
+xmult=hits 5 replic 20;
+best;
+quit;

@@ -174,9 +174,8 @@
 #'
 #' @format A single phylogenetic tree saved as an object of class \code{phylo}
 #'
-#' @references 
-#'  \insertRef{Congreve2016}{TreeSearch}
-#'  \insertRef{Congreve2016dd}{TreeSearch}
+#' @references \insertCite{Congreve2016,Congreve2016dd}{TreeSearch}
+#' \insertAllCited{}
 #' 
 #' @examples 
 #' data(referenceTree)

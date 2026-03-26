@@ -14,6 +14,7 @@
 #include "ts_tree.h"
 #include "ts_pool.h"
 #include "ts_constraint.h"
+#include "ts_strategy.h"
 #include <functional>
 
 namespace ts {
@@ -46,10 +47,27 @@ struct DrivenParams {
   int ratchet_perturb_max_moves = 0;  // 0=auto
   bool ratchet_adaptive = false;
 
+  // NNI perturbation: topology-space escape mechanism (IQ-TREE-style).
+  // Randomly NNI-swap a fraction of internal branches, then TBR to a
+  // new local optimum.  Complementary to weight-perturbation ratchet.
+  int nni_perturb_cycles = 0;           // 0 = disabled
+  double nni_perturb_fraction = 0.5;    // fraction of branches to perturb
+
   // Drifting
   int drift_cycles = 2;
   int drift_afd_limit = 3;
   double drift_rfd_limit = 0.1;
+
+  // Simulated annealing perturbation (PCSA: post-convergence SA).
+  // Multi-cycle SA with best-tree restart, inserted after drift phase.
+  // Each cycle: SA cooling schedule -> TBR reconverge -> keep if improved.
+  // Effective at escaping deep basins under EW at >=100 tips.
+  // 0 = disabled (default). Typical: 3-5 cycles for large trees.
+  int anneal_cycles = 0;
+  int anneal_phases = 5;             // temperature steps per cycle
+  double anneal_t_start = 20.0;      // initial Boltzmann temperature
+  double anneal_t_end = 0.0;         // final temperature
+  int anneal_moves_per_phase = 0;    // 0 = n_tip
 
   // Sectorial search
   int xss_rounds = 3;
@@ -81,6 +99,12 @@ struct DrivenParams {
   // Tabu list size for TBR plateau exploration (0 = disabled)
   int tabu_size = 100;
 
+  // NNI warmup: run NNI hill-climbing before SPR/TBR.
+  // At ≤88 tips, overhead is negligible (~1.5s at 180 tips, <0.1s at ≤88).
+  // At ≥180 tips, NNI saves ~50% of initial descent time and leads TBR to
+  // better basins of attraction (empirically ~100 steps better at 180 tips).
+  bool nni_first = true;
+
   // SPR→TBR escalation: run SPR first (cheaper per move), then TBR.
   // When true, initial hill-climbing is SPR followed by TBR to escape
   // moves that SPR cannot find. When false, goes straight to TBR.
@@ -91,33 +115,125 @@ struct DrivenParams {
   // Number of random Wagner trees per replicate (keep best-scoring)
   int wagner_starts = 1;
 
+  // Biased taxon-addition order for Wagner tree construction.
+  // 0 = RANDOM (default), 1 = GOLOBOFF (non-ambiguous chars), 2 = ENTROPY.
+  // Applied only to the first Wagner start; remaining starts use random order
+  // to preserve basin diversity.  Goloboff 2014 §3.3.
+  int wagner_bias = 0;
+  double wagner_bias_temp = 0.3;   // softmax temperature; 0 = greedy argmax
+
+  // Outer search cycle count: number of times the [XSS → Ratchet →
+  // NNI-perturb → Drift → TBR] block is repeated per replicate.
+  // Default 1 = single pass through the pipeline.  Values > 1 interleave
+  // fresh XSS passes after each ratchet/drift escape, matching TNT's
+  // xmult pattern.  Ratchet/drift/NNI-perturb cycles are divided evenly
+  // among outer cycles; total budget is approximately unchanged.
+  // Goloboff 1999 §2.3 (sectorial + ratchet interleaving).
+  int outer_cycles = 1;
+
+  // Maximum number of improvement-triggered resets of the outer cycle
+  // counter.  When a cycle improves the score, the counter resets to 0
+  // so the search keeps exploiting the new basin — but at most this many
+  // times.  0 = no resets (outer_cycles is exact).  -1 = unlimited.
+  // Default 0: outer_cycles controls the total number of cycles exactly.
+  // Strategy presets may set higher values (e.g. 2–3) to allow productive
+  // re-exploration after escaping local optima.
+  int max_outer_resets = 0;
+
   // Optional starting tree edge matrix (R format: n_edge × 2, 1-based).
   // When non-empty, replicate 0 uses this topology instead of Wagner.
   // Subsequent replicates still use random Wagner trees.
   std::vector<int> start_edge;  // flattened column-major [parent|child]
   int start_n_edge = 0;
+
+  // Consensus-stability stopping criterion.
+  // 0 = disabled (default). When > 0, stop if the strict consensus of
+  // best-score pool trees has been unchanged for this many consecutive
+  // replicates. Checked after each replicate completes and the pool is
+  // updated. Sits alongside targetHits — whichever fires first wins.
+  int consensus_stable_reps = 0;
+
+
+  // Perturbation-count stopping rule (IQ-TREE-style).
+  // 0 = disabled. Default 2 (set in R SearchControl).
+  // When > 0, stop after nTip * perturb_stop_factor consecutive
+  // replicates that fail to improve the best score.  Resets on
+  // every improvement.
+  int perturb_stop_factor = 0;
+  // Adaptive search level.
+  // When true, dynamically scale ratchet_cycles and drift_cycles based
+  // on the hit rate (fraction of replicates that find the current best
+  // score). High hit rates → reduce effort; low hit rates → increase.
+  // The base values are the initially configured cycles; adaptation
+  // applies a multiplier each replicate.
+  bool adaptive_level = false;
+
+  // Adaptive ratchet perturbation probability (T-182).
+  // When true, the ratchet perturbation probability is tapered across
+  // replicates based on pool stability.  Early replicates (unstable pool)
+  // use ratchet_perturb_prob at full strength; later replicates (high
+  // hit rate, stable consensus) use a reduced probability for finer
+  // local exploration.
+  //
+  // The taper factor is:  max(taper_floor, 1.0 - taper_strength * stability)
+  // where stability = hits_to_best / replicates_completed.
+  // The effective probability = ratchet_perturb_prob * taper_factor.
+  bool ratchet_taper = false;
+  double ratchet_taper_floor = 0.5;    // minimum taper factor (prob ≥ 50% of base)
+  double ratchet_taper_strength = 0.6; // how aggressively to reduce (0..1)
+
+  // Cross-replicate consensus constraint tightening.
+  // When true, after a minimum number of replicates, extract the strict
+  // consensus splits from the pool and enforce them as topological
+  // constraints for subsequent replicates. This focuses search on
+  // uncertain parts of the tree. Constraints are cleared whenever the
+  // best score improves. Only active when no user-supplied constraint
+  // is present.
+  bool consensus_constrain = false;
+  int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
+
+  // Fraction of the time budget reserved for MPT enumeration (T-202).
+  // The main search loop exits at budget × (1 - enum_time_fraction),
+  // leaving the remainder for the plateau walk.  Default 0.1 = 10%.
+  // Set to 0 to disable (old behaviour: skip enumeration on timeout).
+  double enum_time_fraction = 0.1;
+
+  // Adaptive starting-tree strategy selection (T-190).
+  // When true, each replicate draws its starting strategy from a Thompson
+  // sampling bandit over {Wagner-random, Wagner-Goloboff, Wagner-entropy,
+  // random-tree, pool-ratchet, pool-NNI-perturb}. The bandit learns
+  // which strategies hit the best score for this dataset.
+  // When false, all replicates use the fixed `wagner_bias` strategy.
+  // Only affects the serial path; parallel uses round-robin.
+  bool adaptive_start = false;
 };
 
 // Cumulative per-phase wall-clock timing (milliseconds).
 struct PhaseTimings {
   double wagner_ms = 0.0;
+  double nni_ms = 0.0;
   double tbr_ms = 0.0;
   double xss_ms = 0.0;
   double rss_ms = 0.0;
   double css_ms = 0.0;
   double ratchet_ms = 0.0;
+  double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
+  double anneal_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
   void operator+=(const PhaseTimings& o) {
     wagner_ms    += o.wagner_ms;
+    nni_ms       += o.nni_ms;
     tbr_ms       += o.tbr_ms;
     xss_ms       += o.xss_ms;
     rss_ms       += o.rss_ms;
     css_ms       += o.css_ms;
     ratchet_ms   += o.ratchet_ms;
+    nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
+    anneal_ms    += o.anneal_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
   }
@@ -128,8 +244,15 @@ struct DrivenResult {
   int replicates_completed;
   int hits_to_best;
   int pool_size;
+  int n_topologies_at_best;      // distinct topologies at best score
+  int last_improved_rep;         // 1-based replicate that last improved score (0 = not tracked)
   bool timed_out;                // true if search ended due to timeout
+  bool consensus_stable;         // true if stopped by consensus stability
   PhaseTimings timings;          // cumulative across all replicates
+
+  // Per-strategy diagnostics (populated when adaptive_start is true)
+  std::array<int, N_STRAT> strategy_attempts{};
+  std::array<int, N_STRAT> strategy_successes{};
 };
 
 // Result of a single replicate (tree + score, no pool interaction).
@@ -140,18 +263,26 @@ struct ReplicateResult {
   PhaseTimings timings;          // per-replicate phase timings
 };
 
-// Run one replicate: Wagner → TBR → XSS → RSS → ratchet → drift → TBR.
+// Run one replicate: Wagner → NNI → SPR → TBR → XSS → RSS → ratchet → drift → TBR.
 // Does NOT interact with the pool — caller handles that.
 // `check_timeout` should return true when time limit is exceeded.
 // Verbosity is the effective verbosity for this replicate (0 in parallel).
+struct SplitFrequencyTable;  // forward declaration (defined in ts_pool.h)
+
 // If `starting_tree` is non-null, use it instead of building a Wagner tree.
+// If `split_freq` is non-null, RSS uses conflict-guided sector selection.
+// `strategy` controls how the starting tree is built when `starting_tree`
+// is null. For pool-based strategies, the caller should perturb a pool tree
+// and pass it as `starting_tree`.
 ReplicateResult run_single_replicate(
     DataSet& ds,
     const DrivenParams& params,
     ConstraintData* cd,
     std::function<bool()> check_timeout,
     int verbosity,
-    TreeState* starting_tree = nullptr);
+    TreeState* starting_tree = nullptr,
+    const SplitFrequencyTable* split_freq = nullptr,
+    StartStrategy strategy = StartStrategy::WAGNER_RANDOM);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

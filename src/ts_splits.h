@@ -34,6 +34,13 @@ struct SplitSet {
 // The tree is treated as unrooted (root edge splits are excluded).
 SplitSet compute_splits(const TreeState& tree);
 
+// Compute the set of non-trivial splits, skipping collapsed edges.
+// Edges where collapsed[node] == 1 are excluded.  Two binary trees that
+// differ only in zero-length resolutions produce the same collapsed split
+// set.  If collapsed is empty, falls back to compute_splits().
+SplitSet compute_collapsed_splits(const TreeState& tree,
+                                  const std::vector<uint8_t>& collapsed);
+
 // Order-independent hash of a SplitSet.
 // Two trees with identical split sets will produce the same hash regardless
 // of split ordering.
@@ -47,6 +54,17 @@ bool splits_equal(const SplitSet& a, const SplitSet& b);
 // Equivalent to hash_splits(compute_splits(tree)) but avoids allocating
 // a SplitSet. Requires tree.postorder to be valid.
 uint64_t hash_tree(const TreeState& tree);
+
+// FNV-1a hash of a single canonicalized split bitset.
+// Used by the pool for per-split frequency counting and consensus hashing.
+inline uint64_t hash_single_split(const uint64_t* s, int wps) {
+  uint64_t h = 0xcbf29ce484222325ULL; // FNV offset basis
+  for (int w = 0; w < wps; ++w) {
+    h ^= s[w];
+    h *= 0x100000001b3ULL; // FNV prime
+  }
+  return h;
+}
 
 } // namespace ts
 

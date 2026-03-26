@@ -20,6 +20,8 @@
 #include "ts_parallel.h"
 #include "ts_simplify.h"
 #include "ts_hsj.h"
+// ts_temper.h removed — parallel tempering lives on feature/parallel-temper
+#include "ts_strategy.h"
 
 using namespace Rcpp;
 
@@ -35,7 +37,11 @@ ts::DataSet make_dataset(
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
     double concavity = -1.0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -62,6 +68,11 @@ ts::DataSet make_dataset(
     info_max_steps = ia.nrow();
   }
 
+  // XPIWE: per-pattern observed-taxa count
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
+
   return ts::build_dataset(
       REAL(contrast), n_tokens, n_states,
       INTEGER(tip_data), n_tips, n_patterns,
@@ -70,7 +81,11 @@ ts::DataSet make_dataset(
       min_steps_ptr,
       concavity,
       info_amounts_ptr,
-      info_max_steps);
+      info_max_steps,
+      xpiwe,
+      xpiwe_r,
+      xpiwe_max_f,
+      obs_count_ptr);
 }
 
 // Convert TreeState topology back to R edge matrix (2-column, 1-based)
@@ -112,10 +127,15 @@ double ts_fitch_score(
     CharacterVector levels,
     IntegerVector min_steps = IntegerVector(),
     double concavity = -1.0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity, infoAmounts);
+                                min_steps, concavity, infoAmounts,
+                                xpiwe, xpiwe_r, xpiwe_max_f, obs_count);
 
   ts::TreeState tree;
   tree.init_from_edge(
@@ -552,6 +572,7 @@ List ts_tbr_search(
     Named("score") = result.best_score,
     Named("n_accepted") = result.n_accepted,
     Named("n_evaluated") = result.n_evaluated,
+    Named("n_zero_skipped") = result.n_zero_skipped,
     Named("converged") = result.converged
   );
 }
@@ -1163,63 +1184,193 @@ static void extract_info_amounts(
   }
 }
 
-// [[Rcpp::export]]
-List ts_driven_search(
+// --- Helpers to unpack R lists into C++ structs ---
+
+// Unpack a searchControl list (from R's SearchControl object) into DrivenParams.
+// Anneal fields are now part of searchControl (no longer a separate list).
+static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
+  // TBR / initial descent
+  params.tbr_max_hits       = as<int>(ctrl["tbrMaxHits"]);
+  params.nni_first          = as<bool>(ctrl["nniFirst"]);
+  params.spr_first          = as<bool>(ctrl["sprFirst"]);
+  params.tabu_size          = as<int>(ctrl["tabuSize"]);
+  params.wagner_starts      = as<int>(ctrl["wagnerStarts"]);
+  params.wagner_bias        = as<int>(ctrl["wagnerBias"]);
+  params.wagner_bias_temp   = as<double>(ctrl["wagnerBiasTemp"]);
+  params.outer_cycles       = as<int>(ctrl["outerCycles"]);
+  params.max_outer_resets   = as<int>(ctrl["maxOuterResets"]);
+
+  // Ratchet
+  params.ratchet_cycles           = as<int>(ctrl["ratchetCycles"]);
+  params.ratchet_perturb_prob     = as<double>(ctrl["ratchetPerturbProb"]);
+  params.ratchet_perturb_mode     = as<int>(ctrl["ratchetPerturbMode"]);
+  params.ratchet_perturb_max_moves = as<int>(ctrl["ratchetPerturbMaxMoves"]);
+  params.ratchet_adaptive         = as<bool>(ctrl["ratchetAdaptive"]);
+  if (ctrl.containsElementNamed("ratchetTaper"))
+    params.ratchet_taper          = as<bool>(ctrl["ratchetTaper"]);
+
+  // NNI perturbation
+  params.nni_perturb_cycles   = as<int>(ctrl["nniPerturbCycles"]);
+  params.nni_perturb_fraction = as<double>(ctrl["nniPerturbFraction"]);
+
+  // Drift
+  params.drift_cycles    = as<int>(ctrl["driftCycles"]);
+  params.drift_afd_limit = as<int>(ctrl["driftAfdLimit"]);
+  params.drift_rfd_limit = as<double>(ctrl["driftRfdLimit"]);
+
+  // Sectorial search
+  params.xss_rounds      = as<int>(ctrl["xssRounds"]);
+  params.xss_partitions  = as<int>(ctrl["xssPartitions"]);
+  params.rss_rounds      = as<int>(ctrl["rssRounds"]);
+  params.css_rounds      = as<int>(ctrl["cssRounds"]);
+  params.css_partitions  = as<int>(ctrl["cssPartitions"]);
+  params.sector_min_size = as<int>(ctrl["sectorMinSize"]);
+  params.sector_max_size = as<int>(ctrl["sectorMaxSize"]);
+
+  // Fuse / pool
+  params.fuse_interval      = as<int>(ctrl["fuseInterval"]);
+  params.fuse_accept_equal  = as<bool>(ctrl["fuseAcceptEqual"]);
+  params.pool_max_size      = as<int>(ctrl["poolMaxSize"]);
+  params.pool_suboptimal    = as<double>(ctrl["poolSuboptimal"]);
+
+  // Stopping / adaptive
+  params.consensus_stable_reps = as<int>(ctrl["consensusStableReps"]);
+  params.perturb_stop_factor   = as<int>(ctrl["perturbStopFactor"]);
+  params.adaptive_level        = as<bool>(ctrl["adaptiveLevel"]);
+  params.consensus_constrain   = as<bool>(ctrl["consensusConstrain"]);
+  params.adaptive_start        = as<bool>(ctrl["adaptiveStart"]);
+  params.enum_time_fraction    = as<double>(ctrl["enumTimeFraction"]);
+
+  // Simulated annealing perturbation (PCSA)
+  params.anneal_cycles          = as<int>(ctrl["annealCycles"]);
+  params.anneal_phases          = as<int>(ctrl["annealPhases"]);
+  params.anneal_t_start         = as<double>(ctrl["annealTStart"]);
+  params.anneal_t_end           = as<double>(ctrl["annealTEnd"]);
+  params.anneal_moves_per_phase = as<int>(ctrl["annealMovesPerPhase"]);
+}
+
+// Unpack a runtimeConfig list into DrivenParams fields + return nThreads.
+// startEdge and progressCallback are handled separately (need special types).
+static int unpack_runtime(List rt, ts::DrivenParams& params) {
+  params.max_replicates = as<int>(rt["maxReplicates"]);
+  params.target_hits    = as<int>(rt["targetHits"]);
+  params.max_seconds    = as<double>(rt["maxSeconds"]);
+  params.verbosity      = as<int>(rt["verbosity"]);
+  int nThreads          = as<int>(rt["nThreads"]);
+
+  // Starting tree edge matrix (optional)
+  if (rt.containsElementNamed("startEdge") &&
+      !Rf_isNull(rt["startEdge"])) {
+    IntegerMatrix se = as<IntegerMatrix>(rt["startEdge"]);
+    int n_edge = se.nrow();
+    params.start_n_edge = n_edge;
+    params.start_edge.resize(2 * n_edge);
+    for (int i = 0; i < n_edge; ++i) {
+      params.start_edge[i] = se(i, 0);
+      params.start_edge[n_edge + i] = se(i, 1);
+    }
+  }
+
+  // Progress callback (optional)
+  if (rt.containsElementNamed("progressCallback") &&
+      !Rf_isNull(rt["progressCallback"])) {
+    Rcpp::Function r_cb = as<Function>(rt["progressCallback"]);
+    params.progress_callback = [r_cb](const ts::ProgressInfo& pi) {
+      r_cb(Rcpp::List::create(
+        Rcpp::Named("replicate") = pi.replicate,
+        Rcpp::Named("max_replicates") = pi.max_replicates,
+        Rcpp::Named("best_score") = pi.best_score,
+        Rcpp::Named("hits_to_best") = pi.hits_to_best,
+        Rcpp::Named("target_hits") = pi.target_hits,
+        Rcpp::Named("pool_size") = pi.pool_size,
+        Rcpp::Named("phase") = std::string(pi.phase),
+        Rcpp::Named("elapsed") = pi.elapsed_seconds,
+        Rcpp::Named("phase_score") = pi.phase_score
+      ));
+    };
+  }
+
+  return nThreads;
+}
+
+// Unpack scoringConfig list and build DataSet.
+static ts::DataSet unpack_scoring(
     NumericMatrix contrast,
     IntegerMatrix tip_data,
     IntegerVector weight,
     CharacterVector levels,
-    int maxReplicates = 100,
-    int targetHits = 10,
-    int tbrMaxHits = 1,
-    int ratchetCycles = 10,
-    double ratchetPerturbProb = 0.04,
-    int ratchetPerturbMode = 0,
-    int ratchetPerturbMaxMoves = 0,
-    bool ratchetAdaptive = false,
-    int driftCycles = 6,
-    int driftAfdLimit = 3,
-    double driftRfdLimit = 0.1,
-    int xssRounds = 3,
-    int xssPartitions = 4,
-    int rssRounds = 1,
-    int cssRounds = 1,
-    int cssPartitions = 4,
-    int sectorMinSize = 6,
-    int sectorMaxSize = 50,
-    int fuseInterval = 3,
-    bool fuseAcceptEqual = false,
-    int poolMaxSize = 100,
-    double poolSuboptimal = 0.0,
-    double maxSeconds = 0.0,
-    int verbosity = 0,
-    IntegerVector min_steps = IntegerVector(),
-    double concavity = -1.0,
-    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
-    Nullable<NumericMatrix> consContrast = R_NilValue,
-    Nullable<IntegerMatrix> consTipData = R_NilValue,
-    Nullable<IntegerVector> consWeight = R_NilValue,
-    Nullable<CharacterVector> consLevels = R_NilValue,
-    int consExpectedScore = 0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue,
-    int tabuSize = 100,
-    int wagnerStarts = 1,
-    Nullable<Function> progressCallback = R_NilValue,
-    int nThreads = 1,
-    Nullable<IntegerMatrix> startEdge = R_NilValue,
-    bool sprFirst = false,
-    Nullable<List> hierarchyBlocks = R_NilValue,
-    Nullable<IntegerMatrix> hsjTipLabels = R_NilValue,
-    double hsjAlpha = 1.0,
-    int hsjAbsentState = 0,
-    Nullable<List> xformChars = R_NilValue)
+    List scoring)
 {
-  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
-                                min_steps, concavity, infoAmounts);
+  IntegerVector min_steps;
+  if (scoring.containsElementNamed("min_steps") &&
+      !Rf_isNull(scoring["min_steps"])) {
+    min_steps = as<IntegerVector>(scoring["min_steps"]);
+  }
+  double concavity = as<double>(scoring["concavity"]);
+  bool xpiwe = as<bool>(scoring["xpiwe"]);
+  double xpiwe_r = as<double>(scoring["xpiwe_r"]);
+  double xpiwe_max_f = as<double>(scoring["xpiwe_max_f"]);
+  IntegerVector obs_count;
+  if (scoring.containsElementNamed("obs_count") &&
+      !Rf_isNull(scoring["obs_count"])) {
+    obs_count = as<IntegerVector>(scoring["obs_count"]);
+  }
 
-  // HSJ hierarchy scoring setup
-  if (hierarchyBlocks.isNotNull()) {
-    List hb_list(hierarchyBlocks.get());
+  // Use SEXP to avoid Nullable assignment ambiguity
+  SEXP ia_sexp = R_NilValue;
+  if (scoring.containsElementNamed("infoAmounts") &&
+      !Rf_isNull(scoring["infoAmounts"])) {
+    ia_sexp = scoring["infoAmounts"];
+  }
+  Nullable<NumericMatrix> infoAmounts(ia_sexp);
+
+  return make_dataset(contrast, tip_data, weight, levels,
+                      min_steps, concavity, infoAmounts,
+                      xpiwe, xpiwe_r, xpiwe_max_f, obs_count);
+}
+
+// Unpack constraintConfig list into ConstraintData.
+// Uses SEXP intermediaries to avoid Nullable<T> assignment ambiguity.
+static ts::ConstraintData unpack_constraint(int n_tips,
+                                            Nullable<List> constraintConfig) {
+  if (constraintConfig.isNotNull()) {
+    List cc(constraintConfig.get());
+
+    SEXP csm = cc.containsElementNamed("consSplitMatrix")
+                   ? SEXP(cc["consSplitMatrix"]) : R_NilValue;
+    SEXP cco = cc.containsElementNamed("consContrast")
+                   ? SEXP(cc["consContrast"]) : R_NilValue;
+    SEXP ctd = cc.containsElementNamed("consTipData")
+                   ? SEXP(cc["consTipData"]) : R_NilValue;
+    SEXP cw  = cc.containsElementNamed("consWeight")
+                   ? SEXP(cc["consWeight"]) : R_NilValue;
+    SEXP cl  = cc.containsElementNamed("consLevels")
+                   ? SEXP(cc["consLevels"]) : R_NilValue;
+    int consExpectedScore = 0;
+    if (cc.containsElementNamed("consExpectedScore"))
+      consExpectedScore = as<int>(cc["consExpectedScore"]);
+
+    return build_constraint_from_r(
+        n_tips,
+        Nullable<IntegerMatrix>(csm),
+        Nullable<NumericMatrix>(cco),
+        Nullable<IntegerMatrix>(ctd),
+        Nullable<IntegerVector>(cw),
+        Nullable<CharacterVector>(cl),
+        consExpectedScore);
+  }
+  return ts::ConstraintData{};
+}
+
+// Unpack hsjConfig list into DataSet fields.
+static void unpack_hsj(Nullable<List> hsjConfig, ts::DataSet& ds) {
+  if (hsjConfig.isNotNull()) {
+    List hc(hsjConfig.get());
+    int hsjAbsentState = 0;
+    if (hc.containsElementNamed("hsjAbsentState"))
+      hsjAbsentState = as<int>(hc["hsjAbsentState"]);
+
+    List hb_list = as<List>(hc["hierarchyBlocks"]);
     for (int b = 0; b < hb_list.size(); ++b) {
       List rb = hb_list[b];
       ts::HierarchyBlock block;
@@ -1229,11 +1380,12 @@ List ts_driven_search(
       block.absent_state = hsjAbsentState;
       ds.hierarchy_blocks.push_back(block);
     }
-    ds.hsj_alpha = hsjAlpha;
+    ds.hsj_alpha = as<double>(hc["hsjAlpha"]);
     ds.scoring_mode = ts::ScoringMode::HSJ;
 
-    if (hsjTipLabels.isNotNull()) {
-      IntegerMatrix tl(hsjTipLabels.get());
+    if (hc.containsElementNamed("hsjTipLabels") &&
+        !Rf_isNull(hc["hsjTipLabels"])) {
+      IntegerMatrix tl = as<IntegerMatrix>(hc["hsjTipLabels"]);
       int n_t = tl.nrow();
       int n_c = tl.ncol();
       ds.n_orig_chars = n_c;
@@ -1245,10 +1397,15 @@ List ts_driven_search(
       }
     }
   }
+}
 
-  // Xform (step-matrix) scoring setup
-  if (xformChars.isNotNull()) {
-    List xf_list(xformChars.get());
+// Unpack xformConfig list into DataSet fields.
+static void unpack_xform(Nullable<List> xformConfig,
+                          IntegerMatrix tip_data,
+                          ts::DataSet& ds) {
+  if (xformConfig.isNotNull()) {
+    List xc(xformConfig.get());
+    List xf_list = as<List>(xc["xformChars"]);
     int n_xf = xf_list.size();
     int max_ns = 0;
     std::vector<int> ns_vec(n_xf);
@@ -1294,10 +1451,8 @@ List ts_driven_search(
         double* tip_ptr = ds.sankoff_tip_costs.data() +
             t * stride + ch * max_ns;
         if (state == -1) {
-          // Fully ambiguous: all states possible
           for (int s = 0; s < ns; ++s) tip_ptr[s] = 0.0;
         } else if (state == -2) {
-          // Present but unknown: all present states (1..ns-1) possible
           for (int s = 1; s < ns; ++s) tip_ptr[s] = 0.0;
         } else if (state >= 0 && state < ns) {
           tip_ptr[state] = 0.0;
@@ -1307,72 +1462,40 @@ List ts_driven_search(
 
     ds.scoring_mode = ts::ScoringMode::XFORM;
   }
+}
+
+// [[Rcpp::export]]
+List ts_driven_search(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    List searchControl,
+    List runtimeConfig,
+    List scoringConfig,
+    Nullable<List> constraintConfig = R_NilValue,
+    Nullable<List> hsjConfig = R_NilValue,
+    Nullable<List> xformConfig = R_NilValue)
+{
+  // Build dataset from flat data matrices + scoring config
+  ts::DataSet ds = unpack_scoring(contrast, tip_data, weight, levels,
+                                  scoringConfig);
+
+  // HSJ hierarchy scoring setup
+  unpack_hsj(hsjConfig, ds);
+
+  // Xform (step-matrix) scoring setup
+  unpack_xform(xformConfig, tip_data, ds);
 
   // Build constraint if provided
   int n_tips = tip_data.nrow();
-  ts::ConstraintData cd = build_constraint_from_r(
-      n_tips, consSplitMatrix, consContrast, consTipData,
-      consWeight, consLevels, consExpectedScore);
+  ts::ConstraintData cd = unpack_constraint(n_tips, constraintConfig);
   ts::ConstraintData* cd_ptr = cd.active ? &cd : nullptr;
 
+  // Populate DrivenParams from searchControl + runtimeConfig
   ts::DrivenParams params;
-  params.max_replicates = maxReplicates;
-  params.target_hits = targetHits;
-  params.tbr_max_hits = tbrMaxHits;
-  params.ratchet_cycles = ratchetCycles;
-  params.ratchet_perturb_prob = ratchetPerturbProb;
-  params.ratchet_perturb_mode = ratchetPerturbMode;
-  params.ratchet_perturb_max_moves = ratchetPerturbMaxMoves;
-  params.ratchet_adaptive = ratchetAdaptive;
-  params.drift_cycles = driftCycles;
-  params.drift_afd_limit = driftAfdLimit;
-  params.drift_rfd_limit = driftRfdLimit;
-  params.xss_rounds = xssRounds;
-  params.xss_partitions = xssPartitions;
-  params.rss_rounds = rssRounds;
-  params.css_rounds = cssRounds;
-  params.css_partitions = cssPartitions;
-  params.sector_min_size = sectorMinSize;
-  params.sector_max_size = sectorMaxSize;
-  params.fuse_interval = fuseInterval;
-  params.fuse_accept_equal = fuseAcceptEqual;
-  params.pool_max_size = poolMaxSize;
-  params.pool_suboptimal = poolSuboptimal;
-  params.max_seconds = maxSeconds;
-  params.verbosity = verbosity;
-  params.tabu_size = tabuSize;
-  params.spr_first = sprFirst;
-  params.wagner_starts = wagnerStarts;
-
-  // Starting tree edge matrix (optional)
-  if (startEdge.isNotNull()) {
-    IntegerMatrix se(startEdge.get());
-    int n_edge = se.nrow();
-    params.start_n_edge = n_edge;
-    params.start_edge.resize(2 * n_edge);
-    for (int i = 0; i < n_edge; ++i) {
-      params.start_edge[i] = se(i, 0);              // parent column
-      params.start_edge[n_edge + i] = se(i, 1);     // child column
-    }
-  }
-
-  // Wire up progress callback if provided
-  if (progressCallback.isNotNull()) {
-    Rcpp::Function r_cb(progressCallback.get());
-    params.progress_callback = [r_cb](const ts::ProgressInfo& pi) {
-      r_cb(Rcpp::List::create(
-        Rcpp::Named("replicate") = pi.replicate,
-        Rcpp::Named("max_replicates") = pi.max_replicates,
-        Rcpp::Named("best_score") = pi.best_score,
-        Rcpp::Named("hits_to_best") = pi.hits_to_best,
-        Rcpp::Named("target_hits") = pi.target_hits,
-        Rcpp::Named("pool_size") = pi.pool_size,
-        Rcpp::Named("phase") = std::string(pi.phase),
-        Rcpp::Named("elapsed") = pi.elapsed_seconds,
-        Rcpp::Named("phase_score") = pi.phase_score
-      ));
-    };
-  }
+  unpack_search_control(searchControl, params);
+  int nThreads = unpack_runtime(runtimeConfig, params);
 
   ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
   ts::DrivenResult result;
@@ -1385,15 +1508,33 @@ List ts_driven_search(
   // Build timings as a NumericVector (lighter than List)
   NumericVector timings = NumericVector::create(
     Named("wagner_ms")    = result.timings.wagner_ms,
+    Named("nni_ms")       = result.timings.nni_ms,
     Named("tbr_ms")       = result.timings.tbr_ms,
     Named("xss_ms")       = result.timings.xss_ms,
     Named("rss_ms")       = result.timings.rss_ms,
     Named("css_ms")       = result.timings.css_ms,
     Named("ratchet_ms")   = result.timings.ratchet_ms,
+    Named("nni_perturb_ms") = result.timings.nni_perturb_ms,
     Named("drift_ms")     = result.timings.drift_ms,
+    Named("anneal_ms")    = result.timings.anneal_ms,
     Named("final_tbr_ms") = result.timings.final_tbr_ms,
     Named("fuse_ms")      = result.timings.fuse_ms
   );
+
+  // Per-strategy diagnostics (T-190)
+  List strategy_diag = R_NilValue;
+  if (params.adaptive_start || nThreads > 1) {
+    CharacterVector sn(ts::N_STRAT);
+    IntegerVector sa(ts::N_STRAT), ss(ts::N_STRAT);
+    for (int i = 0; i < ts::N_STRAT; ++i) {
+      sn[i] = ts::strategy_name(static_cast<ts::StartStrategy>(i));
+      sa[i] = result.strategy_attempts[i];
+      ss[i] = result.strategy_successes[i];
+    }
+    sa.names() = sn;
+    ss.names() = sn;
+    strategy_diag = List::create(Named("attempts") = sa, Named("successes") = ss);
+  }
 
   if (result.pool_size == 0) {
     return List::create(
@@ -1403,8 +1544,12 @@ List ts_driven_search(
       Named("replicates") = result.replicates_completed,
       Named("hits_to_best") = result.hits_to_best,
       Named("pool_size") = 0,
+      Named("n_topologies") = 0,
+      Named("last_improved_rep") = result.last_improved_rep,
       Named("timed_out") = result.timed_out,
-      Named("timings") = timings
+      Named("consensus_stable") = result.consensus_stable,
+      Named("timings") = timings,
+      Named("strategy_diagnostics") = strategy_diag
     );
   }
 
@@ -1424,8 +1569,12 @@ List ts_driven_search(
     Named("replicates") = result.replicates_completed,
     Named("hits_to_best") = result.hits_to_best,
     Named("pool_size") = result.pool_size,
+    Named("n_topologies") = result.n_topologies_at_best,
+    Named("last_improved_rep") = result.last_improved_rep,
     Named("timed_out") = result.timed_out,
-      Named("timings") = timings
+    Named("consensus_stable") = result.consensus_stable,
+    Named("timings") = timings,
+    Named("strategy_diagnostics") = strategy_diag
   );
 }
 
@@ -1451,7 +1600,11 @@ List ts_resample_search(
     Nullable<IntegerVector> consWeight = R_NilValue,
     Nullable<CharacterVector> consLevels = R_NilValue,
     int consExpectedScore = 0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -1468,6 +1621,9 @@ List ts_resample_search(
 
   const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
                                                      : nullptr;
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
 
   // Profile parsimony
   const double* info_amounts_ptr;
@@ -1500,7 +1656,11 @@ List ts_resample_search(
       params,
       info_amounts_ptr,
       info_max_steps,
-      cd_ptr);
+      cd_ptr,
+      xpiwe,
+      xpiwe_r,
+      xpiwe_max_f,
+      obs_count_ptr);
 
   if (result.edge_parent.empty()) {
     return List::create(
@@ -1546,7 +1706,11 @@ List ts_parallel_resample(
     Nullable<IntegerVector> consWeight = R_NilValue,
     Nullable<CharacterVector> consLevels = R_NilValue,
     int consExpectedScore = 0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -1563,6 +1727,9 @@ List ts_parallel_resample(
 
   const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
                                                      : nullptr;
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
 
   const double* info_amounts_ptr;
   int info_max_steps;
@@ -1592,7 +1759,8 @@ List ts_parallel_resample(
         INTEGER(tip_data), n_tips, n_patterns,
         INTEGER(weight), level_ptrs.data(), min_steps_ptr,
         concavity, params, nReplicates, nThreads,
-        info_amounts_ptr, info_max_steps, cd_ptr);
+        info_amounts_ptr, info_max_steps, cd_ptr,
+        xpiwe, xpiwe_r, xpiwe_max_f, obs_count_ptr);
   } else {
     // Serial path: run each replicate sequentially
     results.resize(nReplicates);
@@ -1602,7 +1770,8 @@ List ts_parallel_resample(
           INTEGER(tip_data), n_tips, n_patterns,
           INTEGER(weight), level_ptrs.data(), min_steps_ptr,
           concavity, params,
-          info_amounts_ptr, info_max_steps, cd_ptr);
+          info_amounts_ptr, info_max_steps, cd_ptr,
+          xpiwe, xpiwe_r, xpiwe_max_f, obs_count_ptr);
     }
   }
 
@@ -1654,7 +1823,11 @@ List ts_successive_approx(
     Nullable<IntegerVector> consWeight = R_NilValue,
     Nullable<CharacterVector> consLevels = R_NilValue,
     int consExpectedScore = 0,
-    Nullable<NumericMatrix> infoAmounts = R_NilValue)
+    Nullable<NumericMatrix> infoAmounts = R_NilValue,
+    bool xpiwe = false,
+    double xpiwe_r = 0.5,
+    double xpiwe_max_f = 5.0,
+    IntegerVector obs_count = IntegerVector())
 {
   if (concavity < 0) concavity = HUGE_VAL;
   int n_tips = tip_data.nrow();
@@ -1671,6 +1844,9 @@ List ts_successive_approx(
 
   const int* min_steps_ptr = (min_steps.size() > 0) ? INTEGER(min_steps)
                                                      : nullptr;
+  const int* obs_count_ptr = (xpiwe && obs_count.size() > 0)
+                                 ? INTEGER(obs_count)
+                                 : nullptr;
 
   // Profile parsimony
   const double* info_amounts_ptr;
@@ -1703,7 +1879,11 @@ List ts_successive_approx(
       params,
       info_amounts_ptr,
       info_max_steps,
-      cd_ptr);
+      cd_ptr,
+      xpiwe,
+      xpiwe_r,
+      xpiwe_max_f,
+      obs_count_ptr);
 
   if (result.edge_parent.empty()) {
     return List::create(
@@ -2305,3 +2485,155 @@ List ts_sankoff_test(
     Named("per_char") = per_char,
     Named("optimal_states") = opt_states);
 }
+
+
+// --- Wagner bias benchmark ---
+//
+// For each of n_reps random seeds, builds a Wagner tree under the specified
+// biasing criterion and optionally runs TBR to the local optimum.  Returns
+// per-replicate Wagner scores (and TBR scores if run_tbr = TRUE) so that
+// callers can compare average starting-tree quality across criteria.
+//
+// bias:        0 = RANDOM, 1 = GOLOBOFF, 2 = ENTROPY
+// temperature: softmax temperature (0 = greedy; applied to [0,1]-normalised
+//              scores so the parameter is dataset-independent)
+// n_reps:      number of trees to build
+// run_tbr:     if TRUE, run TBR convergence and record its score too
+
+// [[Rcpp::export]]
+List ts_wagner_bias_bench(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps,
+    double concavity,
+    int    bias,
+    double temperature,
+    int    n_reps,
+    bool   run_tbr)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::BiasedWagnerParams wp;
+  wp.bias        = static_cast<ts::WagnerBias>(bias);
+  wp.temperature = temperature;
+
+  NumericVector wagner_scores(n_reps, NA_REAL);
+  NumericVector tbr_scores(n_reps, NA_REAL);
+  // Per-tip Goloboff and entropy scores (computed once)
+  NumericVector goloboff_scores_r(ds.n_tips, NA_REAL);
+  NumericVector entropy_scores_r(ds.n_tips, NA_REAL);
+  {
+    auto gs = ts::wagner_goloboff_scores(ds);
+    auto es = ts::wagner_entropy_scores(ds);
+    for (int t = 0; t < ds.n_tips; ++t) {
+      goloboff_scores_r[t] = gs[t];
+      entropy_scores_r[t]  = es[t];
+    }
+  }
+
+  for (int rep = 0; rep < n_reps; ++rep) {
+    ts::TreeState tree;
+    ts::biased_wagner_tree(tree, ds, wp, nullptr);
+    wagner_scores[rep] = ts::score_tree(tree, ds);
+
+    if (run_tbr) {
+      ts::TBRParams tp;
+      ts::tbr_search(tree, ds, tp, nullptr, nullptr, nullptr, nullptr);
+      tbr_scores[rep] = ts::score_tree(tree, ds);
+    }
+  }
+
+  return List::create(
+    Named("wagner_score")    = wagner_scores,
+    Named("tbr_score")       = tbr_scores,
+    Named("goloboff_scores") = goloboff_scores_r,
+    Named("entropy_scores")  = entropy_scores_r
+  );
+}
+
+
+// Parallel tempering functions (ts_stochastic_tbr, ts_parallel_temper)
+// removed — live on feature/parallel-temper branch.
+
+// [[Rcpp::export]]
+List ts_test_strategy_tracker(int seed, int n_draws) {
+  using ts::StrategyTracker;
+  using ts::StartStrategy;
+  using ts::N_STRAT;
+
+  StrategyTracker tracker;
+  std::mt19937 rng(seed);
+
+  // 1. Draw `n_draws` strategies and count selections
+  IntegerVector counts(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng);
+    counts[static_cast<int>(s)]++;
+  }
+
+  // 2. Record initial alpha/beta
+  NumericVector alpha_init(N_STRAT), beta_init(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_init[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_init[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 3. Update: arm 0 gets 5 successes, arm 1 gets 5 failures
+  for (int i = 0; i < 5; ++i) {
+    tracker.update(StartStrategy::WAGNER_RANDOM, true);
+    tracker.update(StartStrategy::WAGNER_GOLOBOFF, false);
+  }
+
+  NumericVector alpha_after_update(N_STRAT), beta_after_update(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_update[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_update[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 4. Decay
+  tracker.decay(0.5);
+  NumericVector alpha_after_decay(N_STRAT), beta_after_decay(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    alpha_after_decay[i] = tracker.alpha(static_cast<StartStrategy>(i));
+    beta_after_decay[i] = tracker.beta_param(static_cast<StartStrategy>(i));
+  }
+
+  // 5. Post-update selection distribution (arm 0 should dominate)
+  IntegerVector counts_biased(N_STRAT, 0);
+  for (int i = 0; i < n_draws; ++i) {
+    auto s = tracker.select(rng);
+    counts_biased[static_cast<int>(s)]++;
+  }
+
+  // 6. Round-robin
+  auto rr = StrategyTracker::round_robin(12);
+  IntegerVector round_robin_seq(12);
+  for (int i = 0; i < 12; ++i) {
+    round_robin_seq[i] = static_cast<int>(rr[i]);
+  }
+
+  // 7. Strategy names
+  CharacterVector names(N_STRAT);
+  for (int i = 0; i < N_STRAT; ++i) {
+    names[i] = ts::strategy_name(static_cast<StartStrategy>(i));
+  }
+
+  return List::create(
+    Named("n_strategies") = N_STRAT,
+    Named("strategy_names") = names,
+    Named("initial_counts") = counts,
+    Named("alpha_init") = alpha_init,
+    Named("beta_init") = beta_init,
+    Named("alpha_after_update") = alpha_after_update,
+    Named("beta_after_update") = beta_after_update,
+    Named("alpha_after_decay") = alpha_after_decay,
+    Named("beta_after_decay") = beta_after_decay,
+    Named("biased_counts") = counts_biased,
+    Named("round_robin") = round_robin_seq
+  );
+}
+

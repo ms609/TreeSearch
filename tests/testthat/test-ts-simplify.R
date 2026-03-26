@@ -488,3 +488,150 @@ test_that("Ambiguous character with 2 ambig + 2 unambig tips", {
   s <- score_custom(tree, ds, tip_names)
   expect_equal(s, 1)
 })
+
+
+# ===== Degenerate inapplicable patterns (subsetting / simulation) =====
+
+# When matrices are subsetted or simulated, degenerate patterns can arise
+# where all tips are inapplicable ("-") or missing ("?"). These skip
+# simplification (three-pass NA scoring requires it) but should not break
+# scoring or search.
+
+test_that("All-inapplicable pattern adds 0 to score", {
+  # All-"-" character alone: should score 0 on every topology
+  inapp_only <- MatrixToPhyDat(matrix(
+    rep("-", 6), nrow = 6,
+    dimnames = list(paste0("t", 1:6), NULL)
+  ))
+  set.seed(6331)
+  for (i in seq_len(5)) {
+    tree <- RandomTree(inapp_only, root = TRUE)
+    expect_equal(TreeLength(tree, inapp_only), 0,
+                 info = paste("All-inapp tree", i))
+  }
+})
+
+test_that("Degenerate inapplicable patterns don't alter informative scores", {
+  # Score a dataset with and without degenerate patterns;
+  # the degenerate chars should add 0.
+  info_mat <- matrix(c(
+    "0", "0", "0", "1", "1", "1",
+    "0", "0", "1", "0", "1", "1"
+  ), nrow = 6, dimnames = list(paste0("t", 1:6), NULL))
+  info_dataset <- MatrixToPhyDat(info_mat)
+
+  combined_mat <- cbind(
+    matrix(rep("-", 6), nrow = 6),               # all-inapp
+    matrix(rep("?", 6), nrow = 6),               # all-missing
+    matrix(c("-","?","-","?","-","?"), nrow = 6), # mixed -/?
+    info_mat
+  )
+  dimnames(combined_mat) <- list(paste0("t", 1:6), NULL)
+  combined_dataset <- MatrixToPhyDat(combined_mat)
+
+  set.seed(8243)
+  for (i in seq_len(5)) {
+    tree <- RandomTree(info_dataset, root = TRUE)
+    score_info <- TreeLength(tree, info_dataset)
+    score_combined <- TreeLength(tree, combined_dataset)
+    expect_equal(score_combined, score_info,
+                 info = paste("Tree", i,
+                              "— degenerate chars should add 0"))
+  }
+})
+
+test_that("Mixed degenerate inapplicable/missing patterns score correctly", {
+  # 8 tips: a mix of "?", "-", and their combinations,
+  # plus informative characters
+  mat <- matrix(c(
+    "-", "?", "-", "?", "-", "?", "-", "?",  # degenerate: all -/?
+    "?", "?", "?", "?", "?", "?", "?", "?",  # degenerate: all missing
+    "0", "0", "0", "0", "1", "1", "1", "1",  # informative
+    "0", "0", "1", "1", "0", "0", "1", "1"   # informative
+  ), nrow = 8, dimnames = list(paste0("t", 1:8), NULL))
+  dataset <- MatrixToPhyDat(mat)
+  ds <- make_ts_data(dataset)
+
+  set.seed(4817)
+  for (i in seq_len(5)) {
+    tree <- RandomTree(dataset, root = TRUE)
+    score <- ts_score(tree, ds)
+    expected <- TreeLength(tree, dataset)
+    expect_equal(score, expected, info = paste("Tree", i))
+  }
+})
+
+test_that("'All in [0, ?]' characters simplified in inapplicable datasets", {
+  # In an inapplicable dataset, ? tokens include the inapp bit.
+  # Characters where every tip is one applicable state or ? are genuinely
+  # uninformative and should be simplified away (not bypassed).
+  mat <- matrix(c(
+    "0", "0", "?", "?", "?", "?", "?", "?",  # all-0-or-? -> uninformative
+    "0", "0", "1", "1", "-", "-", "?", "?",   # mixed informative
+    "0", "0", "0", "0", "1", "1", "1", "1"    # standard informative
+  ), nrow = 8, dimnames = list(paste0("t", 1:8), NULL))
+  dataset <- MatrixToPhyDat(mat)
+  ds <- make_ts_data(dataset)
+  diag <- ts_diag(ds)
+
+  # The all-0-or-? pattern should be identified as uninformative
+  expect_gte(diag$n_patterns_removed, 1L,
+             label = "all-[0,?] pattern should be removed")
+
+  # Scores must still match TreeLength on multiple trees
+  set.seed(5291)
+  for (i in seq_len(5)) {
+    tree <- RandomTree(dataset, root = TRUE)
+    score <- ts_score(tree, ds)
+    expected <- TreeLength(tree, dataset)
+    expect_equal(score, expected, info = paste("Tree", i))
+  }
+})
+
+test_that("000?----?000 pattern kept as informative", {
+  # Genuine inapplicable tips ("-") make this topology-dependent under
+  # three-pass NA scoring: the character MUST NOT be simplified away.
+  mat <- matrix(c(
+    "0", "0", "0", "?", "-", "-", "-", "-", "?", "0", "0", "0",
+    "0", "0", "0", "0", "0", "0", "1", "1", "1", "1", "1", "1"
+  ), nrow = 12, dimnames = list(paste0("t", 1:12), NULL))
+  dataset <- MatrixToPhyDat(mat)
+  ds <- make_ts_data(dataset)
+
+  # Scores must match TreeLength
+  set.seed(2618)
+  for (i in seq_len(5)) {
+    tree <- RandomTree(dataset, root = TRUE)
+    score <- ts_score(tree, ds)
+    expected <- TreeLength(tree, dataset)
+    expect_equal(score, expected, info = paste("Tree", i))
+  }
+})
+
+test_that("Driven search handles degenerate inapplicable patterns", {
+  # Simulates a subsetted matrix: 3 degenerate + 2 informative characters
+  mat <- matrix(c(
+    "-", "-", "-", "-", "-", "-", "-", "-", "-", "-",  # all inapp
+    "?", "-", "?", "-", "?", "-", "?", "-", "?", "-",  # all missing/inapp
+    "-", "?", "-", "-", "?", "?", "-", "-", "?", "?",  # all missing/inapp
+    "0", "0", "0", "1", "1", "0", "0", "1", "1", "1",  # informative
+    "0", "0", "1", "0", "1", "1", "0", "1", "0", "1"   # informative
+  ), nrow = 10, dimnames = list(paste0("t", 1:10), NULL))
+  dataset <- MatrixToPhyDat(mat)
+  ds <- make_ts_data(dataset)
+
+  result <- ts_driven(ds)
+  # Build the best tree and verify score
+  best_tree <- structure(
+    list(edge = result$trees[[1]],
+         tip.label = paste0("t", seq_len(nrow(ds$tip_data))),
+         Nnode = nrow(ds$tip_data) - 1L),
+    class = "phylo"
+  )
+  rescore <- ts_score(best_tree, ds)
+  expect_equal(result$best_score, rescore)
+
+  # Score should also match TreeLength
+  tl <- TreeLength(best_tree, dataset)
+  expect_equal(rescore, tl)
+})

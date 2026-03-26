@@ -48,8 +48,11 @@ consensus_ui <- function(id) {
   list(
     tree_plot = plotOutput(ns("treePlot"), height = "600px"),
 
-    which_tree = sliderInput(ns("whichTree"), "Tree to plot", value = 0L,
-                             min = 0L, max = 1L, step = 1L),
+    which_tree = tagList(
+      sliderInput(ns("whichTree"), "Tree to plot", value = 0L,
+                  min = 0L, max = 1L, step = 1L),
+      htmlOutput(ns("clusterLabel"), inline = TRUE)
+    ),
 
     tree_plot_config = tagList(
       selectizeInput(ns("outgroup"), "Root on:", multiple = TRUE,
@@ -238,6 +241,19 @@ consensus_server <- function(id, r,
 
     whichTree <- debounce(reactive(input$whichTree), aJiffy)
 
+    output$clusterLabel <- renderUI({
+      wt <- whichTree()
+      if (is.null(wt) || wt < 1L) return(NULL)
+      cl <- clusterings()
+      if (cl$n < 2L) return(NULL)
+      clId <- cl$cluster[wt]
+      col <- palettes[[min(length(palettes), cl$n)]][clId]
+      tags$span(
+        paste0("Cluster ", clId),
+        style = paste0("color:", col, ";font-weight:bold;margin-left:4px;")
+      )
+    })
+
     consP <- debounce(reactive(signif(input$consP)), 50)
 
     ############################################################################
@@ -360,7 +376,7 @@ consensus_server <- function(id, r,
     LabelConcordance <- \() {
       LogMsg("LabelConcordance()")
       if (input$concordance != "none" &&
-          !is.null(r$plottedTree)) {
+          inherits(r$plottedTree, "phylo")) {
         LabelSplits(r$plottedTree, signif(concordance(), 3),
                     col = SupportColor(concordance()),
                     frame = "none", pos = 3L)
@@ -568,8 +584,14 @@ consensus_server <- function(id, r,
     ############################################################################
 
     PolEscVal <- reactive({
+      tl <- tipLabels()
+      dl <- names(r$dataset)
+      # Skip if taxa don't match exactly: tipLabels() may include taxa absent
+      # from the dataset (e.g. trees loaded from a superset dataset), causing
+      # a matrix-dimension mismatch inside LengthAdded / TreeLength.
+      if (!setequal(tl, dl)) return(NULL)
       LengthAdded(r$trees,
-                  r$dataset[tipLabels(), PlottedChar()],
+                  r$dataset[tl, PlottedChar()],
                   concavity())
     })
 
@@ -603,7 +625,10 @@ consensus_server <- function(id, r,
             tip.color = roguishness,
             Display = function(tr) {
               tr <- UserRoot(tr)
-              if (unitEdge()) {
+              if ("tipsRight" %in% input$mapDisplay) {
+                # Cladogram: tips aligned to the right
+                tr$edge.length <- NULL
+              } else {
                 tr$edge.length <- rep.int(1, dim(tr$edge)[[1]])
               }
               SortEdges(tr)
@@ -681,6 +706,45 @@ consensus_server <- function(id, r,
     # Cluster consensus plot (absorbed from clustering.R)
     ############################################################################
 
+    # Per-edge colors for cluster consensus: unique splits get the full
+    # cluster color; splits shared by other clusters fade towards grey.
+    ClusterEdgeCols <- function(tree, cluster_col, all_splits, cluster_idx) {
+      n_tip <- Ntip(tree)
+      n_edge <- nrow(tree$edge)
+      edge_col <- rep(cluster_col, n_edge)
+
+      my_splits <- all_splits[[cluster_idx]]
+      n_clusters <- length(all_splits)
+      if (length(my_splits) == 0 || n_clusters < 2) return(edge_col)
+
+      other_idx <- setdiff(seq_len(n_clusters), cluster_idx)
+      split_nodes <- as.integer(names(my_splits))
+
+      shared <- integer(length(my_splits))
+      for (j in other_idx) {
+        if (length(all_splits[[j]]) > 0) {
+          shared <- shared + as.integer(my_splits %in% all_splits[[j]])
+        }
+      }
+      uniqueness <- 1 - shared / length(other_idx)
+
+      grey_rgb <- col2rgb("grey70")[, 1]
+      col_rgb <- col2rgb(cluster_col)[, 1]
+      edge_child <- tree$edge[, 2]
+      for (e in seq_len(n_edge)) {
+        child <- edge_child[e]
+        if (child > n_tip) {
+          sidx <- match(child, split_nodes)
+          if (!is.na(sidx)) {
+            u <- uniqueness[sidx]
+            bl <- grey_rgb + (col_rgb - grey_rgb) * u
+            edge_col[e] <- rgb(bl[1], bl[2], bl[3], maxColorValue = 255)
+          }
+        }
+      }
+      edge_col
+    }
+
     PlotClusterCons <- function() {
       LogMsg("PlotClusterCons()")
       on.exit(LogMsg("/PlotClusterCons()"))
@@ -699,21 +763,30 @@ consensus_server <- function(id, r,
         r$plottedTree <- vector("list", cl$n)
         par(mfrow = c(nRow, ceiling(cl$n / nRow)))
 
+        # Phase 1: compute all cluster consensus trees
+        all_cons <- vector("list", cl$n)
         for (i in seq_len(cl$n)) {
-          col <- palettes[[min(length(palettes), cl$n)]][i]
-          PutTree(r$trees)
-          PutData(cl$cluster)
-
           cons <- ConsensusWithout(r$trees[cl$cluster == i], dropped,
                                    p = consP())
           cons <- UserRoot(cons)
           if (unitEdge()) {
             cons$edge.length <- rep.int(1, dim(cons$edge)[1])
           }
-          cons <- SortEdges(cons)
+          all_cons[[i]] <- SortEdges(cons)
+        }
+        all_splits <- lapply(all_cons, as.Splits)
+
+        # Phase 2: plot with uniqueness-based edge coloring
+        for (i in seq_len(cl$n)) {
+          col <- palettes[[min(length(palettes), cl$n)]][i]
+          PutTree(r$trees)
+          PutData(cl$cluster)
+
+          cons <- all_cons[[i]]
           r$plottedTree[[i]] <- cons
+          edge_col <- ClusterEdgeCols(cons, col, all_splits, i)
           plot(cons, edge.width = 2, font = 3, cex = 0.83,
-               edge.color = col, tip.color = TipCols()[cons$tip.label])
+               edge.color = edge_col, tip.color = TipCols()[cons$tip.label])
           legend("topright", paste0("Cluster ", i), pch = 15, col = col,
                  pt.cex = 1.5, bty = "n")
           LabelConcordance()
@@ -765,37 +838,69 @@ consensus_server <- function(id, r,
             " # Colour tips by stability"
           )
         )
+        LogCommentP("Compute all cluster consensus trees:", 1)
+        LogCodeP(
+          paste0("allCons <- lapply(seq_len(", cl$n, "), function(i) {"),
+          "  clusterTrees <- trees[clustering == i]",
+          "  cons <- ConsensusWithout(",
+          "    trees = clusterTrees,",
+          paste0("    tip = ", EnC(dropped), ","),
+          paste0("    p = ", consP()),
+          "  )"
+        )
+        LogUserRoot(dropped = dropped)
+        if (unitEdge()) {
+          LogExprP("  cons$edge.length <- rep.int(1, nrow(cons$edge))")
+        }
+        LogCodeP("  TreeTools::SortTree(cons)", "})")
+        LogCommentP(paste0(
+          "Compare splits across clusters to highlight unique edges"
+        ))
+        LogCodeP("allSplits <- lapply(allCons, TreeTools::as.Splits)")
         LogCommentP("Plot each consensus tree in turn:", 1)
         LogCodeP(paste0("for (i in seq_len(", cl$n, ")) {"))
         LogIndent(+2)
         LogCodeP(
-          "clusterTrees <- trees[clustering == i]",
-          "cons <- ConsensusWithout(",
-          "  trees = clusterTrees,",
-          paste0("  tip = ", EnC(dropped), ","),
-          paste0("  p = ", consP()),
-          ")"
+          "cons <- allCons[[i]]",
+          "nTip <- ape::Ntip(cons)",
+          "mySplits <- allSplits[[i]]",
+          paste0("otherIdx <- setdiff(seq_len(", cl$n, "), i)"),
+          "shared <- integer(length(mySplits))",
+          "for (j in otherIdx) {",
+          "  if (length(allSplits[[j]]) > 0)",
+          "    shared <- shared + (mySplits %in% allSplits[[j]])",
+          "}",
+          "uniqueness <- 1 - shared / length(otherIdx)",
+          "greyRgb <- col2rgb(\"grey70\")[, 1]",
+          "colRgb <- col2rgb(clusterCol[i])[, 1]",
+          "edgeCol <- rep(clusterCol[i], nrow(cons$edge))",
+          "splitNodes <- as.integer(names(mySplits))",
+          "for (e in seq_len(nrow(cons$edge))) {",
+          "  child <- cons$edge[e, 2]",
+          "  if (child > nTip) {",
+          "    si <- match(child, splitNodes)",
+          "    if (!is.na(si)) {",
+          "      bl <- greyRgb + (colRgb - greyRgb) * uniqueness[si]",
+          "      edgeCol[e] <- rgb(bl[1], bl[2], bl[3], maxColorValue = 255)",
+          "    }",
+          "  }",
+          "}"
         )
-        LogUserRoot(dropped = dropped)
-        if (unitEdge()) {
-          LogExprP("cons$edge.length <- rep.int(1, nrow(cons$edge))")
-        }
-        LogSortEdges("cons")
         LogCodeP("plot(",
                  "  cons,",
-                 "  edge.width = 2,             # Widen lines",
-                 "  font = 3,                   # Italicize labels",
-                 "  cex = 0.83,                 # Shrink tip font size",
-                 "  edge.color = clusterCol[i], # Colour tree",
+                 "  edge.width = 2,",
+                 "  font = 3,",
+                 "  cex = 0.83,",
+                 "  edge.color = edgeCol,",
                  "  tip.color = tipCols[cons$tip.label]",
                  ")")
         LogCodeP("legend(",
                  "  \"bottomright\",",
                  "  paste(\"Cluster\", i),",
-                 "  pch = 15,            # Filled circle icon",
-                 "  pt.cex = 1.5,        # Increase icon size",
+                 "  pch = 15,",
+                 "  pt.cex = 1.5,",
                  "  col = clusterCol[i],",
-                 "  bty = \"n\"            # Don't plot legend in box",
+                 "  bty = \"n\"",
                  ")")
         LogConcordance("cons")
         LogIndent(-2)
@@ -1121,10 +1226,12 @@ consensus_server <- function(id, r,
     UpdateKeepNTipsRange <- reactive({
       if (AnyTrees() && "consConfig" %in% r$visibleConfigs) {
         nTip <- TipsInTree()
-        LogMsg("UpdateKeepNTipsRange(", input$keepNTips, " -> ", nTip, ")")
+        # isolate() prevents re-triggering when user manually edits keepNTips
+        currentInput <- isolate(input$keepNTips)
+        LogMsg("UpdateKeepNTipsRange(", currentInput, " -> ", nTip, ")")
         r$keepNTips <- nNonRogues()
-        if (r$keepNTips != input$keepNTips) {
-          r$oldkeepNTips <- input$keepNTips
+        if (r$keepNTips != currentInput) {
+          r$oldkeepNTips <- currentInput
         }
         updateNumericInput(session, inputId = "keepNTips",
                            label = paste0("Tips to show (/", nTip, "):"),

@@ -1,27 +1,58 @@
+# Feasibility thresholds for MaddisonSlatkin exact computation.
+# The split_count is the coefficient of x^floor(n/2) in the generating
+# polynomial prod_i (1 + x + ... + x^{a_i}), capturing partition shape.
+# Calibrated from worst-case (balanced) partition timing experiments
+# using bitmask encoding (states at positions 2^(i-1)):
+#   k=3: n=27 (9,9,9)   sc=75  0.97s safe;  n=31 (11,10,10) sc=96 1.32s marginal
+#   k=4: n=13 (4,3,3,3) sc=50  0.36s safe;  n=15 (4,4,4,3)  sc=70 0.94s marginal
+#   k=5: n=9  (2,2,2,2,1) sc=35 0.22s safe; n=10 (2,2,2,2,2) sc=51 0.49s
+.MS_SC_THRESHOLD <- c(Inf, Inf, 75L, 50L, 35L)
+
+.MSSplitCount <- function(state_counts) {
+  counts <- state_counts[state_counts > 0L]
+  if (!length(counts)) return(0L)
+  n <- sum(counts)
+  if (n <= 2L) return(1L)
+  target <- n %/% 2L
+  poly <- 1.0
+  for (ci in counts) {
+    new_len  <- min(length(poly) + ci, target + 1L)
+    new_poly <- numeric(new_len)
+    for (j in seq_len(new_len)) {
+      lo <- max(1L, j - ci)
+      hi <- min(j,  length(poly))
+      if (lo <= hi) new_poly[j] <- sum(poly[lo:hi])
+    }
+    poly <- new_poly
+  }
+  if (target + 1L <= length(poly)) poly[target + 1L] else 0.0
+}
+
 #' Prepare data for Profile Parsimony
 #' 
 #' Calculates profiles for each character in a dataset.
 #' Characters with 2 informative states (i.e. states present in more than one
 #' taxon) use the exact formula of Carter _et al._ (1990).
-#' Characters with 3--5 informative states use the recursive algorithm of
-#' Maddison & Slatkin (1991).
+#' Characters with 3 or more informative states use the recursive algorithm of
+#' Maddison & Slatkin (1991), falling back to a Monte Carlo approximation for
+#' large or complex characters.
 #' 
 #' Characters are simplified where necessary, with a warning:
 #' - inapplicable tokens will be replaced with the ambiguous token
 #'    (i.e. `-` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`);
 #' - Ambiguous tokens will be treated as fully ambiguous
 #'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`)
-#' - Where more than five states are informative, states beyond the five most
-#'   informative will be treated as ambiguous.
 #' 
 #' @param dataset dataset of class \code{phyDat}
 #' @param approx Character string controlling how profile information amounts
 #'   are computed for multi-state characters with many tips.
-#'   `"auto"` (default) reduces characters exceeding feasibility thresholds to
-#'   binary; `"exact"` always uses the exact Maddison & Slatkin calculation
-#'   (slow for large matrices); `"mc"` uses Monte Carlo sampling.
-#' @param n_mc Integer; number of Monte Carlo samples when `approx = "mc"`.
-#'   Default 5000.
+#'   `"auto"` (default) uses the exact Maddison & Slatkin calculation when
+#'   feasible, falling back to a Monte Carlo approximation for large or
+#'   complex characters.
+#'   `"mc"` always uses the Monte Carlo approximation;
+#'   `"exact"` always uses the exact calculation (may be very slow).
+#' @param n_mc Integer; number of Monte Carlo samples for the MC
+#'   approximation.  Default 100 000.
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
@@ -51,7 +82,7 @@
 #' @family profile parsimony functions
 #' @encoding UTF-8
 #' @export
-PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
+PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
   if ("info.amounts" %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)
@@ -98,10 +129,8 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
   # Transpose to: rows = tips, cols = patterns (matching .RemoveExtraTokens)
   mataset <- t(mataset)
   
-  # --- Strip singletons and cap to 5 informative states per pattern ---
+  # --- Strip singletons ---
   maxInformative <- 0L
-  cappedAny <- FALSE
-  reducedAny <- FALSE
   
   for (j in seq_len(ncol(mataset))) {
     col <- mataset[, j]
@@ -118,46 +147,9 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 5000L) {
       mataset[mataset[, j] %in% singletonTokens, j] <- qmLevel[1]
     }
     
-    if (nInf > 5L) {
-      # Keep 5 most frequent informative states, convert rest to ambiguous
-      sortedInf <- sort(tab[informative], decreasing = TRUE)
-      toRemove <- as.integer(names(sortedInf)[6:length(sortedInf)])
-      mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
-      nInf <- 5L
-      cappedAny <- TRUE
-      # Recount after capping
-      tab <- table(mataset[mataset[, j] != qmLevel[1], j])
-      informative <- tab > 1L
-    }
-    
-    # MaddisonSlatkin is infeasible for multi-state chars with many tips.
-    # With approx = "auto" or "exact": reduce to binary (top 2) now so
-    # the pattern data and info.amounts stay consistent.
-    # With approx = "mc": keep multi-state pattern intact; StepInformation
-    # will compute IC via MC approximation for the full multi-state character.
-    if (nInf >= 3L && !identical(approx, "mc")) {
-      nInfTips <- sum(tab[informative])
-      maxTips <- c(Inf, Inf, 25L, 18L, 12L)
-      if (nInfTips > maxTips[min(nInf, 5L)] && !identical(approx, "exact")) {
-        sortedInf <- sort(tab[informative], decreasing = TRUE)
-        toRemove <- as.integer(names(sortedInf)[3:length(sortedInf)])
-        mataset[mataset[, j] %in% toRemove, j] <- qmLevel[1]
-        nInf <- 2L
-        reducedAny <- TRUE
-      }
-    }
-    
     maxInformative <- max(maxInformative, nInf)
   }
-  
-  if (cappedAny) {
-    warning("More than 5 informative tokens in some characters; ",
-            "keeping 5 most frequent.")
-  }
-  if (reducedAny) {
-    warning("Multi-state characters reduced to 2 most frequent states for ",
-            "profile parsimony feasibility.")
-  }
+
   
   if (maxInformative < 2L) {
     cli_alert("No informative characters in `dataset`.")

@@ -1,7 +1,8 @@
 # Module: References panel
 #
-# Renders the references section. No reactive inputs or state reads/writes.
-# Citation variables are defined in global.R and passed via `cites`.
+# Renders the references section. Adapts "Tree search" references based on
+# the active weighting mode ("off" = EW, "on" = IW, "xpiwe" = XPIWE,
+# "prof" = profile parsimony).
 
 references_ui <- function(id) {
   ns <- NS(id)
@@ -9,9 +10,10 @@ references_ui <- function(id) {
 }
 
 #' @param id Module namespace id.
+#' @param weighting Reactive returning the current weighting mode string.
 #' @param cites Named list of citation HTML strings. Defaults to looking up
 #'   each variable in the calling environment (i.e. global.R when run as app).
-references_server <- function(id, cites = NULL) {
+references_server <- function(id, weighting = NULL, cites = NULL) {
   # If no cites list supplied, collect from the caller's environment so the
   # app's global.R assignments are found automatically.
   if (is.null(cites)) {
@@ -19,6 +21,9 @@ references_server <- function(id, cites = NULL) {
     get_cite <- function(nm) get(nm, envir = e, inherits = TRUE)
     cites <- list(
       Brazeau2019    = get_cite("Brazeau2019"),
+      Goloboff1993   = get_cite("Goloboff1993"),
+      Goloboff1999   = get_cite("Goloboff1999"),
+      Goloboff2014   = get_cite("Goloboff2014"),
       Morphy         = get_cite("Morphy"),
       Nixon1999      = get_cite("Nixon1999"),
       SmithSearch    = get_cite("SmithSearch"),
@@ -45,10 +50,29 @@ references_server <- function(id, cites = NULL) {
 
   moduleServer(id, function(input, output, session) {
     output$references <- renderUI({
+      wt <- if (is.reactive(weighting)) weighting() else "off"
+
+      # Standing tree-search references (always shown)
+      searchRefs <- list(
+        cites$SmithSearch,
+        cites$Goloboff1999,
+        cites$Nixon1999,
+        cites$Brazeau2019,
+        cites$Morphy
+      )
+      # IW / XPIWE: add Goloboff 1993
+      if (wt %in% c("on", "xpiwe")) {
+        searchRefs <- c(searchRefs, list(cites$Goloboff1993))
+      }
+      # XPIWE only: add Goloboff 2014
+      if (identical(wt, "xpiwe")) {
+        searchRefs <- c(searchRefs, list(cites$Goloboff2014))
+      }
+
       tagList(
         tags$h2("References for methods used"),
         tags$h3("Tree search"),
-        HTML(cites$Brazeau2019, cites$Morphy, cites$Nixon1999, cites$SmithSearch),
+        HTML(paste0(searchRefs, collapse = "")),
         tags$h3("Tree space mapping"),
         HTML(paste0(cites$Gower1966, cites$Gower1969, cites$Kaski2003,
                     cites$RCoreTeam, cites$SmithDist, cites$Smith2020,

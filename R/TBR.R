@@ -39,8 +39,8 @@ TBRWarning <- function (parent, child, error) {
 #' 
 #' @return `TBR()` returns a tree in \code{phyDat} format that has undergone one
 #' \acronym{TBR} iteration.
-#' @references The \acronym{TBR} algorithm is summarized in
-#' \insertRef{Felsenstein2004}{TreeSearch}
+#' @references \insertCite{Felsenstein2004}{TreeSearch}
+#' \insertAllCited{}
 #' 
 #' @examples
 #' library("ape")

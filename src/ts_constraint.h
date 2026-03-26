@@ -27,7 +27,8 @@ namespace ts {
 enum class ClipZone : int {
   UNCONSTRAINED = 0,  // clip tips don't interact with this split
   MUST_INSIDE   = 1,  // all clip tips inside split → regraft inside
-  MUST_OUTSIDE  = 2   // all clip tips outside split → regraft outside
+  MUST_OUTSIDE  = 2,  // all clip tips outside split → regraft outside
+  FORBIDDEN     = 3   // clip straddles split AND rest straddles → no valid regraft
 };
 
 struct ConstraintData {
@@ -109,12 +110,33 @@ void classify_clip_constraints(const TreeState& tree, int clip_node,
 bool regraft_violates_constraint(int below,
                                  const ConstraintData& cd);
 
+// Build ConstraintData directly from pre-canonicalized split bitsets.
+// `split_bits` is contiguous: n_splits * words_per_split uint64_t values.
+// Splits must already be canonicalized (bit 0 clear).
+// No posthoc DataSet is built (has_posthoc = false).
+ConstraintData build_constraint_from_bitsets(
+    const uint64_t* split_bits, int n_splits,
+    int words_per_split, int n_tips);
+
 // --- Post-hoc check (for sector/fuse) ---
 
 // Full Fitch check: score the tree against the constraint DataSet.
 // Returns true if constraint is violated.
 bool violates_constraint_posthoc(const TreeState& tree,
                                  const ConstraintData& cd);
+
+// --- Post-hoc repair ---
+
+// Compute per-node subtree tip bitmasks via postorder traversal.
+// Returns array of size n_node * n_words.
+// For tips: bit[t] = 1. For internal nodes: OR of children.
+std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words);
+
+// Repair constraint violations by minimal SPR moves.
+// After return, all constraint splits are displayed and
+// update_constraint() has been called. Caller must rescore.
+// Returns the number of SPR moves performed (0 if tree was valid).
+int impose_constraint(TreeState& tree, ConstraintData& cd);
 
 } // namespace ts
 

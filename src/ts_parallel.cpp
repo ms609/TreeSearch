@@ -1,4 +1,6 @@
 #include "ts_parallel.h"
+#include "ts_collapsed.h"
+#include "ts_constraint.h"
 #include "ts_rng.h"
 #include "ts_fitch.h"
 #include "ts_fuse.h"
@@ -37,13 +39,26 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
 
   double fused_score = score_tree(fused, ds);
 
-  bool fuse_ok = true;
-  if (cd && cd->active) {
-    fuse_ok = !violates_constraint_posthoc(fused, *cd);
+  bool fused_ok = true;
+  if (cd && cd->active &&
+      violates_constraint_posthoc(fused, *cd)) {
+    impose_constraint(fused, *cd);
+    fused.build_postorder();
+    fused.reset_states(ds);
+    fused_score = score_tree(fused, ds);
+    // Verify repair succeeded — impose_constraint is heuristic
+    map_constraint_nodes(fused, *cd);
+    for (int s = 0; s < cd->n_splits; ++s) {
+      if (cd->constraint_node[s] < 0) { fused_ok = false; break; }
+    }
   }
-  if (fuse_ok) pool_.add(fused, fused_score);
+  if (fused_ok) {
+    std::vector<uint8_t> fused_collapsed;
+    compute_collapsed_flags(fused, ds, fused_collapsed);
+    pool_.add_collapsed(fused, fused_score, fused_collapsed);
+  }
 
-  if (fused_score < best_before) {
+  if (fused_ok && fused_score < best_before) {
     pool_.set_hits_to_best(0);
   } else {
     pool_.set_hits_to_best(hits_before);
@@ -56,6 +71,11 @@ void ThreadSafePool::extract_into(TreePool& out) {
   for (const auto& e : entries) {
     out.add(e.tree, e.score);
   }
+  // Propagate the actual independent-hit count.  The add() calls above
+  // only count one hit per distinct topology; the internal pool tracks
+  // the true number of independent replicate hits (including duplicates
+  // that matched best_score but were deduped).
+  out.set_hits_to_best(pool_.hits_to_best());
 }
 
 // --- Worker thread function ---
@@ -74,6 +94,9 @@ struct WorkerContext {
 
   // Pre-generated seeds (one per replicate)
   const std::vector<unsigned>* seeds;
+
+  // Pre-computed strategy sequence for round-robin (T-190)
+  const std::vector<StartStrategy>* strategies;
 
   // Per-thread timing accumulator (index = thread_id)
   PhaseTimings* thread_timings;
@@ -121,17 +144,27 @@ void worker_thread(WorkerContext ctx) {
       start_ptr = &start_tree;
     }
 
+    // Strategy for this replicate (round-robin when adaptive, else default)
+    StartStrategy rep_strat = StartStrategy::WAGNER_RANDOM;
+    if (ctx.strategies && rep < static_cast<int>(ctx.strategies->size())) {
+      rep_strat = (*ctx.strategies)[rep];
+    }
+
     // Run the replicate pipeline (verbosity=0 for parallel)
     ReplicateResult rep_result = run_single_replicate(
-        ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr);
+        ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr,
+        nullptr, rep_strat);
 
     if (ctx.stop_flag->load(std::memory_order_relaxed)) break;
 
     // Accumulate phase timings for this thread
     ctx.thread_timings[ctx.thread_id] += rep_result.timings;
 
-    // Add to shared pool
-    ctx.shared_pool->add(rep_result.tree, rep_result.score);
+    // Add to shared pool with collapsed-topology dedup
+    std::vector<uint8_t> rep_collapsed;
+    compute_collapsed_flags(rep_result.tree, ds_local, rep_collapsed);
+    ctx.shared_pool->add_collapsed(rep_result.tree, rep_result.score,
+                                   rep_collapsed);
     ctx.replicates_done->fetch_add(1, std::memory_order_relaxed);
 
     // Check convergence
@@ -170,7 +203,10 @@ DrivenResult parallel_driven_search(
   result.replicates_completed = 0;
   result.hits_to_best = 0;
   result.pool_size = 0;
+  result.n_topologies_at_best = 0;
+  result.last_improved_rep = 0;  // not tracked in parallel (replicates out of order)
   result.timed_out = false;
+  result.consensus_stable = false;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -199,6 +235,12 @@ DrivenResult parallel_driven_search(
   std::atomic<int> replicates_claimed(0);
   std::atomic<int> replicates_done(0);
 
+  // Perturbation-count stopping rule (T-187, parallel path).
+  const int perturb_stop_limit = (params.perturb_stop_factor > 0)
+      ? ds_prototype.n_tips * params.perturb_stop_factor : 0;
+  double last_known_best = 1e18;
+  int reps_at_last_improvement = 0;
+
   // Prepare worker context
   WorkerContext ctx;
   ctx.ds_prototype = &ds_prototype;
@@ -210,9 +252,21 @@ DrivenResult parallel_driven_search(
   ctx.replicates_done = &replicates_done;
   ctx.seeds = &seeds;
 
-  // Timeout setup
+  // Pre-compute round-robin strategy sequence for adaptive start (T-190)
+  std::vector<StartStrategy> strategies;
+  if (params.adaptive_start) {
+    strategies = StrategyTracker::round_robin(params.max_replicates);
+  }
+  ctx.strategies = params.adaptive_start ? &strategies : nullptr;
+
+  // Two-phase timeout (T-202): main loop exits early, reserving time for
+  // MPT enumeration.
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();
+  const double enum_frac = std::max(0.0,
+                                     std::min(params.enum_time_fraction, 0.5));
+  const double main_deadline = params.max_seconds * (1.0 - enum_frac);
+  const double full_deadline = params.max_seconds;
 
   // Cancel file: read path from environment variable (set by Shiny app).
   // If the file exists, the search should stop.
@@ -235,6 +289,7 @@ DrivenResult parallel_driven_search(
   }
 
   // Main thread: poll for interrupt and timeout
+  int last_stab_done = 0;  // replicates_done at last consensus check
   while (true) {
     // Sleep briefly to avoid spinning
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -266,11 +321,11 @@ DrivenResult parallel_driven_search(
       break;
     }
 
-    // Check timeout
+    // Check timeout (main loop deadline, reserving time for MPT enum)
     if (use_timeout) {
       auto now = std::chrono::steady_clock::now();
       double elapsed = std::chrono::duration<double>(now - start_time).count();
-      if (elapsed >= params.max_seconds) {
+      if (elapsed >= main_deadline) {
         stop_flag.store(true, std::memory_order_relaxed);
         result.timed_out = true;
         break;
@@ -288,6 +343,49 @@ DrivenResult parallel_driven_search(
       }
     }
 
+    // Consensus stability check (parallel path).
+    // Only check when new replicates have completed; otherwise the
+    // unchanged counter increments on idle polls (every 200 ms) and
+    // can trigger premature termination with slow replicates.
+    if (params.consensus_stable_reps > 0) {
+      int done_now = replicates_done.load(std::memory_order_relaxed);
+      auto st = shared_pool.status();
+      if (st.pool_size >= 2 && done_now > last_stab_done) {
+        last_stab_done = done_now;
+        int unchanged = shared_pool.update_consensus_stability();
+        if (unchanged >= params.consensus_stable_reps) {
+          stop_flag.store(true, std::memory_order_relaxed);
+          result.consensus_stable = true;
+          if (params.verbosity >= 1) {
+            Rprintf("Consensus stable for %d replicates (score %.5g, "
+                    "pool %d trees)\n",
+                    unchanged, st.best_score, st.pool_size);
+          }
+          break;
+        }
+      }
+    }
+
+
+    // Perturbation-count stopping rule (T-187, parallel path)
+    if (perturb_stop_limit > 0) {
+      int done = replicates_done.load(std::memory_order_relaxed);
+      double cur_best = shared_pool.best_score();
+      if (cur_best < last_known_best) {
+        last_known_best = cur_best;
+        reps_at_last_improvement = done;
+      }
+      if (done - reps_at_last_improvement >= perturb_stop_limit) {
+        stop_flag.store(true, std::memory_order_relaxed);
+        if (params.verbosity >= 1) {
+          Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                  "(limit %d = %d tips x %d)\n",
+                  done - reps_at_last_improvement, perturb_stop_limit,
+                  ds_prototype.n_tips, params.perturb_stop_factor);
+        }
+        break;
+      }
+    }
     // Progress reporting
     if (params.verbosity >= 1) {
       auto st = shared_pool.status();
@@ -319,9 +417,23 @@ DrivenResult parallel_driven_search(
   result.replicates_completed = replicates_done.load();
   result.hits_to_best = pool_out.hits_to_best();
 
-  // MPT enumeration: TBR plateau walk from each pool tree (serial, main thread)
-  if (pool_out.size() > 0 && pool_out.size() < pool_out.max_size
-      && !result.timed_out) {
+  // MPT enumeration: TBR plateau walk from each pool tree (serial, main
+  // thread).  T-202: always runs (even after timeout), subject to the
+  // reserved enum time budget.
+  auto elapsed_now = [&]() -> double {
+    auto now = std::chrono::steady_clock::now();
+    return std::chrono::duration<double>(now - start_time).count();
+  };
+  auto check_enum_timeout = [&]() -> bool {
+    if (use_timeout && elapsed_now() >= full_deadline) return true;
+    if (!cancel_path.empty()) {
+      FILE* cf = std::fopen(cancel_path.c_str(), "r");
+      if (cf) { std::fclose(cf); return true; }
+    }
+    return false;
+  };
+
+  if (pool_out.size() > 0 && pool_out.size() < pool_out.max_size) {
     TBRParams tp;
     tp.accept_equal = true;
     tp.tabu_size = 100;
@@ -333,9 +445,11 @@ DrivenResult parallel_driven_search(
     }
     int seed_idx = 0;
     while (seed_idx < pool_out.size() && pool_out.size() < pool_out.max_size) {
+      if (check_enum_timeout()) break;
       TreeState enum_tree = pool_out.all()[seed_idx].tree;
       tp.max_hits = std::max(10, (pool_out.max_size - pool_out.size()) * 2);
-      tbr_search(enum_tree, ds_prototype, tp, cd_ptr, nullptr, &pool_out);
+      tbr_search(enum_tree, ds_prototype, tp, cd_ptr, nullptr, &pool_out,
+                 check_enum_timeout);
       ++seed_idx;
     }
   }
@@ -343,6 +457,7 @@ DrivenResult parallel_driven_search(
   // result.replicates_completed and result.hits_to_best already set
   // before MPT enumeration (above).
   result.pool_size = pool_out.size();
+  result.n_topologies_at_best = pool_out.count_at_best();
   if (pool_out.size() > 0) {
     result.best_score = pool_out.best_score();
   } else {
@@ -376,7 +491,11 @@ std::vector<ResampleResult> parallel_resample(
     int n_threads,
     const double* info_amounts_r,
     int info_max_steps,
-    ConstraintData* cd)
+    ConstraintData* cd,
+    bool xpiwe,
+    double xpiwe_r,
+    double xpiwe_max_f,
+    const int* obs_count_r)
 {
   if (n_threads <= 0) {
     n_threads = static_cast<int>(std::thread::hardware_concurrency());
@@ -415,7 +534,8 @@ std::vector<ResampleResult> parallel_resample(
           tip_data_r, n_tips, n_patterns,
           original_weights, levels_r, min_steps_r,
           concavity, params,
-          info_amounts_r, info_max_steps, cd);
+          info_amounts_r, info_max_steps, cd,
+          xpiwe, xpiwe_r, xpiwe_max_f, obs_count_r);
     }
 
     ts::thread_rng = nullptr;

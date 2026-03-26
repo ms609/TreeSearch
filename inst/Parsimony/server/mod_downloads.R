@@ -57,7 +57,7 @@ downloads_server <- function(id, state, dataSource, plotSize,
           on.exit(unlink(zipDir))
           rFile <- paste0(zipDir, "/TreeSearch-session.R")
           file.copy(cmdLogFile, rFile, overwrite = TRUE)
-          zip(file, c(
+          zip::zip(file, c(
             rFile,
             if (state$dataFiles)
               paste0(tempdir(), "/", dataFileName(seq_len(state$dataFiles))),
@@ -65,7 +65,7 @@ downloads_server <- function(id, state, dataSource, plotSize,
               paste0(tempdir(), "/", excelFileName(seq_len(state$excelFiles))),
             if (state$treeFiles)
               paste0(tempdir(), "/", treeFileName(seq_len(state$treeFiles)))
-          ), flags = "-9Xj")
+          ), compression_level = 9, mode = "cherry-pick")
         }
       }
     )
@@ -101,12 +101,12 @@ downloads_server <- function(id, state, dataSource, plotSize,
           rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
           writeLines(rCode(), con = rFile)
 
-          zip(file, c(
+          zip::zip(file, c(
             rFile,
             paste0(tempdir(), "/", lastFile("data")),
             paste0(tempdir(), "/", lastFile("excel")),
             paste0(tempdir(), "/", lastFile("tree"))
-          ), flags = "-r9Xj")
+          ), compression_level = 9, mode = "cherry-pick")
         }
       }
     )

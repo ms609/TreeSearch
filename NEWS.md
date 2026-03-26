@@ -2,6 +2,11 @@
 
 ## Breaking changes
 
+- Implied weighting now applies the missing-entries correction of
+  Goloboff (2014) by default (`extended_iw = TRUE`).  Characters with
+  many missing entries receive a reduced effective concavity, compensating
+  for artificially low observed homoplasy.  Set `extended_iw = FALSE` to
+  reproduce pre-2.0.0 behaviour.
 - `MaximizeParsimony()` has an entirely new parameter interface.
   The previous `MaximizeParsimony()` (R-loop search using MorphyLib) has been
   renamed to `Morphy()`.
@@ -61,6 +66,20 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - `tbrMaxHits`, `wagnerStarts`, `tabuSize`.
 - `progressCallback` — R function called after each replicate (for custom
   progress reporting).
+
+### Search optimizations
+
+- **Collapsed-edge clip skipping**: TBR, SPR, and drift search skip
+  clips at zero-length edges that provably cannot improve the score,
+  reducing unnecessary evaluations on sparse data.
+- **Conflict-guided sectorial search**: random sectorial search targets
+  sectors around splits that conflict across pool trees.
+- **Diversity-aware pool eviction**: when the tree pool is full, the most
+  topologically similar entry is evicted to maintain diversity.
+- **Cross-replicate consensus constraint tightening**: opt-in via
+  `consensusConstrain = TRUE` in `SearchControl()`.
+- **Consensus-stability early stopping**: search terminates when the strict
+  consensus is stable for `consensusStableReps` consecutive replicates.
 
 ### Batch resampling
 

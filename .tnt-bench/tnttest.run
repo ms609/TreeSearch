@@ -1,0 +1,7 @@
+mxram 1024;
+proc Vinther2008.tnt;
+rseed 1;
+xpiwe=10;
+xmult=hits 3 replic 5;
+best;
+quit;

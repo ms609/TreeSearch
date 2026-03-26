@@ -17,6 +17,7 @@
 ^split-support$
 /^src\-/
 CONTRIBUTING\.md
+papers\.md
 README\.md
 cran\-comments\.md
 vignettes/\.RData
@@ -48,3 +49,6 @@ Makevars\.win\..*-bak$
 
 # Test artifacts
 ^test.*\.txt$
+^vtune
+^dev$
+^papers\.md$
