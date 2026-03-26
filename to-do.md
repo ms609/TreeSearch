@@ -34,19 +34,14 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-242 | P1 | PARKED (C, GHA 23545987517) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. Investigate whether this is a genuine regression or expected IW behaviour. |
+| T-242 | P1 | PARKED (C, GHA 23545987517†) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. GHA failure is stale (pre-T-214); cpp-search passes on 23547582438. Investigation task — GHA status doesn't resolve it. |
 
 
 
 
 ### Shiny App
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| T-232 | P2 | PARKED (D, GHA 23543699366†) | — | **[Shiny] "Tips to show" input bounces back on decrement.** Clicking "down" arrow resets to previous value (e.g. 54 for Sun dataset). | From a.013. Fix committed. GHA failed pre-T-214 fix; awaiting re-validation on current HEAD (run 23547582438 queued). |
-| T-240 | P2 | PARKED (D, GHA 23544604214†) | — | **[Shiny] Pool suboptimal filter not applied when changed mid-search.** After search, changing "Keep if suboptimal by" from ≤6 to ≤2 or ≤0 doesn't filter existing pool trees. | From a.17. Fix committed. GHA failed pre-T-214; awaiting re-validation. |
-| T-239 | P3 | PARKED (D, GHA 23545538742†) | — | **[Shiny] Cluster consensus: highlight edges unique to a cluster.** Heatmap colouring: emphasize "unique to cluster" vs "in 5/6 clusters". Agnarsson (6 clusters) is testbed. | From a.07. Feature committed. GHA failed pre-T-214; awaiting re-validation. |
-| T-241 | P3 | PARKED (D, GHA 23545261957†) | — | **[Shiny] Show cluster assignment next to tree selector.** Add "(cluster X)" in cluster colour after "Tree to plot" label. | From a.19. Feature committed. GHA failed pre-T-214; awaiting re-validation. |
+(no open tasks)
 
 ### Performance Optimization (180+ tips)
 
@@ -63,6 +58,6 @@
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by F (focus 6: R↔C++ interface). Clean — no bugs. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-25 by F (round 20). Cleaned stale entries, updated PR refs. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-25 by F (round 20 triage). Open PRs: #216 (native-search), #213 (CID-consensus). #226/#227 merged, #215/#222 CLOSED. #210 (draft cpp-search→main). #178/#106 stale — consider closing. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 21). Closed 4 Shiny tasks (re-validated by GHA 23547582438). Updated stale GHA notes. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by E (via S-COORD). Open PRs: #230 (hot-loop-opt, GHA pending), #216 (native-search, stale GHA), #213 (CID-consensus, WORKTREE). #210 (draft cpp-search→main). #178/#106 stale+CONFLICTING — recommend closing. |
 

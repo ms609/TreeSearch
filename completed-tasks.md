@@ -9,6 +9,10 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 | ID | Description | Agent | Notes |
 |----|-------------|-------|-------|
 | T-248 | SA phase tuning for large preset | E | Hamilton benchmark (mbank_X30754 180t, 5 seeds, 30s/60s). annealCycles=1 (400ms/rep, 40% hit rate) most cost-effective; AC=3 (1370ms/rep, 21% hit rate) no significant score gain (p>0.5). Reduced large preset from AC=3 to AC=1, saves ~1s/rep (~6%). |
+| T-232 | [Shiny] "Tips to show" bounces back on decrement | D | Fix committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
+| T-240 | [Shiny] Pool suboptimal filter not applied mid-search | D | Fix committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
+| T-239 | [Shiny] Cluster consensus: highlight unique edges | D | Feature committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
+| T-241 | [Shiny] Show cluster assignment next to tree selector | D | Feature committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
 | T-247 | XPIWE search quality investigation (Vinther2008) | E | NOT A BUG. Score discrepancy (3.84382 vs TNT 3.79283) is entirely from different inapplicable handling (Brazeau three-pass vs standard Fitch). TNT's tree scores EW=80 in TreeSearch vs 78 in TNT (2-step inapplicable difference). TreeSearch's tree (EW=79) is genuinely better under three-pass scoring. XPIWE implementation verified correct: uses eff_k in all scoring paths. |
 | T-244 | Full-pipeline 180-tip benchmark on Hamilton | E | Large preset on EPYC 7702. Median scores: 30s=1202, 60s=1190, 120s=1185. Per-rep median 17.3s. SA phase identified as least productive (7.4% time, 14% hit rate). 65-74 step improvement over pre-T-206 Intel baselines. |
 
