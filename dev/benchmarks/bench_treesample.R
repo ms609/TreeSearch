@@ -108,8 +108,8 @@ for (i in seq_len(nrow(configs))) {
   key <- paste0("t", cfg$n_tip)
   trees <- tree_cache[[key]]
 
-  for (ts in c("auto", Inf)) {
-    ts_label <- if (is.character(ts)) ts else "inf"
+  for (ts_label in c("auto", "inf")) {
+    ts <- if (ts_label == "auto") "auto" else Inf
     cat(sprintf("[%d/%d] n_tip=%d, budget=%ds, seed=%d, treeSample=%s\n",
                 i, nrow(configs), cfg$n_tip, cfg$budget, cfg$seed, ts_label))
 
