@@ -2,7 +2,7 @@
 
 ## Current Task
 - **Task:** T-255 — Reduce drift in default and thorough presets
-- **Status:** Starting. Set driftCycles=0 in default; reduce from 12 to 0 in thorough.
+- **Status:** PARKED. Changes committed (a60c9196). GHA 23589478370 in progress. driftCycles=0 in default, thorough, and SearchControl() default. Test fix for expected value. Docs updated.
 
 ### T-254 — Drift MPT diversity experiment — DONE
 - driftCycles=0 vs 2 on Wortley2006 (37t), Zhu2013 (75t), Geisler2001 (68t)
