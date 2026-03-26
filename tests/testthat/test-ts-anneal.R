@@ -4,7 +4,7 @@ skip_on_cran()
 # --- Helpers ---
 # Build annealConfig list from SearchControl fields
 make_anneal_config <- function(ctrl) {
-  cycles <- as.integer(ctrl$annealCycles %||% 0L)
+  cycles <- as.integer(if (is.null(ctrl$annealCycles)) 0L else ctrl$annealCycles)
   if (cycles > 0L) {
     list(
       cycles = cycles,
