@@ -152,7 +152,7 @@ run_tnt <- function(script_path, dir = STAGING_DIR, timeout_s = 120) {
 
   score <- NA_real_
   score_match <- regmatches(out_text,
-                            regexpr("Best score:\\s+([0-9.]+)", out_text))
+                            regexpr("Best score:\\s+([0-9]+[.][0-9]+)", out_text))
   if (length(score_match) == 1) {
     score <- as.numeric(sub("Best score:\\s+", "", score_match))
   }

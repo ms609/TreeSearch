@@ -98,7 +98,8 @@ run_tnt <- function(data_file, timeout_s, seed, hits, reps, concavity) {
   out_text <- paste(output, collapse = "\n")
 
   score <- NA_real_
-  m <- regmatches(out_text, regexpr("Best score:\\s+([0-9.]+)", out_text))
+  # [0-9]+[.][0-9]+ avoids capturing the trailing period in "3.80000."
+  m <- regmatches(out_text, regexpr("Best score:\\s+([0-9]+[.][0-9]+)", out_text))
   if (length(m) == 1) score <- as.numeric(sub("Best score:\\s+", "", m))
 
   n_trees <- NA_integer_
