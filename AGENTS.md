@@ -413,6 +413,18 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | `AGENTS.md` | Conventions + architecture reference |
 | `.positai/expertise/*.md` | Standing task methodology |
 
+## User-level Posit Assistant skills
+
+The user has Posit Assistant skills installed at `~/.positai/skills/`.
+**Load these with the `skill` tool before starting relevant work:**
+
+| Skill name | When to load |
+|------------|-------------|
+| `r-package-profiling` | Profiling, benchmarking, VTune, A/B comparison, hotspot analysis |
+| `hamilton-hpc` | Hamilton HPC, SLURM jobs, SSH, remote benchmarking |
+
+Example: `skill(skill: "hamilton-hpc")` before any Hamilton dispatch work.
+
 ## Test file conventions
 
 All `tests/testthat/test-ts-*.R` files must use `TreeSearch:::` to call
