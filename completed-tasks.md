@@ -375,3 +375,5 @@ ENDMARK 2>&1
 | T-263 | Hoist StateSnapshot save to once per TBR pass | F | Eliminated per-candidate memcpy save/restore of prelim/final_/down2/subtree_actives (~190 KB at 88 tips). Saved once before TBR pass, restored once after. PR #231 merged 2026-03-27. |
 | T-246 | AVX2 runtime dispatch for Fitch SIMD operations | F | Widened ts_simd.h from SSE2 (128-bit) to AVX2 (256-bit) with `__builtin_cpu_supports("avx2")` runtime detection and SSE2 fallback. Estimated 5–10% on multi-block datasets. PR #233 merged 2026-03-27. |
 | T-257 | Post-ratchet sectorial search pass | F | Added second sectorial pass after ratchet: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR]. Controlled by `postRatchetSectorial` in SearchControl(). PR #234 merged 2026-03-27. |
+| T-270 | Algorithm vignette + AGENTS.md for T-257 post-ratchet sectorial | A | Added pipeline step 5a, new "Post-ratchet sectorial pass" subsection in vignette; fixed stale consensusStableReps preset docs (T-264); updated AGENTS.md pipeline steps. commit d8f3c769. |
+EOF 2>&1

@@ -64,7 +64,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-268 | P2 | ASSIGNED (F) | — | **Branch housekeeping.** Human has merged several branches on GitHub. Pull cpp-search, refresh local branches, delete stale worktrees. | From u.2. |
-| T-270 | P2 | OPEN | — | **Algorithm vignette + AGENTS.md update for T-257 (post-ratchet sectorial).** Per AGENTS.md mandatory update policy: (1) Update `vignettes/search-algorithm.Rmd` to document the post-ratchet sectorial search pass added in T-257 (merged PR #234). (2) Update AGENTS.md "Driven search pipeline per replicate" to list the post-ratchet XSS+RSS+CSS step. (3) Update AGENTS.md "Strategy presets" table if `postRatchetSectorial` is enabled in any preset. **Check first:** if PR #234 already included vignette updates, this task can be closed immediately. | T-266 (prune-reinsert) vignette update should be added once PR #235 merges. |
+
 | T-272 | P3 | OPEN | — | **Close stale PR #178** (concordance feature, Aug 2025, CONFLICTING DRAFT). Recommended for close in rounds 20, 25, 26, 27, 28, 29, 30. | `gh pr close 178 --comment "Stale draft from Aug 2025; CONFLICTING. Closing to keep PR list manageable. Can be reopened when ready."` |
 
 ### Standing Tasks
@@ -73,5 +73,5 @@
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 (focus 9: Wagner & addition trees). ts_wagner.h/.cpp (595 lines) + ts_constraint.h/.cpp (880 lines) reviewed. Latent stale-reference in impose_one_pass() noted (negligible severity, mitigated by retry loops). 902 constraint tests + 80 adversarial tests pass. No bugs filed. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 31 by A. T-266 PR #235 opened. T-150 GHA failed (InfoConsensus.Rd codoc). T-270 (vignette docs) + T-272 (close PR #178) filed. 3 unblocked OPEN specific tasks (T-245, T-269, T-270) → standing at P2. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 31 by A. T-266 PR #235 opened. T-150 GHA failed (InfoConsensus.Rd codoc). T-270 completed. T-272 filed. 2 unblocked OPEN specific tasks (T-245, T-269) → standing at P1. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by E (round 30). 3 PRs merged today: #231 (T-263), #233 (T-246), #234 (T-257). Currently open: #213 (T-150, CID+SPIC, GHA 23636944848), #216 (T-204, native-search), #235 (T-266, prune-reinsert, GHA passed). #210 (cpp-search→main) still open. #178 stale (recommend close). |
