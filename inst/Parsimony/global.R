@@ -332,7 +332,8 @@ FormatMissProb <- function(prob) {
 SearchConfidenceText <- function(K, R, nSearches = 1L,
                                  nTopologies = NULL,
                                  lastImprovedRep = NULL,
-                                 stopReason = NULL) {
+                                 stopReason = NULL,
+                                 replicateScores = NULL) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
   K <- min(K, R)
 
@@ -384,11 +385,30 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     ""
   }
 
+  # Chao1-style landscape coverage (appended when enough replicates available)
+  coverage_note <- if (!is.null(replicateScores) &&
+                       length(replicateScores) >= 5L) {
+    sp <- tryCatch(ScoreSpectrum(replicateScores), error = function(e) NULL)
+    if (!is.null(sp) && !is.na(sp$coverage)) {
+      pct <- round(100 * sp$coverage)
+      paste0(" Landscape coverage: ~", pct, "%",
+             if (sp$unseen_fraction > 0.05)
+               paste0(" (~", round(100 * sp$unseen_fraction),
+                      "% of score levels unseen)")
+             else
+               "")
+    } else {
+      ""
+    }
+  } else {
+    ""
+  }
+
   paste0(K, " of ", R, " ", runs_label, " hit best score. ",
          "Probability that a better score exists: ",
          FormatMissProb(prob_miss),
          topo_note, trajectory_note, rugged_note, small_sample_note,
-         stop_note)
+         stop_note, coverage_note)
 }
 
 EnC <- function(...) {

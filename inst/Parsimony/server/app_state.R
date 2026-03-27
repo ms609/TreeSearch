@@ -58,6 +58,7 @@ AppState <- function() {
     bestSearchScore    = NULL,     # numeric: best score seen across all searches (for accumulation)
     searchTotalHits    = 0L,       # integer: cumulative hits_to_best across runs at current best score
     searchTotalReps    = 0L,       # integer: cumulative runs completed at current best score
+    searchReplicateScores = numeric(0), # numeric: per-replicate scores for ScoreSpectrum coverage estimation
     searchConsensusStable = FALSE, # logical: TRUE if latest search stopped due to consensus stability
     searchTimedOut = FALSE,        # logical: TRUE if latest search stopped due to timeout
 

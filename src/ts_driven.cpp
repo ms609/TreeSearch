@@ -872,6 +872,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     }
 
     ++result.replicates_completed;
+    result.replicate_scores.push_back(rep_result.score);
 
     // Report end of replicate
     report("replicate", 1, rep_result.score, rep1);

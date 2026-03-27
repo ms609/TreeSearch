@@ -101,6 +101,9 @@ struct WorkerContext {
   // Per-thread timing accumulator (index = thread_id)
   PhaseTimings* thread_timings;
   int thread_id;
+
+  // Per-thread score accumulator (index = thread_id)
+  std::vector<double>* thread_scores;
 };
 
 void worker_thread(WorkerContext ctx) {
@@ -167,6 +170,10 @@ void worker_thread(WorkerContext ctx) {
     compute_collapsed_flags(rep_result.tree, ds_local, rep_collapsed);
     ctx.shared_pool->add_collapsed(rep_result.tree, rep_result.score,
                                    rep_collapsed);
+
+    // Record per-replicate score for Chao1 coverage estimation
+    ctx.thread_scores[ctx.thread_id].push_back(rep_result.score);
+
     ctx.replicates_done->fetch_add(1, std::memory_order_relaxed);
 
     // Check convergence
@@ -278,14 +285,16 @@ DrivenResult parallel_driven_search(
     if (cancel_env && cancel_env[0] != '\0') cancel_path = cancel_env;
   }
 
-  // Per-thread timing accumulators
+  // Per-thread timing and score accumulators
   std::vector<PhaseTimings> thread_timings(n_threads);
+  std::vector<std::vector<double>> thread_scores(n_threads);
 
   // Spawn worker threads
   std::vector<std::thread> workers;
   workers.reserve(n_threads);
   for (int t = 0; t < n_threads; ++t) {
     ctx.thread_timings = thread_timings.data();
+    ctx.thread_scores = thread_scores.data();
     ctx.thread_id = t;
     workers.emplace_back(worker_thread, ctx);
   }
@@ -406,9 +415,12 @@ DrivenResult parallel_driven_search(
     if (w.joinable()) w.join();
   }
 
-  // Sum per-thread timings
+  // Sum per-thread timings; merge per-thread replicate scores
   for (int t = 0; t < n_threads; ++t) {
     result.timings += thread_timings[t];
+    for (double s : thread_scores[t]) {
+      result.replicate_scores.push_back(s);
+    }
   }
 
   // Extract results
