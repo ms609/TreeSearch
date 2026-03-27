@@ -16,28 +16,32 @@ test_that("Constraints work", {
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
   set.seed(0)
-  ewResults <- Morphy(characters,
-                                 PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint)
+  ewResults <- suppressWarnings(
+    Morphy(characters,
+           PectinateTree(c("a", "b", "f", "d", "e", "c")),
+           ratchIter = 0, constraint = constraint))
   expect_equal(PectinateTree(letters[1:6]), ewResults[[1]])
   expect_equal(c(seed = 0, start = 1, final = 0),
                attr(ewResults, "firstHit"))
   expect_equal(names(ewResults), "start_1")
   expect_equal(PectinateTree(letters[1:6]),
-               Morphy(characters, concavity = "p",
-                                 PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint)[[1]])
+               suppressWarnings(
+                 Morphy(characters, concavity = "p",
+                        PectinateTree(c("a", "b", "f", "d", "e", "c")),
+                        ratchIter = 0, constraint = constraint))[[1]])
   expect_equal(PectinateTree(letters[1:6]),
-               Morphy(characters, concavity = 10,
-                                 PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint)[[1]])
+               suppressWarnings(
+                 Morphy(characters, concavity = 10,
+                        PectinateTree(c("a", "b", "f", "d", "e", "c")),
+                        ratchIter = 0, constraint = constraint))[[1]])
   # Start tree not consistent with constraint
   dataset <- characters
   tree <- PectinateTree(c("a", "c", "f", "d", "e", "b"))
   expect_equal(PectinateTree(letters[1:6]),
-               Morphy(characters,
-                      PectinateTree(c("a", "c", "f", "d", "e", "b")),
-                                 ratchIter = 0, constraint = constraint)[[1]])
+               suppressWarnings(
+                 Morphy(characters,
+                        PectinateTree(c("a", "c", "f", "d", "e", "b")),
+                        ratchIter = 0, constraint = constraint))[[1]])
   
   
   dataset <- MatrixToPhyDat(matrix(c(0, 0, 1, 1, 1, 1, 1,
@@ -47,7 +51,7 @@ test_that("Constraints work", {
                                         1, 1, 1,   1, 0, 0), ncol = 2,
                                       dimnames = list(letters[1:6], NULL)))
   # T-039 fixed: column-major indexing in build_constraint + Wagner guards
-  cons <- consensus(Morphy(dataset, constraint = constraint),
+  cons <- consensus(suppressWarnings(Morphy(dataset, constraint = constraint)),
                     rooted = TRUE)
   # Avoid %in%.Splits — S3 dispatch breaks in testthat's cloned namespace
   # (test_check / R CMD check). Compare bipartitions as plain logical vectors.
@@ -74,9 +78,10 @@ test_that("Inconsistent constraints fail", {
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  expect_error(Morphy(constraint,
-                                 PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint))
+  suppressWarnings(
+    expect_error(Morphy(constraint,
+                        PectinateTree(c("a", "b", "f", "d", "e", "c")),
+                        ratchIter = 0, constraint = constraint)))
 })
 
 test_that("Morphy() times out", {
@@ -86,8 +91,9 @@ test_that("Morphy() times out", {
   data("congreveLamsdellMatrices", package = "TreeSearch")
   dataset <- congreveLamsdellMatrices[[42]]
   startTime <- Sys.time()
-  Morphy(dataset, ratchIter = 10000, tbrIter = 1, maxHits = 1,
-         maxTime = 0)
+  suppressWarnings(
+    Morphy(dataset, ratchIter = 10000, tbrIter = 1, maxHits = 1,
+           maxTime = 0))
   expect_gt(as.difftime(5, units = "secs"), Sys.time() - startTime)
 })
 
@@ -97,9 +103,10 @@ test_that("Seed trees retained", {
   badTree <- read.tree(text = "(f, (b, (c, (a, (e, d)))));")
   dat <- StringToPhyDat("110000 110000 111000 111000 111100 111001",
                         letters[1:6], byTaxon = FALSE)
-  results <- Morphy(dataset = dat,
-                    tree = c(tree1, tree2, badTree),
-                    ratchIter = 0, verbosity = 4)
+  results <- suppressWarnings(
+    Morphy(dataset = dat,
+           tree = c(tree1, tree2, badTree),
+           ratchIter = 0, verbosity = 4))
   expect_equal(attr(results, "firstHit"),
                c(seed = 2, start = 0, final = 0))
 })
@@ -114,8 +121,14 @@ test_that("Mismatched tree/dataset handled with warnings", {
   datAg <- StringToPhyDat("1100000 1100000 1111000 1110000",
                               letters[1:7], byTaxon = FALSE)
   
-  QP <- function (...) Morphy(..., ratchIter = 0, maxHits = 1,
-                              verbosity = 0)
+  # Suppress Morphy() deprecation warning; let dataset-mismatch warnings pass
+  QP <- function (...) withCallingHandlers(
+    Morphy(..., ratchIter = 0, maxHits = 1, verbosity = 0),
+    simpleWarning = function(w) {
+      if (grepl("deprecated", conditionMessage(w), ignore.case = TRUE))
+        invokeRestart("muffleWarning")
+    }
+  )
   
   expect_equal(5, unname(NTip(expect_warning(QP(datAf, treeBg)))))
   expect_equal(5, unname(NTip(expect_warning(QP(datAe, treeAf)))))
@@ -130,7 +143,7 @@ test_that("Root retained if not 1", {
   dataset <- StringToPhyDat("11000000 11100000 11110000 11111000",
                             paste0("t", 1:8), byTaxon = FALSE)
   
-  mpt <- Morphy(dataset, tr)
+  mpt <- suppressWarnings(Morphy(dataset, tr))
   expect_equal(5, mpt[[1]]$edge[14, 2])
 })
 
