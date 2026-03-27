@@ -183,14 +183,10 @@ over time (e.g. when a feature merges and the worktree is reassigned), but
 | Directory | Branch | Purpose |
 |-----------|--------|---------|
 | `TreeSearch-a` | `cpp-search` | Main source dir; integration branch |
-| `TS-anneal` | `feature/anneal` | Simulated annealing for large trees (T-203) |
-| `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature |
-| `TS-MadSlat` | `feature/madslatkin-profiling` | Mad-Slatkin profiling |
-| `TS-ParsSim` | `feature/parssim-ambiguous` | Parsimony simulation |
-| `TS-PTeval` | `feature/pt-eval` | Parallel tempering evaluation |
+| `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature (T-150) |
 | `TS-NativeSearch` | `feature/native-search` | Native scorer decoupling (T-204) |
+| `TS-PruneRI` | `feature/prune-reinsert` | Taxon prune-reinsert perturbation (T-266) |
 | `TS-TNT-bench` | `feature/tnt-bench` | TNT benchmarking |
-| `TS-Xpiwe` | `feature/xpiwe` | Extended implied weighting |
 
 There is **no permanent worktree for `cpp-search`**. To commit to
 `cpp-search`, use one of these approaches (in order of preference):
