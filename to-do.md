@@ -81,7 +81,7 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 21 by F (ts_search.cpp, 420+42 lines). No bugs found. No ConstraintData (intentional). NNI undo, SPR unclip/unregraft sequence, collapsed-flags refresh, regraft_was_rescored state restoration all correct. Next: ts_data.cpp or ts_fitch.cpp. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 22 by F (ts_data.cpp, 328+206 lines). No bugs found. Token bitmasks, simplification, block grouping, NA tip state encoding, IW/Profile/XPIWE metadata all correct. XPIWE obs=0 minor (degenerate). Next: ts_fitch.cpp (core scoring). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 38 by F. T-269 also dispatched (SLURM 16606669/16606670, 30s+60s). With T-269 and T-289 both parked, only T-245 OPEN → **standing tasks now P1**. PRs #213/#216/#237 still awaiting merge. F-015 GHA 23653228247 running. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 round 40 by F. All 3 ready PRs unmerged: #213 (T-150, GHA 23650002703 PASS), #216 (T-204, GHA 23649607006 PASS), #237 (T-279, GHA 23650290962 PASS). cpp-search F-015 ratchet fix: GHA 23653228247 running. No new PRs needed (F-015 is direct cpp-search fix). Open PRs: #213 (T-150), #216 (T-204), #237 (T-279), #210 (DRAFT). |
