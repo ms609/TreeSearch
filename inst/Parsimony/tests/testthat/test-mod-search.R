@@ -329,6 +329,27 @@ test_that("FormatMissProb displays probability thresholds correctly", {
   expect_equal(FormatMissProb(0.00005), "<0.01%")
 })
 
+test_that("SearchConfidenceText appends Chao1 coverage note when sufficient replicates", {
+  # 10 replicates, low coverage (many singletons): coverage note expected
+  rscores <- c(100, 101, 102, 103, 104, 105, 106, 107, 108, 109)  # all singletons
+  txt <- SearchConfidenceText(1, 10, replicateScores = rscores)
+  expect_match(txt, "coverage", ignore.case = TRUE)
+
+  # No coverage note below threshold (< 5 replicates)
+  txt_few <- SearchConfidenceText(2, 4, replicateScores = c(10, 10, 20, 30))
+  expect_false(grepl("coverage", txt_few, ignore.case = TRUE))
+
+  # No coverage note with NULL replicateScores
+  txt_null <- SearchConfidenceText(3, 10, replicateScores = NULL)
+  expect_false(grepl("coverage", txt_null, ignore.case = TRUE))
+
+  # High coverage (all scores identical): note still present but no "unseen" warning
+  rscores_conv <- rep(42, 10)
+  txt_conv <- SearchConfidenceText(10, 10, replicateScores = rscores_conv)
+  expect_match(txt_conv, "coverage", ignore.case = TRUE)
+  expect_false(grepl("unseen", txt_conv, ignore.case = TRUE))
+})
+
 test_that("scores returns NULL in profile mode before preparation", {
   r <- make_search_state()
   test_trees <- ape::rmtree(3, 6)

@@ -26,6 +26,15 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 
 ### New features
 
+- **`ScoreSpectrum()`**: Chao1-style landscape coverage estimator.  Treats
+  distinct parsimony scores found across replicates as "species" and estimates
+  how thoroughly the parsimony landscape has been sampled (Good-Turing sample
+  coverage, Chao1 richness lower bound, unseen score-level fraction).  The
+  Shiny app's confidence panel now displays the coverage estimate when
+  sufficient replicates have been completed.  `MaximizeParsimony()` now
+  returns a `replicate_scores` attribute containing per-replicate local-optimum
+  scores for this purpose.
+
 - **Multi-replicate driven search** pipeline: random Wagner tree → TBR →
   sectorial search (XSS, RSS, CSS) → ratchet → drift → tree fusing →
   final TBR.

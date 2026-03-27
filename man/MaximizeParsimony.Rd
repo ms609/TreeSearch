@@ -217,6 +217,9 @@ the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},
 \code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}.}
+\item{\code{replicate_scores}}{Numeric vector of the best parsimony score
+found by each completed replicate.  Passed to \code{\link[=ScoreSpectrum]{ScoreSpectrum()}} for
+Chao1-style landscape coverage estimation.}
 }
 }
 \description{

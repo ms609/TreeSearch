@@ -278,6 +278,10 @@ struct DrivenResult {
   // Per-strategy diagnostics (populated when adaptive_start is true)
   std::array<int, N_STRAT> strategy_attempts{};
   std::array<int, N_STRAT> strategy_successes{};
+
+  // Score from each completed replicate's local optimum, in order of
+  // completion.  Used by ScoreSpectrum() for Chao1-style coverage estimation.
+  std::vector<double> replicate_scores;
 };
 
 // Result of a single replicate (tree + score, no pool interaction).
