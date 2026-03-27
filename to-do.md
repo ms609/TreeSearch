@@ -33,8 +33,9 @@
 
 ### Bugs
 
-(no open bugs)
-
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-267 | P2 | OPEN | — | **MaddisonSlatkin 5-state test failure.** `test-MaddisonSlatkin.R:142` — `sum(exp(ms[is.finite(ms)]))` returns 0 instead of 1; line 145 returns NA instead of -6.85. MaddisonSlatkin computation exceeds 2s budget on some characters. Make the test more resilient (increase budget or reduce state count). | From GHA run on PR #231 (u.001). |
 
 
 
@@ -75,13 +76,14 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 |----|-----|--------|--------|-------------|-------|
 
 | T-257 | P3 | PR #234 (F) | — | **Post-ratchet sectorial search pass.** Add a second sectorial search pass after ratchet in the pipeline: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR] instead of [XSS+RSS+CSS → Ratchet → Drift → TBR]. TNT interleaves sectorial search throughout each replicate; this is a lightweight approximation. | T-256 found extra sectorial rounds don't improve scores, but `nodrift_3x` config was best (mean gap 4.9 vs 5.3) due to more replicates. A post-ratchet sectorial pass may still help if it's cheap enough to not cut into replicate count. Needs careful cost/benefit analysis. |
+| T-269 | P3 | OPEN | — | **Fine-grained sectorial interleaving benchmark.** Compare current coarse `outerCycles=2` (all ratchet cycles batched per pass) against fine-grained interleaving (e.g. `outerCycles=12, ratchetCycles=12` → one ratchet cycle per sectorial pass), approximating TNT's per-iteration pattern. T-256 showed extra sectorial *rounds* don't help, but *timing* of sectorial relative to perturbation hasn't been tested. | Low priority. Use 3–5 gap datasets at 30s/60s budgets. |
 
 
 ### Housekeeping
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-268 | P2 | OPEN | — | **Branch housekeeping.** Human has merged several branches on GitHub. Pull cpp-search, refresh local branches, delete stale worktrees. | From u.2. |
+| T-268 | P2 | ASSIGNED (F) | — | **Branch housekeeping.** Human has merged several branches on GitHub. Pull cpp-search, refresh local branches, delete stale worktrees. | From u.2. |
 
 ### Standing Tasks
 
