@@ -390,3 +390,8 @@ EOF 2>&1
 | T-268 | Branch housekeeping: prune 11 stale local branches, update AGENTS.md worktree table | F | Deleted branches: 143-start-search-from-best-tree, 175-discord, 207-calls-to-rf_error, PlotCharacter-rooting, constraint-addition, copilot/fix-maximumlength-crash, keep-subopt, kmeans++, pol-escapa-negative, taxon-influence, tbr-fix. Updated worktree table (TS-anneal/MadSlat/ParsSim/PTeval/Xpiwe removed; TS-PruneRI added). Triaged u.005. commit 838b14c1. |
 | T-273 | Fix flat_blocks.active_mask staleness during ratchet | F | Preventive: sync ds.flat_blocks[b].active_mask in perturb_zero(), perturb_mixed(), restore_perturb_state(). Currently safe (zero call sites for flat indirect), prevents future bug if flat variants wired into ratchet TBR dispatch. commit 44547484. |
 | T-274 | NNI-perturb cycle count at thorough-preset scale | F | Per-replicate sampling, 20 seeds, Zhu2013/Giles2015/Dikow2009 (75–88t). NNI-perturb adds 59–69% overhead, ≤0.1-step expected-best benefit — zero practical advantage. Set nniPerturbCycles=0 in thorough preset. bench_t274_nni_perturb.R. |
+
+## 2026-03-27
+
+| F-003 | T-276: convergence summary after MaximizeParsimony() | 3 | perturb_stop in Rcpp bridge + structure attrs; verbosity summary (score/reps/last_improved/n_MPTs/stop_reason/elapsed); docs + 3 new tests. commit 7f4aca29. GHA 23647640670. |
+EOF 2>&1
