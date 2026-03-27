@@ -380,3 +380,4 @@ EOF 2>&1
 | T-272 | Close stale PR #178 (concordance, Aug 2025 DRAFT) | A | Closed via `gh pr close 178`. |
 EOF 2>&1
 | S-RED-10 | Red-team focus 10: Profile & IW scoring | A | BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps. commit 7cff7870. |
+| T-268 | Branch housekeeping: prune 11 stale local branches, update AGENTS.md worktree table | F | Deleted branches: 143-start-search-from-best-tree, 175-discord, 207-calls-to-rf_error, PlotCharacter-rooting, constraint-addition, copilot/fix-maximumlength-crash, keep-subopt, kmeans++, pol-escapa-negative, taxon-influence, tbr-fix. Updated worktree table (TS-anneal/MadSlat/ParsSim/PTeval/Xpiwe removed; TS-PruneRI added). Triaged u.005. commit 838b14c1. |
