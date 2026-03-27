@@ -1,7 +1,7 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Status:** IDLE (S-RED focus 4 complete)
+- **Status:** ASSIGNED E-001 (NEWS.md update for SearchControl additions since 2026-03-18)
 
 ### S-RED Focus 4 — ts_driven.cpp review — DONE (2026-03-27)
 
