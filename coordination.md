@@ -1,5 +1,34 @@
 # TreeSearch — Strategic Coordination
 
+## S-COORD Round 37 Summary (2026-03-27 15:15 GMT)
+
+**T-289 dispatched (F):** Prune-reinsert benchmark Stage 1 submitted to Hamilton
+SLURM 16606222. 13 configs × 4-5 datasets × 5 seeds × 30s ≈ 325 runs, ETA ~2.7h.
+Fixed Rscript invocation bug in t289_hamilton.sh: `Rscript -e "expr" file.R` does
+NOT source file.R. Use `export R_LIBS_USER; Rscript file.R` (T-252 pattern).
+Also committed bench_prune_reinsert.R which was untracked. commits 5b0c0ad5 + 03e981f8.
+
+Note: t265_hamilton.sh has the same Rscript bug but T-265 is complete.
+
+**F-015 / S-RED focus 16 — ts_ratchet.cpp (259+61 lines):**
+Bug found and fixed directly to cpp-search (same pattern as E-003).
+**Constraint staleness after best_tree revert:** in ratchet_search() non-escape
+path, `update_constraint(tree, *cd)` was missing after copy_topology(best_tree) +
+build_postorder + reset_states. Next cycle's perturbed TBR used stale DFS timestamps.
+Same class as T-278/T-279/E-003. commit ae6a3528. GHA 23653228247 running.
+All other invariants correct: save/restore state, FlatBlock sync (only active_mask
+needed — FlatBlock has no upweight_mask field), perturb modes, adaptive tuning.
+
+**PR status:** #213 (T-150), #216 (T-204), #237 (T-279) all GHA-passed, awaiting
+human merge. No change since round 36.
+
+**Task queue:** T-289 PARKED, T-245 OPEN (P3), T-269 OPEN (P3). Standing tasks P2
+(effective 3 open tasks counting T-289 parked).
+
+**Agent F next:** Park T-289 GHA (23653228247). Take T-269 (fine-grained sectorial
+interleaving benchmark) — this can run locally on the Hamilton session.
+
+
 Last updated: 2026-03-27 14:55 GMT (S-COORD round 35 by F)
 
 ## S-COORD Round 35 Summary (2026-03-27 14:55 GMT)
