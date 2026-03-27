@@ -38,6 +38,12 @@
 
 (no open tasks)
 
+### API / UX
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-274 | P3 | OPEN | — | **Print convergence summary to console after `MaximizeParsimony()`.** The Shiny app displays a convergence evaluation report; same info should print to the R console when running headlessly. Note: integrates with B's Chao-estimate work (T-204 native-search) once that merges. | u.571. Print n_replicates, best_score, n_MPTs, last_improved_rep, time elapsed, and convergence indicator (consensus_stable / plateau_stop / timed_out / perturb_stop). |
+
 ### Performance Optimization (180+ tips)
 
 | ID | Pri | Status | Blocks | Description | Notes |
