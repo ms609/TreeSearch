@@ -25,7 +25,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | PARKED (F, GHA 23645305415) | — | **CID-optimal consensus tree search** | PR #213. GHA 23644644554 failed: Consensus→consensus case in test-Morphy.R (TreeTools import lacks rooted arg). Fixed 0c1f0fe9. Re-dispatched GHA 23645305415. |
+| T-150 | P2 | PARKED (F, GHA 23646972365) | — | **CID-optimal consensus tree search** | PR #213. GHA 23645305415 failed: bare Consensus() in vignettes (not on search path). Fixed 23d93f2e. Re-dispatched GHA 23646972365. |
 | T-204 | P2 | PARKED (F, GHA 23646124106) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23644617599 failed: 98 deprecation warnings (Morphy/PhyDat2Morphy) in tests. Fixed 41ae291a (suppressWarnings). Re-dispatched GHA 23646124106. |
 
 
@@ -42,7 +42,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-276 | P3 | OPEN | — | **Print convergence summary to console after `MaximizeParsimony()`.** The Shiny app displays a convergence evaluation report; same info should print to the R console when running headlessly. Note: integrates with B's Chao-estimate work (T-204 native-search) once that merges. | u.571. Print n_replicates, best_score, n_MPTs, last_improved_rep, time elapsed, and convergence indicator (consensus_stable / plateau_stop / timed_out / perturb_stop). |
+| T-276 | P3 | OPEN | — | **Print convergence summary to console after `MaximizeParsimony()`.** The Shiny app displays a convergence evaluation report; same info should print to the R console when running headlessly. Note: integrates with B's Chao-estimate work (T-204 native-search) once that merges. | u.571. Print n_replicates, best_score, n_MPTs, last_improved_rep, time elapsed, and convergence indicator (consensus_stable / plateau_stop / timed_out / perturb_stop). **S-RED E (2026-03-27):** `DrivenResult::perturb_stop` field now added to ts_driven.h/cpp (previously missing). Use it directly. |
 | T-277 | P3 | PARKED (B, GHA 23646841244) | — | **ScoreSpectrum(): Chao1-style landscape coverage estimator** | On `feature/score-spectrum`. Exports `ScoreSpectrum()`: accepts `multiPhylo` (with new `replicate_scores` attribute) or raw numeric vector; returns Good-Turing coverage + Chao1 richness. C++ side: `DrivenResult::replicate_scores` vector (serial + parallel paths). Shiny: coverage note appended to confidence text. 8 Tier-1 tests. |
 
 ### Performance Optimization (180+ tips)
@@ -78,4 +78,4 @@
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 3 by F (Ratchet/perturbation/sector/prune-reinsert). ts_prune_reinsert.cpp fully reviewed (511 lines, new). T-275 guard correct. final_[tip] init safe via load_tip_states. Sector from_above_for_sector correct. XSS/CSS adaptive early-exit correct. T-273 fix correct. No new bugs found. Next: focus on ts_driven.cpp (cross-replicate constraint tightening, outer loop) — not reviewed since T-189. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 33 by F. T-273 completed. T-275 filed and completed by B (prune-reinsert guard). T-277 filed (ScoreSpectrum, ASSIGNED B). Unblocked OPEN: T-245, T-269, T-274, T-275→done, T-276, T-253, T-277 → 6 specific OPEN → standing at P3. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by F (round 34). #216 (T-204 native-search): GHA 23644617599 failed (98 deprecation warns), fixed 41ae291a, re-dispatched 23646124106. #213 (T-150 cid-consensus): GHA 23644644554 failed (Consensus case), fixed 0c1f0fe9, re-dispatched 23645305415. Open PRs: #213, #216, #210 (cpp-search→main DRAFT). |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by F (round 36). #216 (T-204 native-search): GHA 23644617599 failed (98 deprecation warns), fixed 41ae291a, re-dispatched 23646124106. #213 (T-150 cid-consensus): GHA 23644644554 failed (Consensus case), fixed 0c1f0fe9, re-dispatched 23645305415. Open PRs: #213, #216, #210 (cpp-search→main DRAFT). |
