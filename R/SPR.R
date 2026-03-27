@@ -85,7 +85,6 @@ SPRWarning <- function (parent, child, error) {
 #' tree <- ape::rtree(20, br=FALSE)
 #' SPR(tree)
 #' }
-#' @importFrom ape root
 #' @importFrom TreeTools Preorder
 #' @export
 SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
@@ -143,10 +142,10 @@ SPRMoves.phylo <- function (tree, edgeToBreak = integer(0)) {
   rootNode <- nTip + 1L
   
   if (edge[1] != rootNode) {
-    stop("edge[1,] must connect root to leaf. Try Preorder(root(tree)).");
+    stop("edge[1,] must connect root to leaf. Try Preorder(RootTree(tree)).");
   }
   if (edge[2] != rootNode) {
-    stop("edge[2,] must connect root to leaf. Try Preorder(root(tree)).");
+    stop("edge[2,] must connect root to leaf. Try Preorder(RootTree(tree)).");
   }
   # Return:
   all_spr(edge, break_order)

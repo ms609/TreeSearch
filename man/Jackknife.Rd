@@ -86,6 +86,7 @@ Other split support functions:
 
 Other custom search functions: 
 \code{\link{EdgeListSearch}()},
+\code{\link{InfoConsensus}()},
 \code{\link{MorphyBootstrap}()},
 \code{\link{SuccessiveApproximations}()}
 }

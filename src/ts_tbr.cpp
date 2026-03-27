@@ -1,4 +1,5 @@
 #include "ts_tbr.h"
+#include "ts_cid.h"
 #include "ts_fitch.h"
 #include "ts_collapsed.h"
 #include "ts_rng.h"
@@ -18,6 +19,41 @@
 
 namespace ts {
 
+// --- Top-k candidate buffer for batch CID scoring ---
+struct CidCandidate {
+  int above, below;
+  int reroot_parent, reroot_child;
+  double mrp_score;
+};
+
+// Insert candidate into bounded top-k buffer (sorted ascending by mrp_score).
+// If buffer is full and candidate is worse than the worst (back), skip.
+static void topk_insert(std::vector<CidCandidate>& buf, int k,
+                         double score, int above, int below,
+                         int rp, int rc) {
+  if (static_cast<int>(buf.size()) < k) {
+    buf.push_back({above, below, rp, rc, score});
+    // Keep sorted: insert in position
+    for (int i = static_cast<int>(buf.size()) - 1; i > 0; --i) {
+      if (buf[i].mrp_score < buf[i - 1].mrp_score) {
+        std::swap(buf[i], buf[i - 1]);
+      } else {
+        break;
+      }
+    }
+  } else if (score < buf.back().mrp_score) {
+    buf.back() = {above, below, rp, rc, score};
+    // Re-sort: bubble down from back
+    for (int i = static_cast<int>(buf.size()) - 1; i > 0; --i) {
+      if (buf[i].mrp_score < buf[i - 1].mrp_score) {
+        std::swap(buf[i], buf[i - 1]);
+      } else {
+        break;
+      }
+    }
+  }
+}
+
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
 // Word-at-a-time multiply-xor hash (faster than byte-by-byte FNV-1a).
 
@@ -34,7 +70,40 @@ static uint64_t fast_hash(const uint64_t* data, int n_words) {
 
 static double full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
-  return score_tree(tree, ds);
+  double s = score_tree(tree, ds);
+  // CID mode: score_tree() returns CID (doesn't run Fitch), but
+  // subsequent incremental screening needs populated Fitch state arrays.
+  if (is_cid_like(ds.scoring_mode)) {
+    fitch_score(tree, ds);
+  }
+  return s;
+}
+
+// Compute the MRP screening score from already-populated Fitch states.
+// For IW: per-character weighted fit.  For EW: total steps + offset.
+static double mrp_screening_score(const TreeState& tree, const DataSet& ds,
+                                   std::vector<int>& char_steps) {
+  std::fill(char_steps.begin(), char_steps.end(), 0);
+  for (int node : tree.postorder) {
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      uint64_t mask =
+          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      while (mask) {
+        int c = ts::ctz64(mask);
+        char_steps[blk.pattern_index[c]] += 1;
+        mask &= mask - 1;
+      }
+    }
+  }
+  if (std::isfinite(ds.concavity)) {
+    return compute_weighted_score(ds, char_steps);
+  }
+  int total = 0;
+  for (int p = 0; p < ds.n_patterns; ++p) {
+    total += char_steps[p] * ds.pattern_freq[p];
+  }
+  return static_cast<double>(total) + ds.ew_offset;
 }
 
 // Collect (parent, child) edge pairs reachable from root of main tree.
@@ -472,6 +541,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   int n_zero_skipped = 0;
   int hits = 1;
   const bool use_iw = std::isfinite(ds.concavity);
+  const bool is_cid = is_cid_like(ds.scoring_mode);
   // Floating-point tolerance for score equality
   const double eps = use_iw ? 1e-10 : 0.0;
 
@@ -520,6 +590,23 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     divided_steps.resize(ds.n_patterns, 0);
     iw_delta.resize(ds.n_patterns, 0.0);
   }
+
+  // CID mode: track MRP screening score separately from CID score.
+  // MRP score is used for divided_length and the dominated check;
+  // CID score (best_score) is used for acceptance decisions.
+  std::vector<int> mrp_steps_buf;
+  double mrp_baseline = best_score;  // For non-CID, same as best_score
+  if (is_cid) {
+    mrp_steps_buf.resize(ds.n_patterns, 0);
+    mrp_baseline = mrp_screening_score(tree, ds, mrp_steps_buf);
+  }
+
+  // CID top-k: number of best MRP candidates to CID-score per clip
+  const int cid_top_k = (is_cid && ds.cid_data)
+      ? std::max(1, ds.cid_data->cid_top_k) : 1;
+  const bool use_topk = (cid_top_k > 1);
+  std::vector<CidCandidate> topk_buf;
+  if (use_topk) topk_buf.reserve(cid_top_k);
 
   // Subtree sizes for smaller-subtree filtering
   std::vector<int> subtree_sizes(tree.n_node, 0);
@@ -647,7 +734,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           if (ds.blocks[b].upweight_mask) nu += popcount64(lc & ds.blocks[b].upweight_mask);
           nx_cost += ds.blocks[b].weight * nu;
         }
-        divided_length = best_score + delta - nx_cost;
+        divided_length = mrp_baseline + delta - nx_cost;
       }
 
       // For weighted scoring (IW or profile): precompute base score and deltas
@@ -683,6 +770,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       double best_candidate = HUGE_VAL;
       int best_above = -1, best_below = -1;
       int best_reroot_parent = -1, best_reroot_child = -1;
+      if (use_topk) topk_buf.clear();
 
       // SPR candidates — with early termination (optimization #1)
       size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
@@ -731,6 +819,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           candidate = divided_length + extra;
         }
         ++n_evaluated;
+        if (use_topk) {
+          topk_insert(topk_buf, cid_top_k, candidate,
+                      above, below, -1, -1);
+        }
         if (candidate < best_candidate) {
           best_candidate = candidate;
           best_above = above;
@@ -863,6 +955,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               candidate = divided_length + extra;
             }
             ++n_evaluated;
+            if (use_topk) {
+              topk_insert(topk_buf, cid_top_k, candidate,
+                          above, below, sp, sc);
+            }
             if (candidate < best_candidate) {
               best_candidate = candidate;
               best_above = above;
@@ -881,97 +977,229 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // Restore saved postorder (topology identical to pre-clip state)
       tree.postorder.assign(saved_postorder.begin(), saved_postorder.end());
 
-      bool dominated = (best_candidate > best_score + eps) ||
-                        (best_candidate > best_score - eps && !params.accept_equal);
-
+      // --- Phase 2b: Batch CID scoring of top-k candidates ---
+      // When cid_top_k > 1, evaluate the best k MRP candidates via full
+      // CID scoring and accept the best CID result.  This catches moves
+      // where MRP and CID rankings disagree.
       bool accepted = false;
 
-      if (!dominated && best_above >= 0) {
-        // Topology and state snapshot already saved at the top of the
-        // while loop (optimization #7). No per-candidate save needed.
-
-        bool ok = apply_tbr_move(tree, clip_node,
-                                  best_reroot_parent, best_reroot_child,
-                                  best_above, best_below);
-
-        if (!ok || !validate_topology(tree)) {
-          restore_topology(tree, snap);
-          state_snap.restore(tree);
-          continue;
+      if (use_topk && !topk_buf.empty()) {
+        double mrp_threshold = mrp_baseline;
+        if (ds.cid_data->screening_tolerance > 0.0) {
+          mrp_threshold *= (1.0 + ds.cid_data->screening_tolerance);
         }
 
-        tree.build_postorder_prealloc(work_stack);
-        double actual = full_rescore(tree, ds);
+        double best_cid = HUGE_VAL;
+        int best_cid_idx = -1;
 
-        // Post-hoc constraint validation: TBR rerooting can break
-        // splits that were classified as UNCONSTRAINED during the
-        // clip phase (the rerooting changes which constraint tips
-        // end up on which side of the attachment edge).  Reject
-        // any move that introduces a constraint violation.
-        if (constrained) {
-          map_constraint_nodes(tree, *cd);
+        for (int ki = 0; ki < static_cast<int>(topk_buf.size()); ++ki) {
+          auto& cand = topk_buf[ki];
+          // Dominated check (same threshold as single-candidate path)
+          if (cand.mrp_score > mrp_threshold + eps) continue;
+
+          save_topology(tree, snap);
+          state_snap.save(tree);
+          states_valid = true;
+
+          bool ok = apply_tbr_move(tree, clip_node,
+                                    cand.reroot_parent, cand.reroot_child,
+                                    cand.above, cand.below);
+          if (!ok || !validate_topology(tree)) {
+            restore_topology(tree, snap);
+            state_snap.restore(tree);
+            continue;
+          }
+
+          tree.build_postorder_prealloc(work_stack);
+          // Tighten budget as we find better CID scores in the batch
+          ds.cid_data->score_budget = std::min(best_score + eps, best_cid);
+          double actual = full_rescore(tree, ds);
+          ds.cid_data->score_budget = HUGE_VAL;
+
+          // Post-hoc constraint validation
           bool violation = false;
-          for (int _s = 0; _s < cd->n_splits; ++_s) {
-            if (cd->constraint_node[_s] < 0) {
-              violation = true;
-              break;
+          if (constrained) {
+            map_constraint_nodes(tree, *cd);
+            for (int _s = 0; _s < cd->n_splits; ++_s) {
+              if (cd->constraint_node[_s] < 0) {
+                violation = true;
+                break;
+              }
             }
           }
-          if (violation) {
-            restore_topology(tree, snap);
-            state_snap.restore(tree);
-            map_constraint_nodes(tree, *cd);
-            compute_dfs_timestamps(tree, *cd);
-            continue;
-          }
-        }
 
-        // Compute topology hash for tabu checking
-        uint64_t tree_hash = 0;
-        if (tabu.active()) {
-          tree_hash = hash_tree(tree);
-        }
+          if (!violation && actual < best_cid) {
+            best_cid = actual;
+            best_cid_idx = ki;
+          }
 
-        if (actual < best_score - eps) {
-          // Always accept strict improvements (but record in tabu)
-          if (tabu.active()) tabu.insert(tree_hash);
-          best_score = actual;
-          ++n_accepted;
-          hits = 1;
-          accepted = true;
-          keep_going = true;
-          states_valid = true;
-          if (constrained) {
-            compute_dfs_timestamps(tree, *cd);
-          }
-          if (collect_pool) collect_pool->add(tree, actual);
-        } else if (std::fabs(actual - best_score) <= eps
-                   && params.accept_equal
-                   && hits <= params.max_hits) {
-          // Equal-score move: reject if tabu
-          if (tabu.active() && tabu.contains(tree_hash)) {
-            // Topology already visited — restore and skip
-            restore_topology(tree, snap);
-            state_snap.restore(tree);
-            continue;
-          }
-          if (tabu.active()) tabu.insert(tree_hash);
-          ++hits;
-          ++n_accepted;
-          accepted = true;
-          keep_going = true;
-          states_valid = true;
-          if (constrained) {
-            compute_dfs_timestamps(tree, *cd);
-          }
-          if (collect_pool) collect_pool->add(tree, actual);
-        }
-
-        if (!accepted) {
-          // Optimization #3: restore topology + states without full_rescore
+          // Restore for next candidate (or for final acceptance)
           restore_topology(tree, snap);
           state_snap.restore(tree);
-          // state_snap.restore() already restored postorder via memcpy
+          if (constrained && violation) {
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+          }
+        }
+
+        // Accept the best CID candidate if it improves or equals
+        if (best_cid_idx >= 0) {
+          auto& winner = topk_buf[best_cid_idx];
+
+          if (best_cid < best_score - eps) {
+            // Strict improvement: apply permanently
+            save_topology(tree, snap);
+            state_snap.save(tree);
+            apply_tbr_move(tree, clip_node, winner.reroot_parent,
+                           winner.reroot_child, winner.above, winner.below);
+            tree.build_postorder_prealloc(work_stack);
+            full_rescore(tree, ds);  // repopulate Fitch states
+
+            if (tabu.active()) tabu.insert(hash_tree(tree));
+            best_score = best_cid;
+            mrp_baseline = mrp_screening_score(tree, ds, mrp_steps_buf);
+            ++n_accepted;
+            hits = 1;
+            accepted = true;
+            keep_going = true;
+            states_valid = true;
+            if (constrained) compute_dfs_timestamps(tree, *cd);
+            if (collect_pool) collect_pool->add(tree, best_cid);
+
+          } else if (std::fabs(best_cid - best_score) <= eps
+                     && params.accept_equal
+                     && hits <= params.max_hits) {
+            // Equal-score: apply, check tabu
+            save_topology(tree, snap);
+            state_snap.save(tree);
+            apply_tbr_move(tree, clip_node, winner.reroot_parent,
+                           winner.reroot_child, winner.above, winner.below);
+            tree.build_postorder_prealloc(work_stack);
+            full_rescore(tree, ds);
+
+            uint64_t tree_hash = tabu.active() ? hash_tree(tree) : 0;
+            if (tabu.active() && tabu.contains(tree_hash)) {
+              restore_topology(tree, snap);
+              state_snap.restore(tree);
+              // fall through to !accepted path
+            } else {
+              if (tabu.active()) tabu.insert(tree_hash);
+              mrp_baseline = mrp_screening_score(tree, ds, mrp_steps_buf);
+              ++hits;
+              ++n_accepted;
+              accepted = true;
+              keep_going = true;
+              states_valid = true;
+              if (constrained) compute_dfs_timestamps(tree, *cd);
+              if (collect_pool) collect_pool->add(tree, best_cid);
+            }
+          }
+        }
+        // (if !accepted, tree is already in its original state)
+      } else {
+        // --- Original single-candidate path (non-CID or cid_top_k == 1) ---
+
+        // In CID mode, best_candidate is an MRP screening score on a
+        // different scale from best_score (CID).  Compare against the MRP
+        // baseline instead, with optional tolerance.
+        bool dominated;
+        if (is_cid) {
+          double threshold = mrp_baseline;
+          if (ds.cid_data && ds.cid_data->screening_tolerance > 0.0) {
+            threshold *= (1.0 + ds.cid_data->screening_tolerance);
+          }
+          dominated = (best_candidate > threshold + eps);
+        } else {
+          dominated = (best_candidate > best_score + eps) ||
+                      (best_candidate > best_score - eps && !params.accept_equal);
+        }
+
+        if (!dominated && best_above >= 0) {
+          // Topology and state snapshot already saved at the top of the
+          // while loop (optimization #7). No per-candidate save needed.
+
+          bool ok = apply_tbr_move(tree, clip_node,
+                                    best_reroot_parent, best_reroot_child,
+                                    best_above, best_below);
+
+          if (!ok || !validate_topology(tree)) {
+            restore_topology(tree, snap);
+            state_snap.restore(tree);
+            continue;
+          }
+
+          tree.build_postorder_prealloc(work_stack);
+          if (is_cid && ds.cid_data) {
+            ds.cid_data->score_budget = best_score + eps;
+          }
+          double actual = full_rescore(tree, ds);
+          if (is_cid && ds.cid_data) {
+            ds.cid_data->score_budget = HUGE_VAL;
+          }
+
+          if (constrained) {
+            map_constraint_nodes(tree, *cd);
+            bool violation = false;
+            for (int _s = 0; _s < cd->n_splits; ++_s) {
+              if (cd->constraint_node[_s] < 0) {
+                violation = true;
+                break;
+              }
+            }
+            if (violation) {
+              restore_topology(tree, snap);
+              state_snap.restore(tree);
+              map_constraint_nodes(tree, *cd);
+              compute_dfs_timestamps(tree, *cd);
+              continue;
+            }
+          }
+
+          uint64_t tree_hash = 0;
+          if (tabu.active()) {
+            tree_hash = hash_tree(tree);
+          }
+
+          if (actual < best_score - eps) {
+            if (tabu.active()) tabu.insert(tree_hash);
+            best_score = actual;
+            if (is_cid) {
+              mrp_baseline = mrp_screening_score(tree, ds, mrp_steps_buf);
+            } else {
+              mrp_baseline = actual;
+            }
+            ++n_accepted;
+            hits = 1;
+            accepted = true;
+            keep_going = true;
+            states_valid = true;
+            if (constrained) compute_dfs_timestamps(tree, *cd);
+            if (collect_pool) collect_pool->add(tree, actual);
+          } else if (std::fabs(actual - best_score) <= eps
+                     && params.accept_equal
+                     && hits <= params.max_hits) {
+            if (tabu.active() && tabu.contains(tree_hash)) {
+              restore_topology(tree, snap);
+              state_snap.restore(tree);
+              continue;
+            }
+            if (tabu.active()) tabu.insert(tree_hash);
+            if (is_cid) {
+              mrp_baseline = mrp_screening_score(tree, ds, mrp_steps_buf);
+            }
+            ++hits;
+            ++n_accepted;
+            accepted = true;
+            keep_going = true;
+            states_valid = true;
+            if (constrained) compute_dfs_timestamps(tree, *cd);
+            if (collect_pool) collect_pool->add(tree, actual);
+          }
+
+          if (!accepted) {
+            restore_topology(tree, snap);
+            state_snap.restore(tree);
+          }
         }
       }
 

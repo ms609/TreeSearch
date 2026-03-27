@@ -1,0 +1,224 @@
+---
+title: "MRP Weighting for CID Consensus Screening"
+author: "TreeSearch development"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+    self-contained: true
+execute:
+  cache: true
+  warning: false
+---
+
+## Motivation
+
+`InfoConsensus()` uses a dual-layer scoring architecture: a fast Fitch
+parsimony layer on MRP (Matrix Representation with Parsimony) characters
+screens TBR candidates, and a slower but exact CID (Clustering Information
+Distance) layer accepts or rejects moves.  The tighter the parsimony
+proxy tracks CID, the fewer wasted full-CID evaluations.
+
+This analysis asks: **which parsimony weighting on the MRP characters best
+correlates with CID among single-TBR neighbours?**
+
+We compare:
+
+- Equal weights (EW)
+- Implied weights with $k \in \{1, 2, 3, 5, 10, 20\}$
+- Profile parsimony
+
+## Data
+
+We use a 60-tip subsample of the mammals bootstrap dataset from
+Lemoine et al. (2018) (1000 bootstrap trees on 1449 taxa), as bundled in the
+`consense` package.  100 bootstrap trees form the reference pool.
+
+```{r}
+#| label: setup
+#| message: false
+library(TreeSearch)
+library(TreeTools)
+library(TreeDist)
+library(phangorn)
+library(ggplot2)
+```
+
+```{r}
+#| label: load-data
+mammal_trees <- ape::read.tree(
+  "../../../consense/inst/extdata/phylocrisp/extracted/mammals_full/full/full_bootstraps.tre"
+)
+
+set.seed(4917)
+all_tips <- mammal_trees[[1]]$tip.label
+keep_tips <- sort(sample(all_tips, 60))
+
+ref_trees <- lapply(mammal_trees[1:100], ape::drop.tip,
+                     tip = setdiff(all_tips, keep_tips))
+class(ref_trees) <- "multiPhylo"
+tipLabels <- ref_trees[[1]]$tip.label
+nTip <- length(tipLabels)
+```
+
+The reference pool has `r length(ref_trees)` trees on `r nTip` tips.  The
+majority-rule consensus is only
+`r round(length(as.Splits(Consensus(ref_trees, p = 0.5))) / (nTip - 3) * 100, 1)`%
+resolved, indicating substantial disagreement among bootstrap replicates ---
+a realistic scenario for CID consensus.
+
+## Candidate generation
+
+We generate 500 random single-TBR neighbours of the first reference tree
+using `RootedTBRSwap()`.  This simulates the candidate set that the search
+engine compares during TBR hill-climbing.
+
+```{r}
+#| label: tbr-neighbours
+set.seed(3761)
+base <- Preorder(ref_trees[[1]])
+parent <- base$edge[, 1]
+child <- base$edge[, 2]
+nEdge <- length(parent)
+
+tbr_neighbours <- vector("list", 500L)
+for (i in seq_len(500L)) {
+  result <- RootedTBRSwap(parent, child, nEdge)
+  tbr_neighbours[[i]] <- structure(list(
+    edge = cbind(result[[1]], result[[2]]),
+    tip.label = tipLabels,
+    Nnode = nTip - 1L
+  ), class = "phylo")
+}
+class(tbr_neighbours) <- "multiPhylo"
+```
+
+RF distances from the base tree to neighbours range from
+`r min(RobinsonFoulds(base, tbr_neighbours[1:50]))`
+to `r max(RobinsonFoulds(base, tbr_neighbours[1:50]))`,
+confirming these are genuine single-move neighbours (a TBR move can
+change multiple splits simultaneously).
+
+## MRP matrix
+
+Each non-trivial split from each of the 100 reference trees becomes a
+binary MRP character (tip in split $\to$ state 1, else $\to$ state 0).
+
+```{r}
+#| label: mrp-matrix
+all_splits <- lapply(ref_trees, as.Splits, tipLabels)
+mrp_logical <- do.call(rbind, lapply(all_splits, as.logical))
+mrp_df <- as.data.frame(ifelse(mrp_logical, 1L, 0L))
+colnames(mrp_df) <- tipLabels
+mrp_phydat <- phyDat(mrp_df, type = "USER", levels = c(0, 1))
+```
+
+The MRP matrix has `r nrow(mrp_logical)` characters
+(`r attr(mrp_phydat, "nr")` unique patterns) across `r ncol(mrp_logical)`
+tips.
+
+## Scoring
+
+### CID scores
+
+For each TBR neighbour, we compute mean CID to all 100 reference trees
+using `ClusteringInfoDistance()`.
+
+```{r}
+#| label: cid-scores
+cid_scores <- vapply(tbr_neighbours, function(cand) {
+  mean(ClusteringInfoDistance(cand, ref_trees))
+}, double(1))
+```
+
+### Parsimony scores
+
+```{r}
+#| label: parsimony-scores
+ew_scores <- vapply(tbr_neighbours, function(cand) {
+  TreeLength(cand, mrp_phydat)
+}, double(1))
+
+k_values <- c(1, 2, 3, 5, 10, 20)
+iw_scores <- matrix(NA_real_, nrow = 500L, ncol = length(k_values))
+colnames(iw_scores) <- paste0("k", k_values)
+for (ki in seq_along(k_values)) {
+  iw_scores[, ki] <- vapply(tbr_neighbours, function(cand) {
+    TreeLength(cand, mrp_phydat, concavity = k_values[ki])
+  }, double(1))
+}
+
+profile_scores <- vapply(tbr_neighbours, function(cand) {
+  TreeLength(cand, mrp_phydat, concavity = "profile")
+}, double(1))
+```
+
+## Results
+
+```{r}
+#| label: tbl-correlations
+#| tbl-cap: "Spearman and Pearson correlations between parsimony score and mean CID across 500 TBR neighbours."
+methods <- c("EW", paste0("IW k=", k_values), "Profile")
+all_scores <- cbind(ew_scores, iw_scores, profile_scores)
+colnames(all_scores) <- methods
+
+cors <- data.frame(
+  Method = methods,
+  Spearman = round(vapply(methods, function(m) {
+    cor(all_scores[, m], cid_scores, method = "spearman")
+  }, double(1)), 4),
+  Pearson = round(vapply(methods, function(m) {
+    cor(all_scores[, m], cid_scores, method = "pearson")
+  }, double(1)), 4),
+  row.names = NULL
+)
+knitr::kable(cors)
+```
+
+```{r}
+#| label: fig-scatter
+#| fig-cap: "Standardized parsimony score vs mean CID for three representative methods."
+#| fig-width: 7
+#| fig-height: 5
+plot_df <- data.frame(
+  CID = rep(cid_scores, 3),
+  Score = c(scale(ew_scores)[, 1],
+            scale(iw_scores[, which(k_values == 3)])[, 1],
+            scale(profile_scores)[, 1]),
+  Method = rep(c("EW", "IW k=3", "Profile"), each = length(cid_scores))
+)
+
+ggplot(plot_df, aes(CID, Score, colour = Method)) +
+  geom_point(alpha = 0.3, size = 1) +
+  geom_smooth(method = "lm", se = FALSE, linewidth = 0.7) +
+  labs(x = "Mean CID to reference trees",
+       y = "Parsimony score (standardized)")
+```
+
+```{r}
+#| label: fig-residuals
+#| fig-cap: "Residual parsimony score (after removing CID trend) by method. Tighter distributions indicate better proxies."
+#| fig-width: 7
+#| fig-height: 4
+resid_df <- do.call(rbind, lapply(methods, function(m) {
+  fit <- lm(all_scores[, m] ~ cid_scores)
+  data.frame(Method = m, Residual = scale(residuals(fit))[, 1])
+}))
+
+ggplot(resid_df, aes(Method, Residual)) +
+  geom_boxplot(outlier.size = 0.5) +
+  coord_flip() +
+  labs(y = "Standardized residual (parsimony | CID)")
+```
+
+## Discussion
+
+_To be completed after results are available._
+
+## Session info
+
+```{r}
+#| label: session-info
+sessionInfo()
+```

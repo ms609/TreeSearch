@@ -92,7 +92,7 @@ Let's see the resultant tree, and its score:
 ```{r ratchet-search-results}
 TreeLength(betterTrees[[1]], myMatrix, "profile")
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(ape::consensus(betterTrees))
+plot(TreeTools::Consensus(betterTrees))
 ```
 
 Type `?MaximizeParsimony` to view all search parameters, including strategy
@@ -120,7 +120,7 @@ typically more reliable, summary of the signal with the phylogenetic dataset
 ```{r plot-suboptimal-consensus}
 par(mar = rep(0.25, 4), cex = 0.75)
 table(signif(TreeLength(suboptimals, myMatrix, "profile")))
-plot(ape::consensus(suboptimals))
+plot(Consensus(suboptimals))
 ```
 
 

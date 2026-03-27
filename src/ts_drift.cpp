@@ -1,4 +1,5 @@
 #include "ts_drift.h"
+#include "ts_cid.h"
 #include "ts_collapsed.h"
 #include "ts_constraint.h"
 #include "ts_fitch.h"
@@ -20,7 +21,37 @@ namespace ts {
 
 static double drift_full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
-  return score_tree(tree, ds);
+  double s = score_tree(tree, ds);
+  if (is_cid_like(ds.scoring_mode)) {
+    fitch_score(tree, ds);
+  }
+  return s;
+}
+
+// Compute MRP screening score from already-populated Fitch state arrays.
+static double drift_mrp_score(const TreeState& tree, const DataSet& ds,
+                               std::vector<int>& char_steps) {
+  std::fill(char_steps.begin(), char_steps.end(), 0);
+  for (int node : tree.postorder) {
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      uint64_t mask =
+          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      while (mask) {
+        int c = ts::ctz64(mask);
+        char_steps[blk.pattern_index[c]] += 1;
+        mask &= mask - 1;
+      }
+    }
+  }
+  if (std::isfinite(ds.concavity)) {
+    return compute_weighted_score(ds, char_steps);
+  }
+  int total = 0;
+  for (int p = 0; p < ds.n_patterns; ++p) {
+    total += char_steps[p] * ds.pattern_freq[p];
+  }
+  return static_cast<double>(total) + ds.ew_offset;
 }
 
 static void drift_collect_main_edges(
@@ -325,7 +356,16 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
   double score = drift_full_rescore(tree, ds);
   int n_accepted = 0;
   const bool use_iw = std::isfinite(ds.concavity);
+  const bool is_cid = is_cid_like(ds.scoring_mode);
   const double eps = use_iw ? 1e-10 : 0.0;
+
+  // CID mode: track MRP screening score separately from CID score.
+  std::vector<int> mrp_steps_buf;
+  double mrp_score_val = score;
+  if (is_cid) {
+    mrp_steps_buf.resize(ds.n_patterns, 0);
+    mrp_score_val = drift_mrp_score(tree, ds, mrp_steps_buf);
+  }
 
   bool has_na = false;
   for (int b = 0; b < ds.n_blocks; ++b) {
@@ -435,7 +475,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
         if (ds.blocks[b].upweight_mask) nu += popcount64(lc & ds.blocks[b].upweight_mask);
         nx_cost += ds.blocks[b].weight * nu;
       }
-      divided_length = score + delta - nx_cost;
+      divided_length = mrp_score_val + delta - nx_cost;
     }
 
     // Weighted scoring (IW or profile): precompute base score and deltas
@@ -573,7 +613,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
     if (best_candidate >= HUGE_VAL || best_above < 0) continue;
 
-    double delta_score = best_candidate - score;
+    // AFD check: use MRP screening score (not CID) for delta
+    double delta_score = best_candidate - mrp_score_val;
 
     if (delta_score > afd_limit + eps) {
       continue;
@@ -590,6 +631,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       drift_restore_topology(tree, snap);
       tree.build_postorder();
       drift_full_rescore(tree, ds);
+      if (is_cid) mrp_score_val = drift_mrp_score(tree, ds, mrp_steps_buf);
       continue;
     }
 
@@ -620,12 +662,16 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       // Improvement: always accept
       tree.build_postorder();
       score = drift_full_rescore(tree, ds);
+      if (is_cid) mrp_score_val = drift_mrp_score(tree, ds, mrp_steps_buf);
+      else mrp_score_val = score;
       ++n_accepted;
       if (constrained) update_constraint(tree, *cd);
     } else if (std::fabs(delta_score) <= eps) {
       // Equal: always accept
       tree.build_postorder();
       score = drift_full_rescore(tree, ds);
+      if (is_cid) mrp_score_val = drift_mrp_score(tree, ds, mrp_steps_buf);
+      else mrp_score_val = score;
       ++n_accepted;
       if (constrained) update_constraint(tree, *cd);
     } else {
@@ -633,20 +679,22 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       tree.build_postorder();
       double new_score = drift_full_rescore(tree, ds);
 
-      if (use_iw) {
-        // Under IW, use score-based RFD: (worsening - improving) / worsening
-        // Simplify to score delta ratio
-        double rfd = (new_score > score && score > 0.0)
-            ? (new_score - score) / new_score : 0.0;
+      if (use_iw || is_cid) {
+        // Under IW (or CID with IW screening), use score-based RFD
+        double new_mrp = is_cid ? drift_mrp_score(tree, ds, mrp_steps_buf) : new_score;
+        double rfd = (new_mrp > mrp_score_val && mrp_score_val > 0.0)
+            ? (new_mrp - mrp_score_val) / new_mrp : 0.0;
 
         if (rfd <= rfd_limit) {
           score = new_score;
+          mrp_score_val = new_mrp;
           ++n_accepted;
           if (constrained) update_constraint(tree, *cd);
         } else {
           drift_restore_topology(tree, snap);
           tree.build_postorder();
           score = drift_full_rescore(tree, ds);
+          if (is_cid) mrp_score_val = drift_mrp_score(tree, ds, mrp_steps_buf);
         }
       } else {
         // EW: original local_cost-based RFD

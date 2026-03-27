@@ -26,7 +26,6 @@
 #' @references 
 #' \insertAllCited{}
 #'
-#' @importFrom ape consensus root
 #' @family custom search functions
 #' @export
 SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
@@ -130,7 +129,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
   }
 
   if (!is.null(outgroup)) {
-    tr <- root(tr, outgroup, resolve.root = TRUE)
+    tr <- RootTree(tr, outgroup)
   }
 
   structure(

@@ -77,8 +77,10 @@ ReplicateResult run_single_replicate(
   };
 
   // NNI warmup per Wagner start is skipped when constraints are active
-  // because nni_search() does not enforce topological constraints.
-  bool nni_wagner = params.nni_first && (!cd || !cd->active);
+  // (nni_search() does not enforce constraints) and for CID mode
+  // (nni_search() lacks dual MRP/CID score tracking).
+  bool nni_wagner = params.nni_first && (!cd || !cd->active)
+                    && !is_cid_like(ds.scoring_mode);
 
   // 1. Starting tree: dispatch on StartStrategy.
   //
@@ -151,7 +153,7 @@ ReplicateResult run_single_replicate(
     } else {
       Rprintf("  %s%s tree score: %.5g [%.0f ms]%s\n",
               strategy_name(strategy),
-              params.nni_first ? "+NNI" : "",
+              nni_wagner ? "+NNI" : "",
               best_wag, result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
     }
@@ -854,7 +856,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Add to pool with collapsed-topology dedup
     double prev_best = pool.best_score();
     pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
-    bool score_improved = pool.best_score() < prev_best;
+    bool score_improved = pool.best_score() < prev_best - params.score_tol;
     if (score_improved) {
       result.last_improved_rep = rep1;
       unsuccessful_reps = 0;
@@ -974,6 +976,20 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
                   ds.n_tips, params.perturb_stop_factor);
         }
       }
+      break;
+    }
+
+    // Plateau stopping (absolute count, for continuous-score modes like CID)
+    if (params.plateau_reps > 0 &&
+        unsuccessful_reps >= params.plateau_reps) {
+      if (params.verbosity >= 1) {
+        if (!has_callback) {
+          Rprintf("Stopped: %d consecutive replicates without meaningful "
+                  "improvement (plateau_reps %d, score_tol %.4g)\n",
+                  unsuccessful_reps, params.plateau_reps, params.score_tol);
+        }
+      }
+      result.plateau_stop = true;
       break;
     }
 

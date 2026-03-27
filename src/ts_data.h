@@ -59,7 +59,20 @@ inline int ctz64(uint64_t x) {
 static constexpr int MAX_CHARS_PER_BLOCK = 64;
 static constexpr int MAX_STATES = 32;  // practical limit for morphological data
 
-enum class ScoringMode { EW, IW, XPIWE, PROFILE, HSJ, XFORM };
+enum class ScoringMode { EW, IW, XPIWE, PROFILE, HSJ, XFORM, CID, SPIC };
+
+// CID and SPIC both use MRP-based Fitch screening with a separate
+// information-theoretic objective.  All search modules that special-case
+// CID mode must also cover SPIC.
+inline bool is_cid_like(ScoringMode m) {
+  return m == ScoringMode::CID || m == ScoringMode::SPIC;
+}
+
+// Forward declaration for CID scoring data (defined in ts_cid.h).
+struct CidData;
+
+// Forward declaration for SPIC scoring data (defined in ts_spic.h).
+struct SpicData;
 
 // A hierarchy block describes one controlling primary + its secondaries
 // (Hopkins & St. John 2021). Used by HSJ scoring.
@@ -175,6 +188,14 @@ struct DataSet {
   // where stride = n_chars * max_states.
   // 0.0 = state allowed, INF = state disallowed.
   std::vector<double> sankoff_tip_costs;
+
+  // CID scoring data (populated when scoring_mode == CID).
+  // Owned by the caller; DataSet holds a non-owning pointer.
+  CidData* cid_data = nullptr;
+
+  // SPIC scoring data (populated when scoring_mode == SPIC).
+  // Owned by the caller; DataSet holds a non-owning pointer.
+  SpicData* spic_data = nullptr;
 };
 
 // Build a DataSet from R-side data.

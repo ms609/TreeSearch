@@ -111,6 +111,7 @@ criterion \insertCite{Farris1969}{TreeSearch}.
 \seealso{
 Other custom search functions: 
 \code{\link{EdgeListSearch}()},
+\code{\link{InfoConsensus}()},
 \code{\link{Jackknife}()},
 \code{\link{MorphyBootstrap}()}
 }

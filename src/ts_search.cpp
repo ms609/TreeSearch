@@ -1,4 +1,5 @@
 #include "ts_search.h"
+#include "ts_cid.h"
 #include "ts_fitch.h"
 #include "ts_collapsed.h"
 #include "ts_rng.h"
@@ -19,7 +20,36 @@ namespace ts {
 
 static double full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
-  return score_tree(tree, ds);
+  double s = score_tree(tree, ds);
+  if (is_cid_like(ds.scoring_mode)) {
+    fitch_score(tree, ds);
+  }
+  return s;
+}
+
+static double spr_mrp_score(const TreeState& tree, const DataSet& ds,
+                             std::vector<int>& char_steps) {
+  std::fill(char_steps.begin(), char_steps.end(), 0);
+  for (int node : tree.postorder) {
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      uint64_t mask =
+          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      while (mask) {
+        int c = ts::ctz64(mask);
+        char_steps[blk.pattern_index[c]] += 1;
+        mask &= mask - 1;
+      }
+    }
+  }
+  if (std::isfinite(ds.concavity)) {
+    return compute_weighted_score(ds, char_steps);
+  }
+  int total = 0;
+  for (int p = 0; p < ds.n_patterns; ++p) {
+    total += char_steps[p] * ds.pattern_freq[p];
+  }
+  return static_cast<double>(total) + ds.ew_offset;
 }
 
 // Compute the number of tips in the subtree below each node.
@@ -176,6 +206,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
   int hits = 1;
 
   const bool use_iw = std::isfinite(ds.concavity);
+  const bool is_cid = is_cid_like(ds.scoring_mode);
   const double eps = use_iw ? 1e-10 : 0.0;
 
   // Detect inapplicable characters
@@ -206,6 +237,14 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
   if (use_iw) {
     div_steps.resize(ds.n_patterns, 0);
     iw_del.resize(ds.n_patterns, 0.0);
+  }
+
+  // CID mode: track MRP screening score separately
+  std::vector<int> mrp_steps_buf;
+  double mrp_baseline = best_score;
+  if (is_cid) {
+    mrp_steps_buf.resize(ds.n_patterns, 0);
+    mrp_baseline = spr_mrp_score(tree, ds, mrp_steps_buf);
   }
 
   // Subtree sizes for smaller-subtree filtering
@@ -275,7 +314,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
           if (ds.blocks[b].upweight_mask) nu += popcount64(lc & ds.blocks[b].upweight_mask);
           nx_cost += ds.blocks[b].weight * nu;
         }
-        divided_length = best_score + delta - nx_cost;
+        divided_length = mrp_baseline + delta - nx_cost;
       }
 
       const uint64_t* clip_prelim =
@@ -348,25 +387,49 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
       }
 
       // --- Verify best candidate with full rescore ---
-      bool dominated = (best_candidate > best_score + eps) ||
-                       (best_candidate > best_score - eps
-                        && hits > maxHits);
+      bool dominated;
+      if (is_cid) {
+        double threshold = mrp_baseline;
+        if (ds.cid_data && ds.cid_data->screening_tolerance > 0.0) {
+          threshold *= (1.0 + ds.cid_data->screening_tolerance);
+        }
+        dominated = (best_candidate > threshold + eps);
+      } else {
+        dominated = (best_candidate > best_score + eps) ||
+                    (best_candidate > best_score - eps
+                     && hits > maxHits);
+      }
 
       bool accepted = false;
 
       if (!dominated && best_above >= 0) {
         tree.spr_regraft(best_above, best_below);
         tree.build_postorder();
+        // CID early termination
+        if (is_cid && ds.cid_data) {
+          ds.cid_data->score_budget = best_score + eps;
+        }
         double actual = full_rescore(tree, ds);
+        if (is_cid && ds.cid_data) {
+          ds.cid_data->score_budget = HUGE_VAL;
+        }
 
         if (actual < best_score - eps) {
           best_score = actual;
+          if (is_cid) {
+            mrp_baseline = spr_mrp_score(tree, ds, mrp_steps_buf);
+          } else {
+            mrp_baseline = actual;
+          }
           ++n_moves;
           hits = 1;
           accepted = true;
           keep_going = true;
         } else if (std::fabs(actual - best_score) <= eps
                    && hits <= maxHits) {
+          if (is_cid) {
+            mrp_baseline = spr_mrp_score(tree, ds, mrp_steps_buf);
+          }
           ++hits;
           ++n_moves;
           accepted = true;

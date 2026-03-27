@@ -87,7 +87,7 @@ Ratchet <- function(tree, dataset,
   epsilon <- sqrt(.Machine[["double.eps"]])
   hits <- 0L
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
-    stop("tree must be bifurcating; try rooting with ape::root")
+    stop("tree must be bifurcating; try rooting with RootTree()")
   }
   tree <- RenumberTips(tree, names(dataset))
   edgeList <- tree[["edge"]]
@@ -253,7 +253,7 @@ Ratchet <- function(tree, dataset,
 #' @rdname Ratchet 
 #' @return `MultiRatchet()` returns a list of optimal trees 
 #' produced by `nSearch` `Ratchet()` searches, from which a consensus tree can
-#' be generated using [`ape::consensus()`] or [`TreeTools::ConsensusWithout()`].
+#' be generated using [`Consensus()`][TreeTools::Consensus] or [`TreeTools::ConsensusWithout()`].
 #' @param nSearch Number of Ratchet searches to conduct
 #' (for `RatchetConsensus()`)
 #' @export

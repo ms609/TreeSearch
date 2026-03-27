@@ -591,7 +591,6 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #'
 #' @param weight Logical specifying whether to weight sites according to the
 #' number of quartets they are decisive for.
-#' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @importFrom utils combn
 #' @importFrom TreeTools as.Splits PhyDatToMatrix TipLabels
@@ -797,7 +796,7 @@ SharedPhylogeneticConcordance <- function(tree, dataset) {
   characters <- as.multiPhylo(dataset)
   
   support <- rowSums(vapply(characters, function (char) {
-    trimmed <- lapply(splits, keep.tip, TipLabels(char))
+    trimmed <- KeepTip(splits, TipLabels(char))
     cbind(mi = SharedPhylogeneticInfo(char, trimmed),
           possible = ClusteringInfo(trimmed))
   }, matrix(NA_real_, length(splits), 2)), dims = 2)
