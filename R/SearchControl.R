@@ -92,6 +92,20 @@
 #'   \insertCite{Nguyen2015}{TreeSearch}.
 #' @param nniPerturbFraction Numeric (0--1); fraction of internal branches
 #'   to swap during each NNI-perturbation cycle.  Default 0.5.
+#' @param pruneReinsertCycles Integer; number of taxon pruning-reinsertion
+#'   perturbation cycles per replicate.  Each cycle drops a fraction of leaves,
+#'   runs TBR on the reduced tree to let the backbone restructure, then
+#'   greedily reinserts the dropped taxa via Wagner addition and TBR-polishes
+#'   the full tree.  Complementary to the ratchet (which perturbs character
+#'   weights) and NNI-perturbation (which perturbs the topology directly).
+#'   0 (default) disables this perturbation.
+#' @param pruneReinsertDrop Numeric (0--1); fraction of tips to drop per
+#'   cycle.  Default 0.10 (10%).  Always drops at least 3 tips and keeps
+#'   at least 4.
+#' @param pruneReinsertSelection Integer; tip selection strategy for choosing
+#'   which tips to drop.  0 = random (default), 1 = instability-weighted
+#'   (tips whose placement varies across pool trees are preferentially
+#'   dropped).
 #' @param consensusConstrain Logical; lock the strict consensus of pool
 #'   trees as topological constraints for subsequent replicates?  When
 #'   `TRUE`, after enough replicates (\eqn{\ge}5), splits present in ALL
@@ -214,6 +228,10 @@ SearchControl <- function(
     perturbStopFactor = 2L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
+    # Taxon pruning-reinsertion (T-266)
+    pruneReinsertCycles = 0L,
+    pruneReinsertDrop = 0.10,
+    pruneReinsertSelection = 0L,
     # Simulated annealing perturbation (PCSA, T-207)
     annealCycles = 0L,
     annealPhases = 5L,
@@ -266,6 +284,9 @@ SearchControl <- function(
       perturbStopFactor = as.integer(perturbStopFactor),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
+      pruneReinsertCycles = as.integer(pruneReinsertCycles),
+      pruneReinsertDrop = as.double(pruneReinsertDrop),
+      pruneReinsertSelection = as.integer(pruneReinsertSelection),
       annealCycles = as.integer(annealCycles),
       annealPhases = as.integer(annealPhases),
       annealTStart = as.double(annealTStart),
@@ -288,6 +309,8 @@ print.SearchControl <- function(x, ...) {
                    "ratchetTaper"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
+    "Prune-Reinsert" = c("pruneReinsertCycles", "pruneReinsertDrop",
+                          "pruneReinsertSelection"),
     "Annealing" = c("annealCycles", "annealPhases", "annealTStart",
                      "annealTEnd", "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",

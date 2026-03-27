@@ -1243,6 +1243,11 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.adaptive_start        = as<bool>(ctrl["adaptiveStart"]);
   params.enum_time_fraction    = as<double>(ctrl["enumTimeFraction"]);
 
+  // Taxon pruning-reinsertion (T-266)
+  params.prune_reinsert_cycles    = as<int>(ctrl["pruneReinsertCycles"]);
+  params.prune_reinsert_drop      = as<double>(ctrl["pruneReinsertDrop"]);
+  params.prune_reinsert_selection = as<int>(ctrl["pruneReinsertSelection"]);
+
   // Simulated annealing perturbation (PCSA)
   params.anneal_cycles          = as<int>(ctrl["annealCycles"]);
   params.anneal_phases          = as<int>(ctrl["annealPhases"]);
@@ -1519,6 +1524,7 @@ List ts_driven_search(
     Named("nni_perturb_ms") = result.timings.nni_perturb_ms,
     Named("drift_ms")     = result.timings.drift_ms,
     Named("anneal_ms")    = result.timings.anneal_ms,
+    Named("prune_reinsert_ms") = result.timings.prune_reinsert_ms,
     Named("final_tbr_ms") = result.timings.final_tbr_ms,
     Named("fuse_ms")      = result.timings.fuse_ms
   );
