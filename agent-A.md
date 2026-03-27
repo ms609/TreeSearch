@@ -28,7 +28,10 @@ ratchet (weight-space) and NNI-perturbation (topology-space).
 **Local validation:** Build clean, 44/44 prune-reinsert tests pass,
 234 related tests (driven/nni-perturb/wagner) pass with no regressions.
 
-**GHA dispatched:** run 23634563604, awaiting results.
+**GHA runs:**
+- Run 23634563604: FAIL — `INT_MAX` undeclared on Linux/ARM (missing `<climits>`)
+- Run 23635469688: FAIL — Codoc mismatch (SearchControl.Rd not regenerated)
+- Run 23636145497: PENDING — both issues fixed
 
 **Next steps on GHA success:**
 - Open PR to cpp-search

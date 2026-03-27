@@ -27,7 +27,7 @@
 |----|-----|--------|--------|-------------|-------|
 | T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
 | T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795. |
-| T-266 | P2 | PARKED (A, GHA 23634563604) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests, local build clean. |
+| T-266 | P2 | PARKED (A, GHA 23636145497) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests. Fixed: `<climits>` for ARM, regenerated .Rd. |
 
 
 
