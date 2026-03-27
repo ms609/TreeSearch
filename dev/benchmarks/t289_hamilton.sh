@@ -41,11 +41,25 @@ echo "Node: $(hostname)"
 echo "Started: $(date)"
 echo ""
 
+# Install CRAN dependencies into local lib (if missing)
+echo "Checking/installing CRAN dependencies..."
+Rscript --no-save -e "
+  lib <- '$LIB'
+  .libPaths(c(lib, .libPaths()))
+  pkgs <- c('ape', 'cli', 'inapplicable', 'phangorn', 'Rdpack', 'TreeDist', 'TreeTools')
+  need <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+  if (length(need) > 0) {
+    message('Installing: ', paste(need, collapse = ', '))
+    install.packages(need, lib = lib, repos = 'https://cloud.r-project.org', quiet = TRUE)
+  } else {
+    message('All dependencies present.')
+  }
+"
+
 # Build and install from latest cpp-search
 cd "$REPO" || exit 1
 git fetch origin cpp-search
-git checkout cpp-search
-git pull origin cpp-search
+git pull --ff-only origin cpp-search || git reset --hard origin/cpp-search
 echo "Git HEAD: $(git log --oneline -1)"
 
 rm -f src/*.o src/*.so
