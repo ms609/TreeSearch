@@ -104,7 +104,7 @@ We can plot the best tree(s) that we've found, and check its parsimony score
 
 ```{r plot-tree}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(Consensus(bestTrees))
+plot(TreeTools::Consensus(bestTrees))
 TreeLength(bestTrees[[1]], vinther)
 ```
 
