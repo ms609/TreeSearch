@@ -6,16 +6,19 @@
 \usage{
 InfoConsensus(
   trees,
-  maxReplicates = 100L,
-  targetHits = 10L,
+  maxReplicates = 5L,
+  targetHits = 2L,
   maxSeconds = 0,
   nThreads = getOption("mc.cores", 1L),
+  treeSample = "auto",
   collapse = TRUE,
   neverDrop = FALSE,
-  maxDrop = ceiling(NTip(trees[[1]])/10),
+  maxDrop = min(5L, ceiling(NTip(trees[[1]])/10)),
   control = SearchControl(),
   screeningK = 7,
   screeningTolerance = 0,
+  screeningTopK = 1L,
+  method = c("mci", "spic"),
   verbosity = 1L
 )
 
@@ -35,6 +38,20 @@ times independently.}
 \item{nThreads}{Integer: number of threads for inter-replicate parallelism.
 Defaults to \code{getOption("mc.cores", 1L)}.}
 
+\item{treeSample}{Controls how many input trees are used during Phase 1
+(driven search).  CID verification cost scales linearly with the number
+of input trees, so with large tree sets, using a representative subsample
+for the search phase and verifying against the full set afterwards can be
+faster without sacrificing quality.
+
+\code{"auto"} (default): automatically selects a subsample size based on
+the number of tips.  An integer uses exactly that many trees (sampled
+without replacement).  \code{Inf} or \code{NULL} use all trees.
+
+Subsampling applies only to Phase 1.  Phases 2 and 3 always score
+against the \strong{full} input tree set, and the returned \code{score}
+attribute reflects the full-set MCI.}
+
 \item{collapse}{Logical: if \code{TRUE} (default), run a collapse/resolve
 refinement phase after the binary search.  This can produce a
 non-binary result when collapsing a split improves the mean MCI.}
@@ -47,7 +64,7 @@ A character or integer vector specifies tips that must never be dropped;
 all others are candidates.}
 
 \item{maxDrop}{Integer: maximum number of tips that may be dropped during
-rogue screening.  Default \code{ceiling(nTip / 10)} (10 percent of tips).}
+rogue screening.  Default \code{min(5L, ceiling(nTip / 10))}.}
 
 \item{control}{A \code{\link[=SearchControl]{SearchControl()}} object for expert tuning of the
 driven search strategy.}
@@ -66,6 +83,17 @@ clip.  Values > 0 relax the screening threshold, allowing candidates
 whose MRP score exceeds the current best by up to this fraction (e.g.,
 \code{0.02} = $2\%$ tolerance).  Higher values improve search quality at the
 cost of more MCI evaluations per step.}
+
+\item{screeningTopK}{Integer: number of top MRP-screened candidates to
+evaluate via full MCI scoring per TBR clip.  Default \code{1} uses the
+single best MRP candidate.  Values > 1 score the top-k MRP candidates
+and accept the one with the best MCI, catching moves where MRP and MCI
+rankings disagree.  Cost scales linearly with \code{screeningTopK}.}
+
+\item{method}{Character: the scoring method for consensus optimization.
+\code{"mci"} (default): Mutual Clustering Information.
+\code{"spic"}: Splitwise Phylogenetic Information Content (Smith 2022).
+Faster than MCI because scoring is split-additive.}
 
 \item{verbosity}{Integer controlling console output (0 = silent).}
 }

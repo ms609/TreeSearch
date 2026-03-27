@@ -40,6 +40,8 @@ SearchControl(
   poolSuboptimal = 0,
   consensusStableReps = 0L,
   perturbStopFactor = 2L,
+  scoreTol = 0,
+  plateauReps = 0L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
   pruneReinsertCycles = 0L,
@@ -185,6 +187,18 @@ on easy landscapes, \code{targetHits} fires first.
 Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
 per-replicate granularity.}
+
+\item{scoreTol}{Numeric; minimum score improvement to count as meaningful
+for convergence detection.  Default 0 (any strict improvement counts).
+When positive, improvements smaller than \code{scoreTol} do not reset the
+unsuccessful-replicate counter, allowing \code{perturbStopFactor} and
+\code{plateauReps} to detect convergence in continuous-score modes (e.g.\ CID).}
+
+\item{plateauReps}{Integer; stop after this many consecutive replicates
+without meaningful improvement (as determined by \code{scoreTol}).
+0 disables this criterion (default).
+Unlike \code{perturbStopFactor} (which scales with tree size), this is an
+absolute count suitable for small replicate budgets.}
 
 \item{adaptiveLevel}{Logical; dynamically scale ratchet and drift effort
 based on the observed hit rate?  When \code{TRUE}, easy landscapes
