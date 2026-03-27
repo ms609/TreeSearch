@@ -1,7 +1,19 @@
 # Agent A Progress Log
 
 ## Current Task
-**IDLE** — T-266 PR #235 + T-270 done. Awaiting next task.
+**IDLE** — all tasks complete this session.
+
+## T-204 + T-266 fixes (2026-03-27 ~10:15 GMT)
+- T-204 (PR #216): GHA 23495097795 was a timing issue — docs commit `f59a193c` landed after the run was dispatched. Current HEAD (11622e90) has correct Rd files. Re-dispatched as 23641482723.
+- T-266 (PR #235): Standard CI (R-CMD-check + gcc-ASAN) failed after PR opened. R CMD check failure: spelling ERROR — 'warmup' (from T-270 vignette) and 'config' not in WORDLIST for R 4.1 hunspell. Fixed in `de9e5210` (TS-PruneRI). Re-dispatched agent-check as 23641870390. gcc-ASAN/devel failures are infrastructure (rlang compile error), not package issues.
+
+## S-PR + S-RED focus 1 (2026-03-27 ~10:00 GMT)
+- S-PR: Updated T-204 to-do entry with GHA run 23495097795 failure details — undocumented `CleanNativeData`/`NativeBootstrap`/`NativeLength`/`PrepareNativeData`, codoc mismatches in `Jackknife.Rd`/`Ratchet.Rd`/`TreeSearch.Rd`. B needs to regenerate Rd files and add roxygen2 docs.
+- S-RED focus 1: Reviewed ts_fitch.h/.cpp, ts_fitch_na.h, ts_fitch_na_incr.h, ts_simd.h. Focus on commits since 2026-03-19 (AVX2 dispatch, FlatBlock flat indirect, XFORM integration). No bugs found. AVX2 ops bit-identical to scalar; flat functions infrastructure only; XFORM no double-count (weight=0 removes hierarchy chars from Fitch blocks); incremental downpass/uppass stopping conditions correct.
+
+## S-RED Focus 10 + S-PR + T-270 (2026-03-27 ~09:30–10:00 GMT)
+- S-RED focus 10: reviewed ts_fitch.cpp IW/Profile paths. BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps. 15 tests pass. commit 7cff7870.
+- S-PR: merged cpp-search into #235 (prune-reinsert, clean) and #216 (native-search, clean). #213 (cid-consensus) has ts_tbr.cpp conflict (CID vs T-263 snapshot) — aborted, needs E/human. Closed stale PR #178 (T-272 done).
 
 ## S-COORD Round 31 + T-270 (2026-03-27 ~09:20 GMT)
 - T-266 PR #235 opened (GHA passed).

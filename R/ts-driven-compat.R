@@ -80,6 +80,9 @@ ts_driven_search <- function(
     maxOuterResets = 0L,
     adaptiveStart = FALSE,
     enumTimeFraction = 0.1,
+    pruneReinsertCycles = 0L,
+    pruneReinsertDrop = 0.10,
+    pruneReinsertSelection = 0L,
     annealConfig = NULL)
 {
   # New-style call: grouped lists already provided
@@ -129,6 +132,9 @@ ts_driven_search <- function(
     perturbStopFactor = as.integer(perturbStopFactor),
     adaptiveLevel = as.logical(adaptiveLevel),
     consensusConstrain = as.logical(consensusConstrain),
+    pruneReinsertCycles = as.integer(pruneReinsertCycles),
+    pruneReinsertDrop = as.double(pruneReinsertDrop),
+    pruneReinsertSelection = as.integer(pruneReinsertSelection),
     adaptiveStart = as.logical(adaptiveStart),
     enumTimeFraction = as.double(enumTimeFraction)
   )

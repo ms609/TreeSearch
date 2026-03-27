@@ -157,6 +157,32 @@ test_that("Profile MaximizeParsimony result rescores correctly", {
                label = "Profile driven search rescore")
 })
 
+# S-RED focus 10 regression: precompute_profile_delta old_cost capping.
+# When divided_steps puts s > info_max_steps, old_cost must use the capped
+# max-table value (matching compute_profile), not 0. The bug caused delta to
+# be overestimated, making candidates appear worse than they are — conservative
+# but suboptimal. Fix: mirror the compute_profile cap in precompute_profile_delta.
+# This test checks that profile search scores remain consistent across multiple
+# datasets (a gross regression would appear as a score mismatch).
+test_that("Profile search scores rescore correctly on multiple datasets", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+
+  for (i in c(1, 5, 20)) {
+    dataset <- congreveLamsdellMatrices[[i]]
+    pds <- PrepareDataProfile(dataset)
+
+    set.seed(2831 + i)
+    result <- MaximizeParsimony(dataset, concavity = "profile",
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 verbosity = 0L)
+
+    reported <- attr(result, "score")
+    actual <- TreeLength(result[[1]], pds, concavity = "profile")
+    expect_equal(reported, actual, tolerance = 1e-6,
+                 label = paste0("Profile rescore dataset ", i))
+  }
+})
+
 
 # =====================================================================
 # 4. IW + inapplicable data: rescore consistency

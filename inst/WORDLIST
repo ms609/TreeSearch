@@ -184,6 +184,7 @@ cdot
 cf
 cla
 codecov
+config
 colourblind
 dataset's
 deduplicated
@@ -270,5 +271,6 @@ unrooted
 updaters
 uppass
 upweighted
+warmup
 wianamattensis
 zenodo
