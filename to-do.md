@@ -25,7 +25,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | PARKED (F, GHA 23648875258) | — | **CID-optimal consensus tree search** | PR #213. WORDLIST fix (Splitwise) commit 9b7ee66e. GHA 23648875258. |
+| T-150 | P2 | PARKED (F, GHA 23650002703) | — | **CID-optimal consensus tree search** | PR #213. Vignette fix (TreeTools::Consensus) commit f8bfee49. GHA 23650002703. |
 | T-204 | P2 | PARKED (F, GHA 23649607006) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | Root cause: Morphy.R internally calls PhyDat2Morphy()/UnloadMorphy() without suppressing deprecation warnings. Fixed at source in Morphy.R. commit 0af8fbe2. GHA 23649607006. |
 
 
