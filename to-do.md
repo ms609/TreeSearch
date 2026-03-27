@@ -25,7 +25,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | PARKED (F, GHA 23650002703) | — | **CID-optimal consensus tree search** | PR #213. Vignette fix (TreeTools::Consensus) commit f8bfee49. GHA 23650002703. |
+| T-150 | P2 | PR #213 (F) | — | **CID-optimal consensus tree search** | PR #213. Vignette fix (TreeTools::Consensus) commit f8bfee49. GHA 23650002703. |
 | T-204 | P2 | PR #216 (F) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | GHA 23649607006 PASSED. Ready for merge. |
 
 
@@ -33,7 +33,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-279 | P2 | PARKED (F, GHA 23650290962) | — | **Constrained drift: stale `cd->constraint_node` after RFD rejection + redundant full_rescore.** In `ts_drift.cpp::drift_phase()`, when a constrained suboptimal move passes the constraint check (so `cd` is updated), then is rejected by the RFD test, `update_constraint()` is not called on the restored topology. Bug in both IW reject (lines 647–649) and EW reject (line 689). Same class as T-278. Also eliminates a redundant `drift_full_rescore()` call in the EW reject path (return value at line 657 was discarded, causing a second rescore at line 689). Only affects constrained drift (`driftCycles > 0`); drift disabled in all presets since T-255. | Found by S-RED focus 8 (F, 2026-03-27). PR TBD. feature/drift-constraint-fix commit e85ec84f. |
+| T-279 | P2 | PR #237 (F) | — | **Constrained drift: stale `cd->constraint_node` after RFD rejection + redundant full_rescore.** In `ts_drift.cpp::drift_phase()`, when a constrained suboptimal move passes the constraint check (so `cd` is updated), then is rejected by the RFD test, `update_constraint()` is not called on the restored topology. Bug in both IW reject (lines 647–649) and EW reject (line 689). Same class as T-278. Also eliminates a redundant `drift_full_rescore()` call in the EW reject path (return value at line 657 was discarded, causing a second rescore at line 689). Only affects constrained drift (`driftCycles > 0`); drift disabled in all presets since T-255. | Found by S-RED focus 8 (F, 2026-03-27). PR TBD. feature/drift-constraint-fix commit e85ec84f. |
 
 ### Performance Optimization (180+ tips)
 
@@ -64,6 +64,7 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-289 | P2 | OPEN | — | **Prune-reinsert benchmark (Hamilton).** Stage 1: sweep cycles (1/3/5) × drop fraction (5/10/20/30%) × RANDOM on 5 datasets (37–180t), 5 seeds, 30s. Stage 2: best configs + INSTABILITY selection + ratchet-replacement at 30s/60s. Scripts: `bench_prune_reinsert.R`, `t289_hamilton.sh`. Goal: decide whether to enable in presets and at what settings. | T-266 (impl) merged PR #235. Never benchmarked. |
 | T-269 | P3 | OPEN | — | **Fine-grained sectorial interleaving benchmark.** Compare current coarse `outerCycles=2` (all ratchet cycles batched per pass) against fine-grained interleaving (e.g. `outerCycles=12, ratchetCycles=12` → one ratchet cycle per sectorial pass), approximating TNT's per-iteration pattern. T-256 showed extra sectorial *rounds* don't help, but *timing* of sectorial relative to perturbation hasn't been tested. **Design note (u.005):** Full TNT-style interleaving IS architecturally supported now — setting `outerCycles = ratchetCycles` achieves one sector pass per ratchet cycle. T-257 first validated that any post-ratchet sectorial helps at all (merged). T-269 benchmarks the fine-grained variant to determine whether the per-cycle overhead is worth enabling in presets. | Low priority. Use 3–5 gap datasets at 30s/60s budgets. |
 
 
@@ -72,7 +73,7 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 
-| E-002 | P3 | OPEN | — | **SearchControl Rd completeness check.** After T-150/T-204 merge, verify all parameters in `SearchControl()` Rd match the actual function signature. File bugs for any missing/stale param docs. | Short task; likely 30 min. |
+
 
 
 
