@@ -62,7 +62,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-273 | P3 | ASSIGNED (F) | — | **Fix `flat_blocks.active_mask` staleness during ratchet.** `FlatBlock.active_mask` is populated at `build_dataset()` and NOT updated when `perturb_zero_only()`/`perturb_mixed()` modify `blocks[b].active_mask`. Also not updated by `restore_perturbation_snapshot()`. If flat indirect functions are ever dispatched during ratchet TBR they will use stale masks (screened differently than intended). | Currently SAFE — zero call sites for flat indirect variants (confirmed grep). Fix: add `ds.flat_blocks[b].active_mask = ds.blocks[b].active_mask` in both perturb functions and the restore snapshot. Also update `all_weight_one` if ratchet can change weights (IW case). |
+
 
 
 ### Standing Tasks
