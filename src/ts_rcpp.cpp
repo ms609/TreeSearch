@@ -23,6 +23,7 @@
 // ts_temper.h removed — parallel tempering lives on feature/parallel-temper
 #include "ts_strategy.h"
 #include "ts_cid.h"
+#include "ts_spic.h"
 
 using namespace Rcpp;
 
@@ -2682,8 +2683,10 @@ List ts_cid_consensus(
     double scoreTol = 0.0,
     int plateauReps = 0,
     Nullable<IntegerMatrix> startEdge = R_NilValue,
-    Nullable<Function> progressCallback = R_NilValue)
+    Nullable<Function> progressCallback = R_NilValue,
+    int scoringMethod = 0)
 {
+  // scoringMethod: 0 = MCI (default), 1 = SPIC
   int n_tip = nTip[0];
   bool norm = normalize[0];
   int n_trees = splitMatrices.size();
@@ -2762,8 +2765,20 @@ List ts_cid_consensus(
   // --- Prepare CID data (hash indices, log2 values, scratch presizing) ---
   ts::prepare_cid_data(cid_data);
 
+  // --- Build SPIC data if needed ---
+  ts::SpicData spic_data;
+  if (scoringMethod == 1) {
+    spic_data = ts::build_spic_data(cid_data);
+  }
+
   // --- Build MRP DataSet ---
   ts::DataSet ds = ts::build_mrp_dataset(cid_data);
+
+  // Override scoring mode if SPIC requested
+  if (scoringMethod == 1) {
+    ds.scoring_mode = ts::ScoringMode::SPIC;
+    ds.spic_data = &spic_data;
+  }
 
   // --- Populate DrivenParams ---
   ts::DrivenParams params;
@@ -2882,33 +2897,97 @@ List ts_cid_consensus(
 
 // Topology-only TreeState from a 1-based R edge matrix (two int vectors).
 // Sets up parent/left/right/postorder; leaves Fitch state arrays empty.
-// Sufficient for cid_score(), which only accesses topology fields.
+// Sufficient for cid_score()/spic_score(), which only access topology fields.
+//
+// Handles polytomous trees (e.g. ape's trifurcating-root unrooted
+// representation) by resolving multifurcations into arbitrary binary
+// splits.  The resolved topology doesn't change the split set (the
+// inserted zero-length edges create trivial 1|n-1 splits that
+// compute_splits_cid() filters out).
 static ts::TreeState cid_tree_from_edge(const int* ep, const int* ec,
                                          int n_edge, int n_tip)
 {
+  // --- Phase 1: build adjacency list (children per node) ---
+  int max_node_1idx = 0;
+  for (int i = 0; i < n_edge; ++i) {
+    if (ep[i] > max_node_1idx) max_node_1idx = ep[i];
+    if (ec[i] > max_node_1idx) max_node_1idx = ec[i];
+  }
+  int max_node = max_node_1idx;  // 1-indexed max
+  // children[node_0indexed] = list of child node indices (0-indexed)
+  std::vector<std::vector<int>> children(max_node, std::vector<int>());
+  std::vector<int> par_raw(max_node, -1);
+
+  for (int i = 0; i < n_edge; ++i) {
+    int p = ep[i] - 1;
+    int c = ec[i] - 1;
+    children[p].push_back(c);
+    par_raw[c] = p;
+  }
+
+  // Find root (internal node with no parent)
+  int root = -1;
+  for (int i = n_tip; i < max_node; ++i) {
+    if (par_raw[i] == -1) { root = i; break; }
+  }
+  if (root < 0) root = n_tip;  // fallback
+
+  // --- Phase 2: resolve polytomies ---
+  // Insert virtual nodes for any node with >2 children.
+  // next_id tracks the next available node index.
+  int next_id = max_node;
+  // Resolve in a queue to handle cascading insertions.
+  std::vector<int> queue;
+  for (int i = n_tip; i < max_node; ++i) {
+    if (static_cast<int>(children[i].size()) > 2) queue.push_back(i);
+  }
+  for (size_t qi = 0; qi < queue.size(); ++qi) {
+    int node = queue[qi];
+    while (static_cast<int>(children[node].size()) > 2) {
+      // Peel off the last two children into a new virtual node
+      int c_last = children[node].back(); children[node].pop_back();
+      int c_prev = children[node].back(); children[node].pop_back();
+      int virt = next_id++;
+      // Extend storage
+      if (virt >= static_cast<int>(children.size())) {
+        children.resize(virt + 1);
+        par_raw.resize(virt + 1, -1);
+      }
+      children[virt] = {c_prev, c_last};
+      par_raw[c_prev] = virt;
+      par_raw[c_last] = virt;
+      par_raw[virt] = node;
+      children[node].push_back(virt);
+    }
+  }
+
+  // --- Phase 3: build TreeState ---
+  int n_internal = next_id - n_tip;
+  int n_node = next_id;
+
   ts::TreeState tree;
   tree.n_tip = n_tip;
-  tree.n_internal = n_tip - 1;
-  tree.n_node = 2 * n_tip - 1;
+  tree.n_internal = n_internal;
+  tree.n_node = n_node;
   tree.total_words = 0;
   tree.n_blocks = 0;
 
-  tree.parent.assign(tree.n_node, -1);
-  tree.left.assign(tree.n_internal, -1);
-  tree.right.assign(tree.n_internal, -1);
+  tree.parent.assign(n_node, -1);
+  tree.left.assign(n_internal, -1);
+  tree.right.assign(n_internal, -1);
 
-  for (int i = 0; i < n_edge; ++i) {
-    int p = ep[i] - 1;   // convert to 0-based
-    int c = ec[i] - 1;
-    tree.parent[c] = p;
-    int pi = p - n_tip;
-    if (tree.left[pi] == -1) {
-      tree.left[pi] = c;
+  for (int i = n_tip; i < n_node; ++i) {
+    int pi = i - n_tip;
+    if (static_cast<int>(children[i].size()) >= 1) tree.left[pi] = children[i][0];
+    if (static_cast<int>(children[i].size()) >= 2) tree.right[pi] = children[i][1];
+  }
+  for (int c = 0; c < n_node; ++c) {
+    if (c == root) {
+      tree.parent[c] = c;
     } else {
-      tree.right[pi] = c;
+      tree.parent[c] = par_raw[c];
     }
   }
-  tree.parent[n_tip] = n_tip;  // root is its own parent
   tree.build_postorder();
   return tree;
 }
@@ -3104,6 +3183,144 @@ NumericVector ts_cid_prescreen_rogue(
           masked_cand, masked_input, reduced, lap_scratch);
     }
     result[d] = -mci_sum / n_trees;
+  }
+  return result;
+}
+
+
+// ---------------------------------------------------------------------------
+// ts_spic_score_trees: batch SPIC scoring of candidate trees.
+//
+// Analogous to ts_cid_score_trees but uses SPIC (Splitwise Phylogenetic
+// Information Content) instead of MCI.  Builds SpicData once and reuses
+// across all candidates.  Returns negated SPIC sums (lower = better).
+// ---------------------------------------------------------------------------
+
+// [[Rcpp::export]]
+NumericVector ts_spic_score_trees(
+    List splitMatrices,
+    int nTip,
+    List candidateEdges)
+{
+  if (splitMatrices.size() == 0)
+    Rcpp::stop("ts_spic_score_trees: no input trees provided.");
+
+  // Build CidData first (to get the split sets), then SpicData
+  ts::CidData cd = cid_data_from_splits(splitMatrices, nTip);
+  ts::SpicData sd = ts::build_spic_data(cd);
+
+  int n_cand = candidateEdges.size();
+  NumericVector result(n_cand, R_PosInf);
+
+  for (int i = 0; i < n_cand; ++i) {
+    IntegerMatrix edge = Rcpp::as<IntegerMatrix>(candidateEdges[i]);
+    int n_edge = edge.nrow();
+    std::vector<int> ep(n_edge), ec(n_edge);
+    for (int j = 0; j < n_edge; ++j) {
+      ep[j] = edge(j, 0);
+      ec[j] = edge(j, 1);
+    }
+    ts::TreeState tree = cid_tree_from_edge(ep.data(), ec.data(), n_edge, nTip);
+    result[i] = ts::spic_score(tree, sd);
+  }
+  return result;
+}
+
+
+// ---------------------------------------------------------------------------
+// ts_spic_prescreen_rogue: batch SPIC prescreen for rogue taxon detection.
+//
+// For each tip in droppableTips, masks out the tip from the candidate tree
+// and input tree split data, then computes the SPIC score of the reduced
+// candidate against the reduced inputs.  All masking via bit operations.
+// ---------------------------------------------------------------------------
+
+// Mask a split set for SPIC rogue prescreen: clear one tip's bit.
+// Removes trivial splits and builds result in dst.
+// Reuse the same mask_splits() already defined for CID prescreen.
+
+// [[Rcpp::export]]
+NumericVector ts_spic_prescreen_rogue(
+    List splitMatrices,
+    int nTip,
+    IntegerMatrix candidateEdge,
+    IntegerVector droppableTips)
+{
+  if (splitMatrices.size() == 0)
+    Rcpp::stop("ts_spic_prescreen_rogue: no input trees provided.");
+  if (droppableTips.size() == 0)
+    return NumericVector(0);
+
+  // Build CidData to get split sets, then SpicData
+  ts::CidData cd = cid_data_from_splits(splitMatrices, nTip);
+
+  // Build candidate tree and compute its splits
+  int n_edge = candidateEdge.nrow();
+  std::vector<int> ep(n_edge), ec(n_edge);
+  for (int j = 0; j < n_edge; ++j) {
+    ep[j] = candidateEdge(j, 0);
+    ec[j] = candidateEdge(j, 1);
+  }
+  ts::TreeState cand_tree = cid_tree_from_edge(
+      ep.data(), ec.data(), n_edge, nTip);
+  ts::CidSplitSet full_cand;
+  std::vector<uint64_t> tip_bits_work;
+  ts::compute_splits_cid(cand_tree, tip_bits_work, full_cand);
+
+  int n_drop = droppableTips.size();
+  int n_trees = cd.n_trees;
+  int reduced = nTip - 1;
+  NumericVector result(n_drop);
+
+  ts::CidSplitSet masked_cand;
+  ts::CidSplitSet masked_input;
+
+  for (int d = 0; d < n_drop; ++d) {
+    int drop_tip_0 = droppableTips[d] - 1;
+    int drop_word = drop_tip_0 / 64;
+    int drop_bit_in_word = drop_tip_0 % 64;
+    uint64_t drop_mask = ~(1ULL << drop_bit_in_word);
+
+    // Mask candidate splits
+    mask_splits(full_cand, drop_word, drop_mask, drop_bit_in_word,
+                nTip, masked_cand);
+
+    // Build reduced SpicData from masked input splits.
+    // IC tables use 'reduced' for correct combinatorics, but n_bins
+    // must match the original bit-width (masked data retains original
+    // word count even when nTip crosses a 64-boundary).
+    std::vector<ts::CidSplitSet> masked_inputs(n_trees);
+    for (int t = 0; t < n_trees; ++t) {
+      mask_splits(cd.tree_splits[t], drop_word, drop_mask, drop_bit_in_word,
+                  nTip, masked_inputs[t]);
+    }
+    ts::SpicData sd = ts::build_spic_data_from_splits(
+        masked_inputs, reduced, n_trees, cd.n_bins);
+    int orig_n_bins = cd.n_bins;
+
+    // Score the masked candidate against the masked inputs
+    double total_ic = 0.0;
+    for (int s = 0; s < masked_cand.n_splits; ++s) {
+      const uint64_t* sp = masked_cand.split(s);
+      int a = masked_cand.in_split[s];
+      int b = reduced - a;
+      if (a < 2 || b < 2) continue;
+
+      uint64_t h = ts::hash_split_key(sp, orig_n_bins);
+      int count = 0;
+      auto range = sd.freq_table.equal_range(h);
+      for (auto it = range.first; it != range.second; ++it) {
+        if (it->second.in_split == a &&
+            std::memcmp(sp, it->second.data.data(),
+                        sizeof(uint64_t) * orig_n_bins) == 0) {
+          count = it->second.count;
+          break;
+        }
+      }
+      double freq = static_cast<double>(count) / n_trees;
+      total_ic += ts::split_ic(a, reduced, freq, sd);
+    }
+    result[d] = -total_ic;
   }
   return result;
 }

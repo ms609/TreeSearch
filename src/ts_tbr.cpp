@@ -73,7 +73,7 @@ static double full_rescore(TreeState& tree, const DataSet& ds) {
   double s = score_tree(tree, ds);
   // CID mode: score_tree() returns CID (doesn't run Fitch), but
   // subsequent incremental screening needs populated Fitch state arrays.
-  if (ds.scoring_mode == ScoringMode::CID) {
+  if (is_cid_like(ds.scoring_mode)) {
     fitch_score(tree, ds);
   }
   return s;
@@ -541,7 +541,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   int n_zero_skipped = 0;
   int hits = 1;
   const bool use_iw = std::isfinite(ds.concavity);
-  const bool is_cid = (ds.scoring_mode == ScoringMode::CID);
+  const bool is_cid = is_cid_like(ds.scoring_mode);
   // Floating-point tolerance for score equality
   const double eps = use_iw ? 1e-10 : 0.0;
 

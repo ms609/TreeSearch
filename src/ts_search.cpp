@@ -21,7 +21,7 @@ namespace ts {
 static double full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
   double s = score_tree(tree, ds);
-  if (ds.scoring_mode == ScoringMode::CID) {
+  if (is_cid_like(ds.scoring_mode)) {
     fitch_score(tree, ds);
   }
   return s;
@@ -206,7 +206,7 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
   int hits = 1;
 
   const bool use_iw = std::isfinite(ds.concavity);
-  const bool is_cid = (ds.scoring_mode == ScoringMode::CID);
+  const bool is_cid = is_cid_like(ds.scoring_mode);
   const double eps = use_iw ? 1e-10 : 0.0;
 
   // Detect inapplicable characters

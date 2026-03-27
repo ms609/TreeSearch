@@ -2,6 +2,7 @@
 #include "ts_hsj.h"
 #include "ts_sankoff.h"
 #include "ts_cid.h"
+#include "ts_spic.h"
 #include <vector>
 #include <R.h>
 
@@ -831,6 +832,9 @@ double fitch_score_ew(TreeState& tree, const DataSet& ds) {
 double score_tree(TreeState& tree, const DataSet& ds) {
   if (ds.scoring_mode == ScoringMode::CID) {
     return cid_score(tree, *ds.cid_data);
+  }
+  if (ds.scoring_mode == ScoringMode::SPIC) {
+    return spic_score(tree, *ds.spic_data);
   }
 
   if (ds.scoring_mode == ScoringMode::HSJ) {

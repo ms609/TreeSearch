@@ -228,6 +228,17 @@ void restore_cid_weights(CidData& cd);
 // Synchronize CidData tree weights with MRP block perturbation.
 void sync_cid_weights_from_mrp(CidData& cd, const DataSet& ds);
 
+// FNV-1a hash for split data (used for O(1) lookup in frequency tables).
+inline uint64_t hash_split_key(const uint64_t* data, int n_bins) {
+  if (n_bins == 1) return data[0];
+  uint64_t h = 14695981039346656037ULL;
+  for (int i = 0; i < n_bins; ++i) {
+    h ^= data[i];
+    h *= 1099511628211ULL;
+  }
+  return h;
+}
+
 } // namespace ts
 
 #endif // TS_CID_H

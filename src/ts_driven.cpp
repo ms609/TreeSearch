@@ -79,7 +79,7 @@ ReplicateResult run_single_replicate(
   // (nni_search() does not enforce constraints) and for CID mode
   // (nni_search() lacks dual MRP/CID score tracking).
   bool nni_wagner = params.nni_first && (!cd || !cd->active)
-                    && (ds.scoring_mode != ScoringMode::CID);
+                    && !is_cid_like(ds.scoring_mode);
 
   // 1. Starting tree: dispatch on StartStrategy.
   //

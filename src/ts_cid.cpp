@@ -169,19 +169,7 @@ double clustering_entropy_fast(const CidSplitSet& ss, int n_tips,
 }
 
 
-// ==========================================================================
-// Split hashing for O(1) exact-match lookup
-// ==========================================================================
-
-static inline uint64_t hash_split_key(const uint64_t* data, int n_bins) {
-  if (n_bins == 1) return data[0];
-  uint64_t h = 14695981039346656037ULL;
-  for (int i = 0; i < n_bins; ++i) {
-    h ^= data[i];
-    h *= 1099511628211ULL;
-  }
-  return h;
-}
+// hash_split_key() now in ts_cid.h (inline, shared with ts_spic.cpp)
 
 
 // ==========================================================================

@@ -22,7 +22,7 @@ namespace ts {
 static double drift_full_rescore(TreeState& tree, const DataSet& ds) {
   tree.reset_states(ds);
   double s = score_tree(tree, ds);
-  if (ds.scoring_mode == ScoringMode::CID) {
+  if (is_cid_like(ds.scoring_mode)) {
     fitch_score(tree, ds);
   }
   return s;
@@ -356,7 +356,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
   double score = drift_full_rescore(tree, ds);
   int n_accepted = 0;
   const bool use_iw = std::isfinite(ds.concavity);
-  const bool is_cid = (ds.scoring_mode == ScoringMode::CID);
+  const bool is_cid = is_cid_like(ds.scoring_mode);
   const double eps = use_iw ? 1e-10 : 0.0;
 
   // CID mode: track MRP screening score separately from CID score.

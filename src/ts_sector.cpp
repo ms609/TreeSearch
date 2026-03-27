@@ -271,7 +271,7 @@ static void collect_clade_nodes(const TreeState& tree, int node,
 // needs valid final_ to construct the HTU pseudo-tip.  This helper runs
 // a full Fitch scoring on the MRP characters when needed.
 static void prepare_cid_states(TreeState& tree, const DataSet& ds) {
-  if (ds.scoring_mode == ScoringMode::CID) {
+  if (is_cid_like(ds.scoring_mode)) {
     fitch_score(tree, ds);
   }
 }
@@ -447,9 +447,10 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   // CID mode: sector-internal search uses Fitch on MRP characters;
   // full CID is verified on the complete tree after reinsertion.
   rd.data.scoring_mode = ds.scoring_mode;
-  if (rd.data.scoring_mode == ScoringMode::CID) {
+  if (is_cid_like(rd.data.scoring_mode)) {
     rd.data.scoring_mode = ScoringMode::EW;
     rd.data.cid_data = nullptr;
+    rd.data.spic_data = nullptr;
   }
   rd.data.ew_offset = ds.ew_offset;
   rd.data.precomputed_steps = ds.precomputed_steps;

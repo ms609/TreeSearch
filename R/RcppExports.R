@@ -204,8 +204,16 @@ ts_sankoff_test <- function(edge, n_states_r, cost_matrices_r, tip_states_r, for
     .Call(`_TreeSearch_ts_sankoff_test`, edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r)
 }
 
-ts_cid_consensus <- function(splitMatrices, nTip, normalize, maxReplicates = 100L, targetHits = 10L, tbrMaxHits = 1L, ratchetCycles = 10L, ratchetPerturbProb = 0.04, ratchetPerturbMode = 0L, ratchetAdaptive = FALSE, driftCycles = 6L, driftAfdLimit = 3L, driftRfdLimit = 0.1, xssRounds = 0L, xssPartitions = 4L, rssRounds = 0L, cssRounds = 0L, cssPartitions = 4L, sectorMinSize = 6L, sectorMaxSize = 50L, fuseInterval = 3L, fuseAcceptEqual = FALSE, poolMaxSize = 100L, poolSuboptimal = 0.0, maxSeconds = 0.0, verbosity = 0L, tabuSize = 100L, wagnerStarts = 1L, nThreads = 1L, screeningK = 7.0, screeningTolerance = 0.0, screeningTopK = 1L, scoreTol = 0.0, plateauReps = 0L, startEdge = NULL, progressCallback = NULL) {
-    .Call(`_TreeSearch_ts_cid_consensus`, splitMatrices, nTip, normalize, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, tabuSize, wagnerStarts, nThreads, screeningK, screeningTolerance, screeningTopK, scoreTol, plateauReps, startEdge, progressCallback)
+ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr) {
+    .Call(`_TreeSearch_ts_wagner_bias_bench`, contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr)
+}
+
+ts_test_strategy_tracker <- function(seed, n_draws) {
+    .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws)
+}
+
+ts_cid_consensus <- function(splitMatrices, nTip, normalize, maxReplicates = 100L, targetHits = 10L, tbrMaxHits = 1L, ratchetCycles = 10L, ratchetPerturbProb = 0.04, ratchetPerturbMode = 0L, ratchetAdaptive = FALSE, driftCycles = 6L, driftAfdLimit = 3L, driftRfdLimit = 0.1, xssRounds = 0L, xssPartitions = 4L, rssRounds = 0L, cssRounds = 0L, cssPartitions = 4L, sectorMinSize = 6L, sectorMaxSize = 50L, fuseInterval = 3L, fuseAcceptEqual = FALSE, poolMaxSize = 100L, poolSuboptimal = 0.0, maxSeconds = 0.0, verbosity = 0L, tabuSize = 100L, wagnerStarts = 1L, nThreads = 1L, screeningK = 7.0, screeningTolerance = 0.0, screeningTopK = 1L, scoreTol = 0.0, plateauReps = 0L, startEdge = NULL, progressCallback = NULL, scoringMethod = 0L) {
+    .Call(`_TreeSearch_ts_cid_consensus`, splitMatrices, nTip, normalize, maxReplicates, targetHits, tbrMaxHits, ratchetCycles, ratchetPerturbProb, ratchetPerturbMode, ratchetAdaptive, driftCycles, driftAfdLimit, driftRfdLimit, xssRounds, xssPartitions, rssRounds, cssRounds, cssPartitions, sectorMinSize, sectorMaxSize, fuseInterval, fuseAcceptEqual, poolMaxSize, poolSuboptimal, maxSeconds, verbosity, tabuSize, wagnerStarts, nThreads, screeningK, screeningTolerance, screeningTopK, scoreTol, plateauReps, startEdge, progressCallback, scoringMethod)
 }
 
 ts_cid_score_trees <- function(splitMatrices, nTip, candidateEdges) {
@@ -216,11 +224,11 @@ ts_cid_prescreen_rogue <- function(splitMatrices, nTip, candidateEdge, droppable
     .Call(`_TreeSearch_ts_cid_prescreen_rogue`, splitMatrices, nTip, candidateEdge, droppableTips)
 }
 
-ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr) {
-    .Call(`_TreeSearch_ts_wagner_bias_bench`, contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr)
+ts_spic_score_trees <- function(splitMatrices, nTip, candidateEdges) {
+    .Call(`_TreeSearch_ts_spic_score_trees`, splitMatrices, nTip, candidateEdges)
 }
 
-ts_test_strategy_tracker <- function(seed, n_draws) {
-    .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws)
+ts_spic_prescreen_rogue <- function(splitMatrices, nTip, candidateEdge, droppableTips) {
+    .Call(`_TreeSearch_ts_spic_prescreen_rogue`, splitMatrices, nTip, candidateEdge, droppableTips)
 }
 

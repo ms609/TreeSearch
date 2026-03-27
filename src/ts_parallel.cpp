@@ -6,6 +6,7 @@
 #include "ts_fuse.h"
 #include "ts_tbr.h"
 #include "ts_cid.h"
+#include "ts_spic.h"
 
 #include <R.h>
 #include <Rmath.h>
@@ -114,6 +115,13 @@ void worker_thread(WorkerContext ctx) {
   if (ds_local.cid_data) {
     cid_local = *ds_local.cid_data;
     ds_local.cid_data = &cid_local;
+  }
+
+  // Deep-copy SpicData for thread-local scratch buffers.
+  SpicData spic_local;
+  if (ds_local.spic_data) {
+    spic_local = *ds_local.spic_data;
+    ds_local.spic_data = &spic_local;
   }
 
   ConstraintData cd_local;
