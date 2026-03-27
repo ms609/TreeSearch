@@ -26,7 +26,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-150 | P2 | PARKED (F, GHA 23646972365) | — | **CID-optimal consensus tree search** | PR #213. GHA 23645305415 failed: bare Consensus() in vignettes (not on search path). Fixed 23d93f2e. Re-dispatched GHA 23646972365. |
-| T-204 | P2 | PARKED (F, GHA 23646124106) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23644617599 failed: 98 deprecation warnings (Morphy/PhyDat2Morphy) in tests. Fixed 41ae291a (suppressWarnings). Re-dispatched GHA 23646124106. |
+| T-204 | P2 | PARKED (F, GHA 23647123007) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23644617599 failed: 98 deprecation warnings (Morphy/PhyDat2Morphy) in tests. Fixed 41ae291a (suppressWarnings). Re-dispatched GHA 23646124106. |
 
 
 ### Bugs
