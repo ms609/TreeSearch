@@ -1,5 +1,31 @@
 # TreeSearch — Strategic Coordination
 
+## S-COORD Round 39 Summary (2026-03-27 16:05 GMT)
+
+**GHA results confirmed (all PASS):**
+- GHA 23653228247 (F-015: ratchet constraint staleness) — **PASSED**
+- GHA 23653513217 (F-016: NNI-perturb constraint staleness) — **PASSED**
+- GHA 23653782359 (F-018: prune-reinsert constraint staleness) — **PASSED**
+
+All constraint-staleness fixes now validated on both platforms. The full sweep
+(TBR T-278, drift T-279, sector E-003, ratchet F-015, NNI-perturb F-016,
+prune-reinsert F-018) is complete. All 6 constrained search modules now
+consistently call `update_constraint(tree, *cd)` after any topology revert.
+
+**Hamilton SSH unavailable** — can't poll T-289 (SLURM 16607721) or T-269
+(SLURM 16607719/16607720). Jobs were submitted ~1.5h ago; T-289 ETA ~2.7h
+from submission, so likely still running. Results will be in `t289_results/`
+and `t269_results/` when complete.
+
+**PR status:** #213 (T-150), #216 (T-204), #237 (T-279) still awaiting human
+merge. No new PRs needed (F-015/016/018 were direct cpp-search commits).
+
+**Task queue:** T-289 PARKED, T-269 PARKED, T-245 OPEN (only specific open
+task). Standing tasks now **P1** (<3 open specific tasks).
+
+**Agent F next:** S-RED focus 23 (ts_fitch.cpp, 844+288 lines — core Fitch
+scoring engine).
+
 ## S-COORD Round 37 Summary (2026-03-27 15:15 GMT)
 
 **T-289 dispatched (F):** Prune-reinsert benchmark Stage 1 submitted to Hamilton
