@@ -25,30 +25,8 @@ int fitch_downpass_node(
   int steps = popcount64(needs_union);
 
   // Pass 2: compute output states with broadcast masks
-#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
-  simd::v128 ai = simd::set1_64(any_intersect);
-  simd::v128 nu = simd::set1_64(needs_union);
-  int s = 0;
-  for (; s + 2 <= n_states; s += 2) {
-    simd::v128 l = simd::loadu128(&left_state[s]);
-    simd::v128 r = simd::loadu128(&right_state[s]);
-    simd::v128 isect = simd::and128(l, r);
-    simd::v128 uni = simd::or128(l, r);
-    simd::storeu128(&node_state[s],
-        simd::or128(simd::and128(isect, ai), simd::and128(uni, nu)));
-  }
-  for (; s < n_states; ++s) {
-    uint64_t isect = left_state[s] & right_state[s];
-    uint64_t uni = left_state[s] | right_state[s];
-    node_state[s] = (isect & any_intersect) | (uni & needs_union);
-  }
-#else
-  for (int s = 0; s < n_states; ++s) {
-    uint64_t isect = left_state[s] & right_state[s];
-    uint64_t uni = left_state[s] | right_state[s];
-    node_state[s] = (isect & any_intersect) | (uni & needs_union);
-  }
-#endif
+  simd::fitch_combine(left_state, right_state, node_state, n_states,
+                      any_intersect, needs_union);
 
   return steps;
 }
@@ -121,32 +99,8 @@ int fitch_downpass(TreeState& tree, const DataSet& ds) {
           needs_union;
 
       // Compute output states with broadcast masks
-#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
-      {
-        simd::v128 ai = simd::set1_64(any_intersect);
-        simd::v128 nuvec = simd::set1_64(needs_union);
-        int s = 0;
-        for (; s + 2 <= blk.n_states; s += 2) {
-          simd::v128 l = simd::loadu128(&left_state[s]);
-          simd::v128 r = simd::loadu128(&right_state[s]);
-          simd::v128 isect = simd::and128(l, r);
-          simd::v128 uni = simd::or128(l, r);
-          simd::storeu128(&node_state[s],
-              simd::or128(simd::and128(isect, ai), simd::and128(uni, nuvec)));
-        }
-        for (; s < blk.n_states; ++s) {
-          uint64_t isect = left_state[s] & right_state[s];
-          uint64_t uni = left_state[s] | right_state[s];
-          node_state[s] = (isect & any_intersect) | (uni & needs_union);
-        }
-      }
-#else
-      for (int s = 0; s < blk.n_states; ++s) {
-        uint64_t isect = left_state[s] & right_state[s];
-        uint64_t uni = left_state[s] | right_state[s];
-        node_state[s] = (isect & any_intersect) | (uni & needs_union);
-      }
-#endif
+      simd::fitch_combine(left_state, right_state, node_state,
+                          blk.n_states, any_intersect, needs_union);
     }
   }
 
