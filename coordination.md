@@ -1,6 +1,58 @@
 # TreeSearch — Strategic Coordination
 
-Last updated: 2026-03-27 10:40 GMT (S-COORD round 32 by F)
+Last updated: 2026-03-27 14:55 GMT (S-COORD round 35 by F)
+
+## S-COORD Round 35 Summary (2026-03-27 14:55 GMT)
+
+**T-253 complete (F):** Gap characterization by dataset features done.
+ntax is dominant predictor of search difficulty (ρ≈0.63 in both T-265 fitch-mode gaps
+and T-252 mbank convergence gaps). nchar matters only at extremes (>2000). pct_missing/
+pct_inapp weakly correlated but likely confounded with ntax. T-245 (TBR batching)
+confirmed as highest-priority next step for ≥75-taxon regime. Results in
+`dev/benchmarks/t253_gap_characterization.md`. commit d05638e5.
+
+**T-150 WORDLIST fix (F):** "Splitwise" was missing from inst/WORDLIST — the spell-check
+test failure root cause. Added and re-dispatched as GHA 23648875258. Previous GHA
+23648267378 failed on this (and only this) issue.
+
+**3 GHAs running:**
+- 23648875258 (T-150, feature/cid-consensus, PR #213)
+- 23648401936 (T-204, feature/native-search, PR #216)
+- 23648703841 (S-RED fix, cpp-search: perturb_stop in parallel path)
+
+**Task queue:** 2 unblocked OPEN specific tasks (T-245, T-269) + E-002 (soft-blocked
+on T-150/T-204 merge) + E-001 (ASSIGNED E). Standing tasks at **P2** (3–5 open).
+Next priority: S-RED focus 6 (ts_tbr.cpp review) while GHAs run.
+
+**Agent F next:** S-RED focus 6.
+
+## S-COORD Round 34 Summary (2026-03-27 13:45 GMT)
+
+**T-277 (ScoreSpectrum, B):** Merged via PR #236 to cpp-search. Removed from to-do.md; added to completed-tasks.md.
+
+**T-276 (convergence summary, F):** DONE. GHA 23647640670 PASS. Removed from to-do.md.
+
+**S-RED focus 5 (ts_parallel.cpp, F):** Bug fixed — `result.perturb_stop` not initialized (UB) and not set in parallel path. commit 1a640b73. GHA 23648703841 running.
+
+**ASan.yml fix (E):** `pak::pak("r-lib/rlang")` approach broken — GitHub dev rlang 1.1.7.9000 also embeds `PREXPR` in `src/rlang/rlang-types.h`. New approach: patch CRAN source tarball with `#ifndef PREXPR / #define PREXPR(x) R_PromiseExpr(x) / #endif` shim before `R CMD INSTALL`. commit 05261c34. GHA 23648993981 dispatched to verify.
+
+**Agent C file stale:** agent-c.md still shows T-214 as PARKED, but T-214 was completed (GHA 23542642164 PASS, per completed-tasks.md). C should update agent-c.md on next assignment.
+
+**NEWS.md gap (E):** NEWS.md was last updated 2026-03-18. Since then, multiple new SearchControl() parameters have been added (nniFirst, nniPerturbCycles/Fraction, postRatchetSectorial, outerCycles, wagnerBias/BiasTemp, adaptiveLevel, maxPruneReinsertion) that are absent from NEWS. Verbosity convergence summary (T-276) also missing. Filed E-001 (P2).
+
+**Agent status:**
+- A: IDLE. Can take T-245/T-269/E-002 or S-RED focus 6.
+- B: IDLE (T-277 merged — B may not know yet). Can take T-245/T-269/E-002.
+- C: IDLE (T-214 was done — file stale). Can take T-245/T-269/E-002.
+- D: IDLE. Can take T-245/T-269/E-002.
+- E: ASSIGNED E-001 (NEWS.md update). T-150/T-204 PRs parked waiting GHA (F).
+- F: Parked on T-150 (GHA 23648875258) and T-204 (GHA 23648401936). ASSIGNED T-253.
+
+**Task queue:** 4 unblocked OPEN specific tasks (T-245 OPEN, T-269 OPEN, E-001 ASSIGNED E, E-002 OPEN) → **standing tasks at P2** (3–5).
+
+**Open PRs:** #213 (T-150, GHA 23648875258 running), #216 (T-204, GHA 23648401936 running), #210 (cpp-search→main, DRAFT — needs E-001 done before review).
+
+
 
 ## S-COORD Round 32 Summary (2026-03-27 10:40 GMT)
 
