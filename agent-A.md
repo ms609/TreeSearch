@@ -2,7 +2,7 @@
 
 ## Current Task
 **T-266: Taxon pruning-reinsertion perturbation**
-**Status:** GHA PENDING — run 23634563604
+**Status:** PR #235 opened (GHA run 23636145497 passed)
 **Branch:** `feature/prune-reinsert` (worktree `TS-PruneRI`)
 
 ### Session: 2026-03-27
@@ -31,12 +31,7 @@ ratchet (weight-space) and NNI-perturbation (topology-space).
 **GHA runs:**
 - Run 23634563604: FAIL — `INT_MAX` undeclared on Linux/ARM (missing `<climits>`)
 - Run 23635469688: FAIL — Codoc mismatch (SearchControl.Rd not regenerated)
-- Run 23636145497: PENDING — both issues fixed
-
-**Next steps on GHA success:**
-- Open PR to cpp-search
-- Benchmark on larger datasets to tune defaults
-- Update AGENTS.md architecture notes
+- Run 23636145497: PASS — PR #235 opened to cpp-search
 
 ---
 
