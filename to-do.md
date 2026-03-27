@@ -53,10 +53,6 @@
 
 ### TNT Comparison & Strategy Learning
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| T-253 | P3 | ASSIGNED (F) | — | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | T-252 complete: 25-matrix training baseline at 30/60/120s downloaded (t252_mbank_*.csv). ≤35t: all converge at 30s. 36-65t: near-optimal. 66-135t: still improving. project4284 (4062t): can't complete 1 replicate. **NB:** always compare like-for-like scoring (Fitch vs Fitch). |
-
 ### Strategy Tuning
 
 | ID | Pri | Status | Blocks | Description | Notes |
@@ -66,7 +62,10 @@
 
 ### Housekeeping
 
-(no open tasks)
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| E-001 | P2 | ASSIGNED (E) | cpp-search→main | **Update NEWS.md for SearchControl additions since 2026-03-18.** Add entries for: `nniFirst`, `nniPerturbCycles`/`nniPerturbFraction`, `postRatchetSectorial`, `outerCycles`, `wagnerBias`/`wagnerBiasTemp`, `adaptiveLevel`, prune-reinsert (`maxPruneReinsertion`); verbosity convergence summary (T-276); fix `consensusStableReps` bullet (opt-in via SearchControl, disabled in all presets). Prerequisite for cpp-search→main review. | Check `?SearchControl` Rd and R/MaximizeParsimony.R for current param list. |
+| E-002 | P3 | OPEN | — | **SearchControl Rd completeness check.** After T-150/T-204 merge, verify all parameters in `SearchControl()` Rd match the actual function signature. File bugs for any missing/stale param docs. | Short task; likely 30 min. |
 
 
 
@@ -76,5 +75,5 @@
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 5 by F (ts_parallel.cpp, 589 lines). Bug found and fixed: `result.perturb_stop` never initialized (UB) and not set to `true` when perturb-stop fires in parallel path — serial path had both correct. commit 1a640b73. GHA 23648703841. Next: ts_tbr.cpp or ts_ratchet.cpp (core search modules not reviewed recently). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 33 by F. T-274 done, T-275 done, T-276 done (F), T-277 merged (PR #236). Unblocked OPEN: T-245, T-253 (ASSIGNED F), T-269 → 3 specific OPEN → standing at P2. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 33 by F. T-253 complete. Remaining OPEN: T-245, T-269 + E-002 → standing at P2. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 round 38 by E. #213 (T-150): GHA 23648267378 FAILED (Splitwise+reorder NOTE) → F applied WORDLIST fix 9b7ee66e, redispatch GHA 23648875258. #216 (T-204): GHA 23648401936 running. **ASAN**: `pak::pak("r-lib/rlang")` approach broken — GitHub dev version also embeds PREXPR in rlang-types.h. New fix: patch-and-install CRAN source with `#define PREXPR(x) R_PromiseExpr(x)` shim (ASan.yml updated, needs feature branches to rebase). Open PRs: #213, #216, #210 (DRAFT). |
