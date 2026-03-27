@@ -39,11 +39,11 @@ tokens <- matrix(c(
   0, 0, 0, 0, 0, 0), byrow = TRUE, nrow = 2L,
   dimnames = list(letters[1:2], NULL))
 pd <- TreeTools::MatrixToPhyDat(tokens)
-morphyObj <- PhyDat2Morphy(pd)
+suppressWarnings(morphyObj <- PhyDat2Morphy(pd))
 MorphyWeights(morphyObj)
 if (SetMorphyWeights(c(1, 1.5, 2/3), morphyObj) != 0L) message("Errored")
 MorphyWeights(morphyObj)
-morphyObj <- UnloadMorphy(morphyObj)
+suppressWarnings(morphyObj <- UnloadMorphy(morphyObj))
 }
 \seealso{
 Other Morphy API functions: 

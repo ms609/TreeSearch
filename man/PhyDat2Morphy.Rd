@@ -26,15 +26,15 @@ Once finished with the object, it should be destroyed using
 }
 \examples{
 data("Lobo", package="TreeTools")
-morphyObj <- PhyDat2Morphy(Lobo.phy)
+suppressWarnings(morphyObj <- PhyDat2Morphy(Lobo.phy))
 # Set object to be destroyed at end of session or closure of function
-# on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
+# on.exit(suppressWarnings(morphyObj <- UnloadMorphy(morphyObj)), add = TRUE)
 
 # Do something with pointer
 # ....
 
 # Or, instead of on.exit, manually destroy morphy object and free memory:
-morphyObj <- UnloadMorphy(morphyObj)
+suppressWarnings(morphyObj <- UnloadMorphy(morphyObj))
 }
 \seealso{
 Other Morphy API functions: 

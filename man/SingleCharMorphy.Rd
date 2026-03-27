@@ -23,7 +23,7 @@ Morphy object from single character
 \examples{
 morphyObj <- SingleCharMorphy("-0-0", gap = "Extra")
 RandomTreeScore(morphyObj)
-morphyObj <- UnloadMorphy(morphyObj)
+suppressWarnings(morphyObj <- UnloadMorphy(morphyObj))
 }
 \seealso{
 Score a tree: \code{\link[=MorphyTreeLength]{MorphyTreeLength()}}

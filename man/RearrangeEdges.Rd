@@ -71,10 +71,10 @@ tree <- TreeTools::NJTree(Lobo.phy)
 edge <- tree$edge
 parent <- edge[, 1]
 child <- edge[, 2]
-dataset <- PhyDat2Morphy(Lobo.phy)
+suppressWarnings(dataset <- PhyDat2Morphy(Lobo.phy))
 RearrangeEdges(parent, child, dataset, EdgeSwapper = RootedNNISwap)
 # Remember to free memory:
-dataset <- UnloadMorphy(dataset)
+suppressWarnings(dataset <- UnloadMorphy(dataset))
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

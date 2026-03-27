@@ -23,7 +23,7 @@ algorithm of Brazeau, Guillerme and Smith (2019).
 \examples{
 morphyObj <- SingleCharMorphy("-0-0", "Extra")
 GapHandler(morphyObj)
-morphyObj <- UnloadMorphy(morphyObj)
+suppressWarnings(morphyObj <- UnloadMorphy(morphyObj))
 }
 \seealso{
 Other Morphy API functions: 

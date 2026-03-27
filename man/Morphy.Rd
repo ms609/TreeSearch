@@ -325,9 +325,9 @@ dataset <- inapplicable.phyData[["Asher2005"]]
 
 \donttest{
 # A very quick run for demonstration purposes
-trees <- Morphy(dataset, ratchIter = 0, startIter = 0,
+trees <- suppressWarnings(Morphy(dataset, ratchIter = 0, startIter = 0,
                 tbrIter = 1, maxHits = 4, maxTime = 1/100,
-                concavity = 10, verbosity = 4)
+                concavity = 10, verbosity = 4))
 names(trees)
 cons <- Consensus(trees)
 }
