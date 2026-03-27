@@ -272,6 +272,7 @@ struct DrivenResult {
   int last_improved_rep;         // 1-based replicate that last improved score (0 = not tracked)
   bool timed_out;                // true if search ended due to timeout
   bool consensus_stable;         // true if stopped by consensus stability
+  bool perturb_stop;             // true if stopped by perturb_stop_factor
   PhaseTimings timings;          // cumulative across all replicates
 
   // Per-strategy diagnostics (populated when adaptive_start is true)

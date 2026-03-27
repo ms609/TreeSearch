@@ -249,7 +249,7 @@ this is expected and should be done carefully at feature-merge time.
 5. On GHA success, open a PR:
    ```bash
    gh pr create --base cpp-search --head feature/<name> \
-     --title "T-nnn: <description>" --body "Agent <Letter>. ..."
+     --title "<Letter>-nnn: <description>" --body "Agent <Letter>. ..."
    ```
 6. Set `to-do.md` status to `PR #N (<Letter>)`. Move on.
 7. Human reviews and merges the PR.
@@ -263,6 +263,13 @@ this is expected and should be done carefully at feature-merge time.
 ---
 
 ## Multi-agent workflow protocol
+
+> **Task IDs:** New tasks use `<Letter>-nnn` format (e.g. `A-042`), where
+> `<Letter>` is your agent letter and `nnn` is your personal counter
+> (tracked in `agent-<letter>.md`). Existing `T-nnn` IDs in `to-do.md`,
+> `completed-tasks.md`, PRs, and git log are valid and need not be renamed.
+> Before adding or removing rows in `to-do.md`, acquire the lock:
+> `bash ../../todo-lock.sh . acquire` / `bash ../../todo-lock.sh . release`.
 
 ### Worktree tasks
 
@@ -287,9 +294,10 @@ On `/assign X`:
       If the rename fails (file gone or access denied), another agent
       claimed it — skip.
    d. Create a `to-do.md` task under `### Shiny App` for each valid
-      report. Assign the next available `T-nnn` ID, a priority based on
-      severity (default P2), and tag as `[Shiny]`. Use the file's content
-      as the description/notes.
+      report. Assign a `<Letter>-nnn` ID (your letter + incremented
+      counter; see "Task IDs" in the master AGENTS.md), a priority based
+      on severity (default P2), and tag as `[Shiny]`. Use the file's
+      content as the description/notes.
    e. Delete the `aXXX.claimed-X.md` file once the `to-do.md` entry is
       written.
    f. Repeat for all claimed files before moving on. **Do not start
@@ -323,7 +331,7 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
    row in a section/group, delete the section header too.
 2. **Append** a summary row to `completed-tasks.md` under the current date
    heading (create a new `## YYYY-MM-DD` heading if needed):
-   `| T-nnn | Short description | X | Brief notes |`
+   `| <Letter>-nnn | Short description | X | Brief notes |`
 3. Set `agent-X.md` to IDLE.
 4. Append a brief entry to this file documenting what changed.
 5. Update `coordination.md` if strategic objectives are affected.

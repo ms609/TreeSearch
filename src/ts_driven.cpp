@@ -380,9 +380,8 @@ ReplicateResult run_single_replicate(
     }
 
     // 4b. NNI perturbation (topology-space escape)
-    // Skip when constraints are active: random_nni_perturb() doesn't
-    // enforce constraints. impose_constraint() repairs violations
-    // after perturbation, so this is now safe under constraints.
+    // `cd` is passed through to nni_perturb_search(), which calls
+    // impose_constraint() after perturbation; safe under constraints.
     if (nni_perturb_per > 0) {
       NNIPerturbParams np;
       np.n_cycles = nni_perturb_per;
@@ -600,6 +599,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   result.last_improved_rep = 0;
   result.timed_out = false;
   result.consensus_stable = false;
+  result.perturb_stop = false;
 
   // Perturbation-count stopping rule (T-187).
   int unsuccessful_reps = 0;
@@ -923,6 +923,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       if (fused_ok && fused_score < best_before) {
         pool.set_hits_to_best(0);
         result.last_improved_rep = rep1;
+        unsuccessful_reps = 0;  // fuse found a better score; reset perturb-stop counter
         report("fuse", 1, fused_score, rep1);
         if (params.verbosity >= 1 && !has_callback) {
           Rprintf("  Fuse improved: %.5g -> %.5g\n",
@@ -974,6 +975,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
                   ds.n_tips, params.perturb_stop_factor);
         }
       }
+      result.perturb_stop = true;
       break;
     }
 
