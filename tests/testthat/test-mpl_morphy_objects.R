@@ -1,9 +1,9 @@
 test_that("PhyDat2Morphy() errors", {
-  expect_error(PhyDat2Morphy(NA))
+  suppressWarnings(expect_error(PhyDat2Morphy(NA)))
 })
 
 test_that("UnloadMorphy() errors", {
-  expect_error(UnloadMorphy(NA))
+  suppressWarnings(expect_error(UnloadMorphy(NA)))
 })
 
 test_that("GapHandler()", {
@@ -12,20 +12,20 @@ test_that("GapHandler()", {
                    dimnames = list(letters[1:4], NULL))
   pd <- TreeTools::MatrixToPhyDat(tokens)
   
-  morphyObj <- PhyDat2Morphy(pd)
+  morphyObj <- suppressWarnings(PhyDat2Morphy(pd))
   expect_equal(0, RandomTreeScore(morphyObj))
   expect_equal("Inapplicable", GapHandler(morphyObj))
-  UnloadMorphy(morphyObj)
+  suppressWarnings(UnloadMorphy(morphyObj))
   
-  morphyObj <- PhyDat2Morphy(pd, "ambigu")
+  morphyObj <- suppressWarnings(PhyDat2Morphy(pd, "ambigu"))
   expect_equal(0, RandomTreeScore(morphyObj))
   expect_equal("Missing data", GapHandler(morphyObj))
-  UnloadMorphy(morphyObj)
+  suppressWarnings(UnloadMorphy(morphyObj))
   
-  morphyObj <- PhyDat2Morphy(pd, "eXt")
+  morphyObj <- suppressWarnings(PhyDat2Morphy(pd, "eXt"))
   expect_lt(0, RandomTreeScore(morphyObj))
   expect_equal("Extra state", GapHandler(morphyObj))
-  UnloadMorphy(morphyObj)
+  suppressWarnings(UnloadMorphy(morphyObj))
   
   morphyObj <- SingleCharMorphy("-0-0", "eXt")
   expect_lt(0, RandomTreeScore(morphyObj))
@@ -33,7 +33,7 @@ test_that("GapHandler()", {
   UnloadMorphy(morphyObj)
   
   expect_error(SingleCharMorphy("-0-0", "ERROR"))
-  expect_error(GapHandler(morphyObj))
+  suppressWarnings(expect_error(GapHandler(morphyObj)))
 })
 
 test_that("morphy_profile fails nicely", {
