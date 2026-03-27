@@ -3,6 +3,10 @@
 ## Current Task
 **IDLE** — all tasks complete this session.
 
+## S-PR + S-RED focus 1 (2026-03-27 ~10:00 GMT)
+- S-PR: Updated T-204 to-do entry with GHA run 23495097795 failure details — undocumented `CleanNativeData`/`NativeBootstrap`/`NativeLength`/`PrepareNativeData`, codoc mismatches in `Jackknife.Rd`/`Ratchet.Rd`/`TreeSearch.Rd`. B needs to regenerate Rd files and add roxygen2 docs.
+- S-RED focus 1: Reviewed ts_fitch.h/.cpp, ts_fitch_na.h, ts_fitch_na_incr.h, ts_simd.h. Focus on commits since 2026-03-19 (AVX2 dispatch, FlatBlock flat indirect, XFORM integration). No bugs found. AVX2 ops bit-identical to scalar; flat functions infrastructure only; XFORM no double-count (weight=0 removes hierarchy chars from Fitch blocks); incremental downpass/uppass stopping conditions correct.
+
 ## S-RED Focus 10 + S-PR + T-270 (2026-03-27 ~09:30–10:00 GMT)
 - S-RED focus 10: reviewed ts_fitch.cpp IW/Profile paths. BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps. 15 tests pass. commit 7cff7870.
 - S-PR: merged cpp-search into #235 (prune-reinsert, clean) and #216 (native-search, clean). #213 (cid-consensus) has ts_tbr.cpp conflict (CID vs T-263 snapshot) — aborted, needs E/human. Closed stale PR #178 (T-272 done).
