@@ -2,7 +2,7 @@
 
 ## Current Task
 **T-277 (P3)** — ScoreSpectrum() Chao1 landscape coverage estimator.
-Feature branch `feature/score-spectrum`. PARKED: GHA 23644927459.
+Feature branch `feature/score-spectrum`. PARKED: GHA 23645787062.
 
 ### Completed this session
 - T-275: Prune-reinsert guard for non-EW scoring modes (committed to cpp-search ded9897a)
