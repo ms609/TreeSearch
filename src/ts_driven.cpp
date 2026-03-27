@@ -12,6 +12,7 @@
 #include "ts_constraint.h"
 #include "ts_wagner.h"
 #include "ts_splits.h"
+#include "ts_prune_reinsert.h"
 #include "ts_rng.h"
 
 #include <R.h>
@@ -206,6 +207,9 @@ ReplicateResult run_single_replicate(
       (params.drift_cycles + n_outer - 1) / n_outer);
   const int nni_perturb_per = (params.nni_perturb_cycles == 0) ? 0 : std::max(1,
       (params.nni_perturb_cycles + n_outer - 1) / n_outer);
+  const int prune_reinsert_per = (params.prune_reinsert_cycles == 0) ? 0 :
+      std::max(1,
+      (params.prune_reinsert_cycles + n_outer - 1) / n_outer);
 
   int outer = 0;
   while (outer < n_outer) {
@@ -406,6 +410,37 @@ ReplicateResult run_single_replicate(
         Rprintf("  %s score: %.5g [%.0f ms total]\n",
                 outer_label("SA").c_str(),
                 score_tree(result.tree, ds), result.timings.anneal_ms);
+      }
+    }
+
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+
+    // 5c. Taxon pruning-reinsertion (T-266).
+    // Drop a fraction of leaves, TBR-optimize the backbone, then greedily
+    // re-add the dropped taxa and TBR-polish.  Complementary to the ratchet
+    // (which perturbs weights) and NNI-perturbation (which perturbs topology).
+    if (prune_reinsert_per > 0) {
+      PruneReinsertParams prp;
+      prp.n_cycles = prune_reinsert_per;
+      prp.drop_fraction = params.prune_reinsert_drop;
+      prp.selection = static_cast<PruneSelection>(
+          params.prune_reinsert_selection);
+      prp.tbr_max_hits = params.tbr_max_hits;
+      prp.tabu_size = params.tabu_size;
+
+      prune_reinsert_search(result.tree, ds, prp, cd, split_freq,
+                            check_timeout);
+
+      result.timings.prune_reinsert_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("PruneRI").c_str(),
+                score_tree(result.tree, ds),
+                result.timings.prune_reinsert_ms);
       }
     }
 

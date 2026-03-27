@@ -83,6 +83,20 @@ void random_topology_tree(TreeState& tree, const DataSet& ds);
 void random_constrained_tree(TreeState& tree, const DataSet& ds,
                              ConstraintData& cd);
 
+// --- Low-level helpers (used by prune-reinsert and Wagner) ---
+
+// Allocate a full-sized TreeState for n_tips taxa and load tip states.
+void init_wagner_state(TreeState& tree, const DataSet& ds);
+
+// Insert a new tip at edge (above, below), creating new_internal between them.
+void insert_tip_at_edge(TreeState& tree, int tip, int new_internal,
+                        int above, int below);
+
+// Incremental two-pass Fitch rescore after insert_tip_at_edge().
+// Returns the score delta (always positive during construction).
+int wagner_incremental_rescore(TreeState& tree, const DataSet& ds,
+                               int new_internal);
+
 } // namespace ts
 
 #endif // TS_WAGNER_H
