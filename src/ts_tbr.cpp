@@ -972,6 +972,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           restore_topology(tree, snap);
           state_snap.restore(tree);
           // state_snap.restore() already restored postorder via memcpy
+          // Re-sync constraint metadata to the restored topology.  When a
+          // constrained move passes the violation check but fails the score
+          // check, map_constraint_nodes() was already called for the
+          // post-move tree; after restoration cd->constraint_node is stale
+          // relative to the pre-move topology.  Without this re-mapping,
+          // the next clip's classify_clip_constraints() can produce false-
+          // positive or false-negative constraint violations.
+          if (constrained) {
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+          }
         }
       }
 
@@ -1008,12 +1019,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
   tree.prealloc_undo = nullptr;
 
-  // Ensure state arrays match the final tree
-  if (!states_valid) {
-    full_rescore(tree, ds);
-  } else {
-    best_score = full_rescore(tree, ds);
-  }
+  // Ensure state arrays match the final tree and return an authoritative score.
+  // states_valid is always true at this point (it is initialized true and only
+  // ever set back to true on acceptance), so both branches reduce to the same
+  // call.  Simplified to a single assignment.
+  best_score = full_rescore(tree, ds);
 
   bool converged = !(params.max_accepted_changes > 0
                      && n_accepted >= params.max_accepted_changes);
