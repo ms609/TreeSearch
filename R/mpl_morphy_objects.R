@@ -40,11 +40,13 @@ summary.morphyPtr <- function (object, ...) {
 #'   0, 0, 0, 0, 0, 0), byrow = TRUE, nrow = 2L,
 #'   dimnames = list(letters[1:2], NULL))
 #' pd <- TreeTools::MatrixToPhyDat(tokens)
+#' \donttest{
 #' morphyObj <- PhyDat2Morphy(pd)
 #' MorphyWeights(morphyObj)
 #' if (SetMorphyWeights(c(1, 1.5, 2/3), morphyObj) != 0L) message("Errored")
 #' MorphyWeights(morphyObj)
 #' morphyObj <- UnloadMorphy(morphyObj)
+#' }
 #' @template MRS
 #' @family Morphy API functions
 #' @export
@@ -87,7 +89,7 @@ SetMorphyWeights <- function (weight, morphyObj, checkInput = TRUE) {
 #' @examples 
 #' morphyObj <- SingleCharMorphy("-0-0", "Extra")
 #' GapHandler(morphyObj)
-#' morphyObj <- UnloadMorphy(morphyObj)
+#' morphyObj <- suppressWarnings(UnloadMorphy(morphyObj))
 #' @family Morphy API functions
 #' @template MRS
 #' @export
@@ -121,6 +123,7 @@ GapHandler <- function (morphyObj) {
 #' @return `PhyDat2Morphy()` returns a pointer to an initialized Morphy object.
 #' 
 #' @examples
+#' \donttest{
 #' data("Lobo", package="TreeTools")
 #' morphyObj <- PhyDat2Morphy(Lobo.phy)
 #' # Set object to be destroyed at end of session or closure of function
@@ -131,6 +134,7 @@ GapHandler <- function (morphyObj) {
 #' 
 #' # Or, instead of on.exit, manually destroy morphy object and free memory:
 #' morphyObj <- UnloadMorphy(morphyObj)
+#' }
 #' @template MRS
 #' @family Morphy API functions
 #' @importFrom TreeTools PhyToString
@@ -220,7 +224,7 @@ MorphyErrorCheck <- function(action) {
 #' @examples 
 #' morphyObj <- SingleCharMorphy("-0-0", gap = "Extra")
 #' RandomTreeScore(morphyObj)
-#' morphyObj <- UnloadMorphy(morphyObj)
+#' morphyObj <- suppressWarnings(UnloadMorphy(morphyObj))
 #' @template MRS
 #' @seealso 
 #' Score a tree: [`MorphyTreeLength()`]

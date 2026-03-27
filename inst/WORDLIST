@@ -183,6 +183,7 @@ cdef
 cdot
 cf
 cla
+cleanup
 codecov
 config
 colourblind
@@ -222,6 +223,7 @@ outgroup
 pachycephalosaurid
 palaeoscolecid
 patagonensis
+phyDat
 phyllostomid
 phylo
 phylogenetics

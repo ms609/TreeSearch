@@ -253,7 +253,7 @@
 #'   c(0, 1, 1, 1, 0, 0,
 #'     1, 1, 1, 0, 0, 0), ncol = 2,
 #'   dimnames = list(letters[1:6], NULL)))
-#' Morphy(characters, constraint = constraint, verbosity = 0)
+#' suppressWarnings(Morphy(characters, constraint = constraint, verbosity = 0))
 #' 
 #' @template MRS
 #' 
