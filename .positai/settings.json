@@ -1,6 +1,6 @@
 {
   "model": {
-    "id": "claude-opus-4-6",
+    "id": "claude-sonnet-4-6",
     "provider": "positai",
     "thinkingEffort": "high"
   },
@@ -46,7 +46,8 @@
       "*": "allow"
     },
     "skill": {
-      "r-package-profiling": "allow"
+      "r-package-profiling": "allow",
+      "hamilton-hpc": "allow"
     },
     "webfetch": {
       "https://repo.r-wasm.org/*": "allow",

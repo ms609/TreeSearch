@@ -27,30 +27,8 @@ int fitch_downpass_node(
   int steps = popcount64(needs_union);
 
   // Pass 2: compute output states with broadcast masks
-#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
-  simd::v128 ai = simd::set1_64(any_intersect);
-  simd::v128 nu = simd::set1_64(needs_union);
-  int s = 0;
-  for (; s + 2 <= n_states; s += 2) {
-    simd::v128 l = simd::loadu128(&left_state[s]);
-    simd::v128 r = simd::loadu128(&right_state[s]);
-    simd::v128 isect = simd::and128(l, r);
-    simd::v128 uni = simd::or128(l, r);
-    simd::storeu128(&node_state[s],
-        simd::or128(simd::and128(isect, ai), simd::and128(uni, nu)));
-  }
-  for (; s < n_states; ++s) {
-    uint64_t isect = left_state[s] & right_state[s];
-    uint64_t uni = left_state[s] | right_state[s];
-    node_state[s] = (isect & any_intersect) | (uni & needs_union);
-  }
-#else
-  for (int s = 0; s < n_states; ++s) {
-    uint64_t isect = left_state[s] & right_state[s];
-    uint64_t uni = left_state[s] | right_state[s];
-    node_state[s] = (isect & any_intersect) | (uni & needs_union);
-  }
-#endif
+  simd::fitch_combine(left_state, right_state, node_state, n_states,
+                      any_intersect, needs_union);
 
   return steps;
 }
@@ -123,32 +101,8 @@ int fitch_downpass(TreeState& tree, const DataSet& ds) {
           needs_union;
 
       // Compute output states with broadcast masks
-#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
-      {
-        simd::v128 ai = simd::set1_64(any_intersect);
-        simd::v128 nuvec = simd::set1_64(needs_union);
-        int s = 0;
-        for (; s + 2 <= blk.n_states; s += 2) {
-          simd::v128 l = simd::loadu128(&left_state[s]);
-          simd::v128 r = simd::loadu128(&right_state[s]);
-          simd::v128 isect = simd::and128(l, r);
-          simd::v128 uni = simd::or128(l, r);
-          simd::storeu128(&node_state[s],
-              simd::or128(simd::and128(isect, ai), simd::and128(uni, nuvec)));
-        }
-        for (; s < blk.n_states; ++s) {
-          uint64_t isect = left_state[s] & right_state[s];
-          uint64_t uni = left_state[s] | right_state[s];
-          node_state[s] = (isect & any_intersect) | (uni & needs_union);
-        }
-      }
-#else
-      for (int s = 0; s < blk.n_states; ++s) {
-        uint64_t isect = left_state[s] & right_state[s];
-        uint64_t uni = left_state[s] | right_state[s];
-        node_state[s] = (isect & any_intersect) | (uni & needs_union);
-      }
-#endif
+      simd::fitch_combine(left_state, right_state, node_state,
+                          blk.n_states, any_intersect, needs_union);
     }
   }
 
@@ -761,8 +715,17 @@ void precompute_profile_delta(const DataSet& ds,
     int idx_old = s - 1;       // 0-based row for current step count
     int idx_new = s;           // 0-based row for step count + 1
 
-    double old_cost = (idx_old >= 0 && idx_old < ds.info_max_steps)
-        ? ds.info_amounts[idx_old + ds.info_max_steps * p] : 0.0;
+    // old_cost: 0 if invariant (s<=0), capped at max if beyond table.
+    // Note: must mirror the capping in compute_profile() to avoid overestimating
+    // delta when divided_steps already exceeds info_max_steps (S-RED focus 10).
+    double old_cost;
+    if (idx_old < 0) {
+      old_cost = 0.0;
+    } else if (idx_old < ds.info_max_steps) {
+      old_cost = ds.info_amounts[idx_old + ds.info_max_steps * p];
+    } else {
+      old_cost = ds.info_amounts[(ds.info_max_steps - 1) + ds.info_max_steps * p];
+    }
 
     double new_cost;
     if (idx_new >= 0 && idx_new < ds.info_max_steps) {

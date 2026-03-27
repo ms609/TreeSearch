@@ -18,8 +18,6 @@ static void check_wagner_precondition(int n_tip) {
   }
 }
 
-namespace {
-
 // Initialize a full-sized TreeState for Wagner construction.
 // Allocates all arrays but does not set topology (caller does that).
 void init_wagner_state(TreeState& tree, const DataSet& ds) {
@@ -237,8 +235,6 @@ int wagner_incremental_rescore(TreeState& tree, const DataSet& ds,
 
   return score_delta;
 }
-
-} // anonymous namespace
 
 // Expose the is_ancestor_or_equal helper for constraint checking.
 static inline bool is_ancestor_or_equal(

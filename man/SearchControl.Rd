@@ -32,6 +32,7 @@ SearchControl(
   cssPartitions = 4L,
   sectorMinSize = 6L,
   sectorMaxSize = 50L,
+  postRatchetSectorial = FALSE,
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
   intraFuse = FALSE,
@@ -41,6 +42,9 @@ SearchControl(
   perturbStopFactor = 2L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
+  pruneReinsertCycles = 0L,
+  pruneReinsertDrop = 0.1,
+  pruneReinsertSelection = 0L,
   annealCycles = 0L,
   annealPhases = 5L,
   annealTStart = 20,
@@ -146,6 +150,10 @@ sectorial search.}
 \item{sectorMinSize, sectorMaxSize}{Integer; minimum and maximum clade
 sizes for sectorial search.}
 
+\item{postRatchetSectorial}{Logical; when \code{TRUE}, run XSS+RSS+CSS again
+after ratchet perturbation using the same round counts.  Approximates
+TNT's interleaved sectorial pattern.  Default: \code{FALSE}.}
+
 \item{fuseInterval}{Integer; fuse pool trees every \emph{n} replicates.}
 
 \item{fuseAcceptEqual}{Logical; accept equally-scoring fused trees?}
@@ -190,6 +198,23 @@ best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
+
+\item{pruneReinsertCycles}{Integer; number of taxon pruning-reinsertion
+perturbation cycles per replicate.  Each cycle drops a fraction of leaves,
+runs TBR on the reduced tree to let the backbone restructure, then
+greedily reinserts the dropped taxa via Wagner addition and TBR-polishes
+the full tree.  Complementary to the ratchet (which perturbs character
+weights) and NNI-perturbation (which perturbs the topology directly).
+0 (default) disables this perturbation.}
+
+\item{pruneReinsertDrop}{Numeric (0--1); fraction of tips to drop per
+cycle.  Default 0.10 (10\%).  Always drops at least 3 tips and keeps
+at least 4.}
+
+\item{pruneReinsertSelection}{Integer; tip selection strategy for choosing
+which tips to drop.  0 = random (default), 1 = instability-weighted
+(tips whose placement varies across pool trees are preferentially
+dropped).}
 
 \item{annealCycles}{Integer; number of simulated annealing perturbation
 cycles (PCSA) per replicate.  Each cycle perturbs the current best tree

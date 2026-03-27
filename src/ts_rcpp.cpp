@@ -1228,6 +1228,7 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.css_partitions  = as<int>(ctrl["cssPartitions"]);
   params.sector_min_size = as<int>(ctrl["sectorMinSize"]);
   params.sector_max_size = as<int>(ctrl["sectorMaxSize"]);
+  params.post_ratchet_sectorial = as<bool>(ctrl["postRatchetSectorial"]);
 
   // Fuse / pool
   params.fuse_interval      = as<int>(ctrl["fuseInterval"]);
@@ -1244,11 +1245,16 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.adaptive_start        = as<bool>(ctrl["adaptiveStart"]);
   params.enum_time_fraction    = as<double>(ctrl["enumTimeFraction"]);
 
-  // Convergence tolerance
+  // Convergence tolerance (CID / continuous-score modes)
   if (ctrl.containsElementNamed("scoreTol"))
     params.score_tol           = as<double>(ctrl["scoreTol"]);
   if (ctrl.containsElementNamed("plateauReps"))
     params.plateau_reps        = as<int>(ctrl["plateauReps"]);
+
+  // Taxon pruning-reinsertion (T-266)
+  params.prune_reinsert_cycles    = as<int>(ctrl["pruneReinsertCycles"]);
+  params.prune_reinsert_drop      = as<double>(ctrl["pruneReinsertDrop"]);
+  params.prune_reinsert_selection = as<int>(ctrl["pruneReinsertSelection"]);
 
   // Simulated annealing perturbation (PCSA)
   params.anneal_cycles          = as<int>(ctrl["annealCycles"]);
@@ -1526,6 +1532,7 @@ List ts_driven_search(
     Named("nni_perturb_ms") = result.timings.nni_perturb_ms,
     Named("drift_ms")     = result.timings.drift_ms,
     Named("anneal_ms")    = result.timings.anneal_ms,
+    Named("prune_reinsert_ms") = result.timings.prune_reinsert_ms,
     Named("final_tbr_ms") = result.timings.final_tbr_ms,
     Named("fuse_ms")      = result.timings.fuse_ms
   );

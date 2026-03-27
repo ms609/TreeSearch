@@ -53,6 +53,13 @@ struct DrivenParams {
   int nni_perturb_cycles = 0;           // 0 = disabled
   double nni_perturb_fraction = 0.5;    // fraction of branches to perturb
 
+  // Taxon pruning-reinsertion (T-266): complementary perturbation that
+  // drops a fraction of leaves, TBR-optimizes the backbone, then greedily
+  // re-adds the dropped taxa via Wagner insertion + TBR polish.
+  int prune_reinsert_cycles = 0;          // 0 = disabled
+  double prune_reinsert_drop = 0.10;      // fraction of tips to drop
+  int prune_reinsert_selection = 0;       // 0 = random, 1 = instability
+
   // Drifting
   int drift_cycles = 2;
   int drift_afd_limit = 3;
@@ -77,6 +84,13 @@ struct DrivenParams {
   int css_partitions = 4;       // partitions for CSS
   int sector_min_size = 6;
   int sector_max_size = 50;
+
+  // Post-ratchet sectorial search (T-257).
+  // When true, run XSS+RSS+CSS again after ratchet perturbation using the
+  // same round counts and sector parameters.  TNT interleaves sectorial
+  // search throughout each replicate; this approximates that pattern by
+  // exploiting the new basin reached after ratchet before TBR polish.
+  bool post_ratchet_sectorial = false;
 
   // Tree fusing
   int fuse_interval = 3;         // fuse every N replicates (between-replicate)
@@ -242,6 +256,7 @@ struct PhaseTimings {
   double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
   double anneal_ms = 0.0;
+  double prune_reinsert_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
@@ -256,6 +271,7 @@ struct PhaseTimings {
     nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
     anneal_ms    += o.anneal_ms;
+    prune_reinsert_ms += o.prune_reinsert_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
   }

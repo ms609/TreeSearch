@@ -216,10 +216,12 @@ implemented in TNT [@Goloboff2016]:
 3. **Random sectorial search** (RSS)
 4. **Constrained sectorial search** (CSS)
 5. **Parsimony ratchet** perturbation
+5a. **Post-ratchet XSS+RSS+CSS** (optional; `postRatchetSectorial = TRUE`)
 6. **Stochastic NNI-perturbation**
 7. **Tree drifting**
-8. **Final TBR** polish
-9. **Pool insertion** + tree fusing (every `fuseInterval` replicates)
+8. **Post-convergence simulated annealing** (PCSA; optional)
+9. **Final TBR** polish
+10. **Pool insertion** + tree fusing (every `fuseInterval` replicates)
 
 Post-search, a TBR plateau walk from all pool seeds enumerates
 equally-scoring topologies.
@@ -429,6 +431,18 @@ This avoids spending time on unproductive sectorial search for datasets
 where it provides no benefit, while having no cost for datasets where
 it is productive (the early exit never fires).
 
+### Post-ratchet sectorial pass
+
+When `postRatchetSectorial = TRUE`, a second round of XSS+RSS+CSS runs
+after ratchet perturbation (pipeline step 5a), before NNI-perturbation
+and drift.
+After the ratchet displaces the tree to a new basin of attraction, a
+fresh sectorial pass can exploit structural improvements available in
+that basin before final TBR polish.
+This approximates the pattern used by TNT's `xmult` command, which
+interleaves sectorial search throughout each replicate [@Goloboff1999].
+This option is disabled by default; no current strategy preset enables it.
+
 
 ## Tree fusing
 
@@ -531,8 +545,12 @@ The signal-density gate (character pattern count) prevents the `thorough`
 preset from being selected for datasets with flat parsimony landscapes where
 additional search effort yields no benefit.
 
-All presets enable NNI warmup (`nniFirst = TRUE`) and consensus-stability
-stopping (`consensusStableReps = 3` or 2 for `large`).
+All presets enable NNI warmup (`nniFirst = TRUE`).
+Consensus-stability stopping (`consensusStableReps`) is set to 0 in all
+presets: enabling it caused premature search termination in most datasets,
+stopping after only 7--20% of the time budget had elapsed.
+It remains available via `SearchControl(consensusStableReps = N)` for
+advanced use.
 
 Any parameter can be overridden by the user via `SearchControl()`.
 

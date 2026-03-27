@@ -12,6 +12,7 @@
 #include "ts_constraint.h"
 #include "ts_wagner.h"
 #include "ts_splits.h"
+#include "ts_prune_reinsert.h"
 #include "ts_rng.h"
 
 #include <R.h>
@@ -208,6 +209,9 @@ ReplicateResult run_single_replicate(
       (params.drift_cycles + n_outer - 1) / n_outer);
   const int nni_perturb_per = (params.nni_perturb_cycles == 0) ? 0 : std::max(1,
       (params.nni_perturb_cycles + n_outer - 1) / n_outer);
+  const int prune_reinsert_per = (params.prune_reinsert_cycles == 0) ? 0 :
+      std::max(1,
+      (params.prune_reinsert_cycles + n_outer - 1) / n_outer);
 
   int outer = 0;
   while (outer < n_outer) {
@@ -318,6 +322,65 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
+    // 4a. Post-ratchet sectorial search (T-257)
+    // After ratchet perturbation, the tree is in a new basin. A second
+    // sectorial pass can exploit local improvements in this basin before
+    // TBR polish, approximating TNT's interleaved sectorial pattern.
+    if (params.post_ratchet_sectorial && tree_large_enough_for_sectors) {
+      SectorParams sp;
+      sp.min_sector_size = params.sector_min_size;
+      sp.max_sector_size = params.sector_max_size;
+      sp.internal_ratchet_cycles = 0;
+      sp.internal_max_hits = 1;
+
+      if (params.xss_rounds > 0) {
+        sp.n_partitions = params.xss_partitions;
+        sp.xss_rounds = params.xss_rounds;
+        xss_search(result.tree, ds, sp, cd);
+        result.timings.xss_ms += ph_lap();
+      }
+
+      if (ts::check_interrupt() || check_timeout()) {
+        result.interrupted = true;
+        result.score = score_tree(result.tree, ds);
+        return result;
+      }
+
+      if (params.rss_rounds > 0) {
+        sp.split_freq = split_freq;
+        for (int rr = 0; rr < params.rss_rounds; ++rr) {
+          rss_search(result.tree, ds, sp, cd);
+          if (ts::check_interrupt() || check_timeout()) {
+            result.interrupted = true;
+            result.score = score_tree(result.tree, ds);
+            return result;
+          }
+        }
+        result.timings.rss_ms += ph_lap();
+      }
+
+      if (params.css_rounds > 0) {
+        SectorParams css_sp;
+        css_sp.n_partitions = params.css_partitions;
+        css_sp.xss_rounds = params.css_rounds;
+        css_sp.internal_max_hits = 1;
+        css_search(result.tree, ds, css_sp, cd);
+        result.timings.css_ms += ph_lap();
+
+        if (ts::check_interrupt() || check_timeout()) {
+          result.interrupted = true;
+          result.score = score_tree(result.tree, ds);
+          return result;
+        }
+      }
+
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g\n",
+                outer_label("PostRatch-XSS").c_str(),
+                score_tree(result.tree, ds));
+      }
+    }
+
     // 4b. NNI perturbation (topology-space escape)
     // Skip when constraints are active: random_nni_perturb() doesn't
     // enforce constraints. impose_constraint() repairs violations
@@ -408,6 +471,37 @@ ReplicateResult run_single_replicate(
         Rprintf("  %s score: %.5g [%.0f ms total]\n",
                 outer_label("SA").c_str(),
                 score_tree(result.tree, ds), result.timings.anneal_ms);
+      }
+    }
+
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+
+    // 5c. Taxon pruning-reinsertion (T-266).
+    // Drop a fraction of leaves, TBR-optimize the backbone, then greedily
+    // re-add the dropped taxa and TBR-polish.  Complementary to the ratchet
+    // (which perturbs weights) and NNI-perturbation (which perturbs topology).
+    if (prune_reinsert_per > 0) {
+      PruneReinsertParams prp;
+      prp.n_cycles = prune_reinsert_per;
+      prp.drop_fraction = params.prune_reinsert_drop;
+      prp.selection = static_cast<PruneSelection>(
+          params.prune_reinsert_selection);
+      prp.tbr_max_hits = params.tbr_max_hits;
+      prp.tabu_size = params.tabu_size;
+
+      prune_reinsert_search(result.tree, ds, prp, cd, split_freq,
+                            check_timeout);
+
+      result.timings.prune_reinsert_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("PruneRI").c_str(),
+                score_tree(result.tree, ds),
+                result.timings.prune_reinsert_ms);
       }
     }
 

@@ -25,65 +25,52 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
-| T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795. |
-
+| T-150 | P2 | PARKED (E, GHA 23636944848) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. SPIC method added (commit 6636924c); GHA 23636944848 **FAILED** — codoc mismatch in `InfoConsensus.Rd`. Fix: regenerate Rd (`roxygen2::roxygenise(load_code=roxygen2::load_installed)`), commit, re-dispatch. |
+| T-204 | P2 | PARKED (A, GHA 23641482723) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23495097795 failed due to timing (dispatched before `f59a193c` doc commit). Current HEAD (11622e90) has all Rd files correct. Re-dispatched as GHA 23641482723. |
+| T-266 | P2 | PARKED (A, GHA 23641870390) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests. agent-check passed (23636145497). Standard CI failed: (1) R CMD check spelling ERROR — 'warmup'/'config' not in WORDLIST (R 4.1 hunspell stricter); fixed in de9e5210. (2) gcc-ASAN/devel failures: rlang compile error (infrastructure issue, not package). Re-dispatched agent-check as GHA 23641870390. |
 
 
 ### Bugs
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-
-| T-242 | P1 | PARKED (C, GHA 23545987517†) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. GHA failure is stale (pre-T-214); cpp-search passes on 23547582438. Investigation task — GHA status doesn't resolve it. |
-
-
+(no open bugs)
 
 
 ### Shiny App
 
 (no open tasks)
 
-### Performance Optimization — TBR per-evaluation overhead (from T-260 VTune)
-
-T-260 VTune profiling found **37.8% of TBR time** is non-scoring overhead.
-Three tasks below address the top hotspots. Combined potential: ~16–19% wall
-time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
-
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-
-| T-263 | P2 | PR #231 (F) | — | **Selective StateSnapshot save/restore in TBR.** `StateSnapshot::save()` and `::restore()` in `ts_tbr.cpp:216-246` memcpy the **entire** prelim, final_, down2, subtree_actives, local_cost, and postorder arrays before each candidate evaluation and restore on rejection. VTune: **14.6% of TBR time** (4.53s/30s). At 88 tips, each save/restore copies ~190 KB; at 180 tips, ~380+ KB. Most of this data is untouched — only nodes on the path from clip/regraft points to root are modified by `apply_tbr_move()` + `full_rescore()`. **Task:** (1) In `apply_tbr_move()`, track which node indices are modified (the clip subtree, the regraft path, and their ancestors to root). (2) Replace bulk memcpy with selective save/restore of only dirty node entries. (3) For `postorder`, either save/rebuild (cheap at ~175 ints) or track whether it changed. (4) Benchmark: must show measurable wall-time improvement on Dikow2009 (88t) and ideally mbank_X30754 (180t). **Alternative approach:** eliminate the snapshot entirely — after rejection, call `full_rescore()` to recompute from scratch. This trades snapshot cost (14.6%) for an extra `full_rescore` on rejection (~29% × rejection_rate). Only viable if T-261+T-262 make `full_rescore` very cheap. Benchmark both approaches. | Medium-high effort. Most impactful single change (~10–12% savings). Needs careful correctness testing — any node missed in the dirty set produces silent score corruption. Feature branch `feature/selective-snapshot`. |
-
 ### Performance Optimization (180+ tips)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-245 | P3 | OPEN | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
-| T-246 | P3 | PR #233 (F) | — | **AVX2 runtime dispatch for Fitch bit ops.** Widen `ts_simd.h` from SSE2 (128-bit) to AVX2 (256-bit) with runtime detection (`__builtin_cpu_supports("avx2")`) and SSE2 fallback. Estimated 5–10% on datasets with many states or character blocks. | EPYC 7702 supports AVX2. Can be done independently of T-245. Less invasive than batching. |
 
 ### TNT Comparison & Strategy Learning
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-252 | P3 | PARKED (F, SLURM 16599543) | — | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | `t252_v2.sh` submitted (job 16599543). Previous failure was httpuv/shiny not building in fresh lib — fixed by using ts-bench/lib-baseline for deps and only installing fresh TreeSearch to lib-t252. |
+| T-253 | P3 | OPEN | T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | T-249 complete: EW gaps are 0–7 steps (mean 2.2) across 11 hard datasets at 120s. 5 datasets optimal. Remaining blocker: T-252 (broader baseline). **NB:** always compare like-for-like scoring (Fitch vs Fitch); Brazeau scores are inherently higher. |
 
-| T-252 | P3 | OPEN | — | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | Uses `benchmark_mbank_sample()` in `bench_framework.R`. |
-| T-253 | P3 | OPEN | T-249, T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | Depends on T-249 (updated gaps) and T-252 (broader baseline). |
-
-### Strategy Tuning (from T-251 trajectory analysis)
+### Strategy Tuning
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-269 | P3 | OPEN | — | **Fine-grained sectorial interleaving benchmark.** Compare current coarse `outerCycles=2` (all ratchet cycles batched per pass) against fine-grained interleaving (e.g. `outerCycles=12, ratchetCycles=12` → one ratchet cycle per sectorial pass), approximating TNT's per-iteration pattern. T-256 showed extra sectorial *rounds* don't help, but *timing* of sectorial relative to perturbation hasn't been tested. **Design note (u.005):** Full TNT-style interleaving IS architecturally supported now — setting `outerCycles = ratchetCycles` achieves one sector pass per ratchet cycle. T-257 first validated that any post-ratchet sectorial helps at all (merged). T-269 benchmarks the fine-grained variant to determine whether the per-cycle overhead is worth enabling in presets. | Low priority. Use 3–5 gap datasets at 30s/60s budgets. |
 
-| T-257 | P3 | OPEN | — | **Post-ratchet sectorial search pass.** Add a second sectorial search pass after ratchet in the pipeline: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR] instead of [XSS+RSS+CSS → Ratchet → Drift → TBR]. TNT interleaves sectorial search throughout each replicate; this is a lightweight approximation. | T-256 found extra sectorial rounds don't improve scores, but `nodrift_3x` config was best (mean gap 4.9 vs 5.3) due to more replicates. A post-ratchet sectorial pass may still help if it's cheap enough to not cut into replicate count. Needs careful cost/benefit analysis. |
+
+### Housekeeping
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-273 | P3 | OPEN | — | **Fix `flat_blocks.active_mask` staleness during ratchet.** `FlatBlock.active_mask` is populated at `build_dataset()` and NOT updated when `perturb_zero_only()`/`perturb_mixed()` modify `blocks[b].active_mask`. Also not updated by `restore_perturbation_snapshot()`. If flat indirect functions are ever dispatched during ratchet TBR they will use stale masks (screened differently than intended). | Currently SAFE — zero call sites for flat indirect variants (confirmed grep). Fix: add `ds.flat_blocks[b].active_mask = ds.blocks[b].active_mask` in both perturb functions and the restore snapshot. Also update `all_weight_one` if ratchet can change weights (IW case). |
 
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 by E (focus 8: T-264, PR #232, T-255). All verified correct. subtree_actives non-NA positions confirmed safe (init to 0, never written, all reads guarded by has_inapplicable). Budget utilization confirmed: Agnarsson2004 uses 94% at 5s. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 2 by F (Search topology invariants). T-263 snapshot hoisting VERIFIED CORRECT. T-235 SPR fix VERIFIED CORRECT. LATENT: flat_blocks.active_mask not synced with ratchet perturbation (zero call sites — safe now). T-196 NA+IW screening improvement confirmed. No new bugs filed. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 27). Fixed R 4.1 %||% compat in test-ts-anneal.R. Windows covr MaddisonSlatkin failure is instrumentation artifact (main check clean). Hamilton unreachable. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by E. 6 open PRs: #233 (T-246 AVX2, MERGEABLE, CI in progress), #231 (T-263 selective-snapshot, MERGEABLE, CI failures from pre-fix base — needs rebase for SearchControl.Rd + timeout test fixes), #216 (native-search, MERGEABLE, 25 commits behind), #213 (CID consensus, MERGEABLE, 15 behind), #210 (cpp-search→main, MERGEABLE), #178 (stale, CONFLICTING, Aug 2025 — recommend close). All feature PRs are MERGEABLE but CI is UNSTABLE due to stale bases. |
-
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 32 by F. T-268/T-252 status updated. S-RED focus 2 done. T-273 filed (flat_blocks latent). Agent status updated. 3 unblocked OPEN specific (T-245, T-269, T-273) → standing at P2. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by A (round 31). Merged cpp-search into #235 (prune-reinsert, clean) and #216 (native-search, clean). #213 (cid-consensus) has ts_tbr.cpp conflict (CID changes vs T-263 snapshot opt) — needs human/E resolution. #178 CLOSED (stale 2025 draft). Open: #213 (GHA failing, merge conflict), #216 (clean), #235 (clean). #210 (cpp-search→main). |

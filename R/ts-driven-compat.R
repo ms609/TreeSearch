@@ -36,6 +36,7 @@ ts_driven_search <- function(
     cssPartitions = 4L,
     sectorMinSize = 6L,
     sectorMaxSize = 50L,
+    postRatchetSectorial = FALSE,
     fuseInterval = 3L,
     fuseAcceptEqual = FALSE,
     poolMaxSize = 100L,
@@ -79,6 +80,9 @@ ts_driven_search <- function(
     maxOuterResets = 0L,
     adaptiveStart = FALSE,
     enumTimeFraction = 0.1,
+    pruneReinsertCycles = 0L,
+    pruneReinsertDrop = 0.10,
+    pruneReinsertSelection = 0L,
     annealConfig = NULL)
 {
   # New-style call: grouped lists already provided
@@ -119,6 +123,7 @@ ts_driven_search <- function(
     cssPartitions = as.integer(cssPartitions),
     sectorMinSize = as.integer(sectorMinSize),
     sectorMaxSize = as.integer(sectorMaxSize),
+    postRatchetSectorial = as.logical(postRatchetSectorial),
     fuseInterval = as.integer(fuseInterval),
     fuseAcceptEqual = as.logical(fuseAcceptEqual),
     poolMaxSize = as.integer(poolMaxSize),
@@ -127,6 +132,9 @@ ts_driven_search <- function(
     perturbStopFactor = as.integer(perturbStopFactor),
     adaptiveLevel = as.logical(adaptiveLevel),
     consensusConstrain = as.logical(consensusConstrain),
+    pruneReinsertCycles = as.integer(pruneReinsertCycles),
+    pruneReinsertDrop = as.double(pruneReinsertDrop),
+    pruneReinsertSelection = as.integer(pruneReinsertSelection),
     adaptiveStart = as.logical(adaptiveStart),
     enumTimeFraction = as.double(enumTimeFraction)
   )
