@@ -45,6 +45,12 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
+      # rlang ≤1.1.7 (CRAN) uses PREXPR which was removed in R-devel 4.6.
+      # The GitHub main branch already uses the new r_obj* abstraction.
+      # Pre-install the development version so pak does not downgrade it.
+      - name: Pre-install rlang (R-devel compat)
+        run: Rscript -e 'pak::pak("r-lib/rlang")'
+
       - uses: ms609/actions/asan@main
         with:
           test: ${{ matrix.config.test }}
