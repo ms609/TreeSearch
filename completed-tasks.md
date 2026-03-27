@@ -394,4 +394,4 @@ EOF 2>&1
 ## 2026-03-27
 
 | F-003 | T-276: convergence summary after MaximizeParsimony() | 3 | perturb_stop in Rcpp bridge + structure attrs; verbosity summary (score/reps/last_improved/n_MPTs/stop_reason/elapsed); docs + 3 new tests. commit 7f4aca29. GHA 23647640670. |
-EOF 2>&1
+| F-004 | T-252: Hamilton MorphoBank training-set baseline benchmark | 3 | 25-matrix fixed training sample at 30/60/120s, 5 seeds, EW. SLURM 16599543 complete. Results: ≤35t converge at 30s (0 gap); 36-65t near-optimal; 66-135t still improving at 120s (up to 238 steps); project4284 (4062t) can't finish 1 replicate. CSVs in dev/benchmarks/. T-253 unblocked. |

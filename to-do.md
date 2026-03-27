@@ -25,8 +25,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | PARKED (F, GHA 23646972365) | — | **CID-optimal consensus tree search** | PR #213. Ubuntu ✓. Windows running. **InfoConsensus.Rd codoc mismatch** (S-PR E 2026-03-27): `\usage` has stale defaults (maxReplicates=100L, targetHits=10L) and is missing treeSample, screeningTopK, method params added after last roxygen run. Needs `roxygen2::roxygenise(load_code=load_installed)` on feature/cid-consensus then commit. |
-| T-204 | P2 | PARKED (F, GHA 23647123007) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. Ubuntu ✓ ("significant warnings" noted — check Windows log). Windows running. GHA 23647123007. |
+| T-150 | P2 | PARKED (F, GHA 23648267378) | — | **CID-optimal consensus tree search** | PR #213. Fixed InfoConsensus.Rd (added treeSample, screeningTopK, method; fixed maxReplicates/targetHits/maxDrop defaults) and SearchControl.Rd (added scoreTol, plateauReps). commit 5db96f42. GHA 23648267378. |
+| T-204 | P2 | PARKED (F, GHA 23648401936) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | Fixed Rd example deprecation warnings: suppressWarnings() around PhyDat2Morphy/UnloadMorphy in GapHandler, MorphyWeights, PhyDat2Morphy, RearrangeEdges, SingleCharMorphy; suppressWarnings(Morphy(...)) in donttest block. commit ec5f419f. GHA 23648401936. |
 
 
 ### Bugs
@@ -55,8 +55,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-252 | P3 | PARKED (F, SLURM 16599543) | — | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | `t252_v2.sh` submitted (job 16599543). Previous failure was httpuv/shiny not building in fresh lib — fixed by using ts-bench/lib-baseline for deps and only installing fresh TreeSearch to lib-t252. |
-| T-253 | P3 | OPEN | T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | T-249 complete: EW gaps are 0–7 steps (mean 2.2) across 11 hard datasets at 120s. 5 datasets optimal. Remaining blocker: T-252 (broader baseline). **NB:** always compare like-for-like scoring (Fitch vs Fitch); Brazeau scores are inherently higher. |
+| T-253 | P3 | OPEN | — | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | T-252 complete: 25-matrix training baseline at 30/60/120s downloaded (t252_mbank_*.csv). ≤35t: all converge at 30s. 36-65t: near-optimal. 66-135t: still improving. project4284 (4062t): can't complete 1 replicate. **NB:** always compare like-for-like scoring (Fitch vs Fitch). |
 
 ### Strategy Tuning
 
