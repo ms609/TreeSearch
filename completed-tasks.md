@@ -377,3 +377,5 @@ ENDMARK 2>&1
 | T-257 | Post-ratchet sectorial search pass | F | Added second sectorial pass after ratchet: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR]. Controlled by `postRatchetSectorial` in SearchControl(). PR #234 merged 2026-03-27. |
 | T-270 | Algorithm vignette + AGENTS.md for T-257 post-ratchet sectorial | A | Added pipeline step 5a, new "Post-ratchet sectorial pass" subsection in vignette; fixed stale consensusStableReps preset docs (T-264); updated AGENTS.md pipeline steps. commit d8f3c769. |
 EOF 2>&1
+| T-272 | Close stale PR #178 (concordance, Aug 2025 DRAFT) | A | Closed via `gh pr close 178`. |
+EOF 2>&1

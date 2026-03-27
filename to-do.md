@@ -65,7 +65,7 @@
 |----|-----|--------|--------|-------------|-------|
 | T-268 | P2 | ASSIGNED (F) | — | **Branch housekeeping.** Human has merged several branches on GitHub. Pull cpp-search, refresh local branches, delete stale worktrees. | From u.2. |
 
-| T-272 | P3 | OPEN | — | **Close stale PR #178** (concordance feature, Aug 2025, CONFLICTING DRAFT). Recommended for close in rounds 20, 25, 26, 27, 28, 29, 30. | `gh pr close 178 --comment "Stale draft from Aug 2025; CONFLICTING. Closing to keep PR list manageable. Can be reopened when ready."` |
+
 
 ### Standing Tasks
 
@@ -74,4 +74,4 @@
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 (focus 9: Wagner & addition trees). ts_wagner.h/.cpp (595 lines) + ts_constraint.h/.cpp (880 lines) reviewed. Latent stale-reference in impose_one_pass() noted (negligible severity, mitigated by retry loops). 902 constraint tests + 80 adversarial tests pass. No bugs filed. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 31 by A. T-266 PR #235 opened. T-150 GHA failed (InfoConsensus.Rd codoc). T-270 completed. T-272 filed. 2 unblocked OPEN specific tasks (T-245, T-269) → standing at P1. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by E (round 30). 3 PRs merged today: #231 (T-263), #233 (T-246), #234 (T-257). Currently open: #213 (T-150, CID+SPIC, GHA 23636944848), #216 (T-204, native-search), #235 (T-266, prune-reinsert, GHA passed). #210 (cpp-search→main) still open. #178 stale (recommend close). |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by A (round 31). Merged cpp-search into #235 (prune-reinsert, clean) and #216 (native-search, clean). #213 (cid-consensus) has ts_tbr.cpp conflict (CID changes vs T-263 snapshot opt) — needs human/E resolution. #178 CLOSED (stale 2025 draft). Open: #213 (GHA failing, merge conflict), #216 (clean), #235 (clean). #210 (cpp-search→main). |
