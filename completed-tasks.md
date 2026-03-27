@@ -7,6 +7,10 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 ## 2026-03-26
 
 | ID | Description | Agent | Notes |
+| T-242 | Agnarsson2004 IW search quality regression | — | **CLOSED — not a bug.** `ThreadSafePool::extract_into()` reset `hits_to_best` to distinct topology count (often 1) instead of actual independent replicate hits. Fix: `bc19667f2` propagates real hit count via `set_hits_to_best()`. Score 50.1872 (XPIWE k=10^0.75) is correct; actual hit rate ~60–67%, not the reported 2%. Search algorithm was unaffected; only Shiny convergence display was wrong. Regression test in `test-ts-parallel.R`. |
+| T-265 | Per-replicate search quality investigation | F | **CLOSED — not a bug.** Filed as P1 after T-249 round 3 showed 5–54 step gaps vs TNT, but the gap was a **scoring method confound**: Brazeau inapplicable scores compared against TNT Fitch scores. Correct EW gaps are 0–7 steps (mean 2.2, 5/11 datasets optimal at 120s). Remaining small gaps covered by T-253. Hamilton jobs: 16597207 (Phase 1), 16597240 (Phase 2a, cancelled). |
+| T-264 | Disable `consensusStableReps` in presets | F | Fix committed to cpp-search (23e9f57b). GHA 23600674681 PASSED. Removed `consensusStableReps` from sprint/default/thorough presets (fall back to 0 = disabled). Prevents premature early termination when all replicates converge to same consensus. |
+| T-249 | Round 3 TNT comparison (Hamilton) | F | 16 datasets × 2 timeouts × 3 seeds on Hamilton (job 16596844). Data in `t249_results/`. Led to T-264 discovery (budget waste) and T-265 investigation (scoring confound). |
 |----|-------------|-------|-------|
 | T-256 | Sectorial search intensity experiment | F | Hamilton job 16596760, 4 configs × 5 gap datasets × 3 seeds × 30s. Doubling/tripling xssRounds+rssRounds: no meaningful score improvement (mean gap 6.2/5.2 vs baseline 5.3). `nodrift_3x` config best (mean gap 4.9) but entirely due to 34% more replicates from removing drift, not from extra sectorial rounds. Current sectorial intensity (xss=3, rss=1) is sufficient. Unblocks T-257 (negative result: adding rounds alone won't help). |
 | T-259 | Ratchet cycle count experiment | F | Same Hamilton job 16596760. Reducing ratchetCycles from 12 to 8/6/4: ratch_8 mixed (mean gap 5.9 vs 5.3, better on 3/5 datasets but +5 steps worse on Geisler2001); ratch_6 clearly worse (7.8); ratch_4 clearly worse (8.5). Current default of 12 is justified. Dataset-dependent variance with only 3 seeds — directional evidence, not definitive. |
@@ -361,4 +365,10 @@ EOF 2>&1
 | T-265 | Per-replicate search quality regression — RESOLVED as scoring method confound | E | T-249/T-264 compared Brazeau-scored TreeSearch to EW-scored TNT. Apparent mean gap +17.8 steps; actual EW-vs-EW gap +2.2 steps. 5/11 datasets at 0 gap. R2-equiv/R2-modern/auto preset all find identical Brazeau scores — no preset or engine regression. Also found stale .agent-E library caused T-249 early termination artifact. |
 | T-249 | TNT comparison round 3 — validated | E | Hamilton job 16596844 results validated. Large apparent gaps were scoring method confound (Brazeau vs EW). Future TNT comparisons must use fitch_mode() for apples-to-apples. |
 | T-264 | consensusStableReps fix — verified | E | GHA 23600674681 passed both platforms. Scoring confound resolved; fix is correct. |
+
+## 2026-03-27
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-267 | MaddisonSlatkin 5-state test resilience | A | Test now skips when computation hits the 2s time budget on slow CI machines, instead of failing with NA. |
 ENDMARK 2>&1

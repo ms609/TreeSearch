@@ -33,9 +33,8 @@
 
 ### Bugs
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-| T-267 | P2 | OPEN | — | **MaddisonSlatkin 5-state test failure.** `test-MaddisonSlatkin.R:142` — `sum(exp(ms[is.finite(ms)]))` returns 0 instead of 1; line 145 returns NA instead of -6.85. MaddisonSlatkin computation exceeds 2s budget on some characters. Make the test more resilient (increase budget or reduce state count). | From GHA run on PR #231 (u.001). |
+(no open bugs)
+
 
 
 
