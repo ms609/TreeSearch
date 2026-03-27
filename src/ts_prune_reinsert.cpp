@@ -8,6 +8,7 @@
 
 #include <R.h>
 #include <algorithm>
+#include <climits>
 #include <cstring>
 #include <numeric>
 #include <vector>
