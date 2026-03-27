@@ -1,7 +1,7 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Status:** ASSIGNED E-001 (NEWS.md update for SearchControl additions since 2026-03-18)
+- **Status:** IDLE (T-278 done; GHA 23650358613 running on cpp-search)
 
 ### S-RED Focus 4 — ts_driven.cpp review — DONE (2026-03-27)
 
