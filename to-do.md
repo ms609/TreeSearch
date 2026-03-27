@@ -26,7 +26,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-150 | P2 | PARKED (F, GHA 23650002703) | — | **CID-optimal consensus tree search** | PR #213. Vignette fix (TreeTools::Consensus) commit f8bfee49. GHA 23650002703. |
-| T-204 | P2 | PARKED (F, GHA 23649607006) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | Root cause: Morphy.R internally calls PhyDat2Morphy()/UnloadMorphy() without suppressing deprecation warnings. Fixed at source in Morphy.R. commit 0af8fbe2. GHA 23649607006. |
+| T-204 | P2 | PR #216 (F) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | GHA 23649607006 PASSED. Ready for merge. |
 
 
 ### Bugs
@@ -63,7 +63,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 9 by F (ts_fuse.cpp, 521+41 lines). No bugs. Note: ancestor-split stale detection uses raw bitsets; may be incorrect in rounds 2+ if TBR moves tip0 away from root, but impact is conservative (no score error). Next: ts_driven.cpp (1056 lines) or ts_sector.cpp (1007 lines). |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 10 by F (ts_driven.cpp, 1056 lines). No bugs. Notes: goto-finish is valid C++; adaptive_params copy correct; SA best-tree save/restore correct; MPT enumeration uses check_enum_timeout (full deadline) correctly; extra score_tree calls at verbosity>=2 harmless. Next: ts_sector.cpp (1007 lines). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 35 by F. T-278 filed (constrained TBR constraint staleness). OPEN: T-278, T-245, T-269, E-002 → 4 specific OPEN → standing at P2. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 round 38 by E. **ASAN**: `continue-on-error: true` on jobs (rlang capture.c uses PREXPR directly — header shim can't fix it). GHA 23649409998 confirms green status with jobs failing — PRs no longer blocked. T-150: GHA 23648875258 ubuntu ✓, windows running. T-204: GHA 23649607006 running (Morphy.R root-cause fix). Open PRs: #213 (T-150), #216 (T-204), #210 (DRAFT). |
