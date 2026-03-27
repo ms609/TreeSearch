@@ -25,9 +25,9 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
+| T-150 | P2 | PARKED (E, GHA 23636944848) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. SPIC method added (commit 6636924c); GHA 23636944848. |
 | T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795. |
-| T-266 | P2 | PARKED (A, GHA 23636145497) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests. Fixed: `<climits>` for ARM, regenerated .Rd. |
+| T-266 | P2 | PR #235 (A) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests. GHA passed (run 23636145497). |
 
 
 
@@ -35,7 +35,6 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-267 | P2 | OPEN | — | **MaddisonSlatkin 5-state test failure.** `test-MaddisonSlatkin.R:142` — `sum(exp(ms[is.finite(ms)]))` returns 0 instead of 1; line 145 returns NA instead of -6.85. MaddisonSlatkin computation exceeds 2s budget on some characters. Make the test more resilient (increase budget or reduce state count). | From GHA run on PR #231 (u.001). |
 
 
 
