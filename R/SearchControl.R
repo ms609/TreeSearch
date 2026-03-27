@@ -303,7 +303,8 @@ SearchControl <- function(
 print.SearchControl <- function(x, ...) {
   groups <- list(
     "TBR" = c("tbrMaxHits", "nniFirst", "sprFirst", "tabuSize",
-              "wagnerStarts", "wagnerBias", "wagnerBiasTemp", "outerCycles"),
+              "wagnerStarts", "wagnerBias", "wagnerBiasTemp", "outerCycles",
+              "maxOuterResets"),
     "Ratchet" = c("ratchetCycles", "ratchetPerturbProb", "ratchetPerturbMode",
                    "ratchetPerturbMaxMoves", "ratchetAdaptive",
                    "ratchetTaper"),
@@ -321,7 +322,8 @@ print.SearchControl <- function(x, ...) {
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
                     "adaptiveLevel",
-                    "consensusConstrain", "adaptiveStart")
+                    "consensusConstrain", "adaptiveStart",
+                    "enumTimeFraction")
   )
   cat("SearchControl object\n")
   for (gname in names(groups)) {
