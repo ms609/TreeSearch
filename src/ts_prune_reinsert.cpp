@@ -433,6 +433,17 @@ PruneReinsertResult prune_reinsert_search(
   PruneReinsertResult result;
   result.n_improvements = 0;
 
+  // build_reduced_dataset() copies EW/IW/XPIWE metadata completely.
+  // For PROFILE (info_amounts), HSJ (hierarchy_blocks/tip_labels), and
+  // XFORM (sankoff_* fields), the reduced dataset would be missing
+  // scoring-specific fields, causing incorrect reduced-tree scores (T-275).
+  // Guard: skip prune-reinsert for unsupported scoring modes.
+  if (ds.scoring_mode == ScoringMode::PROFILE ||
+      ds.scoring_mode == ScoringMode::HSJ ||
+      ds.scoring_mode == ScoringMode::XFORM) {
+    return result;
+  }
+
   double current_score = score_tree(tree, ds);
   result.best_score = current_score;
 

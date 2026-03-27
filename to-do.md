@@ -25,8 +25,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | PARKED (E, GHA 23636944848) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. SPIC method added (commit 6636924c); GHA 23636944848 **FAILED** — codoc mismatch in `InfoConsensus.Rd`. Fix: regenerate Rd (`roxygen2::roxygenise(load_code=roxygen2::load_installed)`), commit, re-dispatch. |
-| T-204 | P2 | PARKED (A, GHA 23643078732) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23641482723 failed: spelling ERROR ('cleanup'/'phyDat') + deprecated-fn warnings in examples. Fixed eb21c588: WORDLIST + wrap examples. Re-dispatched as GHA 23643078732. |
+| T-150 | P2 | PARKED (F, GHA 23644644554) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. ASAN run 23643030700 failed: `rlang` compilation failure (infrastructure, not our code). Re-dispatched GHA 23644644554. |
+| T-204 | P2 | PARKED (F, GHA 23644617599) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23642888974 failed: WORDLIST fix was in eb21c588 (after merge commit fadc9d7e that triggered run). Re-dispatched GHA 23644617599. |
 
 
 ### Bugs
@@ -42,7 +42,8 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-274 | P3 | OPEN | — | **Print convergence summary to console after `MaximizeParsimony()`.** The Shiny app displays a convergence evaluation report; same info should print to the R console when running headlessly. Note: integrates with B's Chao-estimate work (T-204 native-search) once that merges. | u.571. Print n_replicates, best_score, n_MPTs, last_improved_rep, time elapsed, and convergence indicator (consensus_stable / plateau_stop / timed_out / perturb_stop). |
+| T-276 | P3 | OPEN | — | **Print convergence summary to console after `MaximizeParsimony()`.** The Shiny app displays a convergence evaluation report; same info should print to the R console when running headlessly. Note: integrates with B's Chao-estimate work (T-204 native-search) once that merges. | u.571. Print n_replicates, best_score, n_MPTs, last_improved_rep, time elapsed, and convergence indicator (consensus_stable / plateau_stop / timed_out / perturb_stop). |
+| T-277 | P3 | ASSIGNED (B) | — | **ScoreSpectrum(): Chao1-style landscape coverage estimator** | On `feature/score-spectrum`. Exports `ScoreSpectrum()`: accepts `multiPhylo` (with new `replicate_scores` attribute) or raw numeric vector; returns Good-Turing coverage + Chao1 richness. C++ side: `DrivenResult::replicate_scores` vector (serial + parallel paths). Shiny: coverage note appended to confidence text. 8 Tier-1 tests. |
 
 ### Performance Optimization (180+ tips)
 
@@ -67,8 +68,7 @@
 
 ### Housekeeping
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
+(no open tasks)
 
 
 
@@ -78,5 +78,5 @@
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 2 by F (Search topology invariants). T-263 snapshot hoisting VERIFIED CORRECT. T-235 SPR fix VERIFIED CORRECT. LATENT: flat_blocks.active_mask not synced with ratchet perturbation (zero call sites — safe now). T-196 NA+IW screening improvement confirmed. No new bugs filed. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 32 by F. T-268/T-252 status updated. S-RED focus 2 done. T-273 filed (flat_blocks latent). Agent status updated. Now 5 unblocked OPEN specific (T-245, T-269, T-273, T-274, T-253) → standing at P2. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by F (round 32). Merged cpp-search into #216 (native-search, clean) and #213 (cid-consensus, resolved ts_tbr.cpp conflict: keep cid use_topk path, apply T-263 to single-cand else path). #235 (prune-reinsert) MERGED. A fixed T-204 native-search (eb21c588 WORDLIST+examples). Open: #213 (new CI 23643030700/690 running), #216 (GHA 23643078732 by A), #210 (cpp-search→main DRAFT). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 33 by F. T-273 completed. T-275 filed and completed by B (prune-reinsert guard). T-277 filed (ScoreSpectrum, ASSIGNED B). Unblocked OPEN: T-245, T-269, T-274, T-275→done, T-276, T-253, T-277 → 6 specific OPEN → standing at P3. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by F (round 33). #216 (T-204 native-search): GHA 23642888974 failed (WORDLIST fix eb21c588 pushed AFTER merge triggered run). Re-dispatched 23644617599. #213 (T-150 cid-consensus): GHA 23643030700 failed: rlang ASAN infrastructure issue. Re-dispatched 23644644554. Open PRs: #213, #216, #210 (cpp-search→main DRAFT). |

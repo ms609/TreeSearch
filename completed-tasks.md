@@ -7,6 +7,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 ## 2026-03-27
 
 | ID | Description | Agent | Notes |
+| T-275 | Prune-reinsert: block non-EW scoring modes | B | Early-return guard in `prune_reinsert_search()` for PROFILE/HSJ/XFORM scoring modes. `build_reduced_dataset()` omits mode-specific fields; guard prevents incorrect reduced-tree scores until each mode is properly wired. |
 | T-266 | Taxon pruning-reinsertion perturbation | A | `ts_prune_reinsert.h/.cpp` + pipeline phase 5c + 44 tests. `pruneReinsertCycles`/`pruneReinsertDrop`/`pruneReinsertSelection` in `SearchControl()`. gcc-ASAN/devel failure was rlang infrastructure (PREXPR removed in R-devel); merged by human. Feature branch `feature/prune-reinsert` (PR #235) merged to cpp-search. Worktree TS-PruneRI removed. |
 |----|-------------|-------|-------|
 
