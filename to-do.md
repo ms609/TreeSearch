@@ -41,6 +41,23 @@
 |----|-----|--------|--------|-------------|-------|
 | T-245 | P3 | OPEN | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
 
+### Alternative Homologies (Goloboff 2026) — `feature/alt-homology` / `TS-AltHom`
+
+Ref: Goloboff (2026) *Cladistics* doi:10.1111/cla.70033.
+Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homologies-with-step-matrix-recoding.md`
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-280 | P3 | OPEN | — | **AltHom Phase 1: `AlternativeHomology` S3 class & core recoding (MVP).** Create `R/AlternativeHomology.R` (constructor, validation, print), `R/recode_alt_homology.R` (correspondence enumeration, morphotype states, cost matrix, tip assignment). Wire into `TreeLength()` for scoring on a fixed tree. Reproduce paper's Definition 1 cost matrix + Table 1 as tests. | WORKTREE (TS-AltHom). Invertible, no external constraints, two part-types only. |
+| T-281 | P3 | OPEN | T-280 | **AltHom Phase 2: Constraints & options.** Non-invertible (`>`), adjacent (`>>`), restricted homology (`!`), configurable part transformation costs, adjacent-loss merging (`<`). Reproduce Definitions 2–3 and their cost matrices. | WORKTREE (TS-AltHom). |
+| T-282 | P3 | OPEN | T-280 | **AltHom Phase 3: Wire into `MaximizeParsimony()` search pipeline.** Accept `AlternativeHomology` in `hierarchy` param, prepare xformArgs, end-to-end search. Also wire `Resample()` and `SuccessiveApproximations()`. | WORKTREE (TS-AltHom). |
+| T-283 | P3 | OPEN | T-280 | **AltHom Phase 4: External inapplicability.** An external character can make individual characters, parts, or entire part sets inapplicable. Expand state enumeration for externally-disabled states. | WORKTREE (TS-AltHom). |
+| T-284 | P3 | OPEN | T-280 | **AltHom Phase 5: Combination pruning.** Implement `xlinks&` (pairwise compatibility), `xlinks!` (observed-state-only), `xlinks@` (uninformative-state restriction) to reduce supercharacter state count. Verify same optimal trees as unpruned. | WORKTREE (TS-AltHom). |
+| T-285 | P3 | OPEN | T-280 | **AltHom Phase 6: Implied weighting support.** Compute combined minimum steps across all valid alignments (not sum of per-char minima). Required for correct IW homoplasy counts. | WORKTREE (TS-AltHom). |
+| T-286 | P3 | OPEN | T-280 | **AltHom Phase 7: Mixed `AlternativeHomology` + `CharacterHierarchy`.** Support datasets with both simple hierarchy blocks and alternative homology blocks in one analysis. | WORKTREE (TS-AltHom). |
+| T-287 | P3 | OPEN | T-284 | **AltHom Phase 8: Static alignment fallback.** For datasets where supercharacter exceeds practical state limit, generate alternative static datasets (one per alignment) and search each. | WORKTREE (TS-AltHom). |
+| T-288 | P3 | OPEN | T-282 | **AltHom Phase 9: Documentation & vignette.** `vignettes/alternative-homologies.Rmd`, roxygen docs for all new exports, `inst/REFERENCES.bib` entry. | WORKTREE (TS-AltHom). |
+
 ### TNT Comparison & Strategy Learning
 
 ### Strategy Tuning
@@ -63,7 +80,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 11 by F (ts_sector.cpp, 1007 lines). No bugs. Key guards: root_ok check in search_sector, full rescore after reinsertion, HTU revert on worsening, score_tree before build_reduced_dataset. Next: ts_pool.cpp (335 lines) or ts_wagner.cpp. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 12 by F (ts_pool.cpp, 335 lines). No critical bugs. Note: tbr_search collect_pool calls add() (full splits) but driven_search uses add_collapsed() — mixed pool entries may miss zero-length-edge duplicates; conservative/rare. Next: ts_wagner.cpp or ts_constraint.cpp. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 35 by F. T-278 filed (constrained TBR constraint staleness). OPEN: T-278, T-245, T-269, E-002 → 4 specific OPEN → standing at P2. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 round 38 by E. **ASAN**: `continue-on-error: true` on jobs (rlang capture.c uses PREXPR directly — header shim can't fix it). GHA 23649409998 confirms green status with jobs failing — PRs no longer blocked. T-150: GHA 23648875258 ubuntu ✓, windows running. T-204: GHA 23649607006 running (Morphy.R root-cause fix). Open PRs: #213 (T-150), #216 (T-204), #210 (DRAFT). |
