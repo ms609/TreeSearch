@@ -216,6 +216,7 @@ DrivenResult parallel_driven_search(
   result.last_improved_rep = 0;  // not tracked in parallel (replicates out of order)
   result.timed_out = false;
   result.consensus_stable = false;
+  result.perturb_stop = false;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -388,6 +389,7 @@ DrivenResult parallel_driven_search(
       }
       if (done - reps_at_last_improvement >= perturb_stop_limit) {
         stop_flag.store(true, std::memory_order_relaxed);
+        result.perturb_stop = true;
         if (params.verbosity >= 1) {
           Rprintf("Stopped: %d consecutive unsuccessful replicates "
                   "(limit %d = %d tips x %d)\n",
