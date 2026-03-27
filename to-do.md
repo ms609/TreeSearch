@@ -71,7 +71,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-26 (focus 9: Wagner & addition trees). ts_wagner.h/.cpp (595 lines) + ts_constraint.h/.cpp (880 lines) reviewed. Latent stale-reference in impose_one_pass() noted (negligible severity, mitigated by retry loops). 902 constraint tests + 80 adversarial tests pass. No bugs filed. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 10 by A (Profile & IW scoring). BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps (overestimated delta; conservative, low impact). 15 IW/profile tests pass. commit 7cff7870. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 31 by A. T-266 PR #235 opened. T-150 GHA failed (InfoConsensus.Rd codoc). T-270 completed. T-272 filed. 2 unblocked OPEN specific tasks (T-245, T-269) → standing at P1. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by A (round 31). Merged cpp-search into #235 (prune-reinsert, clean) and #216 (native-search, clean). #213 (cid-consensus) has ts_tbr.cpp conflict (CID changes vs T-263 snapshot opt) — needs human/E resolution. #178 CLOSED (stale 2025 draft). Open: #213 (GHA failing, merge conflict), #216 (clean), #235 (clean). #210 (cpp-search→main). |

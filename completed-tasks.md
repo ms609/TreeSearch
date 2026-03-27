@@ -379,3 +379,4 @@ ENDMARK 2>&1
 EOF 2>&1
 | T-272 | Close stale PR #178 (concordance, Aug 2025 DRAFT) | A | Closed via `gh pr close 178`. |
 EOF 2>&1
+| S-RED-10 | Red-team focus 10: Profile & IW scoring | A | BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps. commit 7cff7870. |
