@@ -42,6 +42,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-274 | P2 | OPEN | — | **NNI-perturb cycle count at thorough-preset scale (65–88 tips).** S-PROF round 6 found NNI-perturb = 34.3% of Zhu2013 search time with only 14% hit rate (1-step improvement). Ratchet is 4–8 steps/call at comparable cost. Benchmark `nniPerturbCycles=0` vs `5` at 65–88 tips using time-adjusted expected-best metric. If no-NNI wins → reduce in thorough preset; if NNI helps at 88+ → set conditional on dataset size. | Zhu2013/Dikow2009/Giles2015, 3–5 seeds, 30s/60s budgets. Use `expected_best()` in profiling.md for comparison. |
 | T-245 | P3 | OPEN | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
 
 ### TNT Comparison & Strategy Learning
@@ -70,6 +71,6 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 2 by F (Search topology invariants). T-263 snapshot hoisting VERIFIED CORRECT. T-235 SPR fix VERIFIED CORRECT. LATENT: flat_blocks.active_mask not synced with ratchet perturbation (zero call sites — safe now). T-196 NA+IW screening improvement confirmed. No new bugs filed. |
-| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 32 by F. T-268/T-252 status updated. S-RED focus 2 done. T-273 filed (flat_blocks latent). Agent status updated. 3 unblocked OPEN specific (T-245, T-269, T-273) → standing at P2. |
+| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 32 by F. T-268/T-252 status updated. S-RED focus 2 done. T-273 filed (flat_blocks latent). Agent status updated. Now 5 unblocked OPEN specific (T-245, T-269, T-273, T-274, T-253) → standing at P2. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by F (round 32). Merged cpp-search into #216 (native-search, clean) and #213 (cid-consensus, resolved ts_tbr.cpp conflict: keep cid use_topk path, apply T-263 to single-cand else path). #235 (prune-reinsert) MERGED. A fixed T-204 native-search (eb21c588 WORDLIST+examples). Open: #213 (new CI 23643030700/690 running), #216 (GHA 23643078732 by A), #210 (cpp-search→main DRAFT). |

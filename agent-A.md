@@ -1,7 +1,34 @@
 # Agent A Progress Log
 
 ## Current Task
-**IDLE** — all tasks complete this session.
+**IDLE** — S-PROF round 6 complete, T-204 fix dispatched.
+
+## S-PROF Round 6 + T-204 fix + T-266 tidy (2026-03-27 ~10:50 GMT)
+
+### T-266 tidy-up
+- Deleted from to-do.md; added to completed-tasks.md (2026-03-27 section).
+- Removed feature/prune-reinsert branch (local + origin).
+- TS-PruneRI directory orphaned (git metadata already gone); manual cleanup needed.
+
+### T-204 fix (GHA 23641482723 → 23643078732)
+- GHA 23641482723 failed: spelling ERROR ('cleanup'/'phyDat') + deprecated-fn
+  warnings in examples. Root: T-204 added `.Deprecated()` to `PhyDat2Morphy`/
+  `UnloadMorphy`; examples calling those (PhyDat2Morphy.Rd, MorphyWeights.Rd,
+  GapHandler.Rd, SingleCharMorphy.Rd, Morphy.R constraint example) now emit
+  warnings in `R CMD check`.
+- Fix (eb21c588 on feature/native-search): WORDLIST + `\donttest{}`/
+  `suppressWarnings()` wrappers. Re-dispatched as GHA 23643078732.
+
+### S-PROF Round 6: thorough-preset phase distribution (Zhu2013, 75t)
+Built cpp-search HEAD (post T-261+T-262+T-263). Ran MaximizeParsimony with
+verbosity=2 to capture phase timings for thorough preset.
+
+**Phase distribution (3 reps, ~11.2s/rep):**
+| Ratchet 46.3% | NNI-perturb 34.3% | RSS 7.4% | CSS 4.4% | XSS 3.2% | TBR 3.2% |
+
+**Key finding:** NNI-perturb = 34% of time with 14% hit rate (1 step/hit).
+TBR is negligible (3%), confirming T-261+T-262+T-263 effectiveness.
+Filed T-274 (P2): benchmark nniPerturbCycles=0 vs 5 at thorough-preset scale.
 
 ## T-204 + T-266 fixes (2026-03-27 ~10:15 GMT)
 - T-204 (PR #216): GHA 23495097795 was a timing issue — docs commit `f59a193c` landed after the run was dispatched. Current HEAD (11622e90) has correct Rd files. Re-dispatched as 23641482723.
