@@ -49,7 +49,6 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-274 | P2 | ASSIGNED (F) | — | **NNI-perturb cycle count at thorough-preset scale (65–88 tips).** S-PROF round 6 found NNI-perturb = 34.3% of Zhu2013 search time with only 14% hit rate (1-step improvement). Ratchet is 4–8 steps/call at comparable cost. Benchmark `nniPerturbCycles=0` vs `5` at 65–88 tips using time-adjusted expected-best metric. If no-NNI wins → reduce in thorough preset; if NNI helps at 88+ → set conditional on dataset size. | Zhu2013/Dikow2009/Giles2015, 3–5 seeds, 30s/60s budgets. Use `expected_best()` in profiling.md for comparison. |
 | T-245 | P3 | OPEN | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
 
 ### TNT Comparison & Strategy Learning

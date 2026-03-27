@@ -130,7 +130,7 @@
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
-    nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
+    nniPerturbCycles = 0L,  # T-274: 69% overhead, zero time-adjusted benefit
     driftCycles = 0L,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,

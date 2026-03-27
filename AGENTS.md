@@ -532,7 +532,7 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 |--------|-----------|-------------|
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, Wagner×3, NNI-first, adaptive level |
-| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
+| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb (T-274), 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
 | large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
 
 **T-264 (2026-03-26):** `consensusStableReps` removed from all presets
@@ -983,10 +983,24 @@ for `n_cycles`.
 
 **Pipeline placement:** Between ratchet (phase 4) and drift (phase 5) in
 `run_single_replicate()`. Disabled by default (`nniPerturbCycles = 0`).
-Enabled in the `thorough` preset (5 cycles, 0.5 fraction).
+Previously enabled in the `thorough` preset (5 cycles, 0.5 fraction);
+**disabled in all presets since T-274 (2026-03-27)** — see benchmark below.
 
 **R API:** `SearchControl(nniPerturbCycles, nniPerturbFraction)`.
 Timings reported as `nni_perturb_ms`.
+
+**T-274 benchmark (2026-03-27, Agent F): NNI-perturb disabled in thorough preset.**
+Per-replicate sampling, 20 seeds, datasets Zhu2013/Giles2015/Dikow2009 (75–88t):
+
+| Dataset | nni=0 time | nni=5 time | overhead | EB_30s (nni=0) | EB_30s (nni=5) | EB_60s (nni=0) | EB_60s (nni=5) |
+|---------|:----------:|:----------:|:--------:|:--------------:|:--------------:|:--------------:|:--------------:|
+| Zhu2013 (75t) | 2.3s | 3.9s | +69% | 638.2 | 638.2 | 638.0 | 638.0 |
+| Giles2015 (78t) | 2.2s | 3.5s | +59% | 710.1 | 710.1 | 710.0 | 710.0 |
+| Dikow2009 (88t) | 4.2s | 7.0s | +67% | 1611.3 | 1611.2 | 1611.1 | 1611.0 |
+
+NNI-perturb adds 59–69% per-replicate overhead with ≤0.1-step expected-best
+benefit at all budgets — well within bootstrap noise. Time-adjusted expected
+best is identical across conditions. Set `nniPerturbCycles = 0` in thorough preset.
 
 ### Biased Wagner addition (T-188, 2026-03-23)
 
@@ -1189,6 +1203,11 @@ Ranked by priority:
     identical (7.3 vs 7.4; 11.6 vs 10.2). Drift delays consensus
     stability without improving the answer. **Recommendation:** set
     `driftCycles=0` in default and thorough presets (T-255).
+11. ~~NNI-perturb cycle count at thorough-preset scale~~ — **Done** (T-274): Per-replicate
+    sampling, 20 seeds, Zhu2013/Giles2015/Dikow2009 (75–88t). NNI-perturb adds 59–69%
+    per-replicate overhead with ≤0.1-step expected-best benefit at 30s/60s budgets — within
+    bootstrap noise. **Set `nniPerturbCycles = 0` in thorough preset.** Available via
+    `SearchControl(nniPerturbCycles = N)` for manual use.
 
 ## Benchmarks and profiling
 
