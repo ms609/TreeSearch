@@ -713,8 +713,17 @@ void precompute_profile_delta(const DataSet& ds,
     int idx_old = s - 1;       // 0-based row for current step count
     int idx_new = s;           // 0-based row for step count + 1
 
-    double old_cost = (idx_old >= 0 && idx_old < ds.info_max_steps)
-        ? ds.info_amounts[idx_old + ds.info_max_steps * p] : 0.0;
+    // old_cost: 0 if invariant (s<=0), capped at max if beyond table.
+    // Note: must mirror the capping in compute_profile() to avoid overestimating
+    // delta when divided_steps already exceeds info_max_steps (S-RED focus 10).
+    double old_cost;
+    if (idx_old < 0) {
+      old_cost = 0.0;
+    } else if (idx_old < ds.info_max_steps) {
+      old_cost = ds.info_amounts[idx_old + ds.info_max_steps * p];
+    } else {
+      old_cost = ds.info_amounts[(ds.info_max_steps - 1) + ds.info_max_steps * p];
+    }
 
     double new_cost;
     if (idx_new >= 0 && idx_new < ds.info_max_steps) {
