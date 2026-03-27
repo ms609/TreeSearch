@@ -115,7 +115,7 @@ sampled most-parsimonious trees:
 
 ```{r plot-label-nodes}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-majCons <- Consensus(bestTrees, p = 0.5)
+majCons <- TreeTools::Consensus(bestTrees, p = 0.5)
 splitFreqs <- TreeTools::SplitFrequency(majCons, bestTrees) / length(bestTrees)
 plot(majCons)
 TreeTools::LabelSplits(majCons, round(splitFreqs * 100), unit = "%",
@@ -157,7 +157,7 @@ nReplicates <- 10
 jackTrees <- Resample(vinther, bestTrees, nReplicates = nReplicates,
                       verbosity = 0)
 
-strict <- Consensus(bestTrees, p = 1)
+strict <- TreeTools::Consensus(bestTrees, p = 1)
 
 par(mar = rep(0, 4), cex = 0.8)
 # Take the strict consensus of all trees for each replicate
@@ -218,7 +218,7 @@ The most informative single summary tree is thus provided by:
 ```{r cons-without-halk}
 par(mar = rep(0, 4), cex = 0.8)
 noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, "Wiwaxia")
-plot(Consensus(noWiwaxia), tip.color = Rogue::ColByStability(noWiwaxia))
+plot(TreeTools::Consensus(noWiwaxia), tip.color = Rogue::ColByStability(noWiwaxia))
 ```
 
 This reveals that all trees agree that _Halkieria_ and _Orthrozanclus_ are
@@ -311,7 +311,7 @@ constant, _k_:
 ```{r iw-search, message = FALSE}
 iwTrees <- MaximizeParsimony(vinther, concavity = 10)
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(Consensus(iwTrees))
+plot(TreeTools::Consensus(iwTrees))
 ```
 
 Note that we recommend a default value of 10, somewhat higher than the default 

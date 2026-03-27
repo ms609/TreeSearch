@@ -120,7 +120,7 @@ typically more reliable, summary of the signal with the phylogenetic dataset
 ```{r plot-suboptimal-consensus}
 par(mar = rep(0.25, 4), cex = 0.75)
 table(signif(TreeLength(suboptimals, myMatrix, "profile")))
-plot(Consensus(suboptimals))
+plot(TreeTools::Consensus(suboptimals))
 ```
 
 
