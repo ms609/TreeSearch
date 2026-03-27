@@ -27,6 +27,7 @@
 |----|-----|--------|--------|-------------|-------|
 | T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
 | T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795. |
+| T-266 | P2 | PARKED (A, GHA 23634563604) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests, local build clean. |
 
 
 
@@ -64,7 +65,7 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 
-| T-252 | P3 | OPEN | — | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | Uses `benchmark_mbank_sample()` in `bench_framework.R`. |
+| T-252 | P3 | ASSIGNED (F) | — | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | Uses `benchmark_mbank_sample()` in `bench_framework.R`. |
 | T-253 | P3 | OPEN | T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | T-249 complete: EW gaps are 0–7 steps (mean 2.2) across 11 hard datasets at 120s. 5 datasets optimal. Remaining blocker: T-252 (broader baseline). **NB:** always compare like-for-like scoring (Fitch vs Fitch); Brazeau scores are inherently higher. |
 
 ### Strategy Tuning (from T-251 trajectory analysis)
@@ -72,7 +73,7 @@ time reduction. See `dev/benchmarks/vtune_tbr_analysis.md` for full data.
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 
-| T-257 | P3 | PARKED (F, GHA 23607823258) | — | **Post-ratchet sectorial search pass.** Add a second sectorial search pass after ratchet in the pipeline: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR] instead of [XSS+RSS+CSS → Ratchet → Drift → TBR]. TNT interleaves sectorial search throughout each replicate; this is a lightweight approximation. | T-256 found extra sectorial rounds don't improve scores, but `nodrift_3x` config was best (mean gap 4.9 vs 5.3) due to more replicates. A post-ratchet sectorial pass may still help if it's cheap enough to not cut into replicate count. Needs careful cost/benefit analysis. |
+| T-257 | P3 | PR #234 (F) | — | **Post-ratchet sectorial search pass.** Add a second sectorial search pass after ratchet in the pipeline: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR] instead of [XSS+RSS+CSS → Ratchet → Drift → TBR]. TNT interleaves sectorial search throughout each replicate; this is a lightweight approximation. | T-256 found extra sectorial rounds don't improve scores, but `nodrift_3x` config was best (mean gap 4.9 vs 5.3) due to more replicates. A post-ratchet sectorial pass may still help if it's cheap enough to not cut into replicate count. Needs careful cost/benefit analysis. |
 
 
 ### Standing Tasks

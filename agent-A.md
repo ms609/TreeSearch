@@ -1,7 +1,41 @@
 # Agent A Progress Log
 
 ## Current Task
-**Status:** IDLE
+**T-266: Taxon pruning-reinsertion perturbation**
+**Status:** GHA PENDING — run 23634563604
+**Branch:** `feature/prune-reinsert` (worktree `TS-PruneRI`)
+
+### Session: 2026-03-27
+
+Implemented taxon pruning-reinsertion (T-266): a perturbation strategy that
+drops ~10% of leaves, TBR-optimizes the reduced backbone, then greedily
+re-adds the dropped taxa via Wagner insertion + TBR polish. Complements the
+ratchet (weight-space) and NNI-perturbation (topology-space).
+
+**Commit:** `afbf531f` on `feature/prune-reinsert`
+
+**Files added:**
+- `src/ts_prune_reinsert.h/.cpp` — core algorithm (random + instability-weighted tip selection)
+- `tests/testthat/test-ts-prune-reinsert.R` — 44 assertions (Tier 2)
+
+**Files modified:**
+- `src/ts_driven.h/.cpp` — pipeline phase 5c, timing, outer-cycle division
+- `src/ts_wagner.h/.cpp` — exposed 3 helpers for reuse
+- `src/ts_rcpp.cpp` — param unpacking + timing output
+- `R/SearchControl.R` — 3 new params (pruneReinsertCycles/Drop/Selection)
+- `R/ts-driven-compat.R` — backward-compat wrapper
+
+**Local validation:** Build clean, 44/44 prune-reinsert tests pass,
+234 related tests (driven/nni-perturb/wagner) pass with no regressions.
+
+**GHA dispatched:** run 23634563604, awaiting results.
+
+**Next steps on GHA success:**
+- Open PR to cpp-search
+- Benchmark on larger datasets to tune defaults
+- Update AGENTS.md architecture notes
+
+---
 
 ## Session: 2026-03-26 — S-RED focus 9 review
 
@@ -31,21 +65,3 @@ bugs on `feature/random-constrained-tree` (worktree `TS-RCT`).
 **GHA run 23557186264:** 0 FAIL, 10927 PASS on both Ubuntu and Windows.
 
 **PR #229** created to cpp-search.
-
-#### Commits (5)
-1. `27e81942` feat: random_constrained_tree()
-2. `8650522a` docs: update T-212 test comments
-3. `728ec297` fix: impose_constraint() bail-out threshold and return value
-4. `939ea5bf` fix: impose_constraint handles root-child moves via topology_spr()
-5. `d523c99d` chore: add PCSA, reconverged, reconverges to WORDLIST
-
-#### impose_constraint() bugs fixed
-| Bug | Fix |
-|-----|-----|
-| Bail-out threshold n_tip/4 too aggressive | Raised to n_tip |
-| Return 0 for both "no violations" and "bailed out" | Return -1 on bail-out |
-| spr_clip() can't detach root children | New topology_spr() helper |
-
-### Earlier (same session)
-- Investigated random_constrained_tree history: never committed to any branch
-- Commit `61fbd03d` on cpp-search: corrected T-212 test comments
