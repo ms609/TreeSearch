@@ -26,7 +26,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-150 | P2 | PARKED (E, GHA 23636944848) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. SPIC method added (commit 6636924c); GHA 23636944848 **FAILED** — codoc mismatch in `InfoConsensus.Rd`. Fix: regenerate Rd (`roxygen2::roxygenise(load_code=roxygen2::load_installed)`), commit, re-dispatch. |
-| T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795 **FAILED**: (1) Undocumented objects: `CleanNativeData`, `NativeBootstrap`, `NativeLength`, `PrepareNativeData` — add roxygen2 `@export` + docs. (2) Codoc mismatches in `Jackknife.Rd`, `Ratchet.Rd`, `TreeSearch.Rd` (EdgeListSearch) — run `roxygen2::roxygenise(load_code=roxygen2::load_installed)`, commit, re-dispatch. |
+| T-204 | P2 | PARKED (A, GHA 23641482723) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23495097795 failed due to timing (dispatched before `f59a193c` doc commit). Current HEAD (11622e90) has all Rd files correct. Re-dispatched as GHA 23641482723. |
 | T-266 | P2 | PR #235 (A) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests. GHA passed (run 23636145497). |
 
 
@@ -63,7 +63,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 10 by A (Profile & IW scoring). BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps (overestimated delta; conservative, low impact). 15 IW/profile tests pass. commit 7cff7870. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 2 by F (Search topology invariants). T-263 snapshot hoisting VERIFIED CORRECT. T-235 SPR fix VERIFIED CORRECT. LATENT: flat_blocks.active_mask not synced with ratchet perturbation (zero call sites — safe now). T-196 NA+IW screening improvement confirmed. No new bugs filed. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 31 by A. T-266 PR #235 opened. T-150 GHA failed (InfoConsensus.Rd codoc). T-270 completed. T-272 filed. 2 unblocked OPEN specific tasks (T-245, T-269) → standing at P1. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by A (round 31). Merged cpp-search into #235 (prune-reinsert, clean) and #216 (native-search, clean). #213 (cid-consensus) has ts_tbr.cpp conflict (CID changes vs T-263 snapshot opt) — needs human/E resolution. #178 CLOSED (stale 2025 draft). Open: #213 (GHA failing, merge conflict), #216 (clean), #235 (clean). #210 (cpp-search→main). |
