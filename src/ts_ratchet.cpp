@@ -218,6 +218,10 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
       copy_topology(tree, best_tree);
       tree.build_postorder();
       tree.reset_states(ds);
+      // Re-sync constraint metadata: topology changed, so cd->constraint_node
+      // and DFS timestamps must reflect the restored (best_tree) topology.
+      // Same bug class as T-278 (TBR) and T-279 (drift).
+      if (cd) update_constraint(tree, *cd);
     }
 
     ++cycles_completed;
