@@ -49,6 +49,9 @@
 #' @param cssPartitions Integer; number of partitions in CSS.
 #' @param sectorMinSize,sectorMaxSize Integer; minimum and maximum clade
 #'   sizes for sectorial search.
+#' @param postRatchetSectorial Logical; when `TRUE`, run XSS+RSS+CSS again
+#'   after ratchet perturbation using the same round counts.  Approximates
+#'   TNT's interleaved sectorial pattern.  Default: `FALSE`.
 #' @param fuseInterval Integer; fuse pool trees every _n_ replicates.
 #' @param fuseAcceptEqual Logical; accept equally-scoring fused trees?
 #' @param intraFuse Logical; fuse the current tree against pool donors
@@ -199,6 +202,7 @@ SearchControl <- function(
     cssPartitions = 4L,
     sectorMinSize = 6L,
     sectorMaxSize = 50L,
+    postRatchetSectorial = FALSE,
     # Fuse / pool
     fuseInterval = 3L,
     fuseAcceptEqual = FALSE,
@@ -252,6 +256,7 @@ SearchControl <- function(
       cssPartitions = as.integer(cssPartitions),
       sectorMinSize = as.integer(sectorMinSize),
       sectorMaxSize = as.integer(sectorMaxSize),
+      postRatchetSectorial = as.logical(postRatchetSectorial),
       fuseInterval = as.integer(fuseInterval),
       fuseAcceptEqual = as.logical(fuseAcceptEqual),
       intraFuse = as.logical(intraFuse),
@@ -287,7 +292,8 @@ print.SearchControl <- function(x, ...) {
                      "annealTEnd", "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",
-                     "sectorMinSize", "sectorMaxSize"),
+                     "sectorMinSize", "sectorMaxSize",
+                     "postRatchetSectorial"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
