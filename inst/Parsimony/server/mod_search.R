@@ -117,6 +117,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       # Weighting mode changed: old run counts no longer apply; keep trees
       r$searchTotalHits <- 0L
       r$searchTotalReps <- 0L
+      r$searchReplicateScores <- numeric(0)
       r$bestSearchScore  <- NULL
       r$searchLastImprovedRep <- NULL
       r$searchConsensusStable <- FALSE
@@ -128,6 +129,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       # Concavity constant changed: old run counts no longer apply; keep trees
       r$searchTotalHits <- 0L
       r$searchTotalReps <- 0L
+      r$searchReplicateScores <- numeric(0)
       r$bestSearchScore  <- NULL
       r$searchLastImprovedRep <- NULL
       r$searchConsensusStable <- FALSE
@@ -538,7 +540,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                                         r$searchCount,
                                         nTopologies = length(r$allTrees),
                                         lastImprovedRep = r$searchLastImprovedRep,
-                                        stopReason = stopReason)
+                                        stopReason = stopReason,
+                                        replicateScores = r$searchReplicateScores)
       html <- if (!is.null(confText)) {
         nS <- r$searchCount
         tooltip <- paste0(
@@ -1058,6 +1061,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           LogComment("Same optimal score: accumulating trees across search runs")
           r$searchTotalHits <- r$searchTotalHits + newHits
           r$searchTotalReps <- r$searchTotalReps + newReps
+          newRepScores <- attr(newTrees, "replicate_scores")
+          if (!is.null(newRepScores)) {
+            r$searchReplicateScores <- c(r$searchReplicateScores, newRepScores)
+          }
           # Keep existing last_improved_rep (new search didn't improve score)
           combined <- c(r$allTrees, newTrees)
           # Deduplicate by canonical Newick (ladderized topology string)
@@ -1093,6 +1100,12 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           } else {
             NULL
           }
+          newRepScores2 <- attr(newTrees, "replicate_scores")
+          r$searchReplicateScores <- if (!is.null(newRepScores2)) {
+            newRepScores2
+          } else {
+            numeric(0)
+          }
           newTrees
         }
 
@@ -1123,6 +1136,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observeEvent(r$dataset, {
       r$searchTotalHits <- 0L
       r$searchTotalReps <- 0L
+      r$searchReplicateScores <- numeric(0)
       r$bestSearchScore <- NULL
       r$searchLastImprovedRep <- NULL
       r$searchConsensusStable <- FALSE

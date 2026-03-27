@@ -1544,6 +1544,10 @@ List ts_driven_search(
     strategy_diag = List::create(Named("attempts") = sa, Named("successes") = ss);
   }
 
+  // Per-replicate scores for ScoreSpectrum() coverage estimation
+  NumericVector rep_scores(result.replicate_scores.begin(),
+                           result.replicate_scores.end());
+
   if (result.pool_size == 0) {
     return List::create(
       Named("trees") = List::create(),
@@ -1557,7 +1561,8 @@ List ts_driven_search(
       Named("timed_out") = result.timed_out,
       Named("consensus_stable") = result.consensus_stable,
       Named("timings") = timings,
-      Named("strategy_diagnostics") = strategy_diag
+      Named("strategy_diagnostics") = strategy_diag,
+      Named("replicate_scores") = rep_scores
     );
   }
 
@@ -1582,7 +1587,8 @@ List ts_driven_search(
     Named("timed_out") = result.timed_out,
     Named("consensus_stable") = result.consensus_stable,
     Named("timings") = timings,
-    Named("strategy_diagnostics") = strategy_diag
+    Named("strategy_diagnostics") = strategy_diag,
+    Named("replicate_scores") = rep_scores
   );
 }
 

@@ -404,6 +404,9 @@
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
 #'       `drift_ms`, `final_tbr_ms`, `fuse_ms`.}
+#'     \item{`replicate_scores`}{Numeric vector of the best parsimony score
+#'       found by each completed replicate.  Passed to [ScoreSpectrum()] for
+#'       Chao1-style landscape coverage estimation.}
 #'   }
 #'
 #' @examples
@@ -860,6 +863,7 @@ MaximizeParsimony <- function(
     consensus_stable = isTRUE(result$consensus_stable),
     timings = unlist(result$timings),
     strategy_diagnostics = result$strategy_diagnostics,
+    replicate_scores = result$replicate_scores,
     class = "multiPhylo"
   )
 }
