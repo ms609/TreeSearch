@@ -78,6 +78,13 @@ struct DrivenParams {
   int sector_min_size = 6;
   int sector_max_size = 50;
 
+  // Post-ratchet sectorial search (T-257).
+  // When true, run XSS+RSS+CSS again after ratchet perturbation using the
+  // same round counts and sector parameters.  TNT interleaves sectorial
+  // search throughout each replicate; this approximates that pattern by
+  // exploiting the new basin reached after ratchet before TBR polish.
+  bool post_ratchet_sectorial = false;
+
   // Tree fusing
   int fuse_interval = 3;         // fuse every N replicates (between-replicate)
   bool fuse_accept_equal = false;

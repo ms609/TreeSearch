@@ -513,15 +513,20 @@ warning and delegates to `Morphy()`. Scheduled for removal in 2028.
 
 ### Driven search pipeline per replicate
 
-1. Random Wagner tree → optional SPR → TBR to local optimum
+1. Random Wagner tree → NNI warmup → TBR to local optimum
 2. XSS sectorial search (if tree large enough)
 3. RSS random sectorial search
 4. CSS constrained sectorial search
 5. Ratchet perturbation to escape local optima
-6. Drift search (accept suboptimal moves)
-7. Final TBR polish
-8. Add to pool
-9. Fuse against pool (every `fuse_interval` replicates)
+5a. Post-ratchet XSS+RSS+CSS (if `postRatchetSectorial = TRUE`)
+6. NNI-perturbation (topology-space escape, if `nniPerturbCycles > 0`)
+7. Drift search (accept suboptimal moves)
+8. PCSA perturbation (if `annealCycles > 0`)
+9. Final TBR polish
+10. Add to pool
+11. Fuse against pool (every `fuse_interval` replicates)
+
+Steps 2–9 are wrapped in the `outerCycles` loop (default 1).
 
 Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
