@@ -578,8 +578,8 @@ Morphy <- function(dataset, tree,
   
   # Initialize constraints
   if (constrained) {
-    morphyConstr <- PhyDat2Morphy(constraint)
-    on.exit(morphyConstr <- UnloadMorphy(morphyConstr), add = TRUE)
+    morphyConstr <- suppressWarnings(PhyDat2Morphy(constraint))
+    on.exit(suppressWarnings(morphyConstr <- UnloadMorphy(morphyConstr)), add = TRUE)
     constraintWeight <- attr(constraint, "weight")
     if (any(constraintWeight > 1)) {
       cli_alert_warning("Some constraints are exact duplicates.")
@@ -651,8 +651,8 @@ Morphy <- function(dataset, tree,
   if ((!iw && !profile) || # Required for equal weights search
       (isTRUE(ratchEW) && ratchIter > 0) # For EW ratchet searches
   ) {
-    morphyObj <- PhyDat2Morphy(dataset)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj), add = TRUE)
+    morphyObj <- suppressWarnings(PhyDat2Morphy(dataset))
+    on.exit(suppressWarnings(morphyObj <- UnloadMorphy(morphyObj)), add = TRUE)
   }
   
   if (iw || profile) {
@@ -662,8 +662,9 @@ Morphy <- function(dataset, tree,
     startWeights <- at[["weight"]]
     minLength <- MinimumLength(dataset, compress = TRUE)
     morphyObjects <- lapply(characters, SingleCharMorphy)
-    on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
-            add = TRUE)
+    on.exit(suppressWarnings(
+      morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1))),
+      add = TRUE)
     
     nLevel <- length(at[["level"]])
     nChar <- at[["nr"]]
