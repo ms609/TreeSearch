@@ -26,8 +26,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-150 | P2 | PARKED (E, GHA 23636944848) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. SPIC method added (commit 6636924c); GHA 23636944848 **FAILED** — codoc mismatch in `InfoConsensus.Rd`. Fix: regenerate Rd (`roxygen2::roxygenise(load_code=roxygen2::load_installed)`), commit, re-dispatch. |
-| T-204 | P2 | PARKED (A, GHA 23641482723) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23495097795 failed due to timing (dispatched before `f59a193c` doc commit). Current HEAD (11622e90) has all Rd files correct. Re-dispatched as GHA 23641482723. |
-| T-266 | P2 | PARKED (A, GHA 23641870390) | — | **Taxon pruning-reinsertion perturbation.** Drop ~10% of leaves, TBR-optimize backbone, Wagner-reinsert, TBR-polish. Random + instability-weighted selection. Disabled by default. | On `feature/prune-reinsert` (worktree `TS-PruneRI`). 44 tests. agent-check passed (23636145497). Standard CI failed: (1) R CMD check spelling ERROR — 'warmup'/'config' not in WORDLIST (R 4.1 hunspell stricter); fixed in de9e5210. (2) gcc-ASAN/devel failures: rlang compile error (infrastructure issue, not package). Re-dispatched agent-check as GHA 23641870390. |
+| T-204 | P2 | PARKED (A, GHA 23643078732) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA 23641482723 failed: spelling ERROR ('cleanup'/'phyDat') + deprecated-fn warnings in examples. Fixed eb21c588: WORDLIST + wrap examples. Re-dispatched as GHA 23643078732. |
 
 
 ### Bugs
