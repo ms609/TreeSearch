@@ -14,9 +14,9 @@ test_that("ScoreSpectrum handles edge cases gracefully", {
   expect_equal(sp1$observed_levels, 1L)
   expect_true(is.na(sp1$coverage))
 
-  # Non-finite values are stripped
+  # Non-finite values are stripped (NA, Inf, -Inf all removed)
   sp_na <- ScoreSpectrum(c(10, NA, Inf, -Inf, 20, 10))
-  expect_equal(sp_na$n_replicates, 4L)
+  expect_equal(sp_na$n_replicates, 3L)  # 3 finite values: 10, 20, 10
 })
 
 test_that("ScoreSpectrum computes correct Chao1 and coverage estimates", {
