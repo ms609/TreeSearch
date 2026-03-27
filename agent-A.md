@@ -1,9 +1,15 @@
 # Agent A Progress Log
 
 ## Current Task
-**T-266: Taxon pruning-reinsertion perturbation**
-**Status:** PR #235 opened (GHA run 23636145497 passed)
-**Branch:** `feature/prune-reinsert` (worktree `TS-PruneRI`)
+**IDLE** — T-266 PR #235 open, awaiting human merge.
+
+## S-COORD Round 31 (2026-03-27 ~09:20 GMT)
+- T-266 PR #235 opened (GHA passed).
+- T-150 GHA 23636944848 FAILED — InfoConsensus.Rd codoc mismatch. Updated T-150 row in to-do.md.
+- Filed T-270 (vignette docs for T-257), T-272 (close PR #178).
+- Updated coordination.md agent status + task pipeline.
+- u.005.claimed-F: skipped (claimed by F).
+
 
 ### Session: 2026-03-27
 
