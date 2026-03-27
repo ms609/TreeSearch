@@ -1556,6 +1556,7 @@ List ts_driven_search(
       Named("last_improved_rep") = result.last_improved_rep,
       Named("timed_out") = result.timed_out,
       Named("consensus_stable") = result.consensus_stable,
+      Named("perturb_stop") = result.perturb_stop,
       Named("timings") = timings,
       Named("strategy_diagnostics") = strategy_diag
     );
@@ -1581,6 +1582,7 @@ List ts_driven_search(
     Named("last_improved_rep") = result.last_improved_rep,
     Named("timed_out") = result.timed_out,
     Named("consensus_stable") = result.consensus_stable,
+    Named("perturb_stop") = result.perturb_stop,
     Named("timings") = timings,
     Named("strategy_diagnostics") = strategy_diag
   );

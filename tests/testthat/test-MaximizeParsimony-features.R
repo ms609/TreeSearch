@@ -126,6 +126,29 @@ test_that("maxSeconds = 0 means no timeout", {
   expect_false(attr(result, "timed_out"))
 })
 
+test_that("perturbStopFactor fires and sets perturb_stop attribute", {
+  # perturbStopFactor=1 on Vinther2008 (23 tips) means limit = 23 reps.
+  set.seed(4618)
+  result <- MaximizeParsimony(ds, maxReplicates = 500L, targetHits = 500L,
+                               control = SearchControl(
+                                 perturbStopFactor = 1L,
+                                 ratchetCycles = 1L),
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_lt(attr(result, "replicates"), 500L)
+  expect_true(attr(result, "perturb_stop"))
+  expect_false(attr(result, "timed_out"))
+})
+
+test_that("verbosity = 1 prints 'Search complete' summary to console", {
+  set.seed(3071)
+  expect_message(
+    MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                      verbosity = 1L),
+    "Search complete"
+  )
+})
+
 # --- nThreads ---
 
 test_that("nThreads = 1 (serial) runs correctly", {

@@ -311,6 +311,7 @@ test_that("perturbStopFactor stops search after unsuccessful replicates", {
   expect_lt(result$replicates, 100L)
   expect_true(result$pool_size >= 1)
   expect_true(result$best_score > 0)
+  expect_true(result$perturb_stop)
 })
 
 test_that("perturbStopFactor=0 disables the rule", {

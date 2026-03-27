@@ -210,6 +210,9 @@ improved the best score (0 if not tracked, e.g. parallel search).}
 \item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped
 because the strict consensus was unchanged for
 \code{consensusStableReps} consecutive replicates.}
+\item{\code{perturb_stop}}{Logical: \code{TRUE} if the search stopped because
+\code{nTip * perturbStopFactor} consecutive replicates failed to improve
+the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
 \item{\code{timings}}{Named numeric vector of cumulative wall-clock time
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},

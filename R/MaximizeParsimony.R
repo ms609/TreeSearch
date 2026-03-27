@@ -400,6 +400,9 @@
 #'     \item{`consensus_stable`}{Logical: `TRUE` if the search stopped
 #'       because the strict consensus was unchanged for
 #'       `consensusStableReps` consecutive replicates.}
+#'     \item{`perturb_stop`}{Logical: `TRUE` if the search stopped because
+#'       `nTip * perturbStopFactor` consecutive replicates failed to improve
+#'       the best score (see [`SearchControl()`]).}
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
@@ -842,10 +845,18 @@ MaximizeParsimony <- function(
 
   # --- Output ---
   if (verbosity > 0L) {
+    total_s <- round(sum(unlist(result$timings), na.rm = TRUE) / 1000, 1)
+    stop_reason <- if (isTRUE(result$timed_out)) "timeout"
+                   else if (isTRUE(result$consensus_stable)) "consensus stable"
+                   else if (isTRUE(result$perturb_stop)) "perturbation limit"
+                   else "replicate limit"
     cli_alert_success(paste0(
       "Search complete: score {.strong {signif(result$best_score, 7)}}, ",
-      "{result$replicates} replicate{?s}, ",
-      "{result$hits_to_best} hit{?s} to best"
+      "{result$replicates} replicate{?s} ",
+      "(last improved: #{result$last_improved_rep}), ",
+      "{result$hits_to_best} hit{?s} to best, ",
+      "{result$n_topologies} MPT{?s}, ",
+      "stop: {stop_reason}, {total_s}s"
     ))
   }
 
@@ -858,6 +869,7 @@ MaximizeParsimony <- function(
     last_improved_rep = result$last_improved_rep,
     timed_out = isTRUE(result$timed_out),
     consensus_stable = isTRUE(result$consensus_stable),
+    perturb_stop = isTRUE(result$perturb_stop),
     timings = unlist(result$timings),
     strategy_diagnostics = result$strategy_diagnostics,
     class = "multiPhylo"
