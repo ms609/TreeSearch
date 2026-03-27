@@ -7,6 +7,7 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 ## 2026-03-27
 
 | ID | Description | Agent | Notes |
+| E-003 | Constrained sector search: stale constraint_node after sector improvement | E | `map_constraint_nodes()` + `compute_dfs_timestamps()` after accepted sector improvement in rss_search/xss_search (both improvement and equal-accepted branches). Same class as T-278/T-279. Commit f1ad0308 labelled "T-280" (superseded by AltHom task, hence E-003). 205/205 constraint+sector tests pass locally. GHA 23650991803. |
 | T-278 | Constrained TBR: stale constraint_node after rejected move | E | `map_constraint_nodes()` + `compute_dfs_timestamps()` after topology restoration when constrained move rejected at score check. Also removed dead `if (!states_valid)` branch at final full_rescore. 860 constraint tests pass locally. GHA 23650358613. Commit df3aa71e. |
 | T-275 | Prune-reinsert: block non-EW scoring modes | B | Early-return guard in `prune_reinsert_search()` for PROFILE/HSJ/XFORM scoring modes. `build_reduced_dataset()` omits mode-specific fields; guard prevents incorrect reduced-tree scores until each mode is properly wired. |
 | T-266 | Taxon pruning-reinsertion perturbation | A | `ts_prune_reinsert.h/.cpp` + pipeline phase 5c + 44 tests. `pruneReinsertCycles`/`pruneReinsertDrop`/`pruneReinsertSelection` in `SearchControl()`. gcc-ASAN/devel failure was rlang infrastructure (PREXPR removed in R-devel); merged by human. Feature branch `feature/prune-reinsert` (PR #235) merged to cpp-search. Worktree TS-PruneRI removed. |
