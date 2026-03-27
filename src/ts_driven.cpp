@@ -320,6 +320,65 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
+    // 4a. Post-ratchet sectorial search (T-257)
+    // After ratchet perturbation, the tree is in a new basin. A second
+    // sectorial pass can exploit local improvements in this basin before
+    // TBR polish, approximating TNT's interleaved sectorial pattern.
+    if (params.post_ratchet_sectorial && tree_large_enough_for_sectors) {
+      SectorParams sp;
+      sp.min_sector_size = params.sector_min_size;
+      sp.max_sector_size = params.sector_max_size;
+      sp.internal_ratchet_cycles = 0;
+      sp.internal_max_hits = 1;
+
+      if (params.xss_rounds > 0) {
+        sp.n_partitions = params.xss_partitions;
+        sp.xss_rounds = params.xss_rounds;
+        xss_search(result.tree, ds, sp, cd);
+        result.timings.xss_ms += ph_lap();
+      }
+
+      if (ts::check_interrupt() || check_timeout()) {
+        result.interrupted = true;
+        result.score = score_tree(result.tree, ds);
+        return result;
+      }
+
+      if (params.rss_rounds > 0) {
+        sp.split_freq = split_freq;
+        for (int rr = 0; rr < params.rss_rounds; ++rr) {
+          rss_search(result.tree, ds, sp, cd);
+          if (ts::check_interrupt() || check_timeout()) {
+            result.interrupted = true;
+            result.score = score_tree(result.tree, ds);
+            return result;
+          }
+        }
+        result.timings.rss_ms += ph_lap();
+      }
+
+      if (params.css_rounds > 0) {
+        SectorParams css_sp;
+        css_sp.n_partitions = params.css_partitions;
+        css_sp.xss_rounds = params.css_rounds;
+        css_sp.internal_max_hits = 1;
+        css_search(result.tree, ds, css_sp, cd);
+        result.timings.css_ms += ph_lap();
+
+        if (ts::check_interrupt() || check_timeout()) {
+          result.interrupted = true;
+          result.score = score_tree(result.tree, ds);
+          return result;
+        }
+      }
+
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g\n",
+                outer_label("PostRatch-XSS").c_str(),
+                score_tree(result.tree, ds));
+      }
+    }
+
     // 4b. NNI perturbation (topology-space escape)
     // Skip when constraints are active: random_nni_perturb() doesn't
     // enforce constraints. impose_constraint() repairs violations

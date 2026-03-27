@@ -32,6 +32,7 @@ SearchControl(
   cssPartitions = 4L,
   sectorMinSize = 6L,
   sectorMaxSize = 50L,
+  postRatchetSectorial = FALSE,
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
   intraFuse = FALSE,
@@ -148,6 +149,10 @@ sectorial search.}
 
 \item{sectorMinSize, sectorMaxSize}{Integer; minimum and maximum clade
 sizes for sectorial search.}
+
+\item{postRatchetSectorial}{Logical; when \code{TRUE}, run XSS+RSS+CSS again
+after ratchet perturbation using the same round counts.  Approximates
+TNT's interleaved sectorial pattern.  Default: \code{FALSE}.}
 
 \item{fuseInterval}{Integer; fuse pool trees every \emph{n} replicates.}
 
