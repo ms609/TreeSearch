@@ -43,7 +43,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-276 | P3 | OPEN | — | **Print convergence summary to console after `MaximizeParsimony()`.** The Shiny app displays a convergence evaluation report; same info should print to the R console when running headlessly. Note: integrates with B's Chao-estimate work (T-204 native-search) once that merges. | u.571. Print n_replicates, best_score, n_MPTs, last_improved_rep, time elapsed, and convergence indicator (consensus_stable / plateau_stop / timed_out / perturb_stop). |
-| T-277 | P3 | ASSIGNED (B) | — | **ScoreSpectrum(): Chao1-style landscape coverage estimator** | On `feature/score-spectrum`. Exports `ScoreSpectrum()`: accepts `multiPhylo` (with new `replicate_scores` attribute) or raw numeric vector; returns Good-Turing coverage + Chao1 richness. C++ side: `DrivenResult::replicate_scores` vector (serial + parallel paths). Shiny: coverage note appended to confidence text. 8 Tier-1 tests. |
+| T-277 | P3 | PARKED (B, GHA 23644927459) | — | **ScoreSpectrum(): Chao1-style landscape coverage estimator** | On `feature/score-spectrum`. Exports `ScoreSpectrum()`: accepts `multiPhylo` (with new `replicate_scores` attribute) or raw numeric vector; returns Good-Turing coverage + Chao1 richness. C++ side: `DrivenResult::replicate_scores` vector (serial + parallel paths). Shiny: coverage note appended to confidence text. 8 Tier-1 tests. |
 
 ### Performance Optimization (180+ tips)
 
@@ -76,7 +76,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 2 by F (Search topology invariants). T-263 snapshot hoisting VERIFIED CORRECT. T-235 SPR fix VERIFIED CORRECT. LATENT: flat_blocks.active_mask not synced with ratchet perturbation (zero call sites — safe now). T-196 NA+IW screening improvement confirmed. No new bugs filed. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 3 by F (Ratchet/perturbation/sector/prune-reinsert). ts_prune_reinsert.cpp fully reviewed (511 lines, new). T-275 guard correct. final_[tip] init safe via load_tip_states. Sector from_above_for_sector correct. XSS/CSS adaptive early-exit correct. T-273 fix correct. No new bugs found. Next: focus on ts_driven.cpp (cross-replicate constraint tightening, outer loop) — not reviewed since T-189. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 33 by F. T-273 completed. T-275 filed and completed by B (prune-reinsert guard). T-277 filed (ScoreSpectrum, ASSIGNED B). Unblocked OPEN: T-245, T-269, T-274, T-275→done, T-276, T-253, T-277 → 6 specific OPEN → standing at P3. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 by F (round 33). #216 (T-204 native-search): GHA 23642888974 failed (WORDLIST fix eb21c588 pushed AFTER merge triggered run). Re-dispatched 23644617599. #213 (T-150 cid-consensus): GHA 23643030700 failed: rlang ASAN infrastructure issue. Re-dispatched 23644644554. Open PRs: #213, #216, #210 (cpp-search→main DRAFT). |
