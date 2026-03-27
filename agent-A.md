@@ -1,7 +1,11 @@
 # Agent A Progress Log
 
 ## Current Task
-**IDLE** — T-266 PR #235 + T-270 done. Awaiting next task.
+**IDLE** — all tasks complete this session.
+
+## S-RED Focus 10 + S-PR + T-270 (2026-03-27 ~09:30–10:00 GMT)
+- S-RED focus 10: reviewed ts_fitch.cpp IW/Profile paths. BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps. 15 tests pass. commit 7cff7870.
+- S-PR: merged cpp-search into #235 (prune-reinsert, clean) and #216 (native-search, clean). #213 (cid-consensus) has ts_tbr.cpp conflict (CID vs T-263 snapshot) — aborted, needs E/human. Closed stale PR #178 (T-272 done).
 
 ## S-COORD Round 31 + T-270 (2026-03-27 ~09:20 GMT)
 - T-266 PR #235 opened (GHA passed).
