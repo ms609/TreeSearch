@@ -87,9 +87,14 @@ NNIPerturbResult nni_perturb_search(
       continue;
     }
 
-    // Repair constraint violations from blind NNI perturbation
-    if (cd && cd->active) {
-      impose_constraint(tree, *cd);
+    // Repair constraint violations from blind NNI perturbation, then
+    // re-sync constraint metadata for the (now repaired) topology.
+    // update_constraint must be called even when impose_constraint is
+    // skipped — cd->constraint_node and DFS timestamps are stale after
+    // the topology change from random_nni_perturb.
+    if (cd) {
+      if (cd->active) impose_constraint(tree, *cd);
+      update_constraint(tree, *cd);
     }
 
     // Rescore after perturbation (+ repair)
@@ -110,6 +115,9 @@ NNIPerturbResult nni_perturb_search(
       copy_topology(tree, best_tree);
       tree.build_postorder();
       tree.reset_states(ds);
+      // Re-sync constraint metadata after topology revert.
+      // Same bug class as T-278 (TBR), T-279 (drift), F-015 (ratchet).
+      if (cd) update_constraint(tree, *cd);
     }
 
     ++cycles_completed;
