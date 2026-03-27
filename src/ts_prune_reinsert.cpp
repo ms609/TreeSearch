@@ -484,6 +484,13 @@ PruneReinsertResult prune_reinsert_search(
     // 5. Expand reduced tree and reinsert dropped tips
     expand_and_reinsert(tree, ds, red_tree, pt.tip_map, dropped, cd);
 
+    // Re-sync constraint metadata: expand_and_reinsert completely rebuilds
+    // the topology (init_wagner_state + node mapping + tip reinsertion),
+    // so cd->constraint_node and DFS timestamps are stale.
+    // Same bug class as T-278 (TBR), T-279 (drift), F-015 (ratchet),
+    // F-016 (NNI-perturb).
+    if (cd) update_constraint(tree, *cd);
+
     // 6. TBR polish on full tree
     {
       TBRParams tp;
@@ -502,6 +509,9 @@ PruneReinsertResult prune_reinsert_search(
       ++result.n_improvements;
     } else {
       tree = backup;  // revert
+      // Re-sync constraint metadata after topology revert.
+      // Same bug class as F-015 (ratchet), F-016 (NNI-perturb).
+      if (cd) update_constraint(tree, *cd);
     }
   }
 
