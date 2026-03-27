@@ -26,7 +26,7 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-150 | P2 | PARKED (F, GHA 23648875258) | — | **CID-optimal consensus tree search** | PR #213. WORDLIST fix (Splitwise) commit 9b7ee66e. GHA 23648875258. |
-| T-204 | P2 | PARKED (F) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | GHA 23648401936 FAILED Windows: WARN 18 from `UnloadMorphy()` in `tests/testthat/test-pp-random-tree.R` at lines 51, 67, 86, 91, 103, 127 — wrap all with `suppressWarnings()`. Then grep other test files for similar deprecated calls. Commit, push, redispatch. |
+| T-204 | P2 | PARKED (F, GHA 23649607006) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | Root cause: Morphy.R internally calls PhyDat2Morphy()/UnloadMorphy() without suppressing deprecation warnings. Fixed at source in Morphy.R. commit 0af8fbe2. GHA 23649607006. |
 
 
 ### Bugs
@@ -44,6 +44,12 @@
 |----|-----|--------|--------|-------------|-------|
 
 (no open tasks)
+
+### Bugs
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-278 | P2 | OPEN | — | **Constrained TBR: stale `cd->constraint_node` after rejected move.** In `ts_tbr.cpp`, when a constrained move is applied (`apply_tbr_move`), passes the constraint-violation test, but is then rejected at the score check (`actual >= best_score`), `cd->constraint_node` is left in the post-apply state after `restore_topology + state_snap.restore()`. The constraint data is not re-derived from the restored topology. The next clip's `classify_clip_constraints` uses stale mapping, potentially causing false-positive or false-negative constraint violations. Fix: call `map_constraint_nodes(tree, *cd)` and `compute_dfs_timestamps(tree, *cd)` after the rejection at lines 971–974 (inside the constrained search path). Only affects constrained TBR (`consensusConstrain=TRUE` or user constraint). | Found by S-RED focus 6 (F, 2026-03-27). The `if (!states_valid)` dead code at line 1012 should also be fixed (capture return value). |
 
 ### Performance Optimization (180+ tips)
 
@@ -73,7 +79,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | ASSIGNED (F) | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 5 by F (ts_parallel.cpp, 589 lines). Bug found and fixed: `result.perturb_stop` never initialized (UB) and not set to `true` when perturb-stop fires in parallel path — serial path had both correct. commit 1a640b73. GHA 23648703841. Next: ts_tbr.cpp or ts_ratchet.cpp (core search modules not reviewed recently). |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 6 by F (ts_tbr.cpp, 1025 lines). Two findings: (1) latent dead-code bug line 1013 — `full_rescore()` return not captured when `!states_valid` (currently unreachable, but semantically wrong); (2) real low-impact bug — after a constrained move is applied, fails score check, and is restored, `cd->constraint_node` is left in post-apply state (stale) relative to restored topology. Next clip's `classify_clip_constraints` uses stale data. Only affects constrained TBR (`consensusConstrain=TRUE` or user constraints). Next: file T-278 (constrained TBR fix) and assess severity. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
-| S-COORD | dyn | ASSIGNED (F) | — | **Standing: Coordination review** | Last run: 2026-03-27 round 33 by F. T-253 complete. Remaining OPEN: T-245, T-269 + E-002 → standing at P2. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 35 by F. T-278 filed (constrained TBR constraint staleness). OPEN: T-278, T-245, T-269, E-002 → 4 specific OPEN → standing at P2. |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 round 38 by E. #213 (T-150): GHA 23648267378 FAILED (Splitwise+reorder NOTE) → F applied WORDLIST fix 9b7ee66e, redispatch GHA 23648875258. #216 (T-204): GHA 23648401936 running. **ASAN**: `pak::pak("r-lib/rlang")` approach broken — GitHub dev version also embeds PREXPR in rlang-types.h. New fix: patch-and-install CRAN source with `#define PREXPR(x) R_PromiseExpr(x)` shim (ASan.yml updated, needs feature branches to rebase). Open PRs: #213, #216, #210 (DRAFT). |
