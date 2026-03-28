@@ -49,10 +49,10 @@ Rscript --no-save -e "
   } else { message('All dependencies present.') }
 "
 
-# Rebuild from feature/tbr-batch (pruneReinsertNni lives here)
+# Rebuild from cpp-search (pruneReinsertNni merged via PR #238)
 cd "$REPO" || exit 1
-git fetch origin feature/tbr-batch
-git checkout --detach origin/feature/tbr-batch
+git fetch origin cpp-search
+git reset --hard origin/cpp-search
 echo "Git HEAD: $(git log --oneline -1)"
 
 echo "Rebuilding TreeSearch..."
