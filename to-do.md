@@ -39,7 +39,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-245 | P3 | ASSIGNED (F) | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | GHA 23690208221 PASSED. PR open; Hamilton benchmark pending. feature/tbr-batch commit 038e00a8. |
+| T-245 | P3 | PR #238 (F) | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | PR #238. GHA 23690208221 PASSED. Hamilton benchmark pending. feature/tbr-batch commit 038e00a8. |
 
 ### Alternative Homologies (Goloboff 2026) — `feature/alt-homology` / `TS-AltHom`
 
@@ -79,5 +79,5 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-28 focus 29 by F (ts_tbr.cpp T-245 batch loop + ts_driven.cpp T-289 Stage 4 — no bugs; fixed stale PR comment in MaximizeParsimony.R f1e9c4c5). All current modules reviewed ≥ once. Next: re-review after new feature merges. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-28 round 44 by F. T-245 GHA PASSED; PR open. S-RED focus 29 clean. PR #210 R-CMD-check re-triggered (spelling fix). PRs: #213 (T-150), #216 (T-204), #237 (T-279), #210 (DRAFT), + new T-245 PR pending. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-28 round 44 by F. Open PRs: #213 (T-150, GHA PASS), #216 (T-204, GHA PASS), #237 (T-279, GHA PASS), #210 (DRAFT cpp-search→main, R-CMD-check re-triggered). T-245 PR pending open. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-28 round 44 by F. T-245 PR #238 open. S-RED focus 29 clean. PR #210 R-CMD-check re-triggered (spelling fix). PRs: #213 (T-150), #216 (T-204), #237 (T-279), #238 (T-245), #210 (DRAFT). |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-28 round 44 by F. Open PRs: #213 (T-150, GHA PASS), #216 (T-204, GHA PASS), #237 (T-279, GHA PASS), #238 (T-245, GHA PASS), #210 (DRAFT cpp-search→main, R-CMD-check re-triggered). |
