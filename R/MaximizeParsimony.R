@@ -183,8 +183,7 @@
     wagnerBias = 1L, wagnerBiasTemp = 0.3,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 1L,
-    pruneReinsertCycles = 5L, pruneReinsertDrop = 0.05,
-    pruneReinsertSelection = 2L,
+    pruneReinsertCycles = 0L,
     consensusStableReps = 0L
   )
 )
