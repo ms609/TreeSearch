@@ -45,6 +45,7 @@ SearchControl(
   pruneReinsertCycles = 0L,
   pruneReinsertDrop = 0.1,
   pruneReinsertSelection = 0L,
+  pruneReinsertTbrMoves = 5L,
   annealCycles = 0L,
   annealPhases = 5L,
   annealTStart = 20,
@@ -215,6 +216,14 @@ at least 4.}
 which tips to drop.  0 = random (default), 1 = instability-weighted
 (tips whose placement varies across pool trees are preferentially
 dropped).}
+
+\item{pruneReinsertTbrMoves}{Integer; maximum number of TBR moves accepted
+during the reduced-tree backbone optimisation phase of each
+prune-reinsert cycle.  0 means run to convergence; the default of 5
+mirrors the ratchet design (short perturbation, many diverse cycles)
+and substantially reduces per-cycle cost on datasets with inapplicable
+characters (where Brazeau scoring dominates).  Increase towards 0 if
+you prefer thorough backbone optimisation over replicate throughput.}
 
 \item{annealCycles}{Integer; number of simulated annealing perturbation
 cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
