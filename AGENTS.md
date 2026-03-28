@@ -541,7 +541,7 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, Wagner×3, NNI-first, adaptive level |
 | thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb (T-274), 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100, pruneReinsert(5 cycles, 5%, MISSING) |
 
 **T-264 (2026-03-26):** `consensusStableReps` removed from all presets
 (disabled, 0). The previous setting of 3 caused catastrophic early

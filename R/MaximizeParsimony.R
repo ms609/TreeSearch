@@ -159,6 +159,11 @@
   # - No adaptiveStart: with ~1 replicate per 60s budget, the bandit has
   #   no learning opportunity; adaptiveStart empirically regresses here
   # - Larger sector sizes for proportional tree coverage
+  # - Prune-reinsert perturbation (T-289): 5 cycles, 5% drop, MISSING
+  #   selection (sel=2). Benchmarked on mbank_X30754 (180t, 425p), 10 seeds,
+  #   60s: mean -14.7 steps vs baseline (SD 18.7, SE 5.9). MISSING criterion
+  #   is robust across drop fractions (d=5%: -14.7; d=10%: -14.7); INSTABILITY
+  #   and COMBINED degrade at d=10% (-11.3, -10.2). No pool dependency.
   # Validated on mbank_X30754 (180t, 418p), 5 seeds at 30/60/120s budgets:
   #   60s:  large median=1255 vs thorough 1259 (+4 steps better)
   #   120s: large median=1250 vs thorough 1250 (tied, 2 reps vs 0-1)
@@ -178,6 +183,8 @@
     wagnerBias = 1L, wagnerBiasTemp = 0.3,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 1L,
+    pruneReinsertCycles = 5L, pruneReinsertDrop = 0.05,
+    pruneReinsertSelection = 2L,
     consensusStableReps = 0L
   )
 )
