@@ -126,6 +126,29 @@ test_that("maxSeconds = 0 means no timeout", {
   expect_false(attr(result, "timed_out"))
 })
 
+test_that("perturbStopFactor fires and sets perturb_stop attribute", {
+  # perturbStopFactor=1 on Vinther2008 (23 tips) means limit = 23 reps.
+  set.seed(4618)
+  result <- MaximizeParsimony(ds, maxReplicates = 500L, targetHits = 500L,
+                               control = SearchControl(
+                                 perturbStopFactor = 1L,
+                                 ratchetCycles = 1L),
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_lt(attr(result, "replicates"), 500L)
+  expect_true(attr(result, "perturb_stop"))
+  expect_false(attr(result, "timed_out"))
+})
+
+test_that("verbosity = 1 prints 'Search complete' summary to console", {
+  set.seed(3071)
+  expect_message(
+    MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                      verbosity = 1L),
+    "Search complete"
+  )
+})
+
 # --- nThreads ---
 
 test_that("nThreads = 1 (serial) runs correctly", {
@@ -274,4 +297,38 @@ test_that("Constrained Wagner tree works with multiple seeds", {
     expect_true(is.finite(result$score), info = paste("seed", s))
     expect_equal(nrow(result$edge), 8L, info = paste("seed", s))
   }
+})
+
+# --- Intra-replicate fusing (T-258) ---
+
+test_that("intraFuse runs without error", {
+  set.seed(8517)
+  result <- MaximizeParsimony(ds, strategy = "sprint",
+                              maxReplicates = 5L, targetHits = 2L,
+                              maxSeconds = 3, intraFuse = TRUE,
+                              verbosity = 0L, nThreads = 1L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+  expect_lte(attr(result, "score"), 100)  # should find reasonable score
+})
+
+test_that("intraFuse with dataset size change does not crash", {
+  ds_large <- inapplicable.phyData[["Agnarsson2004"]]  # 62 tips
+  ds_small <- inapplicable.phyData[["Vinther2008"]]     # 23 tips
+
+  # Run on larger dataset first with intra-fuse
+  set.seed(9014)
+  r1 <- MaximizeParsimony(ds_large, strategy = "sprint",
+                          maxReplicates = 3L, targetHits = 2L,
+                          maxSeconds = 3, intraFuse = TRUE,
+                          verbosity = 0L, nThreads = 1L)
+  expect_true(is.finite(attr(r1, "score")))
+
+  # Then run on smaller dataset with intra-fuse (regression test for segfault)
+  set.seed(9015)
+  r2 <- MaximizeParsimony(ds_small, strategy = "sprint",
+                          maxReplicates = 3L, targetHits = 2L,
+                          maxSeconds = 3, intraFuse = TRUE,
+                          verbosity = 0L, nThreads = 1L)
+  expect_true(is.finite(attr(r2, "score")))
 })

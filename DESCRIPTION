@@ -104,6 +104,7 @@ Collate:
   'ReleaseQuestions.R'
   'recode_hierarchy.R'
   'SPR.R'
+  'ScoreSpectrum.R'
   'Sectorial.R'
   'SuccessiveApproximations.R'
   'TBR.R'

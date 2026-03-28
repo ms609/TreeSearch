@@ -65,7 +65,13 @@ summaryRprof("profile.out")
 
 ## Known Baselines
 
-### Latest run: 2026-03-18 16:00 by Agent A (v2.0.0, single-agent, quiet machine)
+### Latest run: 2026-03-27 by Agent A (round 6: post-T-261/T-262/T-263 phase distribution)
+
+See "Phase distribution: current thorough preset" section below for updated numbers.
+The 2026-03-18 baselines used strategy='none' (TBR-only); the thorough preset
+now dominates medium-scale search, making direct comparison impractical.
+
+### Previous run: 2026-03-18 16:00 by Agent A (v2.0.0, single-agent, quiet machine)
 
 Previous baselines (2026-03-17) were inflated ~30–40% by multi-agent machine
 contention. Scores are identical. Timings below are authoritative.
@@ -261,6 +267,94 @@ for default; wagnerStarts=3, sprFirst=TRUE for thorough) against old presets
 - **Do not enable `adaptiveLevel` in `thorough`**: with 20 ratchet + 12 drift
   base, 1.5× scaling creates 30 ratchet + 18 drift per hard replicate,
   causing 3–4× slowdowns for only 2–3 step improvement (benchmarked separately).
+
+### 180-tip large-preset baselines: 2026-03-26 by Agent E (Hamilton HPC, EPYC 7702)
+
+Dataset: mbank_X30754 (180 taxa, 425 chars, 418 patterns, 40% missing, 20% inapplicable).
+Strategy: auto → "large" preset. 5 seeds per budget, single-threaded.
+
+**Score quality by budget (median, 5 seeds):**
+
+| Budget | Median score | Range | Reps/seed |
+|--------|:-----------:|:-----:|:---------:|
+| 30s | 1202 | 1189–1214 | ~1.5 |
+| 60s | 1190 | 1190–1202 | ~3 |
+| 120s | 1185 | 1171–1189 | ~6 |
+
+Per-replicate time: median 17.3s (range 13.7–21.2s). MPT enumeration adds
+0–2 steps beyond best single-replicate score.
+
+**Phase distribution (rep 1, 30s budget, 5-seed averages):**
+
+| Phase | % time | Mean ms | Steps/s | Hit rate |
+|-------|:------:|--------:|:-------:|:--------:|
+| TBR | 43.6% | 7313 | 91.4 | 5/5 (661 steps avg) |
+| Ratchet | 32.2% | 5390 | 4.5 | 5/5 (26.6 steps avg) |
+| SA (anneal) | 7.4% | 1241 | 0.8 | 7/50 (14%, 1.3 steps) |
+| XSS | 5.4% | 897 | 13.8 | 4/5 |
+| Wagner+NNI | 4.7% | 790 | — | starting point |
+| RSS | 3.2% | 530 | 4.8 | 3/5 |
+| CSS | 2.5% | 424 | 11.2 | 2/5 |
+| Final TBR | 1.0% | 174 | 5.2 | 1/5 |
+
+**SA (simulated annealing) phase is the least productive:** 7.4% of time,
+14% hit rate (7/50 reps improved by 1.3 steps on average). Efficiency =
+0.8 steps/s, far below ratchet (4.5) or XSS (13.8). annealCycles=3,
+annealPhases=5 may be overtuned. Reducing could save ~1.2s/rep → 1 extra
+replicate per ~17s saved.
+
+**Comparison with earlier Intel desktop baselines (T-179, pre-T-206):**
+
+| Budget | Intel (pre-T-206) | EPYC (post-T-206) | Delta |
+|--------|:-:|:-:|:-:|
+| 30s | 1276 | 1202 | −74 |
+| 60s | 1255 | 1190 | −65 |
+| 120s | 1250 | 1185 | −65 |
+
+The 65–74 step gap is **primarily due to T-206** (outer cycle reset cap),
+not hardware. T-206 was merged 2026-03-24 19:27; the Intel baselines were
+recorded at 12:56 the same day (pre-T-206). Without the reset cap, each
+replicate performed 3–5 pipeline cycles (~51–85s) vs ~17s with cap=0.
+At 120s budget: ~2 replicates pre-T-206 vs ~6 post-T-206. Hardware
+differences (Intel desktop vs EPYC 7702) are a secondary factor.
+
+### Phase distribution: current thorough preset (2026-03-27, Agent A, round 6)
+
+Dataset: Zhu2013 (75t, 253 chars). Strategy: auto → thorough.
+3 reps, single-threaded, post-T-261+T-262+T-263. Total: 33.7 s = ~11.2 s/rep.
+
+| Phase | Calls | Total ms | Mean ms | % |
+|-------|:-----:|:--------:|:-------:|:---:|
+| Ratchet | 14 | 15617 | 1116 | 46.3% |
+| NNI-perturb | 14 | 11565 | 826 | **34.3%** |
+| RSS | 14 | 2488 | 178 | 7.4% |
+| CSS | 14 | 1477 | 106 | 4.4% |
+| XSS | 14 | 1079 | 77 | 3.2% |
+| TBR (post-phase) | 14 | 622 | 44 | 1.8% |
+| Initial TBR | 3 | 468 | 156 | 1.4% |
+| wag+NNI | 2 | 427 | 214 | 1.3% |
+
+**Key findings vs 2026-03-18 baselines:**
+
+1. **TBR is no longer a bottleneck** (1.4% + 1.8% = 3.2%). T-261+T-262+T-263
+   combined are working — TBR has become fast enough that other phases dominate.
+   Drift was 25–33% before T-255; its removal freed that budget to more ratchet.
+
+2. **NNI-perturb at 34.3% with poor efficiency:**
+   - Hit rate: 14% (2/14 calls improved score)
+   - Mean improvement when hit: 1 step
+   - Efficiency: 0.17 steps/s vs ratchet's ~4–8 steps/call at comparable cost
+   - Cost grows within a replicate (early calls ~300ms, late calls ~1300ms)
+   - This phase likely over-tuned for 75-tip datasets. Filed **T-274** (P2).
+
+3. **RSS at 7.4%** — higher than old 2% baseline. With conflict-guided RSS and
+   outerCycles/reset mechanism creating ~4.7 RSS calls per replicate at ~178ms each
+   (~837ms/rep). Old uniform RSS: ~11ms/rep. 16× overhead increase. Most of this
+   is the actual sector TBR cost (more calls × similar per-sector time), not conflict
+   computation overhead. The reset mechanism is the multiplier.
+
+4. **wag+NNI at 1.3%**: biased Wagner + 3 starts + NNI warmup adds ~214ms per
+   replicate start. Negligible at this scale; confirms T-246/NNI-warmup tuning is fine.
 
 ## What to Profile
 

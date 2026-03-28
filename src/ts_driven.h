@@ -53,6 +53,14 @@ struct DrivenParams {
   int nni_perturb_cycles = 0;           // 0 = disabled
   double nni_perturb_fraction = 0.5;    // fraction of branches to perturb
 
+  // Taxon pruning-reinsertion (T-266): complementary perturbation that
+  // drops a fraction of leaves, TBR-optimizes the backbone, then greedily
+  // re-adds the dropped taxa via Wagner insertion + TBR polish.
+  int prune_reinsert_cycles = 0;          // 0 = disabled
+  double prune_reinsert_drop = 0.10;      // fraction of tips to drop
+  int prune_reinsert_selection = 0;       // 0 = random, 1 = instability
+  int prune_reinsert_tbr_moves = 5;       // TBR moves on reduced tree (0=converge)
+
   // Drifting
   int drift_cycles = 2;
   int drift_afd_limit = 3;
@@ -78,9 +86,24 @@ struct DrivenParams {
   int sector_min_size = 6;
   int sector_max_size = 50;
 
+  // Post-ratchet sectorial search (T-257).
+  // When true, run XSS+RSS+CSS again after ratchet perturbation using the
+  // same round counts and sector parameters.  TNT interleaves sectorial
+  // search throughout each replicate; this approximates that pattern by
+  // exploiting the new basin reached after ratchet before TBR polish.
+  bool post_ratchet_sectorial = false;
+
   // Tree fusing
-  int fuse_interval = 3;         // fuse every N replicates
+  int fuse_interval = 3;         // fuse every N replicates (between-replicate)
   bool fuse_accept_equal = false;
+
+  // Intra-replicate fusing (T-258).
+  // When true, fuse the current tree against pool donors after TBR polish
+  // in each outer cycle.  TNT fuses within each replicate; this approximates
+  // that pattern.  The pool is read-only — the fused tree replaces the
+  // current replicate tree but is only added to the pool after the replicate
+  // completes.  Requires pool.size() >= 2 to have meaningful donors.
+  bool intra_fuse = false;
 
   // Pool
   int pool_max_size = 100;
@@ -220,6 +243,7 @@ struct PhaseTimings {
   double nni_perturb_ms = 0.0;
   double drift_ms = 0.0;
   double anneal_ms = 0.0;
+  double prune_reinsert_ms = 0.0;
   double final_tbr_ms = 0.0;
   double fuse_ms = 0.0;
 
@@ -234,6 +258,7 @@ struct PhaseTimings {
     nni_perturb_ms += o.nni_perturb_ms;
     drift_ms     += o.drift_ms;
     anneal_ms    += o.anneal_ms;
+    prune_reinsert_ms += o.prune_reinsert_ms;
     final_tbr_ms += o.final_tbr_ms;
     fuse_ms      += o.fuse_ms;
   }
@@ -248,11 +273,16 @@ struct DrivenResult {
   int last_improved_rep;         // 1-based replicate that last improved score (0 = not tracked)
   bool timed_out;                // true if search ended due to timeout
   bool consensus_stable;         // true if stopped by consensus stability
+  bool perturb_stop;             // true if stopped by perturb_stop_factor
   PhaseTimings timings;          // cumulative across all replicates
 
   // Per-strategy diagnostics (populated when adaptive_start is true)
   std::array<int, N_STRAT> strategy_attempts{};
   std::array<int, N_STRAT> strategy_successes{};
+
+  // Score from each completed replicate's local optimum, in order of
+  // completion.  Used by ScoreSpectrum() for Chao1-style coverage estimation.
+  std::vector<double> replicate_scores;
 };
 
 // Result of a single replicate (tree + score, no pool interaction).
@@ -282,7 +312,8 @@ ReplicateResult run_single_replicate(
     int verbosity,
     TreeState* starting_tree = nullptr,
     const SplitFrequencyTable* split_freq = nullptr,
-    StartStrategy strategy = StartStrategy::WAGNER_RANDOM);
+    StartStrategy strategy = StartStrategy::WAGNER_RANDOM,
+    const TreePool* pool = nullptr);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

@@ -32,8 +32,11 @@ void save_perturb_state(const DataSet& ds, PerturbSnapshot& snap) {
 
 void restore_perturb_state(DataSet& ds, const PerturbSnapshot& snap) {
   for (int b = 0; b < ds.n_blocks; ++b) {
-    ds.blocks[b].active_mask = snap.active_masks[b];
+    ds.blocks[b].active_mask   = snap.active_masks[b];
     ds.blocks[b].upweight_mask = snap.upweight_masks[b];
+    // Keep FlatBlock cache in sync (T-273: flat indirect functions read
+    // active_mask from FlatBlock, not from blocks[]).
+    ds.flat_blocks[b].active_mask = snap.active_masks[b];
   }
   ds.pattern_freq = snap.pattern_freq;
 }
@@ -51,6 +54,11 @@ void perturb_zero(DataSet& ds, double prob, std::mt19937& rng) {
       }
     }
     blk.active_mask = mask;
+  }
+  // Sync FlatBlock cache (T-273: flat indirect functions read active_mask
+  // from FlatBlock; must stay in sync with blocks[].active_mask).
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    ds.flat_blocks[b].active_mask = ds.blocks[b].active_mask;
   }
 }
 
@@ -110,6 +118,10 @@ void perturb_mixed(DataSet& ds, double prob, std::mt19937& rng,
     blk.active_mask = new_active;
     blk.upweight_mask = up & new_active;
   }
+  // Sync FlatBlock cache (T-273).
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    ds.flat_blocks[b].active_mask = ds.blocks[b].active_mask;
+  }
 }
 
 // Copy topology from src to dst (same-sized trees).
@@ -126,6 +138,9 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                              ConstraintData* cd,
                              std::function<bool()> check_timeout) {
   const bool use_iw = std::isfinite(ds.concavity);
+
+  // No informative characters: nothing to perturb.
+  if (ds.total_words == 0) return {score_tree(tree, ds), 0, 0, 0, 0.0};
 
   // Initial TBR to get a baseline
   TBRParams search_params;
@@ -203,6 +218,10 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
       copy_topology(tree, best_tree);
       tree.build_postorder();
       tree.reset_states(ds);
+      // Re-sync constraint metadata: topology changed, so cd->constraint_node
+      // and DFS timestamps must reflect the restored (best_tree) topology.
+      // Same bug class as T-278 (TBR) and T-279 (drift).
+      if (cd) update_constraint(tree, *cd);
     }
 
     ++cycles_completed;

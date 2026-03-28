@@ -4,10 +4,29 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-03-27
+
+| ID | Description | Agent | Notes |
+| E-003 | Constrained sector search: stale constraint_node after sector improvement | E | `map_constraint_nodes()` + `compute_dfs_timestamps()` after accepted sector improvement in rss_search/xss_search (both improvement and equal-accepted branches). Same class as T-278/T-279. Commit f1ad0308 labelled "T-280" (superseded by AltHom task, hence E-003). 205/205 constraint+sector tests pass locally. GHA 23650991803. |
+| T-278 | Constrained TBR: stale constraint_node after rejected move | E | `map_constraint_nodes()` + `compute_dfs_timestamps()` after topology restoration when constrained move rejected at score check. Also removed dead `if (!states_valid)` branch at final full_rescore. 860 constraint tests pass locally. GHA 23650358613. Commit df3aa71e. |
+| T-275 | Prune-reinsert: block non-EW scoring modes | B | Early-return guard in `prune_reinsert_search()` for PROFILE/HSJ/XFORM scoring modes. `build_reduced_dataset()` omits mode-specific fields; guard prevents incorrect reduced-tree scores until each mode is properly wired. |
+| T-266 | Taxon pruning-reinsertion perturbation | A | `ts_prune_reinsert.h/.cpp` + pipeline phase 5c + 44 tests. `pruneReinsertCycles`/`pruneReinsertDrop`/`pruneReinsertSelection` in `SearchControl()`. gcc-ASAN/devel failure was rlang infrastructure (PREXPR removed in R-devel); merged by human. Feature branch `feature/prune-reinsert` (PR #235) merged to cpp-search. Worktree TS-PruneRI removed. |
+|----|-------------|-------|-------|
+
 ## 2026-03-26
 
 | ID | Description | Agent | Notes |
+| T-242 | Agnarsson2004 IW search quality regression | — | **CLOSED — not a bug.** `ThreadSafePool::extract_into()` reset `hits_to_best` to distinct topology count (often 1) instead of actual independent replicate hits. Fix: `bc19667f2` propagates real hit count via `set_hits_to_best()`. Score 50.1872 (XPIWE k=10^0.75) is correct; actual hit rate ~60–67%, not the reported 2%. Search algorithm was unaffected; only Shiny convergence display was wrong. Regression test in `test-ts-parallel.R`. |
+| T-265 | Per-replicate search quality investigation | F | **CLOSED — not a bug.** Filed as P1 after T-249 round 3 showed 5–54 step gaps vs TNT, but the gap was a **scoring method confound**: Brazeau inapplicable scores compared against TNT Fitch scores. Correct EW gaps are 0–7 steps (mean 2.2, 5/11 datasets optimal at 120s). Remaining small gaps covered by T-253. Hamilton jobs: 16597207 (Phase 1), 16597240 (Phase 2a, cancelled). |
+| T-264 | Disable `consensusStableReps` in presets | F | Fix committed to cpp-search (23e9f57b). GHA 23600674681 PASSED. Removed `consensusStableReps` from sprint/default/thorough presets (fall back to 0 = disabled). Prevents premature early termination when all replicates converge to same consensus. |
+| T-249 | Round 3 TNT comparison (Hamilton) | F | 16 datasets × 2 timeouts × 3 seeds on Hamilton (job 16596844). Data in `t249_results/`. Led to T-264 discovery (budget waste) and T-265 investigation (scoring confound). |
 |----|-------------|-------|-------|
+| T-256 | Sectorial search intensity experiment | F | Hamilton job 16596760, 4 configs × 5 gap datasets × 3 seeds × 30s. Doubling/tripling xssRounds+rssRounds: no meaningful score improvement (mean gap 6.2/5.2 vs baseline 5.3). `nodrift_3x` config best (mean gap 4.9) but entirely due to 34% more replicates from removing drift, not from extra sectorial rounds. Current sectorial intensity (xss=3, rss=1) is sufficient. Unblocks T-257 (negative result: adding rounds alone won't help). |
+| T-259 | Ratchet cycle count experiment | F | Same Hamilton job 16596760. Reducing ratchetCycles from 12 to 8/6/4: ratch_8 mixed (mean gap 5.9 vs 5.3, better on 3/5 datasets but +5 steps worse on Geisler2001); ratch_6 clearly worse (7.8); ratch_4 clearly worse (8.5). Current default of 12 is justified. Dataset-dependent variance with only 3 seeds — directional evidence, not definitive. |
+| T-260 | Per-evaluation overhead profiling (VTune) | E | VTune 2025.10 hotspot collection on Dikow2009 (88t, EW, 1000 TBR passes). Top 3 hotspots: (1) StateSnapshot save/restore 14.6% — full memcpy of ~190KB per candidate evaluation; (2) reset_states zeroing + tip reload 9.1% — unnecessary std::fill before downpass overwrites; (3) fitch_na_score 29.2% (expected, core algorithm). Non-scoring overhead = 37.8% of TBR time. Combined fix potential ~16–19%. Write-up: `dev/benchmarks/vtune_tbr_analysis.md`. Driver: `dev/vtune-tbr-driver.R`. |
+| T-254 | Drift MPT diversity experiment | E | driftCycles=0 vs 2 on 3 datasets (Wortley2006/Zhu2013/Geisler2001), 3 seeds, 30s+120s budgets. Drift provides zero score, MPT, or diversity benefit. Costs 10–22% of replicates. On Wortley2006, no-drift finds 4 MPTs vs 1–3 with drift. Mean RF identical on larger datasets. Unblocks T-255. Write-up: `dev/benchmarks/drift_mpt_analysis.md`. |
+| — | maxReplicates default → 96 (multiple of 48 for parallel efficiency) | F | API: 100→96. Shiny: default 96, slider min=48/max=960/step=48. Issue triaged directly (no T-number). Commit `13501b1a`. |
+| T-251 | TNT trajectory analysis on gap datasets | E | 3 gap datasets (Geisler2001 +5–9, Zhu2013 +4–6, Wortley2006 +3–4), 30s, 3 seeds. Drift 30–170× less efficient than next-worst phase (16–23% of time, <1% improvement). TNT 1.5–3.6× eval/s throughput despite 32-bit scalar — per-eval overhead negates SIMD. TNT does ~67% sectorial search; TS does one pass (6–10% time). Recommendations: eliminate drift from default, increase sectorial rounds. Write-up: `dev/benchmarks/tnt_trajectory_analysis.md`. |
 | T-250 | TNT Fitch kernel disassembly | E | TNT=32-bit i386, zero SIMD, 64KB LUT popcount. TreeSearch has ~4× throughput advantage (128-bit SSE2 vs 32-bit scalar). TNT's 3-5× convergence speed is strategic not implementation. Write-up: `dev/benchmarks/tnt_disassembly_analysis.md`. |
 | T-248 | SA phase tuning for large preset | E | Hamilton benchmark (mbank_X30754 180t, 5 seeds, 30s/60s). annealCycles=1 (400ms/rep, 40% hit rate) most cost-effective; AC=3 (1370ms/rep, 21% hit rate) no significant score gain (p>0.5). Reduced large preset from AC=3 to AC=1, saves ~1s/rep (~6%). |
 | T-232 | [Shiny] "Tips to show" bounces back on decrement | D | Fix committed. Re-validated via GHA 23547582438 (cpp-search PASS). Closed by S-COORD (E). |
@@ -339,3 +358,57 @@ EOF 2>&1
 | T-211 | impose_constraint() bail-out, return value, root-child bugs | A | Three fixes: threshold n_tip/4→n_tip, return -1 on bail-out, new topology_spr() for root-child moves. PR #229. |
 | T-187 | Perturbation-count stopping rule (perturbStopFactor) | D+Z | IQ-TREE-style stopping rule. Benchmarked across 10 datasets: PSF=2 gives 2.4–6.9x speedup with 0 score loss. Default changed from 0 to 2. PR #226 merged. |
 ENDOFAPPEND 2>&1
+| T-258 | Intra-replicate fusing | F | Added `intraFuse` param to SearchControl/DrivenParams. Fuses current tree against pool donors after TBR polish (step 6b). Disabled in parallel mode (already has between-replicate fusing). Critical fix: `build_postorder()` + `reset_states()` after `tree_fuse()` to prevent segfault from stale state arrays. 221 tests pass. Merged directly to cpp-search (`924bfb35`). Benchmark script: `dev/benchmarks/bench_intra_fuse.R`. |
+| T-243 | FlatBlock metadata, flat EW indirect functions, TBR prefetch | E | PR #230 merged to cpp-search. Confirmed 1.4% speedup at 180 tips on Hamilton (median 11.538→11.360s, p=0.001, n=10). TS-HotLoop worktree removed. |
+
+## 2026-03-26 (afternoon)
+| T-255 | Reduce drift in default and thorough presets | E | Set `driftCycles=0` in default and thorough presets. T-254 confirmed drift has zero score, MPT, or diversity benefit and costs 10–22% of replicates. GHA 23598220226 PASS (ARM64 + Windows, 0 errors, 0 warnings). Also fixed: SearchControl.Rd codoc mismatch (0152daa3), flaky timeout test perturbStopFactor (161e0e1b). |
+| T-260 | VTune TBR per-evaluation overhead profiling | E | Dikow2009 88t, EW, 1000 TBR passes, 30.96s CPU. Top hotspots: StateSnapshot save/restore 14.6%, reset_states zeroing 9.1%, fitch_na_score 29.2%. Non-scoring overhead = 37.8%. Filed T-261/T-262/T-263. Write-up: `dev/benchmarks/vtune_tbr_analysis.md`. |
+EOF 2>&1
+| T-261 | Eliminate std::fill zeroing in reset_states() | E | Removed 5 redundant std::fill(0) calls from reset_states() in ts_tree.cpp. Audited all Fitch scoring passes to confirm every array entry written before read. PR #232, merged to cpp-search. |
+| T-262 | Bulk memcpy for tip state loading | E | Replaced element-by-element tip copy with std::memcpy() in load_tip_states(). Combined T-261+T-262 = 8.6% TBR speedup (Dikow2009, 88t). PR #232, merged to cpp-search. |
+EOF 2>&1
+
+## 2026-03-26
+
+| T-265 | Per-replicate search quality regression — RESOLVED as scoring method confound | E | T-249/T-264 compared Brazeau-scored TreeSearch to EW-scored TNT. Apparent mean gap +17.8 steps; actual EW-vs-EW gap +2.2 steps. 5/11 datasets at 0 gap. R2-equiv/R2-modern/auto preset all find identical Brazeau scores — no preset or engine regression. Also found stale .agent-E library caused T-249 early termination artifact. |
+| T-249 | TNT comparison round 3 — validated | E | Hamilton job 16596844 results validated. Large apparent gaps were scoring method confound (Brazeau vs EW). Future TNT comparisons must use fitch_mode() for apples-to-apples. |
+| T-264 | consensusStableReps fix — verified | E | GHA 23600674681 passed both platforms. Scoring confound resolved; fix is correct. |
+
+## 2026-03-27
+
+| ID | Description | Agent | Notes |
+|----|-------------|-------|-------|
+| T-267 | MaddisonSlatkin 5-state test resilience | A | Test now skips when computation hits the 2s time budget on slow CI machines, instead of failing with NA. |
+ENDMARK 2>&1
+| T-263 | Hoist StateSnapshot save to once per TBR pass | F | Eliminated per-candidate memcpy save/restore of prelim/final_/down2/subtree_actives (~190 KB at 88 tips). Saved once before TBR pass, restored once after. PR #231 merged 2026-03-27. |
+| T-246 | AVX2 runtime dispatch for Fitch SIMD operations | F | Widened ts_simd.h from SSE2 (128-bit) to AVX2 (256-bit) with `__builtin_cpu_supports("avx2")` runtime detection and SSE2 fallback. Estimated 5–10% on multi-block datasets. PR #233 merged 2026-03-27. |
+| T-257 | Post-ratchet sectorial search pass | F | Added second sectorial pass after ratchet: [XSS+RSS+CSS → Ratchet → XSS+RSS+CSS → TBR]. Controlled by `postRatchetSectorial` in SearchControl(). PR #234 merged 2026-03-27. |
+| T-270 | Algorithm vignette + AGENTS.md for T-257 post-ratchet sectorial | A | Added pipeline step 5a, new "Post-ratchet sectorial pass" subsection in vignette; fixed stale consensusStableReps preset docs (T-264); updated AGENTS.md pipeline steps. commit d8f3c769. |
+EOF 2>&1
+| T-272 | Close stale PR #178 (concordance, Aug 2025 DRAFT) | A | Closed via `gh pr close 178`. |
+EOF 2>&1
+| S-RED-10 | Red-team focus 10: Profile & IW scoring | A | BUG FIXED: precompute_profile_delta old_cost=0 when s>info_max_steps. commit 7cff7870. |
+| T-268 | Branch housekeeping: prune 11 stale local branches, update AGENTS.md worktree table | F | Deleted branches: 143-start-search-from-best-tree, 175-discord, 207-calls-to-rf_error, PlotCharacter-rooting, constraint-addition, copilot/fix-maximumlength-crash, keep-subopt, kmeans++, pol-escapa-negative, taxon-influence, tbr-fix. Updated worktree table (TS-anneal/MadSlat/ParsSim/PTeval/Xpiwe removed; TS-PruneRI added). Triaged u.005. commit 838b14c1. |
+| T-273 | Fix flat_blocks.active_mask staleness during ratchet | F | Preventive: sync ds.flat_blocks[b].active_mask in perturb_zero(), perturb_mixed(), restore_perturb_state(). Currently safe (zero call sites for flat indirect), prevents future bug if flat variants wired into ratchet TBR dispatch. commit 44547484. |
+| T-274 | NNI-perturb cycle count at thorough-preset scale | F | Per-replicate sampling, 20 seeds, Zhu2013/Giles2015/Dikow2009 (75–88t). NNI-perturb adds 59–69% overhead, ≤0.1-step expected-best benefit — zero practical advantage. Set nniPerturbCycles=0 in thorough preset. bench_t274_nni_perturb.R. |
+
+## 2026-03-27
+
+| F-003 | T-276: convergence summary after MaximizeParsimony() | 3 | perturb_stop in Rcpp bridge + structure attrs; verbosity summary (score/reps/last_improved/n_MPTs/stop_reason/elapsed); docs + 3 new tests. commit 7f4aca29. GHA 23647640670. |
+| F-004 | T-252: Hamilton MorphoBank training-set baseline benchmark | 3 | 25-matrix fixed training sample at 30/60/120s, 5 seeds, EW. SLURM 16599543 complete. Results: ≤35t converge at 30s (0 gap); 36-65t near-optimal; 66-135t still improving at 120s (up to 238 steps); project4284 (4062t) can't finish 1 replicate. CSVs in dev/benchmarks/. T-253 unblocked. |
+| F-005 | S-RED focus 5: ts_parallel.cpp | 1 | Bug: result.perturb_stop not initialized (UB) and not set to true when perturb-stop fires in parallel path. Serial path had both correct. commit 1a640b73. GHA 23648703841. |
+| B-003 | T-277: ScoreSpectrum() Chao1 coverage estimator | 8 | C++ replicate_scores vector, Rcpp bridge, ScoreSpectrum() R function, Shiny coverage note, 8 tests. PR #236 merged 2026-03-27. |
+| E-001 | NEWS.md SearchControl parameter additions | 18 | Added nniFirst, postRatchetSectorial, outerCycles/maxOuterResets, wagnerBias/BiasTemp, perturbStopFactor, pruneReinsertCycles/Drop/Selection, nniPerturbCycles/Fraction, anneal*, adaptiveLevel, adaptiveStart, enumTimeFraction, intraFuse, ratchetTaper, consensusConstrain, consensusStableReps. Added Search output section (convergence summary T-276). Fixed consensusStableReps bullet. commit 8ab23af2. |
+| F-006 | T-253: Gap characterization by dataset features | 2 | ntax is dominant predictor (ρ≈0.63 in two independent datasets). pct_missing/inapp weakly correlated but confounded with ntax. nchar matters only at extremes (>2000). Results: t253_gap_characterization.md + 2 CSVs in dev/benchmarks/. T-245 (TBR batching) identified as top priority for >75-taxon regime. |
+| F-007 | S-RED focus 6: ts_tbr.cpp (1025 lines) | 2 | Two findings: (1) dead-code latent bug line 1013 — `full_rescore()` return not captured in `!states_valid` branch (unreachable currently). (2) Real bug: after constrained move is applied+score-rejected+restored, `cd->constraint_node` is stale. Next clip's `classify_clip_constraints` uses wrong mapping. T-278 filed. |
+| F-008 | S-RED focus 8: ts_drift.cpp (796+42 lines) | 2 | Two bugs fixed in drift_phase(): (1) update_constraint() missing after RFD reject in IW path (lines 647-649) and EW path (line 689) — stale cd->constraint_node causes false constraint violations on next clip. (2) Redundant full_rescore in EW reject path: return value at line 657 discarded, second call at line 689 eliminated. Both fixed in feature/drift-constraint-fix commit e85ec84f. T-279 filed+fixed. |
+| F-009 | S-RED focus 9: ts_fuse.cpp (521+41 lines) | 0 | No bugs. Minor design note: is_ancestor_split using raw bitsets may be slightly off in rounds 2+ if TBR moved tip0 away from root (conservative impact — no score correctness issue). All key invariants (full rescore, undo/redo, canonical matching, lazy donor caching) correct. |
+| F-010 | S-RED focus 10: ts_driven.cpp (1056 lines) | 0 | No bugs. Confirmed correct: goto-finish, adaptive_params, SA best-tree save/restore, MPT check_enum_timeout (full deadline), intra-fuse const pool. Extra score_tree calls at verbosity>=2 harmless. |
+| F-011 | S-RED focus 11: ts_sector.cpp (1007 lines) | 0 | No bugs. Key guards: root_ok in search_sector, full rescore after reinsertion, HTU revert on worsening, score_tree before build_reduced_dataset, post-hoc constraint check. from_above uses EW Fitch approximation (accepted). |
+| F-012 | S-RED focus 12: ts_pool.cpp (335 lines) | 0 | No critical bugs. Minor finding: tbr_search collect_pool uses add() (full splits) but driven_search uses add_collapsed() — mixed entries can miss duplicates for zero-length-edge trees; conservative/rare. Core logic (hits_to_best, evict, diversity eviction, consensus hash, sft) all correct. |
+| F-013 | S-RED focus 14: ts_constraint.cpp (735+143 lines) | 0 | No bugs. build_constraint canonicalization, map_constraint_nodes postorder scan, classify_clip_constraints 4-case logic, regraft_violates_constraint MUST_OUTSIDE boundary exception, topology_spr root-child case, impose_constraint bounded multi-pass repair — all correct. Confirmed constraint staleness bugs (T-278, T-279, E-003) are in callers, not in this module. |
+| E-002 | SearchControl Rd completeness check | F | All 47 formals documented; all consumed by C++. Only gap: print.SearchControl missing maxOuterResets (TBR group) and enumTimeFraction (Stopping group). Fixed in b100b9d4. |
+EOF 2>&1
+| F-014 | S-RED focus 15: ts_wagner.cpp (1133+102 lines) | 0 | No bugs. Incremental Fitch scoring (downpass+uppass with early termination) correct. LCA-based constraint mapping during construction correct (cn==root skip, MUST_OUTSIDE boundary exception). softmax_sample_order numerical stability verified. random_constrained_tree buffer safety verified via canonicalization invariant (tip 0 always outside prevents all-tips-in-one-split overflow). resolve_randomly subtree_root tracking effectively dead (defensive). Constraint retry loops (100 attempts) silently return on all-fail; driven search impose_constraint is additional safety net. |
+EOF 2>&1

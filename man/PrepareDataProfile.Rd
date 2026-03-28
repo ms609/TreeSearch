@@ -6,7 +6,7 @@
 \alias{PrepareDataIW}
 \title{Prepare data for Profile Parsimony}
 \usage{
-PrepareDataProfile(dataset, approx = "auto", n_mc = 5000L)
+PrepareDataProfile(dataset, approx = "auto", n_mc = 100000L)
 
 PrepareDataIW(dataset)
 }

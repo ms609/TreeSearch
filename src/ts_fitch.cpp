@@ -25,30 +25,8 @@ int fitch_downpass_node(
   int steps = popcount64(needs_union);
 
   // Pass 2: compute output states with broadcast masks
-#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
-  simd::v128 ai = simd::set1_64(any_intersect);
-  simd::v128 nu = simd::set1_64(needs_union);
-  int s = 0;
-  for (; s + 2 <= n_states; s += 2) {
-    simd::v128 l = simd::loadu128(&left_state[s]);
-    simd::v128 r = simd::loadu128(&right_state[s]);
-    simd::v128 isect = simd::and128(l, r);
-    simd::v128 uni = simd::or128(l, r);
-    simd::storeu128(&node_state[s],
-        simd::or128(simd::and128(isect, ai), simd::and128(uni, nu)));
-  }
-  for (; s < n_states; ++s) {
-    uint64_t isect = left_state[s] & right_state[s];
-    uint64_t uni = left_state[s] | right_state[s];
-    node_state[s] = (isect & any_intersect) | (uni & needs_union);
-  }
-#else
-  for (int s = 0; s < n_states; ++s) {
-    uint64_t isect = left_state[s] & right_state[s];
-    uint64_t uni = left_state[s] | right_state[s];
-    node_state[s] = (isect & any_intersect) | (uni & needs_union);
-  }
-#endif
+  simd::fitch_combine(left_state, right_state, node_state, n_states,
+                      any_intersect, needs_union);
 
   return steps;
 }
@@ -121,32 +99,8 @@ int fitch_downpass(TreeState& tree, const DataSet& ds) {
           needs_union;
 
       // Compute output states with broadcast masks
-#if defined(TS_SIMD_SSE2) || defined(TS_SIMD_NEON)
-      {
-        simd::v128 ai = simd::set1_64(any_intersect);
-        simd::v128 nuvec = simd::set1_64(needs_union);
-        int s = 0;
-        for (; s + 2 <= blk.n_states; s += 2) {
-          simd::v128 l = simd::loadu128(&left_state[s]);
-          simd::v128 r = simd::loadu128(&right_state[s]);
-          simd::v128 isect = simd::and128(l, r);
-          simd::v128 uni = simd::or128(l, r);
-          simd::storeu128(&node_state[s],
-              simd::or128(simd::and128(isect, ai), simd::and128(uni, nuvec)));
-        }
-        for (; s < blk.n_states; ++s) {
-          uint64_t isect = left_state[s] & right_state[s];
-          uint64_t uni = left_state[s] | right_state[s];
-          node_state[s] = (isect & any_intersect) | (uni & needs_union);
-        }
-      }
-#else
-      for (int s = 0; s < blk.n_states; ++s) {
-        uint64_t isect = left_state[s] & right_state[s];
-        uint64_t uni = left_state[s] | right_state[s];
-        node_state[s] = (isect & any_intersect) | (uni & needs_union);
-      }
-#endif
+      simd::fitch_combine(left_state, right_state, node_state,
+                          blk.n_states, any_intersect, needs_union);
     }
   }
 
@@ -398,6 +352,127 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
 }
 
 
+// --- Flat EW specializations ---
+//
+// These eliminate per-block overhead from the indirect scoring hot path:
+// - No CharBlock struct dereference (288 bytes each; FlatBlock is 16 bytes)
+// - No upweight_mask check (always 0 during normal search)
+// - No weight multiply (always 1 when all_weight_one)
+// - No active_mask==0 check (empty blocks never exist after build_dataset)
+
+int fitch_indirect_bounded_flat(const uint64_t* clip_prelim,
+                                const TreeState& tree,
+                                const DataSet& ds,
+                                int node_a, int node_d,
+                                int cutoff) {
+  int extra_steps = 0;
+  const FlatBlock* fb = ds.flat_blocks.data();
+  size_t a_base = static_cast<size_t>(node_a) * tree.total_words;
+  size_t d_base = static_cast<size_t>(node_d) * tree.total_words;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    uint64_t any_hit = simd::any_hit_reduce3(
+        &clip_prelim[fb[b].offset],
+        &tree.final_[a_base + fb[b].offset],
+        &tree.final_[d_base + fb[b].offset],
+        fb[b].n_states);
+    extra_steps += popcount64(~any_hit & fb[b].active_mask);
+    if (extra_steps >= cutoff) return extra_steps;
+  }
+  return extra_steps;
+}
+
+int fitch_indirect_cached_flat(const uint64_t* clip_prelim,
+                               const uint64_t* vroot,
+                               const DataSet& ds,
+                               int cutoff) {
+  int extra_steps = 0;
+  const FlatBlock* fb = ds.flat_blocks.data();
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    uint64_t any_hit = simd::any_hit_reduce(
+        &clip_prelim[fb[b].offset], &vroot[fb[b].offset],
+        fb[b].n_states);
+    extra_steps += popcount64(~any_hit & fb[b].active_mask);
+    if (extra_steps >= cutoff) return extra_steps;
+  }
+  return extra_steps;
+}
+
+// NA-aware flat bounded indirect (SPR candidates).
+// Handles mixed standard + inapplicable blocks using FlatBlock metadata.
+int fitch_na_indirect_bounded_flat(const uint64_t* clip_prelim,
+                                   const uint64_t* clip_actives,
+                                   const TreeState& tree,
+                                   const DataSet& ds,
+                                   int node_a, int node_d,
+                                   int cutoff) {
+  int extra_steps = 0;
+  const FlatBlock* fb = ds.flat_blocks.data();
+  size_t a_base = static_cast<size_t>(node_a) * tree.total_words;
+  size_t d_base = static_cast<size_t>(node_d) * tree.total_words;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    uint64_t needs_step;
+    if (!fb[b].has_inapplicable) {
+      uint64_t any_hit = simd::any_hit_reduce3(
+          &clip_prelim[fb[b].offset],
+          &tree.final_[a_base + fb[b].offset],
+          &tree.final_[d_base + fb[b].offset],
+          fb[b].n_states);
+      needs_step = ~any_hit & fb[b].active_mask;
+    } else {
+      uint64_t any_hit = simd::any_hit_reduce3_from1(
+          &clip_prelim[fb[b].offset],
+          &tree.final_[a_base + fb[b].offset],
+          &tree.final_[d_base + fb[b].offset],
+          fb[b].n_states);
+      uint64_t clip_has_active =
+          simd::or_reduce(&clip_actives[fb[b].offset], fb[b].n_states, 1);
+      uint64_t below_has_active =
+          simd::or_reduce(&tree.subtree_actives[d_base + fb[b].offset],
+                          fb[b].n_states, 1);
+      needs_step = ~any_hit & clip_has_active & below_has_active
+                 & fb[b].active_mask;
+    }
+    extra_steps += popcount64(needs_step);
+    if (extra_steps >= cutoff) return extra_steps;
+  }
+  return extra_steps;
+}
+
+// NA-aware flat cached indirect (TBR rerooting candidates).
+int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
+                                  const uint64_t* clip_actives,
+                                  const uint64_t* vroot,
+                                  const uint64_t* below_actives,
+                                  const DataSet& ds,
+                                  int cutoff) {
+  int extra_steps = 0;
+  const FlatBlock* fb = ds.flat_blocks.data();
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    uint64_t needs_step;
+    if (!fb[b].has_inapplicable) {
+      uint64_t any_hit = simd::any_hit_reduce(
+          &clip_prelim[fb[b].offset], &vroot[fb[b].offset],
+          fb[b].n_states);
+      needs_step = ~any_hit & fb[b].active_mask;
+    } else {
+      uint64_t any_hit = simd::any_hit_reduce_from1(
+          &clip_prelim[fb[b].offset], &vroot[fb[b].offset],
+          fb[b].n_states);
+      uint64_t clip_has_active =
+          simd::or_reduce(&clip_actives[fb[b].offset], fb[b].n_states, 1);
+      needs_step = ~any_hit & clip_has_active & below_actives[b]
+                 & fb[b].active_mask;
+    }
+    extra_steps += popcount64(needs_step);
+    if (extra_steps >= cutoff) return extra_steps;
+  }
+  return extra_steps;
+}
+
 // --- Per-character step extraction ---
 
 void extract_char_steps(const TreeState& tree, const DataSet& ds,
@@ -638,8 +713,17 @@ void precompute_profile_delta(const DataSet& ds,
     int idx_old = s - 1;       // 0-based row for current step count
     int idx_new = s;           // 0-based row for step count + 1
 
-    double old_cost = (idx_old >= 0 && idx_old < ds.info_max_steps)
-        ? ds.info_amounts[idx_old + ds.info_max_steps * p] : 0.0;
+    // old_cost: 0 if invariant (s<=0), capped at max if beyond table.
+    // Note: must mirror the capping in compute_profile() to avoid overestimating
+    // delta when divided_steps already exceeds info_max_steps (S-RED focus 10).
+    double old_cost;
+    if (idx_old < 0) {
+      old_cost = 0.0;
+    } else if (idx_old < ds.info_max_steps) {
+      old_cost = ds.info_amounts[idx_old + ds.info_max_steps * p];
+    } else {
+      old_cost = ds.info_amounts[(ds.info_max_steps - 1) + ds.info_max_steps * p];
+    }
 
     double new_cost;
     if (idx_new >= 0 && idx_new < ds.info_max_steps) {

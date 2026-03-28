@@ -18,7 +18,7 @@ MaximizeParsimony(
   hsj_alpha = 1,
   constraint,
   strategy = "auto",
-  maxReplicates = 100L,
+  maxReplicates = 96L,
   targetHits = max(10L, as.integer(NTip(dataset)/5)),
   maxSeconds = 0,
   nThreads = 1L,
@@ -119,15 +119,15 @@ character patterns; \code{"thorough"} for 65-119 taxa with >=100
 character patterns; \code{"default"} otherwise.}
 \item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
 sectorial. Good for small datasets or quick surveys.}
-\item{\code{"default"}}{Balanced: 12 ratchet + 2 drift + sectorial + fusing.}
-\item{\code{"thorough"}}{Intensive: 20 ratchet cycles, 12 drift, adaptive
+\item{\code{"default"}}{Balanced: 12 ratchet + sectorial + fusing.}
+\item{\code{"thorough"}}{Intensive: 20 ratchet cycles, adaptive
 perturbation, extra sectorial rounds, NNI perturbation, outer cycle
 loop. Best for datasets with 65-119 tips and 100+ character patterns.}
 \item{\code{"large"}}{Large-tree search (>=120 tips): reduced cycle
 counts scaled for expensive per-replicate cost, no NNI
 perturbation, single biased Wagner start (Goloboff 2014), larger
-sector sizes, simulated annealing instead of drift (linear
-cooling from T=20 to T=0 over 5 phases).  Empirically matches
+sector sizes, 1-cycle simulated annealing instead of drift
+(linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 or exceeds \code{"thorough"} at 180 tips across all time budgets.}
 All presets enable consensus-stability stopping: the search stops early
 if the strict consensus of best-score trees has been unchanged for
@@ -139,7 +139,10 @@ Explicit \code{control} fields always override the preset; for example,
 sprint defaults for everything except \code{ratchetCycles}.}
 
 \item{maxReplicates}{Integer: maximum number of independent search
-replicates (default: 100).
+replicates (default: 96).
+The default is a multiple of 48 (= LCM(12, 16)) so that replicates
+divide evenly across common 12- or 16-core machines when running in
+parallel.
 For large or complex datasets a higher value improves the chance of
 finding all MPTs.  A rough minimum is
 \code{max(10, ceiling(NTip * NChar / 5000))}, where \code{NChar = sum(weight)}.
@@ -207,10 +210,16 @@ improved the best score (0 if not tracked, e.g. parallel search).}
 \item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped
 because the strict consensus was unchanged for
 \code{consensusStableReps} consecutive replicates.}
+\item{\code{perturb_stop}}{Logical: \code{TRUE} if the search stopped because
+\code{nTip * perturbStopFactor} consecutive replicates failed to improve
+the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
 \item{\code{timings}}{Named numeric vector of cumulative wall-clock time
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},
 \code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}.}
+\item{\code{replicate_scores}}{Numeric vector of the best parsimony score
+found by each completed replicate.  Passed to \code{\link[=ScoreSpectrum]{ScoreSpectrum()}} for
+Chao1-style landscape coverage estimation.}
 }
 }
 \description{

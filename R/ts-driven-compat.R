@@ -36,6 +36,7 @@ ts_driven_search <- function(
     cssPartitions = 4L,
     sectorMinSize = 6L,
     sectorMaxSize = 50L,
+    postRatchetSectorial = FALSE,
     fuseInterval = 3L,
     fuseAcceptEqual = FALSE,
     poolMaxSize = 100L,
@@ -79,6 +80,9 @@ ts_driven_search <- function(
     maxOuterResets = 0L,
     adaptiveStart = FALSE,
     enumTimeFraction = 0.1,
+    pruneReinsertCycles = 0L,
+    pruneReinsertDrop = 0.10,
+    pruneReinsertSelection = 0L,
     annealConfig = NULL)
 {
   # New-style call: grouped lists already provided
@@ -119,6 +123,7 @@ ts_driven_search <- function(
     cssPartitions = as.integer(cssPartitions),
     sectorMinSize = as.integer(sectorMinSize),
     sectorMaxSize = as.integer(sectorMaxSize),
+    postRatchetSectorial = as.logical(postRatchetSectorial),
     fuseInterval = as.integer(fuseInterval),
     fuseAcceptEqual = as.logical(fuseAcceptEqual),
     poolMaxSize = as.integer(poolMaxSize),
@@ -127,20 +132,25 @@ ts_driven_search <- function(
     perturbStopFactor = as.integer(perturbStopFactor),
     adaptiveLevel = as.logical(adaptiveLevel),
     consensusConstrain = as.logical(consensusConstrain),
+    pruneReinsertCycles = as.integer(pruneReinsertCycles),
+    pruneReinsertDrop = as.double(pruneReinsertDrop),
+    pruneReinsertSelection = as.integer(pruneReinsertSelection),
     adaptiveStart = as.logical(adaptiveStart),
     enumTimeFraction = as.double(enumTimeFraction)
   )
 
   # Anneal config: fold into SearchControl if provided
+  # Use if/is.null instead of %||% for R < 4.4 compatibility
+  .or <- function(x, default) if (is.null(x)) default else x
   if (!is.null(annealConfig)) {
-    phases <- as.integer(annealConfig$phases %||% 5L)
+    phases <- as.integer(.or(annealConfig$phases, 5L))
     # Backward compat: if phases > 0 but cycles not specified, default to 1
-    sc$annealCycles <- as.integer(annealConfig$cycles %||%
-                                    if (phases > 0L) 1L else 0L)
+    sc$annealCycles <- as.integer(.or(annealConfig$cycles,
+                                      if (phases > 0L) 1L else 0L))
     sc$annealPhases <- phases
-    sc$annealTStart <- as.double(annealConfig$tStart %||% 20)
-    sc$annealTEnd <- as.double(annealConfig$tEnd %||% 0)
-    sc$annealMovesPerPhase <- as.integer(annealConfig$movesPerPhase %||% 0L)
+    sc$annealTStart <- as.double(.or(annealConfig$tStart, 20))
+    sc$annealTEnd <- as.double(.or(annealConfig$tEnd, 0))
+    sc$annealMovesPerPhase <- as.integer(.or(annealConfig$movesPerPhase, 0L))
   }
 
   rt <- list(

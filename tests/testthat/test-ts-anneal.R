@@ -4,7 +4,7 @@ skip_on_cran()
 # --- Helpers ---
 # Build annealConfig list from SearchControl fields
 make_anneal_config <- function(ctrl) {
-  cycles <- as.integer(ctrl$annealCycles %||% 0L)
+  cycles <- as.integer(if (is.null(ctrl$annealCycles)) 0L else ctrl$annealCycles)
   if (cycles > 0L) {
     list(
       cycles = cycles,
@@ -103,7 +103,7 @@ test_that("Large preset enables annealing and disables drift", {
   presets <- TreeSearch:::.AutoStrategy(200L, 200L)
   expect_equal(presets, "large")
   large_ctrl <- TreeSearch:::.StrategyPresets()[["large"]]
-  expect_equal(large_ctrl$annealCycles, 3L)
+  expect_equal(large_ctrl$annealCycles, 1L)
   expect_gt(large_ctrl$annealPhases, 0L)
   expect_equal(large_ctrl$driftCycles, 0L)
 })

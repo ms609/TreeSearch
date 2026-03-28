@@ -12,6 +12,7 @@
 #include "ts_constraint.h"
 #include "ts_wagner.h"
 #include "ts_splits.h"
+#include "ts_prune_reinsert.h"
 #include "ts_rng.h"
 
 #include <R.h>
@@ -57,7 +58,8 @@ ReplicateResult run_single_replicate(
     int verbosity,
     TreeState* starting_tree,
     const SplitFrequencyTable* split_freq,
-    StartStrategy strategy)
+    StartStrategy strategy,
+    const TreePool* pool)
 {
   ReplicateResult result;
   result.interrupted = false;
@@ -205,6 +207,9 @@ ReplicateResult run_single_replicate(
       (params.drift_cycles + n_outer - 1) / n_outer);
   const int nni_perturb_per = (params.nni_perturb_cycles == 0) ? 0 : std::max(1,
       (params.nni_perturb_cycles + n_outer - 1) / n_outer);
+  const int prune_reinsert_per = (params.prune_reinsert_cycles == 0) ? 0 :
+      std::max(1,
+      (params.prune_reinsert_cycles + n_outer - 1) / n_outer);
 
   int outer = 0;
   while (outer < n_outer) {
@@ -315,10 +320,68 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
+    // 4a. Post-ratchet sectorial search (T-257)
+    // After ratchet perturbation, the tree is in a new basin. A second
+    // sectorial pass can exploit local improvements in this basin before
+    // TBR polish, approximating TNT's interleaved sectorial pattern.
+    if (params.post_ratchet_sectorial && tree_large_enough_for_sectors) {
+      SectorParams sp;
+      sp.min_sector_size = params.sector_min_size;
+      sp.max_sector_size = params.sector_max_size;
+      sp.internal_ratchet_cycles = 0;
+      sp.internal_max_hits = 1;
+
+      if (params.xss_rounds > 0) {
+        sp.n_partitions = params.xss_partitions;
+        sp.xss_rounds = params.xss_rounds;
+        xss_search(result.tree, ds, sp, cd);
+        result.timings.xss_ms += ph_lap();
+      }
+
+      if (ts::check_interrupt() || check_timeout()) {
+        result.interrupted = true;
+        result.score = score_tree(result.tree, ds);
+        return result;
+      }
+
+      if (params.rss_rounds > 0) {
+        sp.split_freq = split_freq;
+        for (int rr = 0; rr < params.rss_rounds; ++rr) {
+          rss_search(result.tree, ds, sp, cd);
+          if (ts::check_interrupt() || check_timeout()) {
+            result.interrupted = true;
+            result.score = score_tree(result.tree, ds);
+            return result;
+          }
+        }
+        result.timings.rss_ms += ph_lap();
+      }
+
+      if (params.css_rounds > 0) {
+        SectorParams css_sp;
+        css_sp.n_partitions = params.css_partitions;
+        css_sp.xss_rounds = params.css_rounds;
+        css_sp.internal_max_hits = 1;
+        css_search(result.tree, ds, css_sp, cd);
+        result.timings.css_ms += ph_lap();
+
+        if (ts::check_interrupt() || check_timeout()) {
+          result.interrupted = true;
+          result.score = score_tree(result.tree, ds);
+          return result;
+        }
+      }
+
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g\n",
+                outer_label("PostRatch-XSS").c_str(),
+                score_tree(result.tree, ds));
+      }
+    }
+
     // 4b. NNI perturbation (topology-space escape)
-    // Skip when constraints are active: random_nni_perturb() doesn't
-    // enforce constraints. impose_constraint() repairs violations
-    // after perturbation, so this is now safe under constraints.
+    // `cd` is passed through to nni_perturb_search(), which calls
+    // impose_constraint() after perturbation; safe under constraints.
     if (nni_perturb_per > 0) {
       NNIPerturbParams np;
       np.n_cycles = nni_perturb_per;
@@ -414,6 +477,38 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
+    // 5c. Taxon pruning-reinsertion (T-266).
+    // Drop a fraction of leaves, TBR-optimize the backbone, then greedily
+    // re-add the dropped taxa and TBR-polish.  Complementary to the ratchet
+    // (which perturbs weights) and NNI-perturbation (which perturbs topology).
+    if (prune_reinsert_per > 0) {
+      PruneReinsertParams prp;
+      prp.n_cycles = prune_reinsert_per;
+      prp.drop_fraction = params.prune_reinsert_drop;
+      prp.selection = static_cast<PruneSelection>(
+          params.prune_reinsert_selection);
+      prp.tbr_max_hits = params.tbr_max_hits;
+      prp.tabu_size = params.tabu_size;
+      prp.tbr_max_moves = params.prune_reinsert_tbr_moves;
+
+      prune_reinsert_search(result.tree, ds, prp, cd, split_freq,
+                            check_timeout);
+
+      result.timings.prune_reinsert_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("PruneRI").c_str(),
+                score_tree(result.tree, ds),
+                result.timings.prune_reinsert_ms);
+      }
+    }
+
+    if (ts::check_interrupt() || check_timeout()) {
+      result.interrupted = true;
+      result.score = score_tree(result.tree, ds);
+      return result;
+    }
+
     // 6. TBR polish after each outer cycle.
     // Restores local optimality after drift (which accepts suboptimal moves),
     // and seeds the next cycle's XSS from a clean local optimum.
@@ -435,6 +530,31 @@ ReplicateResult run_single_replicate(
       result.interrupted = true;
       result.score = score_tree(result.tree, ds);
       return result;
+    }
+
+    // 6b. Intra-replicate fusing (T-258).
+    // After TBR polish, fuse the current tree against pool donors.
+    // The pool is read-only; the fused tree replaces the current replicate
+    // tree.  This approximates TNT's within-replicate fusing pattern.
+    // tree_fuse() runs TBR internally after each improvement round, so
+    // no extra TBR pass is needed here.
+    if (params.intra_fuse && pool && pool->size() >= 1) {
+      FuseParams fp;
+      fp.accept_equal = params.fuse_accept_equal;
+      fp.max_rounds = 3;  // brief: just grab low-hanging improvements
+      tree_fuse(result.tree, ds, *pool, fp);
+
+      // Rebuild state arrays: tree_fuse may have modified the topology
+      // and the internal TBR uses a separate scoring path.
+      result.tree.build_postorder();
+      result.tree.reset_states(ds);
+
+      result.timings.fuse_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g\n",
+                outer_label("Intra-fuse").c_str(),
+                score_tree(result.tree, ds));
+      }
     }
 
     // If this cycle improved the score and resets are allowed, reset the
@@ -480,6 +600,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   result.last_improved_rep = 0;
   result.timed_out = false;
   result.consensus_stable = false;
+  result.perturb_stop = false;
 
   // Perturbation-count stopping rule (T-187).
   int unsuccessful_reps = 0;
@@ -713,7 +834,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
         ds, rep_params, rep_cd, check_timeout, params.verbosity, start_ptr,
-        sft_ptr, rep_strategy);
+        sft_ptr, rep_strategy, &pool);
 
     result.timings += rep_result.timings;
 
@@ -752,6 +873,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     }
 
     ++result.replicates_completed;
+    result.replicate_scores.push_back(rep_result.score);
 
     // Report end of replicate
     report("replicate", 1, rep_result.score, rep1);
@@ -803,6 +925,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       if (fused_ok && fused_score < best_before) {
         pool.set_hits_to_best(0);
         result.last_improved_rep = rep1;
+        unsuccessful_reps = 0;  // fuse found a better score; reset perturb-stop counter
         report("fuse", 1, fused_score, rep1);
         if (params.verbosity >= 1 && !has_callback) {
           Rprintf("  Fuse improved: %.5g -> %.5g\n",
@@ -854,6 +977,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
                   ds.n_tips, params.perturb_stop_factor);
         }
       }
+      result.perturb_stop = true;
       break;
     }
 

@@ -26,6 +26,15 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 
 ### New features
 
+- **`ScoreSpectrum()`**: Chao1-style landscape coverage estimator.  Treats
+  distinct parsimony scores found across replicates as "species" and estimates
+  how thoroughly the parsimony landscape has been sampled (Good-Turing sample
+  coverage, Chao1 richness lower bound, unseen score-level fraction).  The
+  Shiny app's confidence panel now displays the coverage estimate when
+  sufficient replicates have been completed.  `MaximizeParsimony()` now
+  returns a `replicate_scores` attribute containing per-replicate local-optimum
+  scores for this purpose.
+
 - **Multi-replicate driven search** pipeline: random Wagner tree → TBR →
   sectorial search (XSS, RSS, CSS) → ratchet → drift → tree fusing →
   final TBR.
@@ -64,8 +73,59 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - `fuseInterval`, `fuseAcceptEqual` — tree fusing parameters.
 - `poolMaxSize`, `poolSuboptimal` — tree pool management.
 - `tbrMaxHits`, `wagnerStarts`, `tabuSize`.
+- `nniFirst` — NNI warmup pass before SPR/TBR in each replicate; at
+  ≥100 tips this substantially improves the Wagner starting-tree quality
+  at negligible cost for small datasets.
+- `postRatchetSectorial` — run a second XSS+RSS+CSS pass after ratchet
+  perturbation; approximates TNT's interleaved sectorial pattern.
+  Enabled by default in the `"thorough"` preset.
+- `outerCycles`, `maxOuterResets` — repeat the full
+  \[XSS/RSS/CSS → ratchet → NNI-perturbation → drift → TBR\] sequence
+  _n_ times per replicate; budget is divided evenly.  Enabled in the
+  `"thorough"` preset (`outerCycles = 2`).
+- `wagnerBias`, `wagnerBiasTemp` — bias taxon addition order during Wagner
+  tree construction toward taxa with more informative characters
+  (Goloboff 2014), substantially improving starting-tree quality at large
+  tip counts.
+- `perturbStopFactor` — stop after `nTip × perturbStopFactor` consecutive
+  replicates that fail to improve the best score; provides 2–7× speedup on
+  converged searches at no score cost.
+- `pruneReinsertCycles`, `pruneReinsertDrop`, `pruneReinsertSelection` —
+  taxon pruning-reinsertion perturbation: drop a fraction of leaves, let
+  the backbone re-optimise with TBR, then reinsert taxa greedily.
+  Complementary to the ratchet (which perturbs character weights).
+- `nniPerturbCycles`, `nniPerturbFraction` — stochastic NNI-perturbation:
+  randomly apply NNI swaps to a fraction of internal branches and
+  reconverge, escaping local optima without altering character weights.
+- `annealCycles`, `annealPhases`, `annealTStart`, `annealTEnd`,
+  `annealMovesPerPhase` — multi-cycle PCSA (simulated annealing
+  perturbation) phase.
+- `adaptiveLevel` — dynamically scale ratchet and drift effort per
+  replicate based on the observed hit rate.
+- `adaptiveStart` — Thompson-sampling bandit strategy for starting-tree
+  selection; adapts over replicates to which strategies yield best scores.
+- `enumTimeFraction` — fraction of `maxSeconds` reserved for the MPT
+  plateau enumeration walk at the end of the search (default 10%).
+- `intraFuse` — within-replicate tree fusing against pool donors after TBR
+  polish; approximates TNT's within-replicate fusing pattern.
+- `ratchetTaper` — gradually reduce ratchet perturbation probability as
+  the pool stabilises, allowing finer local exploration late in the search.
+- `consensusConstrain` — lock pool-consensus splits as topological
+  constraints for subsequent replicates.
+- `consensusStableReps` — stop when the strict consensus is unchanged for
+  this many consecutive replicates (0 = disabled; set e.g. 3 to enable).
 - `progressCallback` — R function called after each replicate (for custom
   progress reporting).
+
+### Search output
+
+- **Convergence summary**: when `verbosity > 0` (the default),
+  `MaximizeParsimony()` now prints a one-line summary on exit reporting the
+  best score, number of replicates completed, replicates since last
+  improvement, number of distinct MPTs found, stop reason (time limit,
+  target hits, perturbation-stop, or user interrupt), and elapsed time.
+  The same information is available as named attributes on the returned
+  tree list.
 
 ### Search optimizations
 
@@ -78,8 +138,10 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
   topologically similar entry is evicted to maintain diversity.
 - **Cross-replicate consensus constraint tightening**: opt-in via
   `consensusConstrain = TRUE` in `SearchControl()`.
-- **Consensus-stability early stopping**: search terminates when the strict
-  consensus is stable for `consensusStableReps` consecutive replicates.
+- **Consensus-stability early stopping**: when `consensusStableReps > 0` in
+  `SearchControl()`, search stops when the strict consensus of best-score
+  pool trees has been unchanged for that many consecutive replicates.
+  Disabled by default.
 
 ### Batch resampling
 

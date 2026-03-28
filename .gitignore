@@ -10,6 +10,7 @@ src/*.dll
 .Rdata
 .Rd2pdf**
 .Rprofile
+.Renviron
 *.gcno
 *.knit.md
 *.log
@@ -53,3 +54,6 @@ test_output.txt
 /.builds
 .positai
 /.gha-results
+/.tnt-bench
+/.vtune*
+/vtune*

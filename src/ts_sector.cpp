@@ -782,8 +782,22 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
             pick_weights[i] = 1.0 + 3.0 * sc[eligible[i]];
           }
         }
+        // Re-sync constraint metadata to the updated topology.  The
+        // global TBR cleanup at the end of rss_search passes `cd`
+        // directly; stale constraint_node mapping after a sector
+        // improvement would cause false-positive or false-negative
+        // constraint violations for the first TBR clips.
+        if (cd && cd->active) {
+          map_constraint_nodes(tree, *cd);
+          compute_dfs_timestamps(tree, *cd);
+        }
       } else if (new_score == result.best_score && params.accept_equal) {
-        // Equal score accepted — topology changed but score didn't
+        // Equal score accepted — topology changed but score didn't.
+        // Re-sync constraint metadata for the same reason as above.
+        if (cd && cd->active) {
+          map_constraint_nodes(tree, *cd);
+          compute_dfs_timestamps(tree, *cd);
+        }
       } else {
         // HTU approximation caused full-tree score to worsen; revert
         restore_clade(tree, snap);
@@ -885,8 +899,20 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
               static_cast<int>(result.best_score - new_score);
           result.best_score = new_score;
           ++result.n_sectors_improved;
+          // Re-sync constraint metadata to the updated topology.
+          // Without this, the global TBR cleanup at the end of each
+          // XSS round uses stale constraint_node mapping (same class
+          // as T-278 / T-279 / T-280).
+          if (cd && cd->active) {
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+          }
         } else if (new_score == result.best_score && params.accept_equal) {
-          // Equal score accepted
+          // Equal score accepted — topology changed; re-sync constraint.
+          if (cd && cd->active) {
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+          }
         } else {
           // HTU approximation caused full-tree score to worsen; revert
           restore_clade(tree, snap);

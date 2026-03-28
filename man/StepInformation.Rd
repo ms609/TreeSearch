@@ -8,7 +8,7 @@ StepInformation(
   char,
   ambiguousTokens = c("-", "?"),
   approx = "auto",
-  n_mc = 5000L
+  n_mc = 100000L
 )
 }
 \arguments{

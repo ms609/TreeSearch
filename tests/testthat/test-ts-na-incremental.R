@@ -168,8 +168,12 @@ test_that("Timeout works on NA datasets", {
   ds <- make_ts_data(dataset)
 
   set.seed(1103)
-  result <- ts_driven(ds, maxReplicates = 1000L, targetHits = 1000L,
-                      maxSeconds = 0.5)
+  # maxReplicates/targetHits set unreachably high so that the timeout
+  # is what stops the search, not convergence (Vinther2008 is tiny).
+  # perturbStopFactor = 0 disables the perturbation-count stop rule,
+  # which otherwise fires in ~23ms on fast hardware (46 reps < 0.05s).
+  result <- ts_driven(ds, maxReplicates = 1000000L, targetHits = 1000000L,
+                      maxSeconds = 0.05, perturbStopFactor = 0L)
 
   expect_true(result$timed_out)
   expect_true(result$best_score > 0)

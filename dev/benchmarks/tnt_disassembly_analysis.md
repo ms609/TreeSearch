@@ -2,7 +2,18 @@
 
 Date: 2026-03-26
 
-## TNT Binary Profile
+## Scope limitation
+
+**This analysis covers the native Windows TNT binary only.** The TNT
+download page explicitly labels the Windows build as "[32 bits]". The
+Mac, Linux, and Cygwin builds are compiled as 64-bit (Goloboff & Morales
+2023). The 64-bit builds likely use wider registers and may include SIMD
+or hardware `popcnt` — the "~4× throughput advantage" conclusion below
+does **not** generalize to 64-bit TNT. Hamilton HPC benchmarks (T-249)
+will run against the 64-bit Linux TNT and may show a very different
+implementation-level gap.
+
+## TNT Binary Profile (Windows, 32-bit)
 
 - **File:** `C:/Programs/Phylogeny/tnt/TNT-bin/tnt.exe` (3.1 MB)
 - **Format:** PE32 (32-bit i386), stripped (no symbols)
@@ -114,10 +125,11 @@ Two-pass design:
 
 ## Implications
 
-### TNT's speed advantage is NOT implementation-level
+### TNT's speed advantage is NOT implementation-level (Windows 32-bit)
 
-TreeSearch has a **~4× raw Fitch throughput advantage** (128-bit SSE2 vs 32-bit
-scalar). Yet TNT converges 3–5× faster on the same datasets. This means:
+On Windows, TreeSearch has a **~4× raw Fitch throughput advantage** (128-bit
+SSE2 vs 32-bit scalar). Yet TNT converges 3–5× faster on the same datasets.
+This means — at minimum on Windows:
 
 1. **TNT's advantage is purely strategic** — fewer candidates evaluated,
    more effective heuristics, or both.

@@ -16,14 +16,19 @@
 
 namespace ts {
 
-// Portable popcount for uint64_t
+// Hardware POPCNT via inline asm (no -mpopcnt flag needed).
+// Same approach as TreeDist::popcnt64 — emits the instruction directly,
+// avoiding the software Hamming weight fallback that __builtin_popcountll
+// compiles to without -mpopcnt.
 inline int popcount64(uint64_t x) {
-#if defined(__GNUC__) || defined(__clang__)
-  return __builtin_popcountll(x);
-#elif defined(_MSC_VER)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
+  uint64_t result;
+  __asm__ ("popcnt %1, %0" : "=r" (result) : "r" (x));
+  return static_cast<int>(result);
+#elif defined(_MSC_VER) && defined(_M_X64)
   return static_cast<int>(__popcnt64(x));
 #else
-  // Fallback: Hamming weight
+  // Fallback: software Hamming weight (non-x86-64 platforms)
   x = x - ((x >> 1) & 0x5555555555555555ULL);
   x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
   return static_cast<int>(
@@ -81,6 +86,17 @@ struct CharBlock {
   int pattern_index[MAX_CHARS_PER_BLOCK];
 };
 
+// Cache-friendly metadata for indirect scoring hot paths.
+// Packs the 3 fields needed per block into 16 bytes (vs ~288 bytes in
+// CharBlock). For 4 blocks this fits in a single 64-byte cache line.
+struct FlatBlock {
+  int offset;              // word offset into state arrays
+  int n_states;            // states in this block (including NA if applicable)
+  uint64_t active_mask;    // active character bits
+  uint8_t has_inapplicable; // 1 if NA block (state 0 = inapplicable)
+  uint8_t _pad[7];         // explicit padding to 24 bytes
+}; // 24 bytes: 4 blocks = 96 bytes ≈ 1.5 cache lines (vs ~1152 for CharBlock)
+
 struct DataSet {
   int n_tips;
   int n_blocks;
@@ -93,6 +109,14 @@ struct DataSet {
   // where word_offset for block b, state s = block_word_offset[b] + s
   std::vector<uint64_t> tip_states;
   std::vector<int> block_word_offset;  // cumulative offset for each block
+
+  // Hot-path indirect scoring: cache-friendly block metadata.
+  // Populated by build_dataset(); mirrors blocks[] + block_word_offset[].
+  std::vector<FlatBlock> flat_blocks;
+  // True when all blocks have weight == 1 (common EW case).
+  // When true AND upweight_mask == 0, the specialized EW indirect
+  // functions can skip per-block weight multiply and upweight checks.
+  bool all_weight_one = false;
 
   // IW metadata (per original pattern)
   int n_patterns;                      // number of unique patterns

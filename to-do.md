@@ -25,48 +25,65 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-150 | P2 | WORKTREE (TS-CID-cons) | — | **CID-optimal consensus tree search** | PR #213 open to cpp-search. |
-| T-204 | P2 | PR #216 (B) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | On `feature/native-search`. GHA run 23495097795. |
-
+| T-150 | P2 | PR #213 (F) | — | **CID-optimal consensus tree search** | PR #213. Vignette fix (TreeTools::Consensus) commit f8bfee49. GHA 23650002703. |
+| T-204 | P2 | PR #216 (F) | — | **Decouple R-loop search from MorphyLib.** Native C++ scorer defaults for `TreeSearch()`, `Ratchet()`, `Jackknife()`; `concavity` param; MorphyLib soft-deprecated. | GHA 23649607006 PASSED. Ready for merge. |
 
 
 ### Bugs
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-242 | P1 | PARKED (C, GHA 23545987517†) | — | **[Bug?] Agnarsson2004 IW search quality regression.** 230 runs, only 5 hit best score (2% hit rate). User reports "1 trees in memory: 1 sampled, each with score 50.1872 (k = 5.62)". May indicate search regression or IW landscape difficulty. | From a.20. GHA failure is stale (pre-T-214); cpp-search passes on 23547582438. Investigation task — GHA status doesn't resolve it. |
-
-
-
-
-### Shiny App
-
-(no open tasks)
+| T-279 | P2 | PR #237 (F) | — | **Constrained drift: stale `cd->constraint_node` after RFD rejection + redundant full_rescore.** In `ts_drift.cpp::drift_phase()`, when a constrained suboptimal move passes the constraint check (so `cd` is updated), then is rejected by the RFD test, `update_constraint()` is not called on the restored topology. Bug in both IW reject (lines 647–649) and EW reject (line 689). Same class as T-278. Also eliminates a redundant `drift_full_rescore()` call in the EW reject path (return value at line 657 was discarded, causing a second rescore at line 689). Only affects constrained drift (`driftCycles > 0`); drift disabled in all presets since T-255. | Found by S-RED focus 8 (F, 2026-03-27). PR TBD. feature/drift-constraint-fix commit e85ec84f. |
 
 ### Performance Optimization (180+ tips)
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-243 | P2 | PARKED (E, GHA 23582386358) | — | **Merge `feature/hot-loop-opt` to `cpp-search`.** FlatBlock struct, flat EW indirect functions, TBR prefetch. Confirmed 1.4% speedup at 180 tips on Hamilton (median 11.538→11.360s, p=0.001, n=10). | PR #230 open. Fixed pre-existing Rd/spelling issues (TREE's, speedup, ratchetTaper/annealCycles usage); re-dispatched GHA. |
+| T-245 | P3 | OPEN | — | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
 
-| T-245 | P3 | OPEN | T-243 | **TBR candidate batching.** Restructure TBR rerooting inner loop to evaluate 4 regraft candidates in lockstep, exploiting memory-level parallelism (while one candidate's data transits L2→L1, ALU works on another). Phase profiling shows TBR+enumeration = 86% of 180-tip wall time; estimated ~13% overall gain. | New branch `feature/tbr-batch`. Validate on Hamilton with same benchmark setup. Most invasive change — needs careful correctness testing. |
-| T-246 | P3 | OPEN | T-243 | **AVX2 runtime dispatch for Fitch bit ops.** Widen `ts_simd.h` from SSE2 (128-bit) to AVX2 (256-bit) with runtime detection (`__builtin_cpu_supports("avx2")`) and SSE2 fallback. Estimated 5–10% on datasets with many states or character blocks. | EPYC 7702 supports AVX2. Can be done independently of T-245. Less invasive than batching. |
+### Alternative Homologies (Goloboff 2026) — `feature/alt-homology` / `TS-AltHom`
 
-### TNT Comparison & Strategy Learning
+Ref: Goloboff (2026) *Cladistics* doi:10.1111/cla.70033.
+Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homologies-with-step-matrix-recoding.md`
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| T-249 | P3 | OPEN | — | **Rerun TNT comparison on current cpp-search HEAD.** Round 2 data (120s, 3 seeds) predates NNI warmup, ratchet tuning, biased Wagner, outer cycle loop, and SA tuning. Update `round2_hard.csv` with current engine to measure remaining gaps. | Existing gaps: Geisler2001 +5, Wortley2006/Zhu2013 +3, Zanol2014 +2. TNT converges 3–5× faster on most datasets. |
-| T-251 | P3 | OPEN | T-249 | **TNT trajectory analysis on gap datasets.** Run TNT with verbose logging on Geisler2001, Zhu2013, Wortley2006 (largest score gaps). Parse logs for score-at-time, phase transitions, ratchet escape magnitudes. Compare to TreeSearch phase timing to identify which phase TNT does better. | Depends on T-249 to confirm which gaps persist. |
-| T-252 | P3 | OPEN | T-251 | **Hamilton MorphoBank training-set benchmarking.** Run TreeSearch on fixed 25-matrix training sample at 30s/60s/120s budgets. Baseline current engine across size/complexity spectrum before any strategy tuning. | Uses `benchmark_mbank_sample()` in `bench_framework.R`. |
-| T-253 | P3 | OPEN | T-251, T-252 | **Gap characterization by dataset features.** Correlate TNT-vs-TreeSearch score gaps with dataset features (ntax, nchar, missing %, homoplasy, n_blocks) to identify what *types* of problems TreeSearch is weakest on. Guide targeted strategy improvements. | Depends on T-249 (updated gaps) and T-252 (broader baseline). |
+| T-280 | P3 | OPEN | — | **AltHom Phase 1: `AlternativeHomology` S3 class & core recoding (MVP).** Create `R/AlternativeHomology.R` (constructor, validation, print), `R/recode_alt_homology.R` (correspondence enumeration, morphotype states, cost matrix, tip assignment). Wire into `TreeLength()` for scoring on a fixed tree. Reproduce paper's Definition 1 cost matrix + Table 1 as tests. | WORKTREE (TS-AltHom). Invertible, no external constraints, two part-types only. |
+| T-281 | P3 | OPEN | T-280 | **AltHom Phase 2: Constraints & options.** Non-invertible (`>`), adjacent (`>>`), restricted homology (`!`), configurable part transformation costs, adjacent-loss merging (`<`). Reproduce Definitions 2–3 and their cost matrices. | WORKTREE (TS-AltHom). |
+| T-282 | P3 | OPEN | T-280 | **AltHom Phase 3: Wire into `MaximizeParsimony()` search pipeline.** Accept `AlternativeHomology` in `hierarchy` param, prepare xformArgs, end-to-end search. Also wire `Resample()` and `SuccessiveApproximations()`. | WORKTREE (TS-AltHom). |
+| T-283 | P3 | OPEN | T-280 | **AltHom Phase 4: External inapplicability.** An external character can make individual characters, parts, or entire part sets inapplicable. Expand state enumeration for externally-disabled states. | WORKTREE (TS-AltHom). |
+| T-284 | P3 | OPEN | T-280 | **AltHom Phase 5: Combination pruning.** Implement `xlinks&` (pairwise compatibility), `xlinks!` (observed-state-only), `xlinks@` (uninformative-state restriction) to reduce supercharacter state count. Verify same optimal trees as unpruned. | WORKTREE (TS-AltHom). |
+| T-285 | P3 | OPEN | T-280 | **AltHom Phase 6: Implied weighting support.** Compute combined minimum steps across all valid alignments (not sum of per-char minima). Required for correct IW homoplasy counts. | WORKTREE (TS-AltHom). |
+| T-286 | P3 | OPEN | T-280 | **AltHom Phase 7: Mixed `AlternativeHomology` + `CharacterHierarchy`.** Support datasets with both simple hierarchy blocks and alternative homology blocks in one analysis. | WORKTREE (TS-AltHom). |
+| T-287 | P3 | OPEN | T-284 | **AltHom Phase 8: Static alignment fallback.** For datasets where supercharacter exceeds practical state limit, generate alternative static datasets (one per alignment) and search each. | WORKTREE (TS-AltHom). |
+| T-288 | P3 | OPEN | T-282 | **AltHom Phase 9: Documentation & vignette.** `vignettes/alternative-homologies.Rmd`, roxygen docs for all new exports, `inst/REFERENCES.bib` entry. | WORKTREE (TS-AltHom). |
+
+### TNT Comparison & Strategy Learning
+
+### Strategy Tuning
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-289 | P2 | PARKED (E, SLURM 16608629) | — | **Prune-reinsert benchmark (Hamilton).** Stage 1: sweep cycles (1/3/5) × drop fraction (5/10/20/30%) × RANDOM on 5 datasets (37–180t), 5 seeds, 30s. Stage 2: best configs + INSTABILITY selection + ratchet-replacement at 30s/60s. Scripts: `bench_prune_reinsert.R`, `t289_hamilton.sh`. Goal: decide whether to enable in presets and at what settings. | F's job 16607721 failed (install exit code 3). E's job 16608629 submitted ~15:59 GMT 2026-03-27; still in dep-install phase as of 16:22. Expected results: 18:30–19:30 GMT. |
+| T-269 | P3 | PARKED (F, SLURM 16607719/16607720) | — | **Fine-grained sectorial interleaving benchmark.** Compare current coarse `outerCycles=2` (all ratchet cycles batched per pass) against fine-grained interleaving (e.g. `outerCycles=12, ratchetCycles=12` → one ratchet cycle per sectorial pass), approximating TNT's per-iteration pattern. T-256 showed extra sectorial *rounds* don't help, but *timing* of sectorial relative to perturbation hasn't been tested. **Design note (u.005):** Full TNT-style interleaving IS architecturally supported now — setting `outerCycles = ratchetCycles` achieves one sector pass per ratchet cycle. T-257 first validated that any post-ratchet sectorial helps at all (merged). T-269 benchmarks the fine-grained variant to determine whether the per-cycle overhead is worth enabling in presets. | Low priority. Use 3–5 gap datasets at 30s/60s budgets. |
+| T-290 | P3 | OPEN | — | **Brazeau-track baseline benchmark (Hamilton).** Run default + thorough presets on the fixed 20-matrix Brazeau sample (`MBANK_BRAZEAU_SAMPLE`), EW + IW(k=10), 30s, 5 seeds. Compare phase timing distributions and strategy rankings to Fitch baselines. Includes sample-size stability analysis (Kendall's W). Script: `dev/benchmarks/bench_brazeau_baseline.R` (in TS-TNT-bench). Goal: determine whether Brazeau scoring needs different strategy presets than Fitch. | Infrastructure added in TS-TNT-bench. |
+
+
+### Housekeeping
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-291 | P3 | OPEN | — | **Update `bench_framework.R` `benchmark_run()` to new `ts_driven_search` interface.** The function currently passes flat keyword args but the C++ bridge now expects structured lists (`scoringConfig`, `searchControl`, `runtimeConfig`). Needs refactor to match the current Rcpp signature. Does not block Brazeau benchmarking (which uses `MaximizeParsimony` directly). | |
+
+
+
+
 
 ### Standing Tasks
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-25 by F (focus 6: R↔C++ interface). Clean — no bugs. |
-| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-26 by E (round 5: 180-tip large-preset benchmarks on Hamilton HPC, T-244/T-248 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-26 by E (round 21). Closed 4 Shiny tasks (re-validated by GHA 23547582438). Updated stale GHA notes. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-26 by E (via S-COORD). Open PRs: #230 (hot-loop-opt, GHA pending), #216 (native-search, stale GHA), #213 (CID-consensus, WORKTREE). #210 (draft cpp-search→main). #178/#106 stale+CONFLICTING — recommend closing. |
-
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 27 by F (ts_rcpp.cpp, 2656L — Rcpp bridge). No bugs. All correctness invariants verified (sentinels, indexing, layout). F sweep now covers: ts_fitch, ts_simd, ts_fitch_na, ts_fitch_na_incr, ts_tree, ts_splits, ts_collapsed, ts_hsj, ts_sankoff, ts_rng, ts_rcpp, ts_parallel, ts_sector, ts_pool, ts_fuse, ts_driven, ts_drift, ts_tbr, ts_ratchet, ts_nni_perturb, ts_resample, ts_prune_reinsert, ts_simplify, ts_search, ts_data, ts_wagner, ts_constraint. **All modules reviewed ≥ once**. E sweep area 4: ts_rng, ts_parallel. Next: re-review post-merge additions (ts_strategy.h from T-190, ts_pcsa from T-207) or wait for new code changes. |
+| S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 40 by F. PRs merged since last S-COORD: #233 (T-246 AVX2), #234 (T-257 post-ratchet sectorial), #235 (T-266 prune-reinsert), #236 (ScoreSpectrum). Still open: #213 (T-150), #216 (T-204), #237 (T-279). F-027 WORDLIST fix (config/warmup R 4.1 CI failures since ~12:50) committed ef83e8db → GHA 23656560997 PARKED. |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 round 40 by F. Open PRs: #213 (T-150, GHA 23650002703 PASS), #216 (T-204, GHA 23649607006 PASS), #237 (T-279, GHA 23650290962 PASS), #210 (DRAFT cpp-search→main). F-027 WORDLIST fix parked GHA 23656560997. |

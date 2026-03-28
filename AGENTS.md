@@ -188,14 +188,10 @@ over time (e.g. when a feature merges and the worktree is reassigned), but
 | Directory | Branch | Purpose |
 |-----------|--------|---------|
 | `TreeSearch-a` | `cpp-search` | Main source dir; integration branch |
-| `TS-anneal` | `feature/anneal` | Simulated annealing for large trees (T-203) |
-| `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature |
-| `TS-MadSlat` | `feature/madslatkin-profiling` | Mad-Slatkin profiling |
-| `TS-ParsSim` | `feature/parssim-ambiguous` | Parsimony simulation |
-| `TS-PTeval` | `feature/pt-eval` | Parallel tempering evaluation |
+| `TS-CID-cons` | `feature/cid-consensus` | CID consensus feature (T-150) |
 | `TS-NativeSearch` | `feature/native-search` | Native scorer decoupling (T-204) |
+| `TS-PruneRI` | `feature/prune-reinsert` | Taxon prune-reinsert perturbation (T-266) |
 | `TS-TNT-bench` | `feature/tnt-bench` | TNT benchmarking |
-| `TS-Xpiwe` | `feature/xpiwe` | Extended implied weighting |
 
 There is **no permanent worktree for `cpp-search`**. To commit to
 `cpp-search`, use one of these approaches (in order of preference):
@@ -224,7 +220,7 @@ git stash pop                                  # restore code work
 
 ### Coordination files live on `cpp-search` only
 
-`to-do.md`, `issues.md`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
+`to-do.md`, `u.nnn`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
 and `AGENTS.md` are **never committed on feature branches**. When an agent
 working on a feature branch needs to log progress or claim a task, they commit
 those changes directly to `cpp-search` (coordination-only commit), keeping the
@@ -258,7 +254,7 @@ this is expected and should be done carefully at feature-merge time.
 5. On GHA success, open a PR:
    ```bash
    gh pr create --base cpp-search --head feature/<name> \
-     --title "T-nnn: <description>" --body "Agent <Letter>. ..."
+     --title "<Letter>-nnn: <description>" --body "Agent <Letter>. ..."
    ```
 6. Set `to-do.md` status to `PR #N (<Letter>)`. Move on.
 7. Human reviews and merges the PR.
@@ -272,6 +268,13 @@ this is expected and should be done carefully at feature-merge time.
 ---
 
 ## Multi-agent workflow protocol
+
+> **Task IDs:** New tasks use `<Letter>-nnn` format (e.g. `A-042`), where
+> `<Letter>` is your agent letter and `nnn` is your personal counter
+> (tracked in `agent-<letter>.md`). Existing `T-nnn` IDs in `to-do.md`,
+> `completed-tasks.md`, PRs, and git log are valid and need not be renamed.
+> Before adding or removing rows in `to-do.md`, acquire the lock:
+> `bash ../../todo-lock.sh . acquire` / `bash ../../todo-lock.sh . release`.
 
 ### Worktree tasks
 
@@ -296,38 +299,25 @@ On `/assign X`:
       If the rename fails (file gone or access denied), another agent
       claimed it — skip.
    d. Create a `to-do.md` task under `### Shiny App` for each valid
-      report. Assign the next available `T-nnn` ID, a priority based on
-      severity (default P2), and tag as `[Shiny]`. Use the file's content
-      as the description/notes.
+      report. Assign a `<Letter>-nnn` ID (your letter + incremented
+      counter; see "Task IDs" in the master AGENTS.md), a priority based
+      on severity (default P2), and tag as `[Shiny]`. Use the file's
+      content as the description/notes.
    e. Delete the `aXXX.claimed-X.md` file once the `to-do.md` entry is
       written.
    f. Repeat for all claimed files before moving on. **Do not start
       working a task until all pending reports are triaged.**
-3. Check `issues.md` **before** `to-do.md`:
-   a. If `issues.md` contains any unclaimed issues (blocks whose first line
-      does **not** start with `CLAIMED`), **claim the bottom-most unclaimed
-      issue** by prepending `CLAIMED (X):` to its first line.
-   b. Triage the claimed issue: determine what needs doing, then add one or
-      more discrete tasks to `to-do.md` (assign appropriate IDs and
-      priorities — issues may be P0). Begin work on the first task.
-   c. Once the `to-do.md` tasks are created, delete the entire issue block
-      (including its `---` separator) from `issues.md`.
-   d. **While `issues.md` still has unclaimed issues, triaging them takes
-      priority over picking up existing `to-do.md` tasks** (an issue may
-      contain a P0).
-4. If `issues.md` is empty or all issues are already claimed, claim the next
-   OPEN task from `to-do.md` as before.
+3. **Triage user issues** (`u.*` files) before `to-do.md`. See the
+   parent `../AGENTS.md` "User issue files" section for the full protocol
+   (scan → claim via rename → triage → delete). While untriaged issues
+   remain, triaging takes priority over `to-do.md` tasks (an issue may
+   contain a P0).
+4. If no untriaged issues, claim the next OPEN task from `to-do.md`.
 
 Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
-> **Concurrency guard (issues.md):** Only the bottom-most *unclaimed* issue
-> may be claimed. Because agents always target the bottom and mark it
-> `CLAIMED (X)` immediately, two agents will never parse the same issue. If
-> an agent sees the bottom issue is already `CLAIMED`, it moves up to the
-> next unclaimed one.
->
-> **Concurrency guard (aXXX.md / a.XXX):** Atomic rename (`mv aXXX.md
-> aXXX.claimed-X.md`) ensures exactly one agent wins each file. NTFS
+> **Concurrency guard (u.nnn / a.XXX):** Atomic rename (`mv u.001
+> u.001.claimed-X`) ensures exactly one agent wins each file. NTFS
 > rename is atomic; losers see "file not found" and skip.
 
 ### During work
@@ -346,7 +336,7 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
    row in a section/group, delete the section header too.
 2. **Append** a summary row to `completed-tasks.md` under the current date
    heading (create a new `## YYYY-MM-DD` heading if needed):
-   `| T-nnn | Short description | X | Brief notes |`
+   `| <Letter>-nnn | Short description | X | Brief notes |`
 3. Set `agent-X.md` to IDLE.
 4. Append a brief entry to this file documenting what changed.
 5. Update `coordination.md` if strategic objectives are affected.
@@ -410,13 +400,25 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | File | Purpose |
 |------|---------|
 | `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
-| `issues.md` | Human-entered issues (agents triage → `to-do.md`) |
+| `u.nnn` | User issue files (agents triage → `to-do.md`, then delete) |
 | `to-do.md` | Task queue (active/open tasks only) |
 | `completed-tasks.md` | Archive of completed tasks |
 | `coordination.md` | Strategic plan |
 | `agent-X.md` | Agent progress log |
 | `AGENTS.md` | Conventions + architecture reference |
 | `.positai/expertise/*.md` | Standing task methodology |
+
+## User-level Posit Assistant skills
+
+The user has Posit Assistant skills installed at `~/.positai/skills/`.
+**Load these with the `skill` tool before starting relevant work:**
+
+| Skill name | When to load |
+|------------|-------------|
+| `r-package-profiling` | Profiling, benchmarking, VTune, A/B comparison, hotspot analysis |
+| `hamilton-hpc` | Hamilton HPC, SLURM jobs, SSH, remote benchmarking |
+
+Example: `skill(skill: "hamilton-hpc")` before any Hamilton dispatch work.
 
 ## Test file conventions
 
@@ -520,15 +522,20 @@ warning and delegates to `Morphy()`. Scheduled for removal in 2028.
 
 ### Driven search pipeline per replicate
 
-1. Random Wagner tree → optional SPR → TBR to local optimum
+1. Random Wagner tree → NNI warmup → TBR to local optimum
 2. XSS sectorial search (if tree large enough)
 3. RSS random sectorial search
 4. CSS constrained sectorial search
 5. Ratchet perturbation to escape local optima
-6. Drift search (accept suboptimal moves)
-7. Final TBR polish
-8. Add to pool
-9. Fuse against pool (every `fuse_interval` replicates)
+5a. Post-ratchet XSS+RSS+CSS (if `postRatchetSectorial = TRUE`)
+6. NNI-perturbation (topology-space escape, if `nniPerturbCycles > 0`)
+7. Drift search (accept suboptimal moves)
+8. PCSA perturbation (if `annealCycles > 0`)
+9. Final TBR polish
+10. Add to pool
+11. Fuse against pool (every `fuse_interval` replicates)
+
+Steps 2–9 are wrapped in the `outerCycles` loop (default 1).
 
 Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
@@ -536,14 +543,15 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 
 | Preset | Condition | Key settings |
 |--------|-----------|-------------|
-| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first, consensus-stop 3 |
-| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 2 drift (AFD 5, RFD 0.15), XSS+RSS, consensus-stop 3, Wagner×3, NNI-first, adaptive level |
-| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 5 NNI-perturb, 12 drift (AFD 5, RFD 0.15), XSS+RSS+CSS, consensus-stop 3, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), consensus-stop 2, Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
+| sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first |
+| default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, Wagner×3, NNI-first, adaptive level |
+| thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb (T-274), 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100 |
 
-`sprint`/`default`/`thorough` set `consensusStableReps = 3`; `large` sets
-`consensusStableReps = 2` (faster convergence detection since replicates at
-120+ tips take 30–90s each).
+**T-264 (2026-03-26):** `consensusStableReps` removed from all presets
+(disabled, 0). The previous setting of 3 caused catastrophic early
+termination — the search stopped after 3 replicates with unchanged
+consensus, using only 7–20% of the time budget on most datasets.
 
 **Large preset design rationale (T-179, 2026-03-24):** At 180 tips, each TBR
 convergence takes ~5–7s, making phases like NNI-perturbation (~5.5s/cycle) and
@@ -608,10 +616,11 @@ when conflict variation is negligible.
 
 ### Consensus-stability stopping
 
-After each replicate, if `consensus_stable_reps > 0` (default 3 in all
-presets), the pool's strict consensus hash is compared to the previous
-replicate's. If unchanged for `consensus_stable_reps` consecutive
-replicates, the search terminates early. `compute_consensus_hash()` uses
+After each replicate, if `consensus_stable_reps > 0` (disabled in all
+presets since T-264; available via `SearchControl(consensusStableReps=N)`),
+the pool's strict consensus hash is compared to the previous replicate's.
+If unchanged for `consensus_stable_reps` consecutive replicates, the
+search terminates early. `compute_consensus_hash()` uses
 XOR of per-split FNV-1a hashes for O(pool × splits) cost.
 
 ### Adaptive search level
@@ -987,10 +996,24 @@ for `n_cycles`.
 
 **Pipeline placement:** Between ratchet (phase 4) and drift (phase 5) in
 `run_single_replicate()`. Disabled by default (`nniPerturbCycles = 0`).
-Enabled in the `thorough` preset (5 cycles, 0.5 fraction).
+Previously enabled in the `thorough` preset (5 cycles, 0.5 fraction);
+**disabled in all presets since T-274 (2026-03-27)** — see benchmark below.
 
 **R API:** `SearchControl(nniPerturbCycles, nniPerturbFraction)`.
 Timings reported as `nni_perturb_ms`.
+
+**T-274 benchmark (2026-03-27, Agent F): NNI-perturb disabled in thorough preset.**
+Per-replicate sampling, 20 seeds, datasets Zhu2013/Giles2015/Dikow2009 (75–88t):
+
+| Dataset | nni=0 time | nni=5 time | overhead | EB_30s (nni=0) | EB_30s (nni=5) | EB_60s (nni=0) | EB_60s (nni=5) |
+|---------|:----------:|:----------:|:--------:|:--------------:|:--------------:|:--------------:|:--------------:|
+| Zhu2013 (75t) | 2.3s | 3.9s | +69% | 638.2 | 638.2 | 638.0 | 638.0 |
+| Giles2015 (78t) | 2.2s | 3.5s | +59% | 710.1 | 710.1 | 710.0 | 710.0 |
+| Dikow2009 (88t) | 4.2s | 7.0s | +67% | 1611.3 | 1611.2 | 1611.1 | 1611.0 |
+
+NNI-perturb adds 59–69% per-replicate overhead with ≤0.1-step expected-best
+benefit at all budgets — well within bootstrap noise. Time-adjusted expected
+best is identical across conditions. Set `nniPerturbCycles = 0` in thorough preset.
 
 ### Biased Wagner addition (T-188, 2026-03-23)
 
@@ -1121,6 +1144,15 @@ isolate the escape-effectiveness question.
 that are optimal at 88 tips may be suboptimal at 180+. The 180-taxon dataset
 should be added to the benchmark suite as a separate tier (T-181).
 
+**Brazeau vs EW scoring confound (T-265, 2026-03-26):** TreeSearch
+uses the Brazeau et al. (2019) inapplicable algorithm by default,
+which penalizes inapplicable-to-applicable transitions. TNT treats
+`-` as `?` (standard EW Fitch). On 11 gap datasets, the apparent
+mean gap was +17.8 steps; the actual EW-vs-EW gap is only +2.2 steps
+(5 datasets at 0 gap). **All TNT comparisons MUST use `fitch_mode()`
+to convert inapplicable to missing** for apples-to-apples scoring.
+`fitch_mode()` is defined in `bench_intra_fuse.R` and `bench_t265_regression.R`.
+
 **`maxTime` confound (2026-03-23):** Initial 180-taxon testing used
 `maxTime` (legacy Morphy parameter), which silently delegated to the
 R-loop `Morphy()` engine. The C++ driven search (via `maxSeconds`) is
@@ -1176,6 +1208,19 @@ Ranked by priority:
    `thorough` preset defaults to `outerCycles=2`. Matches TNT xmult
    pattern. Goloboff 1999 §2.3. Needs benchmarking to validate
    improvement on standard datasets.
+10. ~~Drift MPT diversity experiment~~ — **Done** (T-254): Drift
+    (`driftCycles=2`) provides zero score benefit, zero MPT enumeration
+    benefit, zero topological diversity benefit, and costs 10–22% of
+    replicates. On Wortley2006, no-drift consistently finds 4 MPTs vs
+    1–3 with drift. On Geisler2001/Zhu2013, mean pairwise RF is
+    identical (7.3 vs 7.4; 11.6 vs 10.2). Drift delays consensus
+    stability without improving the answer. **Recommendation:** set
+    `driftCycles=0` in default and thorough presets (T-255).
+11. ~~NNI-perturb cycle count at thorough-preset scale~~ — **Done** (T-274): Per-replicate
+    sampling, 20 seeds, Zhu2013/Giles2015/Dikow2009 (75–88t). NNI-perturb adds 59–69%
+    per-replicate overhead with ≤0.1-step expected-best benefit at 30s/60s budgets — within
+    bootstrap noise. **Set `nniPerturbCycles = 0` in thorough preset.** Available via
+    `SearchControl(nniPerturbCycles = N)` for manual use.
 
 ## Benchmarks and profiling
 

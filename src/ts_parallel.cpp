@@ -101,6 +101,9 @@ struct WorkerContext {
   // Per-thread timing accumulator (index = thread_id)
   PhaseTimings* thread_timings;
   int thread_id;
+
+  // Per-thread score accumulator (index = thread_id)
+  std::vector<double>* thread_scores;
 };
 
 void worker_thread(WorkerContext ctx) {
@@ -151,9 +154,11 @@ void worker_thread(WorkerContext ctx) {
     }
 
     // Run the replicate pipeline (verbosity=0 for parallel)
+    // pool=nullptr: intra-fuse disabled in parallel mode (between-replicate
+    // fusing via ThreadSafePool::fuse_round() is already active)
     ReplicateResult rep_result = run_single_replicate(
         ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr,
-        nullptr, rep_strat);
+        nullptr, rep_strat, nullptr);
 
     if (ctx.stop_flag->load(std::memory_order_relaxed)) break;
 
@@ -165,6 +170,10 @@ void worker_thread(WorkerContext ctx) {
     compute_collapsed_flags(rep_result.tree, ds_local, rep_collapsed);
     ctx.shared_pool->add_collapsed(rep_result.tree, rep_result.score,
                                    rep_collapsed);
+
+    // Record per-replicate score for Chao1 coverage estimation
+    ctx.thread_scores[ctx.thread_id].push_back(rep_result.score);
+
     ctx.replicates_done->fetch_add(1, std::memory_order_relaxed);
 
     // Check convergence
@@ -207,6 +216,7 @@ DrivenResult parallel_driven_search(
   result.last_improved_rep = 0;  // not tracked in parallel (replicates out of order)
   result.timed_out = false;
   result.consensus_stable = false;
+  result.perturb_stop = false;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -276,14 +286,16 @@ DrivenResult parallel_driven_search(
     if (cancel_env && cancel_env[0] != '\0') cancel_path = cancel_env;
   }
 
-  // Per-thread timing accumulators
+  // Per-thread timing and score accumulators
   std::vector<PhaseTimings> thread_timings(n_threads);
+  std::vector<std::vector<double>> thread_scores(n_threads);
 
   // Spawn worker threads
   std::vector<std::thread> workers;
   workers.reserve(n_threads);
   for (int t = 0; t < n_threads; ++t) {
     ctx.thread_timings = thread_timings.data();
+    ctx.thread_scores = thread_scores.data();
     ctx.thread_id = t;
     workers.emplace_back(worker_thread, ctx);
   }
@@ -377,6 +389,7 @@ DrivenResult parallel_driven_search(
       }
       if (done - reps_at_last_improvement >= perturb_stop_limit) {
         stop_flag.store(true, std::memory_order_relaxed);
+        result.perturb_stop = true;
         if (params.verbosity >= 1) {
           Rprintf("Stopped: %d consecutive unsuccessful replicates "
                   "(limit %d = %d tips x %d)\n",
@@ -404,9 +417,12 @@ DrivenResult parallel_driven_search(
     if (w.joinable()) w.join();
   }
 
-  // Sum per-thread timings
+  // Sum per-thread timings; merge per-thread replicate scores
   for (int t = 0; t < n_threads; ++t) {
     result.timings += thread_timings[t];
+    for (double s : thread_scores[t]) {
+      result.replicate_scores.push_back(s);
+    }
   }
 
   // Extract results

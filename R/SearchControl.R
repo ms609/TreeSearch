@@ -49,8 +49,14 @@
 #' @param cssPartitions Integer; number of partitions in CSS.
 #' @param sectorMinSize,sectorMaxSize Integer; minimum and maximum clade
 #'   sizes for sectorial search.
+#' @param postRatchetSectorial Logical; when `TRUE`, run XSS+RSS+CSS again
+#'   after ratchet perturbation using the same round counts.  Approximates
+#'   TNT's interleaved sectorial pattern.  Default: `FALSE`.
 #' @param fuseInterval Integer; fuse pool trees every _n_ replicates.
 #' @param fuseAcceptEqual Logical; accept equally-scoring fused trees?
+#' @param intraFuse Logical; fuse the current tree against pool donors
+#'   within each replicate, after TBR polish.  This approximates TNT's
+#'   within-replicate fusing pattern. Default: `FALSE`.
 #' @param poolMaxSize Integer; maximum trees retained in the pool.
 #' @param poolSuboptimal Numeric; retain trees that are this many steps
 #'   worse than the best tree.  0 (default) keeps only optimal trees.
@@ -86,6 +92,27 @@
 #'   \insertCite{Nguyen2015}{TreeSearch}.
 #' @param nniPerturbFraction Numeric (0--1); fraction of internal branches
 #'   to swap during each NNI-perturbation cycle.  Default 0.5.
+#' @param pruneReinsertCycles Integer; number of taxon pruning-reinsertion
+#'   perturbation cycles per replicate.  Each cycle drops a fraction of leaves,
+#'   runs TBR on the reduced tree to let the backbone restructure, then
+#'   greedily reinserts the dropped taxa via Wagner addition and TBR-polishes
+#'   the full tree.  Complementary to the ratchet (which perturbs character
+#'   weights) and NNI-perturbation (which perturbs the topology directly).
+#'   0 (default) disables this perturbation.
+#' @param pruneReinsertDrop Numeric (0--1); fraction of tips to drop per
+#'   cycle.  Default 0.10 (10%).  Always drops at least 3 tips and keeps
+#'   at least 4.
+#' @param pruneReinsertSelection Integer; tip selection strategy for choosing
+#'   which tips to drop.  0 = random (default), 1 = instability-weighted
+#'   (tips whose placement varies across pool trees are preferentially
+#'   dropped).
+#' @param pruneReinsertTbrMoves Integer; maximum number of TBR moves accepted
+#'   during the reduced-tree backbone optimisation phase of each
+#'   prune-reinsert cycle.  0 means run to convergence; the default of 5
+#'   mirrors the ratchet design (short perturbation, many diverse cycles)
+#'   and substantially reduces per-cycle cost on datasets with inapplicable
+#'   characters (where Brazeau scoring dominates).  Increase towards 0 if
+#'   you prefer thorough backbone optimisation over replicate throughput.
 #' @param consensusConstrain Logical; lock the strict consensus of pool
 #'   trees as topological constraints for subsequent replicates?  When
 #'   `TRUE`, after enough replicates (\eqn{\ge}5), splits present in ALL
@@ -185,7 +212,7 @@ SearchControl <- function(
     nniPerturbCycles = 0L,
     nniPerturbFraction = 0.5,
     # Drift
-    driftCycles = 2L,
+    driftCycles = 0L,
     driftAfdLimit = 5L,
     driftRfdLimit = 0.15,
     # Sectorial
@@ -196,9 +223,11 @@ SearchControl <- function(
     cssPartitions = 4L,
     sectorMinSize = 6L,
     sectorMaxSize = 50L,
+    postRatchetSectorial = FALSE,
     # Fuse / pool
     fuseInterval = 3L,
     fuseAcceptEqual = FALSE,
+    intraFuse = FALSE,
     poolMaxSize = 100L,
     poolSuboptimal = 0,
     # Stopping criteria
@@ -206,6 +235,11 @@ SearchControl <- function(
     perturbStopFactor = 2L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
+    # Taxon pruning-reinsertion (T-266)
+    pruneReinsertCycles = 0L,
+    pruneReinsertDrop = 0.10,
+    pruneReinsertSelection = 0L,
+    pruneReinsertTbrMoves = 5L,
     # Simulated annealing perturbation (PCSA, T-207)
     annealCycles = 0L,
     annealPhases = 5L,
@@ -248,14 +282,20 @@ SearchControl <- function(
       cssPartitions = as.integer(cssPartitions),
       sectorMinSize = as.integer(sectorMinSize),
       sectorMaxSize = as.integer(sectorMaxSize),
+      postRatchetSectorial = as.logical(postRatchetSectorial),
       fuseInterval = as.integer(fuseInterval),
       fuseAcceptEqual = as.logical(fuseAcceptEqual),
+      intraFuse = as.logical(intraFuse),
       poolMaxSize = as.integer(poolMaxSize),
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
       perturbStopFactor = as.integer(perturbStopFactor),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
+      pruneReinsertCycles = as.integer(pruneReinsertCycles),
+      pruneReinsertDrop = as.double(pruneReinsertDrop),
+      pruneReinsertSelection = as.integer(pruneReinsertSelection),
+      pruneReinsertTbrMoves = as.integer(pruneReinsertTbrMoves),
       annealCycles = as.integer(annealCycles),
       annealPhases = as.integer(annealPhases),
       annealTStart = as.double(annealTStart),
@@ -272,22 +312,27 @@ SearchControl <- function(
 print.SearchControl <- function(x, ...) {
   groups <- list(
     "TBR" = c("tbrMaxHits", "nniFirst", "sprFirst", "tabuSize",
-              "wagnerStarts", "wagnerBias", "wagnerBiasTemp", "outerCycles"),
+              "wagnerStarts", "wagnerBias", "wagnerBiasTemp", "outerCycles",
+              "maxOuterResets"),
     "Ratchet" = c("ratchetCycles", "ratchetPerturbProb", "ratchetPerturbMode",
                    "ratchetPerturbMaxMoves", "ratchetAdaptive",
                    "ratchetTaper"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
+    "Prune-Reinsert" = c("pruneReinsertCycles", "pruneReinsertDrop",
+                          "pruneReinsertSelection", "pruneReinsertTbrMoves"),
     "Annealing" = c("annealCycles", "annealPhases", "annealTStart",
                      "annealTEnd", "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",
-                     "sectorMinSize", "sectorMaxSize"),
-    "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual",
+                     "sectorMinSize", "sectorMaxSize",
+                     "postRatchetSectorial"),
+    "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
                     "adaptiveLevel",
-                    "consensusConstrain", "adaptiveStart")
+                    "consensusConstrain", "adaptiveStart",
+                    "enumTimeFraction")
   )
   cat("SearchControl object\n")
   for (gname in names(groups)) {

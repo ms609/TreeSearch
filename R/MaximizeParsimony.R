@@ -111,29 +111,27 @@
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 5L, fuseAcceptEqual = FALSE,
     tabuSize = 0L, wagnerStarts = 1L,
-    nniFirst = TRUE, sprFirst = FALSE,
-    consensusStableReps = 3L
+    nniFirst = TRUE, sprFirst = FALSE
   ),
   default = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
-    driftCycles = 2L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    driftCycles = 0L,
     xssRounds = 3L, xssPartitions = 4L,
     rssRounds = 1L, cssRounds = 0L, cssPartitions = 4L,
     sectorMinSize = 6L, sectorMaxSize = 50L,
     fuseInterval = 3L, fuseAcceptEqual = FALSE,
     tabuSize = 100L, wagnerStarts = 3L,
     nniFirst = TRUE, sprFirst = FALSE, adaptiveLevel = TRUE,
-    consensusStableReps = 3L,
     maxOuterResets = 2L
   ),
   thorough = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
-    nniPerturbCycles = 5L, nniPerturbFraction = 0.5,
-    driftCycles = 12L, driftAfdLimit = 5L, driftRfdLimit = 0.15,
+    nniPerturbCycles = 0L,  # T-274: 69% overhead, zero time-adjusted benefit
+    driftCycles = 0L,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
@@ -142,7 +140,6 @@
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 2L,
     maxOuterResets = 3L,
-    consensusStableReps = 3L,
     adaptiveStart = TRUE
   ),
   # Large-tree preset (>=120 tips): at 180 tips each TBR convergence takes
@@ -181,7 +178,7 @@
     wagnerBias = 1L, wagnerBiasTemp = 0.3,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 1L,
-    consensusStableReps = 2L
+    consensusStableReps = 0L
   )
 )
 
@@ -325,8 +322,8 @@
 #'       character patterns; `"default"` otherwise.}
 #'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
 #'       sectorial. Good for small datasets or quick surveys.}
-#'     \item{`"default"`}{Balanced: 12 ratchet + 2 drift + sectorial + fusing.}
-#'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, 12 drift, adaptive
+#'     \item{`"default"`}{Balanced: 12 ratchet + sectorial + fusing.}
+#'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, adaptive
 #'       perturbation, extra sectorial rounds, NNI perturbation, outer cycle
 #'       loop. Best for datasets with 65-119 tips and 100+ character patterns.}
 #'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
@@ -407,10 +404,16 @@
 #'     \item{`consensus_stable`}{Logical: `TRUE` if the search stopped
 #'       because the strict consensus was unchanged for
 #'       `consensusStableReps` consecutive replicates.}
+#'     \item{`perturb_stop`}{Logical: `TRUE` if the search stopped because
+#'       `nTip * perturbStopFactor` consecutive replicates failed to improve
+#'       the best score (see [`SearchControl()`]).}
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
 #'       `drift_ms`, `final_tbr_ms`, `fuse_ms`.}
+#'     \item{`replicate_scores`}{Numeric vector of the best parsimony score
+#'       found by each completed replicate.  Passed to [ScoreSpectrum()] for
+#'       Chao1-style landscape coverage estimation.}
 #'   }
 #'
 #' @examples
@@ -849,10 +852,18 @@ MaximizeParsimony <- function(
 
   # --- Output ---
   if (verbosity > 0L) {
+    total_s <- round(sum(unlist(result$timings), na.rm = TRUE) / 1000, 1)
+    stop_reason <- if (isTRUE(result$timed_out)) "timeout"
+                   else if (isTRUE(result$consensus_stable)) "consensus stable"
+                   else if (isTRUE(result$perturb_stop)) "perturbation limit"
+                   else "replicate limit"
     cli_alert_success(paste0(
       "Search complete: score {.strong {signif(result$best_score, 7)}}, ",
-      "{result$replicates} replicate{?s}, ",
-      "{result$hits_to_best} hit{?s} to best"
+      "{result$replicates} replicate{?s} ",
+      "(last improved: #{result$last_improved_rep}), ",
+      "{result$hits_to_best} hit{?s} to best, ",
+      "{result$n_topologies} MPT{?s}, ",
+      "stop: {stop_reason}, {total_s}s"
     ))
   }
 
@@ -865,8 +876,10 @@ MaximizeParsimony <- function(
     last_improved_rep = result$last_improved_rep,
     timed_out = isTRUE(result$timed_out),
     consensus_stable = isTRUE(result$consensus_stable),
+    perturb_stop = isTRUE(result$perturb_stop),
     timings = unlist(result$timings),
     strategy_diagnostics = result$strategy_diagnostics,
+    replicate_scores = result$replicate_scores,
     class = "multiPhylo"
   )
 }

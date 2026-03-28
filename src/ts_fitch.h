@@ -77,6 +77,41 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
                                  const DataSet& ds,
                                  int cutoff);
 
+// --- Flat EW specializations (skip weight/upweight overhead) ---
+//
+// These use FlatBlock metadata (1 cache line for all blocks) instead of
+// the full CharBlock array. Valid only when all blocks have weight==1
+// and no upweight_mask is set (normal search, not ratchet).
+
+// 3-operand bounded: for SPR candidates (reads final_ directly).
+int fitch_indirect_bounded_flat(const uint64_t* clip_prelim,
+                                const TreeState& tree,
+                                const DataSet& ds,
+                                int node_a, int node_d,
+                                int cutoff);
+
+// 2-operand cached: for TBR rerooting candidates (pre-computed vroot).
+int fitch_indirect_cached_flat(const uint64_t* clip_prelim,
+                               const uint64_t* vroot,
+                               const DataSet& ds,
+                               int cutoff);
+
+// NA-aware bounded: for SPR candidates (reads final_ + subtree_actives).
+int fitch_na_indirect_bounded_flat(const uint64_t* clip_prelim,
+                                   const uint64_t* clip_actives,
+                                   const TreeState& tree,
+                                   const DataSet& ds,
+                                   int node_a, int node_d,
+                                   int cutoff);
+
+// NA-aware cached: for TBR rerooting candidates (pre-computed vroot).
+int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
+                                  const uint64_t* clip_actives,
+                                  const uint64_t* vroot,
+                                  const uint64_t* below_actives,
+                                  const DataSet& ds,
+                                  int cutoff);
+
 // --- Inapplicable (NA) three-pass scoring ---
 
 // Full three-pass score for datasets with inapplicable characters.
