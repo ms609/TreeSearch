@@ -2,7 +2,7 @@
 #SBATCH --job-name=t289-prune-ri
 #SBATCH -p shared
 #SBATCH -n 1
-#SBATCH --mem=8G
+#SBATCH --mem=4G
 #SBATCH --time=8:00:00
 #SBATCH --output=/nobackup/%u/TreeSearch/logs/t289_%j.out
 #SBATCH --error=/nobackup/%u/TreeSearch/logs/t289_%j.err
@@ -29,6 +29,7 @@ export OPENBLAS_NUM_THREADS=1
 REPO=/nobackup/$USER/TreeSearch-a
 LIB=/nobackup/$USER/TreeSearch/lib
 OUTDIR=/nobackup/$USER/TreeSearch/t289_results
+export R_LIBS="$LIB:${R_LIBS}"
 
 mkdir -p "$LIB"
 mkdir -p "$OUTDIR"
@@ -46,11 +47,12 @@ echo "Checking/installing CRAN dependencies..."
 Rscript --no-save -e "
   lib <- '$LIB'
   .libPaths(c(lib, .libPaths()))
-  pkgs <- c('ape', 'cli', 'inapplicable', 'phangorn', 'Rdpack', 'TreeDist', 'TreeTools')
+  pkgs <- c('abind', 'ape', 'cli', 'colorspace', 'fastmatch', 'Rdpack', 'TreeDist', 'TreeTools')
   need <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
   if (length(need) > 0) {
     message('Installing: ', paste(need, collapse = ', '))
-    install.packages(need, lib = lib, repos = 'https://cloud.r-project.org', quiet = TRUE)
+    install.packages(need, lib = lib, repos = 'https://cloud.r-project.org',
+                     dependencies = NA, quiet = TRUE)  # NA = Imports+Depends only
   } else {
     message('All dependencies present.')
   }
@@ -76,7 +78,6 @@ fi
 
 # Run benchmark
 cd "$OUTDIR"
-export R_LIBS_USER="$LIB"
 Rscript "$REPO/dev/benchmarks/bench_prune_reinsert.R" "$STAGE" "$TIMEOUT" "$OUTDIR"
 
 echo ""

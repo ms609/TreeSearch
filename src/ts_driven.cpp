@@ -489,6 +489,7 @@ ReplicateResult run_single_replicate(
           params.prune_reinsert_selection);
       prp.tbr_max_hits = params.tbr_max_hits;
       prp.tabu_size = params.tabu_size;
+      prp.tbr_max_moves = params.prune_reinsert_tbr_moves;
 
       prune_reinsert_search(result.tree, ds, prp, cd, split_freq,
                             check_timeout);

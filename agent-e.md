@@ -1,7 +1,24 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Status:** IDLE (T-278 done df3aa71e; E-003/sector constraint staleness done f1ad0308; GHAs 23650358613 + 23650991803 running on cpp-search)
+- **Status:** IDLE (T-289 parked SLURM 16608629; S-RED area 4 done 2026-03-27)
+
+### S-RED Area 4 — Parallelism & RNG — DONE (2026-03-27)
+
+Reviewed ts_rng.h/.cpp (110 lines) and ts_parallel.h/.cpp (732 lines).
+ts_driven.cpp covered in E-003 (see below).
+
+**No bugs found.** Thread safety correct throughout.
+
+Observations (non-bugs):
+- fuse_round holds pool mutex across entire tree_fuse() call (O(n) TBR
+  exchanges). Workers block for full fuse duration. Performance only.
+- Multiple workers may trigger fuse_round at the same `replicates_done`
+  checkpoint due to relaxed read races. Redundant fuse (harmless).
+- Lines 323-325 in main polling loop: empty if-block, dead code.
+- Verbosity Rprintf acquires pool mutex via status(). If fuse_round holds
+  the lock, interrupt/timeout polling is delayed by fuse duration.
+- ts_rng.h serial/parallel dispatch verified correct in all paths.
 
 ### S-RED Focus 4 — ts_driven.cpp review — DONE (2026-03-27)
 

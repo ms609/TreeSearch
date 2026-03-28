@@ -106,6 +106,13 @@
 #'   which tips to drop.  0 = random (default), 1 = instability-weighted
 #'   (tips whose placement varies across pool trees are preferentially
 #'   dropped).
+#' @param pruneReinsertTbrMoves Integer; maximum number of TBR moves accepted
+#'   during the reduced-tree backbone optimisation phase of each
+#'   prune-reinsert cycle.  0 means run to convergence; the default of 5
+#'   mirrors the ratchet design (short perturbation, many diverse cycles)
+#'   and substantially reduces per-cycle cost on datasets with inapplicable
+#'   characters (where Brazeau scoring dominates).  Increase towards 0 if
+#'   you prefer thorough backbone optimisation over replicate throughput.
 #' @param consensusConstrain Logical; lock the strict consensus of pool
 #'   trees as topological constraints for subsequent replicates?  When
 #'   `TRUE`, after enough replicates (\eqn{\ge}5), splits present in ALL
@@ -232,6 +239,7 @@ SearchControl <- function(
     pruneReinsertCycles = 0L,
     pruneReinsertDrop = 0.10,
     pruneReinsertSelection = 0L,
+    pruneReinsertTbrMoves = 5L,
     # Simulated annealing perturbation (PCSA, T-207)
     annealCycles = 0L,
     annealPhases = 5L,
@@ -287,6 +295,7 @@ SearchControl <- function(
       pruneReinsertCycles = as.integer(pruneReinsertCycles),
       pruneReinsertDrop = as.double(pruneReinsertDrop),
       pruneReinsertSelection = as.integer(pruneReinsertSelection),
+      pruneReinsertTbrMoves = as.integer(pruneReinsertTbrMoves),
       annealCycles = as.integer(annealCycles),
       annealPhases = as.integer(annealPhases),
       annealTStart = as.double(annealTStart),
@@ -311,7 +320,7 @@ print.SearchControl <- function(x, ...) {
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
     "Prune-Reinsert" = c("pruneReinsertCycles", "pruneReinsertDrop",
-                          "pruneReinsertSelection"),
+                          "pruneReinsertSelection", "pruneReinsertTbrMoves"),
     "Annealing" = c("annealCycles", "annealPhases", "annealTStart",
                      "annealTEnd", "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",

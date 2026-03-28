@@ -354,6 +354,13 @@ void expand_and_reinsert(
     std::swap(reinsert_order[i], reinsert_order[j]);
   }
 
+  // Pre-allocate DFS stack once; cleared per tip.
+  // wagner_incremental_rescore walks up via tree.parent (no postorder needed),
+  // and the DFS below uses tree.left/right only — so build_postorder() is NOT
+  // required between insertions.  One call after the loop suffices.
+  std::vector<int> stack;
+  stack.reserve(tree.n_node);
+
   for (int tip : reinsert_order) {
     int new_internal = next_internal++;
 
@@ -364,7 +371,7 @@ void expand_and_reinsert(
     int best_above = -1, best_below = -1;
     int best_extra = INT_MAX;
 
-    std::vector<int> stack;
+    stack.clear();
     stack.push_back(n_tip);  // root
 
     while (!stack.empty()) {
@@ -410,10 +417,11 @@ void expand_and_reinsert(
 
     insert_tip_at_edge(tree, tip, new_internal, best_above, best_below);
     wagner_incremental_rescore(tree, ds, new_internal);
-
-    // Rebuild postorder after each insertion for correct DFS traversal
-    tree.build_postorder();
   }
+
+  // Rebuild postorder once after all insertions — required by the subsequent
+  // TBR polish in prune_reinsert_search (and by score_tree).
+  tree.build_postorder();
 }
 
 } // anonymous namespace
