@@ -553,6 +553,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Pre-allocated below_actives cache (NA TBR rerooting)
   std::vector<uint64_t> below_actives_cache;
 
+  // Use flat FlatBlock variants for indirect scoring when weight==1 and no
+  // upweight_mask is active.  This is true for normal EW search; false during
+  // ratchet phases that apply upweighting.  Checked once per tbr_search call.
+  bool use_flat = ds.all_weight_one;
+  if (use_flat) {
+    for (int b_chk = 0; b_chk < ds.n_blocks; ++b_chk)
+      if (ds.blocks[b_chk].upweight_mask) { use_flat = false; break; }
+  }
+  // Cache total_words as a local int to keep inner-loop expressions concise.
+  const int tw = tree.total_words;
+
   TopoSnapshot snap;
   bool keep_going = true;
   bool states_valid = true;  // track whether state arrays are current
@@ -714,8 +725,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             int cutoff = (best_candidate < HUGE_VAL)
                 ? static_cast<int>(best_candidate - divided_length + 1)
                 : INT_MAX;
-            int extra = fitch_na_indirect_length_bounded(clip_prelim,
-                clip_actives, tree, ds, above, below, cutoff);
+            int extra = use_flat
+                ? fitch_na_indirect_bounded_flat(clip_prelim, clip_actives,
+                      tree, ds, above, below, cutoff)
+                : fitch_na_indirect_length_bounded(clip_prelim, clip_actives,
+                      tree, ds, above, below, cutoff);
             candidate = divided_length + extra;
           }
         } else if (use_iw) {
@@ -726,8 +740,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           int cutoff = (best_candidate < HUGE_VAL)
               ? static_cast<int>(best_candidate - divided_length + 1)
               : INT_MAX;
-          int extra = fitch_indirect_length_bounded(
-              clip_prelim, tree, ds, above, below, cutoff);
+          int extra = use_flat
+              ? fitch_indirect_bounded_flat(clip_prelim, tree, ds,
+                    above, below, cutoff)
+              : fitch_indirect_length_bounded(clip_prelim, tree, ds,
+                    above, below, cutoff);
           candidate = divided_length + extra;
         }
         ++n_evaluated;
@@ -801,74 +818,160 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             continue;  // Already evaluated an equivalent rerooting
           }
 
-          for (int ei = 0; ei < n_main; ++ei) {
-            // Prefetch vroot data for a future iteration.
-            // At 180 tips vroot_cache is ~140 KB (L2); prefetch hides
-            // the ~10-cycle L2 latency. No-op on small trees (L1-resident).
-            if (ei + 2 < n_main) {
+          if (use_flat && !use_iw) {
+            // === EW flat 4-wide batch (T-245) ===
+            // Collect up to 4 non-skipped candidates per iteration and
+            // evaluate them simultaneously.  4 independent vroot_cache rows
+            // are read in parallel, hiding L2 latency for large trees.
+            int ei = 0;
+            while (ei < n_main) {
+              int b_ei[4];
+              int b_n = 0;
+              while (ei < n_main && b_n < 4) {
+                auto& [ab, bl] = main_edges[ei];
+                bool skip = (ab == nz && bl == ns)
+                    || (sector_mask && !(*sector_mask)[bl])
+                    || (constrained && regraft_violates_constraint(bl, *cd))
+                    || (!collapsed.empty() && collapsed[bl]);
+                if (!skip) b_ei[b_n++] = ei;
+                ++ei;
+              }
+              if (b_n == 0) break;
+
+              int cutoff_b = (best_candidate < HUGE_VAL)
+                  ? static_cast<int>(best_candidate - divided_length + 1)
+                  : INT_MAX;
+              // Initialise to cutoff_b so partial-batch trailing slots
+              // never accidentally improve best_candidate.
+              int scores[4] = {cutoff_b, cutoff_b, cutoff_b, cutoff_b};
+
+              if (b_n == 4) {
+                // Full 4-wide batch: all 4 vroot_cache rows in flight.
+                if (!has_na) {
+                  fitch_indirect_cached_flat_x4(
+                      virtual_prelim.data(),
+                      &vroot_cache[static_cast<size_t>(b_ei[0]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[1]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[2]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[3]) * tw],
+                      ds, cutoff_b, scores);
+                } else {
+                  fitch_na_indirect_cached_flat_x4(
+                      virtual_prelim.data(), clip_actives,
+                      &vroot_cache[static_cast<size_t>(b_ei[0]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[1]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[2]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[3]) * tw],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[0]) * ds.n_blocks],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[1]) * ds.n_blocks],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[2]) * ds.n_blocks],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[3]) * ds.n_blocks],
+                      ds, cutoff_b, scores);
+                }
+              } else {
+                // Scalar fallback for trailing partial batch (< 4 valid).
+                for (int k = 0; k < b_n; ++k) {
+                  scores[k] = has_na
+                      ? fitch_na_indirect_cached_flat(
+                            virtual_prelim.data(), clip_actives,
+                            &vroot_cache[static_cast<size_t>(b_ei[k]) * tw],
+                            &below_actives_cache[
+                                static_cast<size_t>(b_ei[k]) * ds.n_blocks],
+                            ds, cutoff_b)
+                      : fitch_indirect_cached_flat(
+                            virtual_prelim.data(),
+                            &vroot_cache[static_cast<size_t>(b_ei[k]) * tw],
+                            ds, cutoff_b);
+                }
+              }
+
+              n_evaluated += b_n;
+              for (int k = 0; k < b_n; ++k) {
+                double candidate = divided_length + scores[k];
+                if (candidate < best_candidate) {
+                  best_candidate = candidate;
+                  best_above = main_edges[b_ei[k]].first;
+                  best_below = main_edges[b_ei[k]].second;
+                  best_reroot_parent = sp;
+                  best_reroot_child = sc;
+                }
+              }
+            }
+          } else {
+            // === Scalar path (IW, or ratchet with upweight_mask) ===
+            for (int ei = 0; ei < n_main; ++ei) {
+              // Prefetch vroot data for a future iteration.
+              // At 180 tips vroot_cache is ~140 KB (L2); prefetch hides
+              // the ~10-cycle L2 latency. No-op on small trees (L1-resident).
+              if (ei + 2 < n_main) {
 #if defined(__GNUC__) || defined(__clang__)
-              __builtin_prefetch(
-                  &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words],
-                  0, 0);
+                __builtin_prefetch(
+                    &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words],
+                    0, 0);
 #elif defined(_MSC_VER) && defined(TS_SIMD_SSE2)
-              _mm_prefetch(reinterpret_cast<const char*>(
-                  &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words]),
-                  _MM_HINT_T0);
+                _mm_prefetch(reinterpret_cast<const char*>(
+                    &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words]),
+                    _MM_HINT_T0);
 #endif
-            }
-            auto& [above, below] = main_edges[ei];
-            if (above == nz && below == ns) continue;
-            if (sector_mask && !(*sector_mask)[below]) continue;
-            if (constrained && regraft_violates_constraint(below, *cd))
-              continue;
-            // Collapsed-region regraft merging (same as SPR loop above).
-            if (!collapsed.empty() && collapsed[below]) {
-              continue;
-            }
-            double candidate;
-            if (has_na) {
-              if (use_iw) {
-                candidate = indirect_na_iw_length_cached(
-                    virtual_prelim.data(), clip_actives,
+              }
+              auto& [above, below] = main_edges[ei];
+              if (above == nz && below == ns) continue;
+              if (sector_mask && !(*sector_mask)[below]) continue;
+              if (constrained && regraft_violates_constraint(below, *cd))
+                continue;
+              // Collapsed-region regraft merging (same as SPR loop above).
+              if (!collapsed.empty() && collapsed[below]) {
+                continue;
+              }
+              double candidate;
+              if (has_na) {
+                if (use_iw) {
+                  candidate = indirect_na_iw_length_cached(
+                      virtual_prelim.data(), clip_actives,
+                      &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                      &below_actives_cache[
+                          static_cast<size_t>(ei) * ds.n_blocks],
+                      ds, base_iw, iw_delta, best_candidate);
+                } else {
+                  int cutoff = (best_candidate < HUGE_VAL)
+                      ? static_cast<int>(best_candidate - divided_length + 1)
+                      : INT_MAX;
+                  int extra = fitch_na_indirect_length_cached(
+                      virtual_prelim.data(), clip_actives,
+                      &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
+                      &below_actives_cache[
+                          static_cast<size_t>(ei) * ds.n_blocks],
+                      ds, cutoff);
+                  candidate = divided_length + extra;
+                }
+              } else if (use_iw) {
+                double iw_cutoff = best_candidate;
+                candidate = indirect_iw_length_cached(
+                    virtual_prelim.data(),
                     &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
-                    &below_actives_cache[
-                        static_cast<size_t>(ei) * ds.n_blocks],
-                    ds, base_iw, iw_delta, best_candidate);
+                    ds, base_iw, iw_delta, iw_cutoff);
               } else {
                 int cutoff = (best_candidate < HUGE_VAL)
                     ? static_cast<int>(best_candidate - divided_length + 1)
                     : INT_MAX;
-                int extra = fitch_na_indirect_length_cached(
-                    virtual_prelim.data(), clip_actives,
+                int extra = fitch_indirect_length_cached(
+                    virtual_prelim.data(),
                     &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
-                    &below_actives_cache[
-                        static_cast<size_t>(ei) * ds.n_blocks],
                     ds, cutoff);
                 candidate = divided_length + extra;
               }
-            } else if (use_iw) {
-              double iw_cutoff = best_candidate;
-              candidate = indirect_iw_length_cached(
-                  virtual_prelim.data(),
-                  &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
-                  ds, base_iw, iw_delta, iw_cutoff);
-            } else {
-              int cutoff = (best_candidate < HUGE_VAL)
-                  ? static_cast<int>(best_candidate - divided_length + 1)
-                  : INT_MAX;
-              int extra = fitch_indirect_length_cached(
-                        virtual_prelim.data(),
-                        &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
-                        ds, cutoff);
-              candidate = divided_length + extra;
-            }
-            ++n_evaluated;
-            if (candidate < best_candidate) {
-              best_candidate = candidate;
-              best_above = above;
-              best_below = below;
-              best_reroot_parent = sp;
-              best_reroot_child = sc;
+              ++n_evaluated;
+              if (candidate < best_candidate) {
+                best_candidate = candidate;
+                best_above = above;
+                best_below = below;
+                best_reroot_parent = sp;
+                best_reroot_child = sc;
+              }
             }
           }
         }

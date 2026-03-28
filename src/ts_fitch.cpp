@@ -473,6 +473,104 @@ int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
   return extra_steps;
 }
 
+// --- 4-wide TBR rerooting batch functions (T-245) ---
+//
+// Both functions process all blocks for all 4 candidates in lockstep.
+// Within each block the 4 simd::any_hit_reduce() calls are data-independent,
+// so the out-of-order CPU can issue 4 separate load streams concurrently,
+// hiding L2 latency for the vroot_cache array.
+//
+// Early-exit: once ALL 4 accumulators exceed cutoff we stop iterating blocks.
+// Using '&' (bitwise AND) rather than '&&' in the combined cutoff check avoids
+// branch-prediction overhead on the hot path — all 4 comparisons are always
+// evaluated and combined into a single bitmask test.
+
+void fitch_indirect_cached_flat_x4(
+    const uint64_t* clip_prelim,
+    const uint64_t* vroot0, const uint64_t* vroot1,
+    const uint64_t* vroot2, const uint64_t* vroot3,
+    const DataSet& ds, int cutoff, int out[4]) {
+  const FlatBlock* fb = ds.flat_blocks.data();
+  int es0 = 0, es1 = 0, es2 = 0, es3 = 0;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const int  off  = fb[b].offset;
+    const int  nst  = fb[b].n_states;
+    const uint64_t mask = fb[b].active_mask;
+
+    // 4 independent loads from distinct vroot_cache rows.
+    uint64_t a0 = simd::any_hit_reduce(&clip_prelim[off], &vroot0[off], nst);
+    uint64_t a1 = simd::any_hit_reduce(&clip_prelim[off], &vroot1[off], nst);
+    uint64_t a2 = simd::any_hit_reduce(&clip_prelim[off], &vroot2[off], nst);
+    uint64_t a3 = simd::any_hit_reduce(&clip_prelim[off], &vroot3[off], nst);
+
+    es0 += popcount64(~a0 & mask);
+    es1 += popcount64(~a1 & mask);
+    es2 += popcount64(~a2 & mask);
+    es3 += popcount64(~a3 & mask);
+
+    // Bitwise & avoids short-circuit, keeping branch count low.
+    if ((es0 >= cutoff) & (es1 >= cutoff) & (es2 >= cutoff) & (es3 >= cutoff))
+      break;
+  }
+
+  out[0] = es0; out[1] = es1; out[2] = es2; out[3] = es3;
+}
+
+void fitch_na_indirect_cached_flat_x4(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const uint64_t* vroot0, const uint64_t* vroot1,
+    const uint64_t* vroot2, const uint64_t* vroot3,
+    const uint64_t* ba0, const uint64_t* ba1,
+    const uint64_t* ba2, const uint64_t* ba3,
+    const DataSet& ds, int cutoff, int out[4]) {
+  const FlatBlock* fb = ds.flat_blocks.data();
+  int es0 = 0, es1 = 0, es2 = 0, es3 = 0;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const int  off  = fb[b].offset;
+    const int  nst  = fb[b].n_states;
+    const uint64_t mask = fb[b].active_mask;
+
+    uint64_t ns0, ns1, ns2, ns3;
+
+    if (!fb[b].has_inapplicable) {
+      // Standard block: plain any_hit_reduce (skip inapplicable state 0).
+      uint64_t a0 = simd::any_hit_reduce(&clip_prelim[off], &vroot0[off], nst);
+      uint64_t a1 = simd::any_hit_reduce(&clip_prelim[off], &vroot1[off], nst);
+      uint64_t a2 = simd::any_hit_reduce(&clip_prelim[off], &vroot2[off], nst);
+      uint64_t a3 = simd::any_hit_reduce(&clip_prelim[off], &vroot3[off], nst);
+      ns0 = ~a0 & mask;
+      ns1 = ~a1 & mask;
+      ns2 = ~a2 & mask;
+      ns3 = ~a3 & mask;
+    } else {
+      // NA block: from1 skips the inapplicable state; AND with active masks.
+      // clip_has_active is shared across all 4 candidates for this block.
+      uint64_t clip_ha = simd::or_reduce(&clip_actives[off], nst, 1);
+      uint64_t a0 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot0[off], nst);
+      uint64_t a1 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot1[off], nst);
+      uint64_t a2 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot2[off], nst);
+      uint64_t a3 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot3[off], nst);
+      ns0 = ~a0 & clip_ha & ba0[b] & mask;
+      ns1 = ~a1 & clip_ha & ba1[b] & mask;
+      ns2 = ~a2 & clip_ha & ba2[b] & mask;
+      ns3 = ~a3 & clip_ha & ba3[b] & mask;
+    }
+
+    es0 += popcount64(ns0);
+    es1 += popcount64(ns1);
+    es2 += popcount64(ns2);
+    es3 += popcount64(ns3);
+
+    if ((es0 >= cutoff) & (es1 >= cutoff) & (es2 >= cutoff) & (es3 >= cutoff))
+      break;
+  }
+
+  out[0] = es0; out[1] = es1; out[2] = es2; out[3] = es3;
+}
+
 // --- Per-character step extraction ---
 
 void extract_char_steps(const TreeState& tree, const DataSet& ds,

@@ -112,6 +112,36 @@ int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
                                   const DataSet& ds,
                                   int cutoff);
 
+// --- 4-wide TBR rerooting batch (T-245) ---
+//
+// Process 4 regraft candidates simultaneously in the TBR rerooting inner loop.
+// Each block iteration issues 4 independent loads from vroot_cache, letting
+// the out-of-order CPU serve them concurrently and hide L2 latency.
+//
+// out[i]: extra steps for candidate i; may equal or exceed cutoff.
+// Exits early when ALL 4 exceed cutoff after any block.
+//
+// Requires: ds.all_weight_one, no block has upweight_mask (normal EW search,
+//           not ratchet). Use the use_flat guard in the caller.
+
+// EW flat 4-wide batch (no inapplicable characters).
+void fitch_indirect_cached_flat_x4(
+    const uint64_t* clip_prelim,
+    const uint64_t* vroot0, const uint64_t* vroot1,
+    const uint64_t* vroot2, const uint64_t* vroot3,
+    const DataSet& ds, int cutoff, int out[4]);
+
+// NA-aware flat 4-wide batch (mixed standard + inapplicable blocks).
+// ba0..ba3: below_actives_cache rows (1 uint64 per block) for each candidate.
+void fitch_na_indirect_cached_flat_x4(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const uint64_t* vroot0, const uint64_t* vroot1,
+    const uint64_t* vroot2, const uint64_t* vroot3,
+    const uint64_t* ba0, const uint64_t* ba1,
+    const uint64_t* ba2, const uint64_t* ba3,
+    const DataSet& ds, int cutoff, int out[4]);
+
 // --- Inapplicable (NA) three-pass scoring ---
 
 // Full three-pass score for datasets with inapplicable characters.
