@@ -1,7 +1,31 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Status:** IDLE (T-289 parked SLURM 16608629; S-RED area 4 done 2026-03-27)
+- **Status:** PARKED — T-289 Stage 4 queued as SLURM 16621426 on Hamilton (~5h)
+
+### T-289 Stage 4 — multi-dataset PR validation — DISPATCHED (2026-03-28)
+
+Stage 3 confirmed: MISSING criterion (sel=2), c=5, d=5% gives mean −14.7 steps
+vs baseline at 180t/60s (10 seeds). Applied to large preset. Stage 4 now tests
+generalisation across 5 matrices (131–206t) at 60s and 120s.
+
+**Changes committed (b8b9f831):**
+- `R/MaximizeParsimony.R`: large preset now includes
+  `pruneReinsertCycles=5, pruneReinsertDrop=0.05, pruneReinsertSelection=2`
+- `AGENTS.md`: large preset table updated
+- `dev/benchmarks/bench_pr_stage4_validation.R`: Stage 4 script (200 runs)
+- `dev/benchmarks/t289e_stage4_hamilton.sh`: SLURM script
+
+**Stage 4 design:**
+- 5 datasets: mbank_X30754 (180t), project4133 (131t), project3701 (146t),
+  project804 (173t), syab07205 (206t)
+- 2 configs: baseline (no PR), pr_large (c=5, d=5%, MISSING)
+- 2 budgets: 60s, 120s; 10 seeds; 200 total runs
+- SLURM 16621426, ~5h wall time
+
+**Resume:** poll results when job completes, analyse per-dataset and
+per-budget PR benefit. If consistent improvement, T-289 is done.
+If any dataset regresses, investigate.
 
 ### S-RED Area 4 — Parallelism & RNG — DONE (2026-03-27)
 
