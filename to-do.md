@@ -65,7 +65,7 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-28 focus 29 by F (ts_tbr.cpp T-245 batch loop + ts_driven.cpp T-289 Stage 4 — no bugs; fixed stale PR comment in MaximizeParsimony.R f1e9c4c5). All current modules reviewed ≥ once. Next: re-review after new feature merges. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-28 focus 30 by G. ts_drift.cpp (T-279 post-fix): IW+EW rejection paths both call update_constraint after restore — correct. ts_fitch.h/ts_fitch.cpp/ts_tbr.cpp (T-245 post-merge): x4 batch computation matches scalar; early-exit conservative (all-4 ≥ cutoff); state updates consistent with scalar path. No bugs. Next: review alt-homology modules when T-280 merges. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
 | S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-28 round 45 by G. PRs #237 (T-279) + #238 (T-245) merged and cleaned up. Specific task queue sparse — T-280–288 all WORKTREE. T-289f Stage 5 PARKED (SLURM 16622224, running). PRs open: #213 (T-150), #216 (T-204), #210 (DRAFT). |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-28 round 45 by G. Open PRs: #213 (T-150, GHA PASS), #216 (T-204, GHA PASS), #210 (DRAFT cpp-search→main). Merged this round: #237 (T-279), #238 (T-245). |
