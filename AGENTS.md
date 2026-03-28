@@ -1244,17 +1244,35 @@ tuning. They confirm generalization only. This is a one-way door.
 **Fixed 25-matrix training sample:** `MBANK_FIXED_SAMPLE` in
 `bench_datasets.R` — 7 small, 7 medium, 7 large, 4 xlarge. Selected via
 max-min distance on standardized features. Do not modify. Used by
-`benchmark_mbank_sample()`.
+`benchmark_mbank_sample()`. **Fitch track only** (includes 0%-inapp matrices).
+
+**Fixed 20-matrix Brazeau-track sample:** `MBANK_BRAZEAU_SAMPLE` in
+`bench_datasets.R` — 5 small, 6 medium, 6 large, 3 xlarge. Restricted to
+training matrices with **pct_inapp ≥ 4%** (where Brazeau scoring materially
+differs from Fitch). Do not modify.
 
 **Key functions** (in `dev/benchmarks/bench_datasets.R`):
 - `load_mbank_catalogue()` — loads metadata CSV (excludes dedup by default)
 - `load_mbank_sample(cat, n, seed, split)` — stratified random sample
 - `load_mbank_datasets(cat, keys)` — load specific matrices by key
+- `load_mbank_brazeau_sample(cat)` — fixed 20-matrix Brazeau sample
+- `has_meaningful_inapp(cat, threshold)` — filter to pct_inapp ≥ threshold
 
 **Benchmark runners** (in `dev/benchmarks/bench_framework.R`):
 - `benchmark_mbank_sample()` — fixed 25-matrix training sample (routine)
 - `benchmark_mbank_sweep(split)` — full training or validation sweep
 - `benchmark_mbank_validation()` — validation sweep with prominent warning
+
+**Benchmark tracks** — strategy tuning uses two distinct tracks, each run
+under EW and IW (k=10):
+
+| Track | Scoring | Datasets | Purpose |
+|-------|---------|----------|---------|
+| **Fitch** | `fitch_mode()` | 14 bundled + `MBANK_FIXED_SAMPLE` | TNT comparison, core search quality |
+| **Brazeau** | Default (Brazeau 2019) | `MBANK_BRAZEAU_SAMPLE` + bundled | NA-algorithm-specific strategy tuning |
+
+TNT comparisons are Fitch track only. Do not use validation matrices for
+tuning — they are a one-way door.
 
 **TNT comparison suite** lives in `../TS-TNT-bench/`. Key files:
 - `dev/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)
@@ -1265,19 +1283,43 @@ max-min distance on standardized features. Do not modify. Used by
 Benchmark scripts in `dev/benchmarks/`. Key files:
 - `bench_regression.R` — CI regression test (score quality + timing bounds)
 - `bench_framework.R` — Dataset × strategy × replicate grid
-- `strategies.md` — Strategy space documentation
+- `strategies.md` — Strategy space documentation (full track/sample details)
 
-Profiling baselines in `.positai/expertise/profiling.md`. Phase distribution
-(default strategy, EW, 2026-03-22, post-ratchet tuning):
+**Phase distribution baselines (T-290b, 2026-03-28, Brazeau-sample datasets,
+30s, post-T-255 no-drift presets):**
 
-| Phase | Zhu2013 (75t) | Dikow2009 (88t) | Agnarsson2004 (62t) |
-|-------|:---:|:---:|:---:|
-| Ratchet | 27% | 39% | 35% |
-| Drift | 32% | 28% | 24% |
-| TBR | 31% | 21% | 19% |
-| XSS | 8% | 7% | 8% |
-| RSS | 2% | 3% | 9% |
-| Final TBR | 2% | 3% | 4% |
+| Phase | Fitch/EW/default | Fitch/EW/thorough | Brazeau/EW/default | Brazeau/EW/thorough |
+|-------|:---:|:---:|:---:|:---:|
+| Ratchet | 76% | 65% | 74% | 63% |
+| TBR | 8% | 5% | 7% | 4% |
+| XSS | 6% | 7% | 5% | 6% |
+| RSS | 3% | 10% | 3% | 10% |
+| CSS | — | 7% | — | 7% |
+| Wagner | 4% | 3% | 9% | 7% |
+| Final TBR | 2% | 2% | 2% | 2% |
+
+*(Drift has been 0% in all presets since T-255. The 2026-03-22 baselines
+showing Drift at 24–32% are obsolete.)*
+
+**Brazeau / Fitch per-phase cost ratios (T-290b, EW):**
+
+| Phase | default | thorough |
+|-------|:-------:|:--------:|
+| Wagner | **3.6×** | **3.9×** |
+| Ratchet | 1.3× | 1.3× |
+| RSS/CSS | 1.3× | 1.3× |
+| TBR | 0.9× | 0.9× |
+
+Wagner is the outlier. All other phases are within 0.9–1.4× of Fitch cost.
+Replicate rate under Brazeau is 95–97% of Fitch (landscape not harder).
+
+**wagnerStarts under Brazeau (T-290, analytical):** `wagnerStarts = 3` is
+correct in the thorough preset. The datasets where thorough beats default
+(86t/3660c and 225t) complete **zero replicates** in 30s — the score gap
+is entirely from better starting topology (3 Wagner+NNI vs 1), not extra
+ratchet cycles. For multi-rep datasets (≤94t), wagnerStarts=1 and 3 are
+equivalent. The 3.6–3.9× per-start Wagner cost under Brazeau is ~7% of
+wall time; negligible relative to TBR convergence.
 
 Per-candidate indirect scoring is at memory-throughput limit (~23 ns at
 75 tips).
