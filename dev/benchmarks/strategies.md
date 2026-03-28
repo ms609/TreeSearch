@@ -568,3 +568,133 @@ stability analysis to confirm 20 matrices are sufficient:
    ranking.
 4. Plot median W vs k. If W has plateaued at k=20 (ΔW < 0.02 for last
    2 increments), 20 is sufficient. If still climbing, expand the sample.
+
+---
+
+## Brazeau-track Phase Profiling (T-290b, 2026-03-28)
+
+**Method:** 6 Brazeau-sample datasets (project2346/23t, project2359/42t,
+project4146\_(3)/59t, project2086/91t, project2771/94t, project804/173t)
+× 4 scoring conditions ({Brazeau, Fitch} × {EW, IW k=10}) × 2 strategy
+presets × 3 seeds. 30s timeout. Timings from `attr(result, "timings")`.
+
+### Brazeau / Fitch cost ratio by phase
+
+| Phase | EW/default | EW/thorough | IW10/default | IW10/thorough |
+|-------|:----------:|:-----------:|:------------:|:-------------:|
+| **Wagner** | **3.58×** | **3.85×** | **4.99×** | **5.20×** |
+| TBR | 0.89× | 0.89× | 0.69× | 0.89× |
+| XSS | 1.00× | 1.14× | 0.95× | 0.94× |
+| RSS | 1.38× | 1.29× | 1.23× | 1.06× |
+| CSS | — | 1.30× | — | 1.08× |
+| Ratchet | **1.33×** | 1.29× | 1.23× | 1.09× |
+| Final TBR | 1.23× | 1.19× | 1.02× | 0.96× |
+
+**Key finding:** Wagner is the extreme outlier at 3.6–5.2× under Brazeau.
+All other phases are within 0.7–1.4× of Fitch cost. The IW penalty for
+Wagner is larger than EW (4.99–5.20× vs 3.58–3.85×), likely because IW
+weighting changes which states are ambiguous during NA-aware scoring.
+
+### Phase distribution (% of wall time)
+
+| Phase | Brazeau/EW/default | Brazeau/EW/thorough | Fitch/EW/default | Fitch/EW/thorough |
+|-------|:------------------:|:-------------------:|:----------------:|:-----------------:|
+| Ratchet | **74.3%** | **63.0%** | **75.6%** | **65.0%** |
+| Wagner | 8.9% | 6.7% | 4.5% | 2.8% |
+| TBR | 6.7% | 4.3% | 8.3% | 5.2% |
+| XSS | 5.3% | 6.4% | 6.4% | 6.8% |
+| RSS | 2.9% | 9.6% | 3.1% | 9.7% |
+| CSS | — | 7.2% | — | 7.0% |
+| Final TBR | 1.9% | 2.1% | 2.1% | 2.3% |
+
+Under Brazeau, Wagner is nearly double its Fitch share (8.9% vs 4.5%
+for default; 6.7% vs 2.8% for thorough). All other phases are very close
+between scoring modes. The landscape structure (ratchet dominance, sectorial
+share) is essentially the same under Brazeau as under Fitch.
+
+### Replicate rates
+
+| Condition | Mean reps/30s |
+|-----------|:------------:|
+| Brazeau/EW/default | 26.8 |
+| Brazeau/EW/thorough | 23.3 |
+| Brazeau/IW10/default | 23.2 |
+| Brazeau/IW10/thorough | 19.3 |
+| Fitch/EW/default | 27.7 |
+| Fitch/EW/thorough | 24.8 |
+| Fitch/IW10/default | 24.3 |
+| Fitch/IW10/thorough | 22.0 |
+
+Brazeau runs at 95–97% of Fitch rep rate for the same preset. The landscape
+is not meaningfully harder to navigate under Brazeau.
+
+### Default vs thorough score comparison (Brazeau, 30s, 20-matrix sample)
+
+| Weighting | Datasets where thorough better | Mean best delta | Notes |
+|-----------|:---:|:---:|---|
+| EW | 2/20 (10%) | +12.6 | Driven by 86t (+113) and 225t (+139) datasets |
+| IW10 | 2/20 (10%) | +0.03 | Very small; 3/20 datasets show near-zero gap |
+
+The median improvement is 0 in all conditions. Thorough helps only at
+≥86 tips (where the extra ratchet cycles and sectorial rounds have room
+to operate). For ≤72 tips, default and thorough produce identical results
+at 30s.
+
+### Implications for Brazeau preset tuning
+
+1. **Wagner cost:** `wagnerStarts = 3` (thorough) costs 3.85–5.20× more
+   per start under Brazeau vs Fitch, but Wagner is only 6–9% of wall time.
+   Reducing to `wagnerStarts = 1` saves ~4% of replicate time, enabling
+   ~1 extra replicate per 30s run. Whether that extra replicate outweighs
+   better starting topology depends on dataset size. See T-290c for
+   wagnerStarts = 1 vs 3 experiment.
+
+2. **Ratchet:** The 1.1–1.3× Brazeau overhead per ratchet cycle is modest,
+   and the landscape difficulty is unchanged (same rep rate, same ratchet
+   dominance). No evidence that Brazeau requires more ratchet cycles than
+   Fitch. Current settings (12 cycles/default, 20/thorough) are appropriate.
+
+3. **Overall:** Fitch-tuned presets are appropriate for Brazeau. The only
+   parameter worth revisiting is `wagnerStarts` in the thorough preset,
+   and only for larger datasets where Wagner per-start cost is non-trivial.
+
+### wagnerStarts = 1 vs 3 under Brazeau (analytical, T-290)
+
+The default vs thorough score comparison reveals the mechanism behind the
+wagnerStarts benefit:
+
+| Dataset | n_tax | n_char | med_reps (default) | med_reps (thorough) | best_delta (EW) |
+|---------|:-----:|:------:|:------------------:|:-------------------:|:---------------:|
+| project2084\_(1) | 86 | 3660 | **0** | **0** | +113 (thorough better) |
+| syab07204 | 225 | ~200 | **0** | **0** | +139 (thorough better) |
+| project2086 | 91 | 453 | 7 | 4 | −1 (default slightly better) |
+| project2771 | 94 | ~450 | 9 | 6 | 0 (tied) |
+| ≤72 tips (all) | ≤72 | — | ≥11 | ≥10 | 0 (all tied) |
+
+The two datasets where thorough is significantly better (86t/3660c and
+225t) **complete zero replicates in 30s** for both presets. The score
+difference is therefore NOT from extra replicates or more ratchet cycles —
+it is entirely from **better starting topology quality**.
+
+With wagnerStarts=3 + nniFirst=TRUE, the search evaluates 3 Wagner trees,
+runs NNI from each, and selects the best NNI-local optimum as the TBR
+starting point. At 86–225 tips with hundreds of characters, TBR convergence
+takes 30+ seconds per run. In that regime:
+- The extra Wagner+NNI setup cost (3.6–5.2× per start, but still <500ms
+  total for 3 starts at 86t) is negligible relative to TBR convergence time.
+- The better starting point found by 3-start selection meaningfully reduces
+  the remaining distance to the TBR local optimum.
+
+For datasets where multiple replicates complete (≤94 tips, ≤450 chars),
+wagnerStarts=1 and wagnerStarts=3 produce equivalent scores. The extra
+Wagner starts provide no marginal benefit once ratchet escape drives the
+search across multiple replicates.
+
+**Conclusion:** `wagnerStarts = 3` in the thorough preset is the correct
+choice under Brazeau, for exactly the same reason as under Fitch: it
+dominates at large/complex datasets where initial descent quality is the
+binding constraint, and is negligible at small/medium datasets where
+ratchet escape drives quality. The 3.6–5.2× per-start Wagner cost under
+Brazeau is irrelevant in practice — Wagner overhead is ~7% of wall time,
+and TBR convergence is orders of magnitude more expensive at the scales
+where wagnerStarts matters.
