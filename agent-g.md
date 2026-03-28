@@ -56,3 +56,19 @@ See `completed-tasks.md` for full history. Prior work includes:
 - T-205: Fix flaky test-pp-random-tree.R
 - S-PROF rounds 4–6, T-203, T-179 (large-tree preset)
 AGENTEOF 2>&1
+
+### G-004 — T-290c wagnerStarts confirmatory benchmark (COMPLETE, 2026-03-28 ~19:00 GMT)
+
+Local benchmark EW, 5 seeds, 30s+60s, project2084_(1) 86t/3660c + project2086 91t/453c.
+Results: at 30s/0 reps, w1 better (Wagner overhead consumes TBR time under Brazeau);
+at 60s/1 rep, w3 better (+564 steps). Multi-rep: equivalent.
+Conclusion: large preset (w1) and thorough preset (w3) both confirmed correct.
+strategies.md updated with T-290c section. CSV: t290_results/t290c_quick_20260328_1852.csv.
+
+### G-005 — T-289f Stage 5 RESUBMIT needed (2026-03-28 ~19:05 GMT)
+
+Jobs 16622224/16622226/16622249 all failed: `feature/tbr-batch` deleted after
+PR #238 merge; git checkout syntax also wrong for Hamilton's git version.
+Fix: change to `git reset --hard origin/cpp-search`. Script updated on cpp-search
+commit 2784432a. Hamilton currently unreachable (timeout). Will resubmit when
+connection restored.
