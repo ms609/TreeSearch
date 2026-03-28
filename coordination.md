@@ -1,5 +1,36 @@
 # TreeSearch — Strategic Coordination
 
+## S-COORD Round 41 Summary (2026-03-28 14:35 GMT, Agent E)
+
+**Codoc fix — SearchControl.Rd (E-003):**
+All R-CMD-check platforms failing on PR #210 since 2026-03-28 06:25 with
+"Codoc mismatches from SearchControl.Rd". Root cause: commit 22f929cf
+(`pruneReinsertTbrMoves` param, T-289) added the parameter to the function
+and roxygen `@param` but the Rd file was not regenerated. Fix: manually added
+`pruneReinsertTbrMoves = 5L` to `\usage` and its `\item` to `\arguments` in
+`man/SearchControl.Rd`. Commit fdf25673. PR #210 CI re-triggered (run
+23687279706, pending). Agent-check GHA 23687210711 also dispatched.
+
+**T-289 Stage 4 — Hamilton SLURM 16621426:**
+Stage 3 confirmed MISSING criterion (sel=2, c=5, d=5%) gives −14.7 steps at
+180t/60s. Large preset updated. Stage 4 validating across 5 matrices
+(131–206t) at 60s/120s, 10 seeds, 200 runs. Submitted 2026-03-28 ~08:00 GMT,
+~5h wall time. SSH unavailable — poll later.
+
+**F-027 WORDLIST fix (GHA 23656560997) — PASSED.** Resolved.
+
+**PR status:**
+- #210 (cpp-search→main): CI re-running with codoc fix; was failing since 06:25.
+- #213 (T-150, CID consensus): GHA 23650002703 PASS, awaiting merge.
+- #216 (T-204, native search): GHA 23649607006 PASS, awaiting merge.
+- #237 (T-279, drift constraint fix): GHA 23650290962 PASS, awaiting merge.
+
+**Task queue:** T-289 PARKED (Hamilton), T-269 PARKED (Hamilton), T-245/T-290/T-291
+OPEN. 3 open specific tasks → standing tasks P2 effective.
+
+**Next:** Wait for GHA 23687279706 to confirm codoc fix. Then either poll Hamilton
+for T-289 results or take T-291 (bench_framework.R interface update).
+
 ## S-COORD Round 39 Summary (2026-03-27 16:05 GMT)
 
 **GHA results confirmed (all PASS):**
