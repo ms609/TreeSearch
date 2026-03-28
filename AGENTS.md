@@ -1204,17 +1204,40 @@ tuning. They confirm generalization only. This is a one-way door.
 **Fixed 25-matrix training sample:** `MBANK_FIXED_SAMPLE` in
 `bench_datasets.R` — 7 small, 7 medium, 7 large, 4 xlarge. Selected via
 max-min distance on standardized features. Do not modify. Used by
-`benchmark_mbank_sample()`.
+`benchmark_mbank_sample()`. Used for Fitch-track benchmarking.
+
+**Fixed 20-matrix Brazeau-track sample:** `MBANK_BRAZEAU_SAMPLE` in
+`bench_datasets.R` — 5 small, 6 medium, 6 large, 3 xlarge. Restricted
+to training matrices with pct_inapp ≥ 4% (where the Brazeau three-pass
+algorithm materially differs from Fitch). Do not modify.
 
 **Key functions** (in `dev/benchmarks/bench_datasets.R`):
 - `load_mbank_catalogue()` — loads metadata CSV (excludes dedup by default)
 - `load_mbank_sample(cat, n, seed, split)` — stratified random sample
 - `load_mbank_datasets(cat, keys)` — load specific matrices by key
+- `load_mbank_brazeau_sample(cat)` — fixed 20-matrix Brazeau sample
+- `has_meaningful_inapp(cat, threshold)` — filter to pct_inapp ≥ threshold
 
 **Benchmark runners** (in `dev/benchmarks/bench_framework.R`):
 - `benchmark_mbank_sample()` — fixed 25-matrix training sample (routine)
 - `benchmark_mbank_sweep(split)` — full training or validation sweep
 - `benchmark_mbank_validation()` — validation sweep with prominent warning
+
+### Benchmark tracks
+
+Two distinct tracks, each run under EW and IW (k=10):
+
+| Track | Scoring | Datasets | Purpose |
+|-------|---------|----------|---------|
+| **Fitch** | `fitch_mode()` | 14 bundled + `MBANK_FIXED_SAMPLE` | TNT comparison, core search quality |
+| **Brazeau** | Default (Brazeau 2019) | `MBANK_BRAZEAU_SAMPLE` | NA-aware strategy tuning |
+
+TNT comparisons use Fitch track only (TNT doesn't implement Brazeau).
+Both tracks test EW and IW(k=10) because weighting reshapes the fitness
+landscape and may warrant different strategy presets.
+
+See `dev/benchmarks/strategies.md` §"Benchmark Tracks" for full protocol
+including priority order and sample-size validation.
 
 **TNT comparison suite** lives in `../TS-TNT-bench/`. Key files:
 - `dev/benchmarks/bench_tnt_compare.R` — runner (smoke/medium/full)

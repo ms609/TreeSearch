@@ -274,6 +274,8 @@ MBANK_MIN_NTAX <- 20L
 # Chosen via max-min distance on standardized (ntax, nchar, pct_missing,
 # pct_inapp) within each tier: 7 small, 7 medium, 7 large, 4 xlarge.
 # Do not modify: results are only comparable when the same sample is used.
+# Used for Fitch-track benchmarking (all scoring modes, including matrices
+# with zero inapplicable coding).
 MBANK_FIXED_SAMPLE <- c(
   # Small (20-30 taxa)
   "project532", "project2346", "project2451", "project4501",
@@ -287,6 +289,30 @@ MBANK_FIXED_SAMPLE <- c(
   # XLarge (121+ taxa)
   "syab07201", "project4133", "project804", "project4284"
 )
+
+# Fixed 20-matrix Brazeau-track sample: training matrices with pct_inapp >= 4%
+# (where the Brazeau et al. 2019 three-pass algorithm materially differs from
+# Fitch scoring). Selected via max-min distance on standardized (ntax, nchar,
+# pct_inapp) within each tier: 5 small, 6 medium, 6 large, 3 xlarge.
+# Matrices with < 20 characters excluded (pathological for search benchmarking).
+# Do not modify: results are only comparable when the same sample is used.
+MBANK_BRAZEAU_SAMPLE <- c(
+  # Small (20-30 taxa)
+  "project4182", "project2346", "project906", "project4112", "project537",
+  # Medium (31-60 taxa)
+  "project709", "project561", "project2359", "project4761",
+  "project4146_(3)", "project4867",
+  # Large (61-120 taxa)
+  "project4286", "project3512_(2)", "project2084_(1)", "project2086",
+  "project2771", "project3938",
+  # XLarge (121+ taxa)
+  "project4103", "project804", "syab07204"
+)
+
+# Minimum inapplicable percentage for Brazeau-track benchmarking.
+# Below this threshold, Brazeau and Fitch scoring produce near-identical
+# results, so Brazeau-specific benchmarking adds no information.
+MBANK_BRAZEAU_INAPP_THRESHOLD <- 4.0
 
 #' Load the MorphoBank matrix catalogue
 #'
@@ -436,4 +462,43 @@ load_mbank_split <- function(catalogue, split = "training", verbose = TRUE) {
     cat(sprintf("Loading all %d %s matrices...\n", nrow(pool), split))
   }
   load_mbank_datasets(catalogue, pool$key, verbose = verbose)
+}
+
+# ===========================================================================
+# Brazeau-track benchmark utilities
+# ===========================================================================
+
+#' Filter catalogue to matrices with meaningful inapplicable coding
+#'
+#' Returns rows where Brazeau et al. (2019) scoring produces materially
+#' different results from Fitch.  Use for Brazeau-track benchmarking.
+#'
+#' @param catalogue Data frame from load_mbank_catalogue().
+#' @param threshold Minimum pct_inapp to include (default:
+#'   MBANK_BRAZEAU_INAPP_THRESHOLD = 4%).
+#' @param min_chars Minimum character count (default: 20). Matrices below
+#'   this are pathological for search benchmarking.
+#' @return Filtered data frame.
+has_meaningful_inapp <- function(catalogue,
+                                 threshold = MBANK_BRAZEAU_INAPP_THRESHOLD,
+                                 min_chars = 20L) {
+  catalogue[catalogue$pct_inapp >= threshold &
+              catalogue$nchar >= min_chars, ]
+}
+
+#' Load the fixed 20-matrix Brazeau-track sample
+#'
+#' These are training matrices with pct_inapp >= 4%, selected for diversity
+#' via max-min distance on (ntax, nchar, pct_inapp).  Use for benchmarking
+#' search strategies under Brazeau scoring.
+#'
+#' @param catalogue Data frame from load_mbank_catalogue().
+#' @param verbose If TRUE, print summary.
+#' @return Named list of prepared datasets.
+load_mbank_brazeau_sample <- function(catalogue, verbose = TRUE) {
+  if (verbose) {
+    cat(sprintf("Brazeau-track sample: %d fixed matrices (pct_inapp >= %.0f%%)\n",
+                length(MBANK_BRAZEAU_SAMPLE), MBANK_BRAZEAU_INAPP_THRESHOLD))
+  }
+  load_mbank_datasets(catalogue, MBANK_BRAZEAU_SAMPLE, verbose = verbose)
 }

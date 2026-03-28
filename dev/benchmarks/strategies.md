@@ -495,3 +495,76 @@ on standardized (ntax, nchar, pct_missing, pct_inapp) within each tier:
 | XLarge (121+) | 4 | syab07201, project4133, project804, project4284 |
 
 **Do not modify this list.** Benchmark comparisons require the same sample.
+
+### Fixed 20-matrix Brazeau-track sample
+
+For benchmarking under Brazeau et al. (2019) NA-aware scoring, a separate
+fixed sample is used (`MBANK_BRAZEAU_SAMPLE` in `bench_datasets.R`).
+Selected from training matrices with **pct_inapp ≥ 4%** (where the
+three-pass algorithm materially differs from Fitch scoring). Max-min
+distance selection on (ntax, nchar, pct_inapp):
+
+| Tier | Count | Keys |
+|------|-------|------|
+| Small (20–30) | 5 | project4182, project2346, project906, project4112, project537 |
+| Medium (31–60) | 6 | project709, project561, project2359, project4761, project4146_(3), project4867 |
+| Large (61–120) | 6 | project4286, project3512_(2), project2084_(1), project2086, project2771, project3938 |
+| XLarge (121+) | 3 | project4103, project804, syab07204 |
+
+**Do not modify this list.** Benchmark comparisons require the same sample.
+
+---
+
+## Benchmark Tracks
+
+Strategy tuning and performance comparison use two distinct tracks,
+each run under both equal weights (EW) and implied weights (IW, k=10).
+
+### Track 1: Fitch (TNT comparison and core search quality)
+
+- **Scoring:** `fitch_mode()` (inapplicable treated as missing)
+- **Datasets:** 14 bundled + `MBANK_FIXED_SAMPLE` (25 matrices, all scorings)
+- **Purpose:** Direct comparison with TNT; measures raw search quality on
+  the same objective function
+- **TNT comparison:** `bench_tnt_compare.R` with `use_fitch = TRUE`
+
+### Track 2: Brazeau (NA-algorithm-specific strategy tuning)
+
+- **Scoring:** Default Brazeau et al. (2019) three-pass algorithm
+- **Datasets:** `MBANK_BRAZEAU_SAMPLE` (20 matrices, pct_inapp ≥ 4%)
+  + relevant bundled datasets
+- **Purpose:** Tests whether the different per-evaluation cost and fitness
+  landscape of NA-aware scoring warrant different strategy presets
+- **No TNT comparison:** TNT does not implement Brazeau scoring
+
+### Weighting dimension
+
+Both tracks should be run under:
+- **EW** (equal weights, `concavity = Inf`)
+- **IW k=10** (implied weights, `concavity = 10`)
+
+IW reshapes the fitness landscape (homoplasy penalties change which local
+optima exist), so the optimal search strategy may differ between EW and IW.
+k=10 is chosen as representative: moderate weighting, commonly used in
+practice.
+
+### Priority order for new benchmark runs
+
+1. **Brazeau × EW** on `MBANK_BRAZEAU_SAMPLE` — biggest current gap
+2. **Fitch × IW(k=10)** on `MBANK_FIXED_SAMPLE` — detects IW strategy needs
+3. **Brazeau × IW(k=10)** on `MBANK_BRAZEAU_SAMPLE` — full interaction
+   (only if 1 or 2 reveals meaningful differences)
+
+### Sample-size validation protocol
+
+After the first Brazeau × EW benchmark round, run a strategy-ranking
+stability analysis to confirm 20 matrices are sufficient:
+
+1. For k = 5, 8, 10, 12, 14, 16, 18, 20: bootstrap 500 subsamples of
+   size k from the 20 matrices.
+2. Within each subsample, rank strategies by mean score gap (strategy
+   score − best-of-strategies, averaged across k datasets).
+3. Compute Kendall's W between each bootstrap ranking and the full-20
+   ranking.
+4. Plot median W vs k. If W has plateaued at k=20 (ΔW < 0.02 for last
+   2 increments), 20 is sufficient. If still climbing, expand the sample.
