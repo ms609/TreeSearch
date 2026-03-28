@@ -421,4 +421,5 @@ EOF 2>&1
 | E-004 | T-291: bench_framework.R benchmark_run() interface update | 0 | Replaced flat do.call() with three structured lists (searchControl/runtimeConfig/scoringConfig). do.call(SearchControl, strategy) fills defaults. commit f1ed5dfc. |
 | E-005 | S-RED: ts_strategy.h + ts_temper.h/.cpp | 0 | No bugs. Naming: stochastic_tbr_phase does SPR not TBR (internal only). Intra-phase best-tree not tracked in anneal_search (known design limit, T-210 addressed inter-phase). All correctness invariants correct. |
 | E-006 | T-289: Prune-reinsert benchmark — COMPLETE | 5 | Stages 1-4 complete. Stage 4 (5 datasets, 131-206t, 10 seeds): PR overhead too high at 60s for large trees (0 reps at 206t). Modest improvement at 120s (mean -9.1 steps, outlier-driven). Decision: disable PR in large preset. commit 74698524. |
-EOF 2>&1
+| F-028 | F-027 WORDLIST fix: restore 'config'+'warmup' for R 4.1 CI | 0 | ef83e8db was removed by mistake in e6ad6e3e; restored. GHA 23656560997 PASSED. |
+| F-029 | T-269: Fine-grained sectorial interleaving benchmark | 4 | 4 datasets (37–88t), outer_cycles 1/2/4/10/20, 5 seeds, 30s. Higher outer_cycles uniformly reduces replicate throughput (20 cycles → 9 vs 54 reps on Dikow2009) with no score improvement. Decision: outerCycles=2 in thorough preset is optimal; no change needed. |

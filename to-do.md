@@ -62,11 +62,6 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 
 ### Strategy Tuning
 
-| ID | Pri | Status | Blocks | Description | Notes |
-|----|-----|--------|--------|-------------|-------|
-
-| T-269 | P3 | PARKED (F, SLURM 16607719/16607720) | — | **Fine-grained sectorial interleaving benchmark.** Compare current coarse `outerCycles=2` (all ratchet cycles batched per pass) against fine-grained interleaving (e.g. `outerCycles=12, ratchetCycles=12` → one ratchet cycle per sectorial pass), approximating TNT's per-iteration pattern. T-256 showed extra sectorial *rounds* don't help, but *timing* of sectorial relative to perturbation hasn't been tested. **Design note (u.005):** Full TNT-style interleaving IS architecturally supported now — setting `outerCycles = ratchetCycles` achieves one sector pass per ratchet cycle. T-257 first validated that any post-ratchet sectorial helps at all (merged). T-269 benchmarks the fine-grained variant to determine whether the per-cycle overhead is worth enabling in presets. | Low priority. Use 3–5 gap datasets at 30s/60s budgets. |
-
 
 ### Housekeeping
 
@@ -84,5 +79,5 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 |----|-----|--------|--------|-------------|-------|
 | S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-27 focus 27 by F (ts_rcpp.cpp, 2656L — Rcpp bridge). No bugs. All correctness invariants verified (sentinels, indexing, layout). F sweep now covers: ts_fitch, ts_simd, ts_fitch_na, ts_fitch_na_incr, ts_tree, ts_splits, ts_collapsed, ts_hsj, ts_sankoff, ts_rng, ts_rcpp, ts_parallel, ts_sector, ts_pool, ts_fuse, ts_driven, ts_drift, ts_tbr, ts_ratchet, ts_nni_perturb, ts_resample, ts_prune_reinsert, ts_simplify, ts_search, ts_data, ts_wagner, ts_constraint. **All modules reviewed ≥ once**. E sweep area 4: ts_rng, ts_parallel. Next: re-review post-merge additions (ts_strategy.h from T-190, ts_pcsa from T-207) or wait for new code changes. |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-27 round 40 by F. PRs merged since last S-COORD: #233 (T-246 AVX2), #234 (T-257 post-ratchet sectorial), #235 (T-266 prune-reinsert), #236 (ScoreSpectrum). Still open: #213 (T-150), #216 (T-204), #237 (T-279). F-027 WORDLIST fix (config/warmup R 4.1 CI failures since ~12:50) committed ef83e8db → GHA 23656560997 PARKED. |
-| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-27 round 40 by F. Open PRs: #213 (T-150, GHA 23650002703 PASS), #216 (T-204, GHA 23649607006 PASS), #237 (T-279, GHA 23650290962 PASS), #210 (DRAFT cpp-search→main). F-027 WORDLIST fix parked GHA 23656560997. |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-28 round 42 by F. T-269 complete (no benefit from fine-grained interleaving). T-289 complete (E, Stage 4: disable PR in large preset). F-027 WORDLIST fix PASSED (GHA 23656560997). PRs still open: #213 (T-150), #216 (T-204), #237 (T-279), #210 (DRAFT). PR #210 R-CMD-check in progress (run 23688837232). |
+| S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-28 round 42 by F. Open PRs: #213 (T-150, GHA 23650002703 PASS), #216 (T-204, GHA 23649607006 PASS), #237 (T-279, GHA 23650290962 PASS), #210 (DRAFT cpp-search→main, codoc fix fdf25673, R-CMD-check in progress 23688837232). |

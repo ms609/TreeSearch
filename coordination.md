@@ -1,5 +1,30 @@
 # TreeSearch — Strategic Coordination
 
+## S-COORD Round 42 Summary (2026-03-28 16:10 GMT, Agent F)
+
+**T-269 complete — Fine-grained sectorial interleaving (30s, 4 datasets, outer_cycles 1/2/4/10/20):**
+Higher outer_cycles uniformly reduces replicate throughput with no score benefit.
+At outer_cycles=20: Dikow2009 gets 9 reps vs 54 at baseline; Zhu2013 gets 16 vs 88.
+Scores are flat or marginally worse at high outer_cycles. The current outerCycles=2 in the
+thorough preset is optimal; no preset change needed.
+
+**T-289 complete (E) — Stage 4 confirms disable-PR decision:**
+5 datasets 131–206t, 10 seeds, 60s/120s. Key: syab07205 (206t) gets 0 PR reps at 60s
+(per-rep cost ≈ 60s, budget exceeded). project3701 (146t) regresses 12 steps mean at 60s.
+commit 746985243 disables pruneReinsertCycles in large preset. Available via SearchControl().
+
+**F-027 WORDLIST fix — PASSED (GHA 23656560997).** Both 'config' and 'warmup' restored.
+
+**PR #210 (cpp-search→main):** codoc fix fdf25673 in place; R-CMD-check run 23688837232
+in progress. Previous pre-existing failures (Windows covr, R-devel rlang, ASAN TBB ODR)
+are infra issues, not package check failures.
+
+**Open PRs:** #213 (T-150, GHA PASS), #216 (T-204, GHA PASS), #237 (T-279, GHA PASS).
+All three await human merge.
+
+**Task queue:** T-245 (P3, TBR batching) is only open specific task. Standing tasks P1.
+S-RED next: ts_mc_fitch.cpp, ts_tabu.h, ts_prune_reinsert.h (222 lines, unreviewed).
+
 ## S-COORD Round 41 Summary (2026-03-28 14:35 GMT, Agent E)
 
 **Codoc fix — SearchControl.Rd (E-003):**
