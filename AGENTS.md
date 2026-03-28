@@ -1321,13 +1321,16 @@ showing Drift at 24–32% are obsolete.)*
 Wagner is the outlier. All other phases are within 0.9–1.4× of Fitch cost.
 Replicate rate under Brazeau is 95–97% of Fitch (landscape not harder).
 
-**wagnerStarts under Brazeau (T-290, analytical):** `wagnerStarts = 3` is
-correct in the thorough preset. The datasets where thorough beats default
-(86t/3660c and 225t) complete **zero replicates** in 30s — the score gap
-is entirely from better starting topology (3 Wagner+NNI vs 1), not extra
-ratchet cycles. For multi-rep datasets (≤94t), wagnerStarts=1 and 3 are
-equivalent. The 3.6–3.9× per-start Wagner cost under Brazeau is ~7% of
-wall time; negligible relative to TBR convergence.
+**wagnerStarts under Brazeau (T-290b/c, 2026-03-28):** Regime depends on
+budget/replicate-time ratio:
+- *Multiple reps/budget*: wagnerStarts=1 and 3 equivalent; w3 marginally better.
+- *~1 rep/budget* (60s at 86t/3660c): wagnerStarts=3 better by +564 steps
+  — better starting topology pays off.
+- *0 reps/budget* (30s at 86t/3660c): wagnerStarts=1 **better** — Brazeau
+  Wagner is expensive (~4×), 3 starts consume budget; more TBR time > better
+  topology at tight budgets.
+Current presets are correct: thorough (w3, gets ≥1 rep at 65–119t) ✓;
+large (w1, gets 0–1 reps at 120t+) ✓.
 
 Per-candidate indirect scoring is at memory-throughput limit (~23 ns at
 75 tips).
