@@ -1,8 +1,7 @@
 mxram 1024;
-proc Aguado2009.tnt;
+proc Zanol2014.tnt;
 rseed 3;
-xpiwe=10;
-timeout 0:00:30;
-xmult=hits 5 replic 20;
+timeout 0:02:00;
+xmult=hits 10 replic 50;
 best;
 quit;

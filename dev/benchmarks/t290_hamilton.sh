@@ -73,10 +73,16 @@ if [ ! -f "$BENCH_SCRIPT" ]; then
     cp "$REPO/dev/benchmarks/bench_datasets.R.tnt" "$REPO/dev/benchmarks/bench_datasets.R"
     rm "$REPO/dev/benchmarks/bench_datasets.R.tnt"
   fi
+  git show feature/tnt-bench:dev/benchmarks/t290_run.R > "$REPO/dev/benchmarks/t290_run.R" 2>/dev/null
 fi
 
 if [ ! -f "$BENCH_SCRIPT" ]; then
   echo "FATAL: bench_brazeau_baseline.R not found"
+  exit 1
+fi
+
+if [ ! -f "$REPO/dev/benchmarks/t290_run.R" ]; then
+  echo "FATAL: t290_run.R not found"
   exit 1
 fi
 
