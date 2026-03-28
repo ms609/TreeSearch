@@ -489,7 +489,9 @@ ReplicateResult run_single_replicate(
           params.prune_reinsert_selection);
       prp.tbr_max_hits = params.tbr_max_hits;
       prp.tabu_size = params.tabu_size;
-      prp.tbr_max_moves = params.prune_reinsert_tbr_moves;
+      prp.tbr_max_moves       = params.prune_reinsert_tbr_moves;
+      prp.tbr_full_max_moves  = params.prune_reinsert_full_moves;
+      prp.nni_full            = (params.prune_reinsert_nni != 0);
 
       prune_reinsert_search(result.tree, ds, prp, cd, split_freq,
                             check_timeout);

@@ -47,6 +47,8 @@ struct PruneReinsertParams {
   int max_drop = 0;                 // 0 = no cap
   PruneSelection selection = PruneSelection::RANDOM;
   int tbr_max_moves = 0;           // TBR on reduced tree: 0 = converge
+  int tbr_full_max_moves = 0;      // TBR on full tree after reinsert: 0 = converge
+  bool nni_full = false;           // use NNI (not TBR) for full-tree polish
   int tbr_max_hits = 1;            // TBR max equal-score hits
   int tabu_size = 100;             // TBR tabu list size
 };

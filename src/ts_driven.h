@@ -60,6 +60,8 @@ struct DrivenParams {
   double prune_reinsert_drop = 0.10;      // fraction of tips to drop
   int prune_reinsert_selection = 0;       // 0 = random, 1 = instability
   int prune_reinsert_tbr_moves = 5;       // TBR moves on reduced tree (0=converge)
+  int prune_reinsert_full_moves = 0;      // TBR moves on full tree (0=converge)
+  int prune_reinsert_nni = 0;            // 1 = NNI polish on full tree (cheaper at large n)
 
   // Drifting
   int drift_cycles = 2;

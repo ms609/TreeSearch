@@ -1248,6 +1248,8 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.prune_reinsert_drop      = as<double>(ctrl["pruneReinsertDrop"]);
   params.prune_reinsert_selection = as<int>(ctrl["pruneReinsertSelection"]);
   params.prune_reinsert_tbr_moves = as<int>(ctrl["pruneReinsertTbrMoves"]);
+  params.prune_reinsert_full_moves = as<int>(ctrl["pruneReinsertFullMoves"]);
+  params.prune_reinsert_nni       = as<int>(ctrl["pruneReinsertNni"]);
 
   // Simulated annealing perturbation (PCSA)
   params.anneal_cycles          = as<int>(ctrl["annealCycles"]);
