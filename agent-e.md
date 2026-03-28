@@ -17,7 +17,7 @@ R/SearchControl.R, man/SearchControl.Rd. commit 09c93468.
 
 Stage 5 benchmark script created (bench_pr_stage5_nni.R + t289f_stage5_hamilton.sh).
 3 configs × 5 datasets × 2 budgets × 10 seeds = 300 runs.
-Committed aa3f16ea. Hamilton unreachable; submit when back:
+Committed aa3f16ea. Stage 5 submitted: SLURM 16622224 (~4-6h).
   sbatch /nobackup/pjjg18/TreeSearch-a/dev/benchmarks/t289f_stage5_hamilton.sh
 
 S-RED on new NNI branch: clean. No bugs. Constraint-staleness non-issue
