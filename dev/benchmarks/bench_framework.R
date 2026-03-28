@@ -181,26 +181,31 @@ benchmark_run <- function(ds, strategy,
     )
   }
 
-  # Build the full argument list for ts_driven_search.
+  # Build structured args for ts_driven_search (new interface: three config lists).
   # verbosity >= 1 required for the C++ engine to invoke the callback.
-  args <- c(
-    list(
-      contrast = ds$contrast,
-      tip_data = ds$tip_data,
-      weight = ds$weight,
-      levels = ds$levels,
-      maxReplicates = as.integer(maxReplicates),
-      targetHits = as.integer(targetHits),
-      maxSeconds = as.double(maxSeconds),
-      verbosity = 1L,
-      progressCallback = progress_cb
-    ),
-    strategy
+  searchControl <- do.call(TreeSearch::SearchControl, strategy)
+  runtimeConfig <- list(
+    maxReplicates    = as.integer(maxReplicates),
+    targetHits       = as.integer(targetHits),
+    maxSeconds       = as.double(maxSeconds),
+    verbosity        = 1L,
+    nThreads         = 1L,
+    startEdge        = NULL,
+    progressCallback = progress_cb
+  )
+  scoringConfig <- list(
+    concavity  = -1.0,        # sentinel for Inf (equal weights)
+    xpiwe      = FALSE,
+    xpiwe_r    = 0.0,
+    xpiwe_max_f = 1.0
   )
 
   set.seed(seed)
   t0 <- proc.time()
-  result <- do.call(TreeSearch:::ts_driven_search, args)
+  result <- TreeSearch:::ts_driven_search(
+    ds$contrast, ds$tip_data, ds$weight, ds$levels,
+    searchControl, runtimeConfig, scoringConfig
+  )
   wall_s <- as.double((proc.time() - t0)[3])
 
   list(
