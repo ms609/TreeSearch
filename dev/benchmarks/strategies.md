@@ -698,3 +698,43 @@ ratchet escape drives quality. The 3.6–5.2× per-start Wagner cost under
 Brazeau is irrelevant in practice — Wagner overhead is ~7% of wall time,
 and TBR convergence is orders of magnitude more expensive at the scales
 where wagnerStarts matters.
+
+### T-290c confirmatory: wagnerStarts = 1 vs 3, empirical (2026-03-28)
+
+Quick benchmark (EW, 5 seeds, 30s + 60s) on two contrasting datasets to
+validate the T-290b analytical conclusion. Both under Brazeau scoring.
+
+| Dataset | n_tax | n_char | timeout | med_reps | w1_best | w3_best | delta_best |
+|---------|:-----:|:------:|:-------:|:--------:|:-------:|:-------:|:----------:|
+| project2084\_(1) | 86 | 3660 | 30s | 0 | **29258** | 29385 | **−127 (w1 better)** |
+| project2084\_(1) | 86 | 3660 | 60s | 1 | 29196 | **28632** | **+564 (w3 better)** |
+| project2086 | 91 | 453 | 30s | 8 | 2180 | **2133** | +47 (w3 better) |
+| project2086 | 91 | 453 | 60s | 17 | 2169 | **2133** | +36 (w3 better) |
+
+**The 30s / 0-rep result is surprising:** wagnerStarts=1 is better for
+project2084_(1) at 30s. The reason: at 86t with 3660 chars, Brazeau Wagner
+construction is expensive (~4× more than Fitch). Three starts consume
+~20-25s of a 30s budget, leaving almost no TBR time. With one start,
+25s+ is available for TBR — and TBR progress from a mediocre starting
+topology beats no TBR at all.
+
+**At 60s (≥1 rep completed):** wagnerStarts=3 wins by a large margin (+564
+steps). The better starting topology matters at large-dataset scale.
+
+**Reconciling with T-290b:** The T-290b reasoning estimated Wagner overhead
+as "<500ms total for 3 starts at 86t". This holds for small/medium datasets
+(≤500 chars). At 3660 chars with Brazeau, Wagner is far more expensive. The
+30s/0-rep case is a **large-preset** scenario, not a thorough-preset scenario.
+
+**Final conclusion (T-290b + T-290c combined):**
+
+| Regime | Recommended wagnerStarts | Reasoning |
+|--------|:------------------------:|-----------|
+| budget >> replicate_time (multiple reps) | 3 | Small benefit; ratchet dominates |
+| budget ≈ replicate_time (∼1 rep) | 3 | Better topology → large improvement |
+| budget < replicate_time (0 reps, large preset) | 1 | Less Wagner → more TBR → better score |
+
+The current preset assignments are correct:
+- **thorough** (65–119t, ≤500c): wagnerStarts=3 ✓ (gets multiple reps or ~1 rep)
+- **large** (≥120t, high char count): wagnerStarts=1 ✓ (0–1 reps; TBR time > topology quality)
+MDEOF 2>&1
