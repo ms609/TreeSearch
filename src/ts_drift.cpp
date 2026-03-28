@@ -647,6 +647,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
           drift_restore_topology(tree, snap);
           tree.build_postorder();
           score = drift_full_rescore(tree, ds);
+          if (constrained) update_constraint(tree, *cd);
         }
       } else {
         // EW: original local_cost-based RFD
@@ -654,7 +655,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 
         drift_restore_topology(tree, snap);
         tree.build_postorder();
-        drift_full_rescore(tree, ds);
+        score = drift_full_rescore(tree, ds);
         old_local_cost = tree.local_cost;
 
         double F = 0, C = 0;
@@ -686,7 +687,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
           ++n_accepted;
           if (constrained) update_constraint(tree, *cd);
         } else {
-          score = drift_full_rescore(tree, ds);
+          // score already set when topology was restored above
+          if (constrained) update_constraint(tree, *cd);
         }
       }
     }
