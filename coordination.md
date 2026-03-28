@@ -28,8 +28,15 @@ Stage 3 confirmed MISSING criterion (sel=2, c=5, d=5%) gives −14.7 steps at
 **Task queue:** T-289 PARKED (Hamilton), T-269 PARKED (Hamilton), T-245/T-290/T-291
 OPEN. 3 open specific tasks → standing tasks P2 effective.
 
-**Next:** Wait for GHA 23687279706 to confirm codoc fix. Then either poll Hamilton
-for T-289 results or take T-291 (bench_framework.R interface update).
+**GHA 23687804562 results (PR #210, post-codoc-fix):** All 5 release platforms
+PASS. Remaining failures are pre-existing infra issues: Windows covr path, R-devel
+rlang DLL, ASAN RcppParallel TBB ODR. All in dep-install or coverage steps, not
+"Check package". PR #210 ready for human review.
+
+**T-291 complete (E-004):** bench_framework.R benchmark_run() updated to new
+ts_driven_search structured-list interface. commit f1ed5dfc.
+
+**Next:** Poll Hamilton for T-289 Stage 4 results when SSH is available.
 
 ## S-COORD Round 39 Summary (2026-03-27 16:05 GMT)
 
