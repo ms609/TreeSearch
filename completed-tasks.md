@@ -423,3 +423,6 @@ EOF 2>&1
 | E-006 | T-289: Prune-reinsert benchmark — COMPLETE | 5 | Stages 1-4 complete. Stage 4 (5 datasets, 131-206t, 10 seeds): PR overhead too high at 60s for large trees (0 reps at 206t). Modest improvement at 120s (mean -9.1 steps, outlier-driven). Decision: disable PR in large preset. commit 74698524. |
 | F-028 | F-027 WORDLIST fix: restore 'config'+'warmup' for R 4.1 CI | 0 | ef83e8db was removed by mistake in e6ad6e3e; restored. GHA 23656560997 PASSED. |
 | F-029 | T-269: Fine-grained sectorial interleaving benchmark | 4 | 4 datasets (37–88t), outer_cycles 1/2/4/10/20, 5 seeds, 30s. Higher outer_cycles uniformly reduces replicate throughput (20 cycles → 9 vs 54 reps on Dikow2009) with no score improvement. Decision: outerCycles=2 in thorough preset is optimal; no change needed. |
+| F-015 | T-279: Constrained drift stale constraint_node + redundant rescore | 1 | PR #237 merged 2026-03-28. Fixed update_constraint() missing after IW+EW RFD reject in drift_phase(); removed redundant full_rescore in EW reject path. ts_drift.cpp commit e85ec84f. |
+| F-016 | T-245: TBR 4-wide candidate batching | 1 | PR #238 merged 2026-03-28. fitch_indirect_cached_flat_x4()/na variant; TBR rerooting inner loop batch-of-4 for flat EW path; IW/upweight fallback to scalar. GHA 23690208221 PASS. Hamilton benchmark pending. |
+EOF 2>&1
