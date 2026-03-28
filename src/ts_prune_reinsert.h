@@ -25,11 +25,20 @@ namespace ts {
 struct SplitFrequencyTable;
 
 // Tip selection strategy.
-// RANDOM     — uniform random (baseline)
+// RANDOM      — uniform random (baseline)
 // INSTABILITY — sample weighted by positional instability in the pool
 //               (tips whose parent-edge split is rare across pool trees
 //               are more likely to be dropped)
-enum class PruneSelection { RANDOM = 0, INSTABILITY = 1 };
+// MISSING     — sample weighted by uninformative character count: characters
+//               where the tip is fully ambiguous or inapplicable.
+//               High-missingness taxa are hardest to score and most likely
+//               to be trapped in suboptimal positions.
+// COMBINED    — product of INSTABILITY and MISSING scores (normalised):
+//               w(t) = instability(t) * (1 + miss_fraction(t)).
+//               Targets taxa that are both unstably placed and data-poor.
+//               Falls back to INSTABILITY when pool has < 2 trees, and to
+//               MISSING when there is no missingness variation.
+enum class PruneSelection { RANDOM = 0, INSTABILITY = 1, MISSING = 2, COMBINED = 3 };
 
 struct PruneReinsertParams {
   int n_cycles = 1;

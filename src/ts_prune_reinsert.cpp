@@ -21,6 +21,35 @@ namespace ts {
 
 namespace {
 
+// Compute per-tip missingness: weighted count of uninformative characters.
+// A character is uninformative for tip t if:
+//   (a) all state bits are set (fully ambiguous), or
+//   (b) the inapplicable state bit is set (has_inapplicable blocks).
+// Returned vector has length ds.n_tips; values are >= 0.
+std::vector<double> compute_tip_missingness(const DataSet& ds) {
+  int n_tip = ds.n_tips;
+  std::vector<double> miss(n_tip, 0.0);
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const CharBlock& blk = ds.blocks[b];
+    int wo = ds.block_word_offset[b];
+    for (int t = 0; t < n_tip; ++t) {
+      const uint64_t* ts = &ds.tip_states[static_cast<size_t>(t) * ds.total_words + wo];
+
+      // all_set: bit c set iff every state word has bit c set (= fully ambiguous)
+      uint64_t all_set = blk.active_mask;
+      for (int s = 0; s < blk.n_states; ++s) all_set &= ts[s];
+
+      // inapp: bit c set when tip has inapplicable state for character c
+      uint64_t inapp = blk.has_inapplicable ? (ts[0] & blk.active_mask) : 0ULL;
+
+      miss[t] += blk.weight *
+                 static_cast<int>(__builtin_popcountll(all_set | inapp));
+    }
+  }
+  return miss;
+}
+
 // Select which tips to drop.
 // Returns a sorted vector of 0-based tip indices.
 std::vector<int> select_tips_to_drop(
@@ -43,88 +72,13 @@ std::vector<int> select_tips_to_drop(
   std::vector<int> dropped;
   dropped.reserve(k);
 
-  if (params.selection == PruneSelection::INSTABILITY && split_freq &&
-      split_freq->n_trees >= 2)
-  {
-    // Instability-weighted selection: tips whose parent-edge split is
-    // rare in the pool are more likely to be dropped.
-    //
-    // For each tip, compute the hash of the split at its parent edge
-    // (the bipartition separating parent(tip)'s subtree from the rest),
-    // then look up its frequency in the pool.  Instability = 1 - freq.
-
-    // Build tip descendants for each internal node (bitset per node)
-    int nw = (n_tip + 63) / 64;
-    std::vector<uint64_t> node_tips(
-        static_cast<size_t>(tree.n_node) * nw, 0ULL);
-
-    // Tips: set their own bit
-    for (int t = 0; t < n_tip; ++t) {
-      node_tips[static_cast<size_t>(t) * nw + t / 64] |=
-          (1ULL << (t % 64));
-    }
-
-    // Internal nodes in postorder: union of children
-    for (int po_idx = 0;
-         po_idx < static_cast<int>(tree.postorder.size()); ++po_idx) {
-      int node = tree.postorder[po_idx];
-      if (node < n_tip) continue;
-      int ni = node - n_tip;
-      int lc = tree.left[ni];
-      int rc = tree.right[ni];
-      uint64_t* dst = &node_tips[static_cast<size_t>(node) * nw];
-      const uint64_t* lp = &node_tips[static_cast<size_t>(lc) * nw];
-      const uint64_t* rp = &node_tips[static_cast<size_t>(rc) * nw];
-      for (int w = 0; w < nw; ++w) dst[w] = lp[w] | rp[w];
-    }
-
-    // Compute instability score for each tip.
-    // Use the split at the edge above parent(tip).  Canonicalize so
-    // that bit 0 (tip 0) is always 0, matching the pool's hashing.
-    std::vector<double> instability(n_tip, 1.0);
-    std::vector<uint64_t> canon(nw);  // scratch buffer for canonicalization
-
-    for (int t = 0; t < n_tip; ++t) {
-      int par = tree.parent[t];
-      if (par == tree.n_tip) {
-        // Tip is child of root — root splits are trivial
-        instability[t] = 1.0;
-        continue;
-      }
-
-      // The split defined by the edge (grandparent → parent): separates
-      // parent(t)'s subtree from the rest of the tree.
-      const uint64_t* raw =
-          &node_tips[static_cast<size_t>(par) * nw];
-
-      // Canonicalize: ensure bit 0 is 0 (flip if needed)
-      bool flip = (raw[0] & 1ULL) != 0;
-      for (int w = 0; w < nw; ++w) {
-        canon[w] = flip ? ~raw[w] : raw[w];
-      }
-      // Mask trailing bits in the last word
-      int rem = n_tip % 64;
-      if (rem > 0) canon[nw - 1] &= (1ULL << rem) - 1;
-
-      uint64_t h = hash_single_split(canon.data(), nw);
-
-      auto it = split_freq->freq.find(h);
-      if (it != split_freq->freq.end()) {
-        double freq =
-            static_cast<double>(it->second) / split_freq->n_trees;
-        instability[t] = 1.0 - freq;
-      }
-      // else: split not in pool → instability = 1.0 (maximally unstable)
-    }
-
-    // Weighted sampling without replacement
-    std::vector<double> weights = instability;
+  // Weighted sampling without replacement (shared by INSTABILITY/MISSING/COMBINED).
+  // Modifies `weights` in-place (zeroes out selected entries).
+  auto sample_from_weights = [&](std::vector<double>& weights) {
     for (int j = 0; j < k; ++j) {
-      // Compute cumulative weights
       double total = 0.0;
       for (int i = 0; i < n_tip; ++i) total += weights[i];
       if (total <= 0.0) break;
-
       double r = ts::thread_safe_unif() * total;
       double cum = 0.0;
       int pick = n_tip - 1;
@@ -133,10 +87,103 @@ std::vector<int> select_tips_to_drop(
         if (cum >= r) { pick = i; break; }
       }
       dropped.push_back(pick);
-      weights[pick] = 0.0;  // remove from future picks
+      weights[pick] = 0.0;
     }
+  };
+
+  // Helper: compute per-tip instability scores from the pool split table.
+  // Returns a vector of n_tip values in [0, 1] (1.0 = maximally unstable).
+  // Returns an empty vector if the pool doesn't have enough trees.
+  auto compute_instability = [&]() -> std::vector<double> {
+    if (!split_freq || split_freq->n_trees < 2)
+      return {};
+
+    int nw = (n_tip + 63) / 64;
+    std::vector<uint64_t> node_tips(
+        static_cast<size_t>(tree.n_node) * nw, 0ULL);
+
+    for (int t = 0; t < n_tip; ++t)
+      node_tips[static_cast<size_t>(t) * nw + t / 64] |= (1ULL << (t % 64));
+
+    for (int po_idx = 0;
+         po_idx < static_cast<int>(tree.postorder.size()); ++po_idx) {
+      int node = tree.postorder[po_idx];
+      if (node < n_tip) continue;
+      int ni = node - n_tip;
+      uint64_t* dst = &node_tips[static_cast<size_t>(node) * nw];
+      const uint64_t* lp = &node_tips[static_cast<size_t>(tree.left[ni]) * nw];
+      const uint64_t* rp = &node_tips[static_cast<size_t>(tree.right[ni]) * nw];
+      for (int w = 0; w < nw; ++w) dst[w] = lp[w] | rp[w];
+    }
+
+    std::vector<double> instability(n_tip, 1.0);
+    std::vector<uint64_t> canon(nw);
+    int rem = n_tip % 64;
+
+    for (int t = 0; t < n_tip; ++t) {
+      int par = tree.parent[t];
+      if (par == tree.n_tip) continue;  // child of root → leave at 1.0
+
+      const uint64_t* raw = &node_tips[static_cast<size_t>(par) * nw];
+      bool flip = (raw[0] & 1ULL) != 0;
+      for (int w = 0; w < nw; ++w) canon[w] = flip ? ~raw[w] : raw[w];
+      if (rem > 0) canon[nw - 1] &= (1ULL << rem) - 1;
+
+      uint64_t h = hash_single_split(canon.data(), nw);
+      auto it = split_freq->freq.find(h);
+      if (it != split_freq->freq.end())
+        instability[t] = 1.0 - static_cast<double>(it->second) / split_freq->n_trees;
+    }
+    return instability;
+  };
+
+  const PruneSelection sel = params.selection;
+  bool need_instab  = (sel == PruneSelection::INSTABILITY ||
+                       sel == PruneSelection::COMBINED);
+  bool need_missing = (sel == PruneSelection::MISSING ||
+                       sel == PruneSelection::COMBINED);
+
+  std::vector<double> instability, missingness;
+  if (need_instab)  instability = compute_instability();
+  if (need_missing) missingness = compute_tip_missingness(ds);
+
+  if (sel == PruneSelection::INSTABILITY && !instability.empty()) {
+    // Instability-weighted: tips in rare pool splits dropped preferentially.
+    sample_from_weights(instability);
+
+  } else if (sel == PruneSelection::MISSING || sel == PruneSelection::COMBINED) {
+    double max_miss = *std::max_element(missingness.begin(), missingness.end());
+    bool have_instab = !instability.empty();
+
+    if (sel == PruneSelection::MISSING && max_miss > 0.0) {
+      // Missing-data-weighted: taxa with more ambiguous/inapplicable characters
+      // dropped preferentially.
+      sample_from_weights(missingness);
+
+    } else if (sel == PruneSelection::COMBINED &&
+               (have_instab || max_miss > 0.0)) {
+      // Combined: w(t) = instability(t) * (1 + miss_fraction(t)).
+      // Targets taxa that are both unstably placed and data-poor.
+      std::vector<double> weights(n_tip, 1.0);
+      for (int t = 0; t < n_tip; ++t) {
+        double inst = have_instab ? instability[t] : 1.0;
+        double mf   = (max_miss > 0.0) ? missingness[t] / max_miss : 0.0;
+        weights[t]  = inst * (1.0 + mf);
+      }
+      sample_from_weights(weights);
+
+    } else {
+      // No useful signal — fall back to random
+      for (int j = 0; j < k; ++j) {
+        int idx = j + static_cast<int>(ts::thread_safe_unif() * (n_tip - j));
+        if (idx >= n_tip) idx = n_tip - 1;
+        std::swap(candidates[j], candidates[idx]);
+        dropped.push_back(candidates[j]);
+      }
+    }
+
   } else {
-    // Random selection: Fisher-Yates partial shuffle
+    // RANDOM (default, or INSTABILITY with too few pool trees)
     for (int j = 0; j < k; ++j) {
       int idx = j + static_cast<int>(ts::thread_safe_unif() * (n_tip - j));
       if (idx >= n_tip) idx = n_tip - 1;

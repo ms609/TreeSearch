@@ -103,9 +103,17 @@
 #'   cycle.  Default 0.10 (10%).  Always drops at least 3 tips and keeps
 #'   at least 4.
 #' @param pruneReinsertSelection Integer; tip selection strategy for choosing
-#'   which tips to drop.  0 = random (default), 1 = instability-weighted
-#'   (tips whose placement varies across pool trees are preferentially
-#'   dropped).
+#'   which tips to drop:
+#'   - `0` = random (default).
+#'   - `1` = instability-weighted: tips whose parent-edge split is rare across
+#'     pool trees are preferentially dropped.  Requires \eqn{\ge}2 pool trees;
+#'     falls back to random otherwise.
+#'   - `2` = missing-data-weighted: tips with more ambiguous or inapplicable
+#'     characters are preferentially dropped.  High-missingness taxa are
+#'     hardest to score correctly and most likely to be trapped in suboptimal
+#'     positions.
+#'   - `3` = combined: weight = instability × (1 + normalised missingness).
+#'     Targets taxa that are both unstably placed and data-poor.
 #' @param pruneReinsertTbrMoves Integer; maximum number of TBR moves accepted
 #'   during the reduced-tree backbone optimisation phase of each
 #'   prune-reinsert cycle.  0 means run to convergence; the default of 5
