@@ -46,6 +46,8 @@ SearchControl(
   pruneReinsertDrop = 0.1,
   pruneReinsertSelection = 0L,
   pruneReinsertTbrMoves = 5L,
+  pruneReinsertFullMoves = 0L,
+  pruneReinsertNni = FALSE,
   annealCycles = 0L,
   annealPhases = 5L,
   annealTStart = 20,
@@ -224,6 +226,17 @@ mirrors the ratchet design (short perturbation, many diverse cycles)
 and substantially reduces per-cycle cost on datasets with inapplicable
 characters (where Brazeau scoring dominates).  Increase towards 0 if
 you prefer thorough backbone optimisation over replicate throughput.}
+
+\item{pruneReinsertFullMoves}{Integer; maximum TBR moves during the
+full-tree polish after each prune-reinsert cycle.  0 (default) runs
+to convergence.  Has no effect when \code{pruneReinsertNni = TRUE}.}
+
+\item{pruneReinsertNni}{Logical; if \code{TRUE}, use NNI
+(nearest-neighbour interchange) instead of TBR for the full-tree polish
+step of each prune-reinsert cycle.  NNI converges roughly 5x faster than
+TBR at large tip counts (\eqn{\ge}120), substantially reducing per-cycle
+cost while still reaching a local optimum before the outer-loop TBR
+polish.  Default \code{FALSE}.}
 
 \item{annealCycles}{Integer; number of simulated annealing perturbation
 cycles (PCSA) per replicate.  Each cycle perturbs the current best tree

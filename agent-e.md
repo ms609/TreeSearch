@@ -1,101 +1,40 @@
 # Agent E — Progress Log
 
 ## Current Task
-- **Status:** PARKED — T-289 Stage 4 queued as SLURM 16621426 on Hamilton (~5h)
+- **Status:** PARKED — GHA 23690338955 (feature/tbr-batch); Hamilton down
 
-### T-289 Stage 4 — multi-dataset PR validation — DISPATCHED (2026-03-28)
+### T-289f — PR NNI polish cost reduction (2026-03-28)
 
-Stage 3 confirmed: MISSING criterion (sel=2), c=5, d=5% gives mean −14.7 steps
-vs baseline at 180t/60s (10 seeds). Applied to large preset. Stage 4 now tests
-generalisation across 5 matrices (131–206t) at 60s and 120s.
+Root cause of Stage 4 failure identified: full TBR convergence on the full
+tree after every PR cycle (~7s/cycle × 5 = ~35s, before outer TBR runs again).
 
-**Changes committed (b8b9f831):**
-- `R/MaximizeParsimony.R`: large preset now includes
-  `pruneReinsertCycles=5, pruneReinsertDrop=0.05, pruneReinsertSelection=2`
-- `AGENTS.md`: large preset table updated
-- `dev/benchmarks/bench_pr_stage4_validation.R`: Stage 4 script (200 runs)
-- `dev/benchmarks/t289e_stage4_hamilton.sh`: SLURM script
+Added two new SearchControl() params:
+- `pruneReinsertNni = TRUE`: NNI instead of TBR for full-tree polish (~5x cheaper)
+- `pruneReinsertFullMoves = N`: limit full-tree TBR moves (0 = converge, backward compat)
 
-**Stage 4 design:**
-- 5 datasets: mbank_X30754 (180t), project4133 (131t), project3701 (146t),
-  project804 (173t), syab07205 (206t)
-- 2 configs: baseline (no PR), pr_large (c=5, d=5%, MISSING)
-- 2 budgets: 60s, 120s; 10 seeds; 200 total runs
-- SLURM 16621426, ~5h wall time
+7 files changed: ts_prune_reinsert.h/.cpp, ts_driven.h/.cpp, ts_rcpp.cpp,
+R/SearchControl.R, man/SearchControl.Rd. commit 09c93468.
 
-**Resume:** poll results when job completes, analyse per-dataset and
-per-budget PR benefit. If consistent improvement, T-289 is done.
-If any dataset regresses, investigate.
+Stage 5 benchmark script created (bench_pr_stage5_nni.R + t289f_stage5_hamilton.sh).
+3 configs × 5 datasets × 2 budgets × 10 seeds = 300 runs.
+Committed aa3f16ea. Hamilton unreachable; submit when back:
+  sbatch /nobackup/pjjg18/TreeSearch-a/dev/benchmarks/t289f_stage5_hamilton.sh
 
-### S-RED Area 4 — Parallelism & RNG — DONE (2026-03-27)
+S-RED on new NNI branch: clean. No bugs. Constraint-staleness non-issue
+(tbr_search re-syncs cd at entry). Timeout handling correct.
 
-Reviewed ts_rng.h/.cpp (110 lines) and ts_parallel.h/.cpp (732 lines).
-ts_driven.cpp covered in E-003 (see below).
+### T-289 COMPLETE (2026-03-28)
 
-**No bugs found.** Thread safety correct throughout.
+Stage 4 (multi-dataset validation) results: PR adds ~90% per-replicate overhead
+at 206 tips. syab07205/206t: 0 replicates at 60s budget. pruneReinsertCycles=0L
+in large preset. commit 74698524.
 
-Observations (non-bugs):
-- fuse_round holds pool mutex across entire tree_fuse() call (O(n) TBR
-  exchanges). Workers block for full fuse duration. Performance only.
-- Multiple workers may trigger fuse_round at the same `replicates_done`
-  checkpoint due to relaxed read races. Redundant fuse (harmless).
-- Lines 323-325 in main polling loop: empty if-block, dead code.
-- Verbosity Rprintf acquires pool mutex via status(). If fuse_round holds
-  the lock, interrupt/timeout polling is delayed by fuse duration.
-- ts_rng.h serial/parallel dispatch verified correct in all paths.
+### Codoc fix — SearchControl.Rd (E-003, 2026-03-28)
+Rd missing pruneReinsertTbrMoves. Fixed manually. commit fdf25673.
+GHA 23687210711 PASSED.
 
-### S-RED Focus 4 — ts_driven.cpp review — DONE (2026-03-27)
+### T-291 — bench_framework.R interface (E-004)
+benchmark_run() updated to three structured lists. commit f1ed5dfc.
 
-Reviewed ts_driven.cpp (1054 lines) and ts_driven.h (322 lines) in full.
-Focus areas per AGENTS.md: cross-replicate constraint tightening, outer
-cycle loop, and features added since T-189.
-
-**Bugs fixed (committed to cpp-search):**
-
-1. **`unsuccessful_reps` not reset on fuse improvement** (`ts_driven.cpp`
-   line ~923). When inter-replicate fusing found a better score, the
-   perturb-stop counter was not cleared. Meanwhile `last_improved_rep`
-   *was* updated by fuse. This inconsistency could cause `perturb_stop`
-   to fire prematurely when fusing is still productive. Low severity
-   (factor defaults 0; limit = n_tips × factor is high when enabled),
-   but logically wrong. Fixed by adding `unsuccessful_reps = 0;` in the
-   fuse-improvement branch.
-
-2. **`DrivenResult::perturb_stop` flag missing** (`ts_driven.h`).
-   T-276 ("print convergence summary") explicitly lists perturb_stop as
-   a convergence indicator. Added the field and set it at the stopping
-   site in `driven_search()`.
-
-3. **Stale NNI-perturb comment** (step 4b, `ts_driven.cpp`). Opening
-   sentence said "Skip when constraints are active" but the code passes
-   `cd` through `nni_perturb_search()` and has been safe under constraints
-   for several tasks. Replaced with accurate one-liner.
-
-**Other observations (no fix needed):**
-
-- `consensus_constrain = true` with 0 unanimous splits calls
-  `extract_consensus_splits()` every replicate (performance, not
-  correctness). consensus_constrain defaults to false; low priority.
-- `timed_out = true` is set for both timeout and user interrupt — no
-  distinction in DrivenResult. Acceptable for now; T-276 can note this
-  in summary text ("search interrupted/timed out").
-- `score_tree()` called at top of each outer cycle for improvement
-  comparison — minor overhead, by design.
-- MPT enumeration uses user constraint `cd` only (not auto_cd) — by
-  design: enumeration should be unconstrained.
-- Outer cycle reset logic correct; `score_before_cycle` / `score_after_cycle`
-  correctly bound the improvement check.
-- Adaptive level, ratchet taper, consensus constraint tightening, and
-  adaptive start bandit logic all look correct.
-
-### Previous work
-### ASAN vector OOB fix — DONE (2026-03-26)
-- Root cause: total_words == 0 when all characters are parsimony-uninformative
-- Fix: early returns in TBR, SPR, NNI, drift, ratchet, collapsed-flags
-- Commit: 6505803f on cpp-search
-
-### S-COORD Round 27 — DONE
-- Fixed R 4.1 `%||%` compat bug in `test-ts-anneal.R` (58fc2552)
-
-### T-265 — RESOLVED (scoring method confound)
-### Previous: S-RED Focus 8, T-261+T-262, T-255, T-260
+### S-RED E-005 — ts_strategy.h + ts_temper (no bugs)
+### S-RED E-002 — ts_rng + ts_parallel (no bugs)

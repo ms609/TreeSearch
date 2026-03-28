@@ -1,6 +1,7 @@
 #include "ts_prune_reinsert.h"
 #include "ts_fitch.h"
 #include "ts_tbr.h"
+#include "ts_search.h"
 #include "ts_wagner.h"
 #include "ts_pool.h"
 #include "ts_splits.h"
@@ -546,11 +547,17 @@ PruneReinsertResult prune_reinsert_search(
     // F-016 (NNI-perturb).
     if (cd) update_constraint(tree, *cd);
 
-    // 6. TBR polish on full tree
-    {
+    // 6. Polish full tree.
+    // nni_full: NNI convergence (~5x cheaper at large n_tip; outer-loop TBR
+    //   restores full local optimality afterwards).
+    // tbr_full_max_moves > 0: limited TBR (analogous to tbr_max_moves on
+    //   reduced tree).  0 = converge (original behaviour, backward compat).
+    if (params.nni_full) {
+      nni_search(tree, ds, 0, check_timeout);
+    } else {
       TBRParams tp;
       tp.accept_equal = false;
-      tp.max_accepted_changes = 0;  // converge
+      tp.max_accepted_changes = params.tbr_full_max_moves;  // 0 = converge
       tp.max_hits = params.tbr_max_hits;
       tp.tabu_size = params.tabu_size;
       tbr_search(tree, ds, tp, cd, nullptr, nullptr, check_timeout);

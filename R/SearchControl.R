@@ -121,6 +121,14 @@
 #'   and substantially reduces per-cycle cost on datasets with inapplicable
 #'   characters (where Brazeau scoring dominates).  Increase towards 0 if
 #'   you prefer thorough backbone optimisation over replicate throughput.
+#' @param pruneReinsertFullMoves Integer; maximum TBR moves during the
+#'   full-tree polish after each prune-reinsert cycle.  0 (default) runs
+#'   to convergence.  Has no effect when `pruneReinsertNni = TRUE`.
+#' @param pruneReinsertNni Logical; if `TRUE`, use NNI (nearest-neighbour
+#'   interchange) instead of TBR for the full-tree polish step.  NNI
+#'   converges roughly 5x faster than TBR at large tip counts (\eqn{\ge}120),
+#'   substantially reducing per-cycle cost while still reaching a local
+#'   optimum before the outer-loop TBR polish.  Default `FALSE`.
 #' @param consensusConstrain Logical; lock the strict consensus of pool
 #'   trees as topological constraints for subsequent replicates?  When
 #'   `TRUE`, after enough replicates (\eqn{\ge}5), splits present in ALL
@@ -248,6 +256,8 @@ SearchControl <- function(
     pruneReinsertDrop = 0.10,
     pruneReinsertSelection = 0L,
     pruneReinsertTbrMoves = 5L,
+    pruneReinsertFullMoves = 0L,
+    pruneReinsertNni = FALSE,
     # Simulated annealing perturbation (PCSA, T-207)
     annealCycles = 0L,
     annealPhases = 5L,
@@ -304,6 +314,8 @@ SearchControl <- function(
       pruneReinsertDrop = as.double(pruneReinsertDrop),
       pruneReinsertSelection = as.integer(pruneReinsertSelection),
       pruneReinsertTbrMoves = as.integer(pruneReinsertTbrMoves),
+      pruneReinsertFullMoves = as.integer(pruneReinsertFullMoves),
+      pruneReinsertNni = as.integer(pruneReinsertNni),
       annealCycles = as.integer(annealCycles),
       annealPhases = as.integer(annealPhases),
       annealTStart = as.double(annealTStart),
@@ -328,7 +340,8 @@ print.SearchControl <- function(x, ...) {
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
     "Prune-Reinsert" = c("pruneReinsertCycles", "pruneReinsertDrop",
-                          "pruneReinsertSelection", "pruneReinsertTbrMoves"),
+                          "pruneReinsertSelection", "pruneReinsertTbrMoves",
+                          "pruneReinsertFullMoves", "pruneReinsertNni"),
     "Annealing" = c("annealCycles", "annealPhases", "annealTStart",
                      "annealTEnd", "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
