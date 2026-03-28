@@ -412,3 +412,8 @@ EOF 2>&1
 EOF 2>&1
 | F-014 | S-RED focus 15: ts_wagner.cpp (1133+102 lines) | 0 | No bugs. Incremental Fitch scoring (downpass+uppass with early termination) correct. LCA-based constraint mapping during construction correct (cn==root skip, MUST_OUTSIDE boundary exception). softmax_sample_order numerical stability verified. random_constrained_tree buffer safety verified via canonicalization invariant (tip 0 always outside prevents all-tips-in-one-split overflow). resolve_randomly subtree_root tracking effectively dead (defensive). Constraint retry loops (100 attempts) silently return on all-fail; driven search impose_constraint is additional safety net. |
 EOF 2>&1
+
+## 2026-03-28
+
+| E-003 | SearchControl.Rd codoc fix (pruneReinsertTbrMoves) | 0 | GHA: all platforms "Codoc mismatches from SearchControl.Rd". pruneReinsertTbrMoves added to function + roxygen but Rd not regenerated. Added to \usage and \arguments manually. commit fdf25673. GHA 23687210711 dispatched. |
+EOF 2>&1
