@@ -550,7 +550,9 @@ List ts_tbr_search(
     bool acceptEqual = false,
     int maxChanges = 0,
     IntegerVector min_steps = IntegerVector(),
-    double concavity = -1.0)
+    double concavity = -1.0,
+    bool targetedSector = false,
+    int targetedMinSize = 6)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -564,6 +566,8 @@ List ts_tbr_search(
   params.max_hits = maxHits;
   params.accept_equal = acceptEqual;
   params.max_accepted_changes = maxChanges;
+  params.targeted_sector = targetedSector;
+  params.targeted_min_size = targetedMinSize;
 
   ts::TBRResult result = ts::tbr_search(tree, ds, params);
 
@@ -573,7 +577,9 @@ List ts_tbr_search(
     Named("n_accepted") = result.n_accepted,
     Named("n_evaluated") = result.n_evaluated,
     Named("n_zero_skipped") = result.n_zero_skipped,
-    Named("converged") = result.converged
+    Named("converged") = result.converged,
+    Named("n_targeted_calls") = result.n_targeted_calls,
+    Named("n_targeted_improved") = result.n_targeted_improved
   );
 }
 

@@ -35,7 +35,7 @@ extern SEXP _TreeSearch_ts_na_debug_char(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_nni_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_debug_clip(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_spr_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_tbr_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_tbr_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_drift_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_test_indirect(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_ratchet_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -110,7 +110,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_nni_search",    (DL_FUNC) &_TreeSearch_ts_nni_search, 8},
   {"_TreeSearch_ts_debug_clip",    (DL_FUNC) &_TreeSearch_ts_debug_clip, 6},
   {"_TreeSearch_ts_spr_search",    (DL_FUNC) &_TreeSearch_ts_spr_search, 8},
-  {"_TreeSearch_ts_tbr_search",    (DL_FUNC) &_TreeSearch_ts_tbr_search, 10},
+  {"_TreeSearch_ts_tbr_search",    (DL_FUNC) &_TreeSearch_ts_tbr_search, 12},
   {"_TreeSearch_ts_drift_search",  (DL_FUNC) &_TreeSearch_ts_drift_search, 11},
   {"_TreeSearch_ts_test_indirect", (DL_FUNC) &_TreeSearch_ts_test_indirect, 8},
   {"_TreeSearch_ts_ratchet_search", (DL_FUNC) &_TreeSearch_ts_ratchet_search, 14},

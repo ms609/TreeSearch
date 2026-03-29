@@ -470,6 +470,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   int n_accepted = 0;
   int n_evaluated = 0;
   int n_zero_skipped = 0;
+  int n_targeted_calls = 0;
+  int n_targeted_improved = 0;
   int hits = 1;
   const bool use_iw = std::isfinite(ds.concavity);
   // Floating-point tolerance for score equality
@@ -1048,6 +1050,46 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             compute_dfs_timestamps(tree, *cd);
           }
           if (collect_pool) collect_pool->add(tree, actual);
+
+          // Targeted sector refinement: after a strict improvement,
+          // run TBR within the just-moved clip subtree to refine its
+          // internal arrangement for the new context.
+          if (params.targeted_sector
+              && !collect_pool
+              && !sector_mask
+              && subtree_sizes[clip_node] >= params.targeted_min_size)
+          {
+            std::vector<bool> target_mask(tree.n_node, false);
+            {
+              std::vector<int> stk;
+              stk.push_back(clip_node);
+              while (!stk.empty()) {
+                int nd = stk.back();
+                stk.pop_back();
+                target_mask[nd] = true;
+                if (nd >= tree.n_tip) {
+                  int ni = nd - tree.n_tip;
+                  stk.push_back(tree.left[ni]);
+                  stk.push_back(tree.right[ni]);
+                }
+              }
+            }
+
+            TBRParams inner_params;
+            inner_params.max_hits = 1;
+            inner_params.accept_equal = false;
+            inner_params.targeted_sector = false;
+
+            double pre_target = best_score;
+            TBRResult inner = tbr_search(tree, ds, inner_params, cd,
+                                         &target_mask);
+
+            ++n_targeted_calls;
+            if (inner.best_score < pre_target - eps) {
+              best_score = inner.best_score;
+              ++n_targeted_improved;
+            }
+          }
         } else if (std::fabs(actual - best_score) <= eps
                    && params.accept_equal
                    && hits <= params.max_hits) {
@@ -1132,7 +1174,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      && n_accepted >= params.max_accepted_changes);
 
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
-                   converged};
+                   converged, n_targeted_calls, n_targeted_improved};
 }
 
 } // namespace ts

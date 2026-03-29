@@ -57,3 +57,4 @@ test_output.txt
 /.tnt-bench
 /.vtune*
 /vtune*
+.expt-lib/

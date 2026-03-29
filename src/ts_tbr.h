@@ -23,6 +23,8 @@ struct TBRParams {
   int max_accepted_changes = 0;  // 0 = no limit (run to convergence)
   int max_hits = 1;              // equal-score hits before stopping
   int tabu_size = 0;             // tabu list capacity (0 = disabled)
+  bool targeted_sector = false;  // post-acceptance sector search on clip?
+  int targeted_min_size = 6;     // minimum clip subtree size to target
 };
 
 struct TBRResult {
@@ -31,6 +33,8 @@ struct TBRResult {
   int n_evaluated;
   int n_zero_skipped; // clips skipped due to zero-length edge (opt #7)
   bool converged;  // true if stopped due to no improvement
+  int n_targeted_calls = 0;    // targeted sector searches attempted
+  int n_targeted_improved = 0; // targeted searches that found improvement
 };
 
 // Run TBR hill-climbing search on `tree` with dataset `ds`.

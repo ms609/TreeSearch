@@ -120,8 +120,8 @@ ts_spr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 20
     .Call(`_TreeSearch_ts_spr_search`, edge, contrast, tip_data, weight, levels, maxHits, min_steps, concavity)
 }
 
-ts_tbr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L, min_steps = integer(), concavity = -1.0) {
-    .Call(`_TreeSearch_ts_tbr_search`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity)
+ts_tbr_search <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L, min_steps = integer(), concavity = -1.0, targetedSector = FALSE, targetedMinSize = 6L) {
+    .Call(`_TreeSearch_ts_tbr_search`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity, targetedSector, targetedMinSize)
 }
 
 ts_ratchet_search <- function(edge, contrast, tip_data, weight, levels, nCycles = 10L, perturbProb = 0.04, maxHits = 1L, min_steps = integer(), concavity = -1.0, perturbMode = 0L, perturbMaxMoves = 0L, adaptive = FALSE, targetEscapeRate = 0.3) {
@@ -172,10 +172,7 @@ ts_xss_search <- function(edge, contrast, tip_data, weight, levels, nPartitions 
     .Call(`_TreeSearch_ts_xss_search`, edge, contrast, tip_data, weight, levels, nPartitions, xssRounds, acceptEqual, ratchetCycles, maxHits, min_steps, concavity)
 }
 
-# Thin wrapper for the C++ ts_driven_search (10 grouped args).
-# Production callers (MaximizeParsimony, .ResampleHierarchy) call this directly.
-# Tests use ts_driven_search() in ts-driven-compat.R for backward compatibility.
-.ts_driven_search_raw <- function(contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig = NULL, hsjConfig = NULL, xformConfig = NULL) {
+ts_driven_search <- function(contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig = NULL, hsjConfig = NULL, xformConfig = NULL) {
     .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig, hsjConfig, xformConfig)
 }
 

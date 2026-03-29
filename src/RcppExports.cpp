@@ -329,8 +329,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_tbr_search
-List ts_tbr_search(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxHits, bool acceptEqual, int maxChanges, IntegerVector min_steps, double concavity);
-RcppExport SEXP _TreeSearch_ts_tbr_search(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxHitsSEXP, SEXP acceptEqualSEXP, SEXP maxChangesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP) {
+List ts_tbr_search(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int maxHits, bool acceptEqual, int maxChanges, IntegerVector min_steps, double concavity, bool targetedSector, int targetedMinSize);
+RcppExport SEXP _TreeSearch_ts_tbr_search(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP maxHitsSEXP, SEXP acceptEqualSEXP, SEXP maxChangesSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP targetedSectorSEXP, SEXP targetedMinSizeSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -344,7 +344,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type maxChanges(maxChangesSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
     Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_tbr_search(edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity));
+    Rcpp::traits::input_parameter< bool >::type targetedSector(targetedSectorSEXP);
+    Rcpp::traits::input_parameter< int >::type targetedMinSize(targetedMinSizeSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_tbr_search(edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity, targetedSector, targetedMinSize));
     return rcpp_result_gen;
 END_RCPP
 }
