@@ -307,7 +307,11 @@ On `/assign X`:
    (scan → claim via rename → triage → delete). While untriaged issues
    remain, triaging takes priority over `to-do.md` tasks (an issue may
    contain a P0).
-4. If no untriaged issues, claim the next OPEN task from `to-do.md`.
+4. **Check `remote-jobs.md`** for retrievable results. If a job is listed
+   as complete (or past its expected duration), retrieve and process the
+   results before claiming a new task.
+5. If no untriaged issues or pending remote results, claim the next OPEN
+   task from `to-do.md`.
 
 Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
@@ -397,6 +401,7 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
 | `u.nnn` | User issue files (agents triage → `to-do.md`, then delete) |
 | `to-do.md` | Task queue (active/open tasks only) |
+| `remote-jobs.md` | Pending async jobs (Hamilton SLURM, long GHA) — check at `/assign` |
 | `completed-tasks.md` | Archive of completed tasks |
 | `coordination.md` | Strategic plan |
 | `agent-X.md` | Agent progress log |
