@@ -307,7 +307,11 @@ On `/assign X`:
    (scan → claim via rename → triage → delete). While untriaged issues
    remain, triaging takes priority over `to-do.md` tasks (an issue may
    contain a P0).
-4. If no untriaged issues, claim the next OPEN task from `to-do.md`.
+4. **Check `remote-jobs.md`** for retrievable results. If a job is listed
+   as complete (or past its expected duration), retrieve and process the
+   results before claiming a new task.
+5. If no untriaged issues or pending remote results, claim the next OPEN
+   task from `to-do.md`.
 
 Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
@@ -397,6 +401,7 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
 | `u.nnn` | User issue files (agents triage → `to-do.md`, then delete) |
 | `to-do.md` | Task queue (active/open tasks only) |
+| `remote-jobs.md` | Pending async jobs (Hamilton SLURM, long GHA) — check at `/assign` |
 | `completed-tasks.md` | Archive of completed tasks |
 | `coordination.md` | Strategic plan |
 | `agent-X.md` | Agent progress log |
@@ -541,7 +546,7 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, Wagner×3, NNI-first, adaptive level |
 | thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb (T-274), 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100, pruneReinsert=disabled (T-289 Stage 4: overhead too high — 0 reps at 206t/60s) |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100, pruneReinsert=5 cycles NNI-polish (T-289f Stage 5: NNI polish fixes 0-rep failure at 206t; improves 131–180t) |
 
 **T-264 (2026-03-26):** `consensusStableReps` removed from all presets
 (disabled, 0). The previous setting of 3 caused catastrophic early
@@ -561,8 +566,18 @@ PR (c=5, d=5%, MISSING) vs baseline. 60s: mean Δ=+0.5 steps (neutral);
 project3701 146t regresses −12 steps; syab07205 206t: 0 replicates complete
 (per-rep cost ~60s, budget exceeded). 120s: mean Δ=−9.1 steps but driven
 by project3701 (−37 steps); others ≤6 steps. Replicate ratio 0.82 at 60s,
-0.68 at 120s. **Decision: disable PR in large preset** — 0-rep failure at
-206t/60s is a showstopper. Available via SearchControl(pruneReinsertCycles=N).
+0.68 at 120s. Decision: disable PR (TBR polish) — 0-rep failure at 206t/60s
+is a showstopper.
+
+**T-289f Stage 5 (2026-03-29, EPYC 7702, 10 seeds, 5 datasets 131–206t):**
+PR (c=5, NNI full-tree polish) vs pr_tbr (TBR polish, Stage 4 reference) vs
+baseline. pr_tbr at 206t/60s: still 0 reps (confirmed). pr_nni fixes the
+0-rep failure (2 reps at 206t/60s). Score deltas vs baseline: project4133
+(131t) ≈0; project3701 (146t) **−178 steps** at 60s, −128 at 120s; project804
+(173t) −9/−2; mbank_X30754 (180t) −4/−7; syab07205 (206t) +17.5 at 60s
+(neutral at 120s). **Decision: enable pruneReinsertCycles=5, pruneReinsertNni=TRUE
+in large preset.** Note G-006: NNI polish ignores ConstraintData — irrelevant
+since large preset does not use topological constraints.
 
 **Post-T-206 Hamilton HPC baselines (2026-03-26, EPYC 7702, 5 seeds):**
 30s median=1202 (range 1189–1214), 60s median=1190 (1190–1202), 120s
@@ -1224,6 +1239,41 @@ Ranked by priority:
     per-replicate overhead with ≤0.1-step expected-best benefit at 30s/60s budgets — within
     bootstrap noise. **Set `nniPerturbCycles = 0` in thorough preset.** Available via
     `SearchControl(nniPerturbCycles = N)` for manual use.
+12. ~~Size-weighted TBR clip ordering~~ — **Closed** (2026-03-29, `feature/weighted-clip-order`):
+    Diagnostic instrumentation added (`TBRPassRecord`, `ts_tbr_diagnostics()`); 10 seeds × 4
+    datasets (23–88t, random Wagner starts). **Hypothesis FALSIFIED**: tip clips (~51% of all
+    clips) account for only 22–38% of accepted moves (enrichment 0.43–0.76×). Medium-small
+    clips (size 2..√n) are the most productive clip type. All three proposed variants
+    (INV_WEIGHT, TIPS_FIRST, BUCKET) favour tips — the wrong direction. A "medium-first"
+    ordering might save ~3–7% per productive pass, but the enrichment (≈1.2×) is too small
+    to justify implementation complexity. Diagnostic code preserved in branch for reference;
+    no preset change. Branch closed.
+13. ~~XSS↔TBR cycling under IW~~ — **Closed** (2026-03-29, `expt/sector-tbr-cycling`):
+    5 datasets (62–180t), 20 seeds, EW/IW10/IW3, TAEB analysis at 10–120s budgets.
+    **Original hypothesis (IW benefits ≥2× more from XSS than EW): weak signal — closed.**
+    IW3 XSS improvement rate ~30% vs EW ~25%; below 2× threshold; magnitudes small.
+    **Key finding: XSS cycling benefit scales with tree size, not scoring mode.**
+    At ≤88t: XSS adds 24–57% overhead, TAEB Δ ≈ 0 (multi-start dominates).
+    At 180t: XSS adds 12–19% overhead, TAEB Δ = −6.8 to −9.8 EW steps at 30–120s;
+    IW3 Δ = −0.8 to −1.2 score units; 13/20 seeds improve, ~2 cycles to converge.
+    **Practice**: no IW-specific XSS treatment; existing pipeline adequate. The large
+    preset's XSS(3)+RSS(2)+CSS(1) is well-justified; the outerCycles=1 setting means
+    only one XSS pass per replicate — increasing to outerCycles=2 could capture the
+    ~2-cycle joint convergence observed at 180t, but this interacts with T-269
+    (fine-grained interleaving showed diminishing returns from more outer cycles at
+    ≤88t). Results: `TS-sector-expt/dev/benchmarks/expt_tbr_xss_v2_results.rds`.
+14. ~~Targeted post-clip sector search~~ — **Closed** (2026-03-29,
+    `expt/sector-tbr-cycling`): Instrumented `tbr_search()` to run
+    sector-masked TBR on the just-moved clip subtree after each accepted
+    move. 5 datasets (62–180t), 20 seeds, EW/IW10/IW3. **Hit rate ~35%
+    across all scoring modes (no IW-specific benefit). But net HARMFUL:**
+    mbank_X30754 EW TAEB Δ +17 to +34 steps at 30–120s; Zhu2013/Giles2015
+    EW +1–2 steps. IW3 tiny benefit (−0.1 to −0.3). **Mechanism**: local
+    sector refinement after each move changes the global TBR trajectory,
+    steering into worse basins. This validates the existing pipeline design:
+    XSS should run as a separate phase AFTER TBR convergence, not
+    interleaved within individual TBR moves. Results:
+    `TS-sector-expt/dev/benchmarks/expt_targeted_sector_results.rds`.
 
 ## Benchmarks and profiling
 
@@ -1291,7 +1341,8 @@ tuning — they are a one-way door.
 Benchmark scripts in `dev/benchmarks/`. Key files:
 - `bench_regression.R` — CI regression test (score quality + timing bounds)
 - `bench_framework.R` — Dataset × strategy × replicate grid
-- `strategies.md` — Strategy space documentation (full track/sample details)
+- `strategies.md` — Strategy space documentation (full track/sample details,
+  seed count protocol, sample-size validation)
 
 **Phase distribution baselines (T-290b, 2026-03-28, Brazeau-sample datasets,
 30s, post-T-255 no-drift presets):**

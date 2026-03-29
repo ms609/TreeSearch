@@ -550,9 +550,12 @@ PruneReinsertResult prune_reinsert_search(
     // 6. Polish full tree.
     // nni_full: NNI convergence (~5x cheaper at large n_tip; outer-loop TBR
     //   restores full local optimality afterwards).
+    // When topological constraints are active, NNI is skipped and TBR is
+    // used instead — nni_search() does not enforce ConstraintData (G-006).
+    // This mirrors the nni_wagner guard in ts_driven.cpp.
     // tbr_full_max_moves > 0: limited TBR (analogous to tbr_max_moves on
     //   reduced tree).  0 = converge (original behaviour, backward compat).
-    if (params.nni_full) {
+    if (params.nni_full && (!cd || !cd->active)) {
       nni_search(tree, ds, 0, check_timeout);
     } else {
       TBRParams tp;
