@@ -1,74 +1,36 @@
 # Agent G — Progress Log
 
-## Current State
+## Current Task
+- **Task:** IDLE
+- **Status:** Completed T-289f Stage 5 analysis
 
-- **Status:** ACTIVE — T-290c wagnerStarts confirmatory benchmark
-- **Date:** 2026-03-28 ~18:45 GMT
+## Recently Completed
 
-## Recent History (2026-03-28)
+### T-289f Stage 5 — Prune-Reinsert NNI vs TBR Polish (2026-03-29)
+Hamilton HPC benchmark (SLURM 16622421, 7h runtime). 5 large-tree datasets
+(131-206t), 20 seeds, 60s/120s budgets, EW scoring. Three configs: baseline,
+pr_nni (NNI polish), pr_tbr (TBR polish).
 
-### G-001 — T-290: Brazeau-track phase profiling + wagnerStarts analysis (COMPLETE)
+**Results:** pr_nni wins 7/10 conditions by expected-best. Huge benefit on
+project3701 (146t, -178 median at 60s). Modest benefits at 173-180t. Slight
+regression at 206t. pr_tbr harmful (1/9 wins; total starvation at 206t/60s).
 
-Phase profiling {Brazeau,Fitch}×{EW,IW10}×{default,thorough} on 6 datasets
-(23–173t), 30s, 3 seeds. Key findings:
-- Wagner 3.6–5.2× more expensive under Brazeau; ratchet 1.1–1.3×; rep rate
-  ~97% of Fitch.
-- wagnerStarts=3 benefit is topology quality, not cycle count — datasets
-  where thorough > default complete 0 reps in 30s.
-- Conclusion: Fitch-tuned presets are appropriate for Brazeau scoring.
-- strategies.md + AGENTS.md updated. Results in TS-TNT-bench t290_results/.
+**Decision:** Not enabled in large preset - benefit is dataset-dependent and
+reverses at >=206t. Available via SearchControl(pruneReinsertCycles=5,
+pruneReinsertNni=TRUE). strategies.md updated.
 
-### G-002 — S-COORD round 45 (COMPLETE, 2026-03-28 ~18:15 GMT)
+### S-COORD Round 45 (2026-03-28)
+PRs #237 (T-279) and #238 (T-245) merged; rows deleted from to-do.md.
 
-- PRs #237 (T-279 drift fix) + #238 (T-245 TBR batching) merged; rows
-  deleted from to-do.md; entries added to completed-tasks.md.
-- T-289f Stage 5: SLURM 16622224 running (~3 min elapsed at time of check).
-- Open PRs: #213 (T-150), #216 (T-204), #210 (DRAFT).
+### S-RED Focus 30-31 (2026-03-28)
+ts_drift.cpp (T-279): correct. ts_fitch.h/ts_tbr.cpp (T-245): correct.
+ts_prune_reinsert.h/.cpp: G-006 filed (nni_search lacks ConstraintData*).
 
-### G-003 — S-RED focus 30 (COMPLETE, 2026-03-28 ~18:45 GMT)
+### T-290c wagnerStarts Benchmark (2026-03-28)
+wagnerStarts=1 vs 3 under Brazeau scoring, 2 datasets (86-91t).
+Current preset assignments confirmed correct.
 
-ts_drift.cpp (T-279 post-fix review):
-- IW reject: restore → rescore → update_constraint ✓
-- EW reject: "score already set above" → update_constraint ✓
-- Pre-existing edge: re-apply failure in EW accept path skips update_constraint
-  (unreachable in practice; not filed)
-- No bugs.
+---
 
-ts_fitch.h + ts_fitch.cpp + ts_tbr.cpp (T-245 post-merge review):
-- x4 EW computation: identical to scalar (any_hit_reduce + ~a & mask) ✓
-- x4 NA computation: identical to scalar (from1/clip_ha/ba[b]/mask) ✓
-- Early-exit: all-4 >= cutoff, bitwise AND — conservative and correct ✓
-- Partial batch (< 4): correctly falls back to scalar functions ✓
-- State updates (best_candidate, best_above, best_below, best_reroot_*):
-  identical to scalar path ✓
-- No bugs.
-
-### G-004 — T-290c: wagnerStarts confirmatory benchmark — NEXT
-
-Quick benchmark (30s, 5 seeds) comparing wagnerStarts 1 vs 3 on the
-thorough preset to confirm analytical prediction from T-290b.
-
-## Earlier History
-
-See `completed-tasks.md` for full history. Prior work includes:
-- T-208: Fix random_topology_tree ignoring constraints → PR #219 merged
-- T-182: Adaptive ratchet taper (superseded by T-248)
-- T-205: Fix flaky test-pp-random-tree.R
-- S-PROF rounds 4–6, T-203, T-179 (large-tree preset)
-AGENTEOF 2>&1
-
-### G-004 — T-290c wagnerStarts confirmatory benchmark (COMPLETE, 2026-03-28 ~19:00 GMT)
-
-Local benchmark EW, 5 seeds, 30s+60s, project2084_(1) 86t/3660c + project2086 91t/453c.
-Results: at 30s/0 reps, w1 better (Wagner overhead consumes TBR time under Brazeau);
-at 60s/1 rep, w3 better (+564 steps). Multi-rep: equivalent.
-Conclusion: large preset (w1) and thorough preset (w3) both confirmed correct.
-strategies.md updated with T-290c section. CSV: t290_results/t290c_quick_20260328_1852.csv.
-
-### G-005 — T-289f Stage 5 RESUBMIT needed (2026-03-28 ~19:05 GMT)
-
-Jobs 16622224/16622226/16622249 all failed: `feature/tbr-batch` deleted after
-PR #238 merge; git checkout syntax also wrong for Hamilton's git version.
-Fix: change to `git reset --hard origin/cpp-search`. Script updated on cpp-search
-commit 2784432a. Hamilton currently unreachable (timeout). Will resubmit when
-connection restored.
+## Earlier completions
+See completed-tasks.md for full history.

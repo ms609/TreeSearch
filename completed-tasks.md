@@ -426,3 +426,4 @@ EOF 2>&1
 | F-015 | T-279: Constrained drift stale constraint_node + redundant rescore | 1 | PR #237 merged 2026-03-28. Fixed update_constraint() missing after IW+EW RFD reject in drift_phase(); removed redundant full_rescore in EW reject path. ts_drift.cpp commit e85ec84f. |
 | F-016 | T-245: TBR 4-wide candidate batching | 1 | PR #238 merged 2026-03-28. fitch_indirect_cached_flat_x4()/na variant; TBR rerooting inner loop batch-of-4 for flat EW path; IW/upweight fallback to scalar. GHA 23690208221 PASS. Hamilton benchmark pending. |
 EOF 2>&1
+| G-002 | T-289f Stage 5: Prune-reinsert NNI vs TBR polish (Hamilton) | 1 | SLURM 16622421 (7h, EPYC 7702). 5 datasets (131-206t), 20 seeds, 60/120s, EW. pr_nni wins 7/10 EB conditions (huge on project3701 -178 median at 60s; modest at 173-180t; regresses at 206t). pr_tbr harmful (1/9 wins; 0 reps at 206t/60s). Decision: not enabled in preset. strategies.md updated. CSV: TS-TNT-bench/dev/benchmarks/t289f_results/. |
