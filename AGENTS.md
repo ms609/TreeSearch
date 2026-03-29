@@ -1262,6 +1262,18 @@ Ranked by priority:
     ~2-cycle joint convergence observed at 180t, but this interacts with T-269
     (fine-grained interleaving showed diminishing returns from more outer cycles at
     ≤88t). Results: `TS-sector-expt/dev/benchmarks/expt_tbr_xss_v2_results.rds`.
+14. ~~Targeted post-clip sector search~~ — **Closed** (2026-03-29,
+    `expt/sector-tbr-cycling`): Instrumented `tbr_search()` to run
+    sector-masked TBR on the just-moved clip subtree after each accepted
+    move. 5 datasets (62–180t), 20 seeds, EW/IW10/IW3. **Hit rate ~35%
+    across all scoring modes (no IW-specific benefit). But net HARMFUL:**
+    mbank_X30754 EW TAEB Δ +17 to +34 steps at 30–120s; Zhu2013/Giles2015
+    EW +1–2 steps. IW3 tiny benefit (−0.1 to −0.3). **Mechanism**: local
+    sector refinement after each move changes the global TBR trajectory,
+    steering into worse basins. This validates the existing pipeline design:
+    XSS should run as a separate phase AFTER TBR convergence, not
+    interleaved within individual TBR moves. Results:
+    `TS-sector-expt/dev/benchmarks/expt_targeted_sector_results.rds`.
 
 ## Benchmarks and profiling
 
