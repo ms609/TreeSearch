@@ -33,7 +33,7 @@
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| G-006 | P3 | OPEN | — | **`nni_full` PR polish ignores ConstraintData.** In `ts_prune_reinsert.cpp::prune_reinsert_search()`, when `params.nni_full = true`, `nni_search(tree, ds, 0, check_timeout)` is called without `ConstraintData*`. `nni_search` has no constraint parameter, so constraint-violating NNI moves can be accepted. Only affects users who combine `pruneReinsertNni = TRUE` with topological constraints; not in any preset; benchmark datasets are unconstrained. Fix: either add `ConstraintData*` to `nni_search` signature, or post-hoc verify + repair constraint after NNI polish. | Found S-RED focus 31 (G, 2026-03-28). Affects feature/prune-reinsert when it merges. |
+
 
 ### Alternative Homologies (Goloboff 2026) — `feature/alt-homology` / `TS-AltHom`
 
@@ -71,7 +71,7 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
-| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-28 focus 31 by G. ts_prune_reinsert.h/.cpp (583 lines): nni_full path calls nni_search() without ConstraintData* — filed G-006 P3. All other logic correct (tip-selection, topology pruning/expansion, constraint sync after expand and revert, scoring mode guard). Next: review alt-homology modules when T-280 merges. |
+| S-RED | dyn | OPEN | — | **Standing: Red-team review** | Last run: 2026-03-28 focus 31 by G. ts_prune_reinsert.h/.cpp (583 lines): G-006 found + now fixed. Next: ts_search.cpp (NNI/SPR, 421 lines) and ts_nni_perturb.h/.cpp (unreviewed). |
 | S-PROF | dyn | OPEN | — | **Standing: Performance profiling** | Last run: 2026-03-27 by A (round 6: thorough-preset phase distribution at 75t; NNI-perturb 34% time / 14% hit rate; T-274 filed). |
-| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-28 round 45 by G. PRs #237 (T-279) + #238 (T-245) merged and cleaned up. Specific task queue sparse — T-280–288 all WORKTREE. T-289f Stage 5 complete (SLURM 16622421). pr_nni beneficial 131-180t but regresses at 206t; not enabled in preset. PRs open: #213 (T-150), #216 (T-204), #210 (DRAFT). |
+| S-COORD | dyn | OPEN | — | **Standing: Coordination review** | Last run: 2026-03-29 round 46 by E. T-289f complete: pr_nni enabled in large preset (commit 4a549eb4). G-006 fixed. GHA 23703257153 running. Task queue near-empty — only standing tasks + T-280–288 WORKTREE. PRs open: #213 (T-150), #216 (T-204), #210 (DRAFT re-running). |
 | S-PR | dyn | OPEN | — | **Standing: PR maintenance** | Last run: 2026-03-28 round 45 by G. Open PRs: #213 (T-150, GHA PASS), #216 (T-204, GHA PASS), #210 (DRAFT cpp-search→main). Merged this round: #237 (T-279), #238 (T-245). |

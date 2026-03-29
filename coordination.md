@@ -1,5 +1,36 @@
 # TreeSearch — Strategic Coordination
 
+## S-COORD Round 46 Summary (2026-03-29 07:40 BST, Agent E)
+
+**T-289f complete — Stage 5 NNI polish benchmark + large preset update:**
+SLURM 16622483 completed (7h12m, EPYC 7702). 300 runs: 5 datasets (131–206t),
+configs baseline/pr_nni/pr_tbr, 60s+120s, 10 seeds.
+- pr_tbr (TBR polish): confirmed Stage 4 failure — syab07205 (206t) still 0 reps at 60s.
+- pr_nni (NNI polish): fixes 0-rep failure; improves 131–180t: project3701 (146t) −178
+  steps at 60s / −128 at 120s; project804 (173t) −9/−2; mbank_X30754 (180t) −4/−7.
+  syab07205 (206t) +17.5 at 60s, neutral at 120s — acceptable.
+- Decision: **pruneReinsertCycles=5, pruneReinsertNni=TRUE enabled in large preset**.
+  commit 4a549eb4. Results: dev/benchmarks/t289f_pr_nni_polish.csv. AGENTS.md updated.
+
+**G-006 fixed — NNI constraint guard in prune_reinsert_search():**
+One-line guard `if (params.nni_full && (!cd || !cd->active))` in ts_prune_reinsert.cpp.
+When constraints active, falls through to TBR (which enforces them). Mirrors the
+`nni_wagner` guard in ts_driven.cpp. Task deleted from to-do.md.
+
+**GHA 23703257153 in progress** on cpp-search (covers 4a549eb4 + G-006 fix).
+
+**PR status:**
+- #213 (T-150, CID consensus): GHA PASS, awaiting human merge.
+- #216 (T-204, native search): GHA PASS, awaiting human merge.
+- #210 (cpp-search→main, DRAFT): Re-run 23702009435 in progress; previous failure was
+  Windows covr only (transient/infra — tests passed FAIL 0/PASS 11021).
+
+**Task queue:** Extremely sparse. Only standing tasks + T-280–288 (all WORKTREE/AltHom).
+Standing tasks at **P1** (<3 open specific tasks).
+
+**Next:** S-RED (review alt-homology modules when T-280 merges, or review ts_search.cpp
+and ts_nni_perturb.cpp which haven't been reviewed). S-PR to check PR status.
+
 ## S-COORD Round 42 Summary (2026-03-28 16:10 GMT, Agent F)
 
 **T-269 complete — Fine-grained sectorial interleaving (30s, 4 datasets, outer_cycles 1/2/4/10/20):**
@@ -516,12 +547,12 @@ per-taxon/per-character missing rates, rootState vectors. 128 tests passing.
 
 | Agent | Status | Current Task | Notes |
 |-------|--------|-------------|-------|
-| A | IDLE | — | T-266/T-270/T-272/S-RED-1 done this session. |
-| B | IDLE | — | T-204 PR #216 needs GHA fix (missing roxygen2 docs). |
-| C | IDLE | — | T-214 completed. Agent file stale. |
+| A | IDLE | — | |
+| B | IDLE | — | |
+| C | IDLE | — | |
 | D | IDLE | — | |
-| E | PARKED | T-150 (GHA 23636944848 FAILED) | InfoConsensus.Rd codoc mismatch in TS-CID-cons. |
-| F | PARKED | T-252 (Hamilton 16599543) | t252_v2.sh running. T-268/S-RED-2 done today. |
+| E | IDLE | — | T-289f + G-006 + S-COORD done 2026-03-29. GHA 23703257153 running. |
+| F | IDLE | — | |
 | G | IDLE | — | |
 | M | IDLE | — | |
 
