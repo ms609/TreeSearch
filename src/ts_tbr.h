@@ -15,14 +15,35 @@
 #include "ts_constraint.h"
 #include "ts_pool.h"
 #include <functional>
+#include <vector>
 
 namespace ts {
+
+// Clip ordering strategy for TBR search.
+enum class ClipOrder {
+  RANDOM = 0,     // Current default: uniform random shuffle
+  INV_WEIGHT = 1, // Weighted random, w = 1/(1+s) where s = subtree size
+  TIPS_FIRST = 2, // All tip clips first (shuffled), then rest (shuffled)
+  BUCKET = 3      // Three size buckets, random within each
+};
 
 struct TBRParams {
   bool accept_equal = false;     // accept Δ=0 moves?
   int max_accepted_changes = 0;  // 0 = no limit (run to convergence)
   int max_hits = 1;              // equal-score hits before stopping
   int tabu_size = 0;             // tabu list capacity (0 = disabled)
+  ClipOrder clip_order = ClipOrder::RANDOM;
+  bool diagnostics = false;      // collect per-pass diagnostic records
+};
+
+// Per-pass diagnostic record (populated only when TBRParams::diagnostics
+// is true). One record per pass of the outer while loop.
+struct TBRPassRecord {
+  int pass_index;
+  bool productive;              // true if a move was accepted
+  int accepted_clip_size;       // subtree size of accepted clip (0 if null)
+  int n_clips_tried;            // clips evaluated before acceptance (or total)
+  int n_candidates_evaluated;   // total regraft×reroot evaluations this pass
 };
 
 struct TBRResult {
@@ -31,6 +52,7 @@ struct TBRResult {
   int n_evaluated;
   int n_zero_skipped; // clips skipped due to zero-length edge (opt #7)
   bool converged;  // true if stopped due to no improvement
+  std::vector<TBRPassRecord> pass_records; // populated when diagnostics=true
 };
 
 // Run TBR hill-climbing search on `tree` with dataset `ds`.

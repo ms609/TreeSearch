@@ -2656,3 +2656,73 @@ List ts_test_strategy_tracker(int seed, int n_draws) {
   );
 }
 
+// Run TBR to convergence with per-pass diagnostic instrumentation.
+// Returns the final tree, scalar summary statistics, and a data frame
+// of TBRPassRecords (one row per pass of the outer while loop).
+// clipOrder: 0=RANDOM (baseline), 1=INV_WEIGHT, 2=TIPS_FIRST, 3=BUCKET
+// [[Rcpp::export]]
+List ts_tbr_diagnostics(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    int maxHits = 1,
+    bool acceptEqual = false,
+    int maxChanges = 0,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = -1.0,
+    int clipOrder = 0)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  ts::TreeState tree;
+  tree.init_from_edge(
+      &edge(0, 0), &edge(0, 1),
+      edge.nrow(), ds);
+
+  ts::TBRParams params;
+  params.max_hits = maxHits;
+  params.accept_equal = acceptEqual;
+  params.max_accepted_changes = maxChanges;
+  params.diagnostics = true;
+  params.clip_order = static_cast<ts::ClipOrder>(clipOrder);
+
+  ts::TBRResult result = ts::tbr_search(tree, ds, params);
+
+  // Unpack pass records into parallel vectors for a data frame
+  int n_passes = static_cast<int>(result.pass_records.size());
+  IntegerVector pass_index(n_passes);
+  LogicalVector productive(n_passes);
+  IntegerVector accepted_clip_size(n_passes);
+  IntegerVector n_clips_tried(n_passes);
+  IntegerVector n_candidates_evaluated(n_passes);
+
+  for (int i = 0; i < n_passes; ++i) {
+    const ts::TBRPassRecord& rec = result.pass_records[i];
+    pass_index[i]            = rec.pass_index;
+    productive[i]            = rec.productive;
+    accepted_clip_size[i]    = rec.accepted_clip_size;
+    n_clips_tried[i]         = rec.n_clips_tried;
+    n_candidates_evaluated[i]= rec.n_candidates_evaluated;
+  }
+
+  DataFrame passes = DataFrame::create(
+    Named("pass_index")             = pass_index,
+    Named("productive")             = productive,
+    Named("accepted_clip_size")     = accepted_clip_size,
+    Named("n_clips_tried")          = n_clips_tried,
+    Named("n_candidates_evaluated") = n_candidates_evaluated
+  );
+
+  return List::create(
+    Named("edge")          = tree_to_edge(tree),
+    Named("score")         = result.best_score,
+    Named("n_accepted")    = result.n_accepted,
+    Named("n_evaluated")   = result.n_evaluated,
+    Named("n_zero_skipped")= result.n_zero_skipped,
+    Named("converged")     = result.converged,
+    Named("passes")        = passes
+  );
+}
