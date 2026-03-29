@@ -1233,6 +1233,20 @@ Ranked by priority:
     ordering might save ~3–7% per productive pass, but the enrichment (≈1.2×) is too small
     to justify implementation complexity. Diagnostic code preserved in branch for reference;
     no preset change. Branch closed.
+13. ~~XSS↔TBR cycling under IW~~ — **Closed** (2026-03-29, `expt/sector-tbr-cycling`):
+    5 datasets (62–180t), 20 seeds, EW/IW10/IW3, TAEB analysis at 10–120s budgets.
+    **Original hypothesis (IW benefits ≥2× more from XSS than EW): weak signal — closed.**
+    IW3 XSS improvement rate ~30% vs EW ~25%; below 2× threshold; magnitudes small.
+    **Key finding: XSS cycling benefit scales with tree size, not scoring mode.**
+    At ≤88t: XSS adds 24–57% overhead, TAEB Δ ≈ 0 (multi-start dominates).
+    At 180t: XSS adds 12–19% overhead, TAEB Δ = −6.8 to −9.8 EW steps at 30–120s;
+    IW3 Δ = −0.8 to −1.2 score units; 13/20 seeds improve, ~2 cycles to converge.
+    **Practice**: no IW-specific XSS treatment; existing pipeline adequate. The large
+    preset's XSS(3)+RSS(2)+CSS(1) is well-justified; the outerCycles=1 setting means
+    only one XSS pass per replicate — increasing to outerCycles=2 could capture the
+    ~2-cycle joint convergence observed at 180t, but this interacts with T-269
+    (fine-grained interleaving showed diminishing returns from more outer cycles at
+    ≤88t). Results: `TS-sector-expt/dev/benchmarks/expt_tbr_xss_v2_results.rds`.
 
 ## Benchmarks and profiling
 
