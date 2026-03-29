@@ -1291,7 +1291,8 @@ tuning — they are a one-way door.
 Benchmark scripts in `dev/benchmarks/`. Key files:
 - `bench_regression.R` — CI regression test (score quality + timing bounds)
 - `bench_framework.R` — Dataset × strategy × replicate grid
-- `strategies.md` — Strategy space documentation (full track/sample details)
+- `strategies.md` — Strategy space documentation (full track/sample details,
+  seed count protocol, sample-size validation)
 
 **Phase distribution baselines (T-290b, 2026-03-28, Brazeau-sample datasets,
 30s, post-T-255 no-drift presets):**
