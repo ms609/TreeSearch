@@ -1224,6 +1224,15 @@ Ranked by priority:
     per-replicate overhead with ≤0.1-step expected-best benefit at 30s/60s budgets — within
     bootstrap noise. **Set `nniPerturbCycles = 0` in thorough preset.** Available via
     `SearchControl(nniPerturbCycles = N)` for manual use.
+12. ~~Size-weighted TBR clip ordering~~ — **Closed** (2026-03-29, `feature/weighted-clip-order`):
+    Diagnostic instrumentation added (`TBRPassRecord`, `ts_tbr_diagnostics()`); 10 seeds × 4
+    datasets (23–88t, random Wagner starts). **Hypothesis FALSIFIED**: tip clips (~51% of all
+    clips) account for only 22–38% of accepted moves (enrichment 0.43–0.76×). Medium-small
+    clips (size 2..√n) are the most productive clip type. All three proposed variants
+    (INV_WEIGHT, TIPS_FIRST, BUCKET) favour tips — the wrong direction. A "medium-first"
+    ordering might save ~3–7% per productive pass, but the enrichment (≈1.2×) is too small
+    to justify implementation complexity. Diagnostic code preserved in branch for reference;
+    no preset change. Branch closed.
 
 ## Benchmarks and profiling
 

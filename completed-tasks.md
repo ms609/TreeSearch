@@ -427,3 +427,7 @@ EOF 2>&1
 | F-016 | T-245: TBR 4-wide candidate batching | 1 | PR #238 merged 2026-03-28. fitch_indirect_cached_flat_x4()/na variant; TBR rerooting inner loop batch-of-4 for flat EW path; IW/upweight fallback to scalar. GHA 23690208221 PASS. Hamilton benchmark pending. |
 EOF 2>&1
 | G-002 | T-289f Stage 5: Prune-reinsert NNI vs TBR polish (Hamilton) | 1 | SLURM 16622421 (7h, EPYC 7702). 5 datasets (131-206t), 20 seeds, 60/120s, EW. pr_nni wins 7/10 EB conditions (huge on project3701 -178 median at 60s; modest at 173-180t; regresses at 206t). pr_tbr harmful (1/9 wins; 0 reps at 206t/60s). Decision: not enabled in preset. strategies.md updated. CSV: TS-TNT-bench/dev/benchmarks/t289f_results/. |
+
+## 2026-03-29
+
+| PA-001 | TBR clip ordering experiment: Phase 1 diagnostic | 0 | Instrumented tbr_search() with per-pass diagnostics (ClipOrder enum, TBRPassRecord, ts_tbr_diagnostics() bridge). Ran 10 seeds × 4 datasets (23–88t). Finding: tip clips (~51% of clips) account for only 22–38% of accepted moves (enrichment 0.43–0.76×). Medium-small clips (2..√n) are most productive. All three proposed ordering variants (INV_WEIGHT, TIPS_FIRST, BUCKET) favour tips — the opposite of productive direction. Phase 4 outcome: hypothesis FALSIFIED. Branch feature/weighted-clip-order to be closed. |
