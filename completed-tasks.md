@@ -437,3 +437,5 @@ EOF 2>&1
 EOF 2>&1
 | E-002 | G-006: Fix nni_full ignoring ConstraintData in prune_reinsert_search() | 0 | Guard: `if (params.nni_full && (!cd || !cd->active))` — when constraints are active, fall through to TBR (which enforces them), exactly mirroring the `nni_wagner` guard in ts_driven.cpp. One-line fix in ts_prune_reinsert.cpp with explanatory comment. Only affects users who combine pruneReinsertNni=TRUE with topological constraints; no preset does this. |
 EOF 2>&1
+| F-030 | TBR clip-ordering Phase 2: full propagation + docs fix | 1 | Phase 1 had null result because clip_order only reached ~10% of TBR calls (Wagner warmup + final polish). Fixed by adding clip_order to RatchetParams and SectorParams, propagating through ts_driven.cpp, and applying at all TBR call sites in ts_ratchet.cpp and ts_sector.cpp. Benchmark (5 seeds, 30s): TIPS_FIRST +8–13% throughput on Zhu2013/Dikow2009 (thorough preset, 75–88t); neutral/−2% on Agnarsson2004 (default, 62t). No preset defaults changed (clipOrder=0 RANDOM). GHA 23708949592 PASS. PR #239 open → cpp-search. |
+EOF 2>&1
