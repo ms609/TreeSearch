@@ -14,6 +14,14 @@
 #'
 #' @param tbrMaxHits Integer; number of equally-scoring trees to accept
 #'   before stopping a TBR pass.
+#' @param clipOrder Integer (experimental); clip-ordering strategy for TBR
+#'   search.  Determines the order in which edges are tried as clip points.
+#'   0 = random (default); 1 = inverse-weight (fewest descendant taxa first);
+#'   2 = tips-first (terminal edges before internal); 3 = bucket ordering;
+#'   4 = anti-tip (internal before terminal); 5 = large-first (most descendant
+#'   taxa first).  On datasets with \eqn{\ge}65 tips, \code{clipOrder = 2L}
+#'   (tips-first) typically increases replicate throughput by 5--15\% by
+#'   evaluating higher-probability improvement candidates earlier.
 #' @param nniFirst Logical; run an NNI pass before SPR/TBR in each replicate?
 #'   At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
 #'   this significantly accelerates the initial descent from the Wagner tree.

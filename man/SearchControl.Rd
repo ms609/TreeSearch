@@ -6,6 +6,7 @@
 \usage{
 SearchControl(
   tbrMaxHits = 1L,
+  clipOrder = 0L,
   nniFirst = TRUE,
   sprFirst = FALSE,
   tabuSize = 100L,
@@ -60,6 +61,15 @@ SearchControl(
 \arguments{
 \item{tbrMaxHits}{Integer; number of equally-scoring trees to accept
 before stopping a TBR pass.}
+
+\item{clipOrder}{Integer (experimental); clip-ordering strategy for TBR
+search.  Determines the order in which edges are tried as clip points.
+0 = random (default); 1 = inverse-weight (fewest descendant taxa first);
+2 = tips-first (terminal edges before internal); 3 = bucket ordering;
+4 = anti-tip (internal before terminal); 5 = large-first (most descendant
+taxa first).  On datasets with \eqn{\ge}65 tips, \code{clipOrder = 2L}
+(tips-first) typically increases replicate throughput by 5--15\\% by
+evaluating higher-probability improvement candidates earlier.}
 
 \item{nniFirst}{Logical; run an NNI pass before SPR/TBR in each replicate?
 At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
@@ -215,9 +225,19 @@ cycle.  Default 0.10 (10\%).  Always drops at least 3 tips and keeps
 at least 4.}
 
 \item{pruneReinsertSelection}{Integer; tip selection strategy for choosing
-which tips to drop.  0 = random (default), 1 = instability-weighted
-(tips whose placement varies across pool trees are preferentially
-dropped).}
+which tips to drop:
+\itemize{
+\item \code{0} = random (default).
+\item \code{1} = instability-weighted: tips whose parent-edge split is rare across
+pool trees are preferentially dropped.  Requires \eqn{\ge}2 pool trees;
+falls back to random otherwise.
+\item \code{2} = missing-data-weighted: tips with more ambiguous or inapplicable
+characters are preferentially dropped.  High-missingness taxa are
+hardest to score correctly and most likely to be trapped in suboptimal
+positions.
+\item \code{3} = combined: weight = instability × (1 + normalised missingness).
+Targets taxa that are both unstably placed and data-poor.
+}}
 
 \item{pruneReinsertTbrMoves}{Integer; maximum number of TBR moves accepted
 during the reduced-tree backbone optimisation phase of each
@@ -231,12 +251,11 @@ you prefer thorough backbone optimisation over replicate throughput.}
 full-tree polish after each prune-reinsert cycle.  0 (default) runs
 to convergence.  Has no effect when \code{pruneReinsertNni = TRUE}.}
 
-\item{pruneReinsertNni}{Logical; if \code{TRUE}, use NNI
-(nearest-neighbour interchange) instead of TBR for the full-tree polish
-step of each prune-reinsert cycle.  NNI converges roughly 5x faster than
-TBR at large tip counts (\eqn{\ge}120), substantially reducing per-cycle
-cost while still reaching a local optimum before the outer-loop TBR
-polish.  Default \code{FALSE}.}
+\item{pruneReinsertNni}{Logical; if \code{TRUE}, use NNI (nearest-neighbour
+interchange) instead of TBR for the full-tree polish step.  NNI
+converges roughly 5x faster than TBR at large tip counts (\eqn{\ge}120),
+substantially reducing per-cycle cost while still reaching a local
+optimum before the outer-loop TBR polish.  Default \code{FALSE}.}
 
 \item{annealCycles}{Integer; number of simulated annealing perturbation
 cycles (PCSA) per replicate.  Each cycle perturbs the current best tree
