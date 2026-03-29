@@ -5,6 +5,7 @@
 #include "ts_tabu.h"
 #include "ts_splits.h"
 #include <algorithm>
+#include <numeric>
 #include <random>
 #include <vector>
 #include <unordered_set>
@@ -447,6 +448,110 @@ static void precompute_vroot_cache(
 }
 
 
+// --- Clip ordering ---
+
+// Apply the selected clip ordering strategy to clip_candidates.
+// subtree_sizes must be up-to-date. n_tip is the number of tips.
+static void order_clips(
+    std::vector<int>& clips,
+    const std::vector<int>& subtree_sizes,
+    int n_tip,
+    ClipOrder order,
+    std::mt19937& rng)
+{
+  switch (order) {
+    case ClipOrder::RANDOM:
+      std::shuffle(clips.begin(), clips.end(), rng);
+      break;
+
+    case ClipOrder::INV_WEIGHT: {
+      // Weighted random: w = 1/(1+s). Full Fisher-Yates with weighted draw.
+      int n = static_cast<int>(clips.size());
+      std::vector<double> w(n);
+      for (int i = 0; i < n; ++i) {
+        w[i] = 1.0 / (1.0 + subtree_sizes[clips[i]]);
+      }
+      for (int i = 0; i < n - 1; ++i) {
+        double total = 0.0;
+        for (int j = i; j < n; ++j) total += w[j];
+        if (total <= 0.0) break;
+        std::uniform_real_distribution<double> dist(0.0, total);
+        double r = dist(rng);
+        double cumul = 0.0;
+        int pick = i;
+        for (int j = i; j < n; ++j) {
+          cumul += w[j];
+          if (cumul >= r) { pick = j; break; }
+        }
+        std::swap(clips[i], clips[pick]);
+        std::swap(w[i], w[pick]);
+      }
+      break;
+    }
+
+    case ClipOrder::TIPS_FIRST: {
+      // Partition: tips first, then internal. Shuffle within each group.
+      auto mid = std::partition(clips.begin(), clips.end(),
+          [n_tip](int node) { return node < n_tip; });
+      std::shuffle(clips.begin(), mid, rng);
+      std::shuffle(mid, clips.end(), rng);
+      break;
+    }
+
+    case ClipOrder::BUCKET: {
+      // Three buckets: tips (s=1), small (2 <= s <= sqrt(n)), large (s > sqrt(n))
+      int sqrt_n = static_cast<int>(std::sqrt(static_cast<double>(n_tip)));
+      if (sqrt_n < 2) sqrt_n = 2;
+
+      auto large_start = std::partition(clips.begin(), clips.end(),
+          [&subtree_sizes, sqrt_n](int node) {
+            return subtree_sizes[node] <= sqrt_n;
+          });
+      auto small_start = std::partition(clips.begin(), large_start,
+          [n_tip](int node) { return node < n_tip; });
+
+      // clips = [tips | small internal | large]
+      std::shuffle(clips.begin(), small_start, rng);
+      std::shuffle(small_start, large_start, rng);
+      std::shuffle(large_start, clips.end(), rng);
+      break;
+    }
+
+    case ClipOrder::ANTI_TIP: {
+      // Non-tip clips (shuffled) first, tip clips (shuffled) last.
+      // Hypothesis: tips are under-productive; deprioritise them.
+      // Inverse of TIPS_FIRST.
+      auto tip_start = std::partition(clips.begin(), clips.end(),
+          [n_tip](int node) { return node >= n_tip; }); // non-tips first
+      std::shuffle(clips.begin(), tip_start, rng);
+      std::shuffle(tip_start, clips.end(), rng);
+      break;
+    }
+
+    case ClipOrder::LARGE_FIRST: {
+      // Large (>√n) clips first, then small (2..√n), then tips; random within.
+      // Hypothesis: large clips are enriched relative to their clip-fraction.
+      int sqrt_n = static_cast<int>(std::sqrt(static_cast<double>(n_tip)));
+      if (sqrt_n < 2) sqrt_n = 2;
+
+      // Partition: [large | rest]
+      auto rest_start = std::partition(clips.begin(), clips.end(),
+          [&subtree_sizes, sqrt_n](int node) {
+            return subtree_sizes[node] > sqrt_n;
+          });
+      // Partition rest: [large | small-internal | tips]
+      auto tip_start = std::partition(rest_start, clips.end(),
+          [n_tip](int node) { return node >= n_tip; }); // non-tip non-large = small
+
+      // clips = [large | small-internal | tips]
+      std::shuffle(clips.begin(), rest_start, rng);
+      std::shuffle(rest_start, tip_start, rng);
+      std::shuffle(tip_start, clips.end(), rng);
+      break;
+    }
+  }
+}
+
 // --- Main TBR search ---
 
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
@@ -574,6 +679,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   int clips_since_timeout_check = 0;
   bool timed_out = false;
 
+  // Per-pass diagnostic counters
+  int pass_index = 0;
+  int pass_clips_tried = 0;
+  int pass_candidates_evaluated = 0;
+  int accepted_clip_size = 0;
+  std::vector<TBRPassRecord> diag_records;
+
   while (keep_going && !timed_out) {
     keep_going = false;
 
@@ -586,16 +698,23 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     state_snap.save(tree);
     states_valid = true;
 
-    // Optimization #6: only reshuffle when the previous pass found no
+    // Reset per-pass diagnostic counters
+    pass_clips_tried = 0;
+    pass_candidates_evaluated = 0;
+    accepted_clip_size = 0;
+
+    // Recompute subtree sizes (needed for smaller-subtree filtering
+    // and for clip ordering strategies)
+    compute_subtree_sizes(tree, subtree_sizes);
+
+    // Optimization #6: only reorder when the previous pass found no
     // improvement. After an accepted move, retry with the same ordering
     // (the topology changed, so previously-failing clips may now succeed).
     if (need_shuffle) {
-      std::shuffle(clip_candidates.begin(), clip_candidates.end(), rng);
+      order_clips(clip_candidates, subtree_sizes, tree.n_tip,
+                  params.clip_order, rng);
     }
-    need_shuffle = true;  // default: reshuffle next time (unless we accept)
-
-    // Recompute subtree sizes for smaller-subtree filtering
-    compute_subtree_sizes(tree, subtree_sizes);
+    need_shuffle = true;  // default: reorder next time (unless we accept)
 
     for (int clip_node : clip_candidates) {
       if (tree.parent[clip_node] == tree.n_tip) continue;
@@ -615,6 +734,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         ++n_zero_skipped;
         continue;
       }
+
+      ++pass_clips_tried;
+      int clip_evals_before = n_evaluated;
 
       // --- Phase 1: Clip + indirect evaluation ---
 
@@ -1090,6 +1212,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       if (keep_going) {
+        accepted_clip_size = clip_size;
+        pass_candidates_evaluated += (n_evaluated - clip_evals_before);
         // Recompute collapsed regions after the accepted move (states are
         // valid from full_rescore in the accept path above).
         if (!collapsed.empty()) {
@@ -1106,6 +1230,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         break;
       }
 
+      pass_candidates_evaluated += (n_evaluated - clip_evals_before);
+
       if (ts::check_interrupt()) break;
       ++clips_since_timeout_check;
       if (check_timeout && clips_since_timeout_check >= timeout_interval) {
@@ -1113,6 +1239,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         if (check_timeout()) { timed_out = true; break; }
       }
     }
+
+    // Record per-pass diagnostics
+    if (params.diagnostics) {
+      diag_records.push_back({
+        pass_index,
+        /*productive=*/ accepted_clip_size > 0,
+        accepted_clip_size,
+        pass_clips_tried,
+        pass_candidates_evaluated
+      });
+    }
+    ++pass_index;
 
     if (params.max_accepted_changes > 0
         && n_accepted >= params.max_accepted_changes) {
@@ -1132,7 +1270,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      && n_accepted >= params.max_accepted_changes);
 
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
-                   converged};
+                   converged, std::move(diag_records)};
 }
 
 } // namespace ts

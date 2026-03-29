@@ -172,10 +172,7 @@ ts_xss_search <- function(edge, contrast, tip_data, weight, levels, nPartitions 
     .Call(`_TreeSearch_ts_xss_search`, edge, contrast, tip_data, weight, levels, nPartitions, xssRounds, acceptEqual, ratchetCycles, maxHits, min_steps, concavity)
 }
 
-# Thin wrapper for the C++ ts_driven_search (10 grouped args).
-# Production callers (MaximizeParsimony, .ResampleHierarchy) call this directly.
-# Tests use ts_driven_search() in ts-driven-compat.R for backward compatibility.
-.ts_driven_search_raw <- function(contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig = NULL, hsjConfig = NULL, xformConfig = NULL) {
+ts_driven_search <- function(contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig = NULL, hsjConfig = NULL, xformConfig = NULL) {
     .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig, hsjConfig, xformConfig)
 }
 
@@ -213,5 +210,9 @@ ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, 
 
 ts_test_strategy_tracker <- function(seed, n_draws) {
     .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws)
+}
+
+ts_tbr_diagnostics <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L, min_steps = integer(), concavity = -1.0, clipOrder = 0L) {
+    .Call(`_TreeSearch_ts_tbr_diagnostics`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity, clipOrder)
 }
 

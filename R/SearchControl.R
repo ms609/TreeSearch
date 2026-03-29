@@ -14,6 +14,14 @@
 #'
 #' @param tbrMaxHits Integer; number of equally-scoring trees to accept
 #'   before stopping a TBR pass.
+#' @param clipOrder Integer (experimental); clip-ordering strategy for TBR
+#'   search.  Determines the order in which edges are tried as clip points.
+#'   0 = random (default); 1 = inverse-weight (fewest descendant taxa first);
+#'   2 = tips-first (terminal edges before internal); 3 = bucket ordering;
+#'   4 = anti-tip (internal before terminal); 5 = large-first (most descendant
+#'   taxa first).  On datasets with \eqn{\ge}65 tips, \code{clipOrder = 2L}
+#'   (tips-first) typically increases replicate throughput by 5--15\% by
+#'   evaluating higher-probability improvement candidates earlier.
 #' @param nniFirst Logical; run an NNI pass before SPR/TBR in each replicate?
 #'   At small tree sizes (\eqn{\le}88 tips) overhead is negligible; at \eqn{\ge}100 tips
 #'   this significantly accelerates the initial descent from the Wagner tree.
@@ -201,6 +209,11 @@
 SearchControl <- function(
     # TBR
     tbrMaxHits = 1L,
+    # TBR clip ordering strategy (experimental).
+    # 0L=RANDOM (default), 1L=INV_WEIGHT (w=1/(1+s)), 2L=TIPS_FIRST,
+    # 3L=BUCKET (tips/small/large), 4L=ANTI_TIP (non-tips first),
+    # 5L=LARGE_FIRST (large then small then tips)
+    clipOrder = 0L,
     nniFirst = TRUE,
     sprFirst = FALSE,
     tabuSize = 100L,
@@ -274,6 +287,7 @@ SearchControl <- function(
   structure(
     list(
       tbrMaxHits = as.integer(tbrMaxHits),
+      clipOrder = as.integer(clipOrder),
       nniFirst = as.logical(nniFirst),
       sprFirst = as.logical(sprFirst),
       tabuSize = as.integer(tabuSize),
@@ -331,7 +345,7 @@ SearchControl <- function(
 #' @export
 print.SearchControl <- function(x, ...) {
   groups <- list(
-    "TBR" = c("tbrMaxHits", "nniFirst", "sprFirst", "tabuSize",
+    "TBR" = c("tbrMaxHits", "clipOrder", "nniFirst", "sprFirst", "tabuSize",
               "wagnerStarts", "wagnerBias", "wagnerBiasTemp", "outerCycles",
               "maxOuterResets"),
     "Ratchet" = c("ratchetCycles", "ratchetPerturbProb", "ratchetPerturbMode",

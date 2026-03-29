@@ -497,7 +497,7 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
 // Search the sector with TBR. The internal_ratchet_cycles parameter is
 // reserved for future use (ratchet perturbation within sectors).
 static double search_sector(ReducedDataset& rd, int /*internal_ratchet_cycles*/,
-                            int max_hits) {
+                            int max_hits, int clip_order = 0) {
   int htu_idx = rd.n_real_tips;
   int root = rd.subtree.n_tip;
   int sr_mapped = rd.full_to_sector[rd.sector_root];
@@ -511,6 +511,7 @@ static double search_sector(ReducedDataset& rd, int /*internal_ratchet_cycles*/,
 
   TBRParams tp;
   tp.max_hits = max_hits;
+  tp.clip_order = static_cast<ClipOrder>(clip_order);
   TBRResult tr = tbr_search(rd.subtree, rd.data, tp);
 
   // Verify root structure: HTU and sector_root_mapped must remain
@@ -675,6 +676,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     // No sectors of appropriate size; run global TBR and return
     TBRParams tp;
     tp.max_hits = params.internal_max_hits;
+    tp.clip_order = static_cast<ClipOrder>(params.clip_order);
     TBRResult tr = tbr_search(tree, ds, tp);
     result.best_score = tr.best_score;
     result.total_steps_saved =
@@ -726,7 +728,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
 
     // Search the sector
     double sector_best = search_sector(rd, params.internal_ratchet_cycles,
-                                       params.internal_max_hits);
+                                       params.internal_max_hits, params.clip_order);
     ++result.n_sectors_searched;
 
     bool improved = sector_best < sector_current;
@@ -813,6 +815,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
   {
     TBRParams tp;
     tp.max_hits = params.internal_max_hits;
+    tp.clip_order = static_cast<ClipOrder>(params.clip_order);
     TBRResult tr = tbr_search(tree, ds, tp, cd);
     if (tr.best_score < result.best_score) {
       result.total_steps_saved +=
@@ -870,7 +873,8 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
 
       double sector_current = score_tree(rd.subtree, rd.data);
       double sector_best = search_sector(
-          rd, params.internal_ratchet_cycles, params.internal_max_hits);
+          rd, params.internal_ratchet_cycles, params.internal_max_hits,
+          params.clip_order);
       ++result.n_sectors_searched;
 
       bool improved = sector_best < sector_current;
@@ -928,6 +932,7 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
     {
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
+      tp.clip_order = static_cast<ClipOrder>(params.clip_order);
       TBRResult tr = tbr_search(tree, ds, tp, cd);
       if (tr.best_score < result.best_score) {
         result.total_steps_saved +=
@@ -996,6 +1001,7 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
 
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
+      tp.clip_order = static_cast<ClipOrder>(params.clip_order);
 
       TBRResult tr = tbr_search(tree, ds, tp, cd, &sector_mask);
       ++result.n_sectors_searched;
@@ -1014,6 +1020,7 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
     {
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
+      tp.clip_order = static_cast<ClipOrder>(params.clip_order);
       TBRResult tr = tbr_search(tree, ds, tp, cd);
       if (tr.best_score < result.best_score) {
         result.total_steps_saved +=

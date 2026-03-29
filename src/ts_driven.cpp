@@ -167,6 +167,7 @@ ReplicateResult run_single_replicate(
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
+    tp.clip_order = static_cast<ClipOrder>(params.clip_order);
     tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.tbr_ms = ph_lap();
@@ -227,6 +228,7 @@ ReplicateResult run_single_replicate(
       sp.max_sector_size = params.sector_max_size;
       sp.internal_ratchet_cycles = 0;
       sp.internal_max_hits = 1;
+      sp.clip_order = params.clip_order;
 
       // XSS: systematic partitioning
       sp.n_partitions = params.xss_partitions;
@@ -272,6 +274,7 @@ ReplicateResult run_single_replicate(
         css_sp.n_partitions = params.css_partitions;
         css_sp.xss_rounds = params.css_rounds;
         css_sp.internal_max_hits = 1;
+        css_sp.clip_order = params.clip_order;
         css_search(result.tree, ds, css_sp, cd);
 
         result.timings.css_ms += ph_lap();
@@ -305,6 +308,7 @@ ReplicateResult run_single_replicate(
       rp.perturb_max_moves = params.ratchet_perturb_max_moves;
       rp.adaptive = params.ratchet_adaptive;
       rp.tabu_size = params.tabu_size;
+      rp.clip_order = params.clip_order;
       ratchet_search(result.tree, ds, rp, cd, check_timeout);
     }
     result.timings.ratchet_ms += ph_lap();
@@ -330,6 +334,7 @@ ReplicateResult run_single_replicate(
       sp.max_sector_size = params.sector_max_size;
       sp.internal_ratchet_cycles = 0;
       sp.internal_max_hits = 1;
+      sp.clip_order = params.clip_order;
 
       if (params.xss_rounds > 0) {
         sp.n_partitions = params.xss_partitions;
@@ -362,6 +367,7 @@ ReplicateResult run_single_replicate(
         css_sp.n_partitions = params.css_partitions;
         css_sp.xss_rounds = params.css_rounds;
         css_sp.internal_max_hits = 1;
+        css_sp.clip_order = params.clip_order;
         css_search(result.tree, ds, css_sp, cd);
         result.timings.css_ms += ph_lap();
 
@@ -450,6 +456,7 @@ ReplicateResult run_single_replicate(
         {
           TBRParams tp;
           tp.tabu_size = params.tabu_size;
+          tp.clip_order = static_cast<ClipOrder>(params.clip_order);
           tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
         }
 
@@ -517,6 +524,7 @@ ReplicateResult run_single_replicate(
     {
       TBRParams tp;
       tp.tabu_size = params.tabu_size;
+      tp.clip_order = static_cast<ClipOrder>(params.clip_order);
       tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
     }
     result.timings.final_tbr_ms += ph_lap();

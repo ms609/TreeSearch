@@ -148,6 +148,7 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   search_params.max_accepted_changes = 0;
   search_params.max_hits = params.max_hits;
   search_params.tabu_size = params.tabu_size;
+  search_params.clip_order = static_cast<ClipOrder>(params.clip_order);
 
   TBRResult initial = tbr_search(tree, ds, search_params, cd,
                                    nullptr, nullptr, check_timeout);
@@ -169,6 +170,7 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   perturb_params.max_accepted_changes = actual_max_moves;
   perturb_params.max_hits = 1;
   perturb_params.tabu_size = params.tabu_size;
+  perturb_params.clip_order = static_cast<ClipOrder>(params.clip_order);
 
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();

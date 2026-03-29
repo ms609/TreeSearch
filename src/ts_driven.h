@@ -137,6 +137,11 @@ struct DrivenParams {
   // the shallower initial optimum gives ratchet/drift more room to explore.
   bool spr_first = false;
 
+  // TBR clip ordering strategy (see ClipOrder enum in ts_tbr.h).
+  // 0=RANDOM (default), 1=INV_WEIGHT, 2=TIPS_FIRST, 3=BUCKET,
+  // 4=ANTI_TIP, 5=LARGE_FIRST
+  int clip_order = 0;
+
   // Number of random Wagner trees per replicate (keep best-scoring)
   int wagner_starts = 1;
 
