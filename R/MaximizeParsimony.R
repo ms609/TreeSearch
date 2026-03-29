@@ -159,12 +159,16 @@
   # - No adaptiveStart: with ~1 replicate per 60s budget, the bandit has
   #   no learning opportunity; adaptiveStart empirically regresses here
   # - Larger sector sizes for proportional tree coverage
-  # - Prune-reinsert disabled (T-289 Stage 4): early stages showed -14.7 steps
-  #   on mbank_X30754 (180t), but Stage 4 on 5 datasets (131–206t) found
-  #   mean +0.5 steps (neutral) at 60s, project3701 (146t) regressed -12 steps,
-  #   and syab07205 (206t) completed 0 replicates (per-rep cost ~60s, budget
-  #   exceeded). Replicate ratio 0.82 at 60s, 0.68 at 120s. The 0-rep failure
-  #   at 206t/60s is a showstopper; pruneReinsertCycles=0 until faster impl.
+  # - Prune-reinsert with NNI polish (T-289f Stage 5, 2026-03-29): 5 cycles,
+  #   NNI full-tree polish (pruneReinsertNni=TRUE). TBR polish (Stage 4) was
+  #   catastrophic at 206t/60s (0 reps). NNI polish (Stage 5, 5 datasets
+  #   131-206t, 10 seeds, 60s+120s) fixes the 0-rep failure and improves
+  #   median scores at 131-180t (project3701 146t: -178 steps at 60s;
+  #   project804 173t: -9 steps; mbank_X30754 180t: -4 steps at 60s/-7 at
+  #   120s). syab07205 (206t) shows +17.5 steps at 60s but neutral at 120s
+  #   — acceptable given the gains at smaller sizes in range. See G-006 for
+  #   a known limitation (NNI polish ignores ConstraintData; irrelevant here
+  #   since the large preset does not use topological constraints).
   # Validated on mbank_X30754 (180t, 418p), 5 seeds at 30/60/120s budgets:
   #   60s:  large median=1255 vs thorough 1259 (+4 steps better)
   #   120s: large median=1250 vs thorough 1250 (tied, 2 reps vs 0-1)
@@ -184,7 +188,7 @@
     wagnerBias = 1L, wagnerBiasTemp = 0.3,
     nniFirst = TRUE, sprFirst = FALSE,
     outerCycles = 1L,
-    pruneReinsertCycles = 0L,
+    pruneReinsertCycles = 5L, pruneReinsertNni = TRUE,
     consensusStableReps = 0L
   )
 )

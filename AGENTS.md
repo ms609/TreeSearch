@@ -541,7 +541,7 @@ Post-search: TBR plateau enumeration from all pool seeds to find MPTs.
 | sprint | ≤30 tips | 3 ratchet (4%), 0 drift, XSS only, NNI-first |
 | default | 31–64 tips; or ≥65 tips with <100 char patterns | 12 ratchet (25%, 5 moves), 0 drift, XSS+RSS, Wagner×3, NNI-first, adaptive level |
 | thorough | 65–119 tips with ≥100 char patterns | 20 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb (T-274), 0 drift, XSS+RSS+CSS, Wagner×3, NNI-first, outerCycles=2 |
-| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100, pruneReinsert=disabled (T-289 Stage 4: overhead too high — 0 reps at 206t/60s) |
+| large | ≥120 tips with ≥100 char patterns | 12 ratchet (25%, 5 moves, adaptive), 0 NNI-perturb, 0 drift, 1 SA cycle (T=20→0, 5 phases), XSS(3)+RSS(2)+CSS(1), Wagner×1 biased (Goloboff 2014), NNI-first, outerCycles=1, tbrMaxHits=1, sectorMaxSize=100, pruneReinsert=5 cycles NNI-polish (T-289f Stage 5: NNI polish fixes 0-rep failure at 206t; improves 131–180t) |
 
 **T-264 (2026-03-26):** `consensusStableReps` removed from all presets
 (disabled, 0). The previous setting of 3 caused catastrophic early
@@ -561,8 +561,18 @@ PR (c=5, d=5%, MISSING) vs baseline. 60s: mean Δ=+0.5 steps (neutral);
 project3701 146t regresses −12 steps; syab07205 206t: 0 replicates complete
 (per-rep cost ~60s, budget exceeded). 120s: mean Δ=−9.1 steps but driven
 by project3701 (−37 steps); others ≤6 steps. Replicate ratio 0.82 at 60s,
-0.68 at 120s. **Decision: disable PR in large preset** — 0-rep failure at
-206t/60s is a showstopper. Available via SearchControl(pruneReinsertCycles=N).
+0.68 at 120s. Decision: disable PR (TBR polish) — 0-rep failure at 206t/60s
+is a showstopper.
+
+**T-289f Stage 5 (2026-03-29, EPYC 7702, 10 seeds, 5 datasets 131–206t):**
+PR (c=5, NNI full-tree polish) vs pr_tbr (TBR polish, Stage 4 reference) vs
+baseline. pr_tbr at 206t/60s: still 0 reps (confirmed). pr_nni fixes the
+0-rep failure (2 reps at 206t/60s). Score deltas vs baseline: project4133
+(131t) ≈0; project3701 (146t) **−178 steps** at 60s, −128 at 120s; project804
+(173t) −9/−2; mbank_X30754 (180t) −4/−7; syab07205 (206t) +17.5 at 60s
+(neutral at 120s). **Decision: enable pruneReinsertCycles=5, pruneReinsertNni=TRUE
+in large preset.** Note G-006: NNI polish ignores ConstraintData — irrelevant
+since large preset does not use topological constraints.
 
 **Post-T-206 Hamilton HPC baselines (2026-03-26, EPYC 7702, 5 seeds):**
 30s median=1202 (range 1189–1214), 60s median=1190 (1190–1202), 120s
