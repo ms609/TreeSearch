@@ -516,6 +516,39 @@ static void order_clips(
       std::shuffle(large_start, clips.end(), rng);
       break;
     }
+
+    case ClipOrder::ANTI_TIP: {
+      // Non-tip clips (shuffled) first, tip clips (shuffled) last.
+      // Hypothesis: tips are under-productive; deprioritise them.
+      // Inverse of TIPS_FIRST.
+      auto tip_start = std::partition(clips.begin(), clips.end(),
+          [n_tip](int node) { return node >= n_tip; }); // non-tips first
+      std::shuffle(clips.begin(), tip_start, rng);
+      std::shuffle(tip_start, clips.end(), rng);
+      break;
+    }
+
+    case ClipOrder::LARGE_FIRST: {
+      // Large (>√n) clips first, then small (2..√n), then tips; random within.
+      // Hypothesis: large clips are enriched relative to their clip-fraction.
+      int sqrt_n = static_cast<int>(std::sqrt(static_cast<double>(n_tip)));
+      if (sqrt_n < 2) sqrt_n = 2;
+
+      // Partition: [large | rest]
+      auto rest_start = std::partition(clips.begin(), clips.end(),
+          [&subtree_sizes, sqrt_n](int node) {
+            return subtree_sizes[node] > sqrt_n;
+          });
+      // Partition rest: [large | small-internal | tips]
+      auto tip_start = std::partition(rest_start, clips.end(),
+          [n_tip](int node) { return node >= n_tip; }); // non-tip non-large = small
+
+      // clips = [large | small-internal | tips]
+      std::shuffle(clips.begin(), rest_start, rng);
+      std::shuffle(rest_start, tip_start, rng);
+      std::shuffle(tip_start, clips.end(), rng);
+      break;
+    }
   }
 }
 

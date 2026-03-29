@@ -24,7 +24,9 @@ enum class ClipOrder {
   RANDOM = 0,     // Current default: uniform random shuffle
   INV_WEIGHT = 1, // Weighted random, w = 1/(1+s) where s = subtree size
   TIPS_FIRST = 2, // All tip clips first (shuffled), then rest (shuffled)
-  BUCKET = 3      // Three size buckets, random within each
+  BUCKET = 3,     // Three size buckets: tips/small/large, random within each
+  ANTI_TIP = 4,   // Non-tip clips (shuffled) first, tip clips (shuffled) last
+  LARGE_FIRST = 5 // Large (>√n) first, then small (2..√n), then tips; random within each
 };
 
 struct TBRParams {

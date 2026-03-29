@@ -1191,6 +1191,7 @@ static void extract_info_amounts(
 static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   // TBR / initial descent
   params.tbr_max_hits       = as<int>(ctrl["tbrMaxHits"]);
+  params.clip_order         = as<int>(ctrl["clipOrder"]);
   params.nni_first          = as<bool>(ctrl["nniFirst"]);
   params.spr_first          = as<bool>(ctrl["sprFirst"]);
   params.tabu_size          = as<int>(ctrl["tabuSize"]);

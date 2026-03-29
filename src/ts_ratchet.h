@@ -41,6 +41,7 @@ struct RatchetParams {
   double adapt_max_prob = 0.50;      // Upper bound for adaptive tuning
 
   int tabu_size = 0;                 // Tabu list size for TBR calls (0 = disabled)
+  int clip_order = 0;               // ClipOrder cast to int (RANDOM = 0)
 };
 
 struct RatchetResult {

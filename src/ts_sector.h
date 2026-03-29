@@ -32,6 +32,8 @@ struct SectorParams {
   // sectors containing splits absent from the pool consensus.
   // Owned externally (by driven_search); never freed by sector code.
   const SplitFrequencyTable* split_freq = nullptr;
+
+  int clip_order = 0;  // ClipOrder cast to int (RANDOM = 0)
 };
 
 struct SectorResult {
