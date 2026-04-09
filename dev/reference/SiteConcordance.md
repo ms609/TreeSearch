@@ -165,12 +165,13 @@ the tree, even if concentrated on a single edge.
 
 `QuartetConcordance()` is the proportion of quartets (sets of four
 leaves) that are decisive for a split which are also concordant with it
-(the site concordance factor (Minh et al. 2020) ). For example, a
-quartet with the characters `0 0 0 1` is not decisive, as all
-relationships between those leaves are equally parsimonious. But a
+For example, a quartet with the characters `0 0 0 1` is not decisive, as
+all relationships between those leaves are equally parsimonious. But a
 quartet with characters `0 0 1 1` is decisive, and is concordant with
 any tree that groups the first two leaves together to the exclusion of
-the second.
+the second. In contrast to the site concordance factor (Minh et al.
+2020) , `QuartetConcordance()` considers all quartets that are decisive
+for a branch. Doing so circumvents the criticisms of .
 
 By default, the reported value weights each site by the number of
 quartets it is decisive for. This value can be interpreted as the
@@ -182,11 +183,10 @@ is concordant with 75% of 4 decisive quartets. If `weight = TRUE`, the
 split concordance will be 24 + 3 / 96 + 4 = 27%. If `weight = FALSE`,
 the split concordance will be mean(75%, 25%) = 50%.
 
-`QuartetConcordance()` is computed exactly, using all quartets, where as
-other implementations (e.g. IQ-TREE) follow Minh2020) in using a random
-subsample of quartets for a faster, if potentially less accurate,
-computation. Ambiguous and inapplicable tokens are treated as containing
-no grouping information (i.e. `(02)` or `-` are each treated as `?`).
+`QuartetConcordance()` is computed exactly, using all quartets, rather
+than a random subsample . Ambiguous and inapplicable tokens are treated
+as containing no grouping information (i.e. `(02)` or `-` are each
+treated as `?`).
 
 `PhylogeneticConcordance()` treats each character in `dataset` as a
 phylogenetic hypothesis and measures the extent to which it supports the
@@ -213,6 +213,12 @@ Information (Smith 2020) of this tree and `tree`.
 
 ## References
 
+Adummy A (2026). “Some keys from package TreeSearch are not avalable.”
+Failed to insert reference with keys: Minh2020, SmithConc, Goloboff2024,
+cf. @Minh2020, Smith2020 from package = 'TreeSearch'. Possible cause -
+missing REFERENCES.bib in package 'TreeSearch' or 'TreeSearch' not
+installed.  
+  
 Minh BQ, Hahn MW, Lanfear R (2020). “New methods to calculate
 concordance factors for phylogenomic datasets.” *Molecular Biology and
 Evolution*, **37**(9), 2727–2733.
@@ -225,8 +231,8 @@ Metrics for Comparing Phylogenetic Trees.” *Bioinformatics*, **36**(20),
 .  
   
 Smith MR (2026). “Which characters support which clades? Exploring the
-distribution of phylogenetic signal using concordant information.”
-*Forthcoming*.
+distribution of phylogenetic signal using mutual information.”
+*Systematic Biology*, Under review.
 
 ## See also
 

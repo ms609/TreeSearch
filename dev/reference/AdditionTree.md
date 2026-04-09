@@ -81,7 +81,7 @@ AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 #> Phylogenetic tree with 20 tips and 19 internal nodes.
 #> 
 #> Tip labels:
-#>   Psittacosaurus_spp, Pachycephalosaurus_wyomingensis, Texacephale_langstoni, Hanssuesia_sternbergi, Homalocephale_calathocercos, Goyocephale_lattimorei, ...
+#>   Psittacosaurus_spp, Prenocephale_prenes, Pachycephalosaurus_wyomingensis, Texacephale_langstoni, Hanssuesia_sternbergi, Homalocephale_calathocercos, ...
 #> 
 #> Rooted; no branch length.
 ```

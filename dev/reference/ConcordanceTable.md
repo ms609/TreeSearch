@@ -96,8 +96,8 @@ ConcordanceTable(
 ## References
 
 Smith MR (2026). “Which characters support which clades? Exploring the
-distribution of phylogenetic signal using concordant information.”
-*Forthcoming*.
+distribution of phylogenetic signal using mutual information.”
+*Systematic Biology*, Under review.
 
 ## See also
 

@@ -162,12 +162,12 @@ bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
 influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
 #> 
 #> ── BEGIN TREE SEARCH (k = Inf) ─────────────────────────────────────────────────
-#> → Initial score: 82 
+#> → Initial score: 86 
 #> 
 #> ── Sample local optimum ────────────────────────────────────────────────────────
 #> → TBR depth 2; keeping 14.4 trees; k = Inf
-#> ℹ 2026-02-15 17:05:39: Score: 82
-#> ✔ 2026-02-15 17:05:39: Tree search terminated with score 82
+#> ℹ 2026-04-09 15:07:13: Score: 86
+#> ✔ 2026-04-09 15:07:13: Tree search terminated with score 84
 
 # Colour tip labels according to their influence
 upperBound <- 2 * TreeDist::ClusteringEntropy(

@@ -168,5 +168,5 @@ TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 #> Warning: Can handle max. 2 informative tokens. Dropping others.
 #> [1] 3941.387
 TreeLength(5, inapplicable.phyData[[1]])
-#> [1] 1960 1927 1967 1908 1979
+#> [1] 1939 1925 1934 1947 2004
 ```

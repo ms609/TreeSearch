@@ -198,13 +198,17 @@ whose signal is well represented anywhere in the tree, even if concentrated
 on a single edge.</p>
 <p><code>QuartetConcordance()</code> is the proportion of quartets (sets of four leaves)
 that are decisive for a split which are also concordant with it
-(the site concordance factor (Minh et al. 2020)
-).
 For example, a quartet with the characters <code>0 0 0 1</code> is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters <code>0 0 1 1</code> is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
-of the second.</p>
+of the second.
+In contrast to the site concordance factor
+(Minh et al. 2020)
+, <code>QuartetConcordance()</code> considers all
+quartets that are decisive for a branch.
+Doing so circumvents the criticisms of
+.</p>
 <p>By default, the reported value weights each site by the number of quartets
 it is decisive for.  This value can be interpreted as the proportion of
 all decisive quartets that are concordant with a split.
@@ -215,11 +219,9 @@ one that is concordant with 25% of 96 decisive quartets, and
 a second that is concordant with 75% of 4 decisive quartets.
 If <code>weight = TRUE</code>, the split concordance will be 24 + 3 / 96 + 4 = 27%.
 If <code>weight = FALSE</code>, the split concordance will be mean(75%, 25%) = 50%.</p>
-<p><code>QuartetConcordance()</code> is computed exactly, using all quartets, where as
-other implementations (e.g. IQ-TREE) follow
-Minh2020)
- in using a random subsample
-of quartets for a faster, if potentially less accurate, computation.
+<p><code>QuartetConcordance()</code> is computed exactly, using all quartets,
+rather than a random subsample
+.
 Ambiguous and inapplicable tokens are treated as containing no grouping
 information (i.e. <code>(02)</code> or <code>-</code> are each treated as <code>?</code>).</p>
 <p><code>PhylogeneticConcordance()</code> treats each character in <code>dataset</code> as a
@@ -247,7 +249,11 @@ this tree and <code>tree</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>Minh BQ, Hahn MW, Lanfear R (2020).
+    <p>Adummy A (2026).
+“Some keys from package TreeSearch are not avalable.”
+Failed to insert reference with keys:
+    Minh2020, SmithConc, Goloboff2024, cf. @Minh2020, Smith2020
+from package = 'TreeSearch'. Possible cause - missing REFERENCES.bib in package 'TreeSearch' or 'TreeSearch' not installed.<br><br> Minh BQ, Hahn MW, Lanfear R (2020).
 “New methods to calculate concordance factors for phylogenomic datasets.”
 <em>Molecular Biology and Evolution</em>, <b>37</b>(9), 2727–2733.
 <a href="https://doi.org/10.1093/molbev/msaa106" class="external-link">doi:10.1093/molbev/msaa106</a>
@@ -256,8 +262,8 @@ this tree and <code>tree</code>.</p>
 <em>Bioinformatics</em>, <b>36</b>(20), 5007–5013.
 <a href="https://doi.org/10.1093/bioinformatics/btaa614" class="external-link">doi:10.1093/bioinformatics/btaa614</a>
 .<br><br> Smith MR (2026).
-“Which characters support which clades? Exploring the distribution of phylogenetic signal using concordant information.”
-<em>Forthcoming</em>.</p>
+“Which characters support which clades? Exploring the distribution of phylogenetic signal using mutual information.”
+<em>Systematic Biology</em>, Under review.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -428,14 +428,14 @@ trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
                            concavity = 10, verbosity = 4)
 #> 
 #> ── BEGIN TREE SEARCH (k = 10) ──────────────────────────────────────────────────
-#> → Initial score: 16.3264 
+#> → Initial score: 16.0337 
 #> 
 #> ── Sample local optimum ────────────────────────────────────────────────────────
 #> → TBR depth 1; keeping 4 trees; k = 10
-#> ℹ 2026-02-15 17:05:30: Score: 16.3264
-#> ✔ 2026-02-15 17:05:31: Tree search terminated with score 15.969
+#> ℹ 2026-04-09 15:07:04: Score: 16.0337
+#> ✔ 2026-04-09 15:07:04: Tree search terminated with score 16.0337
 names(trees)
-#> [1] "final_1" "final_2" "final_3"
+#> [1] "seed_1"  "final_1" "final_2"
 cons <- Consensus(trees)
 
 # In actual use, be sure to check that the score has converged on a global
