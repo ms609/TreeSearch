@@ -65,7 +65,7 @@ MaximizeParsimony(dataset, hierarchy = hierarchy,
 
 ### X-transformation (step-matrix recoding)
 
-The x-transformation approach [@Goloboff2021b] recodes each hierarchy block
+The x-transformation approach [@Goloboff2021] recodes each hierarchy block
 as a single step-matrix character with asymmetric costs.
 The "absent" state is separated from all possible combinations of
 secondary character states, with a high cost for gaining the structure
@@ -173,6 +173,6 @@ strongly secondaries contribute (via `hsj_alpha`).
 
 **X-transformation** is appropriate when you believe gains of
 complex structures should be penalized more heavily than losses,
-following the maximum-homology philosophy of @Goloboff2021b.
+following the maximum-homology philosophy of @Goloboff2021.
 
 ## References

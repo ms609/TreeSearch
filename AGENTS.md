@@ -927,7 +927,7 @@ hierarchy specification.
 | `src/ts_sankoff.cpp` | Sankoff downpass, uppass, root forcing | Complete |
 | `R/recode_hierarchy.R` | `recode_hierarchy()`: x-transformation recoding (Goloboff et al. 2021) | Complete, 49 tests |
 | `tests/testthat/test-recode-hierarchy.R` | Unit tests for recode_hierarchy() | Complete |
-| `inst/REFERENCES.bib` | Added `Goloboff2021b` entry | Complete |
+| `inst/REFERENCES.bib` | Added `Goloboff2021` entry | Complete |
 
 ### Modified files
 

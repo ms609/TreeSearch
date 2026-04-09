@@ -70,7 +70,7 @@ accounts for inapplicable tokens.  This is the default.
 A parameter $\alpha$ controls the weighting of
 secondary characters.
 
-- **X-transformation** [@Goloboff2021b]: recodes hierarchically-dependent
+- **X-transformation** [@Goloboff2021]: recodes hierarchically-dependent
 characters into composite step-matrix characters with asymmetric costs,
 scored via the Sankoff algorithm.
 

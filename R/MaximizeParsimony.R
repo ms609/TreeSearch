@@ -306,7 +306,7 @@
 #'       `hierarchy`; controlled by `hsj_alpha`.}
 #'     \item{`"xform"`}{Step-matrix recoding approximating maximum homology
 #'       via x-transformations
-#'       \insertCite{Goloboff2021b;textual}{TreeSearch}.  Requires a
+#'       \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
 #'       `hierarchy`.}
 #'   }
 #' @param hsj_alpha Numeric in \[0, 1\]: scaling parameter for secondary-

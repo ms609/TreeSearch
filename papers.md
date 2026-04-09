@@ -35,7 +35,7 @@ Tracking citations for write-up purposes.
 | Key | Citation | Relevance |
 |-----|----------|-----------|
 | Hopkins2021 | Hopkins, M.J. & St. John, K. (2021). A new approach to inapplicable characters in phylogenetics. *Systematic Biology* 70(4): 764–781. | HSJ dissimilarity-metric scoring (T-116–T-118) |
-| Goloboff2021b | Goloboff, P.A., Torres, A. & Arias, J.S. (2021). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. *Cladistics* 37(6): 569–588. | X-transformation recoding for step-matrix inapplicable handling (T-122) |
+| Goloboff2021 | Goloboff, P.A., Torres, A. & Arias, J.S. (2021). Weighted parsimony outperforms other methods of phylogenetic inference under models appropriate for morphology. *Cladistics* 37(6): 569–588. | X-transformation recoding for step-matrix inapplicable handling (T-122) |
 
 ## Implied Weighting
 
