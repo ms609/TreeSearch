@@ -171,7 +171,7 @@ quartet with characters `0 0 1 1` is decisive, and is concordant with
 any tree that groups the first two leaves together to the exclusion of
 the second. In contrast to the site concordance factor (Minh et al.
 2020) , `QuartetConcordance()` considers all quartets that are decisive
-for a branch. Doing so circumvents the criticisms of .
+for a branch. Doing so circumvents the criticisms of Goloboff (2024) .
 
 By default, the reported value weights each site by the number of
 quartets it is decisive for. This value can be interpreted as the
@@ -184,9 +184,9 @@ split concordance will be 24 + 3 / 96 + 4 = 27%. If `weight = FALSE`,
 the split concordance will be mean(75%, 25%) = 50%.
 
 `QuartetConcordance()` is computed exactly, using all quartets, rather
-than a random subsample . Ambiguous and inapplicable tokens are treated
-as containing no grouping information (i.e. `(02)` or `-` are each
-treated as `?`).
+than a random subsample (cf. Minh et al. 2020) . Ambiguous and
+inapplicable tokens are treated as containing no grouping information
+(i.e. `(02)` or `-` are each treated as `?`).
 
 `PhylogeneticConcordance()` treats each character in `dataset` as a
 phylogenetic hypothesis and measures the extent to which it supports the
@@ -213,11 +213,11 @@ Information (Smith 2020) of this tree and `tree`.
 
 ## References
 
-Adummy A (2026). “Some keys from package TreeSearch are not avalable.”
-Failed to insert reference with keys: Minh2020, SmithConc, Goloboff2024,
-cf. @Minh2020, Smith2020 from package = 'TreeSearch'. Possible cause -
-missing REFERENCES.bib in package 'TreeSearch' or 'TreeSearch' not
-installed.  
+Goloboff PA (2024). “Measuring Degree of Group Support.” In
+*Phylogenetic Analysis of Morphological Data*, volume 2, 119–183. CRC
+Press.
+[doi:10.1201/9780367823412-8](https://doi.org/10.1201/9780367823412-8)
+.  
   
 Minh BQ, Hahn MW, Lanfear R (2020). “New methods to calculate
 concordance factors for phylogenomic datasets.” *Molecular Biology and
