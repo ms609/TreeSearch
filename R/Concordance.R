@@ -579,7 +579,7 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' If `weight = FALSE`, the split concordance will be mean(75&percnt;, 25&percnt;) = 50&percnt;.
 #'
 #' `QuartetConcordance()` is computed exactly, using all quartets, 
-#' rather than a random subsample \insertCite{cf. @Minh2020}{TreeSearch}.
+#' rather than a random subsample \insertCite{@cf. @Minh2020}{TreeSearch}.
 #' Ambiguous and inapplicable tokens are treated as containing no grouping
 #' information (i.e. `(02)` or `-` are each treated as `?`).
 #'

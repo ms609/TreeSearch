@@ -169,7 +169,7 @@ If \code{weight = TRUE}, the split concordance will be 24 + 3 / 96 + 4 = 27\%.
 If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 
 \code{QuartetConcordance()} is computed exactly, using all quartets,
-rather than a random subsample \insertCite{cf. @Minh2020}{TreeSearch}.
+rather than a random subsample \insertCite{@cf. @Minh2020}{TreeSearch}.
 Ambiguous and inapplicable tokens are treated as containing no grouping
 information (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
 
