@@ -34,7 +34,7 @@ indices (1-based) not in any hierarchy block.}
 }
 \description{
 Implements the x-transformation recoding of
-\insertCite{Goloboff2021b;textual}{TreeSearch}.
+\insertCite{Goloboff2021;textual}{TreeSearch}.
 Each hierarchy block (one controlling primary character plus \eqn{n}
 secondary characters) is combined into a single step-matrix character
 with \eqn{\prod k_i + 1} states and an asymmetric cost matrix.

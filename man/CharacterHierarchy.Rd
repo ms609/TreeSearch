@@ -25,7 +25,7 @@ can in turn control tertiary characters, and so on.
 \details{
 This hierarchy is required by the HSJ
 \insertCite{Hopkins2021}{TreeSearch} and step-matrix
-\insertCite{Goloboff2021b}{TreeSearch} approaches to inapplicable
+\insertCite{Goloboff2021}{TreeSearch} approaches to inapplicable
 characters, and is passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} via the \code{hierarchy}
 argument.
 }

@@ -135,7 +135,7 @@ regions from the \code{"-"} token.  No hierarchy required.}
 \code{hierarchy}; controlled by \code{hsj_alpha}.}
 \item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
 via x-transformations
-\insertCite{Goloboff2021b;textual}{TreeSearch}.  Requires a
+\insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
 \code{hierarchy}.}
 }}
 
