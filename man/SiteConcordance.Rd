@@ -147,12 +147,15 @@ on a single edge.
 
 \code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
 that are decisive for a split which are also concordant with it
-(the site concordance factor \insertCite{Minh2020}{TreeSearch}).
 For example, a quartet with the characters \verb{0 0 0 1} is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
 of the second.
+In contrast to the site concordance factor
+\insertCite{Minh2020}{TreeSearch}, \code{QuartetConcordance()} considers all
+quartets that are decisive for a branch.
+Doing so circumvents the criticisms of \insertCite{Goloboff2024;textual}{TreeSearch}.
 
 By default, the reported value weights each site by the number of quartets
 it is decisive for.  This value can be interpreted as the proportion of
@@ -165,10 +168,8 @@ a second that is concordant with 75\% of 4 decisive quartets.
 If \code{weight = TRUE}, the split concordance will be 24 + 3 / 96 + 4 = 27\%.
 If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 
-\code{QuartetConcordance()} is computed exactly, using all quartets, where as
-other implementations (e.g. IQ-TREE) follow
-\insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
-of quartets for a faster, if potentially less accurate, computation.
+\code{QuartetConcordance()} is computed exactly, using all quartets,
+rather than a random subsample \insertCite{cf. @Minh2020}{TreeSearch}.
 Ambiguous and inapplicable tokens are treated as containing no grouping
 information (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
 
