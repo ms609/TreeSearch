@@ -557,30 +557,32 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' @details
 #' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
 #' that are decisive for a split which are also concordant with it
-#' (the site concordance factor \insertCite{Minh2020}{TreeSearch}).
 #' For example, a quartet with the characters `0 0 0 1` is not decisive, as
 #' all relationships between those leaves are equally parsimonious.
 #' But a quartet with characters `0 0 1 1` is decisive, and is concordant
 #' with any tree that groups the first two leaves together to the exclusion
 #' of the second.
+#' In contrast to the site concordance factor
+#' \insertCite{Minh2020}{TreeSearch}, `QuartetConcordance()` considers all
+#' quartets that are decisive for a branch.
+#' Doing so circumvents the criticisms of \insertCite{Goloboff2024;textual}{TreeSearch}.
 #'
 #' By default, the reported value weights each site by the number of quartets
 #' it is decisive for.  This value can be interpreted as the proportion of
 #' all decisive quartets that are concordant with a split.
 #' If `weight = FALSE`, the reported value is the mean of the concordance
-#' value for each site.
+#' value for each site. 
 #' Consider a split associated with two sites:
-#' one that is concordant with 25% of 96 decisive quartets, and
-#' a second that is concordant with 75% of 4 decisive quartets.
-#' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27%.
-#' If `weight = FALSE`, the split concordance will be mean(75%, 25%) = 50%.
+#' one that is concordant with 25&percnt; of 96 decisive quartets, and
+#' a second that is concordant with 75&percnt; of 4 decisive quartets.
+#' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27&percnt;.
+#' If `weight = FALSE`, the split concordance will be mean(75&percnt;, 25&percnt;) = 50&percnt;.
 #'
-#' `QuartetConcordance()` is computed exactly, using all quartets, where as
-#' other implementations (e.g. IQ-TREE) follow
-#' \insertCite{@Minh2020;textual}{TreeSearch} in using a random subsample
-#'  of quartets for a faster, if potentially less accurate, computation.
+#' `QuartetConcordance()` is computed exactly, using all quartets, 
+#' rather than a random subsample \insertCite{cf. @Minh2020}{TreeSearch}.
 #' Ambiguous and inapplicable tokens are treated as containing no grouping
 #' information (i.e. `(02)` or `-` are each treated as `?`).
+#'
 #' @return
 #' `QuartetConcordance(return = "edge")` returns a numeric vector giving the
 #' concordance index at each split across all sites; names specify the number of
