@@ -119,6 +119,20 @@ test_that("QuartetConcordance() handles incomplete data", {
   expect_equal(unname(QuartetConcordance(tree, dat)), rep(NA_real_, 5))
 })
 
+test_that("QuartetConcordance() handles non-integer data", {
+  tree <- BalancedTree(8)
+  splits <- as.Splits(tree)
+  mataset <- matrix(c("A", "A", "[AC]", "C", "C", "C", "T", "T", rep("?", 8)),
+                    8, dimnames = list(paste0("t", 1:8), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  intSet <- matrix(c("1", "1", "[12]", "2", "2", "2", "4", "4", rep("?", 8)),
+                    8, dimnames = list(paste0("t", 1:8), NULL))
+  
+  expect_equal(QuartetConcordance(tree, dat),
+               QuartetConcordance(tree, MatrixToPhyDat(intSet)))
+})
+
 test_that(".Rezero() works", {
   expect_equal(TreeSearch:::.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
 })

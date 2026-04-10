@@ -616,19 +616,32 @@ QuartetConcordance <- function(
     warning("No overlap between tree labels and dataset.")
     return(NULL)
   }
+  
   dataset <- dataset[tipLabels, drop = FALSE]
   splits <- as.Splits(tree, dataset)
   logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
                        logical(NTip(dataset)))
   
-  characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
+  contrast <- attr(dataset, "contrast")
   charLevels <- attr(dataset, "allLevels")
-  isAmbig <- rowSums(attr(dataset, "contrast")) > 1
+  
   isInapp <- charLevels == "-"
-  nonGroupingLevels <- charLevels[isAmbig | isInapp]
-  characters[characters %in% nonGroupingLevels] <- NA
-
-  charInt <- `mode<-`(characters, "integer")
+  isAmbig <- rowSums(contrast[, colnames(contrast) != "-"]) > 1
+  isGrouping <- !isAmbig & !isInapp
+  
+  # For each grouping level, which column of the contrast matrix does it uniquely set?
+  groupingCols <- apply(contrast[isGrouping, , drop = FALSE] > 0, 1, which)
+  
+  levelToInt <- rep(NA_integer_, length(charLevels))
+  levelToInt[isGrouping] <- as.integer(groupingCols)
+  
+  characters <- PhyDatToMatrix(dataset)
+  charInt <- array(
+    levelToInt[match(characters, charLevels)],
+    dim      = dim(characters),
+    dimnames = dimnames(characters)
+  )
+  
   raw_counts <- quartet_concordance(logiSplits, charInt)
 
   num <- raw_counts$concordant
