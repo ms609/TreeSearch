@@ -446,6 +446,17 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' @param xlab Character giving a label for the x axis.
 #' @param ylab Character giving a label for the y axis.
 #' @param plot Logical specifying whether to draw the plot.
+#' @param marginSize Integer scalar or vector controlling summary margin strips.
+#' If a scalar (length 1) and greater than zero, both a left strip and a bottom
+#' strip are added, each `marginSize` grid cells wide/tall.
+#' If a vector (length > 1), each entry controls one side following the usual
+#' `par(mar)` order — `c(bottom, left, top, right)` — where a positive value
+#' enables that strip with the given width/height and `NA` or `0` suppresses it.
+#' Currently only the bottom (entry 1) and left (entry 2) strips are
+#' implemented; further entries are accepted but ignored.
+#' The left strip is coloured by the characterwise concordance (weighted mean
+#' across edges); the bottom strip by the edgewise concordance (weighted mean
+#' across characters). One blank cell separates each strip from the main grid.
 #' @param \dots Arguments to `abline`, to control the appearance of vertical
 #' lines marking important edges.
 #' @returns `ConcordanceTable()` invisibly returns an named list containing:
@@ -470,7 +481,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 #'
 #' # View information shared by characters and edges
-#' ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3)
+#' ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
+#'                  marginSize = 1:4)
 #' axis(1)
 #' axis(2)
 #'
@@ -484,8 +496,9 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' - [SiteConcordance()]: compute underlying concordance values.
 #' @export
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
-                             xlab = "Edge", ylab = "Character", 
-                             normalize = TRUE, plot = TRUE, ...) {
+                             xlab = "Edge", ylab = "Character",
+                             normalize = TRUE, plot = TRUE,
+                             marginSize = 0L, ...) {
   cc <- ClusteringConcordance(tree, dataset, return = "all",
                               normalize = normalize)
   nodes <- seq_len(dim(cc)[[2]])
@@ -498,11 +511,67 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
   quality[is.na(quality)] <- 0
 
   col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
-  image(nodes, seq_len(dim(cc)[[3]]),
-        matrix(1:prod(dim(amount)), dim(amount)[[1]]),
-        frame.plot = FALSE, axes = FALSE,
-        col = col, xlab = xlab, ylab = ylab)
-  
+
+  # Parse marginSize: scalar → both sides; vector → c(bottom, left, ...)
+  ms <- as.integer(marginSize)
+  if (length(ms) == 1L) {
+    ms_bottom <- if (!is.na(ms) && ms > 0L) ms else 0L
+    ms_left   <- ms_bottom
+  } else {
+    ms_bottom <- if (!is.na(ms[1L]) && ms[1L] > 0L) ms[1L] else 0L
+    ms_left   <- if (length(ms) >= 2L && !is.na(ms[2L]) && ms[2L] > 0L) ms[2L] else 0L
+  }
+  x_offset <- if (ms_left   > 0L) ms_left   + 1L else 0L
+  y_offset <- if (ms_bottom > 0L) ms_bottom + 1L else 0L
+
+  if (ms_left > 0L || ms_bottom > 0L) {
+    n_edges <- dim(cc)[[2]]
+    n_chars <- dim(cc)[[3]]
+
+    # Marginal concordance: hBest-weighted average of normalized MI
+    hBest_w <- cc["hBest", , ]
+    hBest_w[is.na(hBest_w)] <- 0
+    # `quality` already has NAs zeroed above
+
+    # Extended layout (x = left→right, y = bottom→top):
+    #   x: [char margin: 1..ms_left] [blank: ms_left+1] [grid: (x_offset+1)..(x_offset+n_edges)]
+    #   y: [edge margin: 1..ms_bottom] [blank: ms_bottom+1] [grid: (y_offset+1)..(y_offset+n_chars)]
+    # (absent margin ↔ x_offset or y_offset = 0, so that portion of the range vanishes)
+    nx <- x_offset + n_edges
+    ny <- y_offset + n_chars
+    ext_col <- matrix("#FFFFFF", nx, ny)
+
+    xi <- (x_offset + 1L):(x_offset + n_edges)  # x indices of main grid
+    yi <- (y_offset + 1L):(y_offset + n_chars)   # y indices of main grid
+    ext_col[xi, yi] <- col
+
+    if (ms_left > 0L) {
+      denom_c <- colSums(hBest_w)
+      char_conc <- pmax(-1, pmin(1,
+        ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c)))
+      char_cols <- Col(rep(1, n_chars), char_conc)
+      for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
+    }
+    if (ms_bottom > 0L) {
+      denom_e <- rowSums(hBest_w)
+      edge_conc <- pmax(-1, pmin(1,
+        ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)))
+      edge_cols <- Col(rep(1, n_edges), edge_conc)
+      for (j in seq_len(ms_bottom)) ext_col[xi, j] <- edge_cols
+    }
+
+    image(seq_len(nx), seq_len(ny),
+          matrix(seq_len(nx * ny), nx, ny),
+          col = as.vector(ext_col),
+          frame.plot = FALSE, axes = FALSE,
+          xlab = xlab, ylab = ylab)
+  } else {
+    image(nodes, seq_len(dim(cc)[[3]]),
+          matrix(1:prod(dim(amount)), dim(amount)[[1]]),
+          frame.plot = FALSE, axes = FALSE,
+          col = col, xlab = xlab, ylab = ylab)
+  }
+
   if (largeClade > 1) {
     cladeSize <- CladeSizes(tree)
     edge <- tree[["edge"]]
@@ -511,7 +580,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     bigNode <- vapply(as.integer(colnames(cc)), function (node) {
       all(cladeSize[child[parent == parent[child == node]]] >= largeClade)
     }, logical(1))
-    abline(v = nodes[bigNode] - 0.5, ...)
+    abline(v = nodes[bigNode] + x_offset - 0.5, ...)
   }
   invisible(list(info = info, relInfo = amount, quality = quality, col = col))
 }
