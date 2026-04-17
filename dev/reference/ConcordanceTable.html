@@ -73,6 +73,7 @@
 <span>  ylab <span class="op">=</span> <span class="st">"Character"</span>,</span>
 <span>  normalize <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  plot <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  marginSize <span class="op">=</span> <span class="fl">0L</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -126,6 +127,20 @@ number of random trees.</p></li>
 <dd><p>Logical specifying whether to draw the plot.</p></dd>
 
 
+<dt id="arg-marginsize">marginSize<a class="anchor" aria-label="anchor" href="#arg-marginsize"></a></dt>
+<dd><p>Integer scalar or vector controlling summary margin strips.
+If a scalar (length 1) and greater than zero, both a left strip and a bottom
+strip are added, each <code>marginSize</code> grid cells wide/tall.
+If a vector (length &gt; 1), each entry controls one side following the usual
+<code>par(mar)</code> order — <code>c(bottom, left, top, right)</code> — where a positive value
+enables that strip with the given width/height and <code>NA</code> or <code>0</code> suppresses it.
+Currently only the bottom (entry 1) and left (entry 2) strips are
+implemented; further entries are accepted but ignored.
+The left strip is coloured by the characterwise concordance (weighted mean
+across edges); the bottom strip by the edgewise concordance (weighted mean
+across characters). One blank cell separates each strip from the main grid.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Arguments to <code>abline</code>, to control the appearance of vertical
 lines marking important edges.</p></dd>
@@ -174,7 +189,8 @@ lines marking important edges.</p></dd>
 <span class="r-plt img"><img src="ConcordanceTable-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># View information shared by characters and edges</span></span></span>
-<span class="r-in"><span><span class="fu">ConcordanceTable</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, largeClade <span class="op">=</span> <span class="fl">3</span>, col <span class="op">=</span> <span class="fl">2</span>, lwd <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">ConcordanceTable</span><span class="op">(</span><span class="va">tree</span>, <span class="va">dataset</span>, largeClade <span class="op">=</span> <span class="fl">3</span>, col <span class="op">=</span> <span class="fl">2</span>, lwd <span class="op">=</span> <span class="fl">3</span>,</span></span>
+<span class="r-in"><span>                 marginSize <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/axis.html" class="external-link">axis</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/graphics/axis.html" class="external-link">axis</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="ConcordanceTable-2.png" alt="" width="700" height="433"></span>

@@ -14,6 +14,7 @@ ConcordanceTable(
   ylab = "Character",
   normalize = TRUE,
   plot = TRUE,
+  marginSize = 0L,
   ...
 )
 ```
@@ -74,6 +75,21 @@ ConcordanceTable(
 
   Logical specifying whether to draw the plot.
 
+- marginSize:
+
+  Integer scalar or vector controlling summary margin strips. If a
+  scalar (length 1) and greater than zero, both a left strip and a
+  bottom strip are added, each `marginSize` grid cells wide/tall. If a
+  vector (length \> 1), each entry controls one side following the usual
+  `par(mar)` order — `c(bottom, left, top, right)` — where a positive
+  value enables that strip with the given width/height and `NA` or `0`
+  suppresses it. Currently only the bottom (entry 1) and left (entry 2)
+  strips are implemented; further entries are accepted but ignored. The
+  left strip is coloured by the characterwise concordance (weighted mean
+  across edges); the bottom strip by the edgewise concordance (weighted
+  mean across characters). One blank cell separates each strip from the
+  main grid.
+
 - ...:
 
   Arguments to `abline`, to control the appearance of vertical lines
@@ -130,7 +146,8 @@ QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 
 
 # View information shared by characters and edges
-ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3)
+ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
+                 marginSize = 4)
 axis(1)
 axis(2)
 
