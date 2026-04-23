@@ -10,6 +10,7 @@ src/*.dll
 .Rdata
 .Rd2pdf**
 .Rprofile
+.Renviron
 *.gcno
 *.knit.md
 *.log
@@ -34,3 +35,25 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
+/.agent*
+/agent-*.md
+/to-do.md
+/issues.md
+/coordination.md
+/.*-data
+/TreeSearch.Rcheck
+TreeSearch_*.tar.gz
+
+# Local build config — never commit
+src/Makevars.win
+
+# Test artifacts
+test*.txt
+test_output.txt
+/pdf
+/.builds
+.positai
+/.gha-results
+/.tnt-bench
+/.vtune*
+/vtune*
