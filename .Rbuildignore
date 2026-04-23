@@ -51,4 +51,7 @@ Makevars\.win\..*-bak$
 ^test.*\.txt$
 ^vtune
 ^dev$
+
+# Agent note files
+^remote-jobs\.md$
 ^papers\.md$
