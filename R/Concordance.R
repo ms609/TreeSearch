@@ -518,11 +518,10 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     ms_bottom <- if (!is.na(ms) && ms > 0L) ms else 0L
     ms_left   <- ms_bottom
   } else {
-    ms_bottom <- if (!is.na(ms[1L]) && ms[1L] > 0L) ms[1L] else 0L
-    ms_left   <- if (length(ms) >= 2L) {
-      ms2 <- ms[[2]]
-      if (!is.na(ms2) && ms2 > 0L) ms2 else 0L
-    }
+    ms_bottom <- ms[1L] # [] returns NA if length(ms) < 1
+    if (is.na(ms_bottom) || ms_bottom < 0L) ms_bottom <- 0L
+    ms_left <- ms[2L]
+    if (is.na(ms_left) || ms_left < 0L) ms_left <- 0L
   }
   x_offset <- if (ms_left   > 0L) ms_left   + 1L else 0L
   y_offset <- if (ms_bottom > 0L) ms_bottom + 1L else 0L
