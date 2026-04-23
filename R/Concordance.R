@@ -547,15 +547,14 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 
     if (ms_left > 0L) {
       denom_c <- colSums(hBest_w)
-      char_conc <- ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c))
+      char_conc <- ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c)
       char_cols <- Col(cc["hChar", 1, ], char_conc)
       for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
     }
     if (ms_bottom > 0L) {
       denom_e <- rowSums(hBest_w)
-      edge_conc <- pmax(-1, pmin(1,
-        ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)))
-      edge_cols <- Col(rep(1, n_edges), edge_conc)
+      edge_conc <- ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)
+      edge_cols <- Col(rowMeans(cc["hSplit", , ]), edge_conc)
       for (j in seq_len(ms_bottom)) ext_col[xi, j] <- edge_cols
     }
 
