@@ -5,7 +5,7 @@ Generate colour to depict the amount and quality of observations
 ## Usage
 
 ``` r
-QACol(amount, quality)
+QACol(quality, amount)
 
 QCol(amount, quality)
 
@@ -21,15 +21,15 @@ QALegend(
 
 ## Arguments
 
-- amount:
-
-  Numeric vector of values between 0 and 1, denoting the relative amount
-  of information
-
 - quality:
 
   Numeric vector of values between -1 and 1, denoting the quality of
   observations, where 0 is neutral.
+
+- amount:
+
+  Numeric vector of values between 0 and 1, denoting the relative amount
+  of information.
 
 - where:
 
@@ -86,6 +86,6 @@ Other utility functions:
 ``` r
 amount <- runif(80, 0, 1)
 quality <- runif(80, -1, 1)
-plot(amount, quality, col = QACol(amount, quality), pch = 15)
-abline(h = 0)
+plot(quality, amount, col = QACol(quality, amount), pch = 15)
+abline(v = 0)
 ```

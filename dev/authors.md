@@ -46,7 +46,7 @@ data. doi: 10.5281/zenodo.1042590
     @Manual{Smith2018,
       title = {{TreeSearch}: phylogenetic analysis with discrete character data},
       author = {Martin R. Smith},
-      note = {R package version 1.8.0.9000},
+      note = {R package version 1.8.0.9001},
       year = {2018},
       doi = {10.5281/zenodo.1042590},
     }
