@@ -547,9 +547,8 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 
     if (ms_left > 0L) {
       denom_c <- colSums(hBest_w)
-      char_conc <- pmax(-1, pmin(1,
-        ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c)))
-      char_cols <- Col(rep(1, n_chars), char_conc)
+      char_conc <- ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c))
+      char_cols <- Col(cc["hChar", 1, ], char_conc)
       for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
     }
     if (ms_bottom > 0L) {
