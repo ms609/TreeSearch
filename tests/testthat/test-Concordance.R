@@ -203,9 +203,9 @@ test_that("ConcordantInformation() works", {
 })
 
 test_that("QACol() handles input", {
-  expect_equal(is.na(QACol(c(0, 1, NA, 0, NA), c(0, 1, NA, NA, 0))),
+  expect_equal(is.na(QACol(c(0, 1, NA, NA, 0), c(0, 1, NA, 0, NA))),
                c(FALSE, FALSE, TRUE,
                  FALSE, # No data = black, quality NA by definition
                  TRUE))
-  expect_equal(is.na(QCol(NA, c(0, 1, NA, NA))), c(FALSE, FALSE, TRUE, TRUE))
+  expect_equal(is.na(QCol(c(0, 1, NA, NA), NA)), c(FALSE, FALSE, TRUE, TRUE))
 })

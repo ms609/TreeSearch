@@ -95,7 +95,7 @@ QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 
 # View information shared by characters and edges
 ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
-                 marginSize = 4)
+                 marginSize = 1:4)
 axis(1)
 axis(2)
 

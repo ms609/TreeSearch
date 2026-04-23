@@ -6,7 +6,7 @@
 \alias{QALegend}
 \title{Generate colour to depict the amount and quality of observations}
 \usage{
-QACol(amount, quality)
+QACol(quality, amount)
 
 QCol(amount, quality)
 
@@ -20,11 +20,11 @@ QALegend(
 )
 }
 \arguments{
-\item{amount}{Numeric vector of values between 0 and 1, denoting the relative
-amount of information}
-
 \item{quality}{Numeric vector of values between -1 and 1, denoting the
 quality of observations, where 0 is neutral.}
+
+\item{amount}{Numeric vector of values between 0 and 1, denoting the relative
+amount of information.}
 
 \item{where}{Location of legend, passed to \code{par(fig = where)}}
 
@@ -56,8 +56,8 @@ Generate colour to depict the amount and quality of observations
 \examples{
 amount <- runif(80, 0, 1)
 quality <- runif(80, -1, 1)
-plot(amount, quality, col = QACol(amount, quality), pch = 15)
-abline(h = 0)
+plot(quality, amount, col = QACol(quality, amount), pch = 15)
+abline(v = 0)
 }
 \seealso{
 Other utility functions: 
