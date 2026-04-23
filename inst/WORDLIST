@@ -183,6 +183,7 @@ bristleworm
 cdef
 cdot
 cf
+characterwise
 cla
 codecov
 config
