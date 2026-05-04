@@ -1,0 +1,2 @@
+Update ConcordanceTable() such that marginSize = c(NA, NA, 3, 4) produces
+margin strips on margins 3 & 4.

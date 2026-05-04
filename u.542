@@ -1,0 +1,16 @@
+I opened a dataset with the app.  Then I opened trees that had a non-overlapping
+taxon set and saw:
+
+> TreeSearch::EasyTrees()
+Loading required package: shiny
+
+Attaching package: ‘future’
+
+The following object is masked from ‘package:shinyjs’:
+
+    reset
+
+
+Listening on http://127.0.0.1:3135
+→ mat[i, j, ..., drop = FALSE]
+✖ subscript out of bounds
