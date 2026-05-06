@@ -35,7 +35,7 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
-/.agent*
+
 /agent-*.md
 /to-do.md
 /issues.md
