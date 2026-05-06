@@ -57,3 +57,4 @@ test_output.txt
 /.vtune*
 /vtune*
 /.claude
+/.agent-*
