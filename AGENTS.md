@@ -232,40 +232,33 @@ that worktree. To mark a task as in-flight on a worktree, set its status to
 On `/assign X`:
 
 1. Read `agent-X.md`. If a task is already in-progress, resume it.
-2. **Triage `aXXX.md` / `a.XXX` bug reports** (see "Shiny bug report intake" below):
-   a. List all `a[0-9]*.md` **and** `a.[0-9]*` files in the project root
-      (excluding any `*.claimed-*.md` / `*.claimed-*` files).
+2. **Triage user reports** (`a.*` and `u.*` files) — see "User report intake"
+   below for the full claim protocol:
+   a. List all `a.[0-9]*` **and** `u.[0-9]*` files in the project root
+      (excluding any `*.claimed-*` files).
    b. For each file, check its size first. **Skip files shorter than
       20 characters** (likely mid-edit — the human may still be typing).
       Do not rename or touch these files; leave them for a later pass.
-   c. For files ≥20 characters, attempt `mv aXXX.md aXXX.claimed-X.md`.
-      If the rename fails (file gone or access denied), another agent
+   c. For files ≥20 characters, claim atomically: `mv a.010 a.010.claimed-X`
+      (or `mv u.010 u.010.claimed-X`). If the rename fails, another agent
       claimed it — skip.
-   d. Create a `to-do.md` task under `### Shiny App` for each valid
-      report. Assign a `<Letter>-nnn` ID (your letter + incremented
-      counter; see "Task IDs" in the master AGENTS.md), a priority based
-      on severity (default P2), and tag as `[Shiny]`. Use the file's
-      content as the description/notes.
-   e. Delete the `aXXX.claimed-X.md` file once the `to-do.md` entry is
-      written.
-   f. Repeat for all claimed files before moving on. **Do not start
-      working a task until all pending reports are triaged.**
-3. **Triage user issues** (`u.*` files) before `to-do.md`. See the
-   parent `../AGENTS.md` "User issue files" section for the full protocol
-   (scan → claim via rename → triage → delete). While untriaged issues
-   remain, triaging takes priority over `to-do.md` tasks (an issue may
-   contain a P0).
-4. **Check `remote-jobs.md`** for retrievable results. If a job is listed
+   d. Create a `to-do.md` entry. **`a.*` files** → `### Shiny App`, tag
+      `[Shiny]`. **`u.*` files** → section matching content (search bug,
+      docs issue, etc.). Default priority P2; crash = P1, cosmetic = P3.
+   e. Delete the `.claimed-X` file once the `to-do.md` entry is written.
+   f. Repeat for all files before moving on. **Do not start working a
+      task until all pending reports are triaged.** (An issue may be P0.)
+3. **Check `remote-jobs.md`** for retrievable results. If a job is listed
    as complete (or past its expected duration), retrieve and process the
    results before claiming a new task.
-5. If no untriaged issues or pending remote results, claim the next OPEN
+4. If no untriaged issues or pending remote results, claim the next OPEN
    task from `to-do.md`.
 
 Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 
-> **Concurrency guard (u.nnn / a.XXX):** Atomic rename (`mv u.001
-> u.001.claimed-X`) ensures exactly one agent wins each file. NTFS
-> rename is atomic; losers see "file not found" and skip.
+> **Concurrency guard:** Atomic rename (`mv a.010 a.010.claimed-X` or
+> `mv u.001 u.001.claimed-X`) ensures exactly one agent wins each file.
+> NTFS rename is atomic; losers see "file not found" and skip.
 
 ### During work
 
@@ -289,48 +282,43 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
 5. Update `coordination.md` if strategic objectives are affected.
 6. Take next task.
 
-### Shiny bug report intake
+### User report intake (`a.*` / `u.*`)
 
-The human files Shiny app bugs as individual files in the project root.
-Naming convention:
+The human files reports as individual files in the project root.
+Each file contains a free-text description. The human's workflow is:
+create file → write → save → never touch again.
 
-`u.010`, `u.011`, … (dot-separated, no extension)
+**Naming convention:**
+- `a.###` — app (Shiny) bug. Always routes to `### Shiny App` in `to-do.md`.
+- `u.###` — general user issue (search quality, docs, API, etc.). Route by content.
 
-Each file contains a free-text bug description. The human's workflow is:
-create file → write bug → save → never touch the file again.
-
-**Agent responsibility:** Triage all pending bug report files into
-`to-do.md` at the start of every `/assign` (step 2 in Assignment above).
+**Agent responsibility:** Triage all pending files into `to-do.md` at
+the start of every `/assign` (step 2 in Assignment above).
 
 **Claim protocol:**
 ```bash
-# List unclaimed reports (both conventions)
-ls u.[0-9]* 2>/dev/null | grep -v 'claimed'
+# List unclaimed reports
+ls a.[0-9]* u.[0-9]* 2>/dev/null | grep -v 'claimed'
 
 # Skip short files (< 20 chars) — don't rename, don't touch
-wc -c < u.010  # check size first
+wc -c < a.010  # check size first
 
 # Claim atomically (rename)
-mv u.010 u.010.claimed-X
+mv a.010 a.010.claimed-X
 
 # Read, triage into to-do.md, then delete
-cat u.001.claimed-X
+cat a.010.claimed-X
 # ... create to-do.md entry ...
-rm u.001.claimed-X
+rm a.010.claimed-X
 ```
 
 **Skip guard:** Files shorter than 20 characters are likely mid-edit.
-Do **not** rename them — just leave them in place for a later pass.
+Do **not** rename them — leave in place for a later pass.
 (Renaming and renaming back triggers RStudio "file moved" dialogs.)
 
-**to-do.md placement:** All Shiny bugs go under `### Shiny App`. Create
-the section if it doesn't exist. Default priority P2 unless the content
-clearly indicates higher severity (crash = P1, cosmetic = P3).
-
-**Shiny bug fixes** are committed directly to `cpp-search` (they are
-bug fixes in `inst/Parsimony/`, not feature work, so no feature branch
-is needed). Use the temporary-worktree approach if changes span multiple
-files.
+**Shiny (`a.*`) fixes** are committed directly to `cpp-search` (bug
+fixes in `inst/Parsimony/`, no feature branch needed). Use a temporary
+worktree if changes span multiple files.
 
 ### Standing tasks
 
@@ -346,8 +334,8 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 
 | File | Purpose |
 |------|---------|
-| `a.XXX` | Individual Shiny bug reports (agents triage → `to-do.md`, then delete) |
-| `u.nnn` | User issue files (agents triage → `to-do.md`, then delete) |
+| `a.###` | App (Shiny) bug reports → triage to `### Shiny App`, then delete |
+| `u.###` | General user issue reports → triage to matching section, then delete |
 | `to-do.md` | Task queue (active/open tasks only) |
 | `remote-jobs.md` | Pending async jobs (Hamilton SLURM, long GHA) — check at `/assign` |
 | `completed-tasks.md` | Archive of completed tasks |

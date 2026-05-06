@@ -177,6 +177,14 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
       LogMsg("UpdateActiveTrees()")
 
       nTrees <- length(r$allTrees)
+      if (nTrees == 0L) {
+        if (!is.null(r$trees)) {
+          r$trees <- NULL
+          r$treeHash <- NULL
+          DisplayTreeScores()
+        }
+        return()
+      }
       if (r$nTree == nTrees &&
           r$treeRange[1] == 1L && r$treeRange[2] == nTrees) {
         thinnedTrees <- r$allTrees

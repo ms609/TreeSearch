@@ -1,7 +1,0 @@
-quartet_concordance.cpp uses
-  NumericMatrix concordant(n_splits, n_chars);
-  NumericMatrix decisive(n_splits, n_chars);
-  
--  Is it more efficient to work with a flat matrix and coerce into a NumericMatrix later?
-- (Are we better working with numerics, or ints?) 
-- Are there any other optimization opportunities? Profile with vprof and check.

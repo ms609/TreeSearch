@@ -35,7 +35,6 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
-
 /agent-*.md
 /to-do.md
 /issues.md
@@ -57,3 +56,4 @@ test_output.txt
 /.tnt-bench
 /.vtune*
 /vtune*
+/.claude

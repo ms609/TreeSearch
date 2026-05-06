@@ -217,6 +217,40 @@ test_that("dataset observer preserves compatible trees (T-151 regression)", {
   )
 })
 
+test_that("UpdateActiveTrees does not crash when allTrees cleared with stale nTree (T-292)", {
+  # Regression: UpdateAllTrees(list()) clears r$allTrees but does NOT reset
+  # r$nTree (the `if (nTrees > 0L)` guard skips it). UpdateActiveTrees() then
+  # reaches the else branch, computes r$allTrees[1:old_nTree] = list of NULLs,
+  # and WideSample() throws "trees must be a multiPhylo object".
+  r <- make_data_state()
+  tips <- paste0("t", 1:6)
+  trees <- ape::rmtree(5, 6)
+  for (i in seq_along(trees)) trees[[i]]$tip.label <- tips
+
+  shiny::testServer(
+    data_server,
+    args = list(r = r, parent_session = NULL,
+                callbacks = stub_callbacks, log_fns = stub_log_fns),
+    {
+      returned <- session$getReturned()
+
+      # Simulate post-search state: 5 trees
+      r$allTrees  <- trees
+      r$trees     <- trees
+      r$nTree     <- 5L
+      r$treeRange <- c(1L, 5L)
+      session$flushReact()
+
+      # Simulate UpdateAllTrees(list()): clears allTrees but leaves nTree = 5
+      r$allTrees <- list()
+      session$flushReact()
+
+      expect_no_error(returned$UpdateActiveTrees())
+      expect_null(r$trees)
+    }
+  )
+})
+
 test_that("dataset observer clears incompatible trees on dataset switch", {
   # When old trees have different taxa than the new dataset, they must be cleared.
   r <- make_data_state()
