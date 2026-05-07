@@ -151,7 +151,7 @@ NULL
 #' @importFrom abind abind
 #' @importFrom stats setNames
 #' @importFrom TreeDist ClusteringEntropy Entropy entropy_int
-#' MutualClusteringInfo
+#' @importFrom TreeDist MutualClusteringInfo
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @export
 ClusteringConcordance <- function(
@@ -819,7 +819,7 @@ QuartetConcordance <- function(
 #' split's internal numbering.
 #'
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
-#' MatchStrings
+#' @importFrom TreeTools MatchStrings
 #' @export
 PhylogeneticConcordance <- function(tree, dataset) {
   if (is.null(dataset)) {

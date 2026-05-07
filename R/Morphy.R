@@ -258,19 +258,13 @@
 #' @template MRS
 #' 
 #' @importFrom cli cli_alert cli_alert_danger cli_alert_info cli_alert_success
-#' cli_alert_warning cli_h1 
-#' cli_progress_bar cli_progress_done cli_progress_update
+#' @importFrom cli cli_alert_warning cli_h1 cli_progress_bar cli_progress_done
+#' @importFrom cli cli_progress_update
 #' @importFrom fastmatch fmatch
 #' @importFrom stats runif
-#' @importFrom TreeTools
-#' AddUnconstrained 
-#' CharacterInformation
-#' ConstrainedNJ 
-#' DropTip
-#' ImposeConstraint
-#' MakeTreeBinary
-#' MatrixToPhyDat
-#' NTip
+#' @importFrom TreeTools AddUnconstrained CharacterInformation ConstrainedNJ 
+#' @importFrom TreeTools DropTip ImposeConstraint MakeTreeBinary MatrixToPhyDat
+#' @importFrom TreeTools NTip
 #' @references
 #' \insertAllCited{}
 #' @seealso

@@ -36,19 +36,19 @@ across the leaves.
 \insertAllCited{}
 }
 \seealso{
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=WideSample]{WideSample()}},
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}},
+\code{\link[=recode_hierarchy]{recode_hierarchy()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

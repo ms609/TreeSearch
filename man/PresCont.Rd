@@ -102,12 +102,12 @@ gpc
 of trees that contain the split, and the frequency of the most contradicted
 split, respectively.
 
-Other split support functions: 
-\code{\link{ConcordanceTable}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{Morphy}()},
-\code{\link{MostContradictedFreq}()},
+Other split support functions:
+\code{\link[=ConcordanceTable]{ConcordanceTable()}},
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=Morphy]{Morphy()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link{SiteConcordance}}
 }
 \author{

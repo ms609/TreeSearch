@@ -92,7 +92,7 @@ QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 
 # View information shared by characters and edges
 ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
-                 marginSize = 4)
+                 marginSize = 1:4)
 axis(1)
 axis(2)
 
@@ -108,12 +108,12 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 \item \code{\link[=SiteConcordance]{SiteConcordance()}}: compute underlying concordance values.
 }
 
-Other split support functions: 
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{Morphy}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()},
+Other split support functions:
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=Morphy]{Morphy()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PresCont]{PresCont()}},
 \code{\link{SiteConcordance}}
 }
 \concept{split support functions}

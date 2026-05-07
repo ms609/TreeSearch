@@ -89,7 +89,7 @@
 #' @references \insertCite{Goloboff2018}{TreeSearch}
 #' \insertAllCited{}
 #' @importFrom TreeTools MakeTreeBinary MatrixToPhyDat Postorder RootNode
-#'   RootTree
+#' @importFrom TreeTools RootTree
 #' @family tree scoring
 #' @export
 ParsSim <- function(tree,

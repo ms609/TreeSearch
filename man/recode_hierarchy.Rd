@@ -7,7 +7,7 @@
 recode_hierarchy(dataset, hierarchy)
 }
 \arguments{
-\item{dataset}{A \code{\link[phangorn:as.phyDat]{phyDat}} object.}
+\item{dataset}{A \code{\link[phangorn:phyDat]{phyDat}} object.}
 
 \item{hierarchy}{A \code{\link{CharacterHierarchy}} object.}
 }
@@ -64,19 +64,19 @@ different states).
 \seealso{
 \code{\link[=CharacterHierarchy]{CharacterHierarchy()}}, \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}
 
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=WideSample]{WideSample()}},
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}}
 }
 \concept{tree scoring}
 \keyword{internal}

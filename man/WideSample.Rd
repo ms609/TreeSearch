@@ -29,7 +29,7 @@ maximizes topological spread.}
 \item{distance}{Either:
 \itemize{
 \item A function that accepts a \code{multiPhylo} and returns a \code{dist}
-object (default: \code{\link[TreeDist:TreeDistance]{TreeDist::ClusteringInfoDistance()}}).
+object (default: \code{\link[TreeDist:ClusteringInfoDistance]{TreeDist::ClusteringInfoDistance()}}).
 \item A pre-computed \code{dist} object whose size matches \code{length(trees)}.
 }
 Ignored when \code{method = "random"}.}
@@ -67,19 +67,19 @@ sub5 <- WideSample(trees, 5, distance = dists)
 
 }
 \seealso{
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}},
+\code{\link[=recode_hierarchy]{recode_hierarchy()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

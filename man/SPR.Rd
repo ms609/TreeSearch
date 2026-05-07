@@ -107,9 +107,9 @@ SPR(tree)
 \item \code{\link[=RootedSPR]{RootedSPR()}}: useful when the position of the root node should be retained.
 }
 
-Other tree rearrangement functions: 
-\code{\link{NNI}()},
-\code{\link{TBR}()}
+Other tree rearrangement functions:
+\code{\link[=NNI]{NNI()}},
+\code{\link[=TBR]{TBR()}}
 }
 \author{
 Martin R. Smith
