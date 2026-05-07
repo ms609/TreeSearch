@@ -12,7 +12,7 @@ WideSample(
 )
 }
 \arguments{
-\item{trees}{A \code{multiPhylo} object.}
+\item{trees}{A \code{multiPhylo} object, or a single \code{phylo} (coerced silently).}
 
 \item{n}{Integer: number of trees to retain. If \code{n >= length(trees)}, all
 trees are returned unchanged.}

@@ -40,7 +40,6 @@
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
 | T-294 | P2 | OPEN | — | **[Shiny] Character contrast matrix error on certain datasets** | u.568: mbank_X27573 → `` `char` contract matrix lacks levels for 1LengthAdded(...) `` repeated; also "Unknown scoring issue may distort score" warning for ~19 taxa. Needs reproduction with that matrix. |
-| T-295 | P2 | OPEN | — | **[Shiny] Relabel "Continue" button to "Search"; fix description** | u.826: unless "Continue" actually continues a prior search, button should read "Search" and the description ("starts a fresh search; results panel shows cumulative total across continued searches") should be revised or removed. |
 | T-296 | P2 | OPEN | — | **[Shiny] "Tips to show" refuses values below rogue detector's preferred level** | u.824: setting the value below the level preferred by the Rogue detector causes the number to flick back up to the previous value — input is silently rejected. |
 | T-297 | P3 | OPEN | — | **[Shiny] "Max independent runs" should appear below search strategy in modal** | u.671: logical ordering — "how hard to try" (strategy) before "when to give up" (run limit). |
 

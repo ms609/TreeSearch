@@ -958,18 +958,13 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                       max = 60, value = cur_timeout, post = "min", step = 1),
           sliderInput(ns("maxReplicates"), "Maximum independent runs",
                       min = 48L, max = 960L, value = cur_maxRep, step = 48L),
-          helpText("Limits each individual search. Clicking \u2018Continue\u2019",
-                   "starts a fresh search; the results panel shows the",
-                   "cumulative total across all continued searches.")
+          helpText("Limits each individual search; each click runs a fresh search.",
+                   "The results panel shows the cumulative total across all searches.")
         )),
         title = "Tree search settings",
         footer = tagList(modalButton("Close", icon = Icon("rectangle-xmark")),
                          actionButton(ns("modalGo"), icon = Icon("magnifying-glass"),
-                                      if(length(r$trees)) {
-                                        "Continue search"
-                                      } else {
-                                        "Start search"
-                                      }))
+                                      "Search"))
       ))
       show("go")
     })
@@ -1113,8 +1108,8 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         # Always refresh the display — UpdateAllTrees may short-circuit
         # when trees are unchanged, but hit/rep counts have been updated.
         DisplayTreeScores()
-        updateActionButton(session, "go", "Continue")
-        updateActionButton(session, "modalGo", "Continue search")
+        updateActionButton(session, "go", "Search")
+        updateActionButton(session, "modalGo", "Search")
         shinyjs::show(selector = "#displayConfig")
         newCount <- length(r$allTrees)
         Notification(
@@ -1156,15 +1151,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       hasTrees <- !is.null(r$allTrees) && length(r$allTrees) > 0
       hasData  <- !is.null(r$dataset) && length(r$dataset) > 0
       if (!hasData) return()
-      if (hasTrees) {
-        treeTips <- r$allTrees[[1]]$tip.label
-        dataTips <- names(r$dataset)
-        if (length(intersect(dataTips, treeTips)) == length(r$dataset)) {
-          updateActionButton(session, "go", "Continue")
-        } else {
-          updateActionButton(session, "go", "New search")
-        }
-      } else {
+      if (!hasTrees) {
         updateActionButton(session, "go", "Search")
       }
     })
