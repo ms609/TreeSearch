@@ -1302,14 +1302,21 @@ consensus_server <- function(id, r,
           } else {
             input$outgroup
           }
+          updateSelectizeInput(
+            session,
+            inputId = "outgroup",
+            selected = r$outgroup,
+            choices = KeptTips()
+          )
+        } else {
+          # Update available choices without changing selection, to avoid
+          # stealing focus from the widget after user adds/removes a taxon.
+          updateSelectizeInput(
+            session,
+            inputId = "outgroup",
+            choices = KeptTips()
+          )
         }
-
-        updateSelectizeInput(
-          session,
-          inputId = "outgroup",
-          selected = r$outgroup,
-          choices = KeptTips()
-        )
       }
     })
 
