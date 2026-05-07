@@ -54,11 +54,10 @@ strip are added, each \code{marginSize} grid cells wide/tall.
 If a vector (length > 1), each entry controls one side following the usual
 \code{par(mar)} order — \code{c(bottom, left, top, right)} — where a positive value
 enables that strip with the given width/height and \code{NA} or \code{0} suppresses it.
-Currently only the bottom (entry 1) and left (entry 2) strips are
-implemented; further entries are accepted but ignored.
-The left strip is coloured by the characterwise concordance (weighted mean
-across edges); the bottom strip by the edgewise concordance (weighted mean
-across characters). One blank cell separates each strip from the main grid.}
+The left and right strips are coloured by the characterwise concordance
+(weighted mean across edges); the bottom and top strips by the edgewise
+concordance (weighted mean across characters).
+One blank cell separates each strip from the main grid.}
 
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}
