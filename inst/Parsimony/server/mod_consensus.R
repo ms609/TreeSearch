@@ -362,6 +362,10 @@ consensus_server <- function(id, r,
 
     concordance <- bindCache(reactive({
       LogMsg("concordance()")
+      if (input$concordance %in% c("qc", "mcc", "spc", "clc", "phc") &&
+          !setequal(TipLabels(r$plottedTree), names(r$dataset))) {
+        return(NULL)
+      }
       switch(input$concordance,
              "p"   = SplitFrequency(r$plottedTree, r$trees) / length(r$trees),
              "qc"  = QuartetConcordance(r$plottedTree, r$dataset),
@@ -377,8 +381,10 @@ consensus_server <- function(id, r,
       LogMsg("LabelConcordance()")
       if (input$concordance != "none" &&
           inherits(r$plottedTree, "phylo")) {
-        LabelSplits(r$plottedTree, signif(concordance(), 3),
-                    col = SupportColor(concordance()),
+        conc <- concordance()
+        if (is.null(conc)) return(invisible())
+        LabelSplits(r$plottedTree, signif(conc, 3),
+                    col = SupportColor(conc),
                     frame = "none", pos = 3L)
       }
     }
