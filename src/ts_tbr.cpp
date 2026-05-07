@@ -561,6 +561,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      TreePool* collect_pool,
                      std::function<bool()> check_timeout) {
   double best_score = full_rescore(tree, ds);
+  // Tracks whether `best_score` is the authoritative score of the current
+  // (tree, state arrays). Each accepted move and each state_snap.restore
+  // re-establishes the invariant; apply_tbr_move temporarily breaks it
+  // until the following full_rescore + best_score update completes.
+  // The trailing full_rescore at function exit is gated on this flag,
+  // skipping a redundant O(n_node x n_char) pass when states are coherent.
+  bool score_fresh = true;
 
   // No informative characters: all trees have the same score.
   if (ds.total_words == 0) {
@@ -671,7 +678,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
   TopoSnapshot snap;
   bool keep_going = true;
-  bool states_valid = true;  // track whether state arrays are current
   bool need_shuffle = true;  // optimization #6: defer reshuffle
   // Poll timeout every n_tip clips to avoid overhead on small trees
   // while ensuring responsiveness on large ones.
@@ -696,7 +702,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // the while loop restarts after an accepted move.
     save_topology(tree, snap);
     state_snap.save(tree);
-    states_valid = true;
 
     // Reset per-pass diagnostic counters
     pass_clips_tried = 0;
@@ -1118,10 +1123,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         bool ok = apply_tbr_move(tree, clip_node,
                                   best_reroot_parent, best_reroot_child,
                                   best_above, best_below);
+        // Topology mutated; states no longer match best_score.
+        score_fresh = false;
 
         if (!ok || !validate_topology(tree)) {
           restore_topology(tree, snap);
           state_snap.restore(tree);
+          score_fresh = true;
           continue;
         }
 
@@ -1145,6 +1153,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           if (violation) {
             restore_topology(tree, snap);
             state_snap.restore(tree);
+            score_fresh = true;
             map_constraint_nodes(tree, *cd);
             compute_dfs_timestamps(tree, *cd);
             continue;
@@ -1161,11 +1170,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           // Always accept strict improvements (but record in tabu)
           if (tabu.active()) tabu.insert(tree_hash);
           best_score = actual;
+          score_fresh = true;
           ++n_accepted;
           hits = 1;
           accepted = true;
           keep_going = true;
-          states_valid = true;
           if (constrained) {
             compute_dfs_timestamps(tree, *cd);
           }
@@ -1178,14 +1187,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             // Topology already visited — restore and skip
             restore_topology(tree, snap);
             state_snap.restore(tree);
+            score_fresh = true;
             continue;
           }
           if (tabu.active()) tabu.insert(tree_hash);
+          // Adopt `actual` so that best_score stays bit-exact for the new
+          // topology (it is already within eps of the prior value).
+          best_score = actual;
+          score_fresh = true;
           ++hits;
           ++n_accepted;
           accepted = true;
           keep_going = true;
-          states_valid = true;
           if (constrained) {
             compute_dfs_timestamps(tree, *cd);
           }
@@ -1196,6 +1209,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           // Optimization #3: restore topology + states without full_rescore
           restore_topology(tree, snap);
           state_snap.restore(tree);
+          score_fresh = true;
           // state_snap.restore() already restored postorder via memcpy
           // Re-sync constraint metadata to the restored topology.  When a
           // constrained move passes the violation check but fails the score
@@ -1260,11 +1274,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
   tree.prealloc_undo = nullptr;
 
-  // Ensure state arrays match the final tree and return an authoritative score.
-  // states_valid is always true at this point (it is initialized true and only
-  // ever set back to true on acceptance), so both branches reduce to the same
-  // call.  Simplified to a single assignment.
-  best_score = full_rescore(tree, ds);
+  // States and best_score are kept in sync across every accepted move and
+  // every state_snap.restore (`score_fresh` invariant). The trailing
+  // full_rescore is therefore only needed if a code path left them stale —
+  // it acts as a safety net.
+  if (!score_fresh) {
+    best_score = full_rescore(tree, ds);
+  }
 
   bool converged = !(params.max_accepted_changes > 0
                      && n_accepted >= params.max_accepted_changes);
