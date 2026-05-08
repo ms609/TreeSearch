@@ -1235,15 +1235,16 @@ consensus_server <- function(id, r,
         # isolate() prevents re-triggering when user manually edits keepNTips
         currentInput <- isolate(input$keepNTips)
         LogMsg("UpdateKeepNTipsRange(", currentInput, " -> ", nTip, ")")
-        r$keepNTips <- nNonRogues()
-        if (r$keepNTips != currentInput) {
+        nKept <- nNonRogues()
+        r$keepNTips <- nKept
+        if (nKept != currentInput) {
           r$oldkeepNTips <- currentInput
         }
         updateNumericInput(session, inputId = "keepNTips",
                            label = paste0("Tips to show (/", nTip, "):"),
                            min = max(3L, length(input$neverDrop)),
                            max = nTip,
-                           value = nNonRogues())
+                           value = nKept)
       }
     })
 
