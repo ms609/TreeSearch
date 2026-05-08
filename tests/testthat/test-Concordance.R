@@ -137,6 +137,20 @@ test_that(".Rezero() works", {
   expect_equal(TreeSearch:::.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
 })
 
+test_that("ConcordanceTable() marginSize top/right strips", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+  tree <- TreeSearch::referenceTree
+
+  withr::with_pdf(nullfile(), {
+    ret <- ConcordanceTable(tree, dataset, marginSize = c(NA, NA, 2, 2))
+    expect_named(ret, c("info", "relInfo", "quality", "col"))
+
+    expect_no_error(ConcordanceTable(tree, dataset, marginSize = c(2, 2, 2, 2)))
+    expect_no_error(ConcordanceTable(tree, dataset, marginSize = 2))
+  })
+})
+
 test_that("ClusteringConcordance() gives sensible values", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)

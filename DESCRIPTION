@@ -77,6 +77,9 @@ Config/Needs/website:
   curl,
   igraph,
   pkgdown,
+  remotes,
+Config/roxygen2/version: 8.0.0
+Config/testthat/edition: 2
 Collate:
   'AdditionTree.R'
   'Bootstrap.R'
@@ -131,5 +134,4 @@ ByteCompile: true
 Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)

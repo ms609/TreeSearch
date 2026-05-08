@@ -437,8 +437,8 @@
 #' [`SearchControl()`] for expert-level tuning of the search heuristics.
 #' @references
 #' \insertAllCited{}
-#' @importFrom TreeTools NTip RandomTree Renumber RenumberTips RootTree MakeTreeBinary
-#'   Preorder
+#' @importFrom TreeTools NTip RandomTree Renumber RenumberTips RootTree
+#' @importFrom TreeTools MakeTreeBinary Preorder
 #' @importFrom cli cli_alert_success cli_alert_info cli_alert_warning
 #' @encoding UTF-8
 #' @export

@@ -54,11 +54,10 @@ strip are added, each \code{marginSize} grid cells wide/tall.
 If a vector (length > 1), each entry controls one side following the usual
 \code{par(mar)} order — \code{c(bottom, left, top, right)} — where a positive value
 enables that strip with the given width/height and \code{NA} or \code{0} suppresses it.
-Currently only the bottom (entry 1) and left (entry 2) strips are
-implemented; further entries are accepted but ignored.
-The left strip is coloured by the characterwise concordance (weighted mean
-across edges); the bottom strip by the edgewise concordance (weighted mean
-across characters). One blank cell separates each strip from the main grid.}
+The left and right strips are coloured by the characterwise concordance
+(weighted mean across edges); the bottom and top strips by the edgewise
+concordance (weighted mean across characters).
+One blank cell separates each strip from the main grid.}
 
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}
@@ -92,7 +91,7 @@ QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 
 # View information shared by characters and edges
 ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
-                 marginSize = 4)
+                 marginSize = 1:4)
 axis(1)
 axis(2)
 
@@ -108,12 +107,12 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 \item \code{\link[=SiteConcordance]{SiteConcordance()}}: compute underlying concordance values.
 }
 
-Other split support functions: 
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{Morphy}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()},
+Other split support functions:
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=Morphy]{Morphy()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PresCont]{PresCont()}},
 \code{\link{SiteConcordance}}
 }
 \concept{split support functions}

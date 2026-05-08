@@ -362,6 +362,10 @@ consensus_server <- function(id, r,
 
     concordance <- bindCache(reactive({
       LogMsg("concordance()")
+      if (input$concordance %in% c("qc", "mcc", "spc", "clc", "phc") &&
+          !setequal(TipLabels(r$plottedTree), names(r$dataset))) {
+        return(NULL)
+      }
       switch(input$concordance,
              "p"   = SplitFrequency(r$plottedTree, r$trees) / length(r$trees),
              "qc"  = QuartetConcordance(r$plottedTree, r$dataset),
@@ -377,8 +381,10 @@ consensus_server <- function(id, r,
       LogMsg("LabelConcordance()")
       if (input$concordance != "none" &&
           inherits(r$plottedTree, "phylo")) {
-        LabelSplits(r$plottedTree, signif(concordance(), 3),
-                    col = SupportColor(concordance()),
+        conc <- concordance()
+        if (is.null(conc)) return(invisible())
+        LabelSplits(r$plottedTree, signif(conc, 3),
+                    col = SupportColor(conc),
                     frame = "none", pos = 3L)
       }
     }
@@ -1229,15 +1235,16 @@ consensus_server <- function(id, r,
         # isolate() prevents re-triggering when user manually edits keepNTips
         currentInput <- isolate(input$keepNTips)
         LogMsg("UpdateKeepNTipsRange(", currentInput, " -> ", nTip, ")")
-        r$keepNTips <- nNonRogues()
-        if (r$keepNTips != currentInput) {
+        nKept <- nNonRogues()
+        r$keepNTips <- nKept
+        if (nKept != currentInput) {
           r$oldkeepNTips <- currentInput
         }
         updateNumericInput(session, inputId = "keepNTips",
                            label = paste0("Tips to show (/", nTip, "):"),
                            min = max(3L, length(input$neverDrop)),
                            max = nTip,
-                           value = nNonRogues())
+                           value = nKept)
       }
     })
 
@@ -1296,14 +1303,13 @@ consensus_server <- function(id, r,
           } else {
             input$outgroup
           }
+          updateSelectizeInput(
+            session,
+            inputId = "outgroup",
+            selected = r$outgroup,
+            choices = KeptTips()
+          )
         }
-
-        updateSelectizeInput(
-          session,
-          inputId = "outgroup",
-          selected = r$outgroup,
-          choices = KeptTips()
-        )
       }
     })
 

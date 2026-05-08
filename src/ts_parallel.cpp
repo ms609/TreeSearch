@@ -246,8 +246,6 @@ DrivenResult parallel_driven_search(
   std::atomic<int> replicates_done(0);
 
   // Perturbation-count stopping rule (T-187, parallel path).
-  const int perturb_stop_limit = (params.perturb_stop_factor > 0)
-      ? ds_prototype.n_tips * params.perturb_stop_factor : 0;
   double last_known_best = 1e18;
   int reps_at_last_improvement = 0;
 
@@ -379,24 +377,39 @@ DrivenResult parallel_driven_search(
     }
 
 
-    // Perturbation-count stopping rule (T-187, parallel path)
-    if (perturb_stop_limit > 0) {
+    // Perturbation-count stopping rule (T-187, parallel path).
+    // Dynamic limit: (targetHits / hits) * nTip * psf.
+    // When hits == 0 the limit is infinite (no data yet on hit rate).
+    // When targetHits == 0 (disabled) falls back to flat nTip * psf.
+    if (params.perturb_stop_factor > 0) {
       int done = replicates_done.load(std::memory_order_relaxed);
       double cur_best = shared_pool.best_score();
       if (cur_best < last_known_best) {
         last_known_best = cur_best;
         reps_at_last_improvement = done;
       }
-      if (done - reps_at_last_improvement >= perturb_stop_limit) {
-        stop_flag.store(true, std::memory_order_relaxed);
-        result.perturb_stop = true;
-        if (params.verbosity >= 1) {
-          Rprintf("Stopped: %d consecutive unsuccessful replicates "
-                  "(limit %d = %d tips x %d)\n",
-                  done - reps_at_last_improvement, perturb_stop_limit,
-                  ds_prototype.n_tips, params.perturb_stop_factor);
+      int dry_spell = done - reps_at_last_improvement;
+      if (dry_spell > 0) {
+        int hits = shared_pool.hits_to_best();
+        if (hits > 0) {
+          int limit = (params.target_hits > 0)
+              ? static_cast<int>(
+                  static_cast<double>(params.target_hits) / hits
+                  * ds_prototype.n_tips * params.perturb_stop_factor)
+              : ds_prototype.n_tips * params.perturb_stop_factor;
+          if (dry_spell >= limit) {
+            stop_flag.store(true, std::memory_order_relaxed);
+            result.perturb_stop = true;
+            if (params.verbosity >= 1) {
+              Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                      "(perturbStopFactor %d, limit %d = %d tips x %d x %d/%d hits)\n",
+                      dry_spell, params.perturb_stop_factor, limit,
+                      ds_prototype.n_tips, params.perturb_stop_factor,
+                      params.target_hits, hits);
+            }
+            break;
+          }
         }
-        break;
       }
     }
     // Progress reporting

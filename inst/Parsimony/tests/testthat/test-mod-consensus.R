@@ -120,6 +120,49 @@ test_that("Concordance returns NULL for 'none' mode", {
   )
 })
 
+test_that("keepNTips user edit below nNonRogues is not overwritten (T-296)", {
+  skip_if_not_installed("Rogue")
+  set.seed(42)
+  trees <- ape::rmtree(20, 10)
+  class(trees) <- "multiPhylo"
+  tips <- trees[[1]]$tip.label
+  r <- make_cons_state()
+  r$trees <- trees
+  r$treeHash <- "t296"
+  r$outgroup <- tips[1]
+  r$visibleConfigs <- c("consConfig")
+  r$keepNTips <- length(tips)
+  testServer(
+    consensus_server,
+    args = stub_cons_args(
+      r,
+      AnyTrees = reactive(TRUE),
+      tipLabels = reactive(tips),
+      HaveData = reactive(FALSE)
+    ),
+    {
+      session$setInputs(
+        outgroup = tips[1], neverDrop = character(0),
+        consP = 1, whichTree = 0L,
+        concordance = "none", mapDisplay = character(0),
+        keepNTips = length(tips)
+      )
+      session$elapse(200)
+
+      nKept <- r$keepNTips
+      userChoice <- max(3L, nKept - 1L)
+      if (userChoice == nKept) {
+        skip("nNonRogues too low to test keepNTips below preferred level")
+      }
+
+      session$setInputs(keepNTips = userChoice)
+      session$elapse(200)
+
+      expect_equal(r$keepNTips, userChoice)
+    }
+  )
+})
+
 test_that("UpdateOutgroupInput callable without error", {
   trees <- ape::rmtree(3, 6)
   tips <- trees[[1]]$tip.label

@@ -30,7 +30,7 @@ MaximumLength(x, compress = TRUE)
 \arguments{
 \item{x}{An object of class \code{phyDat};
 or a string to be coerced to a \code{phyDat} object via
-\code{\link[TreeTools:PhyToString]{TreeTools::StringToPhyDat()}};
+\code{\link[TreeTools:StringToPhyDat]{TreeTools::StringToPhyDat()}};
 or an integer vector listing the tokens that may be present at each
 tip along a single character, with each token represented as a binary digit;
 e.g. a value of 11 ( = 2^0 + 2^1 + 2^3) means that
@@ -80,19 +80,19 @@ MinimumLength("-{-1}{-2}{-3}2233")
 MaximumLength("----0011")
 }
 \seealso{
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=WideSample]{WideSample()}},
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}},
+\code{\link[=recode_hierarchy]{recode_hierarchy()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

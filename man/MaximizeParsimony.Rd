@@ -178,7 +178,7 @@ The list includes elements: \code{replicate}, \code{max_replicates},
 \code{phase} (character), \code{elapsed} (seconds), and \code{phase_score}.
 When \code{NULL} (default) and \code{verbosity >= 1} in an interactive session,
 a \code{cli} progress bar is created automatically.
-Supply a custom function (e.g. using \code{\link[shiny:withProgress]{shiny::setProgress()}})
+Supply a custom function (e.g. using \code{\link[shiny:setProgress]{shiny::setProgress()}})
 to control progress display.}
 
 \item{control}{A \code{\link{SearchControl}} object (or a named list) of low-level
@@ -274,19 +274,19 @@ attr(result, "score")
 \code{\link[=Resample]{Resample()}} for jackknife and bootstrap resampling.
 \code{\link[=SearchControl]{SearchControl()}} for expert-level tuning of the search heuristics.
 
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=WideSample]{WideSample()}},
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}},
+\code{\link[=recode_hierarchy]{recode_hierarchy()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

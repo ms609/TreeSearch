@@ -614,8 +614,6 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
   // Perturbation-count stopping rule (T-187).
   int unsuccessful_reps = 0;
-  const int perturb_stop_limit = (params.perturb_stop_factor > 0)
-      ? ds.n_tips * params.perturb_stop_factor : 0;
 
   if (params.max_replicates <= 0) {
     result.best_score = -1.0;
@@ -977,18 +975,30 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       break;
     }
 
-    // Perturbation-count stopping rule (T-187)
-    if (perturb_stop_limit > 0 && unsuccessful_reps >= perturb_stop_limit) {
-      if (params.verbosity >= 1) {
-        if (!has_callback) {
-          Rprintf("Stopped: %d consecutive unsuccessful replicates "
-                  "(limit %d = %d tips x %d)\n",
-                  unsuccessful_reps, perturb_stop_limit,
-                  ds.n_tips, params.perturb_stop_factor);
+    // Perturbation-count stopping rule (T-187).
+    // Dynamic limit: (targetHits / hits) * nTip * psf.
+    // When hits == 0 the limit is infinite (no data yet on hit rate).
+    // When targetHits == 0 (disabled) falls back to flat nTip * psf.
+    if (params.perturb_stop_factor > 0 && unsuccessful_reps > 0) {
+      int hits = pool.hits_to_best();
+      if (hits > 0) {
+        int limit = (params.target_hits > 0)
+            ? static_cast<int>(
+                static_cast<double>(params.target_hits) / hits
+                * ds.n_tips * params.perturb_stop_factor)
+            : ds.n_tips * params.perturb_stop_factor;
+        if (unsuccessful_reps >= limit) {
+          if (params.verbosity >= 1 && !has_callback) {
+            Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                    "(perturbStopFactor %d, limit %d = %d tips x %d x %d/%d hits)\n",
+                    unsuccessful_reps, params.perturb_stop_factor, limit,
+                    ds.n_tips, params.perturb_stop_factor,
+                    params.target_hits, hits);
+          }
+          result.perturb_stop = true;
+          break;
         }
       }
-      result.perturb_stop = true;
-      break;
     }
 
     if (ts::check_interrupt() || check_timeout()) {

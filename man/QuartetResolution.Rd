@@ -25,9 +25,9 @@ tips <- c("Lingula", "Halkieria", "Wiwaxia", "Acaenoplax")
 QuartetResolution(trees, tips)
 }
 \seealso{
-Other utility functions: 
-\code{\link{ClusterStrings}()},
-\code{\link{QACol}()},
-\code{\link{WhenFirstHit}()}
+Other utility functions:
+\code{\link[=ClusterStrings]{ClusterStrings()}},
+\code{\link[=QACol]{QACol()}},
+\code{\link[=WhenFirstHit]{WhenFirstHit()}}
 }
 \concept{utility functions}

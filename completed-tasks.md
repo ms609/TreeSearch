@@ -4,6 +4,12 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-05-07
+
+| ID | Description | Agent | Notes |
+| T-295 | [Shiny] Relabel "Continue" button to "Search"; fix description | — | **Verified:** button does not continue prior search—each click runs a fresh search (trees accumulate if new search hits same optimal score). Changed button labels: "Continue" → "Search" (main UI), "Continue search" → "Search" (modal); updated helpText to clarify that each click is a fresh search. Inconsistency resolved: button label now matches behavior. |
+|----|-------------|-------|-------|
+
 ## 2026-03-27
 
 | ID | Description | Agent | Notes |

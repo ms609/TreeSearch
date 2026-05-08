@@ -151,7 +151,7 @@ NULL
 #' @importFrom abind abind
 #' @importFrom stats setNames
 #' @importFrom TreeDist ClusteringEntropy Entropy entropy_int
-#' MutualClusteringInfo
+#' @importFrom TreeDist MutualClusteringInfo
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @export
 ClusteringConcordance <- function(
@@ -452,11 +452,10 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' If a vector (length > 1), each entry controls one side following the usual
 #' `par(mar)` order — `c(bottom, left, top, right)` — where a positive value
 #' enables that strip with the given width/height and `NA` or `0` suppresses it.
-#' Currently only the bottom (entry 1) and left (entry 2) strips are
-#' implemented; further entries are accepted but ignored.
-#' The left strip is coloured by the characterwise concordance (weighted mean
-#' across edges); the bottom strip by the edgewise concordance (weighted mean
-#' across characters). One blank cell separates each strip from the main grid.
+#' The left and right strips are coloured by the characterwise concordance
+#' (weighted mean across edges); the bottom and top strips by the edgewise
+#' concordance (weighted mean across characters).
+#' One blank cell separates each strip from the main grid.
 #' @param \dots Arguments to `abline`, to control the appearance of vertical
 #' lines marking important edges.
 #' @returns `ConcordanceTable()` invisibly returns an named list containing:
@@ -512,19 +511,25 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 
   col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
 
-  # Parse marginSize: scalar → both sides; vector → c(bottom, left, ...)
+  # Parse marginSize: scalar → bottom+left only; vector → c(bottom, left, top, right)
   ms <- as.integer(marginSize)
   if (length(ms) == 1L) {
     ms_bottom <- if (!is.na(ms) && ms > 0L) ms else 0L
     ms_left   <- ms_bottom
+    ms_top    <- 0L
+    ms_right  <- 0L
   } else {
     ms_bottom <- if (!is.na(ms[1L]) && ms[1L] > 0L) ms[1L] else 0L
     ms_left   <- if (length(ms) >= 2L && !is.na(ms[2L]) && ms[2L] > 0L) ms[2L] else 0L
+    ms_top    <- if (length(ms) >= 3L && !is.na(ms[3L]) && ms[3L] > 0L) ms[3L] else 0L
+    ms_right  <- if (length(ms) >= 4L && !is.na(ms[4L]) && ms[4L] > 0L) ms[4L] else 0L
   }
   x_offset <- if (ms_left   > 0L) ms_left   + 1L else 0L
   y_offset <- if (ms_bottom > 0L) ms_bottom + 1L else 0L
+  x_suffix <- if (ms_right  > 0L) ms_right  + 1L else 0L
+  y_suffix <- if (ms_top    > 0L) ms_top    + 1L else 0L
 
-  if (ms_left > 0L || ms_bottom > 0L) {
+  if (ms_left > 0L || ms_bottom > 0L || ms_top > 0L || ms_right > 0L) {
     n_edges <- dim(cc)[[2]]
     n_chars <- dim(cc)[[3]]
 
@@ -534,30 +539,39 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     # `quality` already has NAs zeroed above
 
     # Extended layout (x = left→right, y = bottom→top):
-    #   x: [char margin: 1..ms_left] [blank: ms_left+1] [grid: (x_offset+1)..(x_offset+n_edges)]
-    #   y: [edge margin: 1..ms_bottom] [blank: ms_bottom+1] [grid: (y_offset+1)..(y_offset+n_chars)]
-    # (absent margin ↔ x_offset or y_offset = 0, so that portion of the range vanishes)
-    nx <- x_offset + n_edges
-    ny <- y_offset + n_chars
+    #   x: [left: 1..ms_left] [blank: ms_left+1] [grid: xi] [blank] [right: ms_right cells]
+    #   y: [bottom: 1..ms_bottom] [blank: ms_bottom+1] [grid: yi] [blank] [top: ms_top cells]
+    nx <- x_offset + n_edges + x_suffix
+    ny <- y_offset + n_chars + y_suffix
     ext_col <- matrix("#FFFFFF", nx, ny)
 
     xi <- (x_offset + 1L):(x_offset + n_edges)  # x indices of main grid
     yi <- (y_offset + 1L):(y_offset + n_chars)   # y indices of main grid
     ext_col[xi, yi] <- col
 
-    if (ms_left > 0L) {
+    if (ms_left > 0L || ms_right > 0L) {
       denom_c <- colSums(hBest_w)
       char_conc <- pmax(-1, pmin(1,
         ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c)))
       char_cols <- Col(rep(1, n_chars), char_conc)
-      for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
+      if (ms_left > 0L) {
+        for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
+      }
+      if (ms_right > 0L) {
+        for (i in seq_len(ms_right)) ext_col[x_offset + n_edges + 1L + i, yi] <- char_cols
+      }
     }
-    if (ms_bottom > 0L) {
+    if (ms_bottom > 0L || ms_top > 0L) {
       denom_e <- rowSums(hBest_w)
       edge_conc <- pmax(-1, pmin(1,
         ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)))
       edge_cols <- Col(rep(1, n_edges), edge_conc)
-      for (j in seq_len(ms_bottom)) ext_col[xi, j] <- edge_cols
+      if (ms_bottom > 0L) {
+        for (j in seq_len(ms_bottom)) ext_col[xi, j] <- edge_cols
+      }
+      if (ms_top > 0L) {
+        for (j in seq_len(ms_top)) ext_col[xi, y_offset + n_chars + 1L + j] <- edge_cols
+      }
     }
 
     image(seq_len(nx), seq_len(ny),
@@ -819,7 +833,7 @@ QuartetConcordance <- function(
 #' split's internal numbering.
 #'
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
-#' MatchStrings
+#' @importFrom TreeTools MatchStrings
 #' @export
 PhylogeneticConcordance <- function(tree, dataset) {
   if (is.null(dataset)) {

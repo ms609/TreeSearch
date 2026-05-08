@@ -15,7 +15,7 @@
 #' `WideSample()` avoids this bias by selecting for topological spread
 #' rather than frequency.
 #'
-#' @param trees A `multiPhylo` object.
+#' @param trees A `multiPhylo` object, or a single `phylo` (coerced silently).
 #' @param n Integer: number of trees to retain. If `n >= length(trees)`, all
 #'   trees are returned unchanged.
 #' @param method Character: subsampling strategy.
@@ -58,7 +58,9 @@ WideSample <- function(
     distance = TreeDist::ClusteringInfoDistance
 ) {
   method <- match.arg(method)
-  if (!inherits(trees, "multiPhylo")) {
+  if (inherits(trees, "phylo")) {
+    trees <- c(trees)
+  } else if (!inherits(trees, "multiPhylo")) {
     stop("`trees` must be a multiPhylo object")
   }
   n <- as.integer(n)

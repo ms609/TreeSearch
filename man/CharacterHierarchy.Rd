@@ -46,18 +46,18 @@ h <- CharacterHierarchy("1" = list(2, 3, 4, 5, "3" = 9:10))
 \seealso{
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}, \code{\link[=hierarchy_from_names]{hierarchy_from_names()}}
 
-Other tree scoring: 
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=WideSample]{WideSample()}},
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}},
+\code{\link[=recode_hierarchy]{recode_hierarchy()}}
 }
 \concept{tree scoring}

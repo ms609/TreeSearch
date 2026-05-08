@@ -74,14 +74,19 @@
 #'   0 (default) disables this criterion; a typical value is 3--5.
 #'   When both `consensusStableReps` and `targetHits` are active, the search
 #'   stops when either criterion is met first.
-#' @param perturbStopFactor Integer; stop after
-#'   `nTip * perturbStopFactor` consecutive replicates that fail to improve
-#'   the best score.  0 disables this criterion.
-#'   Default 2, which provides 2.4--6.9\ifelse{html}{×}{x} speedup on
-#'   converged searches with no score degradation.
-#'   Complementary to `targetHits`: on hard landscapes where few replicates
-#'   independently find the best score, `perturbStopFactor` fires first;
-#'   on easy landscapes, `targetHits` fires first.
+#' @param perturbStopFactor Integer; stop when the number of consecutive
+#'   replicates that fail to improve the best score exceeds
+#'   `(targetHits / hits) * nTip * perturbStopFactor`, where `hits` is
+#'   the number of replicates that have independently found the best score
+#'   so far.  This scales patience inversely with progress toward
+#'   `targetHits`: with few hits the threshold is large (more persistence);
+#'   as hits approach `targetHits` the threshold converges to the flat
+#'   `nTip * perturbStopFactor` limit.  Before any hit has been found
+#'   (`hits == 0`) the criterion does not fire.
+#'   When `targetHits` is disabled (0), falls back to the flat
+#'   `nTip * perturbStopFactor` limit.
+#'   0 disables this criterion entirely.
+#'   Default 2.
 #'   Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 #'   \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
 #'   per-replicate granularity.

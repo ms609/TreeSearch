@@ -84,12 +84,12 @@ ape::write.tree(tree)
 Generate trees by jackknife resampling using \code{\link[=Resample]{Resample()}} for standard
 parsimony searches, or \code{\link[=Jackknife]{Jackknife()}} for custom search criteria.
 
-Other split support functions: 
-\code{\link{ConcordanceTable}()},
-\code{\link{Jackknife}()},
-\code{\link{Morphy}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()},
+Other split support functions:
+\code{\link[=ConcordanceTable]{ConcordanceTable()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=Morphy]{Morphy()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PresCont]{PresCont()}},
 \code{\link{SiteConcordance}}
 }
 \author{

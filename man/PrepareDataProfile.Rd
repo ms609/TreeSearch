@@ -71,10 +71,10 @@ dataset <- congreveLamsdellMatrices[[42]]
 PrepareDataProfile(dataset)
 }
 \seealso{
-Other profile parsimony functions: 
-\code{\link{MaddisonSlatkin}()},
-\code{\link{StepInformation}()},
-\code{\link{WithOneExtraStep}()},
+Other profile parsimony functions:
+\code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}},
+\code{\link[=StepInformation]{StepInformation()}},
+\code{\link[=WithOneExtraStep]{WithOneExtraStep()}},
 \code{\link{profiles}}
 }
 \author{

@@ -35,6 +35,15 @@
 |----|-----|--------|--------|-------------|-------|
 
 
+### Shiny App
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-294 | P2 | OPEN | — | **[Shiny] Character contrast matrix error on certain datasets** | u.568: mbank_X27573 → `` `char` contract matrix lacks levels for 1LengthAdded(...) `` repeated; also "Unknown scoring issue may distort score" warning for ~19 taxa. Needs reproduction with that matrix. |
+| T-296 | P2 | OPEN | — | **[Shiny] "Tips to show" refuses values below rogue detector's preferred level** | u.824: setting the value below the level preferred by the Rogue detector causes the number to flick back up to the previous value — input is silently rejected. |
+| T-297 | P3 | OPEN | — | **[Shiny] "Max independent runs" should appear below search strategy in modal** | u.671: logical ordering — "how hard to try" (strategy) before "when to give up" (run limit). |
+
+
 ### Alternative Homologies (Goloboff 2026) — `feature/alt-homology` / `TS-AltHom`
 
 Ref: Goloboff (2026) *Cladistics* doi:10.1111/cla.70033.
@@ -52,6 +61,13 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 | T-287 | P3 | OPEN | T-284 | **AltHom Phase 8: Static alignment fallback.** For datasets where supercharacter exceeds practical state limit, generate alternative static datasets (one per alignment) and search each. | WORKTREE (TS-AltHom). |
 | T-288 | P3 | OPEN | T-282 | **AltHom Phase 9: Documentation & vignette.** `vignettes/alternative-homologies.Rmd`, roxygen docs for all new exports, `inst/REFERENCES.bib` entry. | WORKTREE (TS-AltHom). |
 
+### Deferred / Future Directions
+
+| ID | Pri | Status | Blocks | Description | Notes |
+|----|-----|--------|--------|-------------|-------|
+| T-290 | — | DEFERRED | — | **GPU-accelerated batch tree scoring.** Evaluate many TBR/SPR candidate rearrangements in a single GPU kernel launch (parallelism across *trees*, not within one tree). For a 180-leaf tree the TBR neighborhood is O(n³) ≈ millions of candidates — enough to saturate GPU hardware. Main challenges: (1) per-candidate work is tiny for Fitch+bitwise (~50 word ops), so GPU arithmetic intensity is very low; (2) tree data structures need flat-array redesign for coalesced GPU memory access; (3) for morphological data sizes (≤500 chars, k ≤ 10) CPU OpenMP parallelism across candidates likely captures most of the win with far less effort. GPU becomes more compelling for Sankoff/implied-weights scoring (O(k²) per node per char) or phylogenomic-scale data (10k+ chars). A hybrid design (CPU manages search logic, GPU batch-scores candidates) is more practical than porting the full search engine to CUDA. **References:** Santander-Jiménez et al. (2020) *J Supercomput* 76:9827 (GPU Fitch parsimony, Kepler→Turing); Santander-Jiménez & Vega-Rodríguez (2025) *Future Gen Comput Syst* (OpenMP/OpenACC/SYCL multi-platform parsimony scoring); Ayres et al. (2019) *Syst Biol* 68:1052 (BEAGLE 3 — GPU likelihood, architectural lessons). | Research: MkPrime `.agent-d.md` 2026-03-29. |
+| T-291 | — | DEFERRED | — | **GPU-parallel independent search replicates.** Run 100+ search replicates simultaneously on GPU SMs (one replicate per SM; modern GPUs have 60–128 SMs). Shared read-only character matrix fits in GPU L2 cache. Main obstacle: tree search has highly irregular, data-dependent control flow (rearrangement selection, acceptance decisions, ratchet perturbation) which causes warp divergence and poor GPU utilization. Branch-and-bound in sectorial search has the same problem. CPU multicore parallelism (8–16 cores via `future`/`parallel::mclapply`, or 100+ via HPC SLURM array jobs) is far simpler and more efficient per-replicate. GPU replicates only become attractive if per-replicate arithmetic is heavy enough to dominate over control flow overhead (e.g., large Sankoff matrices). **References:** same as T-290. | Research: MkPrime `.agent-d.md` 2026-03-29. |
+
 ### TNT Comparison & Strategy Learning
 
 ### Strategy Tuning
@@ -61,6 +77,10 @@ Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homolo
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
+| T-298 | P3 | OPEN | — | **Profile and optimize `quartet_concordance.cpp` matrix allocation** | u.453: review flat array vs. `NumericMatrix`, int vs. double; profile with vprof; check other optimization opportunities. |
+| T-299 | P3 | OPEN | — | **`ConcordanceTable()`: support selective `marginSize` strips** | u.945: `marginSize = c(NA, NA, 3, 4)` should produce margin strips on margins 3 & 4 only (NA = no strip). |
+| T-300 | P3 | OPEN | — | **Lazy `apply_tbr_move` rescore in `tbr_search`.** After the `score_fresh` flag was wired (companion to T-187/PSF work), the trailing `full_rescore` at function exit is now skipped when states are coherent. The remaining redundancy is the `full_rescore(tree, ds)` call at `ts_tbr.cpp:1134`, run after **every** successful `apply_tbr_move` to obtain the authoritative score for the acceptance check. Each call is O(n_node × total_words). Since the move is local (clip + reroot + regraft), the indirect-evaluation pre-check at `ts_tbr.cpp:767-772` already shows that `fitch_incremental_downpass/uppass` from the join point gives the correct score in O(affected_subtree_depth × total_words) instead. **Plan:** make `apply_tbr_move` push touched nodes onto the prealloc_undo stack, return the join node, and replace line 1134's `full_rescore` with `fitch_incremental_downpass` from that node. Estimated savings: O(n_char) per accepted move × ~10–100 accepted moves per replicate. **Risk:** medium — `apply_tbr_move` is the hot correctness-critical path; need careful unit tests covering NA/non-NA, IW/EW, constrained/unconstrained, equal-accept paths. Validate by comparing scores against current unconditional rescore on a battery of datasets before committing. |
+| T-301 | P3 | OPEN | - | Update to testthat edition 3 | Some tests fail; determine where the additional strictness of edition 3 is worth meeting, vs the existing test should be preserved in its relaxed form |
 
 
 

@@ -215,10 +215,10 @@ par(oldPar)
 \pkg{phangorn} package.
 }
 
-Other custom search functions: 
-\code{\link{EdgeListSearch}()},
-\code{\link{Jackknife}()},
-\code{\link{SuccessiveApproximations}()}
+Other custom search functions:
+\code{\link[=EdgeListSearch]{EdgeListSearch()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
