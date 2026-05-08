@@ -545,16 +545,7 @@ per-taxon/per-character missing rates, rootState vectors. 128 tests passing.
 
 ## Agent Status
 
-| Agent | Status | Current Task | Notes |
-|-------|--------|-------------|-------|
-| A | IDLE | — | |
-| B | IDLE | — | |
-| C | IDLE | — | |
-| D | IDLE | — | |
-| E | IDLE | — | T-289f + G-006 + S-COORD done 2026-03-29. GHA 23703257153 running. |
-| F | IDLE | — | |
-| G | IDLE | — | |
-| M | IDLE | — | |
+No active dispatched agents. Live state: `.dispatch/state.json`.
 
 ## Task Pipeline Health
 
@@ -664,7 +655,7 @@ integration, and benchmarking. No PR yet.
 1. **Ratchet `active_mask` not RAII-protected**: Low risk — DataSet rebuilt per R call.
 2. **Wagner NA `subtree_actives` staleness**: Documented UB in incremental NA
    scoring during Wagner construction. `score_tree()` at end gives correct result.
-3. **Shinylive blockers**: See `.positai/plans/2026-03-17-shinylive-plan.md`.
+3. **Shinylive blockers**: See `dev/plans/2026-03-17-shinylive-plan.md`.
 4. **Partial-tip constraint upstream bug**: `TreeTools::AddUnconstrained` crashes
    on zero-character phyDat. Full-tip constraints work.
 5. **XFORM rebuilds SankoffData per score_tree() call** (noted by Agent E in

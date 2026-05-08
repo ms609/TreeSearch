@@ -5,7 +5,7 @@ the task you have been assigned.
 
 Update memory files with anything relevant you learn. But keep them lean.
 
-## Current phase: bug-fixing / pre-release (as of 2026-03-20)
+## Current phase: bug-fixing / pre-release (as of 2026-03-29)
 
 The project is in a **bug-fixing and stabilisation phase** with the goal of
 shipping the package. Agents should:
@@ -59,7 +59,7 @@ directory:
 SRC=$(pwd) && TMPBUILD=$(mktemp -d) && \
   rm -f src/*.o src/*.dll && \
   (cd "$TMPBUILD" && R CMD build --no-build-vignettes --no-manual --no-resave-data "$SRC") && \
-  R CMD INSTALL --library=.agent-X "$TMPBUILD"/TreeSearch_*.tar.gz && \
+  R CMD INSTALL --library=.agent-<id> "$TMPBUILD"/TreeSearch_*.tar.gz && \
   rm -rf "$TMPBUILD"
 ```
 
@@ -70,10 +70,10 @@ Key points:
 
 Run **targeted** tests only:
 ```bash
-Rscript -e "library(TreeSearch, lib.loc='.agent-X'); testthat::test_dir('tests/testthat', filter='test-ts-foo')"
+Rscript -e "library(TreeSearch, lib.loc='.agent-<id>'); testthat::test_dir('tests/testthat', filter='test-ts-foo')"
 ```
 
-**Never** use `R CMD INSTALL --library=.agent-X .` (in-place build).
+**Never** use `R CMD INSTALL --library=.agent-<id> .` (in-place build).
 
 **Never** install to the default library. On Windows, a loaded DLL locks
 the file and blocks other agents.
@@ -95,7 +95,7 @@ producing a DLL that crashes at runtime (exit code 127/139).
 
 **Prevention:** Never use bare `roxygen2::roxygenise()`. To regenerate docs:
 ```bash
-Rscript -e ".libPaths(c('.agent-X', .libPaths())); roxygen2::roxygenise(load_code = roxygen2::load_installed)"
+Rscript -e ".libPaths(c('.agent-<id>', .libPaths())); roxygen2::roxygenise(load_code = roxygen2::load_installed)"
 ```
 
 ### DLL lock
@@ -114,7 +114,7 @@ verify arg counts match between `RcppExports.cpp` and `TreeSearch-init.c`.
 SRC=$(pwd) && TMPBUILD=$(mktemp -d) && \
   rm -f src/*.o src/*.dll && \
   (cd "$TMPBUILD" && R CMD build --no-build-vignettes --no-manual --no-resave-data "$SRC") && \
-  R CMD INSTALL --library=.agent-X "$TMPBUILD"/TreeSearch_*.tar.gz && \
+  R CMD INSTALL --library=.agent-<id> "$TMPBUILD"/TreeSearch_*.tar.gz && \
   rm -rf "$TMPBUILD"
 Rscript check_init.R
 ```
@@ -163,16 +163,16 @@ main              ← stable, taggable; receives only reviewed bug fixes
 
 ### Coordination files live on `cpp-search` only
 
-`to-do.md`, `u.nnn`, `agent-X.md`, `completed-tasks.md`, `coordination.md`,
-and `AGENTS.md` are **never committed on feature branches**. When an agent
-working on a feature branch needs to log progress or claim a task, they commit
-those changes directly to `cpp-search` (coordination-only commit), keeping the
-feature branch clean.
+`to-do.md`, `u.nnn`, `completed-tasks.md`, `coordination.md`,
+and `AGENTS.md` are **never committed on feature branches**. When a dispatched
+agent working on a feature branch needs to claim a task or update coordination
+files, they commit those changes directly to `cpp-search` (coordination-only
+commit), keeping the feature branch clean.
 
 To read coordination files while on a feature branch without switching:
 ```bash
 git show cpp-search:to-do.md
-git show cpp-search:agent-X.md
+git show cpp-search:coordination.md
 ```
 
 ### Shared files at merge time
@@ -197,9 +197,9 @@ this is expected and should be done carefully at feature-merge time.
 5. On GHA success, open a PR:
    ```bash
    gh pr create --base cpp-search --head feature/<name> \
-     --title "<Letter>-nnn: <description>" --body "Agent <Letter>. ..."
+     --title "T-nnn: <description>" --body "Dispatched agent <id>. ..."
    ```
-6. Set `to-do.md` status to `PR #N (<Letter>)`. Move on.
+6. Set `to-do.md` status to `PR #N (<id>)`. Move on.
 7. Human reviews and merges the PR.
 8. After merge, clean up:
    ```bash
@@ -212,12 +212,65 @@ this is expected and should be done carefully at feature-merge time.
 
 ## Multi-agent workflow protocol
 
-> **Task IDs:** New tasks use `<Letter>-nnn` format (e.g. `A-042`), where
-> `<Letter>` is your agent letter and `nnn` is your personal counter
-> (tracked in `agent-<letter>.md`). Existing `T-nnn` IDs in `to-do.md`,
-> `completed-tasks.md`, PRs, and git log are valid and need not be renamed.
+> **Task IDs:** New tasks use `T-nnn` format. Existing `T-nnn`, `<Letter>-nnn`
+> IDs in `to-do.md`, `completed-tasks.md`, PRs, and git log are valid and need
+> not be renamed.
 > Before adding or removing rows in `to-do.md`, acquire the lock:
 > `bash ../../todo-lock.sh . acquire` / `bash ../../todo-lock.sh . release`.
+
+### Dispatcher model
+
+Agents are launched by the dispatcher (`dispatch.sh`) and receive an ephemeral
+ID of the form `d1`, `d2`, etc. The dispatcher:
+
+1. Reads `.dispatch/state.json` to determine which tasks are already in-flight.
+2. Selects a task (via the Haiku ranker or an explicit task ID).
+3. Mints a new agent ID and updates `to-do.md` to `ASSIGNED (d1)`.
+4. Spawns a `claude -p` subprocess whose brief is loaded from
+   `dev/dispatch/agent-brief.md`.
+5. Logs output to `.dispatch/logs/<id>-<task>.log`.
+
+**Agents do not edit `.dispatch/state.json` directly.** State is written only
+by `dispatch.sh checkin`.
+
+#### Starting a session
+
+The user (or a parent dispatched session) calls:
+
+```bash
+bash dispatch.sh allocate <budget>      # e.g. 5%/5h, 2%/wk, 15m
+bash dispatch.sh task <T-ID> [budget]   # explicit task; budget optional
+```
+
+#### Session start protocol (every dispatched agent, before claiming work)
+
+1. **Resume check:** read your brief — if a resume action is recorded, execute
+   it now.
+2. **Triage user reports** (`a.*` and `u.*` files) — see "User report intake"
+   below for the full claim protocol:
+   a. List all `a.[0-9]*` **and** `u.[0-9]*` files in the project root
+      (excluding any `*.claimed-*` files).
+   b. For each file, check its size first. **Skip files shorter than
+      20 characters** (likely mid-edit — the human may still be typing).
+      Do not rename or touch these files; leave them for a later pass.
+   c. For files ≥20 characters, claim atomically:
+      `mv a.010 a.010.claimed-<id>` (or `mv u.010 u.010.claimed-<id>`).
+      If the rename fails, another agent claimed it — skip.
+   d. Create a `to-do.md` entry. **`a.*` files** → `### Shiny App`, tag
+      `[Shiny]`. **`u.*` files** → section matching content (search bug,
+      docs issue, etc.). Default priority P2; crash = P1, cosmetic = P3.
+   e. Delete the `.claimed-<id>` file once the `to-do.md` entry is written.
+   f. Repeat for all files before moving on. **Do not start working a
+      task until all pending reports are triaged.** (An issue may be P0.)
+3. **Check `remote-jobs.md`** for retrievable results. If a job is listed
+   as complete (or past its expected duration), retrieve and process the
+   results before claiming a new task.
+4. If no untriaged issues or pending remote results, proceed with the
+   assigned task.
+
+> **Concurrency guard:** Atomic rename (`mv a.010 a.010.claimed-<id>` or
+> `mv u.001 u.001.claimed-<id>`) ensures exactly one agent wins each file.
+> NTFS rename is atomic; losers see "file not found" and skip.
 
 ### Worktree tasks
 
@@ -227,43 +280,9 @@ modify these tasks.** They are reserved for the human developer working in
 that worktree. To mark a task as in-flight on a worktree, set its status to
 `WORKTREE (name)` where *name* matches the worktree directory basename.
 
-### Assignment
-
-On `/assign X`:
-
-1. Read `agent-X.md`. If a task is already in-progress, resume it.
-2. **Triage user reports** (`a.*` and `u.*` files) — see "User report intake"
-   below for the full claim protocol:
-   a. List all `a.[0-9]*` **and** `u.[0-9]*` files in the project root
-      (excluding any `*.claimed-*` files).
-   b. For each file, check its size first. **Skip files shorter than
-      20 characters** (likely mid-edit — the human may still be typing).
-      Do not rename or touch these files; leave them for a later pass.
-   c. For files ≥20 characters, claim atomically: `mv a.010 a.010.claimed-X`
-      (or `mv u.010 u.010.claimed-X`). If the rename fails, another agent
-      claimed it — skip.
-   d. Create a `to-do.md` entry. **`a.*` files** → `### Shiny App`, tag
-      `[Shiny]`. **`u.*` files** → section matching content (search bug,
-      docs issue, etc.). Default priority P2; crash = P1, cosmetic = P3.
-   e. Delete the `.claimed-X` file once the `to-do.md` entry is written.
-   f. Repeat for all files before moving on. **Do not start working a
-      task until all pending reports are triaged.** (An issue may be P0.)
-3. **Check `remote-jobs.md`** for retrievable results. If a job is listed
-   as complete (or past its expected duration), retrieve and process the
-   results before claiming a new task.
-4. If no untriaged issues or pending remote results, claim the next OPEN
-   task from `to-do.md`.
-
-Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
-
-> **Concurrency guard:** Atomic rename (`mv a.010 a.010.claimed-X` or
-> `mv u.001 u.001.claimed-X`) ensures exactly one agent wins each file.
-> NTFS rename is atomic; losers see "file not found" and skip.
-
 ### During work
 
-- Update `agent-X.md` after every significant step (crash-recovery record).
-- All work uses `.agent-X/` as library directory.
+- All work uses `.agent-<id>/` as library directory (e.g. `.agent-d1/`).
 - **All builds, tests, and benchmarks in bash subprocesses** — never in the
   RStudio R session.
 - **Use GHA for validation** (full test suites, R CMD check, benchmarks).
@@ -276,11 +295,24 @@ Set `CONVERSATIONSUMMARY` to `Agent X: <task description>`.
    row in a section/group, delete the section header too.
 2. **Append** a summary row to `completed-tasks.md` under the current date
    heading (create a new `## YYYY-MM-DD` heading if needed):
-   `| <Letter>-nnn | Short description | X | Brief notes |`
-3. Set `agent-X.md` to IDLE.
-4. Append a brief entry to this file documenting what changed.
-5. Update `coordination.md` if strategic objectives are affected.
-6. Take next task.
+   `| T-nnn | Short description | <id> | Brief notes |`
+3. Update `coordination.md` if strategic objectives are affected.
+4. Run `bash dispatch.sh checkin <id> --done`.
+
+### Parking (waiting for GHA / Hamilton / human review)
+
+When the dispatched agent must stop and wait for an external event:
+
+```bash
+bash dispatch.sh checkin <id> \
+  --kind=<gha|hamilton|human> \
+  --ref=<run-id-or-ref> \
+  --eta=<iso-datetime> \
+  --resume="<one-sentence next action>"
+```
+
+Then exit cleanly. The dispatcher's `reap` subcommand surfaces parked agents
+once their ETA has passed. `to-do.md` status flips to `PARKED (<id>, <kind> <ref>)`.
 
 ### User report intake (`a.*` / `u.*`)
 
@@ -293,7 +325,7 @@ create file → write → save → never touch again.
 - `u.###` — general user issue (search quality, docs, API, etc.). Route by content.
 
 **Agent responsibility:** Triage all pending files into `to-do.md` at
-the start of every `/assign` (step 2 in Assignment above).
+the start of every dispatched session (step 2 in Session start protocol above).
 
 **Claim protocol:**
 ```bash
@@ -304,12 +336,12 @@ ls a.[0-9]* u.[0-9]* 2>/dev/null | grep -v 'claimed'
 wc -c < a.010  # check size first
 
 # Claim atomically (rename)
-mv a.010 a.010.claimed-X
+mv a.010 a.010.claimed-d1
 
 # Read, triage into to-do.md, then delete
-cat a.010.claimed-X
+cat a.010.claimed-d1
 # ... create to-do.md entry ...
-rm a.010.claimed-X
+rm a.010.claimed-d1
 ```
 
 **Skip guard:** Files shorter than 20 characters are likely mid-edit.
@@ -324,9 +356,9 @@ worktree if changes span multiple files.
 
 | ID | Type | Expertise file |
 |----|------|---------------|
-| S-RED | Red-team review | `.positai/expertise/red-team.md` |
-| S-PROF | Performance profiling | `.positai/expertise/profiling.md` |
-| S-COORD | Coordination review | `.positai/expertise/coordination.md` |
+| S-RED | Red-team review | `dev/expertise/red-team.md` |
+| S-PROF | Performance profiling | `dev/expertise/profiling.md` |
+| S-COORD | Coordination review | `dev/expertise/coordination.md` |
 
 Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 
@@ -337,26 +369,14 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | `a.###` | App (Shiny) bug reports → triage to `### Shiny App`, then delete |
 | `u.###` | General user issue reports → triage to matching section, then delete |
 | `to-do.md` | Task queue (active/open tasks only) |
-| `remote-jobs.md` | Pending async jobs (Hamilton SLURM, long GHA) — check at `/assign` |
+| `remote-jobs.md` | Pending async jobs (Hamilton SLURM, long GHA) — check at session start |
 | `completed-tasks.md` | Archive of completed tasks |
 | `coordination.md` | Strategic plan |
-| `agent-X.md` | Agent progress log |
 | `AGENTS.md` | Conventions + workflow reference |
-| `.positai/expertise/*.md` | Standing task methodology |
-
----
-
-## User-level skills
-
-The user has skills installed at `~/.positai/skills/`.
-**Load these with the `skill` tool before starting relevant work:**
-
-| Skill name | When to load |
-|------------|-------------|
-| `r-package-profiling` | Profiling, benchmarking, VTune, A/B comparison, hotspot analysis |
-| `hamilton-hpc` | Hamilton HPC, SLURM jobs, SSH, remote benchmarking |
-
-Example: `skill(skill: "hamilton-hpc")` before any Hamilton dispatch work.
+| `.dispatch/state.json` | Live dispatcher state (active agents, check-ins, budget tally) |
+| `dev/expertise/*.md` | Standing-task methodology references |
+| `dev/dispatch/ranker.txt` | Haiku ranker prompt template used by `dispatch.sh` |
+| `dev/dispatch/agent-brief.md` | Spawned-agent system prompt template used by `dispatch.sh` |
 
 ---
 

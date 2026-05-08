@@ -58,3 +58,7 @@ test_output.txt
 /vtune*
 /.claude
 /.agent-*
+
+# Dispatcher state and logs (ephemeral runtime files)
+.dispatch/
+!.dispatch/logs/.gitkeep

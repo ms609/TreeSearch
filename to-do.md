@@ -3,16 +3,20 @@
 ## How this works
 
 - Tasks are sorted by priority (highest first within each status group).
-- An agent claims a task by changing its status to `ASSIGNED (X)`.
+- An agent claims a task by changing its status to `ASSIGNED (d1)` (or `d2`,
+  `d3`, … — ephemeral dispatcher IDs issued by `dispatch.sh`).
 - When a task is being developed in a **git worktree**, set its status to
   `WORKTREE (name)` where *name* is the worktree directory (e.g.
   `WORKTREE (TS-CID-cons)`). This distinguishes human/long-running worktree
   work from agent assignments and prevents double-claiming.
 - On completion, **delete** the row from this file and append a summary row
   to `completed-tasks.md` (see workflow in AGENTS.md).
-- Tasks awaiting GHA results: `PARKED (<Letter>, GHA <run_id>)`.
-- Tasks with an open PR awaiting human merge: `PR #N (<Letter>)`.
+- Tasks awaiting GHA results: `PARKED (d1, GHA <run_id>)`.
+- Tasks with an open PR awaiting human merge: `PR #N (d1)`.
   S-COORD cleans these up after merge.
+- The `Notes` column may include a bracketed model/effort hint, e.g.
+  `[m:haiku e:low]`, `[m:sonnet e:medium]`, `[m:opus e:high]`. The
+  dispatcher's ranker honours these hints and they override its default choice.
 - Standing tasks (S-RED, S-PROF, S-COORD) are always present. When one is
   completed, reset it to OPEN. Their effective priority is dynamic:
   - ≥6 OPEN specific tasks → standing tasks are P3
@@ -47,7 +51,7 @@
 ### Alternative Homologies (Goloboff 2026) — `feature/alt-homology` / `TS-AltHom`
 
 Ref: Goloboff (2026) *Cladistics* doi:10.1111/cla.70033.
-Plan: `.positai/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homologies-with-step-matrix-recoding.md`
+Plan: `dev/plans/2026-03-27-1415-implement-goloboff-2026-alternative-homologies-with-step-matrix-recoding.md`
 
 | ID | Pri | Status | Blocks | Description | Notes |
 |----|-----|--------|--------|-------------|-------|
