@@ -118,45 +118,44 @@ the outcome of a coin toss, I must record either a `H` or a `T`, and
 with each of the two symbols equally likely, there is no way to compress
 the results of multiple tosses.
 
-The Shannon (1948) information content of an outcome $x$ is defined to
-be $h(x) = - \log_{2}{P(x)}$, which simplifies to $\log_{2}n$ when all
-$n$ outcomes are equally likely. Thus, the outcome of a fair coin toss
-delivers $\log_{2}2 = 1{\mspace{6mu}\text{bit}}$ of information; the
-outcome of rolling a fair six-sided die contains
-$\log_{2}6 \approx 2.58{\mspace{6mu}\text{bits}}$ of information; and
-the outcome of selecting at random one of the 105 unrooted binary
-six-leaf trees is $\log_{2}105 \approx 6.71{\mspace{6mu}\text{bits}}$.
+The Shannon (1948) information content of an outcome $`x`$ is defined to
+be $`h(x) = -\log_2{P(x)}`$, which simplifies to $`\log_2{n}`$ when all
+$`n`$ outcomes are equally likely. Thus, the outcome of a fair coin toss
+delivers $`\log_2{2} = 1\textrm{ bit}`$ of information; the outcome of
+rolling a fair six-sided die contains
+$`\log_2{6} \approx 2.58\textrm{ bits}`$ of information; and the outcome
+of selecting at random one of the 105 unrooted binary six-leaf trees is
+$`\log_2{105} \approx 6.71\textrm{ bits}`$.
 
 Unlikely outcomes are more surprising, and thus contain more information
 than likely outcomes. The information content of rolling a twelve on two
 fair six-sided dice is
-$- \log_{2}\frac{1}{36} \approx 5.16{\mspace{6mu}\text{bits}}$, whereas
-a seven, which could be produced by six of the 36 possible rolls
-(`1 & 6`, `2 & 5`, …), is less surprising, and thus contains less
-information:
-$- \log_{2}\frac{6}{36} \approx 2.58{\mspace{6mu}\text{bits}}$. An
-additional 2.58 bits of information would be required to establish
-whether which of the rolls `1 & 6`, `2 & 5`, … occurred.
+$`-\log_2{\frac{1}{36}} \approx 5.16\textrm{ bits}`$, whereas a seven,
+which could be produced by six of the 36 possible rolls (`1 & 6`,
+`2 & 5`, …), is less surprising, and thus contains less information:
+$`-\log_2{\frac{6}{36}} \approx 2.58\textrm{ bits}`$. An additional 2.58
+bits of information would be required to establish whether which of the
+rolls `1 & 6`, `2 & 5`, … occurred.
 
 Now consider two competing explanations for an event: (i), three
 consecutive rolls of two dice each produced a seven; (ii), two
 consecutive rolls of two dice each produced a twelve. The former event
-corresponds to $3 \times 2.58 = 7.75{\mspace{6mu}\text{bits}}$ of
-information, so is less surprising than the latter, which represents
-$2 \times 5.16 = 10.34{\mspace{6mu}\text{bits}}$, despite involving an
-additional roll of the dice.
+corresponds to $`3 \times 2.58 = 7.75\textrm{ bits}`$ of information, so
+is less surprising than the latter, which represents
+$`2 \times 5.16 = 10.34\textrm{ bits}`$, despite involving an additional
+roll of the dice.
 
 How do we measure the “surprise” associated with additional steps in a
 character on a phylogenetic tree? Consider a character with the states
 `0 0 0 1 1 1`. In the most parsimonious situation in which the character
 contains a single step on a tree, it is compatible with nine of the 105
 labelled six-leaf trees, and thus represents
-$- log_{2}\frac{9}{105} = 3.54{\mspace{6mu}\text{bits}}$ of phylogenetic
+$`-log_2\frac{9}{105} = 3.54\textrm{ bits}`$ of phylogenetic
 information. If we are told that the character contains exactly two
 steps, it can occur on 63 trees, so yields
-$- log_{2}\frac{63}{105} = 0.74{\mspace{6mu}\text{bits}}$. (The number
-of trees with *m* extra steps can be calculated using theorem 1 of
-Carter et al. (1990), implemented in the function
+$`-log_2\frac{63}{105} = 0.74\textrm{ bits}`$. (The number of trees with
+*m* extra steps can be calculated using theorem 1 of Carter et al.
+(1990), implemented in the function
 [`Carter1()`](https://ms609.github.io/TreeSearch/reference/Carter1.html).)
 Learning that a second step occurred meant that 3.54 − 0.74 = 2.81 bits
 of information we had previously attributed to common ancestry instead
@@ -178,7 +177,7 @@ information in each character as possible to common ancestry; in the
 example above, it assigns the first extra step a penalty of 2.81, and
 the second extra step a penalty of 0.74, corresponding to the amount of
 information that could no longer be assigned to common ancestry after
-learning of the existence of the $n$th step.
+learning of the existence of the $`n`$th step.
 
 Whereas the value of a parsimony score obtained under implied weights
 does not have any inherent meaning, the profile parsimony score of a

@@ -36,6 +36,7 @@ available in a
 Install and load the stable version from CRAN as follows:
 
 ``` r
+
 install.packages("TreeSearch")
 library("TreeSearch")
 # Launch the Shiny App with:
@@ -45,6 +46,7 @@ TreeSearch::EasyTrees()
 Install and load the development version of “TreeSearch” with:
 
 ``` r
+
 if(!require("curl")) install.packages("curl")
 if(!require("remotes")) install.packages("remotes")
 remotes::install_github("ms609/TreeSearch")

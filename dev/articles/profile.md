@@ -21,6 +21,7 @@ gives details on installing the package and getting up and running.
 Once installed, load the inapplicable package into R using
 
 ``` r
+
 library("TreeSearch")
 ```
 
@@ -28,6 +29,7 @@ In order to reproduce the random elements of this document, set a random
 seed:
 
 ``` r
+
 # Set a random seed so that random functions in this document are reproducible
 RNGversion("3.5.0")
 ```
@@ -36,6 +38,7 @@ RNGversion("3.5.0")
     ## 'Rounding' sampler used
 
 ``` r
+
 set.seed(888)
 ```
 
@@ -48,6 +51,7 @@ for this example, we’ll use a simulated dataset that comes bundled with
 the `TreeSearch` package.
 
 ``` r
+
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ```
@@ -56,6 +60,7 @@ Unless a starting tree is provided, tree search will from a random
 addition tree:
 
 ``` r
+
 additionTree <- AdditionTree(myMatrix, concavity = "profile")
 TreeLength(additionTree, myMatrix, "profile")
 ```
@@ -63,6 +68,7 @@ TreeLength(additionTree, myMatrix, "profile")
     ## [1] 552.6187
 
 ``` r
+
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(additionTree)
 ```
@@ -72,6 +78,7 @@ plot(additionTree)
 We could alternatively use a random or neighbour-joining tree:
 
 ``` r
+
 randomTree <- TreeTools::RandomTree(myMatrix, root = TRUE)
 TreeLength(randomTree, myMatrix, "profile")
 ```
@@ -79,6 +86,7 @@ TreeLength(randomTree, myMatrix, "profile")
     ## [1] 783.324
 
 ``` r
+
 njTree <- TreeTools::NJTree(myMatrix)
 TreeLength(njTree, myMatrix, "profile")
 ```
@@ -89,6 +97,7 @@ We search for trees with a better score using TBR rearrangements and the
 parsimony ratchet (Nixon, 1999):
 
 ``` r
+
 betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = "profile",
                                  ratchIter = 3, tbrIter = 3, maxHits = 8)
 ```
@@ -99,12 +108,14 @@ globally optimal tree. Nevertheless, let’s see the resultant tree, and
 its score:
 
 ``` r
+
 TreeLength(betterTrees[[1]], myMatrix, "profile")
 ```
 
     ## [1] 512.1181
 
 ``` r
+
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(betterTrees))
 ```
@@ -130,6 +141,7 @@ than the 3 Ratchet hits (`ratchHits`) we’ll settle for here, probably
 using many more Ratchet iterations.
 
 ``` r
+
 suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
                                  ratchIter = 2, tbrIter = 3,
                                  maxHits = 25,
@@ -141,6 +153,7 @@ resolved, but typically more reliable, summary of the signal with the
 phylogenetic dataset (Smith, 2019):
 
 ``` r
+
 par(mar = rep(0.25, 4), cex = 0.75)
 table(signif(TreeLength(suboptimals, myMatrix, "profile")))
 ```
@@ -150,6 +163,7 @@ table(signif(TreeLength(suboptimals, myMatrix, "profile")))
     ##       2       1       1       3       1       1
 
 ``` r
+
 plot(ape::consensus(suboptimals))
 ```
 

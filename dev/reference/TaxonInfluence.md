@@ -166,8 +166,8 @@ influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
 #> 
 #> ── Sample local optimum ────────────────────────────────────────────────────────
 #> → TBR depth 2; keeping 14.4 trees; k = Inf
-#> ℹ 2026-04-23 08:15:10: Score: 86
-#> ✔ 2026-04-23 08:15:10: Tree search terminated with score 84
+#> ℹ 2026-05-11 08:34:50: Score: 86
+#> ✔ 2026-05-11 08:34:50: Tree search terminated with score 84
 
 # Colour tip labels according to their influence
 upperBound <- 2 * TreeDist::ClusteringEntropy(

@@ -361,7 +361,7 @@ Evolutionary Biology*, **5**(1), 58.
 [doi:10.1186/1471-2148-5-58](https://doi.org/10.1186/1471-2148-5-58) .  
   
 Nixon KC (1999). “The Parsimony Ratchet, a new method for rapid
-parsimony analysis.” *Cladistics*, **15**(4), 407–414. ISSN 0748-3007,
+parsimony analysis.” *Cladistics*, **15**(4), 407–414. ISSN 0748-3007.
 [doi:10.1111/j.1096-0031.1999.tb00277.x](https://doi.org/10.1111/j.1096-0031.1999.tb00277.x)
 .  
   
@@ -432,8 +432,8 @@ trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
 #> 
 #> ── Sample local optimum ────────────────────────────────────────────────────────
 #> → TBR depth 1; keeping 4 trees; k = 10
-#> ℹ 2026-04-23 08:15:00: Score: 16.0337
-#> ✔ 2026-04-23 08:15:00: Tree search terminated with score 16.0337
+#> ℹ 2026-05-11 08:34:41: Score: 16.0337
+#> ✔ 2026-05-11 08:34:41: Tree search terminated with score 16.0337
 names(trees)
 #> [1] "seed_1"  "final_1" "final_2"
 cons <- Consensus(trees)

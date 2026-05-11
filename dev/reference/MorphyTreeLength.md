@@ -92,14 +92,6 @@ Other tree scoring:
 [`MinimumLength()`](https://ms609.github.io/TreeSearch/dev/reference/MinimumLength.md),
 [`TaxonInfluence()`](https://ms609.github.io/TreeSearch/dev/reference/TaxonInfluence.md)
 
-Other tree scoring:
-[`CharacterLength()`](https://ms609.github.io/TreeSearch/dev/reference/CharacterLength.md),
-[`ExpectedLength()`](https://ms609.github.io/TreeSearch/dev/reference/ExpectedLength.md),
-[`IWScore()`](https://ms609.github.io/TreeSearch/dev/reference/TreeLength.md),
-[`LengthAdded()`](https://ms609.github.io/TreeSearch/dev/reference/LengthAdded.md),
-[`MinimumLength()`](https://ms609.github.io/TreeSearch/dev/reference/MinimumLength.md),
-[`TaxonInfluence()`](https://ms609.github.io/TreeSearch/dev/reference/TaxonInfluence.md)
-
 ## Author
 
 Martin R. Smith

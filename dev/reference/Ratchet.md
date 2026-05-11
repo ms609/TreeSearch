@@ -252,7 +252,7 @@ For usage pointers, see the
 ## References
 
 Nixon KC (1999). “The Parsimony Ratchet, a new method for rapid
-parsimony analysis.” *Cladistics*, **15**(4), 407–414. ISSN 0748-3007,
+parsimony analysis.” *Cladistics*, **15**(4), 407–414. ISSN 0748-3007.
 [doi:10.1111/j.1096-0031.1999.tb00277.x](https://doi.org/10.1111/j.1096-0031.1999.tb00277.x)
 .
 

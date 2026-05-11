@@ -7,7 +7,7 @@ Generate colour to depict the amount and quality of observations
 ``` r
 QACol(quality, amount)
 
-QCol(amount, quality)
+QCol(quality, amount)
 
 QALegend(
   where = c(0.1, 0.3, 0.1, 0.3),

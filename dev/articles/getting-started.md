@@ -15,6 +15,7 @@ The “TreeSearch” package can be installed as any other package. To get
 the latest stable version from CRAN, type
 
 ``` r
+
 install.packages("TreeSearch")
 ```
 
@@ -23,6 +24,7 @@ into the R (or RStudio) command line.
 Once installed, load the “TreeSearch” package into R using
 
 ``` r
+
 library("TreeSearch")
 ```
 
@@ -34,6 +36,7 @@ Nexus files. These arise due to an issue in the underlying “ape”
 package. To install a patched version, close and re-launch R and run:
 
 ``` r
+
 if (!require("remotes")) install.packages("remotes")
 remotes::install_github("ms609/ape@patch-3")
 ```
@@ -48,6 +51,7 @@ To get the latest development version from
 [GitHub](https://github.com/ms609/TreeSearch/), type
 
 ``` r
+
 remotes::install_github("ms609/TreeSearch")
 ```
 

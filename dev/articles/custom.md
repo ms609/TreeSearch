@@ -11,6 +11,7 @@ a given tree (and dataset).
 First we’ll load the necessary R libraries:
 
 ``` r
+
 library("TreeTools", quietly = TRUE, warn.conflict = FALSE)
 library("TreeSearch")
 
@@ -35,6 +36,7 @@ Here, we can use a copy of our starting tree as a template, to be
 populated with the rearranged `parent` and `child` vectors:
 
 ``` r
+
 tree <- PectinateTree(8)
 PlotTree(tree)
 ```
@@ -42,6 +44,7 @@ PlotTree(tree)
 ![](custom_files/figure-html/tci-setup-1.png)
 
 ``` r
+
 TCIScore <- function(parent, child, dataset) {
   tree$edge <- cbind(parent, child)
   TotalCopheneticIndex(tree)
@@ -62,6 +65,7 @@ don’t need to do anything to `dataset` before it is sent to
 `TreeScorer()`.
 
 ``` r
+
 result <- TreeSearch(tree, dataset = EmptyPhyDat(tree),
                      InitializeData = DoNothing, CleanUpData = DoNothing,
                      TreeScorer = TCIScore,
@@ -74,6 +78,7 @@ result <- TreeSearch(tree, dataset = EmptyPhyDat(tree),
     ##   - Final score 33 found 5 times after 50 rearrangements.
 
 ``` r
+
 PlotTree(result)
 ```
 
@@ -87,6 +92,7 @@ is most different from a starting tree. Notice that `TreeSearch` aims to
 *distance* (which we aim to maximize) before returning it.
 
 ``` r
+
 startTree <- BalancedTree(8)
 
 DistanceScore <- function(parent, child, dataset) {
@@ -104,11 +110,12 @@ result <- TreeSearch(RandomTree(8, root = TRUE), dataset = EmptyPhyDat(tree),
                      verbosity = 1L)
 ```
 
-    ##   - Performing tree search.  Initial score: -5.77985386969094
+    ##   - Performing tree search.  Initial score: -5.77985386969096
 
-    ##   - Final score -7.5661656266226 found 3 times after 50 rearrangements.
+    ##   - Final score -7.56616562662262 found 3 times after 50 rearrangements.
 
 ``` r
+
 par(mfrow = c(1, 2))
 PlotTree(startTree)
 PlotTree(result)
@@ -127,6 +134,7 @@ Morphy object (Brazeau et al., 2017) for each character in a
 phylogenetic dataset:
 
 ``` r
+
 IWInitMorphy <- function (dataset) {
   attr(dataset, "morphyObjs") <- 
     lapply(PhyToString(dataset, byTaxon = FALSE, useIndex = FALSE, 
@@ -142,6 +150,7 @@ To release memory back to the operating system, we must destroy each
 Morphy object once we’re finished with it:
 
 ``` r
+
 IWDestroyMorphy <- function (dataset) {
   vapply(attr(dataset, "morphyObjs"), UnloadMorphy, integer(1))
 }
@@ -159,6 +168,7 @@ character – which we need in order to convert the total number of steps
 to a number of excess steps (*e* in the implied weights formula)
 
 ``` r
+
 IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
                            minLength = attr(dataset, "min.length"), ...) {
   steps <- vapply(attr(dataset, "morphyObjs"), MorphyLength,
@@ -173,6 +183,7 @@ IWScoreMorphy <- function (parent, child, dataset, concavity = 10L,
 Now we are ready to search:
 
 ``` r
+
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
@@ -202,6 +213,7 @@ ratchet search intensity to be controlled from parameters sent to the
 function.
 
 ``` r
+
 IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISwap, 
                          maxIter, maxHits, verbosity = 1L, ...) {
   att <- attributes(dataset)
@@ -238,6 +250,7 @@ Having defined the `Bootstrapper()` function we can now complete a
 Ratchet search with:
 
 ``` r
+
 ratchetTree <- Ratchet(tree = iwTree, dataset = dataset,
                        concavity = 10,
                        InitializeData = IWInitMorphy, 

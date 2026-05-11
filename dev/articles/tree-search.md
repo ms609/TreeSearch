@@ -55,6 +55,7 @@ You can also run tree searches using the R command line. Once installed,
 load the “TreeSearch” package into R using
 
 ``` r
+
 library("TreeSearch")
 ```
 
@@ -68,10 +69,12 @@ phylogenetic signal is obscure enough that it can require Ratchet
 searches to escape from local optima.
 
 ``` r
+
 vinther <- TreeSearch::inapplicable.phyData[["Vinther2008"]]
 ```
 
 ``` r
+
 # Set a random seed so that random functions in this document are reproducible
 RNGversion("3.5.0")
 ```
@@ -80,18 +83,21 @@ RNGversion("3.5.0")
     ## 'Rounding' sampler used
 
 ``` r
+
 set.seed(0)
 ```
 
 We can conduct a basic parsimony search with:
 
 ``` r
+
 bestTrees <- MaximizeParsimony(vinther)
 ```
 
 It can be instructive to inspect the progress of tree search.
 
 ``` r
+
 firstHit <- attr(bestTrees, "firstHit")
 firstHit
 ```
@@ -108,6 +114,7 @@ Advanced users might wish to visualize the progress of tree search by
 mapping tree space:
 
 ``` r
+
 distances <- TreeDist::ClusteringInfoDistance(bestTrees)
 searchStages <- length(firstHit)
 map <- cmdscale(distances, k = 3)
@@ -135,6 +142,7 @@ To be thorough, we might consider continuing the search for a little
 longer, fine-tuning the search parameters:
 
 ``` r
+
 bestTrees <- MaximizeParsimony(vinther, tree = bestTrees,
                                ratchIter = 6L,
                                tbrIter = 4L, 
@@ -149,6 +157,7 @@ We can plot the best tree(s) that we’ve found, and check its parsimony
 score (length):
 
 ``` r
+
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(bestTrees))
 ```
@@ -156,6 +165,7 @@ plot(ape::consensus(bestTrees))
 ![](tree-search_files/figure-html/plot-tree-1.png)
 
 ``` r
+
 TreeLength(bestTrees[[1]], vinther)
 ```
 
@@ -167,6 +177,7 @@ We might be interested in labelling clades with their frequency among
 the sampled most-parsimonious trees:
 
 ``` r
+
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 majCons <- ape::consensus(bestTrees, p = 0.5)
 splitFreqs <- TreeTools::SplitFrequency(majCons, bestTrees) / length(bestTrees)
@@ -206,6 +217,7 @@ here gives a quick-to-run jackknife framework that can be adapted to the
 requirements of a particular dataset.
 
 ``` r
+
 nReplicates <- 10
 jackTrees <- lapply(logical(nReplicates), function (x)
   Resample(vinther, bestTrees, ratchIter = 0, tbrIter = 1, maxHits = 4,
@@ -233,6 +245,7 @@ indicate whether a dataset is unanimous or divided in support of a
 grouping, independently of the method of tree reconstruction.
 
 ``` r
+
 concordance <- QuartetConcordance(strict, vinther)
 
 # Alternative measures:
@@ -257,6 +270,7 @@ The potential impact of rogue taxa can be explored by colouring
 individual tips according to their stability in the tree set:
 
 ``` r
+
 par(mar = rep(0, 4), cex = 0.8)
 
 plot(strict, tip.color = Rogue::ColByStability(bestTrees))
@@ -269,6 +283,7 @@ at the base of Mollusca? We can test to see whether the removal of a
 taxon from a summary tree is justified using:
 
 ``` r
+
 Rogue::QuickRogue(bestTrees, p = 1)
 ```
 
@@ -282,6 +297,7 @@ regarding its own position (a net gain of 14.3 bits). The most
 informative single summary tree is thus provided by:
 
 ``` r
+
 par(mar = rep(0, 4), cex = 0.8)
 noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, "Wiwaxia")
 plot(ape::consensus(noWiwaxia), tip.color = Rogue::ColByStability(noWiwaxia))
@@ -297,6 +313,7 @@ a fact masked in the strict consensus due to the uncertain position of
 We can see where *Wiwaxia* would plot on this tree using:
 
 ``` r
+
 par(mar = rep(0, 4), cex = 0.8)
 xx <- TreeTools::RoguePlot(bestTrees, "Wiwaxia", p = 1)
 ```
@@ -321,6 +338,7 @@ Implied weights can be activated by simply specifying a value of the
 concavity constant, *k*:
 
 ``` r
+
 iwTrees <- MaximizeParsimony(vinther, concavity = 10)
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(iwTrees))
@@ -357,6 +375,7 @@ Here’s a simple example on six taxa that enforces the bipartition ab \|
 cdef:
 
 ``` r
+
 library("TreeTools", quietly = TRUE)
 constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
 characters <- MatrixToPhyDat(matrix(
@@ -373,6 +392,7 @@ Here’s a more complex example that imposes the splits `ab | cef` and
 `abcd | ef`, whilst allowing `g` to plot anywhere on the tree:
 
 ``` r
+
 characters <- MatrixToPhyDat(matrix(
   c(0, 0, 1, 1, 1, 1, 1,
     1, 1, 1, 1, 0, 0, 0), ncol = 2,

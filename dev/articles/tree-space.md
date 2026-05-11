@@ -38,6 +38,7 @@ Equivalent R code can be downloaded using the “Save plot: R script”
 button, and is provided here for reference:
 
 ``` r
+
 # Load required libraries 
 library("TreeTools", quietly = TRUE) 
 library("TreeDist") 
@@ -86,6 +87,7 @@ Equivalent R code can be downloaded using the “Save plot: R script”
 button within the GUI, and is provided here for reference:
 
 ``` r
+
 # Select an appropriate majority value
 # When analysing parsimony results, this value should be 1.
 majority <- 0.5
@@ -98,6 +100,7 @@ exclude
     ## [1] "Paterimitra"         "Yuganotheca_elegans"
 
 ``` r
+
 # Select a rogue whose positions should be depicted
 plottedRogue <- exclude[1]
 
@@ -183,11 +186,13 @@ which may or may not be relevant to phylogenetic questions (Smith, 2020,
 2022a).
 
 ``` r
+
 # Compute distances between pairs of trees
 dists <- TreeDist::ClusteringInfoDistance(trees)
 ```
 
 ``` r
+
 # The quartet distance is a slower alternative:
 library("Quartet")
 dists <- as.dist(Quartet::QuartetDivergence( 
@@ -203,6 +208,7 @@ al., 2019), allowing the optimal clustering to be highlighted on the
 plot.
 
 ``` r
+
 # Try K-means clustering (Hartigan & Wong 1979):
 kClusters <- lapply(
   2:15, # Minimum 2 clusters; maximum 15
@@ -252,6 +258,7 @@ c("Structure below threshold",
     ## [1] "Hierarchical-minimax"
 
 ``` r
+
 # Best silhouette coefficient:
 max(c(threshold, pamSil, hSil, kSil))
 ```
@@ -259,6 +266,7 @@ max(c(threshold, pamSil, hSil, kSil))
     ## [1] 0.5849486
 
 ``` r
+
 # Store the cluster to which each tree is optimally assigned: 
 clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster, kmn = kCluster, 1) 
 nClusters <- length(unique(clustering))
@@ -270,6 +278,7 @@ Now we can map tree space into a few dimensions and visualise the
 distribution of trees:
 
 ``` r
+
 nDim <- 3 # Number of dimensions to plot
 
 # Generate first dimensions of tree space using PCoA 
@@ -368,6 +377,7 @@ conduct rogue taxon analysis for each cluster separately. Note that it
 draws on the results of the clustering analysis above.
 
 ``` r
+
 # Select proportion for majority rule consensus trees
 # 1 is the appropriate value when parsimony trees are included
 majority <- 1
