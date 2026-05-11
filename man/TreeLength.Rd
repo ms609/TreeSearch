@@ -83,13 +83,13 @@ TreeLength(5, inapplicable.phyData[[1]])
 \item See score for each character: \code{\link[=CharacterLength]{CharacterLength()}}.
 }
 
-Other tree scoring: 
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{LengthAdded}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{TaxonInfluence}()}
+Other tree scoring:
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}}
 }
 \author{
 Martin R. Smith (using Morphy C library, by Martin Brazeau)

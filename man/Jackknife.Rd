@@ -79,18 +79,18 @@ using \code{MaximizeParsimony()}.
 \item \code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
 }
 
-Other split support functions: 
-\code{\link{ConcordanceTable}()},
-\code{\link{JackLabels}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()},
+Other split support functions:
+\code{\link[=ConcordanceTable]{ConcordanceTable()}},
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PresCont]{PresCont()}},
 \code{\link{SiteConcordance}}
 
-Other custom search functions: 
-\code{\link{EdgeListSearch}()},
-\code{\link{MorphyBootstrap}()},
-\code{\link{SuccessiveApproximations}()}
+Other custom search functions:
+\code{\link[=EdgeListSearch]{EdgeListSearch()}},
+\code{\link[=MorphyBootstrap]{MorphyBootstrap()}},
+\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

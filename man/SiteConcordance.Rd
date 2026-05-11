@@ -247,13 +247,13 @@ ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 \item \code{\link[=Consistency]{Consistency()}}: Measure consistency of characters with dataset.
 }
 
-Other split support functions: 
-\code{\link{ConcordanceTable}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()}
+Other split support functions:
+\code{\link[=ConcordanceTable]{ConcordanceTable()}},
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PresCont]{PresCont()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

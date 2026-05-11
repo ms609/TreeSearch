@@ -135,13 +135,13 @@ PlotTools::SpectrumLegend(
 \insertAllCited{}
 }
 \seealso{
-Other tree scoring: 
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()}
+Other tree scoring:
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

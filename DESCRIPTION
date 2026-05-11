@@ -78,6 +78,7 @@ Config/Needs/website:
   curl,
   igraph,
   pkgdown,
+Config/roxygen2/version: 8.0.0
 RdMacros: Rdpack
 LinkingTo:
   Rcpp,
@@ -88,5 +89,4 @@ ByteCompile: true
 Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
-RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)

@@ -111,9 +111,9 @@ The algorithm is summarized in
 \insertRef{Felsenstein2004}{TreeSearch}
 }
 \seealso{
-Other tree rearrangement functions: 
-\code{\link{SPR}()},
-\code{\link{TBR}()}
+Other tree rearrangement functions:
+\code{\link[=SPR]{SPR()}},
+\code{\link[=TBR]{TBR()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

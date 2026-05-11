@@ -47,13 +47,13 @@ CharacterLength(tree, dataset, compress = TRUE)
 \insertAllCited{}
 }
 \seealso{
-Other tree scoring: 
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
-\code{\link{TaxonInfluence}()}
+Other tree scoring:
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

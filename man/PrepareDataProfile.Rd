@@ -57,10 +57,10 @@ dataset <- congreveLamsdellMatrices[[42]]
 PrepareDataProfile(dataset)
 }
 \seealso{
-Other profile parsimony functions: 
-\code{\link{Carter1}()},
-\code{\link{StepInformation}()},
-\code{\link{WithOneExtraStep}()},
+Other profile parsimony functions:
+\code{\link[=Carter1]{Carter1()}},
+\code{\link[=StepInformation]{StepInformation()}},
+\code{\link[=WithOneExtraStep]{WithOneExtraStep()}},
 \code{\link{profiles}}
 }
 \author{

@@ -35,10 +35,10 @@ character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
 StepInformation(character)
 }
 \seealso{
-Other profile parsimony functions: 
-\code{\link{Carter1}()},
-\code{\link{PrepareDataProfile}()},
-\code{\link{WithOneExtraStep}()},
+Other profile parsimony functions:
+\code{\link[=Carter1]{Carter1()}},
+\code{\link[=PrepareDataProfile]{PrepareDataProfile()}},
+\code{\link[=WithOneExtraStep]{WithOneExtraStep()}},
 \code{\link{profiles}}
 }
 \author{

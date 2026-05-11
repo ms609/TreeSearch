@@ -351,12 +351,12 @@ MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
 \seealso{
 Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
 
-Other split support functions: 
-\code{\link{ConcordanceTable}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PresCont}()},
+Other split support functions:
+\code{\link[=ConcordanceTable]{ConcordanceTable()}},
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PresCont]{PresCont()}},
 \code{\link{SiteConcordance}}
 }
 \author{

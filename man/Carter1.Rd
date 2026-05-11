@@ -49,10 +49,10 @@ See also:
 (\insertRef{Steel1996}{TreeSearch})
 }
 \seealso{
-Other profile parsimony functions: 
-\code{\link{PrepareDataProfile}()},
-\code{\link{StepInformation}()},
-\code{\link{WithOneExtraStep}()},
+Other profile parsimony functions:
+\code{\link[=PrepareDataProfile]{PrepareDataProfile()}},
+\code{\link[=StepInformation]{StepInformation()}},
+\code{\link[=WithOneExtraStep]{WithOneExtraStep()}},
 \code{\link{profiles}}
 }
 \author{

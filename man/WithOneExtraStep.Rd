@@ -17,10 +17,10 @@ Number of trees with one extra step
 WithOneExtraStep(1, 2, 3)
 }
 \seealso{
-Other profile parsimony functions: 
-\code{\link{Carter1}()},
-\code{\link{PrepareDataProfile}()},
-\code{\link{StepInformation}()},
+Other profile parsimony functions:
+\code{\link[=Carter1]{Carter1()}},
+\code{\link[=PrepareDataProfile]{PrepareDataProfile()}},
+\code{\link[=StepInformation]{StepInformation()}},
 \code{\link{profiles}}
 }
 \concept{profile parsimony functions}

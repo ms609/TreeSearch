@@ -138,10 +138,10 @@ if (interactive()) {
 optima.
 }
 
-Other custom search functions: 
-\code{\link{Jackknife}()},
-\code{\link{MorphyBootstrap}()},
-\code{\link{SuccessiveApproximations}()}
+Other custom search functions:
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=MorphyBootstrap]{MorphyBootstrap()}},
+\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

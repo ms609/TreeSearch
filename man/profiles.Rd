@@ -27,11 +27,11 @@ profile3.5 <- profiles[[8]][[2]][[3]]
 TreeTools::NUnrooted(8) * 2 ^ profile3.5
 }
 \seealso{
-Other profile parsimony functions: 
-\code{\link{Carter1}()},
-\code{\link{PrepareDataProfile}()},
-\code{\link{StepInformation}()},
-\code{\link{WithOneExtraStep}()}
+Other profile parsimony functions:
+\code{\link[=Carter1]{Carter1()}},
+\code{\link[=PrepareDataProfile]{PrepareDataProfile()}},
+\code{\link[=StepInformation]{StepInformation()}},
+\code{\link[=WithOneExtraStep]{WithOneExtraStep()}}
 }
 \concept{profile parsimony functions}
 \keyword{datasets}
