@@ -35,6 +35,7 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
+/.agent*
 /agent-*.md
 /to-do.md
 /issues.md
@@ -57,7 +58,6 @@ test_output.txt
 /.vtune*
 /vtune*
 /.claude
-/.agent-*
 
 # Dispatcher state and logs (ephemeral runtime files)
 .dispatch/

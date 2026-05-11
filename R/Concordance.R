@@ -346,23 +346,23 @@ ClusteringConcordance <- function(
 }
 
 #' Generate colour to depict the amount and quality of observations
-#' @param amount Numeric vector of values between 0 and 1, denoting the relative
-#' amount of information
 #' @param quality Numeric vector of values between -1 and 1, denoting the
 #' quality of observations, where 0 is neutral.
+#' @param amount Numeric vector of values between 0 and 1, denoting the relative
+#' amount of information.
 #' @return `QACol()` returns an RGB hex code for a colour, where lighter colours
 #' correspond to entries with a higher `amount`; unsaturated colours denote
 #' a neutral `quality`; and red/cyan colours denote low/high `quality`.
 #' @examples
 #' amount <- runif(80, 0, 1)
 #' quality <- runif(80, -1, 1)
-#' plot(amount, quality, col = QACol(amount, quality), pch = 15)
-#' abline(h = 0)
+#' plot(quality, amount, col = QACol(quality, amount), pch = 15)
+#' abline(v = 0)
 #' @template MRS
 #' @importFrom colorspace hex polarLUV
 #' @family utility functions
 #' @export
-QACol <- function(amount, quality) {
+QACol <- function(quality, amount) {
   h <- 80 + (quality * 140)
   l <- amount * 88 # < 100: white can take no hue
   c <- abs(quality) * .MaxChroma(h, l)
@@ -392,7 +392,7 @@ QACol <- function(amount, quality) {
 #' unsaturated colours denote a neutral `quality`;
 #' and red/cyan colours denote low/high `quality`. `amount` is ignored.
 #' @export
-QCol <- function(amount, quality) {
+QCol <- function(quality, amount) {
   h <- 80 + (quality * 140)
   l <- abs(quality) * 88 # < 100: white can take no hue
   c <- abs(quality) * .MaxChroma(h, l)
@@ -425,7 +425,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
   amount <- seq(0, 1, length.out = nA)
   quality <- seq(-1, 1, length.out = nQ)
   mat <- outer(amount, quality,
-               Vectorize(function (a, q) Col(a, q)))
+               Vectorize(function (a, q) Col(q, a)))
   image(x = amount, y = quality, z = matrix(1:prod(n), nA, nQ),
         col = mat, axes = FALSE, xlab = "", ylab = "")
   mtext(xlab, side = 1, line = 1, ...)
@@ -509,9 +509,9 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
   amount[is.na(quality)] <- 0
   quality[is.na(quality)] <- 0
 
-  col <- matrix(Col(amount, quality), dim(amount)[[1]], dim(amount)[[2]])
+  col <- matrix(Col(quality, amount), dim(amount)[[1]], dim(amount)[[2]])
 
-  # Parse marginSize: scalar → bottom+left only; vector → c(bottom, left, top, right)
+  # Parse marginSize: scalar → all sides; vector → c(bottom, left, top, right)
   ms <- as.integer(marginSize)
   if (length(ms) == 1L) {
     ms_bottom <- if (!is.na(ms) && ms > 0L) ms else 0L
@@ -553,7 +553,8 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
       denom_c <- colSums(hBest_w)
       char_conc <- pmax(-1, pmin(1,
         ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c)))
-      char_cols <- Col(rep(1, n_chars), char_conc)
+      charInfo <- cc["hChar", 1, ] * cc["n", 1, ]
+      char_cols <- Col(char_conc, charInfo / max(charInfo))
       if (ms_left > 0L) {
         for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
       }
@@ -565,7 +566,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
       denom_e <- rowSums(hBest_w)
       edge_conc <- pmax(-1, pmin(1,
         ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)))
-      edge_cols <- Col(rep(1, n_edges), edge_conc)
+      edge_cols <- Col(edge_conc, rowMeans(cc["hSplit", , ]))
       if (ms_bottom > 0L) {
         for (j in seq_len(ms_bottom)) ext_col[xi, j] <- edge_cols
       }
