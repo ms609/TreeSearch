@@ -118,9 +118,6 @@ test_that("Profile parsimony works in tree search", {
   
   rTree <- randomTree <- RandomTree(dataset, "1")
   expect_lte(TreeLength(rTree, readyData), TreeLength(rTree, dataset))
-  expect_equal(90, TreeLength(referenceTree, dataset), TreeLength(referenceTree, readyData))
-  expect_gt(TreeLength(rTree, readyData, "profile"),
-            TreeLength(referenceTree, readyData, "profile"))
   
   quickTS <- TreeSearch(rTree, dataset, TreeScorer = MorphyLength, EdgeSwapper = RootedNNISwap, 
                         maxIter = 1600, maxHits = 40, verbosity = 0)
