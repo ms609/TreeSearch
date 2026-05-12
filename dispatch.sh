@@ -166,15 +166,29 @@ todo_set_status() {
 # ---------------------------------------------------------------------------
 spawn_local() {
   local agent_id="$1" task_id="$2" model="$3" effort="$4" budget_min="$5"
+  local task_desc="${6:-}" task_notes="${7:-}"
   local logfile="$LOG_DIR/${agent_id}-${task_id}.log"
   mkdir -p "$LOG_DIR"
-  local brief=""; [[ -f "$AGENT_BRIEF" ]] && brief="$(cat "$AGENT_BRIEF")"$'\n\n'
+  local brief=""
+  if [[ -f "$AGENT_BRIEF" ]]; then
+    brief=$(sed \
+      -e "s/{{AGENT_ID}}/${agent_id}/g" \
+      -e "s/{{TASK_ID}}/${task_id}/g" \
+      -e "s|{{TASK_ROW}}|${task_desc} — ${task_notes}|g" \
+      -e "s/{{MODEL}}/${model}/g" \
+      -e "s/{{EFFORT}}/${effort}/g" \
+      -e "s/{{BUDGET_MINUTES}}/${budget_min}/g" \
+      -e "s/{{RESUME_HINT}}/(none)/g" \
+      "$AGENT_BRIEF")$'\n\n'
+  fi
   local prompt="${brief}Agent ID: ${agent_id}
-Task: ${task_id}  Model: ${model}  Effort: ${effort}  Budget: ${budget_min} minutes
+Task: ${task_id} — ${task_desc}
+Notes: ${task_notes}
+Model: ${model}  Effort: ${effort}  Budget: ${budget_min} minutes
 Repo: ${REPO_ROOT}
 When pausing: bash dispatch.sh checkin ${agent_id} --kind=<gha|hamilton|human|other> --ref=<id> --eta=<iso> --resume=\"<action>\"
 When complete: bash dispatch.sh checkin ${agent_id} --done"
-  nohup claude -p --model "$model" "$prompt" > "$logfile" 2>&1 &
+  nohup claude -p --dangerously-skip-permissions --model "$model" "$prompt" > "$logfile" 2>&1 &
   echo $!
 }
 
@@ -231,8 +245,8 @@ cmd_allocate() {
     task_notes=$(echo "$task_row" | cut -d'|' -f5)
   else
     local task_row; task_row=$(grep -E "^\s*\| ${task_id} \|" "$TODO_FILE" | head -1) || true
-    task_desc=$(echo "$task_row" | cut -d'|' -f5)
-    task_notes=$(echo "$task_row" | cut -d'|' -f6)
+    task_desc=$(echo "$task_row" | cut -d'|' -f6)
+    task_notes=$(echo "$task_row" | cut -d'|' -f7)
   fi
 
   parse_hints "$task_notes"
@@ -240,7 +254,7 @@ cmd_allocate() {
   [[ -n "$EFFORT_HINT" ]] && SELECTED_EFFORT="$EFFORT_HINT"
   [[ -z "${SELECTED_MODEL:-}" ]] && heuristic_model "$task_desc $task_notes"
 
-  _do_dispatch "$task_id" "$task_desc" "$SELECTED_MODEL" "$SELECTED_EFFORT" \
+  _do_dispatch "$task_id" "$task_desc" "$task_notes" "$SELECTED_MODEL" "$SELECTED_EFFORT" \
     "$BUDGET_MINUTES" "$BUDGET_WINDOW" "${BUDGET_PCT:-0}" "$state"
 }
 
@@ -258,29 +272,29 @@ cmd_task() {
 
   local task_row; task_row=$(grep -E "^\s*\| ${task_id} \|" "$TODO_FILE" | head -1) \
     || die "task $task_id not found in to-do.md"
-  local task_desc; task_desc=$(echo "$task_row" | cut -d'|' -f5)
-  local task_notes; task_notes=$(echo "$task_row" | cut -d'|' -f6)
+  local task_desc; task_desc=$(echo "$task_row" | cut -d'|' -f6)
+  local task_notes; task_notes=$(echo "$task_row" | cut -d'|' -f7)
 
   parse_hints "$task_notes"
   [[ -n "$MODEL_HINT" ]]  && SELECTED_MODEL="$MODEL_HINT"
   [[ -n "$EFFORT_HINT" ]] && SELECTED_EFFORT="$EFFORT_HINT"
   [[ -z "${SELECTED_MODEL:-}" ]] && heuristic_model "$task_desc $task_notes"
 
-  _do_dispatch "$task_id" "$task_desc" "$SELECTED_MODEL" "$SELECTED_EFFORT" \
+  _do_dispatch "$task_id" "$task_desc" "$task_notes" "$SELECTED_MODEL" "$SELECTED_EFFORT" \
     "$BUDGET_MINUTES" "$BUDGET_WINDOW" "${BUDGET_PCT:-0}" "$state"
 }
 
 # Shared dispatch core (called under lock)
 _do_dispatch() {
-  local task_id="$1" task_desc="$2" model="$3" effort="$4"
-  local budget_min="$5" budget_window="$6" budget_pct="$7" state="$8"
+  local task_id="$1" task_desc="$2" task_notes="$3" model="$4" effort="$5"
+  local budget_min="$6" budget_window="$7" budget_pct="$8" state="$9"
 
   local agent_id; agent_id=$(mint_id "$state")
   local now; now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
   err "dispatching $agent_id → $task_id ($model / $effort / ${budget_min}m)"
 
   local pid=0
-  pid=$(spawn_local "$agent_id" "$task_id" "$model" "$effort" "$budget_min")
+  pid=$(spawn_local "$agent_id" "$task_id" "$model" "$effort" "$budget_min" "$task_desc" "$task_notes")
 
   local new_entry
   new_entry=$(jq -n \
