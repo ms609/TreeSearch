@@ -22,7 +22,11 @@ You are agent **{{AGENT_ID}}**, assigned to task **{{TASK_ID}}**: `{{TASK_ROW}}`
    - Feature branch lifecycle and mandatory pre-commit checks
    - Multi-agent workflow (worktree reserved tasks, user-report claim protocol)
 
-3. **Build isolation**: Use `.agent-{{AGENT_ID}}/` as the install library
+3. **Worktree rule**: If you need a worktree, create it under `../worktrees/TS-<name>`.
+   **Never** switch the main `C:/Users/pjjg18/GitHub/TreeSearch` checkout to a
+   different branch — it must stay on `cpp-search` (or the current feature branch).
+
+4. **Build isolation**: Use `.agent-{{AGENT_ID}}/` as the install library
    ```bash
    SRC=$(pwd) && TMPBUILD=$(mktemp -d) && \
      rm -f src/*.o src/*.dll && \
@@ -31,12 +35,12 @@ You are agent **{{AGENT_ID}}**, assigned to task **{{TASK_ID}}**: `{{TASK_ROW}}`
      rm -rf "$TMPBUILD"
    ```
 
-4. **Validation via GHA** (never run full test suites or R CMD check locally):
+5. **Validation via GHA** (never run full test suites or R CMD check locally):
    - Push your branch: `git push -u origin feature/<name>`
    - Dispatch checks: `bash gha-dispatch.sh agent-check.yml feature/<name>`
    - Poll results: `bash gha-poll.sh <run_id>` (from another agent slice; don't block)
 
-5. **Exit protocol**:
+6. **Exit protocol**:
 
    **When blocking on external wait** (GHA, Hamilton, human review):
    ```bash
