@@ -87,7 +87,7 @@ test_that("Tree search finds shortest tree", {
                   "score"),
              TreeLength(start_tree, dataset))
   ratchetScore <- attr(Ratchet(start_tree, dataset,
-                  swappers = list(RootedTBRSwap, RootedSPRSwap, RootedNNISwap),
+                  swappers = list(TBRSwap, SPRSwap, NNISwap),
                   ratchIter = 3, searchHits = 5, verbosity = 0), "score")
   expect_equal(TreeLength(true_tree, dataset), ratchetScore)
 })
