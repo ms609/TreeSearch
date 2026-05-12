@@ -142,13 +142,13 @@ test_that("ConcordanceTable() marginSize top/right strips", {
   dataset <- congreveLamsdellMatrices[[1]][, 1:20]
   tree <- TreeSearch::referenceTree
 
-  withr::with_pdf(nullfile(), {
-    ret <- ConcordanceTable(tree, dataset, marginSize = c(NA, NA, 2, 2))
-    expect_named(ret, c("info", "relInfo", "quality", "col"))
+  pdf(NULL)
+  on.exit(dev.off())
+  ret <- ConcordanceTable(tree, dataset, marginSize = c(NA, NA, 2, 2))
+  expect_named(ret, c("info", "relInfo", "quality", "col"))
 
-    expect_no_error(ConcordanceTable(tree, dataset, marginSize = c(2, 2, 2, 2)))
-    expect_no_error(ConcordanceTable(tree, dataset, marginSize = 2))
-  })
+  expect_no_error(ConcordanceTable(tree, dataset, marginSize = c(2, 2, 2, 2)))
+  expect_no_error(ConcordanceTable(tree, dataset, marginSize = 2))
 })
 
 test_that("ClusteringConcordance() gives sensible values", {
