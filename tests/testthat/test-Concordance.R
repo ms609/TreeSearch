@@ -207,7 +207,8 @@ test_that("ConcordantInformation() works", {
   tree <- TreeTools::NJTree(dat)
   
   ci <- ConcordantInformation(tree, dat)
-  expect_equal(expect_warning(Evaluate(tree, dat)), ci)
+  expect_warning(eval_val <- Evaluate(tree, dat))
+  expect_equal(eval_val, ci)
   expect_equal(TreeLength(tree, dat, concavity = "prof"),
                unname(ci["noise"]))
   expect_equal(Log2Unrooted(22), unname(ci["treeInformation"]))

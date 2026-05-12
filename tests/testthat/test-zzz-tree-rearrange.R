@@ -52,7 +52,7 @@ test_that("NNI works", {
   nniComb <- NNI(trComb)
   expect_equal(nniComb$tip.label, trComb$tip.label)
   expect_equal(nniComb$Nnode, trComb$Nnode)
-  expect_equal(nniComb, read.tree(text = "(((((3,2),1),4),5),6);"))  
+  expect_equal_tree(nniComb, read.tree(text = "(((((3,2),1),4),5),6);"))
 })
 
 
@@ -133,10 +133,10 @@ test_that("SPR works", {
 })
 
 test_that("TBR can swap over root", {
-  expect_equal(TBR(tree5a, 1, c(7, 1)), read.tree(text = '(a, (d, (e, (c, b))));'))
-  expect_equal(TBR(tree5a, 2, c(5, 1)), read.tree(text = '(a, (c, (b, (d, e))));'))
-  expect_equal(TBR(tree5b, 1, c(7, 1)), read.tree(text = '((a, b), (d, (c, e)));'))
-  expect_equal(TBR(tree5b, 4, c(7, 1)), read.tree(text = '((a, b), (d, (c, e)));'))
+  expect_equal_tree(TBR(tree5a, 1, c(7, 1)), read.tree(text = '(a, (d, (e, (c, b))));'))
+  expect_equal_tree(TBR(tree5a, 2, c(5, 1)), read.tree(text = '(a, (c, (b, (d, e))));'))
+  expect_equal_tree(TBR(tree5b, 1, c(7, 1)), read.tree(text = '((a, b), (d, (c, e)));'))
+  expect_equal_tree(TBR(tree5b, 4, c(7, 1)), read.tree(text = '((a, b), (d, (c, e)));'))
 })
 
 test_that("TBR works", {
@@ -158,38 +158,38 @@ test_that("TBR works", {
   ### expect_equal(TBR(tree, 3, 14), read.tree(text = "(((b, (c, d)), (e, f)), (g, (a, h)));"))
   
   tree <- tree8
-  expect_equal(TBR(tree, 6, c(1 , 6)), read.tree(text = "((((a, b), (e, f)), (c, d)), (g, h));"))
-  expect_equal(TBR(tree, 6, c(1 , 7)), read.tree(text = "((((a, b), (e, f)), (c, d)), (g, h));"))
-  expect_equal(TBR(tree, 6, c(1 , 8)), read.tree(text = "((((a, b), (e, f)), (c, d)), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(1 , 6)), read.tree(text = "((((a, b), (e, f)), (c, d)), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(1 , 7)), read.tree(text = "((((a, b), (e, f)), (c, d)), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(1 , 8)), read.tree(text = "((((a, b), (e, f)), (c, d)), (g, h));"))
   expect_equal(TBR(tree, 6, c(2 , 6)), TBR(tree, 6, c(2 , 7)))
   expect_equal(TBR(tree, 6, c(2 , 6)), TBR(tree, 6, c(2 , 8)))
-  expect_equal(TBR(tree, 6, c(2 , 6)), read.tree(text = "((((a, b), (c, d)), (e, f)), (g, h));"))
-  expect_equal(TBR(tree, 6, c(3 , 6)), read.tree(text = "(((((c, d), a), b), (e, f)), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(2 , 6)), read.tree(text = "((((a, b), (c, d)), (e, f)), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(3 , 6)), read.tree(text = "(((((c, d), a), b), (e, f)), (g, h));"))
   expect_warning(expect_identical(TBR(tree, 6, c(4 , 6)), tree))
   expect_warning(expect_identical(TBR(tree, 8, c(6 , 8)), tree))
   expect_warning(expect_identical(TBR(tree, 6, c(5 , 6)), tree))
   expect_warning(expect_identical(TBR(tree, 6, c(6 , 6)), tree))
   expect_warning(expect_identical(TBR(tree, 6, c(6 , 7)), tree))
   expect_warning(expect_identical(TBR(tree, 6, c(6 , 8)), tree))
-  expect_equal(TBR(tree, 6, c(9 , 6)), read.tree(text = "(((a, b), ((c, d), (e, f))), (g, h));"))
-  expect_equal(TBR(tree, 6, c(10, 6)), read.tree(text = "(((a, b), (((c, d), e), f)), (g, h));"))
-  expect_equal(TBR(tree, 6, c(11, 6)), read.tree(text = "(((a, b), (((c, d), f), e)), (g, h));"))
-  expect_equal(TBR(tree, 6, c(12, 6)), read.tree(text = "(((a, b), (e, f)), ((c, d), (g, h)));"))
-  expect_equal(TBR(tree, 6, c(13, 6)), read.tree(text = "(((a, b), (e, f)), (((c, d), g), h));"))
-  expect_equal(TBR(tree, 6, c(14, 6)), read.tree(text = "(((a, b), (e, f)), (((c, d), h), g));"))
+  expect_equal_tree(TBR(tree, 6, c(9 , 6)), read.tree(text = "(((a, b), ((c, d), (e, f))), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(10, 6)), read.tree(text = "(((a, b), (((c, d), e), f)), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(11, 6)), read.tree(text = "(((a, b), (((c, d), f), e)), (g, h));"))
+  expect_equal_tree(TBR(tree, 6, c(12, 6)), read.tree(text = "(((a, b), (e, f)), ((c, d), (g, h)));"))
+  expect_equal_tree(TBR(tree, 6, c(13, 6)), read.tree(text = "(((a, b), (e, f)), (((c, d), g), h));"))
+  expect_equal_tree(TBR(tree, 6, c(14, 6)), read.tree(text = "(((a, b), (e, f)), (((c, d), h), g));"))
   expect_warning(expect_identical(TBR(tree, 6, c(6, 15)), tree))
-  
-  expect_equal(TBR(tree, 4, c(1, 5)),  read.tree(text = "(((a, (e, f)), (b, (c, d))), (g, h));"))
-  expect_equal(TBR(tree, 4, c(1, 6)),  read.tree(text = "(((a, (e, f)), (b, (c, d))), (g, h));"))
-  expect_equal(TBR(tree, 4, c(1, 7)),  read.tree(text = "(((a, (e, f)), (c, (b, d))), (g, h));"))
-  expect_equal(TBR(tree, 4, c(1, 8)),  read.tree(text = "(((a, (e, f)), (d, (b, c))), (g, h));"))
-  
-  tree <- tree11 
-  tree[["edge.length"]] = rep.int(1, 20) 
-  expect_equal(TBR(tree11, 11, c(8, 17)), read.tree(text = '((j, k), (e, ((a, b), (c, (d, (i, (h, (g, f))))))));'))
-  expect_equal(TBR(tree11, 11, c(2, 11)), read.tree(text = '((j, k), (e, (((a, b), (c, d)), (f, (g, (i, h))))));'))
+
+  expect_equal_tree(TBR(tree, 4, c(1, 5)),  read.tree(text = "(((a, (e, f)), (b, (c, d))), (g, h));"))
+  expect_equal_tree(TBR(tree, 4, c(1, 6)),  read.tree(text = "(((a, (e, f)), (b, (c, d))), (g, h));"))
+  expect_equal_tree(TBR(tree, 4, c(1, 7)),  read.tree(text = "(((a, (e, f)), (c, (b, d))), (g, h));"))
+  expect_equal_tree(TBR(tree, 4, c(1, 8)),  read.tree(text = "(((a, (e, f)), (d, (b, c))), (g, h));"))
+
+  tree <- tree11
+  tree[["edge.length"]] = rep.int(1, 20)
+  expect_equal_tree(TBR(tree11, 11, c(8, 17)), read.tree(text = '((j, k), (e, ((a, b), (c, (d, (i, (h, (g, f))))))));'))
+  expect_equal_tree(TBR(tree11, 11, c(2, 11)), read.tree(text = '((j, k), (e, (((a, b), (c, d)), (f, (g, (i, h))))));'))
   expect_warning(TBR(tree11, 10, c(2, 11)))
-  expect_equal(TBR(tree11, 10, c(3, 11)), read.tree(text = '(e, ((c, d), ((a, b), ((j, k), (f, (g, (h, i)))))));'))
+  expect_equal_tree(TBR(tree11, 10, c(3, 11)), read.tree(text = '(e, ((c, d), ((a, b), ((j, k), (f, (g, (h, i)))))));'))
     
 })
 
@@ -201,7 +201,7 @@ test_that("RootedTBR fails", {
   expect_equal(TBR(tree8, 4, c(1, 5)), RootedTBR(tree8, 4, c(1, 5)))
   expect_warning(RootedTBR(tree5a, edgeToBreak = 1))
   expect_warning(RootedTBR(tree5a, edgeToBreak = 2))
-  expect_equal(RootedTBR(tree5a, edgeToBreak = 3, mergeEdges=6), read.tree(text = '(a, (c, (b, (d, e))));'))
+  expect_equal_tree(RootedTBR(tree5a, edgeToBreak = 3, mergeEdges=6), read.tree(text = '(a, (c, (b, (d, e))));'))
   expect_silent(replicate(100, RootedTBR(tree5a)))
   expect_warning(RootedTBR(tree8, 4, c(13, 6)))
   expect_warning(RootedTBR(read.tree(text = '((a, b), (c, d));')))
@@ -224,7 +224,7 @@ test_that("RootedSPR fails", {
 test_that("SPR is special case of TBR", {
   expect_equal(SPR(tree11, 3, 9), TBR(tree11, 3, c(3, 9)))
   expect_equal(SPR(tree11, 12, 9), TBR(tree11, 12, c(12, 9)))
-  expect_equal(root(SPR(tree11, 1, 14), letters[1:5], resolve.root=TRUE), TBR(tree11, 1, c(1, 14)))
+  expect_equal_tree(root(SPR(tree11, 1, 14), letters[1:5], resolve.root=TRUE), TBR(tree11, 1, c(1, 14)))
   expect_error(SPR(tree11, 1, 6))
 })
 
