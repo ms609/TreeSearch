@@ -495,8 +495,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           if (HaveData() && AnyTrees()) {
             cli::cli_alert(x[[2]])
             cli::cli_alert_danger(x[[1]])
-            Notification(type = "error",
-                         "Could not score all trees with dataset")
+            Notification(type = "error", conditionMessage(x))
           }
           NULL
        })
@@ -824,6 +823,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     observeEvent(input$go, StartSearch())
     observeEvent(input$modalGo, {
       removeModal()
+      show("go")
       StartSearch()
     })
 
@@ -964,7 +964,6 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                          actionButton(ns("modalGo"), icon = Icon("magnifying-glass"),
                                       "Search"))
       ))
-      show("go")
     })
 
     ##########################################################################

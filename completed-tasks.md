@@ -7,7 +7,9 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 ## 2026-05-12
 
 | ID | Description | Agent | Notes |
+| T-296 | [Shiny] "Tips to show" refuses values below rogue detector's preferred level | d1 | Root cause: `UpdateKeepNTipsRange` read `r$keepNTips` after writing it (`if (r$keepNTips != currentInput)`), creating a reactive dependency. User edits to `r$keepNTips` re-triggered `UpdateKeepNTipsRange`, resetting it to `nNonRogues()`. Fix: use local `nKept` variable to break the reactive dependency cycle. Committed in f006918b. Test added in same commit. |
 | T-301 | Update to testthat edition 3 | d1 | Fixed testthat edition 3 compatibility. Root cause: test "Tree search finds shortest tree" in test-CustomSearch.R was using rooted swappers (RootedTBRSwap, RootedSPRSwap, RootedNNISwap) which cannot explore full tree space. Changed to unrooted swappers (TBRSwap, SPRSwap, NNISwap). All 26 tests now pass. Commit 0a41b092. |
+| T-297 | [Shiny] "Max independent runs" appears below search strategy in modal | d1 | Reordering already present in commit dbf47873 ("Reorder"): `maxReplicates` slider moved from after `timeout` to directly below `strategy` in the right column of the search config modal. Verified in inst/Parsimony/server/mod_search.R lines 949–954. |
 |----|-------------|-------|-------|
 
 ## 2026-05-07

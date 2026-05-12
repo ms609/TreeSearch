@@ -611,11 +611,15 @@ consensus_server <- function(id, r,
       if (length(n) && n > 0L) {
         pc <- tryCatch({
           extraLen <- PolEscVal()
-          roguishness <- if (max(extraLen) == 0) {
+          # Clamp to non-negative: LengthAdded() can return negative values
+          # when scoring issues arise, which would produce invalid negative
+          # subscripts.
+          extraLenPos <- if (is.null(extraLen)) NULL else pmax(extraLen, 0)
+          roguishness <- if (is.null(extraLenPos) || max(extraLenPos) == 0) {
             "black"
           } else {
             hcl.colors(256, "inferno")[
-              (192 * extraLen[r$plottedTree$tip.label] / max(extraLen)) + 1
+              (192 * extraLenPos[r$plottedTree$tip.label] / max(extraLenPos)) + 1
             ]
           }
           PlotCharacter(
@@ -640,14 +644,14 @@ consensus_server <- function(id, r,
               SortEdges(tr)
             }
           )
-          if (max(extraLen) > 0) {
+          if (!is.null(extraLenPos) && max(extraLenPos) > 0) {
             PlotTools::SpectrumLegend(
               "bottomleft", bty = "n",
               palette = hcl.colors(256, "inferno")[1:193],
               title = "Mean tree score\nimpact",
               title.font = 2,
               y.intersp = 1.42,
-              legend = c(signif(4:1 * max(extraLen) / 4, 3), "No impact")
+              legend = c(signif(4:1 * max(extraLenPos) / 4, 3), "No impact")
             )
           }
         },

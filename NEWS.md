@@ -178,6 +178,13 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 
 ## Bug fixes
 
+- Shiny: scoring error notification now shows the actual error message
+  (e.g. "Trees have different numbers of edges") rather than the generic
+  "Could not score all trees with dataset".
+- Shiny: fix search requiring two clicks to start when trees have mixed
+  topologies (polytomous/binary).  The "Search" shortcut button now appears
+  only after the modal is dismissed via its own Search button, so it is never
+  obscured by the modal backdrop.
 - Fix output trees from `MaximizeParsimony()` having invalid preorder
   numbering (affected `DropTip()`, distance calculations, and plotting).
 - Fix `fuseInterval = 0` causing a crash (division by zero).
