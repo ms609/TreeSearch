@@ -22,8 +22,9 @@ README\.md
 cran\-comments\.md
 vignettes/\.RData
 ^\.git
-^.*\.o$
 ^.*\.dll$
+^.*\.o$
+^.*\.sh$
 ^.*\.yml$
 ^.*\.Rproj$
 ^\.Rproj\.user$
