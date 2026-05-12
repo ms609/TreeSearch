@@ -364,16 +364,42 @@ cmd_checkin() {
 cmd_reap() {
   local state; state=$(read_state)
   local now; now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-  local ready_ids
-  ready_ids=$(echo "$state" | jq -r --arg now "$now" \
+
+  # Phase 1: ETA-based readiness
+  local ready_ids=""
+  while IFS= read -r id; do
+    [[ -n "$id" ]] && ready_ids="$ready_ids $id"
+  done < <(echo "$state" | jq -r --arg now "$now" \
     '.agents[]|select(.next_checkin!=null and .next_checkin.eta!=null and .next_checkin.eta!="" and .next_checkin.eta<=$now)|.id')
-  if [[ -z "$ready_ids" ]]; then echo '{"ready":[]}'; return 0; fi
+
+  # Phase 2: proactive GHA poll when nothing is ETA-ready yet
+  # Check agents sorted by soonest ETA first; collect all that are complete.
+  if [[ -z "${ready_ids// /}" ]]; then
+    local agent_id run_ref run_status
+    while IFS=$'\t' read -r agent_id run_ref; do
+      [[ -z "$agent_id" ]] && continue
+      run_ref="${run_ref//$'\r'/}"   # strip CRLF from Windows-encoded JSON
+      run_status=$(gh run view "$run_ref" --json status -q '.status' 2>/dev/null) || continue
+      [[ "$run_status" == "completed" ]] && ready_ids="$ready_ids $agent_id"
+    done < <(echo "$state" | jq -r \
+      '[.agents[]|select(.next_checkin.kind=="gha" and (.next_checkin.ref//"")!="")]
+       |sort_by(.next_checkin.eta)[]|[.id,.next_checkin.ref]|@tsv')
+  fi
+
+  ready_ids="${ready_ids# }"
+  [[ -z "$ready_ids" ]] && echo '{"ready":[]}' && return 0
+
+  local ready_arr
+  ready_arr=$(printf '%s\n' $ready_ids | jq -R . | jq -s .)
 
   acquire_lock; trap 'release_lock' EXIT
   state=$(read_state)
   local new_state
-  new_state=$(echo "$state" | jq --arg now "$now" \
-    '.agents=[.agents[]|if (.next_checkin!=null and .next_checkin.eta!=null and .next_checkin.eta!="" and .next_checkin.eta<=$now) then .+{ready:true} else . end]')
+  new_state=$(echo "$state" | jq --argjson ids "$ready_arr" --arg now "$now" \
+    '.agents=[.agents[]|
+       if (.id as $i | $ids | index($i) != null) then .+{ready:true}
+       elif (.next_checkin.eta//"" | . != "" and . <= $now) then .+{ready:true}
+       else . end]')
   write_state "$new_state"
   echo "$new_state" | jq '{ready:[.agents[]|select(.ready==true)|{id,task_id,next_checkin}]}'
 }
