@@ -1,4 +1,3 @@
-context("pp_info_extra_step.R")
 library("TreeSearch", quietly = TRUE)
 
 test_that("Bad input safely handled", {
@@ -29,8 +28,9 @@ test_that("Carter1() matches profile counts", {
       expect_equal(log2(Carter1(mi, a, b)), Log2Carter1(mi, b, a))
       expect_equal(log(Carter1(mi, a, b)), LogCarter1(mi, b, a))
     }
-    expect_equivalent(counted,
-                      cumsum(vapply(m, Carter1, a = a, b = b, double(1))))
+    expect_equal(counted,
+                 cumsum(vapply(m, Carter1, a = a, b = b, double(1))),
+                 ignore_attr = TRUE)
   }
   
   Test(2, 4)
@@ -62,8 +62,9 @@ test_that("WithOneExtraStep()", {
   data("profiles", package = "TreeSearch")
   Test <- function (a, b) {
     n <- sum(a, b)
-    expect_equivalent(2 ^ profiles[[n]][[2]][[n - max(a, b) - 1]][2] * NUnrooted(n),
-                      NUnrootedMult(c(a, b)) + WithOneExtraStep(c(a, b)))
+    expect_equal(2 ^ profiles[[n]][[2]][[n - max(a, b) - 1]][2] * NUnrooted(n),
+                 NUnrootedMult(c(a, b)) + WithOneExtraStep(c(a, b)),
+                 ignore_attr = TRUE)
   }
   
   Test(4, 2)

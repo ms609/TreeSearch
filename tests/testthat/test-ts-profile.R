@@ -1,6 +1,5 @@
 # Tier 2: skipped on CRAN; see tests/testing-strategy.md
 skip_on_cran()
-context("Profile parsimony (C++ engine)")
 
 # Internal C++ scoring function (not exported)
 ts_fitch_score <- TreeSearch:::ts_fitch_score

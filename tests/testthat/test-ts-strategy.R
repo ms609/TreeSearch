@@ -1,5 +1,3 @@
-context("Strategy tracker (Thompson sampling bandit)")
-
 # Exercises StrategyTracker via the ts_test_strategy_tracker() bridge.
 # The bridge creates a fresh tracker, draws `n_draws` selections, then
 # applies 5 successes to arm 0 (WAGNER_RANDOM) and 5 failures to arm 1

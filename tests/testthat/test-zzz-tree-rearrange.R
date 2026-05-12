@@ -1,6 +1,5 @@
 library("TreeTools")
 
-context("Tree rearrangements")
 tree5a <- read.tree(text = '(a, (b, (c, (d, e))));')
 tree5b <- read.tree(text = '((a, b), (c, (d, e)));')
 tree6  <- Preorder(read.tree(text = "((a, (b, (c, d))), (e, f));"))

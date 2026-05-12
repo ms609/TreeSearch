@@ -24,7 +24,6 @@ test_that("PrepareDataProfile()", {
                c(0,0,0,1,1,"?"))
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   phy1 <- TreeTools::MatrixToPhyDat(mtx)
-  expect_equivalent(phy1, PrepareDataProfile(phy1))
   # PrepareDataProfile renormalizes token labels to 1..k; check structural
   # attributes that should be preserved, not levels/allLevels/contrast
   pp1 <- PrepareDataProfile(phy1)
