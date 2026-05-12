@@ -185,7 +185,9 @@ this is expected and should be done carefully at feature-merge time.
 ### Feature branch lifecycle
 
 1. `git checkout cpp-search && git checkout -b feature/<name>`
-   Optionally create a worktree: `git worktree add ../TS-<name> feature/<name>`
+   Optionally create a worktree: `git worktree add ../worktrees/TS-<name> feature/<name>`
+   **Never** switch the main `./TreeSearch` checkout away from `cpp-search` (or a
+   feature branch actively being worked). Worktrees must always live under `../worktrees/`.
 2. Claim task on `cpp-search`'s `to-do.md` (coordination commit).
 3. Do all code work on `feature/<name>`. Use local targeted tests only
    during iteration; use GHA for full validation.
@@ -203,7 +205,7 @@ this is expected and should be done carefully at feature-merge time.
 7. Human reviews and merges the PR.
 8. After merge, clean up:
    ```bash
-   git worktree remove ../TS-<name>  # if worktree was used
+   git worktree remove ../worktrees/TS-<name>  # if worktree was used
    git branch -d feature/<name>
    git push origin --delete feature/<name>
    ```
@@ -275,10 +277,18 @@ bash dispatch.sh task <T-ID> [budget]   # explicit task; budget optional
 ### Worktree tasks
 
 Tasks with status `WORKTREE (name)` are actively developed in a dedicated git
-worktree (e.g. `C:/Users/pjjg18/GitHub/TS-CID-cons`). **Do not claim or
-modify these tasks.** They are reserved for the human developer working in
-that worktree. To mark a task as in-flight on a worktree, set its status to
-`WORKTREE (name)` where *name* matches the worktree directory basename.
+worktree under `C:/Users/pjjg18/GitHub/worktrees/` (e.g.
+`../worktrees/TS-CID-cons`). **Do not claim or modify these tasks.** They are
+reserved for the human developer working in that worktree. To mark a task as
+in-flight on a worktree, set its status to `WORKTREE (name)` where *name*
+matches the worktree directory basename.
+
+> **Worktree rule:** Worktrees must **always** be created under `../worktrees/`
+> (i.e. `C:/Users/pjjg18/GitHub/worktrees/<name>`). **Never** create a worktree
+> directly inside `../` alongside the main checkout, and **never** switch the
+> main `C:/Users/pjjg18/GitHub/TreeSearch` directory to a different branch using
+> `git checkout` — it must remain on `cpp-search` (or the current feature branch
+> being actively developed). Use a worktree instead.
 
 ### During work
 

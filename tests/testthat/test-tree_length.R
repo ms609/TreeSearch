@@ -20,10 +20,10 @@ test_that("Deprecations throw warning", {
   data("inapplicable.datasets")
   dat <- inapplicable.phyData[[1]]
   tree <- TreeTools::RandomTree(dat, root = TRUE)
-  expect_equal(TreeLength(tree, dat),
-               expect_warning(Fitch(tree, dat)))
-  expect_equal(CharacterLength(tree, dat, compress = TRUE),
-               expect_warning(FitchSteps(tree, dat)))
+  expect_warning(fitch_val <- Fitch(tree, dat))
+  expect_equal(TreeLength(tree, dat), fitch_val)
+  expect_warning(fitch_steps_val <- FitchSteps(tree, dat))
+  expect_equal(CharacterLength(tree, dat, compress = TRUE), fitch_steps_val)
   
 })
 
@@ -165,14 +165,13 @@ test_that("TreeLength() handles unrooted / non-preorder trees", {
   set.seed(0)
   unrooted <- RandomTree(mat, root = FALSE)
   
-  expect_equal(expect_warning(TreeLength(c(unrooted), mat),
-                              "rooted on tip 1"),
-               TreeLength(c(RootTree(unrooted, 1)), mat))
+  expect_warning(tmp_tl <- TreeLength(c(unrooted), mat), "rooted on tip 1")
+  expect_equal(tmp_tl, TreeLength(c(RootTree(unrooted, 1)), mat))
   
   expect_equal(TreeLength(RootTree(Postorder(unrooted), 1), mat),
                TreeLength(RootTree(unrooted, 1), mat))
-  scores <- expect_warning(
-    TreeLength(c(unrooted, Postorder(unrooted)), mat),
+  expect_warning(
+    scores <- TreeLength(c(unrooted, Postorder(unrooted)), mat),
     "rooted on tip 1")
   expect_equal(scores[[1]], scores[[2]])
   expect_equal(TreeLength(RootTree(unrooted, 1), mat), scores[[1]])

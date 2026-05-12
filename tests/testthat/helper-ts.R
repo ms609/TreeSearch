@@ -35,6 +35,14 @@ ts_score <- function(tree, ds, concavity = Inf, min_steps = integer(0),
   )
 }
 
+#' Compare two phylogenetic trees topologically (handles order/attr differences).
+#' In testthat edition 3, expect_equal() uses waldo which checks all attributes
+#' including `order` (cladewise vs preorder). all.equal.phylo handles these.
+expect_equal_tree <- function(actual, expected) {
+  cmp <- all.equal(actual, expected)
+  if (!isTRUE(cmp)) testthat::fail(paste(cmp, collapse = "\n")) else testthat::succeed()
+}
+
 #' Validate that a search result has correct tree topology
 validate_result <- function(result, n_tip) {
   if ("trees" %in% names(result)) {

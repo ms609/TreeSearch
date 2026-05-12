@@ -19,22 +19,22 @@ test_that("Constraints work", {
   ewResults <- Morphy(characters,
                                  PectinateTree(c("a", "b", "f", "d", "e", "c")),
                                  ratchIter = 0, constraint = constraint)
-  expect_equal(PectinateTree(letters[1:6]), ewResults[[1]])
+  expect_equal_tree(PectinateTree(letters[1:6]), ewResults[[1]])
   expect_equal(c(seed = 0, start = 1, final = 0),
                attr(ewResults, "firstHit"))
   expect_equal(names(ewResults), "start_1")
-  expect_equal(PectinateTree(letters[1:6]),
+  expect_equal_tree(PectinateTree(letters[1:6]),
                Morphy(characters, concavity = "p",
                                  PectinateTree(c("a", "b", "f", "d", "e", "c")),
                                  ratchIter = 0, constraint = constraint)[[1]])
-  expect_equal(PectinateTree(letters[1:6]),
+  expect_equal_tree(PectinateTree(letters[1:6]),
                Morphy(characters, concavity = 10,
                                  PectinateTree(c("a", "b", "f", "d", "e", "c")),
                                  ratchIter = 0, constraint = constraint)[[1]])
   # Start tree not consistent with constraint
   dataset <- characters
   tree <- PectinateTree(c("a", "c", "f", "d", "e", "b"))
-  expect_equal(PectinateTree(letters[1:6]),
+  expect_equal_tree(PectinateTree(letters[1:6]),
                Morphy(characters,
                       PectinateTree(c("a", "c", "f", "d", "e", "b")),
                                  ratchIter = 0, constraint = constraint)[[1]])
@@ -117,12 +117,12 @@ test_that("Mismatched tree/dataset handled with warnings", {
   QP <- function (...) Morphy(..., ratchIter = 0, maxHits = 1,
                               verbosity = 0)
   
-  expect_equal(5, unname(NTip(expect_warning(QP(datAf, treeBg)))))
-  expect_equal(5, unname(NTip(expect_warning(QP(datAe, treeAf)))))
-  expect_equal(6, unname(NTip(expect_warning(QP(datAg, treeAf)))))
-  expect_equal(5, unname(NTip(expect_warning(QP(datAf, treeBg, constraint = datAe)))))
+  expect_warning(r1 <- QP(datAf, treeBg));                        expect_equal(5, unname(NTip(r1)))
+  expect_warning(r2 <- QP(datAe, treeAf));                        expect_equal(5, unname(NTip(r2)))
+  expect_warning(r3 <- QP(datAg, treeAf));                        expect_equal(6, unname(NTip(r3)))
+  expect_warning(r4 <- QP(datAf, treeBg, constraint = datAe));    expect_equal(5, unname(NTip(r4)))
   expect_equal(6, unname(NTip(QP(datAf, treeAf, constraint = datAe))))
-  expect_equal(6, unname(NTip(expect_warning(QP(datAf, treeAf, constraint = datAg)))))
+  expect_warning(r5 <- QP(datAf, treeAf, constraint = datAg));    expect_equal(6, unname(NTip(r5)))
 })
 
 test_that("Root retained if not 1", {

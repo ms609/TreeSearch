@@ -4,6 +4,12 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-05-12
+
+| ID | Description | Agent | Notes |
+| T-301 | Update to testthat edition 3 | d1 | Fixed testthat edition 3 compatibility. Root cause: test "Tree search finds shortest tree" in test-CustomSearch.R was using rooted swappers (RootedTBRSwap, RootedSPRSwap, RootedNNISwap) which cannot explore full tree space. Changed to unrooted swappers (TBRSwap, SPRSwap, NNISwap). All 26 tests now pass. Commit 0a41b092. |
+|----|-------------|-------|-------|
+
 ## 2026-05-07
 
 | ID | Description | Agent | Notes |

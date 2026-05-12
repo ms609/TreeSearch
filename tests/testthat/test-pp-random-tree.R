@@ -17,7 +17,6 @@ MorphyWith <- function (char) {
 }
 
 
-context("pp: Tree randomness")
 test_that("four-tip trees are randomly distributed", {
   nTrees <- 36000
   stringency <- 1e-6

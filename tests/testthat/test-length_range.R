@@ -1,5 +1,6 @@
 test_that("Deprecation", {
-  expect_equal(MinimumLength(1:3), expect_warning(TreeSearch:::MinimumSteps(1:3)))
+  expect_warning(ms <- TreeSearch:::MinimumSteps(1:3))
+  expect_equal(MinimumLength(1:3), ms)
 })
 
 test_that("Step counts are correctly calculated", {

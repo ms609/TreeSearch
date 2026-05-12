@@ -1,5 +1,3 @@
-context("Starting tree (warm-start)")
-
 ts_score <- function(tree, ds) {
   TreeSearch:::ts_fitch_score(
     tree$edge,

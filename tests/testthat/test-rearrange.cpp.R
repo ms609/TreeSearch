@@ -2,16 +2,16 @@ library("TreeTools")
 
 test_that("TBR errors", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
-  expect_equal(0, length(expect_warning(TreeSearch:::all_tbr(tr$edge, -1))))
-  expect_equal(0, length(expect_warning(TreeSearch:::all_tbr(tr$edge, 1))))
-  expect_equal(0, length(expect_warning(TreeSearch:::all_tbr(tr$edge, 111))))
+  expect_warning(r1 <- TreeSearch:::all_tbr(tr$edge, -1));   expect_equal(0, length(r1))
+  expect_warning(r2 <- TreeSearch:::all_tbr(tr$edge, 1));    expect_equal(0, length(r2))
+  expect_warning(r3 <- TreeSearch:::all_tbr(tr$edge, 111));  expect_equal(0, length(r3))
 })
 
 test_that("SPR errors", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
-  expect_equal(0, length(expect_warning(TreeSearch:::all_spr(tr$edge, -1))))
-  expect_equal(0, length(expect_warning(TreeSearch:::all_spr(tr$edge, 1))))
-  expect_equal(0, length(expect_warning(TreeSearch:::all_spr(tr$edge, 111))))
+  expect_warning(r1 <- TreeSearch:::all_spr(tr$edge, -1));   expect_equal(0, length(r1))
+  expect_warning(r2 <- TreeSearch:::all_spr(tr$edge, 1));    expect_equal(0, length(r2))
+  expect_warning(r3 <- TreeSearch:::all_spr(tr$edge, 111));  expect_equal(0, length(r3))
 })
 
 test_that("TBR working", {

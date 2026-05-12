@@ -1,5 +1,3 @@
-context("pp_exact")
-
 # TODO this test was recovered from a stash and requires updating -- 
 # or may be obselete.
 test_that("Profile score correct for small trees", {
