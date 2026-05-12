@@ -138,17 +138,24 @@ test_that(".Rezero() works", {
 })
 
 test_that("ConcordanceTable() marginSize top/right strips", {
+  skip_if_not_installed("vdiffr")
   data("congreveLamsdellMatrices", package = "TreeSearch")
   dataset <- congreveLamsdellMatrices[[1]][, 1:20]
   tree <- TreeSearch::referenceTree
 
-  pdf(NULL)
-  on.exit(dev.off())
-  ret <- ConcordanceTable(tree, dataset, marginSize = c(NA, NA, 2, 2))
-  expect_named(ret, c("info", "relInfo", "quality", "col"))
+  vdiffr::expect_doppelganger("conc-tbl-xx34", function() {
+    expect_named(
+      ConcordanceTable(tree, dataset, marginSize = c(NA, NA, 2, 2)),
+      c("info", "relInfo", "quality", "col")
+    )
+  })
 
-  expect_no_error(ConcordanceTable(tree, dataset, marginSize = c(2, 2, 2, 2)))
-  expect_no_error(ConcordanceTable(tree, dataset, marginSize = 2))
+  vdiffr::expect_doppelganger("conc-tbl-all", function() {
+    ConcordanceTable(tree, dataset, marginSize = c(2, 2, 2, 2))
+  })
+  vdiffr::expect_doppelganger("conc-tbl-2", function() {
+    capture.output(ConcordanceTable(tree, dataset, marginSize = 2))
+  })
 })
 
 test_that("ClusteringConcordance() gives sensible values", {
@@ -206,8 +213,9 @@ test_that("ConcordantInformation() works", {
   dat <- congreveLamsdellMatrices[[10]]
   tree <- TreeTools::NJTree(dat)
   
-  ci <- ConcordantInformation(tree, dat)
-  expect_warning(eval_val <- Evaluate(tree, dat))
+  expect_message(ci <- ConcordantInformation(tree, dat),
+                 "dataset contains .* bits")
+  expect_warning(suppressMessages(eval_val <- Evaluate(tree, dat)))
   expect_equal(eval_val, ci)
   expect_equal(TreeLength(tree, dat, concavity = "prof"),
                unname(ci["noise"]))
@@ -227,7 +235,7 @@ test_that("ConcordantInformation() works", {
   # After T-107, 3-state chars with 6 tips are within the MaddisonSlatkin
   # feasibility threshold (k=3, max=15 tips), so no binary reduction occurs.
   # Signal/noise are computed via the full 3-state profile (no warning).
-  ci <- ConcordantInformation(tree, dataset)
+  ci <- suppressMessages(ConcordantInformation(tree, dataset))
   expect_equal(c(signal = 0.7835082), ci["signal"], tolerance = 1e-5)
   expect_equal(c(noise = 3.1233824), ci["noise"], tolerance = 1e-5)
   expect_equal(c(ignored = 0), ci["ignored"])
