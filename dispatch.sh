@@ -133,7 +133,7 @@ call_ranker() {
 # Edit to-do.md: set the Status column (col 3) for a given task ID
 # action: set_status  new_status  (OPEN / "ASSIGNED (d1)" / "PARKED (...)")
 #         or: reset_open  (used by kill: ASSIGNED|PARKED → OPEN)
-# Uses python3 (available on this Windows machine via Python 3.12)
+# Uses python (python3 stub on Windows points to App Store, not real Python)
 # ---------------------------------------------------------------------------
 _TODO_EDITOR='
 import sys
@@ -157,7 +157,7 @@ open(fname, "w", encoding="utf-8").writelines(out)
 
 todo_set_status() {
   local task_id="$1" new_status="$2" reset="${3:-}"
-  python3 -c "$_TODO_EDITOR" "$TODO_FILE" "$task_id" "$new_status" ${reset:+reset} 2>/dev/null || \
+  python -c "$_TODO_EDITOR" "$TODO_FILE" "$task_id" "$new_status" ${reset:+reset} 2>/dev/null || \
     err "warning: could not update to-do.md for $task_id"
 }
 
