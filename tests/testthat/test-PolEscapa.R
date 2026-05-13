@@ -12,11 +12,25 @@ test_that("LengthAdded() errors", {
     "`char` must comprise a single character"
   )
   
-  attr(dataset, "contrast")[6, ] <- 0
+  # Error when a used token has a zero-sum contrast row
+  char51 <- dataset[, 51]
+  usedTokens <- unique(unlist(char51, use.names = FALSE))
+  attr(char51, "contrast")[usedTokens[[1L]], ] <- 0
   expect_error(
-    LengthAdded(trees, dataset[, 51]),
-    "`char` contract matrix lacks levels for 6"
+    LengthAdded(trees, char51),
+    "`char` contrast matrix lacks levels for token"
   )
+
+  # No error when only unused tokens have zero-sum contrast rows; also
+  # verifies that downstream scoring does not choke on the stale row
+  char51b <- dataset[, 51]
+  cont51b <- attr(char51b, "contrast")
+  usedTokens2 <- unique(unlist(char51b, use.names = FALSE))
+  unusedRows <- setdiff(seq_len(nrow(cont51b)), usedTokens2)
+  if (length(unusedRows) > 0L) {
+    attr(char51b, "contrast")[unusedRows[[1L]], ] <- 0
+    expect_no_error(LengthAdded(trees, char51b))
+  }
 })
 
 test_that("LengthAdded()", {

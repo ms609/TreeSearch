@@ -1,5 +1,16 @@
 # TreeSearch 2.0.0
 
+## Bug fixes
+
+- `LengthAdded()` no longer errors on datasets whose contrast matrix contains
+  zero-sum rows for tokens that are declared in the SYMBOLS list but not used
+  by any taxon in the character being scored (#294).
+
+- `LengthAdded()` no longer returns negative values when multiple rows of the
+  contrast matrix satisfy the fully-ambiguous applicable condition (e.g.
+  datasets with ~19 taxa and certain character structures); the first matching
+  row is now used consistently (#302).
+
 ## Breaking changes
 
 - Implied weighting now applies the missing-entries correction of
