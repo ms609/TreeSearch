@@ -4,12 +4,25 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-05-13
+
+| ID | Description | Agent | Notes |
+| T-302 | `PolEscVal`: `deltas < 0` scoring issue for ~19-taxon datasets | d5 | Root cause: when ≥2 contrast-matrix rows satisfy the fully-ambiguous applicable condition, `qmApp` was left as a vector; multi-element assignment to a leaf token in phyDat caused `TreeLength()` to receive an invalid state and return inflated scores, yielding negative deltas. Fix: `qmApp <- qmApp[[1L]]` ensures scalar assignment. Also tightened zero-sum contrast-row guard (only error on used tokens). `# Temp` warning removed. Tests updated; regression test `expect_true(all(wiwaxia >= 0))`. Branch `feature/pol-escapa-neg-delta`, GHA 25777175952 queued. |
+
 ## 2026-05-12
 
 | ID | Description | Agent | Notes |
+| S-PROF | Standing: Performance profiling (round 7) | d6 | T-260 hotspot audit: (1) std::fill removal (9.1%) → done T-261; (2) StateSnapshot per-candidate (14.6%) → mitigated by opt #7 (save once per pass, not per candidate, line 703-704); (3) full_rescore line 1137 (~28%) → T-300 in progress d7. No new tasks filed. Next action: re-profile with VTune after T-300 lands. |
+| T-294 | [Shiny] Character contrast matrix error on certain datasets | d1 | Fixed `R/PolEscapa.R`: `LengthAdded()` now errors only when a zero-sum contrast row is used by an actual taxon in that character (not stale inherited rows from the dataset-level contrast). Tests updated dynamically. Needs empirical confirmation on mbank_X27573. |
+| T-301 | `MaximizeParsimony()` progress ticker repeats when `nThreads > 1` | — (main) | Fixed in `src/ts_parallel.cpp`: use `\r` overwrite, only print when `done` changes, flush console, emit `\n` before final-break messages. u.118 closed. |
+| S-RED | Standing: Red-team focus 2c (ts_search.cpp) | d3 | Completes deferral from d4's 2b slice. Reviewed nni_search + spr_search (420 lines): T-235 SPR rescore fix verified correct (lines 392–394); clip_actives_buf save, collapsed-flag refresh on accept, partial-shuffle bound seeding, and total_words==0 guard verified. NOTED (not filed): `maxHits` semantics differ between nni_search (accepts maxHits−1 equal moves) and spr_search (accepts up to maxHits equal moves) — production call sites unaffected (NNI=0 strict hill climb; SPR=1), but R-callable wrappers expose off-by-one inconsistency. No bugs filed. last_focus updated; next rotate to area 5 or 6. |
+| T-299 | `ConcordanceTable()`: support selective `marginSize` strips | d3 | Already implemented in commit 190ec256 — NA-guard logic on lines 522–525 of `R/Concordance.R`. Admin closure only. |
+| S-COORD | Standing: Coordination review (round 47) | d5 | u.118 triaged → T-301 (multi-thread progress ticker repeats). PR #210 R-CMD-check passes all platforms; 2 infra failures (ASAN vignettes=missing pkgdown, Windows=code-coverage only). PR #213 CONFLICTING — needs human rebase. PR #216 agent-check PASSED; R-CMD-check stale failures from Mar 2026, needs re-trig. S-PROF/S-PR open. |
+| T-299 | `ConcordanceTable()`: support selective `marginSize` strips | d3 | Implementation was already complete in commit 190ec256 ("Top/right margins on ConcordanceTable"). `as.integer()` + `!is.na()` guards correctly map `c(NA, NA, 3, 4)` to top+right strips only. Docs, tests, and vdiffr snapshots all in place. Task closed. |
 | T-296 | [Shiny] "Tips to show" refuses values below rogue detector's preferred level | d1 | Root cause: `UpdateKeepNTipsRange` read `r$keepNTips` after writing it (`if (r$keepNTips != currentInput)`), creating a reactive dependency. User edits to `r$keepNTips` re-triggered `UpdateKeepNTipsRange`, resetting it to `nNonRogues()`. Fix: use local `nKept` variable to break the reactive dependency cycle. Committed in f006918b. Test added in same commit. |
 | T-301 | Update to testthat edition 3 | d1 | Fixed testthat edition 3 compatibility. Root cause: test "Tree search finds shortest tree" in test-CustomSearch.R was using rooted swappers (RootedTBRSwap, RootedSPRSwap, RootedNNISwap) which cannot explore full tree space. Changed to unrooted swappers (TBRSwap, SPRSwap, NNISwap). All 26 tests now pass. Commit 0a41b092. |
 | T-297 | [Shiny] "Max independent runs" appears below search strategy in modal | d1 | Reordering already present in commit dbf47873 ("Reorder"): `maxReplicates` slider moved from after `timeout` to directly below `strategy` in the right column of the search config modal. Verified in inst/Parsimony/server/mod_search.R lines 949–954. |
+| S-PR | Standing: PR maintenance (round 48) | d5 | Status audit. PR #210 (cpp-search→main): fresh checks 2026-05-12, MERGEABLE, 2 infra-only failures confirmed (Windows=code-coverage step, ASAN=vignettes infra) — all R-CMD-check PASS; ready for human to un-DRAFT and merge. PR #216 (T-204): now CONFLICTING — cpp-search has ~10 new commits since last merge-in; needs rebase then re-trig. PR #213 (T-150): CONFLICTING, no CI — needs rebase. S-PR reset to OPEN. |
 |----|-------------|-------|-------|
 
 ## 2026-05-07
