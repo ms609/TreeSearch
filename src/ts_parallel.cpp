@@ -299,7 +299,9 @@ DrivenResult parallel_driven_search(
   }
 
   // Main thread: poll for interrupt and timeout
-  int last_stab_done = 0;  // replicates_done at last consensus check
+  int last_stab_done = 0;     // replicates_done at last consensus check
+  int last_progress_done = -1; // replicate count at last progress print
+  bool progress_on_line = false; // true after a \r progress line is open
   while (true) {
     // Sleep briefly to avoid spinning
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -367,6 +369,7 @@ DrivenResult parallel_driven_search(
           stop_flag.store(true, std::memory_order_relaxed);
           result.consensus_stable = true;
           if (params.verbosity >= 1) {
+            if (progress_on_line) { Rprintf("\n"); progress_on_line = false; }
             Rprintf("Consensus stable for %d replicates (score %.5g, "
                     "pool %d trees)\n",
                     unchanged, st.best_score, st.pool_size);
@@ -401,6 +404,7 @@ DrivenResult parallel_driven_search(
             stop_flag.store(true, std::memory_order_relaxed);
             result.perturb_stop = true;
             if (params.verbosity >= 1) {
+              if (progress_on_line) { Rprintf("\n"); progress_on_line = false; }
               Rprintf("Stopped: %d consecutive unsuccessful replicates "
                       "(perturbStopFactor %d, limit %d = %d tips x %d x %d/%d hits)\n",
                       dry_spell, params.perturb_stop_factor, limit,
@@ -412,14 +416,25 @@ DrivenResult parallel_driven_search(
         }
       }
     }
-    // Progress reporting
+    // Progress reporting: overwrite the same line; only update when count changes
     if (params.verbosity >= 1) {
-      auto st = shared_pool.status();
       int done = replicates_done.load(std::memory_order_relaxed);
-      Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d\n",
-              n_threads, done, params.max_replicates,
-              st.best_score, st.pool_size, st.hits_to_best);
+      if (done != last_progress_done) {
+        auto st = shared_pool.status();
+        Rprintf("\r[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d",
+                n_threads, done, params.max_replicates,
+                st.best_score, st.pool_size, st.hits_to_best);
+        R_FlushConsole();
+        last_progress_done = done;
+        progress_on_line = true;
+      }
     }
+  }
+
+  // Close the overwrite progress line before any subsequent output
+  if (params.verbosity >= 1 && progress_on_line) {
+    Rprintf("\n");
+    progress_on_line = false;
   }
 
   // Signal stop to all workers
