@@ -5,6 +5,7 @@
 
 #include <R.h>
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <numeric>
 #include <vector>
