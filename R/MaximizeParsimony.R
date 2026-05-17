@@ -726,7 +726,7 @@ MaximizeParsimony <- function(
   contrast <- at$contrast
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
+  weight <- .ScaleWeight(at$weight)
   levels <- at$levels
 
   # --- Replicate count adequacy check ---
