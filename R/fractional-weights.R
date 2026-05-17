@@ -36,6 +36,21 @@
     # genuinely supplied a zero weight (preserved as 0L).
     keep <- weight > 0
     scaled[keep & scaled < 1L] <- 1L
+    # Guard: the C++ resampling routines expand each pattern `weight[p]`
+    # times into a flat index vector whose length is cast to `int`.  If
+    # sum(weights) > .Machine$integer.max the cast overflows to a negative
+    # value and the subsequent array access is undefined behaviour (segfault).
+    total <- sum(as.double(scaled))
+    if (total > .Machine$integer.max) {
+      stop(
+        "Total scaled weight (",
+        format(round(total), big.mark = ",", scientific = FALSE),
+        ") exceeds .Machine$integer.max.\n",
+        "Reduce options(\"TreeSearch.fractional.scale\") from ", scale,
+        " to a smaller value, or set integer weights directly.",
+        call. = FALSE
+      )
+    }
     # Return:
     scaled
   }

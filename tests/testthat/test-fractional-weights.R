@@ -60,6 +60,41 @@ test_that("TreeLength respects fractional weights end-to-end", {
   expect_equal(scaled_1500, base * 1500)
 })
 
+test_that(".ScaleWeight errors when sum(scaled) > .Machine$integer.max", {
+  # Each weight of (INT_MAX / 4 + 1) * scale would push total >> INT_MAX.
+  # Use a non-integer value so the fractional branch runs.
+  big_w <- (.Machine$integer.max %/% 4L + 1L) / 1000  # fractional, forces scaling
+  withr::with_options(list(TreeSearch.fractional.scale = 1000L), {
+    expect_error(
+      TreeSearch:::.ScaleWeight(rep(big_w, 5L)),
+      regexp = "integer.max",
+      fixed = FALSE
+    )
+  })
+})
+
+test_that("Resample() errors cleanly when sum(weights) > INT_MAX", {
+  # Bypass .ScaleWeight() by setting integer weights directly on the phyDat.
+  # This exercises the C++ guard in ts_resample.cpp.
+  big_w <- .Machine$integer.max %/% 4L + 1L
+  dat <- TreeTools::MatrixToPhyDat(matrix(
+    c(0, 0, 1, 1, 0,
+      0, 1, 0, 1, 0,
+      0, 1, 1, 0, 1,
+      1, 0, 0, 1, 0,
+      1, 0, 1, 0, 0),
+    nrow = 5, byrow = TRUE,
+    dimnames = list(letters[1:5], paste0("c", 1:5))
+  ))
+  # Force integer weights summing to > INT_MAX on the nr unique patterns.
+  attr(dat, "weight") <- rep(big_w, attr(dat, "nr"))
+  expect_error(
+    Resample(dat, nReplicates = 1L),
+    regexp = "INT_MAX|integer.max",
+    ignore.case = TRUE
+  )
+})
+
 test_that("MaximizeParsimony accepts fractional weights without crashing", {
   dat <- TreeTools::MatrixToPhyDat(matrix(
     sample(0:1, 60, replace = TRUE),
