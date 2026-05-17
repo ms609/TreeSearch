@@ -21,10 +21,10 @@ test_that(".ScaleWeight scales true fractional weights by 1000", {
 })
 
 test_that(".ScaleWeight honours TreeSearch.fractional.scale option", {
-  withr::with_options(list(TreeSearch.fractional.scale = 100L), {
-    expect_identical(TreeSearch:::.ScaleWeight(c(0.5, 0.75)),
-                     c(50L, 75L))
-  })
+  old <- options(TreeSearch.fractional.scale = 100L)
+  on.exit(options(old), add = TRUE)
+  expect_identical(TreeSearch:::.ScaleWeight(c(0.5, 0.75)),
+                   c(50L, 75L))
 })
 
 test_that(".ScaleWeight floors tiny positive weights at 1 to avoid drop", {
@@ -64,13 +64,13 @@ test_that(".ScaleWeight errors when sum(scaled) > .Machine$integer.max", {
   # Each weight of (INT_MAX / 4 + 1) * scale would push total >> INT_MAX.
   # Use a non-integer value so the fractional branch runs.
   big_w <- (.Machine$integer.max %/% 4L + 1L) / 1000  # fractional, forces scaling
-  withr::with_options(list(TreeSearch.fractional.scale = 1000L), {
-    expect_error(
-      TreeSearch:::.ScaleWeight(rep(big_w, 5L)),
-      regexp = "integer.max",
-      fixed = FALSE
-    )
-  })
+  old <- options(TreeSearch.fractional.scale = 1000L)
+  on.exit(options(old), add = TRUE)
+  expect_error(
+    TreeSearch:::.ScaleWeight(rep(big_w, 5L)),
+    regexp = "integer.max",
+    fixed = FALSE
+  )
 })
 
 test_that("Resample() errors cleanly when sum(weights) > INT_MAX", {

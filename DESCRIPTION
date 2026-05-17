@@ -64,7 +64,6 @@ Suggests:
   spelling,
   testthat (>= 3.0.0),
   vdiffr (>= 1.0.0),
-  withr,
   zip,
 Config/Needs/check:
   callr,
