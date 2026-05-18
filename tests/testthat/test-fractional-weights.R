@@ -96,6 +96,7 @@ test_that("Resample() errors cleanly when sum(weights) > INT_MAX", {
 })
 
 test_that("MaximizeParsimony accepts fractional weights without crashing", {
+  set.seed(42)
   dat <- TreeTools::MatrixToPhyDat(matrix(
     sample(0:1, 60, replace = TRUE),
     nrow = 6, byrow = TRUE,
