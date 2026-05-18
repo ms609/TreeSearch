@@ -628,8 +628,7 @@ struct DrawPair {
 };
 
 struct FixedDraws {
-  DrawPair draws[256];
-  uint16_t count = 0; // Tracks the actual number of elements used
+  std::vector<DrawPair> draws;
 };
 
 struct ValidDrawsCache {
@@ -656,20 +655,15 @@ struct ValidDrawsCache {
         if (cmp > 0) return;
       }
       
-      // Safety check for the fixed array size (unlikely to be hit)
-      if (out.count >= 256) throw std::runtime_error(
-        "Column has too many taxa/state combinations for the exact solver. "
-        "Use StepInformation(approx = 'mc') to approximate with Monte Carlo.");
-      
       DrawPair dp;
       dp.drawn = StateKey(drawn);
-      
+
       // Create undrawn directly from keys
       StateKey total(leaves);
       dp.undrawn = StateKey(total, dp.drawn);
       dp.m = curSum;
-      
-      out.draws[out.count++] = dp; 
+
+      out.draws.push_back(dp);
       return;
     }
     
@@ -928,8 +922,7 @@ class SolverT {
     };
     
     struct FixedDrawsT {
-      DrawPairT draws[256];
-      uint16_t count = 0;
+      std::vector<DrawPairT> draws;
     };
     
     std::unordered_map<KeyType, FixedDrawsT, HashType> validDraws_cache;
@@ -978,18 +971,13 @@ class SolverT {
           if (cmp > 0) return;
         }
         
-        if (out.count >= 256) 
-          throw std::runtime_error(
-            "Column has too many taxa/state combinations for the exact solver. "
-            "Use StepInformation(approx = 'mc') to approximate with Monte Carlo.");
-        
         DrawPairT dp;
         dp.drawn = KeyType(drawn);
         KeyType total(leaves);
         dp.undrawn = KeyType(total, dp.drawn);
         dp.m = curSum;
-        
-        out.draws[out.count++] = dp;
+
+        out.draws.push_back(dp);
         return;
       }
       
@@ -1069,8 +1057,8 @@ class SolverT {
       const auto& drawpairs = getValidDraws(leaves);
       LSEAccumulator outerAcc;
 
-      for (uint8_t i = 0; i < drawpairs.count && !budget_exceeded; ++i) {
-        const auto& dp = drawpairs.draws[i];
+      for (const auto& dp : drawpairs.draws) {
+        if (budget_exceeded) break;
         const KeyType& drawn = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
         int m = dp.m;
@@ -1202,8 +1190,8 @@ class SolverT {
 
       const auto& drawpairs = getValidDraws(leaves);
 
-      for (uint8_t i = 0; i < drawpairs.count && !budget_exceeded; ++i) {
-        const auto& dp = drawpairs.draws[i];
+      for (const auto& dp : drawpairs.draws) {
+        if (budget_exceeded) break;
         const KeyType& drawn   = dp.drawn;
         const KeyType& undrawn = dp.undrawn;
         const int m = dp.m;
@@ -1410,15 +1398,14 @@ class Solver {
     const auto& drawpairs = validDraws.get(leaves);
     LSEAccumulator outerAcc;
     
-    for (uint8_t i = 0; i < drawpairs.count; ++i) { 
-      const auto& dp = drawpairs.draws[i];
+    for (const auto& dp : drawpairs.draws) {
       const StateKey& drawn = dp.drawn;
       const StateKey& undrawn = dp.undrawn;
       int m = dp.m;
-      
+
       double balancedCorrection = (2*m == n) ? std::log(2.0) : 0.0;
       if (drawn == undrawn) balancedCorrection -= std::log(2.0);
-      
+
       LSEAccumulator innerAcc;
       for (const auto& pr : pairs.noStep[token0]) {
         double val = LogB(pr.a, drawn) + LogB(pr.b, undrawn);
@@ -1429,7 +1416,7 @@ class Solver {
         innerAcc.add(val);
       }
       double innerSum = innerAcc.result();
-      
+
       double acc = balancedCorrection + logRD.compute(drawn, leaves) + innerSum;
       outerAcc.add(acc);
     }
@@ -1476,8 +1463,7 @@ class Solver {
     
     LSEAccumulator outerAcc;
     
-    for (uint8_t i = 0; i < drawpairs.count; ++i) { 
-      const auto& dp = drawpairs.draws[i];
+    for (const auto& dp : drawpairs.draws) {
       const StateKey& drawn = dp.drawn;
       const StateKey& undrawn = dp.undrawn;
       const int m = dp.m;
