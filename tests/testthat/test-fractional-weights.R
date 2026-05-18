@@ -2,7 +2,9 @@
 #
 # The C++ scoring engine still stores int weights, so .ScaleWeight() converts
 # fractional vectors to integer at the R-level chokepoints with a configurable
-# precision (option TreeSearch.fractional.scale, default 1000).
+# precision (option TreeSearch.fractional.scale, default 1260 = 2*2*3*3*5*7).
+
+weight_multiplier <- 1260L
 
 test_that(".ScaleWeight is a no-op for integer weights", {
   w <- c(1L, 2L, 3L, 1L)
@@ -14,10 +16,10 @@ test_that(".ScaleWeight passes integer-valued doubles through unscaled", {
   expect_identical(TreeSearch:::.ScaleWeight(w), c(1L, 2L, 3L))
 })
 
-test_that(".ScaleWeight scales true fractional weights by 1000", {
+test_that(".ScaleWeight scales true fractional weights by default", {
   w <- c(0.5, 1.25, 2.0)
   expect_identical(TreeSearch:::.ScaleWeight(w),
-                   c(500L, 1250L, 2000L))
+                   as.integer(round(w * weight_multiplier)))
 })
 
 test_that(".ScaleWeight honours TreeSearch.fractional.scale option", {
@@ -28,10 +30,11 @@ test_that(".ScaleWeight honours TreeSearch.fractional.scale option", {
 })
 
 test_that(".ScaleWeight floors tiny positive weights at 1 to avoid drop", {
-  # 0.0005 * 1000 rounds to 0; without floor the character would silently
-  # vanish from scoring. Floor to 1.
-  expect_identical(TreeSearch:::.ScaleWeight(c(0.0005, 0.5)),
-                   c(1L, 500L))
+  # A weight whose scaled value rounds to 0 would silently drop the character.
+  # Floor at 1 to preserve it.
+  tiny <- 0.4 / weight_multiplier  # scales to 0 without the floor
+  expect_identical(TreeSearch:::.ScaleWeight(c(tiny, 0.5)),
+                   c(1L, as.integer(round(0.5 * weight_multiplier))))
 })
 
 test_that("TreeLength respects fractional weights end-to-end", {
@@ -51,20 +54,20 @@ test_that("TreeLength respects fractional weights end-to-end", {
   attr(dat, "weight") <- c(2, 2, 2, 2)  # numeric but integer-valued
   expect_equal(TreeLength(tr, dat), base * 2)
 
-  attr(dat, "weight") <- rep(0.5, 4L)  # fractional, scale=1000 -> 500 each
-  scaled_500 <- TreeLength(tr, dat)
-  expect_equal(scaled_500, base * 500)  # half-weight x scale=1000 = 500 x
+  attr(dat, "weight") <- rep(0.5, 4L)
+  half <- TreeLength(tr, dat)
+  expect_equal(half, base * 0.5 * weight_multiplier)
 
   attr(dat, "weight") <- rep(1.5, 4L)
-  scaled_1500 <- TreeLength(tr, dat)
-  expect_equal(scaled_1500, base * 1500)
+  one_half <- TreeLength(tr, dat)
+  expect_equal(one_half, base * 1.5 * weight_multiplier)
 })
 
 test_that(".ScaleWeight errors when sum(scaled) > .Machine$integer.max", {
   # Each weight of (INT_MAX / 4 + 1) * scale would push total >> INT_MAX.
   # Use a non-integer value so the fractional branch runs.
-  big_w <- (.Machine$integer.max %/% 4L + 1L) / 1000  # fractional, forces scaling
-  old <- options(TreeSearch.fractional.scale = 1000L)
+  big_w <- (.Machine$integer.max %/% 4L + 1L) / weight_multiplier
+  old <- options(TreeSearch.fractional.scale = weight_multiplier)
   on.exit(options(old), add = TRUE)
   expect_error(
     TreeSearch:::.ScaleWeight(rep(big_w, 5L)),
