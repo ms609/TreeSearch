@@ -224,14 +224,20 @@ pamSil <- pamSils[bestPam] # Best silhouette coefficient
 pamCluster <- pamClusters[[bestPam]]$cluster # Best solution 
 
 # Try hierarchical clustering with minimax linkage (Bien & Tibshirani 2011):
-hTree <- protoclust::protoclust(dists) 
-hClusters <- lapply(2:15, function (k) cutree(hTree, k = k)) 
-hSils <- vapply(hClusters, function (hCluster) { 
- mean(cluster::silhouette(hCluster, dists)[, 3]) 
-}, double(1)) 
-bestH <- which.max(hSils) 
-hSil <- hSils[bestH] # Best silhouette coefficient 
-hCluster <- hClusters[[bestH]] # Best solution
+if (requireNamespace("protoclust", quietly = TRUE)) {
+  hTree <- protoclust::protoclust(dists)
+  hClusters <- lapply(2:15, function (k) cutree(hTree, k = k))
+  hSils <- vapply(hClusters, function (hCluster) {
+    mean(cluster::silhouette(hCluster, dists)[, 3])
+  }, double(1))
+  bestH <- which.max(hSils)
+  hSil <- hSils[bestH]     # Best silhouette coefficient
+  hCluster <- hClusters[[bestH]] # Best solution
+} else {
+  message("Install the 'protoclust' package to include minimax-linkage clustering.")
+  hSil <- -Inf
+  hCluster <- NULL
+}
 
 # Set threshold for recognizing meaningful clustering 
 # no support < 0.25 < weak < 0.5 < good < 0.7 < strong 
