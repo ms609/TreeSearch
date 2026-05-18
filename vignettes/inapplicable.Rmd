@@ -132,9 +132,7 @@ mat <- matrix(c(
   "1",  "1",  "1",  "0",    "1"
 ), nrow = 6, byrow = TRUE,
 dimnames = list(paste0("t", 1:6), NULL))
-dataset <- phangorn::phyDat(mat, type = "USER",
-                            levels = c("-", "0", "1"),
-                            ambiguity = "?")
+dataset <- TreeTools::MatrixToPhyDat(mat)
 hierarchy <- CharacterHierarchy("1" = 2:3)
 
 # Default: Brazeau et al. algorithm (no hierarchy needed)
