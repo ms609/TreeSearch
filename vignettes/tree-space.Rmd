@@ -48,10 +48,11 @@ Equivalent R code can be downloaded using the "Save plot: R script" button,
 and is provided here for reference:
 
 ```{r load-trees}
-# Load required libraries 
-library("TreeTools", quietly = TRUE) 
-library("TreeDist") 
-library("TreeSearch") 
+# Load required libraries
+library("TreeTools", quietly = TRUE)
+library("TreeDist")
+library("TreeSearch")
+rogueInstalled <- requireNamespace("Rogue", quietly = TRUE)
   
 
 # Load Sun et al. 2018 trees from TreeSearch package
@@ -95,49 +96,52 @@ within the GUI, and is provided here for reference:
 # When analysing parsimony results, this value should be 1.
 majority <- 0.5
 
-# Identify rogue taxa
-exclude <- Rogue::QuickRogue(trees, p = majority)$taxon[-1]
-exclude
+if (rogueInstalled) {
+  # Identify rogue taxa
+  exclude <- Rogue::QuickRogue(trees, p = majority)$taxon[-1]
+  exclude
 
-# Select a rogue whose positions should be depicted
-plottedRogue <- exclude[1]
+  # Select a rogue whose positions should be depicted
+  plottedRogue <- exclude[1]
 
-# Remove other excluded taxa from tree
-consTrees <- lapply(trees, DropTip, setdiff(exclude, plottedRogue))
+  # Remove other excluded taxa from tree
+  consTrees <- lapply(trees, DropTip, setdiff(exclude, plottedRogue))
 
-# Colour tip labels according to their original 'instability' (Smith 2022a)
-tipCols <- Rogue::ColByStability(trees)
+  # Colour tip labels according to their original 'instability' (Smith 2022a)
+  tipCols <- Rogue::ColByStability(trees)
 
-# Our plotted rogue will not appear on the tree
-tipCols <- tipCols[setdiff(consTrees[[1]]$tip.label, plottedRogue)] 
+  # Our plotted rogue will not appear on the tree
+  tipCols <- tipCols[setdiff(consTrees[[1]]$tip.label, plottedRogue)]
 
+  # Set up plotting area
+  par(
+    mar = c(0, 0, 0, 0), # Zero margins
+    cex = 0.8            # Smaller font size
+  )
 
-# Set up plotting area 
-par(
- mar = c(0, 0, 0, 0), # Zero margins 
- cex = 0.8            # Smaller font size 
-)
+  # Plot the reduced consensus tree, showing position of our plotted rogue
+  plotted <- RoguePlot(
+    trees = consTrees,
+    tip = plottedRogue,
+    p = majority,
+    edgeLength = 1,
+    tip.color = tipCols
+  )
 
-# Plot the reduced consensus tree, showing position of our plotted rogue 
-plotted <- RoguePlot( 
- trees = consTrees, 
- tip = plottedRogue,
- p = majority, 
- edgeLength = 1, 
- tip.color = tipCols 
-) 
+  # Calculate split concordance
+  concordance <- SplitFrequency(plotted$cons, trees) / length(trees)
 
-# Calculate split concordance
-concordance <- SplitFrequency(plotted$cons, trees) / length(trees)
-
-# Annotate splits by concordance 
-LabelSplits(
- tree = plotted$cons,
- labels = signif(concordance, 3),
- col = SupportColor(concordance),
- frame = "none",
- pos = 3
-) 
+  # Annotate splits by concordance
+  LabelSplits(
+    tree = plotted$cons,
+    labels = signif(concordance, 3),
+    col = SupportColor(concordance),
+    frame = "none",
+    pos = 3
+  )
+} else {
+  message("Install the 'Rogue' package to render this block.")
+}
 ```
 
 # The structure of tree space
@@ -371,11 +375,15 @@ majority <- 1
 for (i in seq_len(nClusters)) {
   clusterTrees <- trees[clustering == i]
   # Identify rogue taxa for this cluster
-  clusterRogues <- Rogue::QuickRogue(clusterTrees, p = majority)$taxon[-1]
-  
-  # Colour tree labels based on stability across cluster
-  tipCols <- Rogue::ColByStability(clusterTrees)
-  
+  if (rogueInstalled) {
+    clusterRogues <- Rogue::QuickRogue(clusterTrees, p = majority)$taxon[-1]
+    tipCols <- Rogue::ColByStability(clusterTrees)
+  } else {
+    clusterRogues <- character(0)
+    tipCols <- setNames(rep("black", length(clusterTrees[[1]]$tip.label)),
+                        clusterTrees[[1]]$tip.label)
+  }
+
   cons <- ConsensusWithout( 
     trees = clusterTrees, 
     tip = clusterRogues,
