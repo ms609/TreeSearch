@@ -9,6 +9,11 @@
 #include <R.h>
 #include <Rmath.h>
 
+// R_Interactive is exported from libR on all platforms but not always visible
+// via the public headers; declare it here so we can guard console flushes.
+extern "C" { extern Rboolean R_Interactive; }
+
+
 #include <thread>
 #include <chrono>
 #include <algorithm>
@@ -412,13 +417,30 @@ DrivenResult parallel_driven_search(
         }
       }
     }
-    // Progress reporting
+    // Progress reporting.  In an interactive session use \r to overwrite the
+    // same console line; R_FlushConsole() is required there so the buffered
+    // output is shown between event-loop ticks.  In non-interactive mode
+    // (R CMD check, Rscript batch) skip the flush entirely — R_FlushConsole()
+    // calls fflush() on a captured pipe and can block indefinitely, hanging
+    // the check.  At verbosity >= 2 emit a plain \n line so batch logs still
+    // carry progress detail without the flush risk.
     if (params.verbosity >= 1) {
-      auto st = shared_pool.status();
       int done = replicates_done.load(std::memory_order_relaxed);
-      Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d\n",
-              n_threads, done, params.max_replicates,
-              st.best_score, st.pool_size, st.hits_to_best);
+      if (done != last_progress_done) {
+        auto st = shared_pool.status();
+        if (R_Interactive) {
+          Rprintf("\r[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d",
+                  n_threads, done, params.max_replicates,
+                  st.best_score, st.pool_size, st.hits_to_best);
+          R_FlushConsole();
+          progress_on_line = true;
+        } else if (params.verbosity >= 2) {
+          Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d\n",
+                  n_threads, done, params.max_replicates,
+                  st.best_score, st.pool_size, st.hits_to_best);
+        }
+        last_progress_done = done;
+      }
     }
   }
 
