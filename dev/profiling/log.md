@@ -35,4 +35,16 @@ at the bottom of the file before saving.
 
 ---
 
-last_focus: 0
+### Round 1 — 2026-05-18 — area #2 (Ratchet inner loop)
+- Driver:        dev/profiling/drivers/ratchet.R   (bare wall: 2.80 s median; Zhu2013 thorough ×1 rep)
+- Build:         .vtune-lib rebuilt 2026-05-18 from TreeSearch_2.0.0.tar.gz (CXXFLAGS=-O2 -g -fno-omit-frame-pointer via dev/profiling/Makevars.vtune; R CMD INSTALL into .vtune-lib)
+- profvis:       ~3 % R overhead (`MaximizeParsimony` wrapper); `ts_driven_search` dominates → no [Port] finding
+- VTune top 3:   NOT COLLECTED — VTune not installed on this machine; WPR (`wpr -start CPU`) requires admin. Phase-level data from verbosity=2 used instead: Ratchet 62 % of inner-loop search time (802 ms / 1 301 ms); XSS 3 %, RSS 11 %, CSS 9 %, Wagner+TBR 15 %
+- Finding:       [Profiled — unverified] Ratchet is a TBR wrapper. Perturbation save/restore overhead is O(n_chars) ≪ TBR time. T-300 (`full_rescore` after every accepted TBR move, `ts_tbr.cpp:1136–1137`) is the actionable target; implementation plan in `.AGENTS/memory/t300-lazy-tbr-rescore.md`. Cannot verify Δ without per-function hotspot data.
+- Filed:         No new row in findings.md (unverified). T-300 already tracked. Note: also fixed `flat_blocks`/`all_weight_one` missing from `build_reduced_dataset` in ts_sector.cpp (S-RED area-5 finding, done inline).
+- Cleanup:       No VTune result dirs; tarball removed (TreeSearch_2.0.0.tar.gz); .vtune-lib kept (needed for next round)
+- Next reviewer: Install VTune (or run gprof build with `-pg`) to measure `full_rescore` share inside `tbr_search` → then implement T-300 → re-profile to verify speedup. Baseline: 2.80 s/rep (see baselines.md).
+
+---
+
+last_focus: 2

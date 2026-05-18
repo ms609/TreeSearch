@@ -18,8 +18,8 @@ further wins — skip unless code changes), `SKIPPED` (out of rotation).
 
 | #  | Area                                | Files                                                                  | Why hot                                                                                       | Last known cost                                  | Last profiled | Status     |
 |----|-------------------------------------|------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------|--------------------------------------------------|---------------|------------|
-| 1  | NNI-perturb in driven pipeline      | `src/ts_nni_perturb.cpp`, `src/ts_driven.cpp` (perturb call sites)     | 34.3 % of thorough-preset time (Zhu2013), 14 % hit rate, late-call cost ~4× early-call cost   | T-274 raised (P2); cost grows within a replicate | —             | NEW        |
-| 2  | Ratchet inner loop                  | `src/ts_ratchet.cpp`, `src/ts_tbr.cpp` (called from ratchet)           | 46.3 % of thorough-preset time post-T-263; biggest share, structure unprofiled at this level  | 1116 ms/call mean (Zhu2013, 14 calls / 3 reps)   | —             | NEW        |
+| 1  | NNI-perturb in driven pipeline      | `src/ts_nni_perturb.cpp`, `src/ts_driven.cpp` (perturb call sites)     | Disabled in thorough preset via T-274 (`nniPerturbCycles=0L` in `R/MaximizeParsimony.R`) — code on path only when caller sets `nni_perturb_per > 0` | T-274 filed; disabled at R level; re-evaluate only if default changes | 2026-05-18    | AT-LIMIT   |
+| 2  | Ratchet inner loop                  | `src/ts_ratchet.cpp`, `src/ts_tbr.cpp` (called from ratchet)           | 62 % of inner-loop search time (verbosity=2, Zhu2013 thorough, 2026-05-18); TBR dominates (perturbation overhead < 2 %) | 2.80 s/rep median (Zhu2013 thorough ×1 rep, nThreads=1); T-300 (`full_rescore`) is pending fix | 2026-05-18    | PROFILED   |
 | 3  | RSS / sector search                 | `src/ts_sector.cpp`, `src/ts_prune_reinsert.cpp`                       | 7.4 % of thorough-preset time, up **16×** from 2 % baseline after conflict-guided RSS landed  | ~178 ms/call × ~4.7 calls/rep                    | —             | NEW        |
 | 4  | TBR full-rescore at acceptance      | `src/ts_tbr.cpp:1134` (`full_rescore` after every accepted move)       | T-300 — O(n_node × total_words) per accepted move; replaceable by incremental rescore         | ~28 % of `ts_tbr_search` time (S-PROF round 7)   | 2026-05-12    | PROFILED   |
 | 5  | quartet_concordance.cpp allocation  | `src/quartet_concordance.cpp`                                          | T-298 active PR #242 — matrix allocation hoist already benchmarked; re-profile after merge    | hoist-fix in flight                              | 2026-05-12    | PROFILED   |
@@ -33,10 +33,12 @@ further wins — skip unless code changes), `SKIPPED` (out of rotation).
 
 ## Notes on the ranking
 
-- Areas #1–#3 are the three live wins worth chasing first: NNI-perturb has a
-  known efficiency problem (T-274), Ratchet has the largest absolute share
-  with no per-line profile yet, and RSS grew 16× without a profile pass to
-  confirm the cost is sector-TBR (expected) vs conflict tracking (fixable).
+- Area #1 (NNI-perturb) is now AT-LIMIT — disabled in the thorough preset
+  via T-274 (`nniPerturbCycles=0L`); the code path is only active when a
+  caller explicitly sets that parameter, and profiling dead code is wasteful.
+- Areas #2–#3 are the live wins: Ratchet has the largest absolute share
+  (now ~60–70 % after NNI-perturb disabled) with no per-line profile yet;
+  RSS grew 16× without a profile pass to confirm cost source.
 - Area #4 (T-300 lazy rescore) is PARKED in `to-do.md` but stays in the
   rotation because the path is well-understood and the predicted gain is
   large; rerun after T-300 lands to verify.

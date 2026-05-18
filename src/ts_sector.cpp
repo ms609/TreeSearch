@@ -426,6 +426,8 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   rd.data.total_words = ds.total_words;
   rd.data.blocks = ds.blocks;
   rd.data.block_word_offset = ds.block_word_offset;
+  rd.data.flat_blocks = ds.flat_blocks;
+  rd.data.all_weight_one = ds.all_weight_one;
   rd.data.n_patterns = ds.n_patterns;
   rd.data.min_steps = ds.min_steps;
   rd.data.pattern_freq = ds.pattern_freq;

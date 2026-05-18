@@ -11,7 +11,7 @@ power profile) so future regressions can be compared apples-to-apples.
 
 | Driver                          | Dataset / N    | Bare wall (s) | Top hotspot (mod=TreeSearch.dll) | % share | Recorded   | Machine note          |
 |---------------------------------|----------------|---------------|----------------------------------|---------|------------|-----------------------|
-| (none yet — scaffold round; drivers will be written on first profiling round)                                                          |
+| dev/profiling/drivers/ratchet.R | Zhu2013 / 1 rep thorough nThreads=1 | 2.80 (median of 3) | ts_driven_search (>95 %; no VTune; from profvis) | >95 % | 2026-05-18 | Windows 10 i-series, R-devel, .vtune-lib debug build |
 
 ## End-to-end reference timings (from `.positai/expertise/profiling.md`)
 
