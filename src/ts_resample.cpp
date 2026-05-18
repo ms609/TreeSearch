@@ -5,6 +5,7 @@
 
 #include <R.h>
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <numeric>
 #include <vector>
@@ -30,7 +31,29 @@ ResampleResult resample_search(
     const int* obs_count_r)
 {
   // Expand original weights into a flat character index
-  // (each pattern p appears original_weights[p] times)
+  // (each pattern p appears original_weights[p] times).
+  //
+  // Guard: n_total_chars is cast to int and used as an array-index bound.
+  // If sum(weights) > INT_MAX the cast overflows to a negative value and
+  // the subsequent array access is undefined behaviour (SIGSEGV).  Check
+  // via size_t arithmetic before allocating and error out cleanly.
+  {
+    size_t total_chars = 0;
+    for (int p = 0; p < n_patterns; ++p) {
+      if (original_weights[p] < 0) {
+        Rf_error("TreeSearch: character weight[%d] = %d is negative",
+                 p, original_weights[p]);
+      }
+      total_chars += static_cast<size_t>(original_weights[p]);
+    }
+    if (total_chars > static_cast<size_t>(INT_MAX)) {
+      Rf_error("TreeSearch: sum of character weights (%zu) exceeds INT_MAX.\n"
+               "  Reduce options(\"TreeSearch.fractional.scale\") or set\n"
+               "  weights to smaller values before calling Resample().",
+               total_chars);
+    }
+  }
+
   std::vector<int> char_index;
   for (int p = 0; p < n_patterns; ++p) {
     for (int w = 0; w < original_weights[p]; ++w) {

@@ -117,6 +117,7 @@ Collate:
   'WideSample.R'
   'data.R'
   'data_manipulation.R'
+  'fractional-weights.R'
   'length_range.R'
   'mpl_morphy_objects.R'
   'mpl_morphyex.R'

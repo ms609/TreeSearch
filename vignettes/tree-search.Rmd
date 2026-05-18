@@ -12,7 +12,8 @@ vignette: >
 ---
 
 ```{r, echo = FALSE}
-knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7) 
+knitr::opts_chunk$set(fig.width = 7.2, fig.asp = 0.7)
+rogueInstalled <- requireNamespace("Rogue", quietly = TRUE)
 ```
 
 "TreeSearch" is an R package that allows, among other things, 
@@ -197,9 +198,12 @@ The potential impact of rogue taxa can be explored by colouring individual tips
 according to their stability in the tree set:
 
 ```{r stability}
-par(mar = rep(0, 4), cex = 0.8)
-
-plot(strict, tip.color = Rogue::ColByStability(bestTrees))
+if (rogueInstalled) {
+  par(mar = rep(0, 4), cex = 0.8)
+  plot(strict, tip.color = Rogue::ColByStability(bestTrees))
+} else {
+  message("Install the 'Rogue' package to render this block.")
+}
 ```
 
 Would removing an unstable taxon reveal hidden support for relationships at
@@ -207,7 +211,11 @@ the base of Mollusca?  We can test to see whether the removal of a taxon from
 a summary tree is justified using:
 
 ```{r find-rogues}
-Rogue::QuickRogue(bestTrees, p = 1)
+if (rogueInstalled) {
+  Rogue::QuickRogue(bestTrees, p = 1)
+} else {
+  message("Install the 'Rogue' package to render this block.")
+}
 ```
 
 In this case, dropping _Wiwaxia_ would improve the resolution of the
@@ -216,9 +224,14 @@ regarding its own position (a net gain of 14.3 bits).
 The most informative single summary tree is thus provided by:
 
 ```{r cons-without-halk}
-par(mar = rep(0, 4), cex = 0.8)
-noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, "Wiwaxia")
-plot(ape::consensus(noWiwaxia), tip.color = Rogue::ColByStability(noWiwaxia))
+if (rogueInstalled) {
+  par(mar = rep(0, 4), cex = 0.8)
+  noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, "Wiwaxia")
+  plot(ape::consensus(noWiwaxia),
+       tip.color = Rogue::ColByStability(noWiwaxia))
+} else {
+  message("Install the 'Rogue' package to render this block.")
+}
 ```
 
 This reveals that all trees agree that _Halkieria_ and _Orthrozanclus_ are

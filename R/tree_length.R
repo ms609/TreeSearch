@@ -199,7 +199,7 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
     tip_data <- matrix(unlist(dataset, use.names = FALSE),
                        nrow = length(dataset), byrow = TRUE)
     ts_fitch_score(tree[["edge"]], contrast, tip_data,
-                   at$weight, at$levels)
+                   .ScaleWeight(at$weight), at$levels)
   }
 }
 
@@ -308,7 +308,7 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   contrast <- at$contrast
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = length(dataset), byrow = TRUE)
-  weight <- at$weight
+  weight <- .ScaleWeight(at$weight)
   levels <- at$levels
 
   min_steps <- if (iw) as.integer(at[["min.length"]]) else integer(0)
@@ -498,7 +498,8 @@ FastCharacterLength <- function(tree, dataset) {
   }
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = length(dataset), byrow = TRUE)
-  ts_char_steps(tree[["edge"]], at$contrast, tip_data, at$weight, at$levels)
+  ts_char_steps(tree[["edge"]], at$contrast, tip_data,
+                .ScaleWeight(at$weight), at$levels)
 }
 
 #' Calculate parsimony score from Morphy object

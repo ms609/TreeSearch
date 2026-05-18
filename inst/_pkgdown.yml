@@ -73,7 +73,9 @@ articles:
     contents:
     - profile-scores
     - profile
+    - inapplicable
     - custom
+    - search-algorithm
 
 topics:
   - name: SiteConcordance
