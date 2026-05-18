@@ -10,15 +10,26 @@ test_that("Profile handles multi-state characters", {
 })
 
 test_that("Constraints work", {
+  # Morphy() emits informational cli messages via message()
+  # ("Initialized N distinct constraints", "Modifying tree to match
+  # constraint", ...) that are not under test here.  Wrap the whole
+  # body in suppressMessages() to keep test output clean; warnings and
+  # errors are still raised normally.  Verbose paths are exercised in
+  # separate tests below.
+  suppressMessages({
   constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
   characters <- MatrixToPhyDat(matrix(
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
   set.seed(0)
+  # Morphy() defaults to verbosity = 3 and prints a banner / score lines to
+  # stdout. The verbose output is not under test here, so silence it with
+  # verbosity = 0L. (Verbose paths are exercised separately below.)
   ewResults <- Morphy(characters,
                                  PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint)
+                                 ratchIter = 0, constraint = constraint,
+                                 verbosity = 0L)
   expect_equal_tree(PectinateTree(letters[1:6]), ewResults[[1]])
   expect_equal(c(seed = 0, start = 1, final = 0),
                attr(ewResults, "firstHit"))
@@ -26,20 +37,23 @@ test_that("Constraints work", {
   expect_equal_tree(PectinateTree(letters[1:6]),
                Morphy(characters, concavity = "p",
                                  PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint)[[1]])
+                                 ratchIter = 0, constraint = constraint,
+                                 verbosity = 0L)[[1]])
   expect_equal_tree(PectinateTree(letters[1:6]),
                Morphy(characters, concavity = 10,
                                  PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint)[[1]])
+                                 ratchIter = 0, constraint = constraint,
+                                 verbosity = 0L)[[1]])
   # Start tree not consistent with constraint
   dataset <- characters
   tree <- PectinateTree(c("a", "c", "f", "d", "e", "b"))
   expect_equal_tree(PectinateTree(letters[1:6]),
                Morphy(characters,
                       PectinateTree(c("a", "c", "f", "d", "e", "b")),
-                                 ratchIter = 0, constraint = constraint)[[1]])
-  
-  
+                                 ratchIter = 0, constraint = constraint,
+                                 verbosity = 0L)[[1]])
+
+
   dataset <- MatrixToPhyDat(matrix(c(0, 0, 1, 1, 1, 1, 1,
                                      1, 1, 1, 1, 0, 0, 0), ncol = 2,
                                    dimnames = list(letters[1:7], NULL)))
@@ -47,7 +61,8 @@ test_that("Constraints work", {
                                         1, 1, 1,   1, 0, 0), ncol = 2,
                                       dimnames = list(letters[1:6], NULL)))
   # T-039 fixed: column-major indexing in build_constraint + Wagner guards
-  cons <- consensus(Morphy(dataset, constraint = constraint),
+  cons <- consensus(Morphy(dataset, constraint = constraint,
+                           verbosity = 0L),
                     rooted = TRUE)
   # Avoid %in%.Splits — S3 dispatch breaks in testthat's cloned namespace
   # (test_check / R CMD check). Compare bipartitions as plain logical vectors.
@@ -66,7 +81,8 @@ test_that("Constraints work", {
   expect_true(split_in_splits(
     as.Splits(as.logical(c(0, 0, 0, 0, 1, 1)), letters[1:6]),
     as.Splits(DropTip(cons, "g"))))
-  
+
+  })  # end suppressMessages
 })
 
 test_that("Inconsistent constraints fail", {
@@ -74,9 +90,16 @@ test_that("Inconsistent constraints fail", {
     c(0, 1, 1, 1, 0, 0,
       1, 1, 1, 0, 0, 0), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
-  expect_error(Morphy(constraint,
-                                 PectinateTree(c("a", "b", "f", "d", "e", "c")),
-                                 ratchIter = 0, constraint = constraint))
+  # Morphy() may emit cli messages before the error fires; suppress so
+  # they do not leak into testthat output.
+  expect_error(
+    suppressMessages(
+      Morphy(constraint,
+             PectinateTree(c("a", "b", "f", "d", "e", "c")),
+             ratchIter = 0, constraint = constraint,
+             verbosity = 0L)
+    )
+  )
 })
 
 test_that("Morphy() times out", {
@@ -86,8 +109,11 @@ test_that("Morphy() times out", {
   data("congreveLamsdellMatrices", package = "TreeSearch")
   dataset <- congreveLamsdellMatrices[[42]]
   startTime <- Sys.time()
-  Morphy(dataset, ratchIter = 10000, tbrIter = 1, maxHits = 1,
-         maxTime = 0)
+  # Discard verbose progress output — the test is about wall-clock timing.
+  invisible(capture.output(
+    Morphy(dataset, ratchIter = 10000, tbrIter = 1, maxHits = 1,
+           maxTime = 0)
+  ))
   expect_gt(as.difftime(5, units = "secs"), Sys.time() - startTime)
 })
 
@@ -97,9 +123,23 @@ test_that("Seed trees retained", {
   badTree <- read.tree(text = "(f, (b, (c, (a, (e, d)))));")
   dat <- StringToPhyDat("110000 110000 111000 111000 111100 111001",
                         letters[1:6], byTaxon = FALSE)
-  results <- Morphy(dataset = dat,
-                    tree = c(tree1, tree2, badTree),
-                    ratchIter = 0, verbosity = 4)
+  # verbosity = 4 deliberately exercises the most verbose printing path,
+  # which mixes cli messages (stderr) and Rprintf output (stdout).
+  # Capture both streams so nothing leaks into testthat output, and
+  # assert that the verbose marker is present so a future change that
+  # silently breaks the print path would fail this test.
+  msg_lines <- character()
+  stdout_lines <- capture.output(
+    msg_lines <- capture.output(
+      results <- Morphy(dataset = dat,
+                        tree = c(tree1, tree2, badTree),
+                        ratchIter = 0, verbosity = 4),
+      type = "message"
+    )
+  )
+  all_lines <- c(stdout_lines, msg_lines)
+  expect_true(any(grepl("TREE SEARCH|Score|Initial score|Starting search",
+                        all_lines)))
   expect_equal(attr(results, "firstHit"),
                c(seed = 2, start = 0, final = 0))
 })
@@ -114,9 +154,14 @@ test_that("Mismatched tree/dataset handled with warnings", {
   datAg <- StringToPhyDat("1100000 1100000 1111000 1110000",
                               letters[1:7], byTaxon = FALSE)
   
-  QP <- function (...) Morphy(..., ratchIter = 0, maxHits = 1,
-                              verbosity = 0)
-  
+  # QP emits cli messages ("Ignoring taxa...", "Initialized N distinct
+  # constraints") in addition to the R-level warning the tests check
+  # for.  Wrap each call in suppressMessages() to silence the
+  # informational cli output while preserving warning capture.
+  QP <- function (...) suppressMessages(
+    Morphy(..., ratchIter = 0, maxHits = 1, verbosity = 0)
+  )
+
   expect_warning(r1 <- QP(datAf, treeBg));                        expect_equal(5, unname(NTip(r1)))
   expect_warning(r2 <- QP(datAe, treeAf));                        expect_equal(5, unname(NTip(r2)))
   expect_warning(r3 <- QP(datAg, treeAf));                        expect_equal(6, unname(NTip(r3)))
@@ -130,7 +175,7 @@ test_that("Root retained if not 1", {
   dataset <- StringToPhyDat("11000000 11100000 11110000 11111000",
                             paste0("t", 1:8), byTaxon = FALSE)
   
-  mpt <- Morphy(dataset, tr)
+  mpt <- Morphy(dataset, tr, verbosity = 0L)
   expect_equal(5, mpt[[1]]$edge[14, 2])
 })
 

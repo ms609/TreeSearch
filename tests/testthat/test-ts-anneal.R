@@ -126,7 +126,7 @@ test_that("MaximizeParsimony respects annealing in SearchControl", {
                         rssRounds = 0L, cssRounds = 0L)
   result <- MaximizeParsimony(dataset, concavity = Inf,
                               maxSeconds = 3, maxReplicates = 2L,
-                              control = ctrl)
+                              control = ctrl, verbosity = 0L)
   expect_s3_class(result[[1]], "phylo")
 })
 

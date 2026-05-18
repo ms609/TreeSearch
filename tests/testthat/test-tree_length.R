@@ -128,8 +128,15 @@ test_that("Inapplicable characters scored correctly", {
                       extended_iw = FALSE),
                TreeLength(trees, bigPhy, concavity = 6, extended_iw = FALSE))
   
-  expect_equal(vapply(trees, TreeLength, double(1), profPhy, concavity = "p"),
-               TreeLength(trees, profPhy, concavity = "profile"))
+  # TreeLength(., concavity = "profile") internally calls PrepareDataProfile()
+  # which emits a cli message about inapplicable tokens.  Suppress so the
+  # message does not leak into testthat output.
+  expect_equal(suppressMessages(
+                 vapply(trees, TreeLength, double(1), profPhy, concavity = "p")
+               ),
+               suppressMessages(
+                 TreeLength(trees, profPhy, concavity = "profile")
+               ))
   
 
   ## Bigger tree with inapplicable tokens
@@ -147,7 +154,9 @@ test_that("(random) lists of trees are scored", {
   # Expected values calculated from 100k samples
   expect_gt(t.test(TreeLength(100, mat), mu = 318.5877)$p.val, 0.001)
   expect_gt(t.test(TreeLength(100, mat, 10L), mu = 17.16911)$p.val, 0.001)
-  expect_gt(t.test(TreeLength(100, mat, "profile"), mu = 830.0585)$p.val, 0.001)
+  expect_gt(t.test(suppressMessages(
+              TreeLength(100, mat, "profile")
+            ), mu = 830.0585)$p.val, 0.001)
 })
 
 test_that("TreeLength() handles unrooted / non-preorder trees", {
@@ -165,7 +174,12 @@ test_that("TreeLength() handles unrooted / non-preorder trees", {
   set.seed(0)
   unrooted <- RandomTree(mat, root = FALSE)
   
-  expect_warning(tmp_tl <- TreeLength(c(unrooted), mat), "rooted on tip 1")
+  # TreeLength() on an unrooted tree warns "rooted on tip 1" (R warning)
+  # and also emits a cli message ("X not in tree") that does not match the
+  # warning regex; suppress the latter so it does not leak.
+  expect_warning(suppressMessages(
+                   tmp_tl <- TreeLength(c(unrooted), mat)),
+                 "rooted on tip 1")
   expect_equal(tmp_tl, TreeLength(c(RootTree(unrooted, 1)), mat))
   
   expect_equal(TreeLength(RootTree(Postorder(unrooted), 1), mat),
@@ -208,12 +222,17 @@ test_that("CharacterLength() fails gracefully", {
   # Missing leaves
   expect_error(CharacterLength(as.phylo(1, 4), dataset))
   tMinus1 <- as.phylo(1, 42, tipLabels = names(dataset)[-1])
+  # CharacterLength() drops dataset tips absent from the tree, emitting a
+  # cli message ("Acanthoctenus not in tree" here); suppress so the alert
+  # does not leak into testthat output.
   expect_equal(CharacterLength(tMinus1, dataset[-1]),
-               CharacterLength(tMinus1, dataset))
+               suppressMessages(CharacterLength(tMinus1, dataset)))
   expect_error(CharacterLength(as.phylo(1, 43), dataset))
   tPlus1 <- as.phylo(1, 44, tipLabels = c("extra", names(dataset)))
+  # CharacterLength() with an extra tip emits a cli message
+  # ("extra not in `dataset`"); suppress so it does not leak.
   expect_equal(CharacterLength(DropTip(tPlus1, "extra"), dataset),
-               CharacterLength(tPlus1, dataset))
+               suppressMessages(CharacterLength(tPlus1, dataset)))
   expect_error(CharacterLength(as.phylo(1:2, 43, tipLabels = names(dataset)),
                                dataset))
   # no error:

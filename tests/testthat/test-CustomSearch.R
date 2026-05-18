@@ -28,9 +28,14 @@ test_that("Tree can be found", {
                                             maxIter = 1000,
                                             stopAtPlateau = 1, verbosity = 0)))
   
+  # CollapseNode produces a polytomy; Morphy emits a cli alert about
+  # collapsing polytomies that we suppress (it is informational, not the
+  # subject of the test).
   mp1 <- RootTree(
-    Morphy(phy11, tree = CollapseNode(random11, 13),
-           ratchIter = 1)[[1]],
+    suppressMessages(
+      Morphy(phy11, tree = CollapseNode(random11, 13),
+             ratchIter = 1, verbosity = 0L)
+    )[[1]],
     "a")
   expect_true(all.equal(mp1, comb11))
   expect_true(all.equal(

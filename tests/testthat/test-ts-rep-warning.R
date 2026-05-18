@@ -25,12 +25,19 @@ data("inapplicable.phyData", package = "TreeSearch")
 
 test_that("explicit maxReplicates below floor (10) triggers warning", {
   ds30 <- .make_30tip_ds()
-  expect_warning(
-    MaximizeParsimony(ds30, maxReplicates = 3L, targetHits = 1L,
-                      maxSeconds = 0.5, verbosity = 1L),
-    regexp = "replicates are recommended",
-    ignore.case = TRUE
+  # verbose stdout (Rprintf progress) is irrelevant to this test; capture
+  # to keep the testthat output clean. The captured lines are inspected
+  # for sanity to confirm the verbose code path was exercised.
+  stdout_lines <- capture.output(
+    expect_warning(
+      suppressMessages(  # silence cli "Strategy: ..." / "Search complete"
+        MaximizeParsimony(ds30, maxReplicates = 3L, targetHits = 1L,
+                          maxSeconds = 0.5, verbosity = 1L)),
+      regexp = "replicates are recommended",
+      ignore.case = TRUE
+    )
   )
+  expect_true(any(grepl("Replicate", stdout_lines)))
 })
 
 test_that("explicit maxReplicates at or above floor (10) triggers no warning", {
@@ -77,12 +84,17 @@ test_that("explicit maxReplicates below formula threshold triggers warning", {
   # Test only makes sense if the formula threshold exceeds 10
   skip_if(min_reps <= 10L, "synthetic dataset too small to test formula threshold")
 
-  expect_warning(
-    MaximizeParsimony(ds_large, maxReplicates = min_reps - 1L,
-                      targetHits = 1L, maxSeconds = 0.1, verbosity = 1L),
-    regexp = "replicates are recommended",
-    ignore.case = TRUE
+  stdout_lines <- capture.output(
+    expect_warning(
+      suppressMessages(  # silence cli "Strategy: ..." / "Search complete"
+        MaximizeParsimony(ds_large, maxReplicates = min_reps - 1L,
+                          targetHits = 1L, maxSeconds = 0.1, verbosity = 1L)),
+      regexp = "replicates are recommended",
+      ignore.case = TRUE
+    )
   )
+  # Verbose path should still produce per-replicate stdout.
+  expect_true(any(grepl("Replicate|Timeout|score", stdout_lines)))
 })
 
 test_that("explicit maxReplicates at formula threshold triggers no warning", {
