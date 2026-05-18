@@ -21,6 +21,17 @@ test_that("LengthAdded() errors", {
     "`char` contrast matrix lacks levels for token"
   )
 
+  # Error message names the specific token index.
+  # Asher2005 char 67 has 6 used tokens (1..6); zeroing row 6 must produce
+  # a message that explicitly says "6".  The contrast check fires before any
+  # tree/data compatibility check, so mismatched trees are harmless here.
+  char6tok <- inapplicable.phyData[["Asher2005"]][, 67]
+  attr(char6tok, "contrast")[6L, ] <- 0
+  expect_error(
+    LengthAdded(trees, char6tok),
+    "`char` contrast matrix lacks levels for token.s. 6"
+  )
+
   # No error when only unused tokens have zero-sum contrast rows; also
   # verifies that downstream scoring does not choke on the stale row
   char51b <- dataset[, 51]
