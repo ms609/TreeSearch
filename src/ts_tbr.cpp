@@ -17,6 +17,9 @@
 #include <R.h>
 #include <Rinternals.h>
 
+// T-300: verify incremental rescore matches full_rescore before removing.
+#define DEBUG_RESCORE
+
 namespace ts {
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
@@ -1134,7 +1137,49 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         }
 
         tree.build_postorder_prealloc(work_stack);
-        double actual = full_rescore(tree, ds);
+
+        // T-300: incremental rescore for SPR moves (no subtree rerooting).
+        // For TBR moves (reroot_parent is a proper internal node) the rerooting
+        // reverses parent-child links in complex ways; fall back to full_rescore.
+        // nx (clip parent) and nz (clip grandparent) are captured from
+        // clip_state before apply_tbr_move — they identify the two stale chains:
+        //   chain 1: nz lost nx as child → nz and ancestors stale
+        //   chain 2: nx inserted between above/below → nx and ancestors stale
+        bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
+        double actual;
+        if (is_spr) {
+          if (has_na) {
+            fitch_na_incremental_downpass(tree, ds, nz);
+            fitch_na_incremental_downpass(tree, ds, nx);
+            fitch_na_incremental_uppass(tree, ds, nz);
+            fitch_na_incremental_uppass(tree, ds, nx);
+            actual = static_cast<double>(fitch_na_pass3_score(tree, ds));
+          } else {
+            int delta = fitch_incremental_downpass(tree, ds, nz);
+            fitch_incremental_uppass(tree, ds, nz);
+            delta += fitch_incremental_downpass(tree, ds, nx);
+            fitch_incremental_uppass(tree, ds, nx);
+            if (use_iw) {
+              std::fill(divided_steps.begin(), divided_steps.end(), 0);
+              extract_char_steps(tree, ds, divided_steps);
+              actual = compute_weighted_score(ds, divided_steps);
+            } else {
+              actual = best_score + static_cast<double>(delta);
+            }
+          }
+        } else {
+          actual = full_rescore(tree, ds);
+        }
+#ifdef DEBUG_RESCORE
+        {
+          double ref = full_rescore(tree, ds);
+          if (std::fabs(actual - ref) > 1e-9) {
+            Rprintf("DEBUG_RESCORE: incremental=%.10g  full=%.10g  diff=%.10g\n",
+                    actual, ref, actual - ref);
+            actual = ref;
+          }
+        }
+#endif
 
         // Post-hoc constraint validation: TBR rerooting can break
         // splits that were classified as UNCONSTRAINED during the
