@@ -6,13 +6,13 @@
 # 50% of the first character's contribution and 41% of the second's.
 #
 # `.ScaleWeight()` converts a fractional weight vector to integer with a
-# documented scale factor (default 1000, i.e. 0.001 precision). Integer
-# weights pass through unchanged so the function is a no-op for the
+# documented scale factor (default 2*2*3*3*5*7 = 1260, ~0.001 precision).
+# Integerweights pass through unchanged so the function is a no-op for the
 # common case.
 #
 # The TreeLength value returned by the scoring engine is then in units of
 # (steps * scale), so users comparing across runs with fractional weights
-# should divide by `getOption("TreeSearch.fractional.scale", 1000L)`
+# should divide by `getOption("TreeSearch.fractional.scale", 1260L)`
 # (or rely on within-run ranking, which is unaffected).
 
 #' @keywords internal
@@ -28,7 +28,7 @@
     # Return:
     as.integer(weight)
   } else {
-    scale <- as.integer(getOption("TreeSearch.fractional.scale", 1000L))
+    scale <- as.integer(getOption("TreeSearch.fractional.scale", 1260L))
     if (scale < 1L) scale <- 1L
     scaled <- as.integer(round(weight * scale))
     # Guard against under-rounded weights becoming zero: a weight of zero
