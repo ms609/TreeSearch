@@ -66,6 +66,7 @@ Suggests:
   testthat (>= 3.0.0),
   vdiffr (>= 1.0.0),
   zip,
+Remotes: ms609/TreeTools,
 Config/Needs/check:
   callr,
   pkgbuild,
