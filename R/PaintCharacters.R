@@ -44,6 +44,7 @@
 #' library("TreeTools", quietly = TRUE)
 #'
 #' cols <- PaintCharacters(dataset, tree)
+#' conc <- ConcordanceTable(tree, dataset)
 #' # Plot the tree alongside to interpret the colours:
 #' paint <- PaintTree(tree)
 #' plot(tree, edge.color = paint$edgeCol, edge.width = 2)
