@@ -483,7 +483,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #'
 #' # Plot tree and identify nodes
 #' library("TreeTools", quietly = TRUE)
-#' plot(tree)
+#' paint <- PaintTree(tree)
+#' plot(tree, edge.col = paint$edgeCol, tip.col = paint$tipCol, edge.width = 2)
 #' nodeIndex <- as.integer(rownames(as.Splits(tree)))
 #' nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
 #'            frame = "none", bg = NULL)
@@ -491,7 +492,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #'
 #' # View information shared by characters and edges
 #' ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
-#'                  marginSize = 1:4)
+#'                  marginSize = c(0, 0, 1, 2), paintSize = c(1, 2, 0, 0))
 #' axis(1)
 #' axis(2)
 #'
