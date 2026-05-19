@@ -39,7 +39,16 @@ test_that("GapHandler()", {
 test_that("morphy_profile fails nicely", {
   morphyObj <- SingleCharMorphy("1")
   on.exit(UnloadMorphy(morphyObj))
-  expect_error(TreeSearch:::morphy_profile(matrix(NA, 10, 2), list(morphyObj),
-                              1, 1L, matrix(1), 1),
-               "Number of edges does not match Morphy object dimensions")
+  # The C++ function prints a diagnostic via Rprintf ("N + M != X")
+  # to stdout before signalling the R-level error.  Capture so the
+  # diagnostic does not leak into testthat output, and assert that
+  # the diagnostic appeared so the C++ print path is exercised.
+  stdout_lines <- capture.output(
+    expect_error(
+      TreeSearch:::morphy_profile(matrix(NA, 10, 2), list(morphyObj),
+                                  1, 1L, matrix(1), 1),
+      "Number of edges does not match Morphy object dimensions"
+    )
+  )
+  expect_true(any(grepl("!=", stdout_lines)))
 })

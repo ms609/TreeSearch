@@ -31,15 +31,6 @@ jobs:
     container:
       image: ghcr.io/r-hub/containers/gcc-asan:latest
 
-    # rlang ≤ 1.1.7 uses PREXPR() in BOTH src/capture.c and the vendored
-    # src/rlang/rlang-types.h.  PREXPR was removed from the R public API in
-    # R-devel (>= r87506, 2025-01), so rlang cannot be compiled from source
-    # in this container.  A header-shim approach fixes rlang-types.h but not
-    # the direct call sites in capture.c.
-    # Setting continue-on-error so that this upstream blocker does not prevent
-    # PR merges.  Remove this once rlang ≥ 1.1.8 reaches CRAN.
-    continue-on-error: true
-
     name: AddressSanitizer ${{ matrix.config.test }}
 
     strategy:

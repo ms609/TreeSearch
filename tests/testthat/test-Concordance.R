@@ -158,6 +158,20 @@ test_that("ConcordanceTable() marginSize top/right strips", {
   })
 })
 
+test_that("ConcordanceTable() paintSize strips", {
+  skip_if_not_installed("vdiffr")
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+  tree <- TreeSearch::referenceTree
+
+  vdiffr::expect_doppelganger("conc-tbl-paint-scalar", function() {
+    ConcordanceTable(tree, dataset, paintSize = 1)
+  })
+  vdiffr::expect_doppelganger("conc-tbl-paint-with-margin", function() {
+    ConcordanceTable(tree, dataset, marginSize = 2, paintSize = 1)
+  })
+})
+
 test_that("ClusteringConcordance() gives sensible values", {
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)

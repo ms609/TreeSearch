@@ -421,7 +421,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
 
   # hsj without hierarchy
   expect_error(
-    MaximizeParsimony(ds, inapplicable = "hsj"),
+    MaximizeParsimony(ds, inapplicable = "hsj", verbosity = 0L),
     "hierarchy"
   )
 
@@ -429,7 +429,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
   h <- CharacterHierarchy("1" = 2L)
   expect_error(
     MaximizeParsimony(ds, hierarchy = h, inapplicable = "hsj",
-                      hsj_alpha = 2.0),
+                      hsj_alpha = 2.0, verbosity = 0L),
     "hsj_alpha"
   )
 
@@ -446,7 +446,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
 
   expect_error(
     MaximizeParsimony(ds2, hierarchy = h2, inapplicable = "hsj",
-                      concavity = 10),
+                      concavity = 10, verbosity = 0L),
     "Implied weighting"
   )
 
@@ -454,7 +454,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
   # so the error comes from validate_hierarchy rather than the profile check
   expect_error(
     MaximizeParsimony(ds2, hierarchy = h2, inapplicable = "hsj",
-                      concavity = "profile"),
+                      concavity = "profile", verbosity = 0L),
     "inapplicable|Profile"
   )
 

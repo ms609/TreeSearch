@@ -17,6 +17,10 @@
 #include <R.h>
 #include <Rinternals.h>
 
+// T-300 NA variant: cross-check dirty-set NA rescore against full_rescore.
+// Remove once a clean GHA cycle confirms diff == 0 across platforms.
+#define DEBUG_NA_RESCORE
+
 namespace ts {
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
@@ -1134,7 +1138,73 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         }
 
         tree.build_postorder_prealloc(work_stack);
-        double actual = full_rescore(tree, ds);
+
+        // T-300: dirty-set incremental rescore for SPR moves.  The two
+        // affected nodes after apply_tbr_move are nz (clip grandparent,
+        // children changed: nx -> ns) and nx (regraft point, children
+        // changed to {clip_node, below}).  fitch_dirty_downpass updates
+        // every node on the union of paths nz->root and nx->root exactly
+        // once in postorder; sums correctly with no shared-ancestor
+        // ambiguity.  TBR moves with non-trivial rerooting and NA
+        // datasets fall back to full_rescore.
+        bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
+        double actual;
+        if (is_spr && !has_na) {
+          int delta = fitch_dirty_downpass(tree, ds, nz, nx);
+          fitch_dirty_uppass(tree, ds, nz, nx);
+          if (use_iw) {
+            std::fill(divided_steps.begin(), divided_steps.end(), 0);
+            extract_char_steps(tree, ds, divided_steps);
+            actual = compute_weighted_score(ds, divided_steps);
+          } else {
+            actual = best_score + static_cast<double>(delta);
+          }
+        } else if (is_spr && has_na) {
+          // T-300 NA variant: dirty-set Pass 1 + Pass 2 instead of full
+          // rescore.  Pass 3 still runs over the full tree because it
+          // populates internal down2 (read by extract_char_steps) and
+          // counts NA-block steps directly.  Savings come from skipping
+          // Pass 1 + Pass 2 on off-dirty nodes.
+          fitch_na_dirty_downpass(tree, ds, nz, nx);
+          fitch_na_dirty_uppass(tree, ds, nz, nx);
+          int ew_total = fitch_na_pass3_score(tree, ds);
+          if (use_iw) {
+            std::fill(divided_steps.begin(), divided_steps.end(), 0);
+            extract_char_steps(tree, ds, divided_steps);
+            actual = compute_weighted_score(ds, divided_steps);
+          } else {
+            // EW score must include ds.ew_offset (topology-independent
+            // step count added by fitch_score_ew on top of fitch_na_score)
+            // — bug found 2026-05-19: omitting this produced systematic
+            // diff=−3 against full_rescore (Vinther2008 offset = 3).
+            actual = static_cast<double>(ew_total) + ds.ew_offset;
+          }
+        } else {
+          actual = full_rescore(tree, ds);
+        }
+#ifdef DEBUG_NA_RESCORE
+        // Cross-check: NA dirty-set must match full_rescore exactly.
+        // Save/restore tree state because full_rescore overwrites
+        // prelim/final_/local_cost/subtree_actives/down2.
+        if (is_spr && has_na) {
+          std::vector<uint64_t> saved_prelim = tree.prelim;
+          std::vector<uint64_t> saved_final = tree.final_;
+          std::vector<uint64_t> saved_local_cost = tree.local_cost;
+          std::vector<uint64_t> saved_down2 = tree.down2;
+          std::vector<uint64_t> saved_actives = tree.subtree_actives;
+          double ref = full_rescore(tree, ds);
+          if (std::fabs(actual - ref) > 1e-9) {
+            Rprintf("DEBUG_NA_RESCORE: incremental=%.10g  full=%.10g  "
+                    "diff=%.10g  use_iw=%d\n",
+                    actual, ref, actual - ref, (int)use_iw);
+          }
+          tree.prelim = std::move(saved_prelim);
+          tree.final_ = std::move(saved_final);
+          tree.local_cost = std::move(saved_local_cost);
+          tree.down2 = std::move(saved_down2);
+          tree.subtree_actives = std::move(saved_actives);
+        }
+#endif
 
         // Post-hoc constraint validation: TBR rerooting can break
         // splits that were classified as UNCONSTRAINED during the

@@ -19,7 +19,7 @@ MaximizeParsimony(
   constraint,
   strategy = "auto",
   maxReplicates = 96L,
-  targetHits = max(10L, as.integer(NTip(dataset)/5)),
+  targetHits = NULL,
   maxSeconds = 0,
   nThreads = 1L,
   verbosity = 1L,

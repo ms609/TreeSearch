@@ -1,3 +1,23 @@
+# TreeSearch (development version)
+
+## New features
+
+- New function `PaintCharacters()` colours each character in a morphological
+  dataset by the hue of the tree edges it most concordantly supports, using
+  `ConcordanceTable()` MI weights averaged in CIELAB colour space.  Pairs with
+  `TreeTools::PaintTree()` to visually map characters to clades.
+
+- `attr(dataset, "weight")` now accepts non-integer character weights.  The
+  C++ scoring engine still stores `int` weights internally; fractional
+  inputs are rescaled to integer with a configurable precision (default
+  0.001, controlled by `getOption("TreeSearch.fractional.scale", 1000L)`).
+  Previously, fractional weights were silently truncated at the Rcpp
+  boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
+  the respective characters' contributions).  Integer weights pass
+  through unchanged.  `TreeLength()` and other scores are returned in
+  units of `steps * scale` when fractional weights are present; within-
+  run ranking is unaffected.
+
 # TreeSearch 2.0.0
 
 ## Breaking changes

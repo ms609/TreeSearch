@@ -678,6 +678,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
                                      best_reroot_parent, best_reroot_child,
                                      best_above, best_below);
           if (!ok || !drift_validate_topology(tree)) {
+            drift_restore_topology(tree, snap);
             tree.build_postorder();
             drift_full_rescore(tree, ds);
             continue;

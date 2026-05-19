@@ -40,6 +40,7 @@ Other split support functions:
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=Morphy]{Morphy()}},
+\code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
 \code{\link{SiteConcordance}}
 }

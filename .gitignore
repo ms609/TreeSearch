@@ -59,6 +59,13 @@ test_output.txt
 /vtune*
 /.claude
 
+# /profile skill — VTune results and profvis HTML are large and stale fast
+dev/profiling/result_*/
+dev/profiling/drivers/*-profvis.html
+dev/profiling/drivers/*-profvis_files/
+dev/profiling/*.vtune-lib/
+dev/profiling/.vtune-lib-*/
+
 # Dispatcher state and logs (ephemeral runtime files)
 .dispatch/
 !.dispatch/logs/.gitkeep

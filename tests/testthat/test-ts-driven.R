@@ -227,18 +227,29 @@ test_that("Timeout of 0 means no timeout", {
 })
 
 test_that("Verbosity does not break search", {
-  # verbosity=1 and verbosity=2 should work without error
-  expect_no_error({
-    r1 <- ts_driven(small_ds, maxReplicates = 2L, targetHits = 1L,
-                    ratchetCycles = 1L, verbosity = 1L)
+  # verbosity=1 and verbosity=2 should work without error.
+  # Capture stdout (Rprintf from C++ progress reporting) so the verbose
+  # output does not leak into the testthat console, and assert the
+  # expected progress strings are present.
+  out1 <- capture.output({
+    expect_no_error({
+      r1 <- ts_driven(small_ds, maxReplicates = 2L, targetHits = 1L,
+                      ratchetCycles = 1L, verbosity = 1L)
+    })
   })
   expect_true(r1$best_score > 0)
+  expect_true(any(grepl("Replicate", out1)))
 
-  expect_no_error({
-    r2 <- ts_driven(tiny_ds, maxReplicates = 2L, targetHits = 1L,
-                    ratchetCycles = 1L, xssRounds = 0L, verbosity = 2L)
+  out2 <- capture.output({
+    expect_no_error({
+      r2 <- ts_driven(tiny_ds, maxReplicates = 2L, targetHits = 1L,
+                      ratchetCycles = 1L, xssRounds = 0L, verbosity = 2L)
+    })
   })
   expect_true(r2$best_score > 0)
+  # verbosity = 2 adds per-stage score reporting in addition to the
+  # replicate banner from verbosity = 1.
+  expect_true(any(grepl("score", out2)))
 })
 
 test_that("Zero replicates returns empty result", {

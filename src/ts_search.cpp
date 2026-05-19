@@ -80,7 +80,19 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
           // Incremental downpass: O(depth × C) instead of O(n × C)
           tree.clip_undo_stack.clear();
           int delta = fitch_incremental_downpass(tree, ds, c);
-          new_score = best_score + delta;
+          if (std::isfinite(ds.concavity)) {
+            // Weighted (IW or profile): integer EW delta cannot be added
+            // to a float weighted score.  After the chain walk,
+            // local_cost is correct for the whole tree (NNI only changes
+            // children at edge c; off-chain nodes retain valid local_cost
+            // from the score_tree at function entry), so extract per-
+            // pattern step counts and dispatch by ds.scoring_mode.
+            std::vector<int> char_steps(ds.n_patterns, 0);
+            extract_char_steps(tree, ds, char_steps);
+            new_score = compute_weighted_score(ds, char_steps);
+          } else {
+            new_score = best_score + delta;
+          }
         }
 
         if (new_score < best_score) {
