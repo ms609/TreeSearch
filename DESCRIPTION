@@ -41,6 +41,7 @@ Imports:
   cli (>= 3.0),
   colorspace,
   fastmatch (>= 1.1.3),
+  grDevices,
   Rcpp,
   Rdpack (>= 0.7),
   stats,
@@ -96,6 +97,7 @@ Collate:
   'MaximizeParsimony.R'
   'Morphy.R'
   'NNI.R'
+  'PaintCharacters.R'
   'ParsSim.R'
   'PlotCharacter.R'
   'PolEscapa.R'

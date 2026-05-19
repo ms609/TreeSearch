@@ -2,6 +2,11 @@
 
 ## New features
 
+- New function `PaintCharacters()` colours each character in a morphological
+  dataset by the hue of the tree edges it most concordantly supports, using
+  `ConcordanceTable()` MI weights averaged in CIELAB colour space.  Pairs with
+  `TreeTools::PaintTree()` to visually map characters to clades.
+
 - `attr(dataset, "weight")` now accepts non-integer character weights.  The
   C++ scoring engine still stores `int` weights internally; fractional
   inputs are rescaled to integer with a configurable precision (default
