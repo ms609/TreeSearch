@@ -86,30 +86,36 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
           // Incremental downpass: O(depth × C) instead of O(n × C)
           tree.clip_undo_stack.clear();
           int delta = fitch_incremental_downpass(tree, ds, c);
-          new_score = best_score + delta;
+          if (std::isfinite(ds.concavity)) {
+            // Weighted (IW or profile): integer EW delta cannot be added
+            // to a float weighted score.  After the chain walk,
+            // local_cost is correct for the whole tree (NNI only changes
+            // children at edge c; off-chain nodes retain valid local_cost
+            // from the score_tree at function entry), so extract per-
+            // pattern step counts and dispatch by ds.scoring_mode.
+            std::vector<int> char_steps(ds.n_patterns, 0);
+            extract_char_steps(tree, ds, char_steps);
+            new_score = compute_weighted_score(ds, char_steps);
+          } else {
+            new_score = best_score + delta;
+          }
 
 #ifdef DEBUG_NNI_RESCORE
-          // Gated to EW only — IW NNI has a separate pre-existing bug
-          // (best_score + integer_delta mixes float IW score with EW step
-          // delta).  We only care here whether the single-chain primitive
-          // itself drifts on the EW path, which is the T-300 question.
-          if (!std::isfinite(ds.concavity)) {
-            std::vector<uint64_t> saved_prelim = tree.prelim;
-            std::vector<uint64_t> saved_final = tree.final_;
-            std::vector<uint64_t> saved_local_cost = tree.local_cost;
-            std::vector<int> saved_postorder = tree.postorder;
-            tree.build_postorder();
-            double ref = full_rescore(tree, ds);
-            if (std::fabs(new_score - ref) > 1e-9) {
-              Rprintf("DEBUG_NNI_RESCORE: incremental=%.10g  full=%.10g  "
-                      "diff=%.10g\n",
-                      new_score, ref, new_score - ref);
-            }
-            tree.prelim = std::move(saved_prelim);
-            tree.final_ = std::move(saved_final);
-            tree.local_cost = std::move(saved_local_cost);
-            tree.postorder = std::move(saved_postorder);
+          std::vector<uint64_t> saved_prelim = tree.prelim;
+          std::vector<uint64_t> saved_final = tree.final_;
+          std::vector<uint64_t> saved_local_cost = tree.local_cost;
+          std::vector<int> saved_postorder = tree.postorder;
+          tree.build_postorder();
+          double ref = full_rescore(tree, ds);
+          if (std::fabs(new_score - ref) > 1e-9) {
+            Rprintf("DEBUG_NNI_RESCORE: incremental=%.10g  full=%.10g  "
+                    "diff=%.10g\n",
+                    new_score, ref, new_score - ref);
           }
+          tree.prelim = std::move(saved_prelim);
+          tree.final_ = std::move(saved_final);
+          tree.local_cost = std::move(saved_local_cost);
+          tree.postorder = std::move(saved_postorder);
 #endif
         }
 
