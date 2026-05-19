@@ -17,10 +17,6 @@
 #include <R.h>
 #include <Rinternals.h>
 
-// T-300 NA variant: cross-check dirty-set NA rescore against full_rescore.
-// Remove once a clean GHA cycle confirms diff == 0 across platforms.
-#define DEBUG_NA_RESCORE
-
 namespace ts {
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
@@ -1182,29 +1178,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         } else {
           actual = full_rescore(tree, ds);
         }
-#ifdef DEBUG_NA_RESCORE
-        // Cross-check: NA dirty-set must match full_rescore exactly.
-        // Save/restore tree state because full_rescore overwrites
-        // prelim/final_/local_cost/subtree_actives/down2.
-        if (is_spr && has_na) {
-          std::vector<uint64_t> saved_prelim = tree.prelim;
-          std::vector<uint64_t> saved_final = tree.final_;
-          std::vector<uint64_t> saved_local_cost = tree.local_cost;
-          std::vector<uint64_t> saved_down2 = tree.down2;
-          std::vector<uint64_t> saved_actives = tree.subtree_actives;
-          double ref = full_rescore(tree, ds);
-          if (std::fabs(actual - ref) > 1e-9) {
-            Rprintf("DEBUG_NA_RESCORE: incremental=%.10g  full=%.10g  "
-                    "diff=%.10g  use_iw=%d\n",
-                    actual, ref, actual - ref, (int)use_iw);
-          }
-          tree.prelim = std::move(saved_prelim);
-          tree.final_ = std::move(saved_final);
-          tree.local_cost = std::move(saved_local_cost);
-          tree.down2 = std::move(saved_down2);
-          tree.subtree_actives = std::move(saved_actives);
-        }
-#endif
 
         // Post-hoc constraint validation: TBR rerooting can break
         // splits that were classified as UNCONSTRAINED during the
