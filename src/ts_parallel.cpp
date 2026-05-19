@@ -304,7 +304,9 @@ DrivenResult parallel_driven_search(
   }
 
   // Main thread: poll for interrupt and timeout
-  int last_stab_done = 0;  // replicates_done at last consensus check
+  int last_stab_done = 0;     // replicates_done at last consensus check
+  int last_progress_done = -1; // replicate count at last progress print
+  bool progress_on_line = false; // true after a \r progress line is open
   while (true) {
     // Sleep briefly to avoid spinning
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -372,6 +374,7 @@ DrivenResult parallel_driven_search(
           stop_flag.store(true, std::memory_order_relaxed);
           result.consensus_stable = true;
           if (params.verbosity >= 1) {
+            if (progress_on_line) { Rprintf("\n"); progress_on_line = false; }
             Rprintf("Consensus stable for %d replicates (score %.5g, "
                     "pool %d trees)\n",
                     unchanged, st.best_score, st.pool_size);
@@ -406,6 +409,7 @@ DrivenResult parallel_driven_search(
             stop_flag.store(true, std::memory_order_relaxed);
             result.perturb_stop = true;
             if (params.verbosity >= 1) {
+              if (progress_on_line) { Rprintf("\n"); progress_on_line = false; }
               Rprintf("Stopped: %d consecutive unsuccessful replicates "
                       "(perturbStopFactor %d, limit %d = %d tips x %d x %d/%d hits)\n",
                       dry_spell, params.perturb_stop_factor, limit,
@@ -442,6 +446,12 @@ DrivenResult parallel_driven_search(
         last_progress_done = done;
       }
     }
+  }
+
+  // Close the overwrite progress line before any subsequent output
+  if (params.verbosity >= 1 && progress_on_line) {
+    Rprintf("\n");
+    progress_on_line = false;
   }
 
   // Signal stop to all workers

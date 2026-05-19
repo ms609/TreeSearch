@@ -11,7 +11,11 @@ test_that("Addition tree produces valid trees", {
   kx <- AdditionTree(L10, sequence = seq10, concavity = 10)
   expect_equal(TreeTools::NTip(kx), 10L)
 
-  pr <- AdditionTree(L10, sequence = 1:10, concavity = "profile")
+  # PrepareDataProfile() emits a cli message about inapplicable tokens for
+  # profile parsimony; suppress so it doesn't leak into testthat output.
+  pr <- suppressMessages(
+    AdditionTree(L10, sequence = 1:10, concavity = "profile")
+  )
   expect_equal(TreeTools::NTip(pr), 10L)
 })
 
@@ -103,6 +107,8 @@ test_that("AdditionTree() handles edge cases", {
     dimnames = list(letters[1:6], NULL)))
   expect_equal(PectinateTree(letters[1:3]), AdditionTree(dataset[1:3]))
   expect_equal(5, NTip(AdditionTree(dataset[-4])))
-  # 4-tip profile tree
-  expect_equal(4L, NTip(AdditionTree(dataset[1:4], conc = "profile")))
+  # 4-tip profile tree — suppress PrepareDataProfile() cli message.
+  expect_equal(4L, NTip(suppressMessages(
+    AdditionTree(dataset[1:4], conc = "profile")
+  )))
 })

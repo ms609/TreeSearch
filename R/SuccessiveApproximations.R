@@ -64,7 +64,7 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
   contrast <- at$contrast
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = nTip, byrow = TRUE)
-  weight <- at$weight
+  weight <- .ScaleWeight(at$weight)
   levels <- at$levels
 
   # Prepare constraint

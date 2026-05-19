@@ -66,7 +66,7 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
   contrast <- at$contrast
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = nTaxa, byrow = TRUE)
-  weight <- at$weight
+  weight <- .ScaleWeight(at$weight)
   levels <- at$levels
 
   # Constraint

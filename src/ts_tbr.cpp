@@ -1134,6 +1134,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         }
 
         tree.build_postorder_prealloc(work_stack);
+
         double actual = full_rescore(tree, ds);
 
         // Post-hoc constraint validation: TBR rerooting can break

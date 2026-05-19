@@ -25,8 +25,10 @@ test_that("PrepareDataProfile()", {
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   phy1 <- TreeTools::MatrixToPhyDat(mtx)
   # PrepareDataProfile renormalizes token labels to 1..k; check structural
-  # attributes that should be preserved, not levels/allLevels/contrast
-  pp1 <- PrepareDataProfile(phy1)
+  # attributes that should be preserved, not levels/allLevels/contrast.
+  # PrepareDataProfile() emits a cli message about inapplicable tokens
+  # being treated as ambiguous; suppress to keep test output clean.
+  pp1 <- suppressMessages(PrepareDataProfile(phy1))
   expect_equal(attr(pp1, "weight"), attr(phy1, "weight"))
   expect_equal(attr(pp1, "nr"), attr(phy1, "nr"))
   expect_equal(attr(pp1, "nc"), attr(phy1, "nc"))
@@ -39,7 +41,7 @@ test_that("PrepareDataProfile()", {
                c(0,0,0,1,1,"{012}"))
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   phy2 <- TreeTools::MatrixToPhyDat(mtx)
-  pp2 <- PrepareDataProfile(phy2)
+  pp2 <- suppressMessages(PrepareDataProfile(phy2))
   expect_equal(attr(pp2, "nr"), 3L)
   expect_equal(attr(pp2, "nc"), attr(pp1, "nc"))
   # Both informative binary patterns have the same information content
@@ -59,7 +61,7 @@ test_that("PrepareDataProfile()", {
   # After T-107/T-144: 4-state chars with 11 tips are within the
   # MaddisonSlatkin feasibility threshold (k=4, max=18 tips), so they are
   # preserved as 4-state — no binary reduction, no warning.
-  pd <- PrepareDataProfile(dataset)
+  pd <- suppressMessages(PrepareDataProfile(dataset))
   expect_equal(4L, length(attr(pd, "levels")))
   expect_equal(dim(PhyDatToMatrix(pd)), c(11L, 6L))
   expect_equal(c(1L, 2L, 1L, 3L, 4L, 5L), attr(pd, "index"))
@@ -68,12 +70,13 @@ test_that("PrepareDataProfile()", {
   dataset2 <- TreeTools::MatrixToPhyDat(mtx[!mtx[, 1] %in% c(0, 2), ])
   # The first informative pattern in dataset2 matches the informative pattern
   # in pd (both are the same 2-state split with 3 tips vs 4 tips)
-  expect_equal(attr(PrepareDataProfile(dataset2), "info.amounts")[, 1, drop = FALSE],
+  expect_equal(attr(suppressMessages(PrepareDataProfile(dataset2)),
+                    "info.amounts")[, 1, drop = FALSE],
                attr(pd, "info.amounts")[1:3, 2, drop = FALSE])
-  
-  
+
+
   data("Lobo", package = "TreeTools")
-  prep <- PrepareDataProfile(Lobo.phy, n_mc = 1000L)
+  prep <- suppressMessages(PrepareDataProfile(Lobo.phy, n_mc = 1000L))
   info_dims <- dim(attr(prep, "info.amounts"))
   expect_equal(info_dims[2], attr(prep, "nr"))
   expect_true(info_dims[1] >= 1)

@@ -8,7 +8,7 @@ skip_on_cran()
 ts_driven <- TreeSearch:::ts_driven_search
 
 test_that("consensusStableReps = 0 does not trigger early stop", {
-  data("inapplicable.datasets", package = "TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
   ds <- make_ts_data(inapplicable.phyData[["Vinther2008"]])
 
   set.seed(7832)
@@ -26,7 +26,7 @@ test_that("consensusStableReps = 0 does not trigger early stop", {
 })
 
 test_that("consensus stability stops search early", {
-  data("inapplicable.datasets", package = "TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
   ds <- make_ts_data(inapplicable.phyData[["Vinther2008"]])
 
   set.seed(2491)
@@ -45,7 +45,7 @@ test_that("consensus stability stops search early", {
 })
 
 test_that("adaptive level adjusts without crashing", {
-  data("inapplicable.datasets", package = "TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
   ds <- make_ts_data(inapplicable.phyData[["Vinther2008"]])
 
   set.seed(6153)
@@ -63,7 +63,7 @@ test_that("adaptive level adjusts without crashing", {
 })
 
 test_that("both features work together", {
-  data("inapplicable.datasets", package = "TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
   ds <- make_ts_data(inapplicable.phyData[["Vinther2008"]])
 
   set.seed(3847)

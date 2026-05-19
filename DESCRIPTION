@@ -78,6 +78,7 @@ Config/Needs/website:
   igraph,
   pkgdown,
   remotes,
+  shinylive,
 Config/roxygen2/version: 8.0.0
 Config/testthat/edition: 3
 Collate:
@@ -117,6 +118,7 @@ Collate:
   'WideSample.R'
   'data.R'
   'data_manipulation.R'
+  'fractional-weights.R'
   'length_range.R'
   'mpl_morphy_objects.R'
   'mpl_morphyex.R'

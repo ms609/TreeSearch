@@ -142,11 +142,22 @@ test_that("perturbStopFactor fires and sets perturb_stop attribute", {
 
 test_that("verbosity = 1 prints 'Search complete' summary to console", {
   set.seed(3071)
-  expect_message(
-    MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
-                      verbosity = 1L),
-    "Search complete"
+  # MaximizeParsimony emits two streams at verbosity = 1: cli messages
+  # via message() ("Strategy: ...", "Search complete: ...") and C++
+  # Rprintf progress via stdout ("Replicate N/M", "Converged: ...").
+  # Capture both so they don't leak into testthat output, then assert
+  # that the expected lines were produced.
+  msg_lines <- character()
+  stdout_lines <- capture.output(
+    msg_lines <- capture.output(
+      MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
+                        verbosity = 1L),
+      type = "message"
+    )
   )
+  expect_true(any(grepl("Search complete", msg_lines)))
+  expect_true(any(grepl("Replicate", stdout_lines)))
+  expect_true(any(grepl("Converged|score", stdout_lines)))
 })
 
 # --- nThreads ---

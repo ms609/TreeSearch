@@ -1,3 +1,18 @@
+# TreeSearch (development version)
+
+## New features
+
+- `attr(dataset, "weight")` now accepts non-integer character weights.  The
+  C++ scoring engine still stores `int` weights internally; fractional
+  inputs are rescaled to integer with a configurable precision (default
+  0.001, controlled by `getOption("TreeSearch.fractional.scale", 1000L)`).
+  Previously, fractional weights were silently truncated at the Rcpp
+  boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
+  the respective characters' contributions).  Integer weights pass
+  through unchanged.  `TreeLength()` and other scores are returned in
+  units of `steps * scale` when fractional weights are present; within-
+  run ranking is unaffected.
+
 # TreeSearch 2.0.0
 
 ## Bug fixes

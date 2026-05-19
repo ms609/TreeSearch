@@ -44,8 +44,24 @@ namespace simd {
 //
 // Cached flag: evaluated once on first call.  On non-x86, always false.
 
+// AVX2 dispatch workaround for unoptimised builds (covr / gcov).
+//
+// Under covr on Windows (rtools45 GCC 14 + `-O0 --coverage`) any call
+// into the `__attribute__((target("avx2")))` helpers crashes the R
+// session before any test runs.  Locally reproduced with a 4-taxon /
+// 2-character `AdditionTree()` call; first AVX2 path hit is
+// `simd::any_hit_reduce` in `fitch_downpass`.  The same source is
+// stable at `-O2` (R CMD INSTALL default), and AVX2 isn't part of the
+// coverage signal anyway.
+//
+// Guard: only consult `__builtin_cpu_supports("avx2")` when at least
+// `-O1` is in effect.  `__OPTIMIZE__` is defined by GCC/Clang whenever
+// optimisation is enabled; under `-O0` it is undefined and we fall
+// through to the SSE2 baseline (or to the compile-time AVX2 case if
+// the package was built with `-mavx2`).  Non-coverage installs are
+// unaffected.
 inline bool cpu_has_avx2() {
-#if TS_HAS_AVX2_DISPATCH
+#if TS_HAS_AVX2_DISPATCH && defined(__OPTIMIZE__)
   static const bool flag = __builtin_cpu_supports("avx2");
   return flag;
 #elif defined(TS_SIMD_AVX2)
