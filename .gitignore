@@ -69,3 +69,7 @@ dev/profiling/.vtune-lib-*/
 # Dispatcher state and logs (ephemeral runtime files)
 .dispatch/
 !.dispatch/logs/.gitkeep
+
+# T-300 NA benchmark artifacts
+dev/profiling/.bench-libs/
+dev/profiling/t300_na_bench_*.rds

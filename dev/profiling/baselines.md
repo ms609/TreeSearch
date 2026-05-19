@@ -13,6 +13,7 @@ power profile) so future regressions can be compared apples-to-apples.
 |-------------------------------------|----------------|---------------|----------------------------------|---------|------------|-----------------------|
 | dev/profiling/drivers/ratchet.R     | Zhu2013 / 1 rep thorough nThreads=1 | 2.80 (median of 3) | ts_driven_search (>95 %; no VTune; from profvis) | >95 % | 2026-05-18 | Windows 10 i-series, R-devel, .vtune-lib debug build |
 | dev/profiling/drivers/tbr-rescore.R | Zhu2013 / 12 ratchet reps nCycles=12 nThreads=1 | 3.9 | ts::fitch_na_score (full_rescore path via callstack) | 18.2 % | 2026-05-19 | Windows 10 EARTHSCI-PJJG18, 2.904 GHz 16-core, R-devel, .vtune-lib-20260519061049 (HEAD c504ea87) |
+| dev/profiling/t300_na_bench.R       | Zhu2013 / 12 ratchet reps nCycles=12 nThreads=1 | 3.29 (median of 5, score 647) | (post T-300 NA dirty-set; fitch_na_pass3_score expected dominant; not VTune-attributed yet) | n/a | 2026-05-19 | Same machine, HEAD 5b210fdd; 15.2 % wall-time speedup vs c504ea87 baseline (3.88 s median of 3) |
 
 ### Round 2 top-5 hotspots (TreeSearch.dll, Zhu2013 75t ratchet)
 
