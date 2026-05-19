@@ -112,7 +112,7 @@ test_that("xpiwe_r and xpiwe_max_f affect scores", {
 })
 
 test_that("MaximizeParsimony accepts extended_iw", {
-  data("inapplicable.datasets", package = "TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
   ds <- inapplicable.phyData[["Vinther2008"]]
   result <- MaximizeParsimony(ds, concavity = 10, extended_iw = TRUE,
                               maxReplicates = 2L, targetHits = 1L,
