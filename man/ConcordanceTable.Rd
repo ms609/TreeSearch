@@ -90,8 +90,6 @@ lines marking important edges.}
 \insertCite{SmithConc}{TreeSearch}.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN ConcordanceTable.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 # Load data and tree
 data("congreveLamsdellMatrices", package = "TreeSearch")
 dataset <- congreveLamsdellMatrices[[1]][, 1:20]

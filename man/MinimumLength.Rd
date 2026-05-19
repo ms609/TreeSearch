@@ -59,8 +59,6 @@ Ambiguous inapplicable states (e.g. \verb{\{0, -\}}) are currently replaced with
 plain inapplicable token \code{-}, reflecting the current behaviour of Morphy.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN MinimumLength.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 data("inapplicable.datasets")
 myPhyDat <- inapplicable.phyData[[4]]
 

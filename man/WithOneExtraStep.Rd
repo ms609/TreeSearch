@@ -14,8 +14,6 @@ bearing each distinct non-ambiguous token.}
 Number of trees with one extra step
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN WithOneExtraStep.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 WithOneExtraStep(1, 2, 3)
 }
 \seealso{

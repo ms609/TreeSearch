@@ -154,10 +154,8 @@ obtained by tree search under each inapplicable treatment, named accordingly.
 each dataset.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN inapplicable.datasets.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: BEGIN inapplicable.datasets.Rd")}
 data("inapplicable.datasets", package = "TreeSearch")
 names(inapplicable.datasets)
-{cat(format(Sys.time()), "PR244-DIAG: END inapplicable.datasets.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: END inapplicable.datasets.Rd")}
 }
 \references{
 \insertAllCited{}

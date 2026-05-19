@@ -47,8 +47,6 @@ binary trees) for each requested step count.  The exact solver supports
 which falls back to a Monte Carlo approximation automatically.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN Carter1.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 # Log-probability that a 3-state character (2 "0", 3 "1", 2 "2") needs
 # exactly 2 steps on a random 7-leaf tree:
 logp <- MaddisonSlatkin(2, c("0" = 2, "1" = 3, "01" = 0, "2" = 2))

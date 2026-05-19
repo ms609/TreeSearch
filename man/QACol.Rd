@@ -54,8 +54,6 @@ and red/cyan colours denote low/high \code{quality}. \code{amount} is ignored.
 Generate colour to depict the amount and quality of observations
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN QACol.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 amount <- runif(80, 0, 1)
 quality <- runif(80, -1, 1)
 plot(quality, amount, col = QACol(quality, amount), pch = 15)

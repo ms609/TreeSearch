@@ -116,17 +116,6 @@ jobs:
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
 
-      - name: PR244 diag — dump example markers
-        if: always()
-        shell: bash
-        run: |
-          echo "===== PR244-DIAG file (HOME) ====="
-          cat "$HOME/pr244-diag.log" 2>/dev/null || echo "(no $HOME/pr244-diag.log)"
-          echo "===== PR244-DIAG file (workspace) ====="
-          cat "$GITHUB_WORKSPACE/pr244-diag.log" 2>/dev/null || echo "(no workspace/pr244-diag.log)"
-          echo "===== Examples Rout files ====="
-          find check -maxdepth 4 \( -name '*-Ex.Rout*' -o -name '*-Ex.timings' \) 2>/dev/null -exec sh -c 'echo "--- {} ---"; cat "{}"' \; || true
-
       - name: Code coverage
         if: runner.os == 'Windows'
         run: |

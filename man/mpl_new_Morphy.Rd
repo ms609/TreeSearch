@@ -14,8 +14,6 @@ Creates a new empty Morphy object. All fields are unpopulated
 and uninitialised.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN mpl_new_Morphy.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 morphyObj <- mpl_new_Morphy() # Create new object
 ## Do some stuff ... ##
 mpl_delete_Morphy(morphyObj) # Delete when done

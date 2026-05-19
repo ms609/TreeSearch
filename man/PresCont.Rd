@@ -72,8 +72,6 @@ the latter, where the runner-up may become preferred with a modest change to
 the underlying dataset.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN PresCont.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 library("TreeTools", quietly = TRUE) # for as.phylo
 
 # jackTrees will usually be generated with Jackknife() or Resample(),

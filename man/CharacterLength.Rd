@@ -34,8 +34,6 @@ erroneous results or software crash if variables are in the incorrect format.
 
 }}
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN CharacterLength.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 data("inapplicable.datasets")
 dataset <- inapplicable.phyData[[12]]
 tree <- TreeTools::NJTree(dataset)

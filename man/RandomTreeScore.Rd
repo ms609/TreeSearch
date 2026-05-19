@@ -18,8 +18,6 @@ Generates a random tree topology and returns its parsimony score under
 equal weights.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN RandomTreeScore.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 tokens <- matrix(c(
   0, "-", "-", 1, 1, 2,
   0, 1, 0, 1, 2, 2,

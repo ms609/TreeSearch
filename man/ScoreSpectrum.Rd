@@ -58,8 +58,6 @@ When \eqn{f_2 = 0} (no doubleton scores) the bias-corrected form
 \eqn{f_1(f_1 - 1)/2} is used instead.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN ScoreSpectrum.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 library("TreeTools", quietly = TRUE)
 data("Lobo", package = "TreeSearch")
 result <- MaximizeParsimony(Lobo.phy, maxReplicates = 4L)

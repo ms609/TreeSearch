@@ -25,8 +25,6 @@ Once finished with the object, it should be destroyed using
 \code{\link[=UnloadMorphy]{UnloadMorphy()}} to free the allocated memory.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN PhyDat2Morphy.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 data("Lobo", package="TreeTools")
 morphyObj <- PhyDat2Morphy(Lobo.phy)
 # Set object to be destroyed at end of session or closure of function

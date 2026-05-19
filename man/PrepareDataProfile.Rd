@@ -66,8 +66,6 @@ Characters are simplified where necessary, with a warning:
 
 }}
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN PrepareDataProfile.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 data("congreveLamsdellMatrices")
 dataset <- congreveLamsdellMatrices[[42]]
 PrepareDataProfile(dataset)

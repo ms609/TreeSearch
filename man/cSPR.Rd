@@ -15,8 +15,6 @@ cSPR(tree, whichMove = NULL)
 \code{cSPR()} expects a tree rooted on a single tip.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN cSPR.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 tree <- TreeTools::BalancedTree(8)
 
 # Tree must be rooted on leaf

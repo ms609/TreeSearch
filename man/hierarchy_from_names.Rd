@@ -21,8 +21,6 @@ character and its dependents.  Nested hierarchies are detected when a
 \code{sub_} character is also a \code{sup_} for further characters.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN hierarchy_from_names.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 names <- c("sup_tail", "sub_tail_colour", "sub_tail_shape",
             "sup_wing", "sub_wing_venation", "eyes")
 hierarchy_from_names(names)

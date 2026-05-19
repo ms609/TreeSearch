@@ -97,7 +97,6 @@ representative summary of comparisons between sets of trees.
 }
 
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN TaxonInfluence.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: BEGIN TaxonInfluence.Rd")}
 #' # Load data for analysis in R
 library("TreeTools")
 data("congreveLamsdellMatrices", package = "TreeSearch")
@@ -128,7 +127,6 @@ PlotTools::SpectrumLegend(
   legend = signif(seq(upperBound, 0, length.out = 4), 3),
   bty = "n"
 )
-{cat(format(Sys.time()), "PR244-DIAG: END TaxonInfluence.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: END TaxonInfluence.Rd")}
 }
 \references{
 \insertAllCited{}

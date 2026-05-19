@@ -16,8 +16,6 @@ A character string corresponding to the provided error code
 Converts a numeric error code to human-readable format
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN mpl_translate_error.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 mpl_translate_error(-1) # "ERR_INVALID_SYMBOL"
 
 }

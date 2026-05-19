@@ -122,8 +122,6 @@ configuring tree search, see the
 
 }}
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN TreeSearch.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 data("Lobo", package="TreeTools")
 njtree <- TreeTools::NJTree(Lobo.phy)
 

@@ -259,13 +259,11 @@ information profiles are used for scoring
 }
 
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN MaximizeParsimony.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: BEGIN MaximizeParsimony.Rd")}
 data("inapplicable.phyData", package = "TreeSearch")
 dataset <- inapplicable.phyData[["Vinther2008"]]
 result <- MaximizeParsimony(dataset, maxReplicates = 3L, targetHits = 2L)
 result
 attr(result, "score")
-{cat(format(Sys.time()), "PR244-DIAG: END MaximizeParsimony.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: END MaximizeParsimony.Rd")}
 }
 \references{
 \insertAllCited{}

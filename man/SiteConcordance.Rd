@@ -198,8 +198,6 @@ the Shared Phylogenetic Information \insertCite{Smith2020}{TreeSearch} of
 this tree and \code{tree}.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN SiteConcordance.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 \dontshow{
   knitr::opts_chunk$set(fig.width = 6, fig.height = 6)
   oPar <- par(mar = rep(0, 4), cex = 0.8)

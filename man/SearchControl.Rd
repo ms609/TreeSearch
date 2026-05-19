@@ -312,8 +312,6 @@ The parameters correspond to heuristics described by
 \insertCite{Goloboff2016}{TreeSearch}.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN SearchControl.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 # Use defaults
 SearchControl()
 

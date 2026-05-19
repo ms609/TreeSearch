@@ -86,8 +86,6 @@ mirroring the mathematical relationship described by the
 \eqn{k / (k + e)}{k/(k+e)} fit function.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN ParsSim.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 tree <- TreeTools::BalancedTree(8)
 dataset <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L)
 TreeLength(tree, dataset)

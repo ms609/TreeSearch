@@ -63,8 +63,6 @@ in a subset of trees, that iteration is considered not to be decisive, and
 is ignored when calculating the support for that split.
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN JackLabels.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 library("TreeTools", quietly = TRUE) # for as.phylo
 
 # jackTrees will usually be generated with Jackknife() or Resample(),

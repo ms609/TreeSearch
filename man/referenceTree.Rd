@@ -18,8 +18,6 @@ The tree topology used to generate the matrices in
 \code{\link{congreveLamsdellMatrices}}
 }
 \examples{
-{cat(format(Sys.time()), "PR244-DIAG: BEGIN referenceTree.Rd
-", file="~/pr244-diag.log", append=TRUE)}
 data(referenceTree)
 plot(referenceTree)
 
