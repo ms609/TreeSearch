@@ -17,6 +17,11 @@
 #include <R.h>
 #include <Rinternals.h>
 
+// T-300: cross-check incremental rescore against full_rescore on every
+// accepted SPR move.  Enabled during validation; remove the define in a
+// follow-up commit once a clean GHA cycle confirms diff == 0.
+#define DEBUG_RESCORE
+
 namespace ts {
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
@@ -1135,7 +1140,40 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
         tree.build_postorder_prealloc(work_stack);
 
-        double actual = full_rescore(tree, ds);
+        // T-300: dirty-set incremental rescore for SPR moves.  The two
+        // affected nodes after apply_tbr_move are nz (clip grandparent,
+        // children changed: nx -> ns) and nx (regraft point, children
+        // changed to {clip_node, below}).  fitch_dirty_downpass updates
+        // every node on the union of paths nz->root and nx->root exactly
+        // once in postorder; sums correctly with no shared-ancestor
+        // ambiguity.  TBR moves with non-trivial rerooting and NA
+        // datasets fall back to full_rescore.
+        bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
+        double actual;
+        if (is_spr && !has_na) {
+          int delta = fitch_dirty_downpass(tree, ds, nz, nx);
+          fitch_dirty_uppass(tree, ds, nz, nx);
+          if (use_iw) {
+            std::fill(divided_steps.begin(), divided_steps.end(), 0);
+            extract_char_steps(tree, ds, divided_steps);
+            actual = compute_weighted_score(ds, divided_steps);
+          } else {
+            actual = best_score + static_cast<double>(delta);
+          }
+        } else {
+          actual = full_rescore(tree, ds);
+        }
+#ifdef DEBUG_RESCORE
+        if (is_spr && !has_na) {
+          double ref = full_rescore(tree, ds);
+          if (std::fabs(actual - ref) > 1e-9) {
+            Rprintf("DEBUG_RESCORE: incremental=%.10g  full=%.10g  "
+                    "diff=%.10g  use_iw=%d\n",
+                    actual, ref, actual - ref, (int)use_iw);
+          }
+          actual = ref;  // defensive: use truth to avoid downstream drift
+        }
+#endif
 
         // Post-hoc constraint validation: TBR rerooting can break
         // splits that were classified as UNCONSTRAINED during the

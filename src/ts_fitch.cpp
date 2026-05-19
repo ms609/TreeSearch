@@ -254,6 +254,121 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
   }
 }
 
+// --- Dirty-set rescore (T-300) ---
+//
+// After an SPR move, the set of nodes whose prelim is stale is the union of
+// the rootward paths from the two clip endpoints.  Walking each chain
+// independently (as the prior implementation did) double-reads shared
+// ancestors and is brittle in the IW path.  The dirty-set approach visits
+// each affected node exactly once in postorder, reading current children's
+// prelims — which are guaranteed correct because postorder processes
+// children before parents.
+
+int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
+                         int start_a, int start_b) {
+  std::vector<char> dirty(tree.n_node, 0);
+
+  // Mark the rootward path from `node` up to (and including) the root.
+  // Mirrors the parent-self termination used elsewhere in this file.
+  auto mark_path = [&](int node) {
+    while (node >= tree.n_tip && !dirty[node]) {
+      dirty[node] = 1;
+      int p = tree.parent[node];
+      if (p == node) break;  // root
+      node = p;
+    }
+  };
+  mark_path(start_a);
+  mark_path(start_b);
+
+  int length_delta = 0;
+
+  for (int node : tree.postorder) {
+    if (node < tree.n_tip) continue;
+    if (!dirty[node]) continue;
+
+    int ni = node - tree.n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+
+    tree.save_node_state(node);
+
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      if (blk.active_mask == 0) continue;
+      int offset = ds.block_word_offset[b];
+
+      const uint64_t* left_state =
+          &tree.prelim[static_cast<size_t>(lc) * tree.total_words + offset];
+      const uint64_t* right_state =
+          &tree.prelim[static_cast<size_t>(rc) * tree.total_words + offset];
+      uint64_t* node_state =
+          &tree.prelim[static_cast<size_t>(node) * tree.total_words + offset];
+
+      size_t cost_idx = static_cast<size_t>(node) * tree.n_blocks + b;
+      uint64_t old_cost = tree.local_cost[cost_idx];
+      int old_nu = popcount64(old_cost);
+      if (blk.upweight_mask) old_nu += popcount64(old_cost & blk.upweight_mask);
+      length_delta -= blk.weight * old_nu;
+
+      uint64_t any_intersect = simd::any_hit_reduce(
+          left_state, right_state, blk.n_states);
+      uint64_t needs_union = ~any_intersect & blk.active_mask;
+      int new_nu = popcount64(needs_union);
+      if (blk.upweight_mask) new_nu += popcount64(needs_union & blk.upweight_mask);
+      length_delta += blk.weight * new_nu;
+
+      tree.local_cost[cost_idx] = needs_union;
+
+      simd::fitch_combine(left_state, right_state, node_state,
+                          blk.n_states, any_intersect, needs_union);
+    }
+  }
+
+  return length_delta;
+}
+
+void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
+                        int start_a, int start_b) {
+  // Step 1: root final_ = prelim (root prelim may have changed in downpass).
+  int root = tree.n_tip;
+  size_t root_base = static_cast<size_t>(root) * tree.total_words;
+  for (int w = 0; w < tree.total_words; ++w) {
+    tree.final_[root_base + w] = tree.prelim[root_base + w];
+  }
+
+  // Step 2: mark dirty_up = same rootward paths as the downpass.  Every node
+  // on these paths had its prelim updated, so its final_ may shift and its
+  // children must be re-checked.
+  std::vector<char> dirty_up(tree.n_node, 0);
+  auto mark_path = [&](int node) {
+    while (node >= tree.n_tip && !dirty_up[node]) {
+      dirty_up[node] = 1;
+      int p = tree.parent[node];
+      if (p == node) break;
+      node = p;
+    }
+  };
+  mark_path(start_a);
+  mark_path(start_b);
+
+  // Step 3: reverse postorder — visit any node whose parent is dirty_up.
+  // If that node's final_ changes, propagate the flag to it.
+  for (int i = static_cast<int>(tree.postorder.size()) - 1; i >= 0; --i) {
+    int node = tree.postorder[i];
+    if (node == root) continue;
+
+    int anc = tree.parent[node];
+    if (!dirty_up[anc]) continue;
+
+    tree.save_node_state(node);
+    bool changed = uppass_node(tree, ds, node);
+    if (changed && node >= tree.n_tip) {
+      dirty_up[node] = 1;
+    }
+  }
+}
+
 // --- Indirect tree length calculation (Goloboff 1996) ---
 
 int fitch_indirect_length(const uint64_t* clip_prelim,

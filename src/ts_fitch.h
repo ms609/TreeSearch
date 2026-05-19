@@ -51,6 +51,29 @@ int fitch_incremental_downpass(TreeState& tree, const DataSet& ds,
 void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
                               int start_node);
 
+// Dirty-set rescore after an SPR move (T-300).
+//
+// Recomputes prelim and local_cost for every node on the union of paths
+// start_a -> root and start_b -> root, visiting each node exactly once in
+// postorder.  start_a and start_b are the two clip endpoints whose children
+// changed after apply_tbr_move (typically nz = clip grandparent and
+// nx = regraft point).
+//
+// Caller must call tree.build_postorder_prealloc() first so that
+// tree.postorder reflects the post-move topology.
+//
+// Returns the EW length delta: actual = prior_score + delta.
+// For IW/profile, ignore the return value and use extract_char_steps +
+// compute_weighted_score after this call (local_cost is correct).
+int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
+                         int start_a, int start_b);
+
+// Companion uppass for fitch_dirty_downpass.  Recomputes final_ for nodes
+// whose ancestor's final_ may have changed, seeded from the same start
+// points.  Propagates downward.
+void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
+                        int start_a, int start_b);
+
 // Indirect tree length calculation: given the clipped subtree's basal
 // state set (prelim of clip_node) and a candidate destination edge (A, D),
 // compute the length increase from joining them.
