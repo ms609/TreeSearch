@@ -9,9 +9,22 @@
 #include <R.h>
 #include <Rmath.h>
 
-// R_Interactive is exported from libR on all platforms but not always visible
-// via the public headers; declare it here so we can guard console flushes.
-extern "C" { extern Rboolean R_Interactive; }
+// Portable TTY check.  We need to know whether stdout is a real terminal so
+// that we can safely call R_FlushConsole() with the \r overwrite trick.  In
+// R CMD check (and any subprocess that captures output to a pipe) the flush
+// can block indefinitely once the pipe buffer fills, hanging the check.
+//
+// R_Interactive (from R's internal headers) is the obvious test but it is a
+// non-API entry point — R CMD check flags it.  isatty(fileno(stdout)) is the
+// public POSIX equivalent and works identically here: a captured pipe is
+// never a TTY, an interactive console is.
+#ifdef _WIN32
+  #include <io.h>
+  #define TS_ISATTY()  (_isatty(_fileno(stdout)) != 0)
+#else
+  #include <unistd.h>
+  #define TS_ISATTY()  (isatty(fileno(stdout)) != 0)
+#endif
 
 
 #include <thread>
@@ -432,7 +445,7 @@ DrivenResult parallel_driven_search(
       int done = replicates_done.load(std::memory_order_relaxed);
       if (done != last_progress_done) {
         auto st = shared_pool.status();
-        if (R_Interactive) {
+        if (TS_ISATTY()) {
           Rprintf("\r[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d",
                   n_threads, done, params.max_replicates,
                   st.best_score, st.pool_size, st.hits_to_best);
