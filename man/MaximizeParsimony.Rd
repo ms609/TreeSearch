@@ -264,7 +264,6 @@ dataset <- inapplicable.phyData[["Vinther2008"]]
 result <- MaximizeParsimony(dataset, maxReplicates = 3L, targetHits = 2L)
 result
 attr(result, "score")
-
 }
 \references{
 \insertAllCited{}

@@ -48,9 +48,11 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     stop("`char` must comprise a single character; try char[, 1]")
   }
   cont <- attr(char, "contrast")
-  if (any(rowSums(cont) == 0)) {
-    stop("`char` contract matrix lacks levels for ",
-         paste(which(rowSums(cont) == 0), collapse = ", "))
+  zeroRows <- which(rowSums(cont) == 0)
+  usedTokens <- unique(unlist(char, use.names = FALSE))
+  if (any(zeroRows %in% usedTokens)) {
+    stop("`char` contrast matrix lacks levels for token(s) ",
+         paste(zeroRows[zeroRows %in% usedTokens], collapse = ", "))
   }
   if (inherits(trees, "phylo")) {
     trees <- c(trees)
@@ -83,6 +85,8 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   if (length(qmApp) == 0) {
     attr(char, "contrast") <- rbind(cont, colnames(cont) != "-")
     qmApp <- 1 + nrow(cont)
+  } else {
+    qmApp <- qmApp[[1L]]
   }
   
   QMScore <- function(leaf) {
@@ -98,14 +102,14 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   }
   
   deltas <- start - .vapply(seq_along(char), QMScore, start)
-  # Temp:
+  # Temp: guard against negative-delta recurrence; remove once confident fix
+  # holds across edge-case datasets.
   if (any(deltas < 0)) {
     warning("Unknown scoring issue may distort score of ",
             paste(names(char)[apply(deltas < 0, 2, any)], collapse = ", "),
             ". Please report bug to maintainer.")
   }
   # /Temp
-  
   delta <- setNames(colSums(deltas), names(char))
   
   # Return:
