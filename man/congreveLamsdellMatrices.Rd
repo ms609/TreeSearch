@@ -21,6 +21,8 @@ generated from the \link{referenceTree} topology, with
 all branches sharing an equal length.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN congreveLamsdellMatrices.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 data("referenceTree")
 data("congreveLamsdellMatrices")
 TreeLength(referenceTree, congreveLamsdellMatrices[[17]], "profile")

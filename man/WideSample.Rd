@@ -56,6 +56,8 @@ plateaux and under-represents isolated optima.
 rather than frequency.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN WideSample.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 library("TreeTools")
 trees <- as.phylo(0:99, nTip = 8)
 sub10 <- WideSample(trees, 10)

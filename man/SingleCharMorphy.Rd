@@ -21,6 +21,8 @@ Don't forget to unload it when you've finished with it.
 Morphy object from single character
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN SingleCharMorphy.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 morphyObj <- SingleCharMorphy("-0-0", gap = "Extra")
 RandomTreeScore(morphyObj)
 morphyObj <- UnloadMorphy(morphyObj)

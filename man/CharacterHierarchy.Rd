@@ -30,6 +30,8 @@ characters, and is passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()
 argument.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN CharacterHierarchy.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 # Simple: character 1 controls characters 2-5
 h <- CharacterHierarchy("1" = 2:5)
 

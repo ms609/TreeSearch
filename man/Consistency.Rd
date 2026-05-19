@@ -76,6 +76,8 @@ following \insertCite{Brazeau2019;textual}{TreeSearch}, matching their
 default treatment in \code{\link[=TreeLength]{TreeLength()}}.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN Consistency.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 data(inapplicable.datasets)
 dataset <- inapplicable.phyData[[4]]
 head(Consistency(dataset, TreeTools::NJTree(dataset), nRelabel = 10))

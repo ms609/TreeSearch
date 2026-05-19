@@ -41,6 +41,8 @@ Generates a starting tree by adding each taxon in turn to the most
 parsimonious location.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN AdditionTree.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 data("inapplicable.phyData", package = "TreeSearch")
 AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 }

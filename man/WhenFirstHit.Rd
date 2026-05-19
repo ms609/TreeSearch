@@ -21,6 +21,8 @@ and named according to the search iteration in which they were first hit -
 the situation when trees found by \code{\link[=Morphy]{Morphy()}} are saved to file.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN WhenFirstHit.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 library("TreeTools", quietly = TRUE)
 trees <- list(
    seed_00 = as.phylo(1, 8),

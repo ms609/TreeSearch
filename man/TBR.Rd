@@ -91,6 +91,8 @@ parameters
 
 }}
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN TBR.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 library("ape")
 tree <- rtree(20, br=NULL)
 TBR(tree)

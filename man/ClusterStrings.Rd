@@ -24,6 +24,8 @@ Calculate string similarity using the Levenshtein distance and return
 clusters of similar strings.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN ClusterStrings.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 ClusterStrings(c(paste0("FirstCluster ", 1:5),
                  paste0("SecondCluster.", 8:12),
                  paste0("AnotherCluster_", letters[1:6])))

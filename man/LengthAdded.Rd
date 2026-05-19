@@ -50,20 +50,20 @@ never allowed to take an inapplicable value; and an inapplicable token
 remains inapplicable.
 }
 \examples{
-message("PR244-DIAG: BEGIN LengthAdded.Rd")
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN LengthAdded.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: BEGIN LengthAdded.Rd")}
 trees <- inapplicable.trees[["Vinther2008"]]
 dataset <- inapplicable.phyData[["Vinther2008"]]
 char <- dataset[, 11]
-message("PR244-DIAG: LengthAdded.Rd pre-LengthAdded")
+{cat(format(Sys.time()), "PR244-DIAG: LengthAdded.Rd pre-LengthAdded\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: LengthAdded.Rd pre-LengthAdded")}
 added <- LengthAdded(trees, char)
-message("PR244-DIAG: LengthAdded.Rd post-LengthAdded")
+{cat(format(Sys.time()), "PR244-DIAG: LengthAdded.Rd post-LengthAdded\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: LengthAdded.Rd post-LengthAdded")}
 
 PlotCharacter(
   tree = trees[[1]],
   dataset = char,
   tip.color = 1 + added[trees[[1]]$tip.label] # Colour by added steps
 ) -> XX # Suppress return value; display plot only
-message("PR244-DIAG: END LengthAdded.Rd")
+{cat(format(Sys.time()), "PR244-DIAG: END LengthAdded.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: END LengthAdded.Rd")}
 }
 \references{
 \insertAllCited{}

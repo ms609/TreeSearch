@@ -34,6 +34,8 @@ Print a warning and return given tree
 
 }}
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN TBRWarning.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 suppressWarnings(TBRWarning(0, 0, "Message text")) # will trigger warning
 
 }

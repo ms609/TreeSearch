@@ -196,6 +196,8 @@ For usage pointers, see the
 
 }}
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN Ratchet.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 data("Lobo", package = "TreeTools")
 njtree <- TreeTools::NJTree(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search

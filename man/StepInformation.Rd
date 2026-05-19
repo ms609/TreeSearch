@@ -68,6 +68,8 @@ With \code{"exact"}, the full Maddison & Slatkin recursion is forced regardless
 of cost (may be very slow for large or complex characters).
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN StepInformation.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
 StepInformation(character)
 }

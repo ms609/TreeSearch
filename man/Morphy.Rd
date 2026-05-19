@@ -308,6 +308,8 @@ For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{
 }
 
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN Morphy.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 ## Only run examples in interactive R sessions
 if (interactive()) {
   # launch "shiny" point-and-click interface

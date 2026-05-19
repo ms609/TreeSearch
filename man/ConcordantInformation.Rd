@@ -46,6 +46,8 @@ Presently restricted to datasets whose characters contain a maximum of
 two parsimony-informative states.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN ConcordantInformation.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 data(congreveLamsdellMatrices)
 myMatrix <- congreveLamsdellMatrices[[10]]
 ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)

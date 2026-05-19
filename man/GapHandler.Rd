@@ -21,6 +21,8 @@ to other states such as \code{0} or \code{1}; or as "inapplicable data" using th
 algorithm of Brazeau, Guillerme and Smith (2019).
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN GapHandler.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 morphyObj <- SingleCharMorphy("-0-0", "Extra")
 GapHandler(morphyObj)
 morphyObj <- UnloadMorphy(morphyObj)

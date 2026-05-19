@@ -34,6 +34,8 @@ This function is a copy of a deprecated ancestor in TreeTools; see
 \href{https://github.com/ms609/TreeTools/issues/32}{#32}.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN dot-NonDuplicateRoot.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 tree <- TreeTools::Preorder(TreeTools::BalancedTree(8))
 edge <- tree$edge
 parent <- edge[, 1]

@@ -83,6 +83,8 @@ All nodes in a tree must be bifurcating; \code{\link[ape:collapse.singles]{ape::
 
 }}
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN NNI.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 tree <- TreeTools::BalancedTree(8)
 # A random rearrangement
 NNI(tree)

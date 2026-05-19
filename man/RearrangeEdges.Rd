@@ -66,6 +66,8 @@ It also reports the number of times that this score was hit in the
 current function call.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN RearrangeEdges.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 data("Lobo", package="TreeTools")
 tree <- TreeTools::NJTree(Lobo.phy)
 edge <- tree$edge

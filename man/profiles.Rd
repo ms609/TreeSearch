@@ -18,6 +18,8 @@ The base 2 logarithm of the number of trees containing \emph{s} steps, calculate
 by scoring a character on each \emph{n}-leaf tree.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN profiles.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 data(profiles)
 
 # Load profile for a character of the structure 0 0 0 1 1 1 1 1

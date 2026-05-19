@@ -124,6 +124,8 @@ modified Fitch algorithm presented in
 \insertCite{Brazeau2019;textual}{TreeSearch}.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN PlotCharacter.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 # Set up plotting area
 oPar <- par(mar = rep(0, 4))
 

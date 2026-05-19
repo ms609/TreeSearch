@@ -93,6 +93,8 @@ All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collap
 
 }}
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN SPR.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 {
 tree <- ape::rtree(20, br=FALSE)
 SPR(tree)

@@ -34,6 +34,8 @@ applying \code{weight}.
 characters in a \code{Morphy} object; \code{SetMorphyWeights()} edits them.
 }
 \examples{
+{cat(format(Sys.time()), "PR244-DIAG: BEGIN MorphyWeights.Rd
+", file="~/pr244-diag.log", append=TRUE)}
 tokens <- matrix(c(
   0, 0, 0, 1, 1, 2,
   0, 0, 0, 0, 0, 0), byrow = TRUE, nrow = 2L,
