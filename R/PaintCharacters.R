@@ -13,11 +13,9 @@
 #' Characters with no concordant signal on the tree are coloured grey
 #' (`"#888888"`).
 #'
-#' The intended use is to colour a character-space MDS plot so that characters
-#' supporting the same clade share a similar hue.  If the returned colours look
-#' desaturated ("murky"), try raising `threshold` to exclude low-information
-#' edges, or inspect `ConcordanceTable()` directly to understand the
-#' character–edge signal.
+#' If the returned colours look desaturated ("murky"), try raising `threshold` 
+#' to exclude low-information edges, or inspect `ConcordanceTable()` directly to
+#' understand the character–edge signal.
 #'
 #' @param dataset A `phyDat` object containing morphological character data,
 #'   whose `names` match the tip labels of `tree`.

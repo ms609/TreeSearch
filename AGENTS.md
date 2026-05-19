@@ -34,6 +34,14 @@ change). Never run a full test suite or R CMD check locally.
 
 ### GHA dispatch (primary validation path)
 
+Before dispatching, run `spelling::spell_check_package()`.
+GHA will fail on spelling errors.
+If any "errors" can be avoided (e.g. by spelling out acronyms or wrapping in 
+\acronym{}; by hyphenating compound words), reword. Add false positives 
+to `inst/WORDLIST`.
+
+Once confirmed, dispatch GHA with:
+
 ```bash
 # Push your branch and dispatch checks
 git push -u origin feature/<name>

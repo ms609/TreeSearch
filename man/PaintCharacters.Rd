@@ -44,11 +44,9 @@ information amount; discordant edges (quality \eqn{\le 0}) are excluded.
 Characters with no concordant signal on the tree are coloured grey
 (\code{"#888888"}).
 
-The intended use is to colour a character-space MDS plot so that characters
-supporting the same clade share a similar hue.  If the returned colours look
-desaturated ("murky"), try raising \code{threshold} to exclude low-information
-edges, or inspect \code{ConcordanceTable()} directly to understand the
-character–edge signal.
+If the returned colours look desaturated ("murky"), try raising \code{threshold}
+to exclude low-information edges, or inspect \code{ConcordanceTable()} directly to
+understand the character–edge signal.
 }
 \examples{
 data("congreveLamsdellMatrices", package = "TreeSearch")
