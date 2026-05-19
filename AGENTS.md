@@ -34,7 +34,7 @@ change). Never run a full test suite or R CMD check locally.
 
 ### GHA dispatch (primary validation path)
 
-Before dispatching, run `spelling::spell_check_package()`.
+Before dispatching, run `spelling::spell_check_package()` (or a targetted `spell_check_files()`).
 GHA will fail on spelling errors.
 If any "errors" can be avoided (e.g. by spelling out acronyms or wrapping in 
 \acronym{}; by hyphenating compound words), reword. Add false positives 
