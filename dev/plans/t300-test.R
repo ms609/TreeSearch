@@ -60,3 +60,40 @@ n_debug2 <- sum(grepl("DEBUG_RESCORE", log_text2))
 cat("DEBUG_RESCORE mismatch lines emitted (IW):", n_debug2, "(expect 0)\n")
 if (n_debug2 > 0) cat(grep("DEBUG_RESCORE", log_text2, value = TRUE), sep = "\n")
 cat("Final IW score:", attr(result2, "score"), "\n")
+
+cat("\n=== NA TBR test (Vinther2008 EW) ===\n")
+set.seed(8421)
+sink_path3 <- tempfile(fileext = ".txt")
+sink(sink_path3, split = TRUE)
+result3 <- MaximizeParsimony(
+  ds_v,
+  maxReplicates = 5L,
+  targetHits = 20L,
+  verbosity = 1L,
+  nThreads = 1L
+)
+sink()
+log_text3 <- readLines(sink_path3)
+n_debug3 <- sum(grepl("DEBUG_NA_RESCORE", log_text3))
+cat("DEBUG_NA_RESCORE mismatch lines emitted (NA-EW):", n_debug3, "(expect 0)\n")
+if (n_debug3 > 0) cat(grep("DEBUG_NA_RESCORE", log_text3, value = TRUE), sep = "\n")
+cat("Final NA-EW score:", attr(result3, "score"), "\n")
+
+cat("\n=== NA TBR IW test (Vinther2008, concavity=10) ===\n")
+set.seed(8421)
+sink_path4 <- tempfile(fileext = ".txt")
+sink(sink_path4, split = TRUE)
+result4 <- MaximizeParsimony(
+  ds_v,
+  maxReplicates = 5L,
+  targetHits = 20L,
+  verbosity = 1L,
+  nThreads = 1L,
+  concavity = 10
+)
+sink()
+log_text4 <- readLines(sink_path4)
+n_debug4 <- sum(grepl("DEBUG_NA_RESCORE", log_text4))
+cat("DEBUG_NA_RESCORE mismatch lines emitted (NA-IW):", n_debug4, "(expect 0)\n")
+if (n_debug4 > 0) cat(grep("DEBUG_NA_RESCORE", log_text4, value = TRUE), sep = "\n")
+cat("Final NA-IW score:", attr(result4, "score"), "\n")

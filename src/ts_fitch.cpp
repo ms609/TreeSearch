@@ -1054,4 +1054,10 @@ double score_tree(TreeState& tree, const DataSet& ds) {
 
 #include "ts_fitch_na_incr.h"
 
+// =========================================================================
+// NA-aware dirty-set incremental rescore (T-300 NA variant)
+// =========================================================================
+
+#include "ts_fitch_na_dirty.h"
+
 } // namespace ts

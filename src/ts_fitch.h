@@ -74,6 +74,21 @@ int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
 void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
                         int start_a, int start_b);
 
+// --- NA-aware dirty-set incremental rescore (T-300 NA variant) ---
+//
+// Same dirty-set approach as fitch_dirty_downpass / fitch_dirty_uppass but
+// handles inapplicable-bearing blocks via the NA-aware Pass 1 / Pass 2
+// logic.  Used for the SPR accept path under has_inapplicable to avoid
+// full_rescore.  The return value is the EW length delta for standard
+// blocks only — NA block step counts require Pass 3, so call
+// fitch_na_pass3_score(tree, ds) on the updated state to obtain the
+// authoritative score.
+int fitch_na_dirty_downpass(TreeState& tree, const DataSet& ds,
+                             int start_a, int start_b);
+
+void fitch_na_dirty_uppass(TreeState& tree, const DataSet& ds,
+                            int start_a, int start_b);
+
 // Indirect tree length calculation: given the clipped subtree's basal
 // state set (prelim of clip_node) and a candidate destination edge (A, D),
 // compute the length increase from joining them.
