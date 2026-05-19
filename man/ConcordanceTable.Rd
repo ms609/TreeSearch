@@ -14,6 +14,8 @@ ConcordanceTable(
   normalize = TRUE,
   plot = TRUE,
   marginSize = 0L,
+  paintSize = 0L,
+  palette = "default",
   ...
 )
 }
@@ -59,6 +61,18 @@ The left and right strips are coloured by the characterwise concordance
 concordance (weighted mean across characters).
 One blank cell separates each strip from the main grid.}
 
+\item{paintSize}{Integer scalar or vector.  Adds a painted strip OUTSIDE any
+\code{marginSize} strip, using hue from \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}} (edges) and the
+\code{\link[=PaintCharacters]{PaintCharacters()}} algorithm (characters).  A scalar \verb{> 0} adds a right
+strip (characters) and a top strip (edges), each \code{paintSize} cells wide/tall.
+A length-4 vector follows \code{c(bottom, left, top, right)} like \code{marginSize};
+\code{NA} or \code{0} suppresses that side.  One blank cell separates each paint strip
+from the adjacent margin strip (or main grid if no margin exists on that side).}
+
+\item{palette}{Palette specification passed to \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}}.
+Either a character string (\code{"default"}, \code{"protanopia"}, \code{"tritanopia"}) or
+a function \verb{function(h, s)}.  Ignored when \code{paintSize} is zero on all sides.}
+
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}
 }
@@ -85,7 +99,8 @@ tree <- referenceTree
 
 # Plot tree and identify nodes
 library("TreeTools", quietly = TRUE)
-plot(tree)
+paint <- PaintTree(tree)
+plot(tree, edge.col = paint$edgeCol, tip.col = paint$tipCol, edge.width = 2)
 nodeIndex <- as.integer(rownames(as.Splits(tree)))
 nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
            frame = "none", bg = NULL)
@@ -93,7 +108,7 @@ QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 
 # View information shared by characters and edges
 ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
-                 marginSize = 1:4)
+                 marginSize = c(0, 0, 1, 2), paintSize = c(1, 2, 0, 0))
 axis(1)
 axis(2)
 
@@ -114,6 +129,7 @@ Other split support functions:
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
 \code{\link{SiteConcordance}}
 }

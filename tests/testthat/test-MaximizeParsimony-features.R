@@ -3,6 +3,16 @@ library("TreeTools", quietly = TRUE)
 data("inapplicable.phyData", package = "TreeSearch")
 ds <- inapplicable.phyData[["Vinther2008"]]
 
+# --- Input validation ---
+
+test_that("MaximizeParsimony stops with message when dataset is NULL", {
+  expect_error(
+    MaximizeParsimony(NULL, maxReplicates = 1L, targetHits = 1L,
+                      verbosity = 0L),
+    "`dataset` cannot be NULL."
+  )
+})
+
 # --- Strategy presets ---
 
 test_that("strategy = 'sprint' runs and returns valid result", {

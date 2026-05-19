@@ -41,11 +41,12 @@ Imports:
   cli (>= 3.0),
   colorspace,
   fastmatch (>= 1.1.3),
+  grDevices,
   Rcpp,
   Rdpack (>= 0.7),
   stats,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 1.16),
+  TreeTools (>= 2.3.0.9002),
 Suggests:
   cluster,
   future,
@@ -65,6 +66,7 @@ Suggests:
   testthat (>= 3.0.0),
   vdiffr (>= 1.0.0),
   zip,
+Remotes: ms609/TreeTools,
 Config/Needs/check:
   callr,
   pkgbuild,
@@ -96,6 +98,7 @@ Collate:
   'MaximizeParsimony.R'
   'Morphy.R'
   'NNI.R'
+  'PaintCharacters.R'
   'ParsSim.R'
   'PlotCharacter.R'
   'PolEscapa.R'

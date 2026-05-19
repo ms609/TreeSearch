@@ -110,6 +110,7 @@ Other split support functions:
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link{SiteConcordance}}
 }
 \author{

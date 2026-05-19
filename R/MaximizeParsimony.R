@@ -455,7 +455,7 @@ MaximizeParsimony <- function(
     constraint,
     strategy = "auto",
     maxReplicates = 96L,
-    targetHits = max(10L, as.integer(NTip(dataset) / 5)),
+    targetHits = NULL,
     maxSeconds = 0,
     nThreads = 1L,
     verbosity = 1L,
@@ -463,6 +463,16 @@ MaximizeParsimony <- function(
     control = SearchControl(),
     ...
 ) {
+
+  # --- Input validation: check dataset first ---
+  if (is.null(dataset)) {
+    stop("`dataset` cannot be NULL.")
+  }
+
+  # --- Set targetHits default if not provided ---
+  if (is.null(targetHits)) {
+    targetHits <- max(10L, as.integer(NTip(dataset) / 5))
+  }
 
   # --- Backward compatibility: intercept maxTime → maxSeconds ---
   dots <- list(...)

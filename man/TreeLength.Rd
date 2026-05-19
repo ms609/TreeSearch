@@ -165,6 +165,7 @@ data("inapplicable.datasets")
 tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
+\donttest{ # PrepareDataProfile() and random-tree scoring are slower:
 TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 TreeLength(5, inapplicable.phyData[[1]])
 
@@ -174,6 +175,7 @@ hier <- CharacterHierarchy("1" = 2:3)
 tree6 <- TreeTools::BalancedTree(dataset6)
 TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj")
 {cat(format(Sys.time()), "PR244-DIAG: END TreeLength.Rd\n", file="~/pr244-diag.log", append=TRUE); message("PR244-DIAG: END TreeLength.Rd")}
+}
 }
 \references{
 \insertAllCited{}
