@@ -97,6 +97,7 @@ representative summary of comparisons between sets of trees.
 }
 
 \examples{
+message("PR244-DIAG: BEGIN TaxonInfluence.Rd")
 #' # Load data for analysis in R
 library("TreeTools")
 data("congreveLamsdellMatrices", package = "TreeSearch")
@@ -127,6 +128,7 @@ PlotTools::SpectrumLegend(
   legend = signif(seq(upperBound, 0, length.out = 4), 3),
   bty = "n"
 )
+message("PR244-DIAG: END TaxonInfluence.Rd")
 }
 \references{
 \insertAllCited{}

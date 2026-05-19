@@ -160,6 +160,7 @@ alternatively using the hierarchical scoring of
 \code{inapplicable = "hsj"} and a \code{\link{CharacterHierarchy}} is provided.
 }
 \examples{
+message("PR244-DIAG: BEGIN TreeLength.Rd")
 data("inapplicable.datasets")
 tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]])
@@ -172,6 +173,7 @@ dataset6 <- inapplicable.phyData[["Vinther2008"]]
 hier <- CharacterHierarchy("1" = 2:3)
 tree6 <- TreeTools::BalancedTree(dataset6)
 TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj")
+message("PR244-DIAG: END TreeLength.Rd")
 }
 \references{
 \insertAllCited{}

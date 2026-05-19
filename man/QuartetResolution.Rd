@@ -20,9 +20,11 @@ is most closely related to \code{tips[1]}.
 Relationship between four taxa
 }
 \examples{
+message("PR244-DIAG: BEGIN QuartetResolution.Rd")
 trees <- inapplicable.trees[["Vinther2008"]]
 tips <- c("Lingula", "Halkieria", "Wiwaxia", "Acaenoplax")
 QuartetResolution(trees, tips)
+message("PR244-DIAG: END QuartetResolution.Rd")
 }
 \seealso{
 Other utility functions:
