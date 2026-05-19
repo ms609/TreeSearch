@@ -46,7 +46,7 @@ Imports:
   Rdpack (>= 0.7),
   stats,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 1.16),
+  TreeTools (>= 2.3.0.9002),
 Suggests:
   cluster,
   future,

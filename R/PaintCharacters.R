@@ -22,11 +22,12 @@
 #' @param dataset A `phyDat` object containing morphological character data,
 #'   whose `names` match the tip labels of `tree`.
 #' @param tree A `phylo` object whose tip labels match `names(dataset)`.
-#' @param threshold Numeric scalar; edges whose `info` value (see
-#'   [ConcordanceTable()]) is below this threshold are excluded from the
-#'   weighted average regardless of their concordance.  Default `0` retains all
-#'   concordant edges.  Raising the threshold suppresses low-information edges
-#'   that would otherwise dilute the colour signal.
+#' @param threshold Numeric scalar; edges whose information value (the
+#'   `"hBest"` × `"n"` product from [ClusteringConcordance()]) is below this
+#'   threshold are excluded from the weighted average regardless of their
+#'   concordance.  Default `0` retains all concordant edges.  Raising the
+#'   threshold suppresses low-information edges that would otherwise dilute the
+#'   colour signal.
 #' @param palette Palette specification passed to [TreeTools::PaintTree()].
 #'   Either a character string (`"default"`, `"protanopia"`, `"tritanopia"`)
 #'   or a function `function(h, s)` mapping hue (0–360°) and saturation (0–1)
@@ -50,42 +51,58 @@
 #' @seealso [TreeTools::PaintTree()], [ConcordanceTable()]
 #' @family split support functions
 #' @importFrom grDevices col2rgb convertColor rgb
+#' @importFrom TreeTools PaintTree
 #' @export
 PaintCharacters <- function(dataset, tree, threshold = 0,
                              palette = "default") {
   paint <- TreeTools::PaintTree(tree, palette)
-  ct <- ConcordanceTable(tree, dataset, plot = FALSE)
+  cc    <- ClusteringConcordance(tree, dataset, return = "all")
 
-  # Align PaintTree edge colours to ConcordanceTable edge order.
-  # ConcordanceTable covers non-trivial splits only; rownames are child node IDs.
-  ctNodes  <- as.integer(rownames(ct$info))
+  # Replicate the ConcordanceTable extraction (without triggering its plot).
+  # matrix() guards against dimension collapse when nChar == 1 or nEdge == 1.
+  nEdge   <- dim(cc)[[2L]]
+  nChar   <- dim(cc)[[3L]]
+  info    <- matrix(cc["hBest", , ] * cc["n", , ], nEdge, nChar,
+                    dimnames = dimnames(cc)[2:3])
+  relInfo <- info / max(info, na.rm = TRUE)
+  relInfo[is.na(relInfo)] <- 0
+  quality <- matrix(cc["normalized", , ], nEdge, nChar)
+  relInfo[is.na(quality)] <- 0
+  quality[is.na(quality)] <- 0
+
+  # Align PaintTree edge colours to ClusteringConcordance edge order.
+  # Row names are child node IDs (non-trivial splits only).
+  ctNodes  <- as.integer(rownames(info))
   edgeIdx  <- match(ctNodes, tree[["edge"]][, 2L])
   edgeCols <- paint$edgeCol[edgeIdx]
 
   # Convert edge colours to CIELAB (perceptually uniform; a*/b* are Cartesian
-  # so weighted averages avoid circular-mean complications of hue).
-  labMat <- convertColor(
-    t(col2rgb(edgeCols)) / 255,
-    from = "sRGB", to = "Lab"
+  # so weighted averages avoid the circular-mean issue of hue).
+  labMat <- matrix(
+    convertColor(t(col2rgb(edgeCols)) / 255, from = "sRGB", to = "Lab"),
+    ncol = 3L
   )  # nEdges × 3
 
-  # Weight matrix: concordant contribution × relative information amount.
-  wMat <- pmax(ct$quality, 0) * ct$relInfo  # nEdges × nChars
-  wMat[ct$info < threshold] <- 0
+  # Weight matrix: concordant edges only, scaled by relative information.
+  wMat <- pmax(quality, 0) * relInfo   # nEdges × nChars
+  wMat[info < threshold] <- 0
 
-  wSum     <- colSums(wMat)       # nChars
+  wSum     <- colSums(wMat)            # nChars
   noInfo   <- wSum == 0
   wSumSafe <- ifelse(noInfo, 1, wSum)
 
   # Weighted Lab mean: t(3×nEdges %*% nEdges×nChars) → nChars×3, then / wSum.
   labAvg <- t(t(labMat) %*% wMat) / wSumSafe
 
-  # Convert back to sRGB, clamp out-of-gamut values, encode as hex.
-  rgbAvg   <- convertColor(labAvg, from = "Lab", to = "sRGB")
-  rgbAvg   <- pmax(0, pmin(1, rgbAvg))
+  # Convert back to sRGB; clamp out-of-gamut values; encode as hex.
+  # matrix() guards against convertColor() dropping to a vector for 1 row.
+  rgbAvg   <- matrix(
+    pmax(0, pmin(1, convertColor(labAvg, from = "Lab", to = "sRGB"))),
+    ncol = 3L
+  )
   charCols <- rgb(rgbAvg[, 1L], rgbAvg[, 2L], rgbAvg[, 3L])
   charCols[noInfo] <- "#888888"
-  names(charCols) <- colnames(ct$info)
+  names(charCols) <- colnames(info)
 
   # Return:
   charCols

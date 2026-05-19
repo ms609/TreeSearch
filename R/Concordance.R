@@ -456,6 +456,16 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' (weighted mean across edges); the bottom and top strips by the edgewise
 #' concordance (weighted mean across characters).
 #' One blank cell separates each strip from the main grid.
+#' @param paintSize Integer scalar or vector.  Adds a painted strip OUTSIDE any
+#'   `marginSize` strip, using hue from [TreeTools::PaintTree()] (edges) and the
+#'   [PaintCharacters()] algorithm (characters).  A scalar `> 0` adds a right
+#'   strip (characters) and a top strip (edges), each `paintSize` cells wide/tall.
+#'   A length-4 vector follows `c(bottom, left, top, right)` like `marginSize`;
+#'   `NA` or `0` suppresses that side.  One blank cell separates each paint strip
+#'   from the adjacent margin strip (or main grid if no margin exists on that side).
+#' @param palette Palette specification passed to [TreeTools::PaintTree()].
+#'   Either a character string (`"default"`, `"protanopia"`, `"tritanopia"`) or
+#'   a function `function(h, s)`.  Ignored when `paintSize` is zero on all sides.
 #' @param \dots Arguments to `abline`, to control the appearance of vertical
 #' lines marking important edges.
 #' @returns `ConcordanceTable()` invisibly returns an named list containing:
@@ -489,7 +499,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 #'       xlab = "Leaf", ylab = "Character")
 #' @importFrom graphics abline image mtext
-#' @importFrom TreeTools CladeSizes NTip
+#' @importFrom grDevices col2rgb convertColor rgb
+#' @importFrom TreeTools CladeSizes NTip PaintTree
 #' @family split support functions
 #' @seealso
 #' - [SiteConcordance()]: compute underlying concordance values.
@@ -497,7 +508,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
                              xlab = "Edge", ylab = "Character",
                              normalize = TRUE, plot = TRUE,
-                             marginSize = 0L, ...) {
+                             marginSize = 0L, paintSize = 0L,
+                             palette = "default", ...) {
   cc <- ClusteringConcordance(tree, dataset, return = "all",
                               normalize = normalize)
   nodes <- seq_len(dim(cc)[[2]])
@@ -511,7 +523,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 
   col <- matrix(Col(quality, amount), dim(amount)[[1]], dim(amount)[[2]])
 
-  # Parse marginSize: scalar → all sides; vector → c(bottom, left, top, right)
+  # Parse marginSize: scalar → bottom + left; vector → c(bottom, left, top, right)
   ms <- as.integer(marginSize)
   if (length(ms) == 1L) {
     ms_bottom <- if (!is.na(ms) && ms > 0L) ms else 0L
@@ -524,12 +536,34 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     ms_top    <- if (length(ms) >= 3L && !is.na(ms[3L]) && ms[3L] > 0L) ms[3L] else 0L
     ms_right  <- if (length(ms) >= 4L && !is.na(ms[4L]) && ms[4L] > 0L) ms[4L] else 0L
   }
-  x_offset <- if (ms_left   > 0L) ms_left   + 1L else 0L
-  y_offset <- if (ms_bottom > 0L) ms_bottom + 1L else 0L
-  x_suffix <- if (ms_right  > 0L) ms_right  + 1L else 0L
-  y_suffix <- if (ms_top    > 0L) ms_top    + 1L else 0L
 
-  if (ms_left > 0L || ms_bottom > 0L || ms_top > 0L || ms_right > 0L) {
+  # Parse paintSize: scalar → top + right; vector → c(bottom, left, top, right)
+  ps <- as.integer(paintSize)
+  if (length(ps) == 1L) {
+    ps_top    <- if (!is.na(ps) && ps > 0L) ps else 0L
+    ps_right  <- ps_top
+    ps_bottom <- 0L
+    ps_left   <- 0L
+  } else {
+    ps_bottom <- if (!is.na(ps[1L]) && ps[1L] > 0L) ps[1L] else 0L
+    ps_left   <- if (length(ps) >= 2L && !is.na(ps[2L]) && ps[2L] > 0L) ps[2L] else 0L
+    ps_top    <- if (length(ps) >= 3L && !is.na(ps[3L]) && ps[3L] > 0L) ps[3L] else 0L
+    ps_right  <- if (length(ps) >= 4L && !is.na(ps[4L]) && ps[4L] > 0L) ps[4L] else 0L
+  }
+
+  # Paint is outermost; its width is prepended/appended to the margin offset.
+  ps_x_offset <- if (ps_left   > 0L) ps_left   + 1L else 0L
+  ps_y_offset <- if (ps_bottom > 0L) ps_bottom + 1L else 0L
+  ps_x_suffix <- if (ps_right  > 0L) ps_right  + 1L else 0L
+  ps_y_suffix <- if (ps_top    > 0L) ps_top    + 1L else 0L
+
+  x_offset <- ps_x_offset + if (ms_left   > 0L) ms_left   + 1L else 0L
+  y_offset <- ps_y_offset + if (ms_bottom > 0L) ms_bottom + 1L else 0L
+  x_suffix <- (if (ms_right  > 0L) ms_right  + 1L else 0L) + ps_x_suffix
+  y_suffix <- (if (ms_top    > 0L) ms_top    + 1L else 0L) + ps_y_suffix
+
+  if (ms_left > 0L || ms_bottom > 0L || ms_top > 0L || ms_right > 0L ||
+      ps_left > 0L || ps_bottom > 0L || ps_top > 0L || ps_right > 0L) {
     n_edges <- dim(cc)[[2]]
     n_chars <- dim(cc)[[3]]
 
@@ -539,8 +573,8 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     # `quality` already has NAs zeroed above
 
     # Extended layout (x = left→right, y = bottom→top):
-    #   x: [left: 1..ms_left] [blank: ms_left+1] [grid: xi] [blank] [right: ms_right cells]
-    #   y: [bottom: 1..ms_bottom] [blank: ms_bottom+1] [grid: yi] [blank] [top: ms_top cells]
+    #   x: [paint_left] [blank] [margin_left] [blank] [grid] [blank] [margin_right] [blank] [paint_right]
+    #   y: [paint_bottom] [blank] [margin_bottom] [blank] [grid] [blank] [margin_top] [blank] [paint_top]
     nx <- x_offset + n_edges + x_suffix
     ny <- y_offset + n_chars + y_suffix
     ext_col <- matrix("#FFFFFF", nx, ny)
@@ -556,7 +590,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
       charInfo <- cc["hChar", 1, ] * cc["n", 1, ]
       char_cols <- Col(char_conc, charInfo / max(charInfo))
       if (ms_left > 0L) {
-        for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
+        for (i in seq_len(ms_left)) ext_col[ps_x_offset + i, yi] <- char_cols
       }
       if (ms_right > 0L) {
         for (i in seq_len(ms_right)) ext_col[x_offset + n_edges + 1L + i, yi] <- char_cols
@@ -568,11 +602,46 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
         ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)))
       edge_cols <- Col(edge_conc, rowMeans(cc["hSplit", , ]))
       if (ms_bottom > 0L) {
-        for (j in seq_len(ms_bottom)) ext_col[xi, j] <- edge_cols
+        for (j in seq_len(ms_bottom)) ext_col[xi, ps_y_offset + j] <- edge_cols
       }
       if (ms_top > 0L) {
         for (j in seq_len(ms_top)) ext_col[xi, y_offset + n_chars + 1L + j] <- edge_cols
       }
+    }
+
+    if (ps_left > 0L || ps_right > 0L || ps_top > 0L || ps_bottom > 0L) {
+      paint <- PaintTree(tree, palette)
+      ctNodes <- as.integer(rownames(info))
+      edgeIdx <- match(ctNodes, tree[["edge"]][, 2L])
+      edge_paint_cols <- paint$edgeCol[edgeIdx]
+
+      if (ps_left > 0L || ps_right > 0L) {
+        # Per-character colours: Lab-weighted mean of edge paint colours,
+        # reusing `amount` (= relInfo) and `quality` already NA-zeroed above.
+        labMat <- matrix(
+          convertColor(t(col2rgb(edge_paint_cols)) / 255, from = "sRGB", to = "Lab"),
+          ncol = 3L
+        )
+        wMat_p   <- pmax(quality, 0) * amount
+        wSum_p   <- colSums(wMat_p)
+        noInfo_p <- wSum_p == 0
+        labAvg_p <- t(t(labMat) %*% wMat_p) / ifelse(noInfo_p, 1, wSum_p)
+        rgbAvg_p <- matrix(
+          pmax(0, pmin(1, convertColor(labAvg_p, from = "Lab", to = "sRGB"))),
+          ncol = 3L
+        )
+        char_paint_cols <- rgb(rgbAvg_p[, 1L], rgbAvg_p[, 2L], rgbAvg_p[, 3L])
+        char_paint_cols[noInfo_p] <- "#888888"
+
+        if (ps_left  > 0L)
+          for (i in seq_len(ps_left))  ext_col[i, yi] <- char_paint_cols
+        if (ps_right > 0L)
+          for (i in seq_len(ps_right)) ext_col[nx - ps_right + i, yi] <- char_paint_cols
+      }
+      if (ps_bottom > 0L)
+        for (j in seq_len(ps_bottom)) ext_col[xi, j] <- edge_paint_cols
+      if (ps_top    > 0L)
+        for (j in seq_len(ps_top))    ext_col[xi, ny - ps_top + j] <- edge_paint_cols
     }
 
     image(seq_len(nx), seq_len(ny),

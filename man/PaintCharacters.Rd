@@ -12,11 +12,12 @@ whose \code{names} match the tip labels of \code{tree}.}
 
 \item{tree}{A \code{phylo} object whose tip labels match \code{names(dataset)}.}
 
-\item{threshold}{Numeric scalar; edges whose \code{info} value (see
-\code{\link[=ConcordanceTable]{ConcordanceTable()}}) is below this threshold are excluded from the
-weighted average regardless of their concordance.  Default \code{0} retains all
-concordant edges.  Raising the threshold suppresses low-information edges
-that would otherwise dilute the colour signal.}
+\item{threshold}{Numeric scalar; edges whose information value (the
+\code{"hBest"} × \code{"n"} product from \code{\link[=ClusteringConcordance]{ClusteringConcordance()}}) is below this
+threshold are excluded from the weighted average regardless of their
+concordance.  Default \code{0} retains all concordant edges.  Raising the
+threshold suppresses low-information edges that would otherwise dilute the
+colour signal.}
 
 \item{palette}{Palette specification passed to \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}}.
 Either a character string (\code{"default"}, \code{"protanopia"}, \code{"tritanopia"})

@@ -14,6 +14,8 @@ ConcordanceTable(
   normalize = TRUE,
   plot = TRUE,
   marginSize = 0L,
+  paintSize = 0L,
+  palette = "default",
   ...
 )
 }
@@ -58,6 +60,18 @@ The left and right strips are coloured by the characterwise concordance
 (weighted mean across edges); the bottom and top strips by the edgewise
 concordance (weighted mean across characters).
 One blank cell separates each strip from the main grid.}
+
+\item{paintSize}{Integer scalar or vector.  Adds a painted strip OUTSIDE any
+\code{marginSize} strip, using hue from \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}} (edges) and the
+\code{\link[=PaintCharacters]{PaintCharacters()}} algorithm (characters).  A scalar \verb{> 0} adds a right
+strip (characters) and a top strip (edges), each \code{paintSize} cells wide/tall.
+A length-4 vector follows \code{c(bottom, left, top, right)} like \code{marginSize};
+\code{NA} or \code{0} suppresses that side.  One blank cell separates each paint strip
+from the adjacent margin strip (or main grid if no margin exists on that side).}
+
+\item{palette}{Palette specification passed to \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}}.
+Either a character string (\code{"default"}, \code{"protanopia"}, \code{"tritanopia"}) or
+a function \verb{function(h, s)}.  Ignored when \code{paintSize} is zero on all sides.}
 
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}

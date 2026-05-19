@@ -13,12 +13,6 @@
 #include <R.h>
 #include <Rinternals.h>
 
-// T-300 follow-up: cross-check NNI incremental delta against full_rescore.
-// If the same chain primitive that produced the −3 in tbr_search is
-// actually buggy, NNI single-chain calls will show drift here too.
-// Remove once verified clean.
-#define DEBUG_NNI_RESCORE
-
 namespace ts {
 
 // ---- Helpers (file-local) ----
@@ -99,24 +93,6 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
           } else {
             new_score = best_score + delta;
           }
-
-#ifdef DEBUG_NNI_RESCORE
-          std::vector<uint64_t> saved_prelim = tree.prelim;
-          std::vector<uint64_t> saved_final = tree.final_;
-          std::vector<uint64_t> saved_local_cost = tree.local_cost;
-          std::vector<int> saved_postorder = tree.postorder;
-          tree.build_postorder();
-          double ref = full_rescore(tree, ds);
-          if (std::fabs(new_score - ref) > 1e-9) {
-            Rprintf("DEBUG_NNI_RESCORE: incremental=%.10g  full=%.10g  "
-                    "diff=%.10g\n",
-                    new_score, ref, new_score - ref);
-          }
-          tree.prelim = std::move(saved_prelim);
-          tree.final_ = std::move(saved_final);
-          tree.local_cost = std::move(saved_local_cost);
-          tree.postorder = std::move(saved_postorder);
-#endif
         }
 
         if (new_score < best_score) {

@@ -17,11 +17,6 @@
 #include <R.h>
 #include <Rinternals.h>
 
-// T-300: cross-check incremental rescore against full_rescore on every
-// accepted SPR move.  Enabled during validation; remove the define in a
-// follow-up commit once a clean GHA cycle confirms diff == 0.
-#define DEBUG_RESCORE
-
 namespace ts {
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
@@ -1163,17 +1158,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         } else {
           actual = full_rescore(tree, ds);
         }
-#ifdef DEBUG_RESCORE
-        if (is_spr && !has_na) {
-          double ref = full_rescore(tree, ds);
-          if (std::fabs(actual - ref) > 1e-9) {
-            Rprintf("DEBUG_RESCORE: incremental=%.10g  full=%.10g  "
-                    "diff=%.10g  use_iw=%d\n",
-                    actual, ref, actual - ref, (int)use_iw);
-          }
-          actual = ref;  // defensive: use truth to avoid downstream drift
-        }
-#endif
 
         // Post-hoc constraint validation: TBR rerooting can break
         // splits that were classified as UNCONSTRAINED during the
