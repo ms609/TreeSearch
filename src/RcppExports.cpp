@@ -230,6 +230,36 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_ls_fit
+List ts_ls_fit(IntegerMatrix edge, NumericMatrix dist, Nullable<NumericMatrix> weight, int method);
+RcppExport SEXP _TreeSearch_ts_ls_fit(SEXP edgeSEXP, SEXP distSEXP, SEXP weightSEXP, SEXP methodSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< int >::type method(methodSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_ls_fit(edge, dist, weight, method));
+    return rcpp_result_gen;
+END_RCPP
+}
+// ts_ls_search
+List ts_ls_search(IntegerMatrix edge, NumericMatrix dist, Nullable<NumericMatrix> weight, int method, int maxHits, bool doSpr);
+RcppExport SEXP _TreeSearch_ts_ls_search(SEXP edgeSEXP, SEXP distSEXP, SEXP weightSEXP, SEXP methodSEXP, SEXP maxHitsSEXP, SEXP doSprSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type dist(distSEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericMatrix> >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< int >::type method(methodSEXP);
+    Rcpp::traits::input_parameter< int >::type maxHits(maxHitsSEXP);
+    Rcpp::traits::input_parameter< bool >::type doSpr(doSprSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_ls_search(edge, dist, weight, method, maxHits, doSpr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ts_na_debug_char
 List ts_na_debug_char(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int target_pattern);
 RcppExport SEXP _TreeSearch_ts_na_debug_char(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP target_patternSEXP) {

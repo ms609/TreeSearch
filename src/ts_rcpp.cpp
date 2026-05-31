@@ -20,6 +20,7 @@
 #include "ts_parallel.h"
 #include "ts_simplify.h"
 #include "ts_hsj.h"
+#include "ts_ls.h"
 // ts_temper.h removed — parallel tempering lives on feature/parallel-temper
 #include "ts_strategy.h"
 
@@ -106,6 +107,42 @@ IntegerMatrix tree_to_edge(const ts::TreeState& tree) {
   return edge;
 }
 
+// Build a topology-only TreeState (no character data) from a 1-based edge
+// matrix.  Used by the least-squares path, which reads only the tree shape.
+// Assumes the standard TreeSearch numbering: tips 1..n_tip, root = n_tip + 1,
+// first-encountered child of each node goes left.
+ts::TreeState build_topology_tree(const IntegerMatrix& edge) {
+  int n_edge = edge.nrow();
+  int n_tip = n_edge / 2 + 1;
+
+  ts::TreeState tree;
+  tree.n_tip = n_tip;
+  tree.n_internal = n_tip - 1;
+  tree.n_node = 2 * n_tip - 1;
+  tree.total_words = 0;
+  tree.n_blocks = 0;
+  tree.parent.assign(tree.n_node, -1);
+  tree.left.assign(tree.n_internal, -1);
+  tree.right.assign(tree.n_internal, -1);
+
+  std::vector<int> child_count(tree.n_internal, 0);
+  for (int i = 0; i < n_edge; ++i) {
+    int par = edge(i, 0) - 1;
+    int child = edge(i, 1) - 1;
+    tree.parent[child] = par;
+    int ni = par - n_tip;
+    if (child_count[ni] == 0) {
+      tree.left[ni] = child;
+    } else {
+      tree.right[ni] = child;
+    }
+    ++child_count[ni];
+  }
+  tree.parent[n_tip] = n_tip;
+  tree.build_postorder();
+  return tree;
+}
+
 } // anonymous namespace
 
 // Forward declarations for helpers defined later in this file
@@ -143,6 +180,111 @@ double ts_fitch_score(
       edge.nrow(), ds);
 
   return ts::score_tree(tree, ds);
+}
+
+// ---------------------------------------------------------------------------
+//  Least-squares distance fitting (Lapointe & Cucumel average consensus)
+// ---------------------------------------------------------------------------
+
+namespace {
+
+// Map per-branch fitted lengths back onto edge-matrix rows.  Each unrooted
+// branch is keyed by its child node; the root's "other" child edge (which has
+// no design column) is left at zero so that unrooting sums the pair correctly.
+NumericVector ls_edge_lengths(const ts::LSFit& fit, const IntegerMatrix& edge,
+                              int n_node) {
+  std::vector<double> node_len(n_node, 0.0);
+  for (int b = 0; b < fit.n_branch; ++b) {
+    node_len[fit.branch_node[b]] = fit.branch_length[b];
+  }
+  int n_edge = edge.nrow();
+  NumericVector elen(n_edge);
+  for (int i = 0; i < n_edge; ++i) {
+    elen[i] = node_len[edge(i, 1) - 1];
+  }
+  return elen;
+}
+
+const double* ls_weight_ptr(Nullable<NumericMatrix> weight, NumericMatrix& hold) {
+  if (weight.isNull()) return nullptr;
+  hold = NumericMatrix(weight.get());
+  return REAL(hold);
+}
+
+} // anonymous namespace
+
+// Fit branch lengths on a fixed topology to a target distance matrix.
+// `method`: 0 = OLS (closed form), 1 = NNLS (non-negative, matches phangorn).
+// Returns the per-edge lengths (aligned to `edge`'s rows) and the RSS.
+// [[Rcpp::export]]
+List ts_ls_fit(
+    IntegerMatrix edge,
+    NumericMatrix dist,
+    Nullable<NumericMatrix> weight = R_NilValue,
+    int method = 1)
+{
+  ts::TreeState tree = build_topology_tree(edge);
+  NumericMatrix whold;
+  const double* wptr = ls_weight_ptr(weight, whold);
+  ts::LSData ls = ts::build_ls_data(REAL(dist), tree.n_tip, wptr);
+  ts::LSMethod m = (method == 0) ? ts::LSMethod::OLS : ts::LSMethod::NNLS;
+
+  ts::LSFit fit = ts::ls_fit(tree, ls, m);
+
+  return List::create(
+    Named("edge_length") = ls_edge_lengths(fit, edge, tree.n_node),
+    Named("rss") = fit.rss,
+    Named("ok") = fit.ok
+  );
+}
+
+// Heuristic topology search minimising the least-squares fit to `dist`.
+// Alternates NNI and (optionally) SPR hill-climbing until neither improves,
+// then fits final branch lengths on the best topology.
+// [[Rcpp::export]]
+List ts_ls_search(
+    IntegerMatrix edge,
+    NumericMatrix dist,
+    Nullable<NumericMatrix> weight = R_NilValue,
+    int method = 1,
+    int maxHits = 1,
+    bool doSpr = true)
+{
+  ts::TreeState tree = build_topology_tree(edge);
+  NumericMatrix whold;
+  const double* wptr = ls_weight_ptr(weight, whold);
+  ts::LSData ls = ts::build_ls_data(REAL(dist), tree.n_tip, wptr);
+  ts::LSMethod m = (method == 0) ? ts::LSMethod::OLS : ts::LSMethod::NNLS;
+
+  int total_moves = 0, total_iters = 0;
+  ts::LSSearchResult r = ts::ls_nni_search(tree, ls, m, maxHits);
+  double rss = r.rss;
+  total_moves += r.n_moves;
+  total_iters += r.n_iterations;
+
+  if (doSpr) {
+    bool improving = true;
+    while (improving) {
+      double before = rss;
+      ts::LSSearchResult rs = ts::ls_spr_search(tree, ls, m, maxHits);
+      ts::LSSearchResult rn = ts::ls_nni_search(tree, ls, m, maxHits);
+      rss = rn.rss;
+      total_moves += rs.n_moves + rn.n_moves;
+      total_iters += rs.n_iterations + rn.n_iterations;
+      improving = (rss < before - 1e-9);
+    }
+  }
+
+  ts::LSFit fit = ts::ls_fit(tree, ls, m);
+  IntegerMatrix out_edge = tree_to_edge(tree);
+
+  return List::create(
+    Named("edge") = out_edge,
+    Named("edge_length") = ls_edge_lengths(fit, out_edge, tree.n_node),
+    Named("rss") = fit.rss,
+    Named("n_moves") = total_moves,
+    Named("n_iterations") = total_iters
+  );
 }
 
 // [[Rcpp::export]]

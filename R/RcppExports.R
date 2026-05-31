@@ -96,6 +96,14 @@ ts_fitch_score <- function(edge, contrast, tip_data, weight, levels, min_steps =
     .Call(`_TreeSearch_ts_fitch_score`, edge, contrast, tip_data, weight, levels, min_steps, concavity, infoAmounts, xpiwe, xpiwe_r, xpiwe_max_f, obs_count)
 }
 
+ts_ls_fit <- function(edge, dist, weight = NULL, method = 1L) {
+    .Call(`_TreeSearch_ts_ls_fit`, edge, dist, weight, method)
+}
+
+ts_ls_search <- function(edge, dist, weight = NULL, method = 1L, maxHits = 1L, doSpr = TRUE) {
+    .Call(`_TreeSearch_ts_ls_search`, edge, dist, weight, method, maxHits, doSpr)
+}
+
 ts_na_debug_char <- function(edge, contrast, tip_data, weight, levels, target_pattern) {
     .Call(`_TreeSearch_ts_na_debug_char`, edge, contrast, tip_data, weight, levels, target_pattern)
 }

@@ -1,6 +1,16 @@
-# TreeSearch (development version)
+# TreeSearch 2.0.0.9000 (2026-05-31)
 
 ## New features
+
+- New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
+  fit branch lengths to, the tree that best matches a target distance matrix
+  under a least-squares criterion, reusing the optimised C++ rearrangement
+  kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
+  (`method = "nnls"`) least squares are supported, with optional
+  Fitch-Margoliash (`weight = "fm"`) or custom weighting.  This provides the
+  topology-search step of Lapointe & Cucumel's (1997) average consensus
+  procedure; `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in
+  the native kernel.
 
 - New function `PaintCharacters()` colours each character in a morphological
   dataset by the hue of the tree edges it most concordantly supports, using
