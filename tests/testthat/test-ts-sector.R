@@ -155,6 +155,7 @@ test_that("XSS on 30-tip data produces valid result", {
 })
 
 test_that("RSS works with various tree sizes", {
+  set.seed(4715)
   for (n in c(8, 15, 20)) {
     mat <- matrix(sample(0:1, n * 5, replace = TRUE),
                   nrow = n,
@@ -177,6 +178,7 @@ test_that("RSS works with various tree sizes", {
 
 test_that("XSS works with various partition counts", {
   tree <- as.phylo(100, 20)
+  set.seed(6928)
   mat <- matrix(sample(0:1, 20 * 8, replace = TRUE),
                 nrow = 20,
                 dimnames = list(paste0("t", 1:20), NULL))

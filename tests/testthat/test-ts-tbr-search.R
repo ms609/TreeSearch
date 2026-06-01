@@ -94,6 +94,7 @@ test_that("TBR accept_equal allows lateral moves", {
 
 test_that("TBR max_accepted_changes stops early", {
   tree <- as.phylo(1, 10)
+  set.seed(3811)
   mat <- matrix(sample(0:1, 10 * 5, replace = TRUE),
                 nrow = 10,
                 dimnames = list(paste0("t", 1:10), NULL))
@@ -109,6 +110,7 @@ test_that("TBR max_accepted_changes stops early", {
 })
 
 test_that("TBR works on various tree sizes", {
+  set.seed(8127)
   for (n_tip in c(5, 8, 15, 25)) {
     tree <- as.phylo(1, n_tip)
     mat <- matrix(sample(0:2, n_tip * 4, replace = TRUE),
@@ -132,6 +134,7 @@ test_that("TBR works on various tree sizes", {
 
 test_that("TBR result tree has valid topology", {
   tree <- as.phylo(100, 12)
+  set.seed(5219)
   mat <- matrix(sample(0:1, 12 * 5, replace = TRUE),
                 nrow = 12,
                 dimnames = list(paste0("t", 1:12), NULL))

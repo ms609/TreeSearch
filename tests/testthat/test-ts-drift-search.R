@@ -145,6 +145,7 @@ test_that("Single cycle works", {
 })
 
 test_that("Drift works on various tree sizes", {
+  set.seed(2841)
   for (n_tip in c(10, 20, 50)) {
     tree <- as.phylo(1, n_tip)
     mat <- matrix(sample(0:2, n_tip * 4, replace = TRUE),
