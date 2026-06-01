@@ -71,8 +71,14 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     char <- PrepareDataProfile(char)
   }
   
-  # Define ambiguous state, depending on applicability
+  # Define ambiguous state, depending on applicability.
+  # Take the first matching row when multiple rows are fully ambiguous, to
+  # avoid silently assigning a vector to `charQm[[leaf]]` (analogous to the
+  # T-302 fix for `qmApp`).
   qm <- which(rowSums(cont) == dim(cont)[2])
+  if (length(qm) > 0L) {
+    qm <- qm[[1L]]
+  }
   if ("-" %in% colnames(cont)) {
     inapp <- as.logical(cont[, "-"])
     app <- as.logical(rowSums(contApp))
