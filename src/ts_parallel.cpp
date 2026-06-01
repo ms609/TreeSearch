@@ -9,21 +9,20 @@
 #include <R.h>
 #include <Rmath.h>
 
-// Portable TTY check.  We need to know whether stdout is a real terminal so
-// that we can safely call R_FlushConsole() with the \r overwrite trick.  In
-// R CMD check (and any subprocess that captures output to a pipe) the flush
-// can block indefinitely once the pipe buffer fills, hanging the check.
+// Portable TTY check.  We need to know whether the output stream is a real
+// terminal so we can safely use the \r overwrite trick with R_FlushConsole().
+// In R CMD check (and any subprocess that captures output to a pipe) the
+// flush can block indefinitely once the pipe buffer fills, hanging the check.
 //
-// R_Interactive (from R's internal headers) is the obvious test but it is a
-// non-API entry point — R CMD check flags it.  isatty(fileno(stdout)) is the
-// public POSIX equivalent and works identically here: a captured pipe is
-// never a TTY, an interactive console is.
+// We test file descriptor 1 (the POSIX-guaranteed fd for stdout) directly
+// rather than calling fileno(stdout), which would pull in the stdout symbol
+// from <stdio.h> and trigger a CRAN NOTE about stdout use in compiled code.
 #ifdef _WIN32
   #include <io.h>
-  #define TS_ISATTY()  (_isatty(_fileno(stdout)) != 0)
+  #define TS_ISATTY()  (_isatty(1) != 0)
 #else
   #include <unistd.h>
-  #define TS_ISATTY()  (isatty(fileno(stdout)) != 0)
+  #define TS_ISATTY()  (isatty(1) != 0)
 #endif
 
 
