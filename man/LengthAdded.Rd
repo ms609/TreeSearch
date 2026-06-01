@@ -54,11 +54,13 @@ trees <- inapplicable.trees[["Vinther2008"]]
 dataset <- inapplicable.phyData[["Vinther2008"]]
 char <- dataset[, 11]
 added <- LengthAdded(trees, char)
+
 PlotCharacter(
-  tree = trees[[1]],
+  tree = trees[[1]], 
   dataset = char,
   tip.color = 1 + added[trees[[1]]$tip.label] # Colour by added steps
 ) -> XX # Suppress return value; display plot only
+
 }
 \references{
 \insertAllCited{}
