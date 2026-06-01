@@ -1,32 +1,4 @@
-# TreeSearch 2.0.0.9000 (2026-05-31)
 
-## New features
-
-- New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
-  fit branch lengths to, the tree that best matches a target distance matrix
-  under a least-squares criterion, reusing the optimised C++ rearrangement
-  kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
-  (`method = "nnls"`) least squares are supported, with optional
-  Fitch-Margoliash (`weight = "fm"`) or custom weighting.  This provides the
-  topology-search step of Lapointe & Cucumel's (1997) average consensus
-  procedure; `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in
-  the native kernel.
-
-- New function `PaintCharacters()` colours each character in a morphological
-  dataset by the hue of the tree edges it most concordantly supports, using
-  `ConcordanceTable()` MI weights averaged in CIELAB colour space.  Pairs with
-  `TreeTools::PaintTree()` to visually map characters to clades.
-
-- `attr(dataset, "weight")` now accepts non-integer character weights.  The
-  C++ scoring engine still stores `int` weights internally; fractional
-  inputs are rescaled to integer with a configurable precision (default
-  0.001, controlled by `getOption("TreeSearch.fractional.scale", 1000L)`).
-  Previously, fractional weights were silently truncated at the Rcpp
-  boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
-  the respective characters' contributions).  Integer weights pass
-  through unchanged.  `TreeLength()` and other scores are returned in
-  units of `steps * scale` when fractional weights are present; within-
-  run ranking is unaffected.
 
 # TreeSearch 2.0.0
 
@@ -98,6 +70,29 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
   same and neighbouring score plateaus, up to `poolMaxSize`.
   This addresses a common complaint that the previous implementation returned
   only one tree when multiple MPTs exist.
+- `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
+  fit branch lengths to, the tree that best matches a target distance matrix
+  under a least-squares criterion, reusing the optimised C++ rearrangement
+  kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
+  (`method = "nnls"`) least squares are supported, with optional
+  Fitch-Margoliash (`weight = "fm"`) or custom weighting.  This provides the
+  topology-search step of Lapointe & Cucumel's (1997) average consensus
+  procedure; `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in
+  the native kernel.
+- `PaintCharacters()` colours each character in a morphological
+  dataset by the hue of the tree edges it most concordantly supports, using
+  `ConcordanceTable()` MI weights averaged in CIELAB colour space.  Pairs with
+  `TreeTools::PaintTree()` to visually map characters to clades.
+- `attr(dataset, "weight")` now accepts non-integer character weights.  The
+  C++ scoring engine still stores `int` weights internally; fractional
+  inputs are rescaled to integer with a configurable precision (default
+  0.001, controlled by `getOption("TreeSearch.fractional.scale", 1000L)`).
+  Previously, fractional weights were silently truncated at the Rcpp
+  boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
+  the respective characters' contributions).  Integer weights pass
+  through unchanged.  `TreeLength()` and other scores are returned in
+  units of `steps * scale` when fractional weights are present; within-
+  run ranking is unaffected.
 
 ### New parameters for `MaximizeParsimony()`
 
