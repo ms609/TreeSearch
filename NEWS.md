@@ -1,4 +1,46 @@
+# To integrate into 2.0.0 notes
 
+- `WideSample()` now dispatches to the appropriate Max-Min diversity (MMDP)
+  solver from the \pkg{MaxMin} package, choosing the tier automatically
+  from `length(trees)`: the exact node-packing optimum (Sayyady & Fathi, 2016)
+  for small sets, drop-add tabu search (Porumbel et al., 2011) while the
+  distance matrix is affordable, and anchored Gonzalez beyond that.  A new
+  `quality` argument (`1` fast, `2` ~99%-optimal, `3` exact) forces a tier, and
+  `time_budget_s` caps the heuristic and exact solvers.  For very large tree
+  sets the anchored-Gonzalez tier runs from an on-demand distance oracle and
+  never materialises the full distance matrix, so subsampling tens of thousands
+  of trees is feasible.
+  - **Breaking:** the `method` argument is removed (`method = "random"` along
+    with it; draw a random subset with `sample()` if needed), and `distance` is
+    renamed `dist`.  Selection is now fully deterministic — the previous
+    maximin path seeded from a random tree, so results differ from prior
+    versions even at `quality = 1`.
+
+- New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
+  fit branch lengths to, the tree that best matches a target distance matrix
+  under a least-squares criterion, reusing the optimised C++ rearrangement
+  kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
+  (`method = "nnls"`) least squares are supported, with optional
+  Fitch-Margoliash (`weight = "fm"`) or custom weighting.  This provides the
+  topology-search step of Lapointe & Cucumel's (1997) average consensus
+  procedure; `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in
+  the native kernel.
+
+- New function `PaintCharacters()` colours each character in a morphological
+  dataset by the hue of the tree edges it most concordantly supports, using
+  `ConcordanceTable()` MI weights averaged in CIELAB colour space.  Pairs with
+  `TreeTools::PaintTree()` to visually map characters to clades.
+
+- `attr(dataset, "weight")` now accepts non-integer character weights.  The
+  C++ scoring engine still stores `int` weights internally; fractional
+  inputs are rescaled to integer with a configurable precision (default
+  0.001, controlled by `getOption("TreeSearch.fractional.scale", 1000L)`).
+  Previously, fractional weights were silently truncated at the Rcpp
+  boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
+  the respective characters' contributions).  Integer weights pass
+  through unchanged.  `TreeLength()` and other scores are returned in
+  units of `steps * scale` when fractional weights are present; within-
+  run ranking is unaffected.
 
 # TreeSearch 2.0.0
 

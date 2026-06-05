@@ -7,8 +7,9 @@
 WideSample(
   trees,
   n,
-  method = c("maximin", "random"),
-  distance = TreeDist::ClusteringInfoDistance
+  dist = TreeDist::ClusteringInfoDistance,
+  quality = NULL,
+  time_budget_s = 2
 )
 }
 \arguments{
@@ -17,54 +18,98 @@ WideSample(
 \item{n}{Integer: number of trees to retain. If \code{n >= length(trees)}, all
 trees are returned unchanged.}
 
-\item{method}{Character: subsampling strategy.
-\describe{
-\item{\code{"maximin"}}{(Default.) Greedy furthest-point selection: start
-from a randomly chosen tree, then iteratively add the tree whose
-minimum distance to the already-selected set is largest. This
-maximizes topological spread.}
-\item{\code{"random"}}{Simple random sample without replacement.}
+\item{dist}{Either:
+\itemize{
+\item A function giving pairwise distances (default:
+\code{\link[TreeDist:ClusteringInfoDistance]{TreeDist::ClusteringInfoDistance()}}).  It must support the form
+\code{dist(trees)} returning a \code{dist} object; for the largest tree sets it
+is additionally called as \code{dist(trees[[i]], trees)} and must then
+return a numeric vector of length \code{length(trees)} (the distances from
+tree \code{i} to every tree).  \code{ClusteringInfoDistance()} satisfies both.
+\item A pre-computed \code{dist} object or square numeric matrix whose size
+matches \code{length(trees)}.
 }}
 
-\item{distance}{Either:
-\itemize{
-\item A function that accepts a \code{multiPhylo} and returns a \code{dist}
-object (default: \code{\link[TreeDist:ClusteringInfoDistance]{TreeDist::ClusteringInfoDistance()}}).
-\item A pre-computed \code{dist} object whose size matches \code{length(trees)}.
-}
-Ignored when \code{method = "random"}.}
+\item{quality}{Integer solver tier, or \code{NULL} (default) to choose
+automatically by \code{length(trees)}.  \code{1} = anchored Gonzalez (fast),
+\code{2} = DropAdd-TS (~99\%-optimal), \code{3} = exact optimum.  Forcing \code{quality}
+2 or 3 with a \emph{distance function} on a tree set too large to build the
+matrix is an error rather than a silent downgrade; pass a pre-computed
+\code{dist} or use \code{quality = 1} for such sets.}
+
+\item{time_budget_s}{Numeric: wall-clock budget, in seconds, for the
+heuristic (\code{quality = 2}) and exact (\code{quality = 3}) tiers.  Ignored by the
+anchored-Gonzalez tier, which is effectively instantaneous.  Default \code{2}.}
 }
 \value{
 A \code{multiPhylo} object of length \code{min(n, length(trees))}.
 Attributes of the input (e.g. \code{score}, \code{hits_to_best}) are preserved.
 }
 \description{
-Selects \code{n} trees from a \code{multiPhylo} object that are as
-topologically distinct from one another as possible, using greedy
-furthest-point (maximin) selection.  This is useful when a search
-returns many most-parsimonious trees and downstream analyses
-(consensus, tree-space visualization) need a manageable but
-diverse subset.
+Selects \code{n} trees from a \code{multiPhylo} object that are as topologically
+distinct from one another as possible, by solving the Max-Min Diversity
+Problem (MMDP): maximise the \emph{minimum} pairwise distance within the chosen
+subset.  This is useful when a search returns many most-parsimonious trees
+and downstream analyses (consensus, tree-space visualization) need a
+manageable but diverse subset.
 }
 \details{
-Uniform random subsampling of MPTs is misleading: the number of trees
-in a region of tree space reflects the density of the parsimony
-landscape, not the likelihood or support for that topology.
-A random draw over-represents topologies that happen to sit on broad
-plateaux and under-represents isolated optima.
-\code{WideSample()} avoids this bias by selecting for topological spread
-rather than frequency.
+Uniform random subsampling of MPTs is misleading: the number of trees in a
+region of tree space reflects the density of the parsimony landscape, not
+the likelihood or support for that topology.  A random draw over-represents
+topologies that sit on broad plateaux and under-represents isolated optima.
+\code{WideSample()} instead selects for topological \emph{spread}, density-blind, by
+dispatching to the appropriate MMDP solver from the \pkg{MaxMin}
+package:
+
+\describe{
+\item{anchored Gonzalez (\code{quality = 1})}{Greedy furthest-point selection
+from a deterministic peripheral seed.  Fast; the only feasible option
+for very large tree sets, where it runs from an on-demand distance
+oracle and never materialises the full distance matrix.}
+\item{DropAdd-TS (\code{quality = 2})}{Drop-add tabu search
+(Porumbel et al. 2011): a ~99\%-optimal heuristic.  Requires the full
+distance matrix.}
+\item{exact (\code{quality = 3})}{Node-packing integer program
+(Sayyady & Fathi 2016): the proven optimum.  Practical only for small
+\code{length(trees)}; needs the \pkg{highs} package.}
+}
+
+With \code{quality = NULL} (default) the tier is chosen automatically from
+\code{length(trees)}: the exact solver for very small sets (when \pkg{highs} is
+available), DropAdd-TS while the distance matrix is affordable to build, and
+anchored Gonzalez beyond that.  A dense distance matrix is roughly
+\code{8 * length(trees)^2} bytes (about 1.1 GB at 12,000 trees, 12.8 GB at
+40,000), so for the largest sets only the matrix-free anchored Gonzalez is
+reachable.
 }
 \examples{
 library("TreeTools")
 trees <- as.phylo(0:99, nTip = 8)
-sub10 <- WideSample(trees, 10)
+
+# Fast anchored-Gonzalez subsample (deterministic, matrix-free)
+sub10 <- WideSample(trees, 10, quality = 1)
 length(sub10)  # 10
+
+\donttest{
+# Automatic tier selection (DropAdd-TS heuristic at this size)
+auto10 <- WideSample(trees, 10)
 
 # Pre-computed distances
 dists <- TreeDist::ClusteringInfoDistance(trees)
-sub5 <- WideSample(trees, 5, distance = dists)
+sub5 <- WideSample(trees, 5, dist = dists)
 
+# Force the exact optimum on a small set (needs the 'highs' package)
+if (requireNamespace("highs", quietly = TRUE)) {
+  sub4 <- WideSample(trees[1:20], 4, quality = 3)
+}
+}
+
+}
+\references{
+\insertRef{Porumbel2011}{TreeSearch}
+
+\insertRef{Sayyady2016}{TreeSearch}
 }
 \seealso{
 Other tree scoring:
