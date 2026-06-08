@@ -8,7 +8,8 @@
 }
 \description{
 Returns a function of one 1-based index \code{i} giving the distances from tree
-\code{i} to every tree, as required by \code{\link[MaxMin:GonzalezColumn]{MaxMin::GonzalezColumn()}}. Probes
+\code{i} to every tree, as required by the distance-column oracle path of
+\code{\link[MaxMin:Gonzalez]{MaxMin::Gonzalez()}}. Probes
 the \verb{(tree, trees)} calling form once up front and fails clearly if the
 supplied \code{dist} function does not support it.
 }

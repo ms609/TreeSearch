@@ -1,4 +1,5 @@
-# 40,000-tree matrix-free smoke test for WideSample() over MaxMin::GonzalezColumn.
+# 40,000-tree matrix-free smoke test for WideSample() over the
+# MaxMin::Gonzalez() distance-column oracle path.
 suppressPackageStartupMessages({
   library(TreeTools)   # for as.phylo.numeric
   library(TreeSearch)

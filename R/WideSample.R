@@ -174,7 +174,7 @@ WideSample <- function(
     tier,
     # Tier 1: single anchored Gonzalez, fed by a column oracle. Reading the
     # oracle from a supplied matrix or from the on-demand tree callback feeds
-    # GonzalezColumn the identical distances, so the selection does not depend
+    # Gonzalez() the identical distances, so the selection does not depend
     # on whether distances were pre-computed.
     `1` = {
       colFn <- if (matrixAvailable) {
@@ -182,7 +182,7 @@ WideSample <- function(
       } else {
         .WideSampleColumnOracle(dist, trees, nTrees)
       }
-      MaxMin::GonzalezColumn(colFn, nTrees, n)
+      MaxMin::Gonzalez(colFn, n, N = nTrees)
     },
     `2` = MaxMin::DropAddTS(dmat, n, time_budget_s = time_budget_s)$indices,
     `3` = {
@@ -233,7 +233,8 @@ WideSample <- function(
 #' Build a column-oracle closure for the matrix-free Gonzalez path
 #'
 #' Returns a function of one 1-based index `i` giving the distances from tree
-#' `i` to every tree, as required by [MaxMin::GonzalezColumn()]. Probes
+#' `i` to every tree, as required by the distance-column oracle path of
+#' [MaxMin::Gonzalez()]. Probes
 #' the `(tree, trees)` calling form once up front and fails clearly if the
 #' supplied `dist` function does not support it.
 #' @keywords internal
