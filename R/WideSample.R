@@ -267,7 +267,7 @@ WideSample <- function(
   # FarFirst returns farthest-first (selection) order; sort to ascending tree
   # order so the subset preserves the input ordering. A no-op for tiers 2-4,
   # which already return ascending indices.
-  .SubsetMultiPhylo(trees, sort(as.integer(idx)))
+  .SubsetMultiPhylo(trees, as.integer(idx))
 }
 
 #' Choose the WideSample solver tier
