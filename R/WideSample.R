@@ -51,11 +51,11 @@
 #' Two size thresholds govern automatic selection; tune them for the host
 #' machine with [options()] rather than per call:
 #' \describe{
-#'   \item{`TreeSearch.WideSample.buildCeiling`}{Largest `length(trees)` for
+#'   \item{`WideSample.buildCeiling`}{Largest `length(trees)` for
 #'     which a dense distance matrix is built from a distance function (default
 #'     `12000`; ~1.1 GB).  Beyond it only the matrix-free FarFirst tier is
 #'     reachable from a function (a pre-computed matrix is always honoured).}
-#'   \item{`TreeSearch.WideSample.exactCeiling`}{Largest `length(trees)` at
+#'   \item{`WideSample.exactCeiling`}{Largest `length(trees)` at
 #'     which automatic selection reaches the exact tier (default `200`).}
 #' }
 #'
@@ -141,7 +141,7 @@ WideSample <- function(
   # Build ceiling: largest N for which we materialize a dense N x N matrix from
   # a distance function. ~1.1 GB at 12,000; as.matrix.dist overflows near
   # 46,340 (the dist half-vector exceeds .Machine$integer.max).
-  buildCeiling <- getOption("TreeSearch.WideSample.buildCeiling", 12000L)
+  buildCeiling <- getOption("WideSample.buildCeiling", 12000L)
   # Exact ceiling: largest N at which auto-selection reaches the exact tier.
   # MaxMin::ExactMaxMin() is now a sparse-matrix, heuristic-warm-started solver
   # (~20x faster than the dense form), practical to a few hundred trees at the
@@ -149,7 +149,7 @@ WideSample <- function(
   # MaxMin optimum sits near the diameter, where the threshold graph is
   # near-complete). Kept conservative because the IP cost turns on `n` and
   # instance structure, not on `length(trees)` alone.
-  exactCeiling <- getOption("TreeSearch.WideSample.exactCeiling", 200L)
+  exactCeiling <- getOption("WideSample.exactCeiling", 200L)
 
   if (inherits(trees, "phylo")) {
     trees <- c(trees)

@@ -4,8 +4,13 @@
 \alias{WideSample}
 \title{Select a topologically diverse subset of trees}
 \usage{
-WideSample(trees, n, dist = TreeDist::ClusteringInfoDistance, effort = NULL,
-  timeBudgetS = 60)
+WideSample(
+  trees,
+  n,
+  dist = TreeDist::ClusteringInfoDistance,
+  effort = NULL,
+  timeBudgetS = 60
+)
 }
 \arguments{
 \item{trees}{A \code{multiPhylo} object, or a single \code{phylo} (coerced silently).}
@@ -98,11 +103,11 @@ matrix-free FarFirst tier is reachable.
 Two size thresholds govern automatic selection; tune them for the host
 machine with \code{\link[=options]{options()}} rather than per call:
 \describe{
-\item{\code{TreeSearch.WideSample.buildCeiling}}{Largest \code{length(trees)} for
+\item{\code{WideSample.buildCeiling}}{Largest \code{length(trees)} for
 which a dense distance matrix is built from a distance function (default
 \code{12000}; ~1.1 GB).  Beyond it only the matrix-free FarFirst tier is
 reachable from a function (a pre-computed matrix is always honoured).}
-\item{\code{TreeSearch.WideSample.exactCeiling}}{Largest \code{length(trees)} at
+\item{\code{WideSample.exactCeiling}}{Largest \code{length(trees)} at
 which automatic selection reaches the exact tier (default \code{200}).}
 }
 }
