@@ -4,16 +4,26 @@
 \alias{.SelectWideSampleTier}
 \title{Choose the WideSample solver tier}
 \usage{
-.SelectWideSampleTier(quality, matrixAvailable, nTrees, ceiling)
+.SelectWideSampleTier(
+  effort,
+  matrixAvailable,
+  nTrees,
+  ceiling,
+  exactCeiling = 200L,
+  highsAvailable = requireNamespace("highs", quietly = TRUE)
+)
 }
 \value{
-Integer tier (1, 2 or 3); errors when a forced quality is
+Integer tier (1, 2, 3 or 4); errors when a forced effort is
 unreachable.
 }
 \description{
 Keyed on whether a distance matrix is already available and on
 \code{length(trees)}, never on N alone: a supplied matrix keeps the higher tiers
 reachable past the build ceiling, whereas a distance function past the
-ceiling cannot reach them (building the matrix would exhaust memory).
+ceiling cannot reach them (building the matrix would exhaust memory). The
+exact tier is additionally gated on a (smaller) exact ceiling and on the
+\pkg{highs} package being installed; Grasp (\code{effort = 3}) is reachable only
+when forced, never auto-selected.
 }
 \keyword{internal}

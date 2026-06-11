@@ -4,19 +4,15 @@
 \alias{WideSample}
 \title{Select a topologically diverse subset of trees}
 \usage{
-WideSample(
-  trees,
-  n,
-  dist = TreeDist::ClusteringInfoDistance,
-  quality = NULL,
-  time_budget_s = 2
-)
+WideSample(trees, n, dist = TreeDist::ClusteringInfoDistance, effort = NULL,
+  timeBudgetS = 60)
 }
 \arguments{
 \item{trees}{A \code{multiPhylo} object, or a single \code{phylo} (coerced silently).}
 
 \item{n}{Integer: number of trees to retain. If \code{n >= length(trees)}, all
-trees are returned unchanged.}
+trees are returned unchanged.  If \code{n == 1}, the single most central tree
+(the medoid) is returned.}
 
 \item{dist}{Either:
 \itemize{
@@ -30,16 +26,20 @@ tree \code{i} to every tree).  \code{ClusteringInfoDistance()} satisfies both.
 matches \code{length(trees)}.
 }}
 
-\item{quality}{Integer solver tier, or \code{NULL} (default) to choose
-automatically by \code{length(trees)}.  \code{1} = anchored Gonzalez (fast),
-\code{2} = DropAdd-TS (~99\%-optimal), \code{3} = exact optimum.  Forcing \code{quality}
-2 or 3 with a \emph{distance function} on a tree set too large to build the
-matrix is an error rather than a silent downgrade; pass a pre-computed
-\code{dist} or use \code{quality = 1} for such sets.}
+\item{effort}{Integer solver tier, or \code{NULL} (default) to choose
+automatically by \code{length(trees)}.  \code{1} = FarFirst (fast, matrix-free),
+\code{2} = DropAdd (~99\%-optimal, deterministic), \code{3} = Grasp (highest-quality
+heuristic, higher cost), \code{4} = exact optimum.  Forcing \code{effort} 2, 3 or 4
+with a \emph{distance function} on a tree set too large to build the matrix is
+an error rather than a silent downgrade; pass a pre-computed \code{dist} or use
+\code{effort = 1} for such sets.}
 
-\item{time_budget_s}{Numeric: wall-clock budget, in seconds, for the
-heuristic (\code{quality = 2}) and exact (\code{quality = 3}) tiers.  Ignored by the
-anchored-Gonzalez tier, which is effectively instantaneous.  Default \code{2}.}
+\item{timeBudgetS}{Numeric: wall-clock budget, in seconds, for the
+refinement (\code{effort = 2}, \code{3}) and exact (\code{effort = 4}) tiers; ignored by
+the matrix-free FarFirst tier, which is effectively instantaneous.  The
+heuristic tiers terminate at an internal deterministic plateau, usually
+well within this budget, so it acts as a safety cap; a value small enough
+to interrupt the plateau makes the result machine-dependent.  Default \code{60}.}
 }
 \value{
 A \code{multiPhylo} object of length \code{min(n, length(trees))}.
@@ -48,7 +48,7 @@ Attributes of the input (e.g. \code{score}, \code{hits_to_best}) are preserved.
 \description{
 Selects \code{n} trees from a \code{multiPhylo} object that are as topologically
 distinct from one another as possible, by solving the Max-Min Diversity
-Problem (MMDP): maximise the \emph{minimum} pairwise distance within the chosen
+Problem (MMDP): maximize the \emph{minimum} pairwise distance within the chosen
 subset.  This is useful when a search returns many most-parsimonious trees
 and downstream analyses (consensus, tree-space visualization) need a
 manageable but diverse subset.
@@ -63,51 +63,83 @@ dispatching to the appropriate MMDP solver from the \pkg{MaxMin}
 package:
 
 \describe{
-\item{anchored Gonzalez (\code{quality = 1})}{Greedy furthest-point selection
-from a deterministic peripheral seed.  Fast; the only feasible option
-for very large tree sets, where it runs from an on-demand distance
-oracle and never materialises the full distance matrix.}
-\item{DropAdd-TS (\code{quality = 2})}{Drop-add tabu search
-(Porumbel et al. 2011): a ~99\%-optimal heuristic.  Requires the full
+\item{FarFirst (\code{effort = 1})}{Greedy farthest-first selection
+(Gonzalez 1985) from a deterministic peripheral seed.  Fast and
+matrix-free: it reads distances through an on-demand column oracle and
+never materializes the full distance matrix, so it is the only feasible
+option for very large tree sets.  RNG-free, hence deterministic.}
+\item{DropAdd (\code{effort = 2})}{Drop-add tabu search
+(Porumbel et al. 2011): a ~99\%-optimal heuristic that terminates at a
+deterministic plateau.  RNG-free, hence deterministic.  Requires the full
 distance matrix.}
-\item{exact (\code{quality = 3})}{Node-packing integer program
-(Sayyady & Fathi 2016): the proven optimum.  Practical only for small
-\code{length(trees)}; needs the \pkg{highs} package.}
+\item{Grasp (\code{effort = 3})}{GRASP with path relinking
+(Resende et al. 2010): attains the highest \eqn{T_k} of the package's
+heuristics, at a cost that grows steeply with \code{n}.  Requires the full
+distance matrix.  Draws on the session RNG, so the particular trees it
+returns vary between runs unless you call \code{\link[=set.seed]{set.seed()}} first (the
+achieved diversity is essentially unaffected).}
+\item{exact (\code{effort = 4})}{Node-packing integer program
+(Sayyady & Fathi 2016): the proven optimum.  The solver is now
+sparse-matrix and heuristic warm-started, so it is practical up to a few
+hundred trees; it needs the \pkg{highs} package.  The optimal
+\emph{diversity} is deterministic, but when several subsets are tied-optimal
+the particular trees returned can vary with the session RNG.}
 }
 
-With \code{quality = NULL} (default) the tier is chosen automatically from
-\code{length(trees)}: the exact solver for very small sets (when \pkg{highs} is
-available), DropAdd-TS while the distance matrix is affordable to build, and
-anchored Gonzalez beyond that.  A dense distance matrix is roughly
-\code{8 * length(trees)^2} bytes (about 1.1 GB at 12,000 trees, 12.8 GB at
-40,000), so for the largest sets only the matrix-free anchored Gonzalez is
-reachable.
+With \code{effort = NULL} (default) the tier is chosen automatically from
+\code{length(trees)}: the exact solver for small sets (up to ~200 trees, when
+\pkg{highs} is available), DropAdd while the distance matrix is affordable to
+build, and FarFirst beyond that.  Grasp (\code{effort = 3}) is never selected
+automatically -- its cost grows steeply with \code{n}, so it is opt-in.  A dense
+distance matrix is roughly \code{8 * length(trees)^2} bytes (about 1.1 GB at
+12,000 trees, 12.8 GB at 40,000), so for the largest sets only the
+matrix-free FarFirst tier is reachable.
+
+Two size thresholds govern automatic selection; tune them for the host
+machine with \code{\link[=options]{options()}} rather than per call:
+\describe{
+\item{\code{TreeSearch.WideSample.buildCeiling}}{Largest \code{length(trees)} for
+which a dense distance matrix is built from a distance function (default
+\code{12000}; ~1.1 GB).  Beyond it only the matrix-free FarFirst tier is
+reachable from a function (a pre-computed matrix is always honoured).}
+\item{\code{TreeSearch.WideSample.exactCeiling}}{Largest \code{length(trees)} at
+which automatic selection reaches the exact tier (default \code{200}).}
+}
 }
 \examples{
 library("TreeTools")
 trees <- as.phylo(0:99, nTip = 8)
 
-# Fast anchored-Gonzalez subsample (deterministic, matrix-free)
-sub10 <- WideSample(trees, 10, quality = 1)
+# Fast FarFirst subsample (deterministic, matrix-free)
+sub10 <- WideSample(trees, 10, effort = 1)
 length(sub10)  # 10
 
 \donttest{
-# Automatic tier selection (DropAdd-TS heuristic at this size)
+# Automatic tier selection (exact at this size when 'highs' is installed,
+# otherwise the DropAdd heuristic)
 auto10 <- WideSample(trees, 10)
 
 # Pre-computed distances
 dists <- TreeDist::ClusteringInfoDistance(trees)
 sub5 <- WideSample(trees, 5, dist = dists)
 
+# Highest-quality heuristic (Grasp); set a seed for a reproducible selection
+set.seed(1)
+sub8 <- WideSample(trees, 8, effort = 3)
+
 # Force the exact optimum on a small set (needs the 'highs' package)
 if (requireNamespace("highs", quietly = TRUE)) {
-  sub4 <- WideSample(trees[1:20], 4, quality = 3)
+  sub4 <- WideSample(trees[1:20], 4, effort = 4)
 }
 }
 
 }
 \references{
+\insertRef{Gonzalez1985}{TreeSearch}
+
 \insertRef{Porumbel2011}{TreeSearch}
+
+\insertRef{Resende2010}{TreeSearch}
 
 \insertRef{Sayyady2016}{TreeSearch}
 }

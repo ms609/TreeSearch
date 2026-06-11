@@ -18,11 +18,27 @@ test_that("n = 0 returns empty multiPhylo", {
   expect_equal(length(result), 0)
 })
 
-test_that("n = 1 returns a single tree deterministically", {
+test_that("n = 1 returns the medoid deterministically", {
+  skip_if_not_installed("TreeDist")
   trees <- as.phylo(0:9, nTip = 8)
-  result <- WideSample(trees, 1)
+  names(trees) <- paste0("t", seq_along(trees))
+  d <- as.matrix(TreeDist::ClusteringInfoDistance(trees))
+  result <- WideSample(trees, 1, dist = d)
   expect_equal(length(result), 1)
-  expect_equal(result, WideSample(trees, 1))  # deterministic, no RNG
+  # The medoid minimizes summed distance to the rest (most central tree).
+  expect_equal(names(result), names(trees)[which.min(rowSums(d))])
+  expect_equal(result, WideSample(trees, 1, dist = d))  # deterministic, no RNG
+})
+
+test_that("n = 1 medoid falls back to a matrix-free seed past the ceiling", {
+  skip_if_not_installed("TreeDist")
+  old <- options(TreeSearch.WideSample.buildCeiling = 5L)
+  on.exit(options(old))
+  trees <- as.phylo(0:9, nTip = 8)  # 10 > the (lowered) build ceiling of 5
+  names(trees) <- paste0("t", seq_along(trees))
+  result <- WideSample(trees, 1)    # function path, no matrix built
+  expect_equal(length(result), 1)
+  expect_true(all(names(result) %in% names(trees)))
 })
 
 test_that("WideSample selects more diverse trees than random draws", {
@@ -35,7 +51,7 @@ test_that("WideSample selects more diverse trees than random draws", {
     min(m[lower.tri(m)])
   }
 
-  wideGap <- minGap(WideSample(trees, n, quality = 1))
+  wideGap <- minGap(WideSample(trees, n, effort = 1))
 
   set.seed(5028)
   randomGaps <- vapply(1:20, function(i)
@@ -49,9 +65,9 @@ test_that("pre-computed dist (object and matrix) match the function path", {
   trees <- as.phylo(0:29, nTip = 8)
   d <- TreeDist::ClusteringInfoDistance(trees)
 
-  result_fn   <- WideSample(trees, 5, quality = 1)
-  result_dist <- WideSample(trees, 5, dist = d, quality = 1)
-  result_mat  <- WideSample(trees, 5, dist = as.matrix(d), quality = 1)
+  result_fn   <- WideSample(trees, 5, effort = 1)
+  result_dist <- WideSample(trees, 5, dist = d, effort = 1)
+  result_mat  <- WideSample(trees, 5, dist = as.matrix(d), effort = 1)
 
   expect_equal(result_fn, result_dist)
   expect_equal(result_fn, result_mat)
@@ -66,10 +82,26 @@ test_that("attributes are preserved", {
   expect_equal(attr(result, "hits_to_best"), 5L)
 })
 
-test_that("WideSample is deterministic (no RNG)", {
+test_that("WideSample is deterministic on the RNG-free tiers", {
   skip_if_not_installed("TreeDist")
   trees <- as.phylo(0:49, nTip = 10)
-  expect_equal(WideSample(trees, 8), WideSample(trees, 8))
+  # FarFirst (peripheral seed) and DropAdd (tabu search) draw on no RNG, so a
+  # forced effort 1 or 2 is bit-reproducible. (Auto, Grasp and exact may vary
+  # their selection with the session RNG -- see the Grasp test below.)
+  expect_equal(WideSample(trees, 8, effort = 1),
+               WideSample(trees, 8, effort = 1))
+  expect_equal(WideSample(trees, 8, effort = 2),
+               WideSample(trees, 8, effort = 2))
+})
+
+test_that("Grasp tier (effort 3) is reproducible under set.seed", {
+  skip_if_not_installed("TreeDist")
+  trees <- as.phylo(0:39, nTip = 10)
+  set.seed(1)
+  a <- WideSample(trees, 6, effort = 3)
+  set.seed(1)
+  b <- WideSample(trees, 6, effort = 3)
+  expect_equal(a, b)
 })
 
 # Input validation --------------------------------------------------------
@@ -82,10 +114,10 @@ test_that("input validation works", {
   expect_error(WideSample(trees, NA), "non-negative")
 })
 
-test_that("quality is validated", {
+test_that("effort is validated", {
   trees <- as.phylo(0:9, nTip = 8)
-  expect_error(WideSample(trees, 3, quality = 4), "quality")
-  expect_error(WideSample(trees, 3, quality = 0), "quality")
+  expect_error(WideSample(trees, 3, effort = 5), "effort")
+  expect_error(WideSample(trees, 3, effort = 0), "effort")
 })
 
 test_that("dist dimension mismatch is caught", {
@@ -103,17 +135,18 @@ test_that("bad dist argument is caught", {
 
 # Solver tiers ------------------------------------------------------------
 
-test_that("quality 1/2 return valid diverse subsets", {
+test_that("effort 1/2/3 return valid diverse subsets", {
   skip_if_not_installed("TreeDist")
   trees <- as.phylo(0:39, nTip = 10)
-  for (q in 1:2) {
-    res <- WideSample(trees, 6, quality = q, time_budget_s = 1)
+  set.seed(1)  # effort 3 (Grasp) draws on the session RNG
+  for (eff in 1:3) {
+    res <- WideSample(trees, 6, effort = eff, timeBudgetS = 1)
     expect_equal(length(res), 6)
     expect_true(all(names(res) %in% names(trees)))
   }
 })
 
-test_that("quality 3 matches or beats the heuristic optimum on small sets", {
+test_that("effort 4 matches or beats the heuristic optimum on small sets", {
   skip_if_not_installed("TreeDist")
   skip_if_not_installed("highs")
   trees <- as.phylo(0:14, nTip = 8)
@@ -122,18 +155,18 @@ test_that("quality 3 matches or beats the heuristic optimum on small sets", {
     m <- as.matrix(TreeDist::ClusteringInfoDistance(treeSub))
     min(m[lower.tri(m)])
   }
-  exact     <- WideSample(trees, n, quality = 3)
-  heuristic <- WideSample(trees, n, quality = 1)
+  exact     <- WideSample(trees, n, effort = 4)
+  heuristic <- WideSample(trees, n, effort = 1)
   expect_gte(minGap(exact), minGap(heuristic))  # exact optimum is best-or-equal
 })
 
-test_that("forced quality 3 on a large set warns about cost", {
+test_that("forced effort 4 above the exact ceiling warns about cost", {
   skip_if_not_installed("TreeDist")
   skip_if_not_installed("highs")
   skip_on_cran()
-  trees <- as.phylo(0:44, nTip = 8)  # > 40 trips the warning
+  trees <- as.phylo(0:209, nTip = 8)  # > 200 trips the warning
   expect_warning(
-    WideSample(trees, 3, quality = 3, time_budget_s = 1),
+    WideSample(trees, 3, effort = 4, timeBudgetS = 1),
     "may be very slow"
   )
 })
@@ -143,20 +176,30 @@ test_that("forced quality 3 on a large set warns about cost", {
 test_that(".SelectWideSampleTier keys on (matrix-available, N)", {
   sel <- TreeSearch:::.SelectWideSampleTier
   ceil <- 12000L
-  # Auto: matrix present beyond the ceiling still reaches DropAdd, not Gonzalez.
+  exCeil <- 200L
+  # Auto: matrix present beyond the build ceiling still reaches DropAdd, not
+  # the matrix-free FarFirst.
   expect_equal(sel(NULL, TRUE,  20000L, ceil), 2L)
-  # Auto: a function beyond the ceiling falls back to anchored Gonzalez.
+  # Auto: a function beyond the build ceiling falls back to FarFirst.
   expect_equal(sel(NULL, FALSE, 20000L, ceil), 1L)
   # Auto: moderate N builds the matrix for DropAdd.
   expect_equal(sel(NULL, FALSE, 5000L,  ceil), 2L)
-  # Forced quality 1 is always reachable.
+  # Auto: small N reaches the exact tier when highs is available, else DropAdd.
+  expect_equal(sel(NULL, FALSE, 50L, ceil, exCeil, highsAvailable = TRUE), 4L)
+  expect_equal(sel(NULL, FALSE, 50L, ceil, exCeil, highsAvailable = FALSE), 2L)
+  # Auto: just above the exact ceiling never auto-selects exact (Grasp is
+  # opt-in, so DropAdd is the auto heuristic here).
+  expect_equal(sel(NULL, TRUE, 201L, ceil, exCeil, highsAvailable = TRUE), 2L)
+  # Forced effort 1 is always reachable.
   expect_equal(sel(1L,   FALSE, 20000L, ceil), 1L)
-  # Forced quality 2/3 with a function past the ceiling is a hard error.
+  # Forced effort 2/3/4 with a function past the build ceiling is a hard error.
   expect_error(sel(2L, FALSE, 20000L, ceil), "build ceiling")
   expect_error(sel(3L, FALSE, 20000L, ceil), "build ceiling")
-  # Forced quality 2/3 with a supplied matrix past the ceiling is fine.
+  expect_error(sel(4L, FALSE, 20000L, ceil), "build ceiling")
+  # Forced effort 2/3/4 with a supplied matrix past the ceiling is fine.
   expect_equal(sel(2L, TRUE, 20000L, ceil), 2L)
   expect_equal(sel(3L, TRUE, 20000L, ceil), 3L)
+  expect_equal(sel(4L, TRUE, 20000L, ceil), 4L)
 })
 
 test_that(".WideSampleColumnOracle probes the (tree, trees) contract", {

@@ -3,13 +3,19 @@
 - `WideSample()` now dispatches to the appropriate Max-Min diversity (MMDP)
   solver from the \pkg{MaxMin} package, choosing the tier automatically
   from `length(trees)`: the exact node-packing optimum (Sayyady & Fathi, 2016)
-  for small sets, drop-add tabu search (Porumbel et al., 2011) while the
-  distance matrix is affordable, and anchored Gonzalez beyond that.  A new
-  `quality` argument (`1` fast, `2` ~99%-optimal, `3` exact) forces a tier, and
-  `time_budget_s` caps the heuristic and exact solvers.  For very large tree
-  sets the anchored-Gonzalez tier runs from an on-demand distance oracle and
-  never materialises the full distance matrix, so subsampling tens of thousands
-  of trees is feasible.
+  for small sets (up to ~200 trees), DropAdd tabu search (Porumbel et al.,
+  2011) while the distance matrix is affordable, and matrix-free FarFirst
+  (Gonzalez, 1985) beyond that.  The `effort` argument forces a tier: `1`
+  FarFirst (fast), `2` DropAdd (~99%-optimal), `3` Grasp (GRASP with path
+  relinking, Resende et al. 2010 — the highest-quality heuristic, opt-in only),
+  `4` exact.  `timeBudgetS` caps the refinement and exact solvers (default
+  60 s; the heuristic tiers usually finish at a deterministic plateau well
+  within it).  `n == 1` returns the medoid (most central tree).  The
+  `TreeSearch.WideSample.buildCeiling` and `TreeSearch.WideSample.exactCeiling`
+  options tune the size thresholds for the host machine.  For very large tree
+  sets the FarFirst tier runs from an on-demand distance oracle and never
+  materializes the full distance matrix, so subsampling tens of thousands of
+  trees is feasible.
 
 - New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
   fit branch lengths to, the tree that best matches a target distance matrix

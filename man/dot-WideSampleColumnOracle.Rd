@@ -2,14 +2,14 @@
 % Please edit documentation in R/WideSample.R
 \name{.WideSampleColumnOracle}
 \alias{.WideSampleColumnOracle}
-\title{Build a column-oracle closure for the matrix-free Gonzalez path}
+\title{Build a column-oracle closure for the matrix-free FarFirst path}
 \usage{
 .WideSampleColumnOracle(dist, trees, nTrees)
 }
 \description{
 Returns a function of one 1-based index \code{i} giving the distances from tree
 \code{i} to every tree, as required by the distance-column oracle path of
-\code{\link[MaxMin:Gonzalez]{MaxMin::Gonzalez()}}. Probes
+\code{\link[MaxMin:FarFirst]{MaxMin::FarFirst()}}. Probes
 the \verb{(tree, trees)} calling form once up front and fails clearly if the
 supplied \code{dist} function does not support it.
 }
