@@ -10,11 +10,6 @@
   sets the anchored-Gonzalez tier runs from an on-demand distance oracle and
   never materialises the full distance matrix, so subsampling tens of thousands
   of trees is feasible.
-  - **Breaking:** the `method` argument is removed (`method = "random"` along
-    with it; draw a random subset with `sample()` if needed), and `distance` is
-    renamed `dist`.  Selection is now fully deterministic — the previous
-    maximin path seeded from a random tree, so results differ from prior
-    versions even at `quality = 1`.
 
 - New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
   fit branch lengths to, the tree that best matches a target distance matrix
@@ -26,10 +21,6 @@
   procedure; `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in
   the native kernel.
 
-- New function `PaintCharacters()` colours each character in a morphological
-  dataset by the hue of the tree edges it most concordantly supports, using
-  `ConcordanceTable()` MI weights averaged in CIELAB colour space.  Pairs with
-  `TreeTools::PaintTree()` to visually map characters to clades.
 
 - `attr(dataset, "weight")` now accepts non-integer character weights.  The
   C++ scoring engine still stores `int` weights internally; fractional
@@ -43,17 +34,6 @@
   run ranking is unaffected.
 
 # TreeSearch 2.0.0
-
-## Bug fixes
-
-- `LengthAdded()` no longer errors on datasets whose contrast matrix contains
-  zero-sum rows for tokens that are declared in the SYMBOLS list but not used
-  by any taxon in the character being scored (#294).
-
-- `LengthAdded()` no longer returns negative values when multiple rows of the
-  contrast matrix satisfy the fully-ambiguous applicable condition (e.g.
-  datasets with ~19 taxa and certain character structures); the first matching
-  row is now used consistently (#302).
 
 ## Breaking changes
 
@@ -81,7 +61,10 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 
 ### New features
 
-- **`ScoreSpectrum()`**: Chao1-style landscape coverage estimator.  Treats
+- `PaintCharacters()` colours each character in a morphological dataset by its
+  most concordant tree edges.
+
+- `ScoreSpectrum()`: Chao1-style landscape coverage estimator.  Treats
   distinct parsimony scores found across replicates as "species" and estimates
   how thoroughly the parsimony landscape has been sampled (Good-Turing sample
   coverage, Chao1 richness lower bound, unseen score-level fraction).  The
@@ -255,6 +238,15 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
   for implied weights, profile parsimony, and constraints.
 
 ## Bug fixes
+
+- `LengthAdded()` no longer errors on datasets whose contrast matrix contains
+  zero-sum rows for tokens that are declared in the SYMBOLS list but not used
+  by any taxon in the character being scored (#294).
+
+- `LengthAdded()` no longer returns negative values when multiple rows of the
+  contrast matrix satisfy the fully-ambiguous applicable condition (e.g.
+  datasets with ~19 taxa and certain character structures); the first matching
+  row is now used consistently (#302).
 
 - Shiny: scoring error notification now shows the actual error message
   (e.g. "Trees have different numbers of edges") rather than the generic
