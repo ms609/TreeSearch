@@ -243,7 +243,7 @@ WideSample <- function(
       } else {
         .WideSampleColumnOracle(dist, trees, nTrees)
       }
-      MaxMin::FarFirst(n, colFn, N = nTrees, progress = FALSE)
+      MaxMin::FarFirst(n, colFn, N = nTrees)
     },
     # Tier 2: DropAdd returns the bare (sorted) index vector; it runs to its
     # deterministic plateau, with `maxSeconds` as a safety cap.
