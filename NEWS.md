@@ -8,7 +8,7 @@
   (Gonzalez, 1985) beyond that.  The `effort` argument forces a tier: `1`
   FarFirst (fast), `2` DropAdd (~99%-optimal), `3` Grasp (GRASP with path
   relinking, Resende et al. 2010 — the highest-quality heuristic, opt-in only),
-  `4` exact.  `timeBudgetS` caps the refinement and exact solvers (default
+  `4` exact.  `maxSeconds` caps the refinement and exact solvers (default
   60 s; the heuristic tiers usually finish at a deterministic plateau well
   within it).  `n == 1` returns the medoid (most central tree).  The
   `TreeSearch.WideSample.buildCeiling` and `TreeSearch.WideSample.exactCeiling`
