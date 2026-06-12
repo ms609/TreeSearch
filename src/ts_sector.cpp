@@ -993,6 +993,11 @@ static void build_sector_mask(const TreeState& tree, int sector_root,
 SectorResult css_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params,
                         ConstraintData* cd) {
+  // No HSJ/XFORM guard needed here (cf. T-303 guards in rss_search/xss_search).
+  // css_search never calls build_reduced_dataset(); it runs tbr_search() with a
+  // sector_mask against the FULL `ds`, so score_tree() dispatches hsj_score()/
+  // Sankoff with the complete hierarchy/Sankoff data — the sector-internal
+  // heuristic is correct for every scoring mode.
   double current_score = score_tree(tree, ds);
 
   SectorResult result;
