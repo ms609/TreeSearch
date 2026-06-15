@@ -94,6 +94,9 @@
 #' library("TreeTools")
 #' trees <- as.phylo(0:99, nTip = 8)
 #'
+#' # WideSample() needs the MaxMin package (Max-Min diversity solvers)
+#' if (requireNamespace("MaxMin", quietly = TRUE)) {
+#'
 #' # Fast FarFirst subsample (deterministic, matrix-free)
 #' sub10 <- WideSample(trees, 10, effort = 1)
 #' length(sub10)  # 10
@@ -115,6 +118,8 @@
 #' if (requireNamespace("highs", quietly = TRUE)) {
 #'   sub4 <- WideSample(trees[1:20], 4, effort = 4)
 #' }
+#' }
+#'
 #' }
 #'
 #' @references

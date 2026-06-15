@@ -59,7 +59,7 @@ When \eqn{f_2 = 0} (no doubleton scores) the bias-corrected form
 }
 \examples{
 library("TreeTools", quietly = TRUE)
-data("Lobo", package = "TreeSearch")
+data("Lobo", package = "TreeTools")
 result <- MaximizeParsimony(Lobo.phy, maxReplicates = 4L)
 sp <- ScoreSpectrum(result)
 print(sp)

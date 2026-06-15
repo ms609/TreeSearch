@@ -186,7 +186,10 @@ SimplificationResult simplify_patterns(
     // Build per-tip token bitmasks from the original data
     sp.tip_tokens.resize(n_tips);
     bool has_genuine_inapp = false;
-    uint32_t all_states_mask = (1u << n_states) - 1;
+    // n_states may equal MAX_STATES (32); `1u << 32` is undefined behaviour
+    // (UBSAN), so build the all-ones mask directly in that case.
+    uint32_t all_states_mask =
+        n_states >= 32 ? ~0u : (1u << n_states) - 1;
     for (int tip = 0; tip < n_tips; ++tip) {
       int token = tip_data_r[tip + n_tips * p] - 1;  // 1-based to 0-based
       sp.tip_tokens[tip] = token_states[token];
