@@ -263,6 +263,13 @@ the entire tree for each candidate, only the affected nodes are
 re-evaluated.
 A bounded variant bails out when the accumulated score exceeds the best
 candidate found so far, skipping unnecessary computation.
+These incremental deltas are exact for equal-weights, implied-weights,
+extended-implied-weights, and profile scoring.
+Under HSJ and x-transformation scoring, however, a tree's score also
+includes a topology-dependent hierarchy term (the hierarchy dynamic
+program or Sankoff contribution) that an incremental Fitch delta cannot
+capture; for these modes an accepted move is therefore re-scored in full
+before the best score is updated.
 
 ### Zero-length edge skipping
 
