@@ -17,5 +17,5 @@ Opens a "shiny" app for interactive parsimony tree search and results
 exploration.
 }
 \seealso{
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}}, \code{\link[=Morphy]{Morphy()}}
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}}
 }

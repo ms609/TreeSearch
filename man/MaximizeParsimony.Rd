@@ -227,7 +227,7 @@ capture); unsupported non-constraint branches still collapse.}
 These override the corresponding \code{control} fields and the strategy
 preset.
 Legacy \code{Morphy()}-style parameters (e.g. \code{ratchIter}, \code{tbrIter}) are
-detected and forwarded to \code{\link[=Morphy]{Morphy()}} with a deprecation warning.}
+rejected with an error; use this function's own controls instead.}
 }
 \value{
 A \code{multiPhylo} object containing the best tree(s) found, with
@@ -353,7 +353,6 @@ attr(result, "score")
 \insertAllCited{}
 }
 \seealso{
-\code{\link[=Morphy]{Morphy()}} for fine-grained control over the R-level search loop.
 \code{\link[=Resample]{Resample()}} for jackknife and bootstrap resampling.
 \code{\link[=SearchControl]{SearchControl()}} for expert-level tuning of the search heuristics.
 

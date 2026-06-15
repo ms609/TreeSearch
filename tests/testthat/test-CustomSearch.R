@@ -27,31 +27,6 @@ test_that("Tree can be found", {
   expect_false(all.equal(comb11, TreeSearch(random11, dataset = phy11,
                                             maxIter = 1000,
                                             stopAtPlateau = 1, verbosity = 0)))
-  
-  # CollapseNode produces a polytomy; Morphy emits a cli alert about
-  # collapsing polytomies that we suppress (it is informational, not the
-  # subject of the test).
-  mp1 <- RootTree(
-    suppressMessages(
-      Morphy(phy11, tree = CollapseNode(random11, 13),
-             ratchIter = 1, verbosity = 0L)
-    )[[1]],
-    "a")
-  expect_true(all.equal(mp1, comb11))
-  expect_true(all.equal(
-    Morphy(phy11, tree = random11, verbosity = 0L)[[1]],
-    comb11
-  ))
-  expect_true(all.equal(
-    Morphy(phy11, random11, ratchIter = 0, verbosity = 0L)[[1]],
-    comb11
-  ))
-
-  # Interestingly, a good example of a case with multiple optima that require
-  # ratchet to move between
-  iw <- Morphy(phy11, random11, ratchIter = 1, tbrIter = 5,
-               concavity = 10, verbosity = 0L)[[1]]
-  expect_equal_tree(comb11, iw)
 #  TODO: Sectorial Search not working yet!
 #  expect_equal(SectorialSearch(RandomTree(phy11, "a"), phy11, verbosity = -1), comb11) 
 })
@@ -103,14 +78,6 @@ test_that("Profile parsimony works in tree search", {
   phy11 <- phangorn::phyDat(data11, type = "USER", levels = c(FALSE, TRUE))
   
   random11 <- as.phylo(17905853L, 11, letters[1:11]) # Rooted on "a"
-  
-  # Use more iterations than necessary locally, as RNG may differ on other 
-  # platforms.
-  expect_equal_tree(comb11,
-               Morphy(phy11, c(random11, random11), # multiPhylo
-                      ratchIter = 1, tbrIter = 2, maxHits = 10,
-                      concavity = "profile", verbosity = 0)[[1]])
-  
   
   sillyData <- lapply(1:22, function (i) c(rep(0, i - 1), rep(1, 22 - i),
                                            rep(1, 22 - i), rep(0, i - 1)))#, sample(2, 20, replace = TRUE)-1))

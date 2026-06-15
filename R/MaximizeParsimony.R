@@ -579,7 +579,7 @@
 #'   These override the corresponding `control` fields and the strategy
 #'   preset.
 #'   Legacy `Morphy()`-style parameters (e.g. `ratchIter`, `tbrIter`) are
-#'   detected and forwarded to [`Morphy()`] with a deprecation warning.
+#'   rejected with an error; use this function's own controls instead.
 #'
 #' @return A `multiPhylo` object containing the best tree(s) found, with
 #'   attributes:
@@ -627,8 +627,7 @@
 #'
 #' @template MRS
 #' @family tree scoring
-#' @seealso [`Morphy()`] for fine-grained control over the R-level search loop.
-#' [`Resample()`] for jackknife and bootstrap resampling.
+#' @seealso [`Resample()`] for jackknife and bootstrap resampling.
 #' [`SearchControl()`] for expert-level tuning of the search heuristics.
 #' @references
 #' \insertAllCited{}
@@ -684,32 +683,20 @@ MaximizeParsimony <- function(
     dots[["maxTime"]] <- NULL
   }
 
-  # --- Backward compatibility: detect Morphy()-style parameters ---
+  # --- Reject legacy Morphy()-style parameters ---
+  # Morphy() (an R-loop MorphyLib search, never released on CRAN) has been
+  # removed; its functionality is superseded by this C++ engine.
   .morphyParams <- c("ratchIter", "tbrIter", "startIter", "finalIter",
-                      "maxHits", "quickHits", "ratchEW",
-                      "tolerance")
+                     "maxHits", "quickHits", "ratchEW", "tolerance")
   legacyHits <- intersect(names(dots), .morphyParams)
   if (length(legacyHits)) {
-    .Deprecated(
-      "Morphy",
-      msg = paste0(
-        "Parameter", if (length(legacyHits) > 1L) "s", " ",
-        paste0(sQuote(legacyHits), collapse = ", "),
-        " belong", if (length(legacyHits) == 1L) "s", " to `Morphy()`,",
-        " not the new `MaximizeParsimony()`.\n",
-        "  Delegating to `Morphy()`. ",
-        "Please update your code to call `Morphy()` directly ",
-        "or use the new MaximizeParsimony() parameters.\n",
-        "  See ?Morphy and ?MaximizeParsimony for details."
-      )
-    )
-    morphyArgs <- dots
-    morphyArgs$dataset <- dataset
-    if (!missing(tree) && !is.null(tree)) morphyArgs$tree <- tree
-    if (!missing(concavity)) morphyArgs$concavity <- concavity
-    if (!missing(constraint)) morphyArgs$constraint <- constraint
-    if (!missing(verbosity)) morphyArgs$verbosity <- verbosity
-    return(do.call(Morphy, morphyArgs))
+    stop("Parameter", if (length(legacyHits) > 1L) "s", " ",
+         paste0(sQuote(legacyHits), collapse = ", "),
+         " belong", if (length(legacyHits) == 1L) "s",
+         " to the removed `Morphy()` search, not `MaximizeParsimony()`.\n",
+         "  Use this function's own controls instead ",
+         "(see `?SearchControl`, `maxReplicates`, `maxSeconds`).",
+         call. = FALSE)
   }
 
   # --- Resolve control: merge control + ... overrides ---

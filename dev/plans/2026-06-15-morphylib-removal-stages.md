@@ -12,35 +12,34 @@ via the native kernel (`FastCharacterLength`). Pointer retained so `Morphy()`'s
 C-loop + introspection are untouched. Fixes `{1-}` for `TreeSearch`/`Ratchet`/
 `Jackknife`/custom.Rmd. Verified `== TreeLength` across Lobo + CL datasets.
 
-## Stage 2 — migrate `Morphy()`'s C-loop + the rare gap modes  ⚠ NEEDS REVIEW
+## Stage 2 — axe `Morphy()` entirely  ✅ (done on this branch)
+
+Originally scoped as "migrate `Morphy()`'s C-loop", but `Morphy()` turned out to
+be redundant and unreleased, so it was deleted instead. For reference, it scored
+through three closures in its hot loop (former R/Morphy.R:317-345):
 `Morphy()` (R/Morphy.R) scores through three closures called in the hot search
 loop (R/Morphy.R:317-345):
 - `.EWScore`   -> `preorder_morphy(edge, morphyObj)`
 - `.IWScore`   -> `morphy_iw(edge, morphyObjs, weight, minLength, charSeq, concavity, target)`
 - `.ProfileScore` -> `morphy_profile(edge, morphyObjs, weight, charSeq, profiles, target)`
 
-Migration options (DECISION NEEDED — both change superseded-path behaviour, and
-native!=MorphyLib on `{1-}` data means `Morphy()` may return different trees):
-  (a) **Swap the closures to native** keeping the existing search loop:
-      - EW: trivial — `morphyObj` already carries the native attr; call
-        `.NativeMorphyLength`.
-      - IW: `ts_fitch_score(edge, contrast, tip_data, weight, levels, min_steps,
-        concavity = k)`. **Loses** the `target` early-abort bound (efficiency,
-        not correctness) and the per-char `charSeq`/`morphyObjs` machinery.
-      - Profile: `ts_fitch_score(..., infoAmounts = profiles)` similarly.
-        `morphy_profile`'s `target` early-abort is lost.
-  (b) **Redirect `Morphy()` to `MaximizeParsimony()`** — `Morphy()` is fully
-      superseded for EW/IW/profile. Cleanest end-state, but must map args
-      (`ratchIter`/`tbrIter`/`maxHits`/`concavity`/constraint) and accept that
-      the search path (and trees found) change.
-Recommendation: (a) if `Morphy()`'s search API must be preserved verbatim;
-(b) if a behaviour change to this superseded function is acceptable.
+**DECISION (MRS, 2026-06-15): axe `Morphy()` entirely** rather than migrate it.
+It was never on CRAN (not in 1.8.0) and is the redundant middle between
+`MaximizeParsimony()` (native EW/IW/profile + constraints + ratchet) and
+`TreeSearch()` (custom-criteria R-loop). Functionally nothing is lost.
 
-Rare gap modes (currently fall back to MorphyLib via `.NativeMorphyData` ->
-NULL): reproduce natively by recoding the dataset before scoring —
-  - `ambiguous`/`missing`: matrix round-trip, `-` -> `?` (drops the `-` level).
-  - `extra`: `-` -> a fresh ordinary state symbol.
-Then `.NativeMorphyData`/`.SingleCharNative` return data for all modes.
+Done on this branch: deleted `Morphy()` + its private helpers
+(`.EWScore`/`.IWScore`/`.ProfileScore`/`.TBRSearch`/`.CombineResults`/
+`.ReplaceResults`/`.Time`/`.DateTime`) from `R/Morphy.R`; dropped
+`export(Morphy)`; replaced `MaximizeParsimony()`'s legacy-param delegation
+(`do.call(Morphy, …)`) with an informative error; deleted `test-Morphy.R`
+(+ snapshots) and the `Morphy()` calls in `test-CustomSearch.R`; fixed the
+dangling `[Morphy()]` doc links; regenerated NAMESPACE/man.
+
+Consequence: `morphy_iw`/`morphy_profile` are now dead (Morphy() was their only
+caller), and the rare `ambiguous`/`extra` gap modes no longer need a native
+reimplementation (nothing in production uses them; `.NativeMorphyData` still
+falls back to MorphyLib for them via `PhyDat2Morphy`, removed in Stage 3).
 
 ## Stage 3 — delete vendored MorphyLib  ⚠ LARGE, all-or-nothing
 Once nothing calls MorphyLib:
@@ -59,7 +58,9 @@ Once nothing calls MorphyLib:
   `test-pp-random-tree.R`, `test-RandomTreeScore.R`, and any `Morphy()` test
   asserting exact trees/scores on inapplicable data.
 
-## Why Stages 2-3 are not done unattended
-They change behaviour of superseded public functions, span the C/C++ build, and
-require many test rewrites + CI cycles — they warrant a maintainer decision on
-the `Morphy()` approach (a vs b) and review before landing.
+## Status
+Stage 2 (axe `Morphy()`) is implemented on this branch. Stage 3 (delete the
+now-dead `morphy_iw`/`morphy_profile`, make `PhyDat2Morphy`/`SingleCharMorphy`
+native-only, migrate `RandomTreeScore`, remove the `mpl_*` bindings +
+introspection + vendored C/C++ sources, update DESCRIPTION/Makevars + tests)
+remains — larger, spans the C build, best done with review.
