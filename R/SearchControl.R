@@ -334,7 +334,7 @@ SearchControl <- function(
       pruneReinsertSelection = as.integer(pruneReinsertSelection),
       pruneReinsertTbrMoves = as.integer(pruneReinsertTbrMoves),
       pruneReinsertFullMoves = as.integer(pruneReinsertFullMoves),
-      pruneReinsertNni = as.integer(pruneReinsertNni),
+      pruneReinsertNni = as.logical(pruneReinsertNni),
       annealCycles = as.integer(annealCycles),
       annealPhases = as.integer(annealPhases),
       annealTStart = as.double(annealTStart),

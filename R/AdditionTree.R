@@ -26,6 +26,9 @@
 #' @export
 AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
 
+  if (!inherits(dataset, "phyDat")) {
+    stop("`dataset` must be a `phyDat` object")
+  }
   taxa <- names(dataset)
   nTaxa <- length(taxa)
 

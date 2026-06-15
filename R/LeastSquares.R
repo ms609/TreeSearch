@@ -19,6 +19,15 @@
     stop("`dist` must carry tip labels (row/column names)")
   }
   dimnames(D) <- list(labs, labs)
+  if (anyDuplicated(labs)) {
+    stop("`dist` has duplicated tip labels")
+  }
+  if (any(!is.finite(D))) {
+    stop("`dist` contains non-finite values (NA, NaN or Inf)")
+  }
+  if (!isSymmetric(unname(D))) {
+    stop("`dist` must be a symmetric distance matrix")
+  }
   D
 }
 
@@ -124,6 +133,9 @@ LeastSquaresFit <- function(tree, dist, method = c("nnls", "ols"),
                             weight = NULL) {
   method <- match.arg(method)
   D <- .LSMatrix(dist)
+  if (nrow(D) < 3L) {
+    stop("Least-squares fit needs at least three tips")
+  }
   W <- .LSWeight(weight, D)
   prepped <- .LSPrepTree(tree, rownames(D))
   labs <- prepped[["tip.label"]]

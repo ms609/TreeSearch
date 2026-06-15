@@ -45,7 +45,11 @@
 #' @param suboptimal retain trees that are suboptimal by this score.
 #'  Defaults to a small value that will counter rounding errors.
 #' 
-#' @return `Ratchet()` returns a tree modified by parsimony ratchet iterations.
+#' @return When `returnAll = FALSE` (the default), `Ratchet()` returns a single
+#'  optimal `phylo` tree, with its parsimony score in attribute `"score"`.
+#'  When `returnAll = TRUE`, it returns a `multiPhylo` of the optimal (and
+#'  near-optimal, within `suboptimal`) trees encountered, each carrying its own
+#'  `"score"` attribute.
 #'
 #' @references 
 #' \insertAllCited{}
@@ -211,14 +215,17 @@ Ratchet <- function(tree, dataset,
         # Return to lapply: 
         x})
       ret <- unique(forest)
+      class(ret) <- "multiPhylo"
       if (verbosity > 1L) {
         message(" - Removing duplicates leaves ", length(ret), " unique trees")
       }
       uniqueScores <- vapply(ret, attr, double(1), "score")
     } else if (length(forest) == 1) {
-      ret <- tree
       newEdge <- forest[[1]]
-      ret[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
+      onlyTree <- tree
+      onlyTree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
+      attr(onlyTree, "score") <- newEdge[[3]]
+      ret <- structure(list(onlyTree), class = "multiPhylo")
       uniqueScores <- newEdge[[3]]
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")

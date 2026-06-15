@@ -137,6 +137,11 @@ WideSample <- function(
     effort = NULL,
     maxSeconds = 60
 ) {
+  if (!requireNamespace("MaxMin", quietly = TRUE)) {
+    stop("`WideSample()` requires the 'MaxMin' package, which provides the ",
+         "Max-Min diversity solvers; install it from ",
+         "https://github.com/ms609/MaxMin", call. = FALSE)
+  }
   # Build ceiling: largest N for which we materialize a dense N x N matrix from
   # a distance function. ~1.1 GB at 12,000; as.matrix.dist overflows near
   # 46,340 (the dist half-vector exceeds .Machine$integer.max).

@@ -686,10 +686,11 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
   // Adaptive starting-tree strategy (T-190).
   StrategyTracker strategy_tracker;
-  // Seed a dedicated RNG for Thompson sampling from R's RNG.
-  GetRNGstate();
-  std::mt19937 bandit_rng(static_cast<unsigned>(unif_rand() * 4294967295.0));
-  PutRNGstate();
+  // Seed a dedicated RNG for Thompson sampling.  Use ts::make_rng() so the seed
+  // is drawn from the thread-local RNG on worker threads (e.g. parallel
+  // Resample, where driven_search runs off the main thread) and from R's RNG in
+  // serial mode — never calling the R API from a worker thread (T-309).
+  std::mt19937 bandit_rng = ts::make_rng();
 
   // Cross-replicate consensus constraint tightening.
   // When enabled and no user constraint is supplied, the strict consensus
