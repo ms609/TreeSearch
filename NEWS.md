@@ -1,31 +1,17 @@
 # To integrate into 2.0.0 notes
 
 - `WideSample()` now dispatches to the appropriate Max-Min diversity (MMDP)
-  solver from the \pkg{MaxMin} package, choosing the tier automatically
-  from `length(trees)`: the exact node-packing optimum (Sayyady & Fathi, 2016)
-  for small sets (up to ~200 trees), DropAdd tabu search (Porumbel et al.,
-  2011) while the distance matrix is affordable, and matrix-free FarFirst
-  (Gonzalez, 1985) beyond that.  The `effort` argument forces a tier: `1`
-  FarFirst (fast), `2` DropAdd (~99%-optimal), `3` Grasp (GRASP with path
-  relinking, Resende et al. 2010 — the highest-quality heuristic, opt-in only),
-  `4` exact.  `timeBudgetS` caps the refinement and exact solvers (default
-  60 s; the heuristic tiers usually finish at a deterministic plateau well
-  within it).  `n == 1` returns the medoid (most central tree).  The
-  `TreeSearch.WideSample.buildCeiling` and `TreeSearch.WideSample.exactCeiling`
-  options tune the size thresholds for the host machine.  For very large tree
-  sets the FarFirst tier runs from an on-demand distance oracle and never
-  materializes the full distance matrix, so subsampling tens of thousands of
-  trees is feasible.
+  solver from the `MaxMin` package, choosing the tier automatically
+  from `length(trees)`.
 
 - New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
   fit branch lengths to, the tree that best matches a target distance matrix
   under a least-squares criterion, reusing the optimised C++ rearrangement
   kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
   (`method = "nnls"`) least squares are supported, with optional
-  Fitch-Margoliash (`weight = "fm"`) or custom weighting.  This provides the
-  topology-search step of Lapointe & Cucumel's (1997) average consensus
-  procedure; `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in
-  the native kernel.
+  Fitch-Margoliash (`weight = "fm"`) or custom weighting.
+  `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in the native
+  kernel.
 
 
 - `attr(dataset, "weight")` now accepts non-integer character weights.  The
