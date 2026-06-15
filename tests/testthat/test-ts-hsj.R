@@ -638,13 +638,16 @@ test_that("driven HSJ (TreeLength) agrees with direct ts_hsj_score()", {
   }
 })
 
-test_that("HSJ primary scoring is invariant to phyDat level ordering", {
-  # build_tip_labels and hsj_absent_state are both level-order generic, so the
-  # primary present/absent contribution must not depend on where "0"/"-" sit in
-  # `levels`.  Tested at alpha = 0 (secondaries ignored) so this isolates the
-  # absent_state fix; a hard-coded absent_state would break it.
-  # (NB: at alpha > 0 the *secondary* dissimilarity is sensitive to level order
-  #  via the Fitch uppass lowest-bit tie-break — a separate, pre-existing issue.)
+test_that("HSJ score is invariant to phyDat level ordering", {
+  # A parsimony-style score must not depend on the arbitrary internal ordering
+  # of phyDat `levels`.  Two contributions could leak the ordering:
+  #   * the PRIMARY absent/present term  — guarded by hsj_absent_state() (T-307);
+  #   * the SECONDARY dissimilarity term — the Fitch uppass in fitch_label_char()
+  #     formerly resolved ambiguous internal nodes to the LOWEST SET BIT, whose
+  #     token depends on `levels`.  It now resolves toward the best-supported
+  #     token (subtree count, ties by smallest tip index), which is keyed on the
+  #     tokens and tree rather than the bit encoding.
+  # The secondary term only bites at alpha > 0, so test alpha in {0, 0.5, 1}.
   mat <- matrix(c(
     "0",  "-",  "-",
     "1",  "0",  "1",
@@ -657,9 +660,44 @@ test_that("HSJ primary scoring is invariant to phyDat level ordering", {
     paste0("t", 1:4)))
   h <- CharacterHierarchy("1" = 2:3)
 
-  orderings <- list(c("-", "0", "1"), c("0", "1", "-"), c("1", "-", "0"))
-  scores <- vapply(orderings, function(lv) {
-    hsj_score(tree, make_hsj_dat(mat, levels = lv), h, alpha = 0)
-  }, double(1))
-  expect_equal(scores, rep(1, length(orderings)))
+  # All six orderings of the three tokens.
+  orderings <- list(c("-", "0", "1"), c("-", "1", "0"), c("0", "-", "1"),
+                    c("0", "1", "-"), c("1", "-", "0"), c("1", "0", "-"))
+  for (a in c(0, 0.5, 1)) {
+    scores <- vapply(orderings, function(lv) {
+      hsj_score(tree, make_hsj_dat(mat, levels = lv), h, alpha = a)
+    }, double(1))
+    # Every ordering must agree (this dataset returned 2.5 vs 2.0 before the fix
+    # at alpha = 1; the absent_state regression earlier made alpha = 0 disagree).
+    expect_equal(scores, rep(scores[[1]], length(orderings)),
+                 info = sprintf("hsj_alpha = %s", a))
+  }
+})
+
+test_that("HSJ secondary dissimilarity is level-order invariant (multistate)", {
+  # Stress the secondary term with a 3-state secondary and missing data, where
+  # internal ambiguity is common and the lowest-bit tie-break was most exposed.
+  mat <- matrix(c(
+    "1",  "0",  "1",
+    "1",  "2",  "?",
+    "0",  "-",  "-",
+    "1",  "1",  "0",
+    "1",  "0",  "2",
+    "1",  "2",  "1"
+  ), nrow = 6, byrow = TRUE,
+  dimnames = list(paste0("t", 1:6), NULL))
+  tree <- Renumber(RenumberTips(ape::read.tree(
+    text = "((t1,t2),((t3,t4),(t5,t6)));"), paste0("t", 1:6)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  toks <- c("-", "0", "1", "2")
+  orderings <- list(toks, rev(toks), c("0", "1", "2", "-"),
+                    c("2", "0", "-", "1"), c("1", "-", "2", "0"))
+  for (a in c(0.5, 1)) {
+    scores <- vapply(orderings, function(lv) {
+      hsj_score(tree, make_hsj_dat(mat, levels = lv), h, alpha = a)
+    }, double(1))
+    expect_equal(scores, rep(scores[[1]], length(orderings)),
+                 info = sprintf("hsj_alpha = %s", a))
+  }
 })

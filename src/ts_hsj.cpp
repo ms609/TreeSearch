@@ -41,8 +41,11 @@ static int fitch_label_char(
     std::vector<uint32_t>& state_sets)
 {
   int n_tip = tree.n_tip;
+  int n_node = tree.n_node;
 
-  // Initialize tips
+  // Initialize tips; track the number of distinct states (highest concrete
+  // token index + 1) so the order-invariant tie-break arrays can be sized.
+  int n_states = 1;
   for (int t = 0; t < n_tip; ++t) {
     int label = tip_labels[t * n_orig_chars + char_idx];
     if (label < 0 || label > 30) {
@@ -50,6 +53,7 @@ static int fitch_label_char(
       state_sets[t] = 0xFFFFFFFFu;
     } else {
       state_sets[t] = 1u << label;
+      if (label + 1 > n_states) n_states = label + 1;
     }
   }
 
@@ -70,26 +74,88 @@ static int fitch_label_char(
     }
   }
 
-  // --- Uppass: resolve each node to a single state ---
-  // Root: pick lowest bit from its state set
-  int root = tree.postorder.back();
-  state_sets[root] = state_sets[root] & (~state_sets[root] + 1); // isolate lowest bit
+  // --- Order-invariant tie-break support -------------------------------
+  // The uppass below must resolve ambiguous nodes to a single state so that
+  // parent-child mismatches (the HSJ secondary dissimilarity) can be counted.
+  // Resolving by bit index (the old "lowest set bit") makes the result depend
+  // on the arbitrary phyDat `levels` ordering, because which token maps to the
+  // lowest bit is determined by `levels`.  Instead we resolve toward the token
+  // with the most support in the node's own subtree, breaking ties by the
+  // smallest supporting tip index.  Both keys are properties of the *tokens*
+  // and the tree, not of the bit encoding, so the resolution — and hence the
+  // mismatch count — is invariant to level ordering.  This still yields a valid
+  // most-parsimonious reconstruction, so the dissimilarity stays non-zero (the
+  // concern that motivated adding the uppass in the first place).
+  //
+  // tb_cnt[node * K + s]    = # tips in subtree(node) carrying concrete token s
+  // tb_mintip[node * K + s] = smallest tip index in subtree(node) with token s
+  const int K = n_states;
+  const int INF_TIP = std::numeric_limits<int>::max();
+  std::vector<int> tb_cnt(static_cast<size_t>(n_node) * K, 0);
+  std::vector<int> tb_mintip(static_cast<size_t>(n_node) * K, INF_TIP);
+  for (int t = 0; t < n_tip; ++t) {
+    int label = tip_labels[t * n_orig_chars + char_idx];
+    if (label >= 0 && label < K) {   // concrete (ambiguous tips favour nothing)
+      tb_cnt[static_cast<size_t>(t) * K + label] = 1;
+      tb_mintip[static_cast<size_t>(t) * K + label] = t;
+    }
+  }
+  for (int i = 0; i < static_cast<int>(tree.postorder.size()); ++i) {
+    int node = tree.postorder[i];
+    int ni = node - n_tip;
+    int lc = tree.left[ni];
+    int rc = tree.right[ni];
+    size_t nb = static_cast<size_t>(node) * K;
+    size_t lb = static_cast<size_t>(lc) * K;
+    size_t rb = static_cast<size_t>(rc) * K;
+    for (int s = 0; s < K; ++s) {
+      tb_cnt[nb + s] = tb_cnt[lb + s] + tb_cnt[rb + s];
+      tb_mintip[nb + s] = std::min(tb_mintip[lb + s], tb_mintip[rb + s]);
+    }
+  }
 
-  // Traverse preorder (reverse postorder) to resolve internal nodes and tips
+  // Resolve `state_sets[node]` to a single state, preferring the best-supported
+  // token (max subtree count; ties broken by smallest supporting tip index —
+  // a strict order, since distinct tokens never share a supporting tip).  When
+  // no token in the set has concrete support (the whole subtree is ambiguous
+  // for this character), fall back to the lowest set bit: every node then
+  // inherits it and no mismatch is affected, so the choice is score-neutral.
+  auto pick_state = [&](int node) -> uint32_t {
+    uint32_t set = state_sets[node];
+    size_t base = static_cast<size_t>(node) * K;
+    int best = -1;
+    for (int s = 0; s < K; ++s) {
+      if (!(set & (1u << s)) || tb_cnt[base + s] == 0) continue;
+      if (best < 0 ||
+          tb_cnt[base + s] > tb_cnt[base + best] ||
+          (tb_cnt[base + s] == tb_cnt[base + best] &&
+           tb_mintip[base + s] < tb_mintip[base + best])) {
+        best = s;
+      }
+    }
+    if (best < 0) return set & (~set + 1);   // no support: lowest bit (neutral)
+    return 1u << best;
+  };
+
+  // --- Uppass: resolve each node to a single state ---
+  int root = tree.postorder.back();
+  state_sets[root] = pick_state(root);
+
+  // Traverse preorder (reverse postorder) to resolve internal nodes and tips.
   for (int i = static_cast<int>(tree.postorder.size()) - 1; i >= 0; --i) {
     int node = tree.postorder[i];
     int ni = node - n_tip;
     int lc = tree.left[ni];
     int rc = tree.right[ni];
 
-    // Resolve each child: prefer parent's state if compatible
+    // Resolve each child: prefer parent's (already-resolved) state if it lies
+    // in the child's set (DELTRAN-style); otherwise pick order-invariantly.
     for (int child : {lc, rc}) {
       uint32_t overlap = state_sets[child] & state_sets[node];
       if (overlap != 0) {
         state_sets[child] = state_sets[node]; // inherit parent's state
       } else {
-        // Pick lowest bit from child's state set
-        state_sets[child] = state_sets[child] & (~state_sets[child] + 1);
+        state_sets[child] = pick_state(child);
       }
     }
   }
