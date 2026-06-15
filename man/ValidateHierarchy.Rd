@@ -17,7 +17,7 @@ informative error if validation fails).
 }
 \description{
 Check that a \code{\link{CharacterHierarchy}} object is consistent with a
-\code{\link[phangorn:phyDat]{phyDat}} dataset: character indices exist,
+\code{\link[phangorn:as.phyDat]{phyDat}} dataset: character indices exist,
 controlling characters are binary (absent/present), secondaries are
 coded inapplicable where expected, and no character appears in
 multiple blocks.

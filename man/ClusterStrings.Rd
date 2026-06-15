@@ -29,10 +29,10 @@ ClusterStrings(c(paste0("FirstCluster ", 1:5),
                  paste0("AnotherCluster_", letters[1:6])))
 }
 \seealso{
-Other utility functions:
-\code{\link[=QACol]{QACol()}},
-\code{\link[=QuartetResolution]{QuartetResolution()}},
-\code{\link[=WhenFirstHit]{WhenFirstHit()}}
+Other utility functions: 
+\code{\link{QACol}()},
+\code{\link{QuartetResolution}()},
+\code{\link{WhenFirstHit}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -35,6 +35,25 @@
   Wagner starts that once distinguished it are folded into `"thorough"`, so the two
   are identical.  Existing calls continue to work.
 
+- **MorphyLib removed.** The vendored Morphy Phylogenetic Library (C/C++) has
+  been dropped; all parsimony scoring now runs through the native C++ kernel,
+  which implements the Brazeau, Guillerme & Smith (2019) inapplicable-state
+  algorithm correctly — including ambiguous-with-inapplicable tokens such as
+  `{1-}`, which MorphyLib mis-scored.  The custom-search functions
+  (`TreeSearch()`, `Ratchet()`, `Jackknife()`, `MorphyBootstrap()`,
+  `EdgeListSearch()`) keep their interfaces; `Jackknife()` and
+  `MorphyBootstrap()` now resample characters natively (the resampled weights
+  are scored by the native kernel rather than by mutating a MorphyLib object,
+  fixing a case where resampled weights could be ignored).
+  The low-level MorphyLib bindings (`mpl_*()`), together with the
+  `MorphyWeights()`, `SetMorphyWeights()`, `GapHandler()`, `MorphyErrorCheck()`,
+  `GetMorphyLength()` and `C_MorphyLength()` helpers and the
+  `summary.morphyPtr()` method, have been removed.  `PhyDat2Morphy()`,
+  `SingleCharMorphy()`, `UnloadMorphy()` and `is.morphyPtr()` are retained but
+  now return lightweight, garbage-collected handles; only the default
+  `"inapplicable"` gap treatment is supported (recode data for the
+  missing/extra-state treatments).
+
 - `MaximizeParsimony()` results now carry a `candidates_evaluated` attribute:
   the number of TBR/SPR-class rearrangements examined during a single-threaded
   search (the analogue of TNT's "rearrangements examined"), for diagnosing

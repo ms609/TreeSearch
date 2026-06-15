@@ -54,22 +54,6 @@ mi_key <- function(ni, nj) {
     .Call(`_TreeSearch_mi_key`, ni, nj)
 }
 
-preorder_morphy <- function(edge, MorphyHandl) {
-    .Call(`_TreeSearch_preorder_morphy`, edge, MorphyHandl)
-}
-
-preorder_morphy_by_char <- function(edge, MorphyHandls) {
-    .Call(`_TreeSearch_preorder_morphy_by_char`, edge, MorphyHandls)
-}
-
-morphy_iw <- function(edge, MorphyHandls, weight, minScore, sequence, concavity, target) {
-    .Call(`_TreeSearch_morphy_iw`, edge, MorphyHandls, weight, minScore, sequence, concavity, target)
-}
-
-morphy_profile <- function(edge, MorphyHandls, weight, sequence, profiles, target) {
-    .Call(`_TreeSearch_morphy_profile`, edge, MorphyHandls, weight, sequence, profiles, target)
-}
-
 quartet_concordance <- function(splits, characters) {
     .Call(`_TreeSearch_quartet_concordance`, splits, characters)
 }

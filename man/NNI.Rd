@@ -111,9 +111,9 @@ tree <- TreeTools::Preorder(tree)
 \insertAllCited{}
 }
 \seealso{
-Other tree rearrangement functions:
-\code{\link[=SPR]{SPR()}},
-\code{\link[=TBR]{TBR()}}
+Other tree rearrangement functions: 
+\code{\link{SPR}()},
+\code{\link{TBR}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

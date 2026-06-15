@@ -4,10 +4,10 @@
 #' equal weights.
 #' 
 #' @param dataset A `phyDat` object (recommended) or a Morphy object created
-#'   with [`PhyDat2Morphy()`] (legacy; deprecated).
+#'   with [`PhyDat2Morphy()`].
 #'
 #' @return `RandomTreeScore()` returns a numeric parsimony score.
-#' @examples 
+#' @examples
 #' tokens <- matrix(c(
 #'   0, "-", "-", 1, 1, 2,
 #'   0, 1, 0, 1, 2, 2,
@@ -19,13 +19,13 @@
 #' @export
 RandomTreeScore <- function(dataset) {
   if (inherits(dataset, "morphyPtr")) {
-    nTip <- mpl_get_numtaxa(dataset)
-    if (nTip < 2) {
-      return(0L)
+    native <- attr(dataset, "native", exact = TRUE)
+    if (is.null(native)) {
+      stop("`dataset` lacks native scoring data")
     }
-    return(.Call(`RANDOM_TREE_SCORE`, as.integer(nTip), dataset))
+    dataset <- native[["phy"]]
   }
-  
+
   nTip <- length(dataset)
   if (nTip < 2) {
     return(0)

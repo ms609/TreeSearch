@@ -11,47 +11,19 @@ UnloadMorphy(morphyObj)
 \code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
 }
 \value{
-Morphy error code, decipherable using \code{\link{mpl_translate_error}}
+\code{UnloadMorphy()} returns the integer \code{0}, invisibly.
 }
 \description{
-Destroys a previously-created Morphy object.
-}
-\details{
-Best practice is to call \code{morphyObj <- UnloadMorphy(morphyObj)}
-Failure to do so will cause a crash if \code{UnloadMorphy()} is called on an
-object that  has already been destroyed
+Releases a previously-created Morphy object.
+Retained for backwards compatibility: Morphy objects in TreeSearch 2.0 are
+managed by R's garbage collector, so \code{UnloadMorphy()} simply invalidates the
+handle and returns \code{0}.
 }
 \seealso{
-Other Morphy API functions:
-\code{\link[=GapHandler]{GapHandler()}},
-\code{\link[=MorphyErrorCheck]{MorphyErrorCheck()}},
-\code{\link[=MorphyWeights]{MorphyWeights()}},
-\code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}},
-\code{\link[=SingleCharMorphy]{SingleCharMorphy()}},
-\code{\link[=is.morphyPtr]{is.morphyPtr()}},
-\code{\link[=mpl_apply_tipdata]{mpl_apply_tipdata()}},
-\code{\link[=mpl_attach_rawdata]{mpl_attach_rawdata()}},
-\code{\link[=mpl_attach_symbols]{mpl_attach_symbols()}},
-\code{\link[=mpl_delete_Morphy]{mpl_delete_Morphy()}},
-\code{\link[=mpl_first_down_recon]{mpl_first_down_recon()}},
-\code{\link[=mpl_first_up_recon]{mpl_first_up_recon()}},
-\code{\link[=mpl_get_charac_weight]{mpl_get_charac_weight()}},
-\code{\link[=mpl_get_gaphandl]{mpl_get_gaphandl()}},
-\code{\link[=mpl_get_num_charac]{mpl_get_num_charac()}},
-\code{\link[=mpl_get_num_internal_nodes]{mpl_get_num_internal_nodes()}},
-\code{\link[=mpl_get_numtaxa]{mpl_get_numtaxa()}},
-\code{\link[=mpl_get_symbols]{mpl_get_symbols()}},
-\code{\link[=mpl_init_Morphy]{mpl_init_Morphy()}},
-\code{\link[=mpl_new_Morphy]{mpl_new_Morphy()}},
-\code{\link[=mpl_second_down_recon]{mpl_second_down_recon()}},
-\code{\link[=mpl_second_up_recon]{mpl_second_up_recon()}},
-\code{\link[=mpl_set_charac_weight]{mpl_set_charac_weight()}},
-\code{\link[=mpl_set_num_internal_nodes]{mpl_set_num_internal_nodes()}},
-\code{\link[=mpl_set_parsim_t]{mpl_set_parsim_t()}},
-\code{\link[=mpl_translate_error]{mpl_translate_error()}},
-\code{\link[=mpl_update_lower_root]{mpl_update_lower_root()}},
-\code{\link[=mpl_update_tip]{mpl_update_tip()}},
-\code{\link[=summary.morphyPtr]{summary.morphyPtr()}}
+Other Morphy API functions: 
+\code{\link{PhyDat2Morphy}()},
+\code{\link{SingleCharMorphy}()},
+\code{\link{is.morphyPtr}()}
 }
 \author{
 Martin R. Smith

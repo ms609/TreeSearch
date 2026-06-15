@@ -537,7 +537,11 @@ MorphyTreeLength <- function(tree, morphyObj) {
   if (!is.morphyPtr(morphyObj)) {
     stop("`morphyObj` must be a valid Morphy pointer")
   }
-  nTaxa <- mpl_get_numtaxa(morphyObj)
+  native <- attr(morphyObj, "native", exact = TRUE)
+  if (is.null(native)) {
+    stop("`morphyObj` lacks native scoring data")
+  }
+  nTaxa <- native[["nTip"]]
   if (nTaxa != length(tree[["tip.label"]])) {
     stop ("Number of taxa in Morphy object (", nTaxa,
           ") not equal to number of tips in tree")
@@ -553,53 +557,27 @@ MorphyTreeLength <- function(tree, morphyObj) {
 #' @describeIn MorphyTreeLength Faster function that requires internal tree
 #'   parameters. Node numbering must increase monotonically away from root.
 #' @inheritParams RearrangeEdges
+#' @param inPostorder,nTaxa Retained for backwards compatibility; ignored.
 #' @author Martin R. Smith
-#' @keywords internal
-#' @importFrom TreeTools PostorderOrder Preorder
-#' @importFrom fastmatch fmatch
 #' @export
 MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
-                         nTaxa = mpl_get_numtaxa(morphyObj)) {
-  # Native (MorphyLib-free) scoring for the default inapplicable gap mode.
-  # `.NativeMorphyData()` attaches this only for that mode; the rarely-used
-  # ambiguous/extra modes return NULL here and fall through to MorphyLib.
+                         nTaxa = NULL) {
+  # MorphyLib-free scoring via the native Fitch kernel, which handles the
+  # Brazeau-Guillerme-Smith inapplicable algorithm (including the `{1-}` case
+  # that MorphyLib mis-scores).
   native <- attr(morphyObj, "native", exact = TRUE)
-  if (!is.null(native)) {
-    return(.NativeMorphyLength(parent, child, native))
+  if (is.null(native)) {
+    stop("`morphyObj` must be a valid Morphy object; see ?PhyDat2Morphy.")
   }
-  if (!inPostorder) {
-    edgeList <- Preorder(cbind(parent, child))
-    edgeList <- edgeList[PostorderOrder(edgeList), ]
-    parent <- edgeList[, 1]
-    child <- edgeList[, 2]
-  }
-  if (!inherits(morphyObj, "morphyPtr")) {
-    stop("`morphyObj` must be a Morphy pointer. See ?LoadMorphy().")
-  }
-  if (nTaxa < 1L) {
-    # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
-    # evaluation of nTaxa will cause a crash.
-    stop("Error: ", mpl_translate_error(nTaxa))
-  }
-  
-  maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
-  rootNode <- nTaxa + 1L
-  allNodes <- rootNode:maxNode
-  
-  parentOf <- parent[fmatch(seq_len(maxNode), child)]
-  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
-  leftChild <- child[length(parent) + 1L - fmatch(allNodes, rev(parent))]
-  rightChild <- child[fmatch(allNodes, parent)]
-  
   # Return:
-  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L),
-               as.integer(rightChild - 1L), morphyObj)
+  .NativeMorphyLength(parent, child, native)
 }
 
 # Score an edge list with the native Fitch kernel, reusing the verified
 # `FastCharacterLength()` pipeline (correct Brazeau-Guillerme-Smith handling of
 # inapplicable tokens, including the `{1-}` case that MorphyLib mis-scores).
 # `native` is the list attached by `.NativeMorphyData()`.
+#' @importFrom TreeTools Renumber RenumberTips
 .NativeMorphyLength <- function(parent, child, native) {
   parent <- as.integer(parent)
   child <- as.integer(child)
@@ -613,34 +591,3 @@ MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
   as.integer(round(sum(steps * native[["weight"]])))
 }
 
-#' @describeIn MorphyTreeLength Fastest function that requires internal tree parameters
-#' @param parentOf Integer vector containing, for each tip and each node in 
-#' sequential order, the integer index its parent node.  
-#' The root node should be its own parent.
-#' @param leftChild integer vector containing, for each node, starting at the 
-#' root and proceeding in sequential order, the integer corresponding to its
-#' left child.  Tip numbering begins at 0; the root node is numbered `nTip`.
-#' @param rightChild integer vector containing, for each node, the index
-#'                  of its right child.
-#' @family tree scoring
-#' @author Martin R. Smith
-#' @keywords internal
-#' @export
-GetMorphyLength <- function(parentOf, leftChild, rightChild, morphyObj) {
-  # Return:
-  .Call(`MORPHYLENGTH`, as.integer(parentOf), as.integer(leftChild), 
-               as.integer(rightChild), morphyObj)
-}
-
-#' @describeIn MorphyTreeLength Direct call to C function. Use with caution.
-#' @param parentOf For each node, numbered in postorder, the number of its parent node.
-#' @param leftChild  For each internal node, numbered in postorder, the number of its left 
-#'                   child node or tip.
-#' @param rightChild For each internal node, numbered in postorder, the number of its right
-#'                   child node or tip.
-#' @keywords internal
-#' @export
-C_MorphyLength <- function(parentOf, leftChild, rightChild, morphyObj) {
-  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
-               as.integer(rightChild - 1L), morphyObj)
-}

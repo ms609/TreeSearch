@@ -2,7 +2,7 @@
 % Please edit documentation in R/mpl_morphy_objects.R
 \name{.GapHandler}
 \alias{.GapHandler}
-\title{Translate a gap treatment into a string in the format expected by Morphy}
+\title{Translate a gap treatment into a canonical string}
 \usage{
 .GapHandler(gap)
 }
@@ -10,10 +10,9 @@
 \item{gap}{Character vector: how should gaps be handled?}
 }
 \value{
-Character string that can be translated into a gap handling strategy
-by Morphy.
+Character string identifying the gap-handling strategy.
 }
 \description{
-Translate a gap treatment into a string in the format expected by Morphy
+Translate a gap treatment into a canonical string
 }
 \keyword{internal}

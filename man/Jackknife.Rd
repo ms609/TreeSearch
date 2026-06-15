@@ -76,19 +76,19 @@ engine.
 \item \code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
 }
 
-Other split support functions:
-\code{\link[=ConcordanceTable]{ConcordanceTable()}},
-\code{\link[=JackLabels]{JackLabels()}},
-\code{\link[=Morphy]{Morphy()}},
-\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
-\code{\link[=PaintCharacters]{PaintCharacters()}},
-\code{\link[=PresCont]{PresCont()}},
+Other split support functions: 
+\code{\link{ConcordanceTable}()},
+\code{\link{JackLabels}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PaintCharacters}()},
+\code{\link{PresCont}()},
+\code{\link{Resample}()},
 \code{\link{SiteConcordance}}
 
-Other custom search functions:
-\code{\link[=EdgeListSearch]{EdgeListSearch()}},
-\code{\link[=MorphyBootstrap]{MorphyBootstrap()}},
-\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
+Other custom search functions: 
+\code{\link{EdgeListSearch}()},
+\code{\link{MorphyBootstrap}()},
+\code{\link{SuccessiveApproximations}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

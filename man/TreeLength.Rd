@@ -120,7 +120,7 @@ characters are controlling primaries and which are their dependent
 secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
 ignored when \code{inapplicable = "bgs"} (the default).
 See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
-\code{\link[=HierarchyFromNames]{HierarchyFromNames()}} for automated construction from
+\code{\link[=hierarchy_from_names]{hierarchy_from_names()}} for automated construction from
 TNT-style character names.}
 
 \item{inapplicable}{Character: method for handling inapplicable characters.
@@ -193,19 +193,19 @@ TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj")
 \item See score for each character: \code{\link[=CharacterLength]{CharacterLength()}}.
 }
 
-Other tree scoring:
-\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
-\code{\link[=CharacterLength]{CharacterLength()}},
-\code{\link[=ExpectedLength]{ExpectedLength()}},
-\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
-\code{\link[=LengthAdded]{LengthAdded()}},
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
-\code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
-\code{\link[=ParsSim]{ParsSim()}},
-\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
-\code{\link[=TaxonInfluence]{TaxonInfluence()}},
-\code{\link[=WideSample]{WideSample()}}
+Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
+\code{\link{CharacterLength}()},
+\code{\link{ExpectedLength}()},
+\code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{MinimumLength}()},
+\code{\link{MorphyTreeLength}()},
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \author{
 Martin R. Smith

@@ -7,57 +7,34 @@
 SingleCharMorphy(char, gap = "inapp")
 }
 \arguments{
-\item{char}{State of each character at each tip in turn, in a format that will be converted
-to a character string by \code{\link{paste0}(char, ";", collapse="")}.}
+\item{char}{State of each character at each tip in turn, in a format that
+will be converted to a character string by
+\code{\link{paste0}(char, ";", collapse="")}.}
 
-\item{gap}{An unambiguous abbreviation of \code{inapplicable}, \code{ambiguous}
-(= \code{missing}), or \verb{extra state}, specifying how gaps will be handled.}
+\item{gap}{Character specifying how gaps (the inapplicable token) will be
+handled.  Only the default \code{"inapplicable"} treatment (the algorithm of
+Brazeau, Guillerme and Smith 2019) is supported; recode your data if you
+require gaps to be treated as missing or as an extra state.}
 }
 \value{
-A pointer to an object of class \code{morphyObj}.
-Don't forget to unload it when you've finished with it.
+A \code{morphyPtr} object.
+Release it with \code{\link[=UnloadMorphy]{UnloadMorphy()}} when finished.
 }
 \description{
 Morphy object from single character
 }
 \examples{
-morphyObj <- SingleCharMorphy("-0-0", gap = "Extra")
+morphyObj <- SingleCharMorphy("-0-0")
 RandomTreeScore(morphyObj)
 morphyObj <- UnloadMorphy(morphyObj)
 }
 \seealso{
 Score a tree: \code{\link[=MorphyTreeLength]{MorphyTreeLength()}}
 
-Other Morphy API functions:
-\code{\link[=GapHandler]{GapHandler()}},
-\code{\link[=MorphyErrorCheck]{MorphyErrorCheck()}},
-\code{\link[=MorphyWeights]{MorphyWeights()}},
-\code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}},
-\code{\link[=UnloadMorphy]{UnloadMorphy()}},
-\code{\link[=is.morphyPtr]{is.morphyPtr()}},
-\code{\link[=mpl_apply_tipdata]{mpl_apply_tipdata()}},
-\code{\link[=mpl_attach_rawdata]{mpl_attach_rawdata()}},
-\code{\link[=mpl_attach_symbols]{mpl_attach_symbols()}},
-\code{\link[=mpl_delete_Morphy]{mpl_delete_Morphy()}},
-\code{\link[=mpl_first_down_recon]{mpl_first_down_recon()}},
-\code{\link[=mpl_first_up_recon]{mpl_first_up_recon()}},
-\code{\link[=mpl_get_charac_weight]{mpl_get_charac_weight()}},
-\code{\link[=mpl_get_gaphandl]{mpl_get_gaphandl()}},
-\code{\link[=mpl_get_num_charac]{mpl_get_num_charac()}},
-\code{\link[=mpl_get_num_internal_nodes]{mpl_get_num_internal_nodes()}},
-\code{\link[=mpl_get_numtaxa]{mpl_get_numtaxa()}},
-\code{\link[=mpl_get_symbols]{mpl_get_symbols()}},
-\code{\link[=mpl_init_Morphy]{mpl_init_Morphy()}},
-\code{\link[=mpl_new_Morphy]{mpl_new_Morphy()}},
-\code{\link[=mpl_second_down_recon]{mpl_second_down_recon()}},
-\code{\link[=mpl_second_up_recon]{mpl_second_up_recon()}},
-\code{\link[=mpl_set_charac_weight]{mpl_set_charac_weight()}},
-\code{\link[=mpl_set_num_internal_nodes]{mpl_set_num_internal_nodes()}},
-\code{\link[=mpl_set_parsim_t]{mpl_set_parsim_t()}},
-\code{\link[=mpl_translate_error]{mpl_translate_error()}},
-\code{\link[=mpl_update_lower_root]{mpl_update_lower_root()}},
-\code{\link[=mpl_update_tip]{mpl_update_tip()}},
-\code{\link[=summary.morphyPtr]{summary.morphyPtr()}}
+Other Morphy API functions: 
+\code{\link{PhyDat2Morphy}()},
+\code{\link{UnloadMorphy}()},
+\code{\link{is.morphyPtr}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

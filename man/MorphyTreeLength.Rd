@@ -3,23 +3,11 @@
 \name{MorphyTreeLength}
 \alias{MorphyTreeLength}
 \alias{MorphyLength}
-\alias{GetMorphyLength}
-\alias{C_MorphyLength}
 \title{Calculate parsimony score from Morphy object}
 \usage{
 MorphyTreeLength(tree, morphyObj)
 
-MorphyLength(
-  parent,
-  child,
-  morphyObj,
-  inPostorder = FALSE,
-  nTaxa = mpl_get_numtaxa(morphyObj)
-)
-
-GetMorphyLength(parentOf, leftChild, rightChild, morphyObj)
-
-C_MorphyLength(parentOf, leftChild, rightChild, morphyObj)
+MorphyLength(parent, child, morphyObj, inPostorder = FALSE, nTaxa = NULL)
 }
 \arguments{
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}, with tip
@@ -37,13 +25,7 @@ matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
 matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
 \code{tree[["edge"]][, 2]}.}
 
-\item{parentOf}{For each node, numbered in postorder, the number of its parent node.}
-
-\item{leftChild}{For each internal node, numbered in postorder, the number of its left
-child node or tip.}
-
-\item{rightChild}{For each internal node, numbered in postorder, the number of its right
-child node or tip.}
+\item{inPostorder, nTaxa}{Retained for backwards compatibility; ignored.}
 }
 \value{
 \code{MorphyTreeLength()} returns the length of the tree,
@@ -58,27 +40,23 @@ For most users, the function \code{\link[=TreeLength]{TreeLength()}} will be mor
 \item \code{MorphyLength()}: Faster function that requires internal tree
 parameters. Node numbering must increase monotonically away from root.
 
-\item \code{GetMorphyLength()}: Fastest function that requires internal tree parameters
-
-\item \code{C_MorphyLength()}: Direct call to C function. Use with caution.
-
 }}
 \seealso{
 PhyDat2Morphy
 
-Other tree scoring:
-\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
-\code{\link[=CharacterLength]{CharacterLength()}},
-\code{\link[=ExpectedLength]{ExpectedLength()}},
-\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
-\code{\link[=IWScore]{IWScore()}},
-\code{\link[=LengthAdded]{LengthAdded()}},
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
-\code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=ParsSim]{ParsSim()}},
-\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
-\code{\link[=TaxonInfluence]{TaxonInfluence()}},
-\code{\link[=WideSample]{WideSample()}}
+Other tree scoring: 
+\code{\link{CharacterHierarchy}()},
+\code{\link{CharacterLength}()},
+\code{\link{ExpectedLength}()},
+\code{\link{IWScore}()},
+\code{\link{LengthAdded}()},
+\code{\link{MaximizeParsimony}()},
+\code{\link{MinimumLength}()},
+\code{\link{ParsSim}()},
+\code{\link{TaxonInfluence}()},
+\code{\link{WideSample}()},
+\code{\link{hierarchy_from_names}()},
+\code{\link{recode_hierarchy}()}
 }
 \author{
 Martin R. Smith

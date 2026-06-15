@@ -55,63 +55,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// preorder_morphy
-int preorder_morphy(IntegerMatrix edge, SEXP MorphyHandl);
-RcppExport SEXP _TreeSearch_preorder_morphy(SEXP edgeSEXP, SEXP MorphyHandlSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type MorphyHandl(MorphyHandlSEXP);
-    rcpp_result_gen = Rcpp::wrap(preorder_morphy(edge, MorphyHandl));
-    return rcpp_result_gen;
-END_RCPP
-}
-// preorder_morphy_by_char
-IntegerVector preorder_morphy_by_char(IntegerMatrix edge, List MorphyHandls);
-RcppExport SEXP _TreeSearch_preorder_morphy_by_char(SEXP edgeSEXP, SEXP MorphyHandlsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< List >::type MorphyHandls(MorphyHandlsSEXP);
-    rcpp_result_gen = Rcpp::wrap(preorder_morphy_by_char(edge, MorphyHandls));
-    return rcpp_result_gen;
-END_RCPP
-}
-// morphy_iw
-double morphy_iw(IntegerMatrix edge, List MorphyHandls, NumericVector weight, IntegerVector minScore, IntegerVector sequence, NumericVector concavity, NumericVector target);
-RcppExport SEXP _TreeSearch_morphy_iw(SEXP edgeSEXP, SEXP MorphyHandlsSEXP, SEXP weightSEXP, SEXP minScoreSEXP, SEXP sequenceSEXP, SEXP concavitySEXP, SEXP targetSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< List >::type MorphyHandls(MorphyHandlsSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type weight(weightSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type minScore(minScoreSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type sequence(sequenceSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type concavity(concavitySEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type target(targetSEXP);
-    rcpp_result_gen = Rcpp::wrap(morphy_iw(edge, MorphyHandls, weight, minScore, sequence, concavity, target));
-    return rcpp_result_gen;
-END_RCPP
-}
-// morphy_profile
-double morphy_profile(IntegerMatrix edge, List MorphyHandls, NumericVector weight, IntegerVector sequence, NumericMatrix profiles, NumericVector target);
-RcppExport SEXP _TreeSearch_morphy_profile(SEXP edgeSEXP, SEXP MorphyHandlsSEXP, SEXP weightSEXP, SEXP sequenceSEXP, SEXP profilesSEXP, SEXP targetSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
-    Rcpp::traits::input_parameter< List >::type MorphyHandls(MorphyHandlsSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type weight(weightSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type sequence(sequenceSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type profiles(profilesSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type target(targetSEXP);
-    rcpp_result_gen = Rcpp::wrap(morphy_profile(edge, MorphyHandls, weight, sequence, profiles, target));
-    return rcpp_result_gen;
-END_RCPP
-}
 // quartet_concordance
 List quartet_concordance(const LogicalMatrix splits, const IntegerMatrix characters);
 RcppExport SEXP _TreeSearch_quartet_concordance(SEXP splitsSEXP, SEXP charactersSEXP) {

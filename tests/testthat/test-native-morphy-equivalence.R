@@ -3,15 +3,14 @@
 # (Brazeau-Guillerme-Smith) scores -- NOT bit-equivalence with legacy MorphyLib,
 # which mis-scores `{1-}` ambiguous-with-inapplicable tokens (Lobo pattern 93).
 
-test_that("PhyDat2Morphy() attaches native data only for the inapplicable mode", {
+test_that("PhyDat2Morphy() attaches native data for the inapplicable mode", {
   data("Lobo", package = "TreeTools")
   mo <- PhyDat2Morphy(Lobo.phy)                    # default gap = "inapplicable"
   on.exit(UnloadMorphy(mo), add = TRUE)
   expect_false(is.null(attr(mo, "native", exact = TRUE)))
 
-  ma <- PhyDat2Morphy(Lobo.phy, "ambiguous")       # rare mode: MorphyLib for now
-  on.exit(UnloadMorphy(ma), add = TRUE)
-  expect_null(attr(ma, "native", exact = TRUE))
+  # Non-inapplicable gap treatments are unsupported now that MorphyLib is gone.
+  expect_error(PhyDat2Morphy(Lobo.phy, "ambiguous"))
 })
 
 test_that("native MorphyTreeLength() equals native TreeLength()", {

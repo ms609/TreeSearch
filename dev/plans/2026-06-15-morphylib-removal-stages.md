@@ -58,9 +58,35 @@ Once nothing calls MorphyLib:
   `test-pp-random-tree.R`, `test-RandomTreeScore.R`, and any `Morphy()` test
   asserting exact trees/scores on inapplicable data.
 
+### Stage 3 findings (resolved)
+- **Wagner is NOT a MorphyLib dependency.** The native engine has its own
+  self-contained addition-tree builder (`src/ts_wagner.cpp`:
+  `wagner_tree`/`random_wagner_tree`/`biased_wagner_tree`, used by
+  `ts_driven`). MorphyLib's `src/wagner.c` (`mpl_wagner_*`, `MPLstate`) is
+  internal MorphyLib plumbing, reachable only through `morphy.c` → the deleted
+  R bridge. `MPLstate`/`MPLndsets`/`MPLpartition` appear ONLY in MorphyLib
+  files; no `ts_*` source uses them. So MorphyLib deletes wholesale — no
+  `MPLstate` extraction, no Wagner rebuild.
+- **Resampling weight coupling (the real gating issue).** `Jackknife()` and
+  `MorphyBootstrap()` resampled by mutating character weights in place on the
+  MorphyLib pointer (`mpl_set_charac_weight`) and re-scoring. Stage 1's native
+  `MorphyLength` reads weights frozen into `attr(morphyObj,"native")` at
+  construction, so those mutations were ignored — a latent regression.
+  Fixed by **functional native resampling**: `.SetMorphyWeight()` returns a
+  copy of the handle carrying the resampled weight vector; the custom-search
+  framework (`EdgeListSearch` + `TreeScorer`/`EdgeSwapper`) is unchanged.
+  Regression covered by a new test (doubling weights doubles the score).
+  Custom-search resampling is preserved; `Resample()` (no custom TreeScorer)
+  is a separate path and was not a substitute.
+
 ## Status
-Stage 2 (axe `Morphy()`) is implemented on this branch. Stage 3 (delete the
-now-dead `morphy_iw`/`morphy_profile`, make `PhyDat2Morphy`/`SingleCharMorphy`
-native-only, migrate `RandomTreeScore`, remove the `mpl_*` bindings +
-introspection + vendored C/C++ sources, update DESCRIPTION/Makevars + tests)
-remains — larger, spans the C build, best done with review.
+Stage 3 IMPLEMENTED on this branch: `PhyDat2Morphy`/`SingleCharMorphy`
+native-only; `UnloadMorphy` a no-op; `RandomTreeScore` native (kept
+`RandomMorphyTree` + the pure C `RANDOM_TREE`); removed `mpl_*` bindings,
+introspection helpers, `MORPHYLENGTH`/`RANDOM_TREE_SCORE`/`GetMorphyLength`/
+`C_MorphyLength`, `morphy_iw`/`morphy_profile`/`preorder_morphy`; deleted all
+17 vendored MorphyLib C/C++ sources; trimmed `TreeSearch-init.c` +
+`build_postorder.h`; regenerated RcppExports/NAMESPACE/man. Package compiles,
+installs, and the test suite is green. Outstanding: DESCRIPTION MorphyLib
+copyright/attribution (sensitive — Brazeau/BGS credit) left for maintainer
+decision.

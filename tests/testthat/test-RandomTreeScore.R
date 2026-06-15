@@ -57,7 +57,7 @@ test_that("RandomTreeScore() backward compat with morphyObj", {
   # One leaf
   pd <- TreeTools::MatrixToPhyDat(tokens[1, , drop = FALSE])
   morphyObj <- PhyDat2Morphy(pd)
-  expect_equal(mpl_get_numtaxa(morphyObj), 1L)
+  expect_equal(morphyObj[["nTip"]], 1L)
   expect_equal(RandomTreeScore(morphyObj), 0)
   morphyObj <- UnloadMorphy(morphyObj)
   

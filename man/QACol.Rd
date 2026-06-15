@@ -60,10 +60,10 @@ plot(quality, amount, col = QACol(quality, amount), pch = 15)
 abline(v = 0)
 }
 \seealso{
-Other utility functions:
-\code{\link[=ClusterStrings]{ClusterStrings()}},
-\code{\link[=QuartetResolution]{QuartetResolution()}},
-\code{\link[=WhenFirstHit]{WhenFirstHit()}}
+Other utility functions: 
+\code{\link{ClusterStrings}()},
+\code{\link{QuartetResolution}()},
+\code{\link{WhenFirstHit}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

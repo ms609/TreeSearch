@@ -122,13 +122,13 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 \item \code{\link[=SiteConcordance]{SiteConcordance()}}: compute underlying concordance values.
 }
 
-Other split support functions:
-\code{\link[=JackLabels]{JackLabels()}},
-\code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=Morphy]{Morphy()}},
-\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
-\code{\link[=PaintCharacters]{PaintCharacters()}},
-\code{\link[=PresCont]{PresCont()}},
+Other split support functions: 
+\code{\link{JackLabels}()},
+\code{\link{Jackknife}()},
+\code{\link{MostContradictedFreq}()},
+\code{\link{PaintCharacters}()},
+\code{\link{PresCont}()},
+\code{\link{Resample}()},
 \code{\link{SiteConcordance}}
 }
 \concept{split support functions}

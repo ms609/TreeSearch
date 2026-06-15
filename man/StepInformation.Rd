@@ -72,10 +72,10 @@ character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
 StepInformation(character)
 }
 \seealso{
-Other profile parsimony functions:
-\code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}},
-\code{\link[=PrepareDataProfile]{PrepareDataProfile()}},
-\code{\link[=WithOneExtraStep]{WithOneExtraStep()}},
+Other profile parsimony functions: 
+\code{\link{MaddisonSlatkin}()},
+\code{\link{PrepareDataProfile}()},
+\code{\link{WithOneExtraStep}()},
 \code{\link{profiles}}
 }
 \author{

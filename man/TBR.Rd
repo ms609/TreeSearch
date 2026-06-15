@@ -102,9 +102,9 @@ TBR(tree)
 \seealso{
 \code{\link[=RootedTBR]{RootedTBR()}}: useful when the position of the root node should be retained.
 
-Other tree rearrangement functions:
-\code{\link[=NNI]{NNI()}},
-\code{\link[=SPR]{SPR()}}
+Other tree rearrangement functions: 
+\code{\link{NNI}()},
+\code{\link{SPR}()}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

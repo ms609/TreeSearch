@@ -109,10 +109,10 @@ criterion \insertCite{Farris1969}{TreeSearch}.
 \insertAllCited{}
 }
 \seealso{
-Other custom search functions:
-\code{\link[=EdgeListSearch]{EdgeListSearch()}},
-\code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=MorphyBootstrap]{MorphyBootstrap()}}
+Other custom search functions: 
+\code{\link{EdgeListSearch}()},
+\code{\link{Jackknife}()},
+\code{\link{MorphyBootstrap}()}
 }
 \concept{custom search functions}
 \keyword{internal}

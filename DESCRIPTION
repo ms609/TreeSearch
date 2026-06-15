@@ -130,7 +130,6 @@ Collate:
   'fractional-weights.R'
   'length_range.R'
   'mpl_morphy_objects.R'
-  'mpl_morphyex.R'
   'pp_info_extra_step.r'
   'tree_length.R'
   'tree_rearrangement.R'
@@ -146,3 +145,4 @@ Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3

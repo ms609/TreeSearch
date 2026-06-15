@@ -23,7 +23,7 @@ containing:
 Random postorder tree
 }
 \seealso{
-Other tree generation functions:
-\code{\link[=AdditionTree]{AdditionTree()}}
+Other tree generation functions: 
+\code{\link{AdditionTree}()}
 }
 \concept{tree generation functions}

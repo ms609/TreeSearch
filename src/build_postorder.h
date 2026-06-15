@@ -1,5 +1,6 @@
 #include <stdlib.h>
-#include "RMorphy.h"
+#include <R.h>
+#include <Rinternals.h>
 
 /* Random number generator from http://www.cse.yorku.ca/~oz/marsaglia-rng.html
 / 1+random_int%10 generates an integer from 1 to 10 [MWC renamed to random_int]
@@ -165,41 +166,5 @@ extern SEXP RANDOM_TREE(SEXP ntip) {
   SET_VECTOR_ELT(RESULT, 1, LEFT);
   SET_VECTOR_ELT(RESULT, 2, RIGHT);
   UNPROTECT(4);
-  return(RESULT);
-}
-
-extern SEXP RANDOM_TREE_SCORE(SEXP ntip, SEXP MorphyHandl) {
-  const int n_tip = INTEGER(ntip)[0];
-  if (n_tip < 2) {
-    (Rf_error)("n_tip must be at least two");
-  }
-  Morphy handl = R_ExternalPtrAddr(MorphyHandl);
-  GetRNGstate();
-  unsigned long zs = 1UL + (unsigned long)(unif_rand() * 4294967294.0);
-  unsigned long ws = 1UL + (unsigned long)(unif_rand() * 4294967294.0);
-  PutRNGstate();
-  seed_random_tree(zs, ws);
-  SEXP RESULT = PROTECT(allocVector(INTSXP, 1));
-  int *score,
-    *parent_of = calloc(n_tip + n_tip - 1 , sizeof(int)),
-    *left = calloc(n_tip - 1              , sizeof(int)),
-    *right = calloc(n_tip - 1             , sizeof(int));
-    
-  score = INTEGER(RESULT);
-  *score = 0;
-  if (n_tip < 2) {
-    INTEGER(RESULT)[0] = 0;
-    UNPROTECT(1);
-    return(RESULT);
-  }
-  
-  
-  random_tree(parent_of, left, right, &n_tip);
-  morphy_length(parent_of, left, right, handl, score); 
-  
-  free(parent_of);
-  free(left);
-  free(right);
-  UNPROTECT(1);
   return(RESULT);
 }
