@@ -416,6 +416,34 @@ build_tip_labels <- function(dataset) {
 }
 
 
+#' Identify the primary "absent" state for HSJ scoring
+#'
+#' Returns the 0-based token index of the primary character's *absent* state,
+#' for the [HSJ][recode_hierarchy] scorer's `absent_state` argument.
+#'
+#' Under reductive coding (Hopkins & St. John 2021) the controlling primary
+#' character codes presence/absence of a structure, conventionally `"0"` =
+#' absent, `"1"` = present.  The index of `"0"` depends on the dataset's
+#' `levels` ordering (e.g. it is 1 for `c("-", "0", "1")` but 0 for
+#' `c("0", "1")`), so it must be computed rather than hard-coded.  The
+#' inapplicable token `"-"` is *also* treated as absent by the C++ scorer; if
+#' no `"0"` level exists, its index is returned as the absent state.
+#'
+#' @param dataset A `phyDat` object.
+#' @return Integer scalar: the 0-based index of the absent token in
+#'   `attr(dataset, "levels")`.
+#' @keywords internal
+#' @export
+hsj_absent_state <- function(dataset) {
+  lv <- attr(dataset, "levels")
+  idx <- match("0", lv)
+  if (is.na(idx)) {
+    idx <- match("-", lv)
+  }
+  if (is.na(idx)) 0L else as.integer(idx - 1L)
+}
+
+
 #' Convert CharacterHierarchy to list for C++
 #'
 #' Converts a [`CharacterHierarchy`] object into a flat list of hierarchy

@@ -11,6 +11,7 @@ ts_hsj_score <- TreeSearch:::ts_hsj_score
 build_tip_labels <- TreeSearch:::build_tip_labels
 hierarchy_to_blocks <- TreeSearch:::hierarchy_to_blocks
 non_hierarchy_weights <- TreeSearch:::non_hierarchy_weights
+hsj_absent_state <- TreeSearch:::hsj_absent_state
 
 # --- Helper: build a reductively-coded phyDat ---
 make_hsj_dat <- function(mat, levels = c("-", "0", "1")) {
@@ -25,7 +26,8 @@ hsj_score <- function(tree, dataset, hierarchy, alpha = 1.0) {
                      nrow = length(dataset), byrow = TRUE)
   blocks <- hierarchy_to_blocks(hierarchy)
   tl <- build_tip_labels(dataset)
-  # absent_state = 1 (token index for "0" when levels = c("-", "0", "1"))
+  # absent_state = 0-based token index of "0" (= 1 for levels c("-","0","1")),
+  # computed the same way the driven pipeline does.
   ts_hsj_score(
     edge = tree$edge,
     contrast = at$contrast,
@@ -35,7 +37,7 @@ hsj_score <- function(tree, dataset, hierarchy, alpha = 1.0) {
     hierarchy_blocks_r = blocks,
     alpha = alpha,
     tip_labels_r = tl,
-    absent_state = 1L
+    absent_state = hsj_absent_state(dataset)
   )
 }
 
@@ -566,4 +568,98 @@ test_that("HSJ handles extreme absent/present ratios", {
 
   score_one <- hsj_score(tree, ds_one, h, alpha = 1.0)
   expect_equal(score_one, 1)  # One gain (or loss from root)
+})
+
+
+# =========================================================================
+# Regression: absent_state must identify the primary's "0" (absent) state,
+# not the inapplicable "-" token, and must follow the level ordering.
+# (Driven pipeline previously hard-coded 0L = index of "-", so primaries
+#  coded "0" were treated as present and gain/loss was never counted.)
+# =========================================================================
+test_that("hsj_absent_state() tracks the '0' token across level orderings", {
+  expect_equal(hsj_absent_state(make_hsj_dat(
+    matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
+    levels = c("-", "0", "1"))), 1L)
+  expect_equal(hsj_absent_state(make_hsj_dat(
+    matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
+    levels = c("0", "1", "-"))), 0L)
+  expect_equal(hsj_absent_state(make_hsj_dat(
+    matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
+    levels = c("1", "-", "0"))), 2L)
+})
+
+test_that("HSJ is sensitive to primary present/absent at alpha=0", {
+  # At alpha=0 the block score counts only primary gains/losses, so a primary
+  # absence MUST register.  Before the fix this returned 0 (absence invisible).
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(paste0("t", 1:4), NULL))
+  ds <- make_hsj_dat(mat)
+  tree <- Renumber(RenumberTips(
+    ape::read.tree(text = "((t1,t2),(t3,t4));"), names(ds)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  # One absent tip among three present → one gain.
+  expect_equal(hsj_score(tree, ds, h, alpha = 0), 1)
+
+  # Make every tip present → no gain/loss → block score 0.
+  mat_all <- mat
+  mat_all["t1", ] <- c("1", "0", "0")
+  ds_all <- make_hsj_dat(mat_all)
+  expect_equal(hsj_score(tree, ds_all, h, alpha = 0), 0)
+})
+
+test_that("driven HSJ (TreeLength) agrees with direct ts_hsj_score()", {
+  # The driven pipeline and the test bridge must compute the same absent_state.
+  mat <- matrix(c(
+    "0",  "-",  "-",  "0",
+    "0",  "-",  "-",  "1",
+    "1",  "0",  "1",  "0",
+    "1",  "1",  "0",  "1",
+    "1",  "0",  "0",  "0",
+    "1",  "1",  "1",  "1"
+  ), nrow = 6, byrow = TRUE,
+  dimnames = list(paste0("t", 1:6), NULL))
+  ds <- make_hsj_dat(mat)
+  tree <- Renumber(RenumberTips(ape::read.tree(
+    text = "((t1,t2),((t3,t4),(t5,t6)));"), names(ds)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  for (a in c(0, 0.5, 1)) {
+    expect_equal(
+      TreeLength(tree, ds, hierarchy = h, inapplicable = "hsj", hsj_alpha = a),
+      hsj_score(tree, ds, h, alpha = a)
+    )
+  }
+})
+
+test_that("HSJ primary scoring is invariant to phyDat level ordering", {
+  # build_tip_labels and hsj_absent_state are both level-order generic, so the
+  # primary present/absent contribution must not depend on where "0"/"-" sit in
+  # `levels`.  Tested at alpha = 0 (secondaries ignored) so this isolates the
+  # absent_state fix; a hard-coded absent_state would break it.
+  # (NB: at alpha > 0 the *secondary* dissimilarity is sensitive to level order
+  #  via the Fitch uppass lowest-bit tie-break — a separate, pre-existing issue.)
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(paste0("t", 1:4), NULL))
+  tree <- Renumber(RenumberTips(
+    ape::read.tree(text = "((t1,t2),(t3,t4));"),
+    paste0("t", 1:4)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  orderings <- list(c("-", "0", "1"), c("0", "1", "-"), c("1", "-", "0"))
+  scores <- vapply(orderings, function(lv) {
+    hsj_score(tree, make_hsj_dat(mat, levels = lv), h, alpha = 0)
+  }, double(1))
+  expect_equal(scores, rep(1, length(orderings)))
 })

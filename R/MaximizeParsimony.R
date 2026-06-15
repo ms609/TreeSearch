@@ -784,8 +784,9 @@ MaximizeParsimony <- function(
     hsjArgs$hierarchyBlocks <- hierarchy_to_blocks(hierarchy)
     hsjArgs$hsjTipLabels <- build_tip_labels(dataset)
     hsjArgs$hsjAlpha <- as.double(hsj_alpha)
-    # Absent state is typically 0 (first level in reductive coding)
-    hsjArgs$hsjAbsentState <- 0L
+    # 0-based token index of the primary's "absent" state (depends on level
+    # ordering, so computed from the data rather than hard-coded).
+    hsjArgs$hsjAbsentState <- hsj_absent_state(dataset)
 
     # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy
     adj_weight <- non_hierarchy_weights(dataset, hierarchy)

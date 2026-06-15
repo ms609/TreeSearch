@@ -947,7 +947,7 @@ Morphy <- function(dataset, tree,
     hsjBase$blocks_per_top <- lapply(hierarchy, .FlattenOneTop)
     hsjBase$hsjTipLabels <- build_tip_labels(dataset)
     hsjBase$hsjAlpha <- as.double(hsj_alpha)
-    hsjBase$hsjAbsentState <- 0L
+    hsjBase$hsjAbsentState <- hsj_absent_state(dataset)
   }
 
   # Prepare full xform args (before resampling)

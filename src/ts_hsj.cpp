@@ -142,11 +142,16 @@ static double score_hierarchy_block(
   }
 
   // Step 2: Determine primary state at each tip
-  // primary_present[tip] = true if primary is present (not absent_state)
+  // primary_present[tip] = true unless the primary codes the structure as
+  // absent.  The structure is absent when the primary token is the explicit
+  // "absent" state (block.absent_state, e.g. "0") OR the inapplicable token
+  // ("-").  This mirrors the x-transform recoding (recode_hierarchy.R), which
+  // treats `pri == "0" || pri == "-"` as absent, and is required for nested
+  // hierarchies where a controlling primary may itself be inapplicable.
   std::vector<bool> primary_present(n_tip, false);
   for (int t = 0; t < n_tip; ++t) {
     int label = tip_labels[t * n_orig_chars + block.primary_char];
-    primary_present[t] = (label != block.absent_state);
+    primary_present[t] = (label != block.absent_state) && (label != inapp_state);
   }
 
   // Step 3: a(n)/p(n) DP
