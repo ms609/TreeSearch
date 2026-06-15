@@ -2695,8 +2695,20 @@ List ts_sankoff_test(
   for (int t = 0; t < n_tip; ++t) {
     for (int ch = 0; ch < n_chars; ++ch) {
       int state = tip_states_r(t, ch);
-      if (state >= 0 && state < sd.chars[ch].n_states) {
-        sd.tip_costs[t * stride + ch * sd.max_states + state] = 0.0;
+      const int ns_ch = sd.chars[ch].n_states;
+      double* tip_ptr = sd.tip_costs.data() +
+          static_cast<size_t>(t) * stride + static_cast<size_t>(ch) * sd.max_states;
+      // Mirror the live xform path (ts_driven_search): -1 = fully ambiguous
+      // ("?" in a controlling character), -2 = present but in an unknown
+      // secondary combination (any present state). Previously these sentinels
+      // were skipped, leaving every state at INF, so any "?" inflated the
+      // hierarchy score to Inf.
+      if (state == -1) {
+        for (int s = 0; s < ns_ch; ++s) tip_ptr[s] = 0.0;
+      } else if (state == -2) {
+        for (int s = 1; s < ns_ch; ++s) tip_ptr[s] = 0.0;
+      } else if (state >= 0 && state < ns_ch) {
+        tip_ptr[state] = 0.0;
       }
     }
   }
