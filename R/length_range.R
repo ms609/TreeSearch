@@ -162,11 +162,11 @@ MinimumSteps <- function(x) {
 }
 
 #' @rdname MinimumLength
-#' @return `MaximumLength()` returns a vector of integers specifying the 
+#' @return `MaximumLength()` returns a vector of integers specifying the
 #' maximum number of steps that each character can attain in a parsimonious
 #' reconstruction on a tree.  Inapplicable tokens are not yet supported.
 #' @export
-MaximumLength <- function(x, compress = TRUE) {
+MaximumLength <- function(x, compress = FALSE) {
   UseMethod("MaximumLength")
 }
 

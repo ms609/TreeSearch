@@ -22,6 +22,13 @@ test_that("CharacterHierarchy constructor works", {
   expect_length(h3[[1]]$children, 1)
   expect_equal(h3[[1]]$children[[1]]$controlling, 3L)
   expect_equal(h3[[1]]$children[[1]]$dependents, 9:10)
+
+  # A sub-controller listed explicitly AND as a named sub-block (e.g. the
+  # documented `list(2, 3, 4, 5, "3" = 9:10)`) must appear once, not twice,
+  # in `dependents` (RTS-003).
+  h4 <- CharacterHierarchy("1" = list(2, 3, 4, 5, "3" = 9:10))
+  expect_equal(h4[[1]]$dependents, c(2L, 3L, 4L, 5L))
+  expect_false(anyDuplicated(h4[[1]]$dependents) > 0)
 })
 
 test_that("CharacterHierarchy rejects bad input", {

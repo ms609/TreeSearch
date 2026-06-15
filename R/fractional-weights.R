@@ -19,8 +19,17 @@
 .ScaleWeight <- function(weight) {
   if (length(weight) == 0L) {
     # Return:
-    integer(0L)
-  } else if (is.integer(weight)) {
+    return(integer(0L))
+  }
+  # Reject values that would corrupt the integer weight passed to C++: a
+  # negative weight reaches the scorer as a negative `int` (undefined
+  # behaviour), and NA/NaN/Inf otherwise surface only as an opaque
+  # "missing value where TRUE/FALSE needed" from the overflow guard below.
+  if (any(!is.finite(weight)) || any(weight < 0)) {
+    stop("`weight` must contain only finite, non-negative values.",
+         call. = FALSE)
+  }
+  if (is.integer(weight)) {
     # Return:
     weight
   } else if (all(weight == as.integer(weight))) {

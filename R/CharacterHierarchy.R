@@ -101,7 +101,10 @@ CharacterHierarchy <- function(...) {
     }
     return(list(
       controlling = as.integer(ctrl),
-      dependents = dependents,
+      # A sub-controller may also be listed as an explicit dependent (e.g.
+      # `list(2, 3, 4, 5, "3" = 9:10)`); keep it once so ValidateHierarchy()
+      # does not flag it as appearing in multiple blocks.
+      dependents = unique(dependents),
       children = children
     ))
   }

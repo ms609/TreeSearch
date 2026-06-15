@@ -130,6 +130,18 @@ test_that("Trees without edge lengths work (uniform default)", {
   expect_equal(sum(attr(result, "extra_steps")), 5L)
 })
 
+test_that("Trees with all-zero edge lengths work (RTS-001)", {
+  # All-zero branch lengths left `sample.int(prob = )` with no positive
+  # probability ("too few positive probabilities"); they should fall back to
+  # a uniform draw, like absent edge lengths.
+  tree <- TreeTools::BalancedTree(8)
+  tree$edge.length <- rep(0, nrow(tree$edge))
+  set.seed(9021)
+  expect_s3_class(ParsSim(tree, nChar = c(0L, 3L)), "phyDat")          # init
+  result <- ParsSim(tree, nChar = c(4L), nExtraSteps = 5L)             # extra steps
+  expect_equal(sum(attr(result, "extra_steps")), 5L)
+})
+
 test_that("Reproducibility: same seed gives same result", {
   tree <- TreeTools::BalancedTree(8)
 
@@ -221,6 +233,13 @@ test_that("Input validation catches errors", {
   expect_error(ParsSim(tree, nChar = c(0L)), "at least one")
   expect_error(ParsSim(tree, nExtraSteps = -1L), "non-negative")
   expect_error(ParsSim(tree, concavity = -5), "positive")
+  # Non-finite concavities other than +Inf must error, not silently fall back
+  # to equal weights (RTS-005)
+  expect_error(ParsSim(tree, nChar = c(1L), concavity = -Inf), "positive")
+  expect_error(ParsSim(tree, nChar = c(1L), concavity = NaN), "positive")
+  # +Inf remains valid (equal weights)
+  expect_s3_class(ParsSim(tree, nChar = c(4L), nExtraSteps = 2L,
+                          concavity = Inf), "phyDat")
   # rootState length must be 1 or sum(nChar)
   expect_error(ParsSim(tree, nChar = c(3L), rootState = c(0L, 1L)),
                "length 1 or sum")

@@ -11,6 +11,19 @@ test_that(".ScaleWeight is a no-op for integer weights", {
   expect_identical(TreeSearch:::.ScaleWeight(w), w)
 })
 
+test_that(".ScaleWeight rejects non-finite or negative weights (RTS-004)", {
+  # A negative weight previously passed straight through to the C++ scorer as a
+  # negative int (undefined behaviour); NA/NaN/Inf surfaced only as an opaque
+  # "missing value where TRUE/FALSE needed".
+  expect_error(TreeSearch:::.ScaleWeight(c(0.5, -1.3)), "non-negative")
+  expect_error(TreeSearch:::.ScaleWeight(c(1L, -2L)), "non-negative")
+  expect_error(TreeSearch:::.ScaleWeight(c(0.5, NA)), "finite")
+  expect_error(TreeSearch:::.ScaleWeight(c(0.5, NaN)), "finite")
+  expect_error(TreeSearch:::.ScaleWeight(c(0.5, Inf)), "finite")
+  # Zero weights remain valid (a character may legitimately be switched off)
+  expect_identical(TreeSearch:::.ScaleWeight(c(0, 1.5)), c(0L, 1890L))
+})
+
 test_that(".ScaleWeight passes integer-valued doubles through unscaled", {
   w <- c(1, 2, 3)
   expect_identical(TreeSearch:::.ScaleWeight(w), c(1L, 2L, 3L))

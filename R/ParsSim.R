@@ -113,11 +113,17 @@ ParsSim <- function(tree,
   missing_spec <- .pars_sim_validate_missing(missing)
 
   use_profile <- identical(concavity, "profile")
-  use_iw <- !use_profile && is.finite(concavity)
-  if (use_iw && concavity <= 0) {
-    stop("`concavity` must be positive (or Inf for equal weights, ",
-         "or \"profile\" for profile parsimony)")
+  if (!use_profile) {
+    # `Inf` is valid (equal weights); reject NaN, -Inf and finite non-positive
+    # values, which otherwise slip past the `is.finite()` test below and are
+    # silently treated as equal weights.
+    if (!is.numeric(concavity) || length(concavity) != 1L || is.nan(concavity) ||
+        identical(concavity, -Inf) || (is.finite(concavity) && concavity <= 0)) {
+      stop("`concavity` must be a positive number (or Inf for equal weights, ",
+           "or \"profile\" for profile parsimony)")
+    }
   }
+  use_iw <- !use_profile && is.finite(concavity)
 
   # --- Prepare tree ----------------------------------------------------------
   tree_info <- .pars_sim_prepare_tree(tree)
@@ -499,6 +505,16 @@ ParsSim <- function(tree,
 #' @noRd
 .safe_sample_idx <- function(n, prob = NULL) {
   if (n == 1L) return(1L)
+  if (!is.null(prob)) {
+    # Edge lengths drive the weights; a tree with all-zero (or absent /
+    # undefined) branch lengths leaves every candidate edge with weight 0,
+    # for which sample.int() errors "too few positive probabilities". Treat
+    # such edges as equiprobable instead.
+    prob[is.na(prob)] <- 0
+    if (!any(prob > 0)) {
+      prob <- NULL
+    }
+  }
   sample.int(n, 1L, prob = prob)
 }
 

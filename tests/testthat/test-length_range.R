@@ -94,6 +94,17 @@ test_that("MaximumLength() edge cases are handled correctly", {
   expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
 })
 
+test_that("MaximumLength() default matches MinimumLength (RTS-007)", {
+  # The generic's documented default was `compress = TRUE`, but S3 dispatch
+  # used the method default (`FALSE`), so the per-character (uncompressed)
+  # result was returned. Align the signature with the actual behaviour and
+  # with MinimumLength().
+  expect_identical(formals(MaximumLength)$compress, FALSE)
+  pd <- inapplicable.phyData[[1]]
+  expect_length(MaximumLength(pd), length(attr(pd, "index")))
+  expect_length(MaximumLength(pd), length(MinimumLength(pd)))
+})
+
 test_that("MaximumLength() handles inapplicable tokens", {
   # Number of regions = number of inapplicable tokens - 1
   # One extra step allowable for each extra region
