@@ -10,6 +10,11 @@ WithOneExtraStep(...)
 \item{\dots}{Vector or series of integers specifying the number of leaves
 bearing each distinct non-ambiguous token.}
 }
+\value{
+\code{WithOneExtraStep()} returns the number of unrooted binary trees on
+which a character with the specified token counts can be reconstructed using
+exactly one step more than the minimum.
+}
 \description{
 Number of trees with one extra step
 }
