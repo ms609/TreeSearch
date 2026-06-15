@@ -2,7 +2,7 @@
 % Please edit documentation in R/WideSample.R
 \name{.SelectWideSampleTier}
 \alias{.SelectWideSampleTier}
-\title{Choose the WideSample solver tier}
+\title{Choose the \code{WideSample()} solver tier}
 \usage{
 .SelectWideSampleTier(
   effort,
@@ -23,7 +23,7 @@ Keyed on whether a distance matrix is already available and on
 reachable past the build ceiling, whereas a distance function past the
 ceiling cannot reach them (building the matrix would exhaust memory). The
 exact tier is additionally gated on a (smaller) exact ceiling and on the
-\pkg{highs} package being installed; Grasp (\code{effort = 3}) is reachable only
-when forced, never auto-selected.
+\pkg{highs} package being installed; \code{Grasp()} (\code{effort = 3}) is never
+auto-selected.
 }
 \keyword{internal}

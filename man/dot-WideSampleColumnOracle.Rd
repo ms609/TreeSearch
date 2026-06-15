@@ -2,7 +2,7 @@
 % Please edit documentation in R/WideSample.R
 \name{.WideSampleColumnOracle}
 \alias{.WideSampleColumnOracle}
-\title{Build a column-oracle closure for the matrix-free FarFirst path}
+\title{Build a column-oracle closure for the matrix-free \code{FarFirst()} path}
 \usage{
 .WideSampleColumnOracle(dist, trees, nTrees)
 }

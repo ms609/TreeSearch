@@ -12,27 +12,28 @@
 #' the likelihood or support for that topology.  A random draw over-represents
 #' topologies that sit on broad plateaux and under-represents isolated optima.
 #' `WideSample()` instead selects for topological *spread*, density-blind, by
-#' dispatching to the appropriate MMDP solver from the \pkg{MaxMin}
+#' dispatching to the appropriate \acronym{MMDP}{Max-Min Diversity Problem}
+#' solver from the \pkg{MaxMin}
 #' package:
 #'
+#  TODO replace {TreeSearch} refs with {MaxMin} once package on CRAN and 
+#  imported, and remove refs from inst/REFERENCES.bib (DRY)
 #' \describe{
-#'   \item{FarFirst (`effort = 1`)}{Greedy farthest-first selection
-#'     (Gonzalez 1985) from a deterministic peripheral seed.  Fast and
-#'     matrix-free: it reads distances through an on-demand column oracle and
-#'     never materializes the full distance matrix, so it is the only feasible
-#'     option for very large tree sets.  RNG-free, hence deterministic.}
-#'   \item{DropAdd (`effort = 2`)}{Drop-add tabu search
-#'     (Porumbel et al. 2011): a ~99%-optimal heuristic that terminates at a
-#'     deterministic plateau.  RNG-free, hence deterministic.  Requires the full
-#'     distance matrix.}
-#'   \item{Grasp (`effort = 3`)}{GRASP with path relinking
-#'     (Resende et al. 2010): attains the highest \eqn{T_k} of the package's
+#'   \item{`FarFirst()` (`effort = 1`)}{Greedy farthest-first selection
+#'     \insertCite{Gonzalez1985}{TreeSearch} from a peripheral seed.
+#'     Fast and matrix-free: the only feasible option for very large tree sets.}
+#'   \item{`DropAdd()` (`effort = 2`)}{Drop-add tabu search
+#'     \insertCite{Porumbel2011}{TreeSearch}: a ~99%-optimal heuristic that
+#'     terminates at a deterministic plateau.
+#'     Requires the full distance matrix.}
+#'   \item{`Grasp()` (`effort = 3`)}{GRASP with path relinking
+#'     \insertCite{@Resende2010}{TreeSearch}: attains the highest \eqn{T_k} of the package's
 #'     heuristics, at a cost that grows steeply with `n`.  Requires the full
 #'     distance matrix.  Draws on the session RNG, so the particular trees it
 #'     returns vary between runs unless you call [set.seed()] first (the
 #'     achieved diversity is essentially unaffected).}
 #'   \item{exact (`effort = 4`)}{Node-packing integer program
-#'     (Sayyady & Fathi 2016): the proven optimum.  The solver is now
+#'     \insertCite{@Sayyady2016}{TreeSearch}: the proven optimum.  The solver is now
 #'     sparse-matrix and heuristic warm-started, so it is practical up to a few
 #'     hundred trees; it needs the \pkg{highs} package.  The optimal
 #'     *diversity* is deterministic, but when several subsets are tied-optimal
@@ -41,19 +42,20 @@
 #'
 #' With `effort = NULL` (default) the tier is chosen automatically from
 #' `length(trees)`: the exact solver for small sets (up to ~200 trees, when
-#' \pkg{highs} is available), DropAdd while the distance matrix is affordable to
-#' build, and FarFirst beyond that.  Grasp (`effort = 3`) is never selected
-#' automatically -- its cost grows steeply with `n`, so it is opt-in.  A dense
+#' \pkg{highs} is available), `DropAdd()` while the distance matrix is
+#' affordable to build, and `FarFirst()` beyond that.
+#' `Grasp()` (`effort = 3`) is never selected automatically, as its cost grows
+#'  steeply with `n`.  A dense
 #' distance matrix is roughly `8 * length(trees)^2` bytes (about 1.1 GB at
 #' 12,000 trees, 12.8 GB at 40,000), so for the largest sets only the
-#' matrix-free FarFirst tier is reachable.
+#' matrix-free `FarFirst()` tier is reachable.
 #'
 #' Two size thresholds govern automatic selection; tune them for the host
 #' machine with [options()] rather than per call:
 #' \describe{
 #'   \item{`WideSample.buildCeiling`}{Largest `length(trees)` for
 #'     which a dense distance matrix is built from a distance function (default
-#'     `12000`; ~1.1 GB).  Beyond it only the matrix-free FarFirst tier is
+#'     `12000`; ~1.1 GB).  Beyond it only the matrix-free `FarFirst()` tier is
 #'     reachable from a function (a pre-computed matrix is always honoured).}
 #'   \item{`WideSample.exactCeiling`}{Largest `length(trees)` at
 #'     which automatic selection reaches the exact tier (default `200`).}
@@ -75,18 +77,15 @@
 #'       matches `length(trees)`.
 #'   }
 #' @param effort Integer solver tier, or `NULL` (default) to choose
-#'   automatically by `length(trees)`.  `1` = FarFirst (fast, matrix-free),
-#'   `2` = DropAdd (~99%-optimal, deterministic), `3` = Grasp (highest-quality
-#'   heuristic, higher cost), `4` = exact optimum.  Forcing `effort` 2, 3 or 4
-#'   with a *distance function* on a tree set too large to build the matrix is
-#'   an error rather than a silent downgrade; pass a pre-computed `dist` or use
-#'   `effort = 1` for such sets.
+#'   automatically by `length(trees)`.  `1` = `FarFirst()` (fast, matrix-free),
+#'   `2` = `DropAdd()` (~99%-optimal, deterministic), `3` = `Grasp()`
+#'   (highest-quality heuristic, higher cost), `4` = exact optimum.
+#'   Setting `effort` 2, 3 or 4 with a distance function fails when a tree set
+#'   is too large to store the distance matrix in memory; pass a pre-computed
+#'   `dist` or use `effort = 1` for such sets.
 #' @param maxSeconds Numeric: wall-clock budget, in seconds, for the
-#'   refinement (`effort = 2`, `3`) and exact (`effort = 4`) tiers; ignored by
-#'   the matrix-free FarFirst tier, which is effectively instantaneous.  The
-#'   heuristic tiers terminate at an internal deterministic plateau, usually
-#'   well within this budget, so it acts as a safety cap; a value small enough
-#'   to interrupt the plateau makes the result machine-dependent.  Default `60`.
+#'   refinement (`effort = 2`, `3`) and exact (`effort = 4`) tiers.
+#'   Default `60`.
 #'
 #' @return A `multiPhylo` object of length `min(n, length(trees))`.
 #'   Attributes of the input (e.g. `score`, `hits_to_best`) are preserved.
@@ -268,14 +267,14 @@ WideSample <- function(
   .SubsetMultiPhylo(trees, as.integer(idx))
 }
 
-#' Choose the WideSample solver tier
+#' Choose the `WideSample()` solver tier
 #'
 #' Keyed on whether a distance matrix is already available and on
 #' `length(trees)`, never on N alone: a supplied matrix keeps the higher tiers
 #' reachable past the build ceiling, whereas a distance function past the
 #' ceiling cannot reach them (building the matrix would exhaust memory). The
 #' exact tier is additionally gated on a (smaller) exact ceiling and on the
-#' \pkg{highs} package being installed; Grasp (`effort = 3`) is never
+#' \pkg{highs} package being installed; `Grasp()` (`effort = 3`) is never
 #' auto-selected.
 #' @return Integer tier (1, 2, 3 or 4); errors when a forced effort is
 #'   unreachable.
@@ -337,7 +336,7 @@ WideSample <- function(
   }
 }
 
-#' Build a column-oracle closure for the matrix-free FarFirst path
+#' Build a column-oracle closure for the matrix-free `FarFirst()` path
 #'
 #' Returns a function of one 1-based index `i` giving the distances from tree
 #' `i` to every tree, as required by the distance-column oracle path of
