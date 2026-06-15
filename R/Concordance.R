@@ -166,7 +166,7 @@ ClusteringConcordance <- function(
     return(NULL)
   }
   if (is.null(tree)) {
-    warning("Cannot calculate concordance without `dataset`.")
+    warning("Cannot calculate concordance without `tree`.")
     return(NULL)
   }
 
@@ -311,7 +311,12 @@ ClusteringConcordance <- function(
              mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
              structure(ret, hMax = charMax, mcse = mcseInfo)
            } else {
-             structure(charInfo / charMax, hMax = charMax)
+             # `ret` already honours `normalize`: with normalize = FALSE,
+             # zero = 0 so ret == charInfo / charMax; with normalize = TRUE,
+             # ret subtracts the random-expectation baseline. Returning
+             # charInfo / charMax here discarded the normalization, making
+             # normalize = TRUE (the default) silently behave like FALSE.
+             structure(ret, hMax = charMax)
            }
          }, {
            # tree: Entropy-weighted mean across best character-split pairs
