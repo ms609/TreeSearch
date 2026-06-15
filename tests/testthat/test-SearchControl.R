@@ -29,6 +29,18 @@ test_that("SearchControl() accepts custom values", {
  expect_equal(ctrl$xssRounds, 3L)
 })
 
+test_that("SearchControl() rejects non-positive partition counts (RT-CPP-01)", {
+  # A zero partition count is an integer division by zero in the C++
+  # `xss_partition()` kernel -- an uncatchable SIGFPE that kills the R session.
+  expect_error(SearchControl(xssPartitions = 0L),  "xssPartitions.*positive")
+  expect_error(SearchControl(xssPartitions = -1L), "xssPartitions.*positive")
+  expect_error(SearchControl(xssPartitions = NA_integer_), "xssPartitions.*positive")
+  expect_error(SearchControl(cssPartitions = 0L),  "cssPartitions.*positive")
+  # The boundary value 1 (whole tree in a single sector) is valid.
+  expect_equal(SearchControl(xssPartitions = 1L)$xssPartitions, 1L)
+  expect_equal(SearchControl(cssPartitions = 1L)$cssPartitions, 1L)
+})
+
 test_that("print.SearchControl works", {
   ctrl <- SearchControl()
   expect_output(print(ctrl), "SearchControl object")

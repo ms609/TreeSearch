@@ -593,6 +593,12 @@ static void reinsert_sector(TreeState& tree, const ReducedDataset& rd) {
 // visited O(1) times in the main loop; rootward walks are O(height)
 // each and there are at most n_partitions of them.
 static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
+  // Defensive: `n_partitions` reaches here straight from SearchControl, and a
+  // value of 0 would make `tree.n_tip / n_partitions` (below) an integer
+  // division by zero -- an uncatchable SIGFPE that kills the R session.
+  // Treat any non-positive request as a single partition (the whole tree).
+  if (n_partitions < 1) n_partitions = 1;
+
   std::vector<int> subtree_size(tree.n_node, 0);
   for (int i = 0; i < tree.n_tip; ++i) {
     subtree_size[i] = 1;

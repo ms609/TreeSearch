@@ -289,6 +289,15 @@ SearchControl <- function(
     adaptiveStart = FALSE,
     enumTimeFraction = 0.1
 ) {
+  # The sectorial-search partition counts divide the tip count in the C++
+  # kernel (`xss_partition()`), so a value of zero is an integer division by
+  # zero -- an uncatchable crash. Require at least one partition.
+  for (.p in c("xssPartitions", "cssPartitions")) {
+    .v <- as.integer(get(.p))
+    if (length(.v) != 1L || is.na(.v) || .v < 1L) {
+      stop("`", .p, "` must be a single positive integer")
+    }
+  }
   structure(
     list(
       tbrMaxHits = as.integer(tbrMaxHits),
