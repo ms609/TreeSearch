@@ -222,6 +222,35 @@ test_that("ClusteringConcordance() gives sensible values", {
                tolerance = 0.05)
 })
 
+test_that("ClusteringConcordance(return = 'char') Monte-Carlo handles ambiguity", {
+  # Regression for T-330: characters whose ambiguous tokens drop different tips
+  # give `charSplits` over heterogeneous tip sets. The Monte-Carlo `normalize`
+  # path scored a *list* of random trees against that list in one call, which
+  # could not reconcile a common label set ("Old and new labels must match").
+  tree <- ape::read.tree(text = "((a, b, c, d, e), (f, g, h));")
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      0, 0, 0, 0, 0, 1, 1, 1,
+                      0, 0, 0, 0, rep("?", 4), # drops 4 tips
+                      0, 0, 1, 1, rep("?", 4), # drops a different 4 tips
+                      rep("?", 8)),            # all ambiguous
+                    8, dimnames = list(letters[1:8], NULL))
+  dat <- MatrixToPhyDat(mataset)
+
+  set.seed(1)
+  # Previously errored: "Old and new labels must match"
+  cc <- ClusteringConcordance(tree, dat, return = "char", normalize = 10L)
+  nChar <- length(attr(dat, "index"))
+  expect_length(cc, nChar)
+  expect_length(attr(cc, "mcse"), nChar)
+  # Character 2 matches the only split perfectly, so normalization leaves it at 1
+  expect_equal(unname(cc[2]), 1)
+  expect_equal(unname(attr(cc, "mcse")[2]), 0)
+  # Monte-Carlo score never exceeds the un-normalized score (subtracts a baseline)
+  bare <- ClusteringConcordance(tree, dat, return = "char", normalize = FALSE)
+  finite <- is.finite(cc) & is.finite(bare)
+  expect_true(all(cc[finite] <= bare[finite] + 1e-8))
+})
+
 test_that("ConcordantInformation() works", {
   data(congreveLamsdellMatrices)
   dat <- congreveLamsdellMatrices[[10]]

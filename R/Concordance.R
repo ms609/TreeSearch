@@ -259,7 +259,17 @@ ClusteringConcordance <- function(
     charInfo <- MutualClusteringInfo(tree, charSplits)[at[["index"]]]
     if (is.numeric(normalize)) {
       rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
-      randInfo <- MutualClusteringInfo(rTrees, charSplits)[, attr(dataset, "index")]
+      # Score each random tree against `charSplits` separately: characters with
+      # ambiguous tokens yield splits over different tip subsets, and the
+      # vectorised `MutualClusteringInfo(<list of trees>, <list of splits>)`
+      # path cannot reconcile a single label set across them ("Old and new
+      # labels must match"). Looping one tree at a time mirrors the working
+      # `charInfo` call above.
+      randInfo <- t(vapply(
+        rTrees,
+        function(rt) MutualClusteringInfo(rt, charSplits),
+        double(length(charSplits))
+      ))[, attr(dataset, "index"), drop = FALSE]
       randMean <- colMeans(randInfo)
       var <- rowSums((t(randInfo) - randMean) ^ 2) / (normalize - 1)
       mcse <- sqrt(var / normalize)
