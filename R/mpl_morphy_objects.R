@@ -174,6 +174,9 @@ PhyDat2Morphy <- function(phy, gap = "inapplicable",
   if (mpl_apply_tipdata(morphyObj) -> error) {
     stop("Error ", mpl_translate_error(error), "in mpl_apply_tipdata")          #nocov
   }
+  # Attach native (MorphyLib-free) scoring data so MorphyLength() uses the
+  # correct native Fitch kernel for the inapplicable gap mode.
+  attr(morphyObj, "native") <- .NativeMorphyData(phy, gap, weight)
   # Return:
   morphyObj
 }
@@ -193,6 +196,49 @@ PhyDat2Morphy <- function(phy, gap = "inapplicable",
   
   # Return:
   switch(handler, "inapplicable", "missing", "missing", "newstate")
+}
+
+# Precompute MorphyLib-free Fitch scoring data for a Morphy object.
+# Returns NULL (so MorphyLength() keeps using MorphyLib) for the rarely used
+# `ambiguous`/`extra` gap modes; the default `inapplicable` mode is scored by
+# the native kernel, which handles ambiguous-with-inapplicable tokens correctly.
+.NativeMorphyData <- function(phy, gap = "inapplicable",
+                              weight = attr(phy, "weight")) {
+  if (.GapHandler(gap) != "inapplicable") {
+    return(NULL)
+  }
+  at <- attributes(phy)
+  if (is.null(at[["levels"]]) || ncol(at[["contrast"]]) == 0L) {
+    return(NULL)
+  }
+  list(
+    phy = phy,
+    weight = rep_len(weight, at[["nr"]]),
+    tip.label = names(phy),
+    nTip = length(phy)
+  )
+}
+
+# As `.NativeMorphyData()`, but reconstructing a single-character phyDat from a
+# Morphy token string (e.g. "-0-{12}0") for `SingleCharMorphy()`.
+.SingleCharNative <- function(char, gap = "inapp") {
+  if (.GapHandler(gap) != "inapplicable") {
+    return(NULL)
+  }
+  charStr <- paste0(paste0(char, collapse = ""), ";")
+  entries <- regmatches(
+    charStr, gregexpr("\\{[^{}]+\\}|\\([^()]+\\)|[^;]", charStr))[[1]]
+  nTip <- length(entries)
+  if (nTip < 1L) {
+    return(NULL)
+  }
+  m <- matrix(entries, ncol = 1L,
+              dimnames = list(as.character(seq_len(nTip)), NULL))
+  phy <- tryCatch(MatrixToPhyDat(m), error = function(e) NULL)
+  if (is.null(phy)) {
+    return(NULL)
+  }
+  .NativeMorphyData(phy, "inapplicable", attr(phy, "weight"))
 }
 
 #' Check for error whilst modifying Morphy object
@@ -239,6 +285,7 @@ SingleCharMorphy <- function (char, gap = "inapp") {
   MorphyErrorCheck(mpl_set_charac_weight(1, 1, morphyObj)) 
   MorphyErrorCheck(mpl_apply_tipdata(morphyObj))
   class(morphyObj) <- "morphyPtr"
+  attr(morphyObj, "native") <- .SingleCharNative(char, gap)
   morphyObj
 }
 

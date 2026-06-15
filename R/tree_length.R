@@ -560,6 +560,13 @@ MorphyTreeLength <- function(tree, morphyObj) {
 #' @export
 MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
                          nTaxa = mpl_get_numtaxa(morphyObj)) {
+  # Native (MorphyLib-free) scoring for the default inapplicable gap mode.
+  # `.NativeMorphyData()` attaches this only for that mode; the rarely-used
+  # ambiguous/extra modes return NULL here and fall through to MorphyLib.
+  native <- attr(morphyObj, "native", exact = TRUE)
+  if (!is.null(native)) {
+    return(.NativeMorphyLength(parent, child, native))
+  }
   if (!inPostorder) {
     edgeList <- Preorder(cbind(parent, child))
     edgeList <- edgeList[PostorderOrder(edgeList), ]
@@ -585,8 +592,25 @@ MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
   rightChild <- child[fmatch(allNodes, parent)]
   
   # Return:
-  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
+  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L),
                as.integer(rightChild - 1L), morphyObj)
+}
+
+# Score an edge list with the native Fitch kernel, reusing the verified
+# `FastCharacterLength()` pipeline (correct Brazeau-Guillerme-Smith handling of
+# inapplicable tokens, including the `{1-}` case that MorphyLib mis-scores).
+# `native` is the list attached by `.NativeMorphyData()`.
+.NativeMorphyLength <- function(parent, child, native) {
+  parent <- as.integer(parent)
+  child <- as.integer(child)
+  tree <- structure(
+    list(edge = cbind(parent, child),
+         tip.label = native[["tip.label"]],
+         Nnode = length(unique(parent))),
+    class = "phylo")
+  tree <- RenumberTips(Renumber(tree), native[["tip.label"]])
+  steps <- FastCharacterLength(tree, native[["phy"]])
+  as.integer(round(sum(steps * native[["weight"]])))
 }
 
 #' @describeIn MorphyTreeLength Fastest function that requires internal tree parameters
