@@ -37,8 +37,12 @@ public:
   int max_size;        // maximum number of entries (e.g. 100)
   double suboptimal;   // keep trees within this many steps of best
 
+  // `max_size` must be at least 1: `add()` enters its eviction branch as soon
+  // as `entries_.size() >= max_size`, which for max_size <= 0 is true on the
+  // very first insert and dereferences `entries_[0]` on an empty vector (an
+  // out-of-bounds read that segfaults). A pool must be able to hold one tree.
   TreePool(int max_sz = 100, double subopt = 0.0)
-    : max_size(max_sz), suboptimal(subopt),
+    : max_size(max_sz < 1 ? 1 : max_sz), suboptimal(subopt),
       best_score_(1e18), hits_to_best_(0),
       consensus_hash_(0), consensus_unchanged_(0) {}
 

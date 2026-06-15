@@ -289,10 +289,12 @@ SearchControl <- function(
     adaptiveStart = FALSE,
     enumTimeFraction = 0.1
 ) {
-  # The sectorial-search partition counts divide the tip count in the C++
-  # kernel (`xss_partition()`), so a value of zero is an integer division by
-  # zero -- an uncatchable crash. Require at least one partition.
-  for (.p in c("xssPartitions", "cssPartitions")) {
+  # Guard the count parameters whose non-positive values crash the C++ kernel:
+  # `xssPartitions`/`cssPartitions` divide the tip count in `xss_partition()`
+  # (integer division by zero -> SIGFPE), and `poolMaxSize` sizes the tree pool
+  # whose eviction branch reads `entries_[0]` once `size >= max_size`
+  # (an out-of-bounds read on an empty pool -> segfault). Each must be >= 1.
+  for (.p in c("xssPartitions", "cssPartitions", "poolMaxSize")) {
     .v <- as.integer(get(.p))
     if (length(.v) != 1L || is.na(.v) || .v < 1L) {
       stop("`", .p, "` must be a single positive integer")
