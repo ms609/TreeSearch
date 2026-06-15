@@ -9,7 +9,7 @@ WideSample(
   n,
   dist = TreeDist::ClusteringInfoDistance,
   effort = NULL,
-  timeBudgetS = 60
+  maxSeconds = 60
 )
 }
 \arguments{
@@ -39,7 +39,7 @@ with a \emph{distance function} on a tree set too large to build the matrix is
 an error rather than a silent downgrade; pass a pre-computed \code{dist} or use
 \code{effort = 1} for such sets.}
 
-\item{timeBudgetS}{Numeric: wall-clock budget, in seconds, for the
+\item{maxSeconds}{Numeric: wall-clock budget, in seconds, for the
 refinement (\code{effort = 2}, \code{3}) and exact (\code{effort = 4}) tiers; ignored by
 the matrix-free FarFirst tier, which is effectively instantaneous.  The
 heuristic tiers terminate at an internal deterministic plateau, usually

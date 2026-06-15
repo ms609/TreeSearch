@@ -81,7 +81,7 @@
 #'   with a *distance function* on a tree set too large to build the matrix is
 #'   an error rather than a silent downgrade; pass a pre-computed `dist` or use
 #'   `effort = 1` for such sets.
-#' @param timeBudgetS Numeric: wall-clock budget, in seconds, for the
+#' @param maxSeconds Numeric: wall-clock budget, in seconds, for the
 #'   refinement (`effort = 2`, `3`) and exact (`effort = 4`) tiers; ignored by
 #'   the matrix-free FarFirst tier, which is effectively instantaneous.  The
 #'   heuristic tiers terminate at an internal deterministic plateau, usually
@@ -136,7 +136,7 @@ WideSample <- function(
     n,
     dist = TreeDist::ClusteringInfoDistance,
     effort = NULL,
-    timeBudgetS = 60
+    maxSeconds = 60
 ) {
   # Build ceiling: largest N for which we materialize a dense N x N matrix from
   # a distance function. ~1.1 GB at 12,000; as.matrix.dist overflows near
@@ -194,7 +194,7 @@ WideSample <- function(
 
   # A single tree has no pairwise distance to maximize; return the medoid (the
   # most central tree) as the most representative single choice. Independent of
-  # `effort`/`timeBudgetS`, so handled before they are validated.
+  # `effort`/`maxSeconds`, so handled before they are validated.
   if (n == 1L) {
     # Return:
     return(.SubsetMultiPhylo(
@@ -209,9 +209,9 @@ WideSample <- function(
     }
   }
 
-  if (!is.numeric(timeBudgetS) || length(timeBudgetS) != 1L ||
-      is.na(timeBudgetS) || timeBudgetS <= 0) {
-    stop("`timeBudgetS` must be a single positive number (or Inf)")
+  if (!is.numeric(maxSeconds) || length(maxSeconds) != 1L ||
+      is.na(maxSeconds) || maxSeconds <= 0) {
+    stop("`maxSeconds` must be a single positive number (or Inf)")
   }
 
   # --- select the solver tier on (matrix-available, N) ----------------------
@@ -243,24 +243,22 @@ WideSample <- function(
       } else {
         .WideSampleColumnOracle(dist, trees, nTrees)
       }
-      MaxMin::FarFirst(colFn, m = n, N = nTrees, progress = FALSE)
+      MaxMin::FarFirst(colFn, k = n, N = nTrees)
     },
     # Tier 2: DropAdd returns the bare (sorted) index vector; it runs to its
-    # deterministic plateau, with `timeBudgetS` as a safety cap.
-    `2` = MaxMin::DropAdd(dmat, m = n, timeBudgetS = timeBudgetS,
-                          progress = FALSE),
+    # deterministic plateau, with `maxSeconds` as a safety cap.
+    `2` = MaxMin::DropAdd(dmat, k = n, maxSeconds  = maxSeconds),
     # Tier 3: Grasp likewise returns the bare index vector (RNG-dependent).
-    `3` = MaxMin::Grasp(dmat, m = n, timeBudgetS = timeBudgetS),
+    `3` = MaxMin::Grasp(dmat, k = n, maxSeconds  = maxSeconds),
     # Tier 4: exact solver returns a list; take its `$indices`.
     `4` = {
       if (nTrees > exactCeiling) {
         warning("Exact MMDP (effort = 4) on ", nTrees,
                 " trees may be very slow; consider effort = 2 (DropAdd) ",
-                "or 3 (Grasp), or a larger `timeBudgetS`.",
+                "or 3 (Grasp), or a larger `maxSeconds`.",
                 immediate. = TRUE)
       }
-      MaxMin::ExactMaxMin(dmat, m = n, timeBudgetS = timeBudgetS,
-                          progress = FALSE)$indices
+      MaxMin::ExactMaxMin(dmat, k = n, maxSeconds = maxSeconds)$indices
     }
   )
 
@@ -319,7 +317,7 @@ WideSample <- function(
 #' distance to all others. Uses the distance matrix when one is available or
 #' affordable to build; when only a distance function is supplied for a set too
 #' large to build a matrix, the central medoid is not affordable, so the
-#' deterministic peripheral seed ([MaxMin::FarFirst()] with `m = 1`) is returned
+#' deterministic peripheral seed ([MaxMin::FarFirst()] with `k = 1`) is returned
 #' as a matrix-free fallback.
 #' @return Integer index (1-based) of the selected tree.
 #' @keywords internal
@@ -335,7 +333,7 @@ WideSample <- function(
   } else {
     colFn <- .WideSampleColumnOracle(dist, trees, nTrees)
     # Return:
-    as.integer(MaxMin::FarFirst(colFn, m = 1L, N = nTrees, progress = FALSE))
+    as.integer(MaxMin::FarFirst(colFn, k = 1L, N = nTrees))
   }
 }
 

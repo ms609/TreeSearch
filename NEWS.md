@@ -39,6 +39,11 @@
   units of `steps * scale` when fractional weights are present; within-
   run ranking is unaffected.
 
+- `LengthAdded()` removes a temporary warning guard that fired on datasets
+  triggering the T-302 `qmApp` scalar-unwrap fix; regression tests now cover
+  both the `qmApp` (T-302) and `qm` (commit e8b318c3) scalar-unwrap paths,
+  confirming all deltas are non-negative and match independent computation.
+
 # TreeSearch 2.0.0
 
 ## Breaking changes
