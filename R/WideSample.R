@@ -317,7 +317,7 @@ WideSample <- function(
 #' distance to all others. Uses the distance matrix when one is available or
 #' affordable to build; when only a distance function is supplied for a set too
 #' large to build a matrix, the central medoid is not affordable, so the
-#' deterministic peripheral seed ([MaxMin::FarFirst()] with `m = 1`) is returned
+#' deterministic peripheral seed ([MaxMin::FarFirst()] with `k = 1`) is returned
 #' as a matrix-free fallback.
 #' @return Integer index (1-based) of the selected tree.
 #' @keywords internal
@@ -333,7 +333,7 @@ WideSample <- function(
   } else {
     colFn <- .WideSampleColumnOracle(dist, trees, nTrees)
     # Return:
-    as.integer(MaxMin::FarFirst(colFn, m = 1L, N = nTrees, progress = FALSE))
+    as.integer(MaxMin::FarFirst(colFn, k = 1L, N = nTrees))
   }
 }
 
