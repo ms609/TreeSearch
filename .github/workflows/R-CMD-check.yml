@@ -102,8 +102,14 @@ jobs:
         with:
           needs: |
             check
+          # highs >= 1.13 calls base R's `%||%` (added in R 4.4.0) while still
+          # declaring `R (>= 4.0.0)`, so it errors on our R 4.1 leg with
+          # "could not find function '%||%'". Pin the last good version there
+          # until upstream fixes its declared R dependency (already done on
+          # their dev branch). Remove once a fixed highs reaches CRAN.
           extra-packages: |
             phangorn=?ignore-before-r=4.1.0
+            ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
 
       - name: Set up R dependencies (covr)
         uses: r-lib/actions/setup-r-dependencies@v2
