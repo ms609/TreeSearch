@@ -63,6 +63,12 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
     }
     concavity <- Inf
   }
+  # NaN/NA slip past `is.finite() && <= 0` and would reach the kernel as a
+  # non-finite double, silently selecting equal weights; reject them explicitly.
+  if (!is.numeric(concavity) || length(concavity) != 1L || is.na(concavity)) {
+    stop("`concavity` must be a single number (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
+  }
   if (is.finite(concavity) && concavity <= 0) {
     stop("`concavity` must be positive (or Inf for equal weights, ",
          "or \"profile\" for profile parsimony).")

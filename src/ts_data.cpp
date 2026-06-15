@@ -309,6 +309,15 @@ DataSet build_dataset(
       // f = 1 + r * missing / obs  (NOT r * total / obs)
       int obs = obs_count_r[p];
       int missing = n_tips - obs;
+      // An all-missing pattern (obs == 0) has no observed tips and so no
+      // steps to weight; guard the division (obs in the denominator would give
+      // f = Inf, capped to xpiwe_max_f -> a spurious finite penalty). Neutral
+      // eff_k/phi leave its (zero) step count unweighted.
+      if (obs == 0) {
+        ds.eff_k[p] = concavity;
+        ds.phi[p] = 1.0;
+        continue;
+      }
       double f = 1.0 + xpiwe_r * missing / static_cast<double>(obs);
       if (f < 1.0) f = 1.0;
       if (f > xpiwe_max_f) f = xpiwe_max_f;
