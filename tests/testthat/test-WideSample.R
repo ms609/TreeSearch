@@ -140,7 +140,7 @@ test_that("effort 1/2/3 return valid diverse subsets", {
   trees <- as.phylo(0:39, nTip = 10)
   set.seed(1)  # effort 3 (Grasp) draws on the session RNG
   for (eff in 1:3) {
-    res <- WideSample(trees, 6, effort = eff, maxSeconds = 1)
+    res <- WideSample(trees, 6, effort = eff, maxSeconds = 0.05)
     expect_equal(length(res), 6)
     expect_true(all(names(res) %in% names(trees)))
   }
@@ -166,7 +166,7 @@ test_that("forced effort 4 above the exact ceiling warns about cost", {
   skip_on_cran()
   trees <- as.phylo(0:209, nTip = 8)  # > 200 trips the warning
   expect_warning(
-    WideSample(trees, 3, effort = 4, maxSeconds = 1),
+    WideSample(trees, 3, effort = 4, maxSeconds = 0.05),
     "may be very slow"
   )
 })

@@ -108,14 +108,6 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   }
   
   deltas <- start - .vapply(seq_along(char), QMScore, start)
-  # Temp: guard against negative-delta recurrence; remove once confident fix
-  # holds across edge-case datasets.
-  if (any(deltas < 0)) {
-    warning("Unknown scoring issue may distort score of ",
-            paste(names(char)[apply(deltas < 0, 2, any)], collapse = ", "),
-            ". Please report bug to maintainer.")
-  }
-  # /Temp
   delta <- setNames(colSums(deltas), names(char))
   
   # Return:

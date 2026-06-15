@@ -14,7 +14,7 @@ Returns the index of the most central tree -- the medoid, minimizing summed
 distance to all others. Uses the distance matrix when one is available or
 affordable to build; when only a distance function is supplied for a set too
 large to build a matrix, the central medoid is not affordable, so the
-deterministic peripheral seed (\code{\link[MaxMin:FarFirst]{MaxMin::FarFirst()}} with \code{m = 1}) is returned
+deterministic peripheral seed (\code{\link[MaxMin:FarFirst]{MaxMin::FarFirst()}} with \code{k = 1}) is returned
 as a matrix-free fallback.
 }
 \keyword{internal}

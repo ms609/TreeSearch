@@ -4,6 +4,11 @@ Tasks moved here from `to-do.md` on completion. Newest first.
 
 ---
 
+## 2026-06-15
+
+| ID | Description | Agent | Notes |
+| T-305 | T-302 qmApp fix lacks a positive-path regression test | claude-sonnet-4-6 | Added two new `test_that` blocks in `test-PolEscapa.R`: (1) qmApp scalar-unwrap: synthesises a phyDat with 6 levels including two fully-applicable-ambiguous rows (`{01}`, `{01}dup`), tips coded "-"/"0"/"1"; asserts all deltas ≥ 0 and that t3's delta matches independent `TreeLength()` computation. (2) qm scalar-unwrap: synthesises a phyDat with "?" and "also?" both having rowSums == ncol(cont); tips coded "?"; asserts deltas ≥ 0 and that "?" tips give delta = 0 matching independent computation. Also removed the `# Temp` warning guard from `LengthAdded()` (now that positive-path tests confirm both fixes hold). |
+
 ## 2026-05-13
 
 | ID | Description | Agent | Notes |
