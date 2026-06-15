@@ -1245,10 +1245,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                    && hits <= params.max_hits) {
           // Equal-score move: reject if tabu
           if (tabu.active() && tabu.contains(tree_hash)) {
-            // Topology already visited — restore and skip
+            // Topology already visited — restore and skip.
             restore_topology(tree, snap);
             state_snap.restore(tree);
             score_fresh = true;
+            // Re-sync constraint metadata to the restored topology: the
+            // violation check above ran map_constraint_nodes() on the post-move
+            // tree, so cd->constraint_node / DFS timestamps are stale after
+            // restoration (same hazard handled in the !accepted path below).
+            if (constrained) {
+              map_constraint_nodes(tree, *cd);
+              compute_dfs_timestamps(tree, *cd);
+            }
             continue;
           }
           if (tabu.active()) tabu.insert(tree_hash);
