@@ -11,7 +11,7 @@ ts_hsj_score <- TreeSearch:::ts_hsj_score
 build_tip_labels <- TreeSearch:::build_tip_labels
 hierarchy_to_blocks <- TreeSearch:::hierarchy_to_blocks
 non_hierarchy_weights <- TreeSearch:::non_hierarchy_weights
-hsj_absent_state <- TreeSearch:::hsj_absent_state
+.HSJAbsentState <- TreeSearch:::.HSJAbsentState
 
 # --- Helper: build a reductively-coded phyDat ---
 make_hsj_dat <- function(mat, levels = c("-", "0", "1")) {
@@ -37,7 +37,7 @@ hsj_score <- function(tree, dataset, hierarchy, alpha = 1.0) {
     hierarchy_blocks_r = blocks,
     alpha = alpha,
     tip_labels_r = tl,
-    absent_state = hsj_absent_state(dataset)
+    absent_state = .HSJAbsentState(dataset)
   )
 }
 
@@ -577,14 +577,14 @@ test_that("HSJ handles extreme absent/present ratios", {
 # (Driven pipeline previously hard-coded 0L = index of "-", so primaries
 #  coded "0" were treated as present and gain/loss was never counted.)
 # =========================================================================
-test_that("hsj_absent_state() tracks the '0' token across level orderings", {
-  expect_equal(hsj_absent_state(make_hsj_dat(
+test_that(".HSJAbsentState() tracks the '0' token across level orderings", {
+  expect_equal(.HSJAbsentState(make_hsj_dat(
     matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
     levels = c("-", "0", "1"))), 1L)
-  expect_equal(hsj_absent_state(make_hsj_dat(
+  expect_equal(.HSJAbsentState(make_hsj_dat(
     matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
     levels = c("0", "1", "-"))), 0L)
-  expect_equal(hsj_absent_state(make_hsj_dat(
+  expect_equal(.HSJAbsentState(make_hsj_dat(
     matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
     levels = c("1", "-", "0"))), 2L)
 })
@@ -641,7 +641,7 @@ test_that("driven HSJ (TreeLength) agrees with direct ts_hsj_score()", {
 test_that("HSJ score is invariant to phyDat level ordering", {
   # A parsimony-style score must not depend on the arbitrary internal ordering
   # of phyDat `levels`.  Two contributions could leak the ordering:
-  #   * the PRIMARY absent/present term  — guarded by hsj_absent_state() (T-307);
+  #   * the PRIMARY absent/present term  — guarded by .HSJAbsentState() (T-307);
   #   * the SECONDARY dissimilarity term — the Fitch uppass in fitch_label_char()
   #     formerly resolved ambiguous internal nodes to the LOWEST SET BIT, whose
   #     token depends on `levels`.  It now resolves toward the best-supported

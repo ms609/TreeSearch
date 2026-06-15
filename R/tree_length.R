@@ -178,7 +178,7 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
                  hierarchy_to_blocks(hierarchy),
                  as.double(hsj_alpha),
                  build_tip_labels(dataset),
-                 hsj_absent_state(dataset))
+                 .HSJAbsentState(dataset))
   } else if (useXform) {
     tree <- RenumberTips(Renumber(tree), names(dataset))
     at <- attributes(dataset)
@@ -326,7 +326,7 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
     blocks <- hierarchy_to_blocks(hierarchy)
     alpha <- as.double(hsj_alpha)
     tip_labels <- build_tip_labels(dataset)
-    absent_state <- hsj_absent_state(dataset)
+    absent_state <- .HSJAbsentState(dataset)
     vapply(tree, function(tr) {
       ts_hsj_score(tr[["edge"]], contrast, tip_data, adj_weight, levels,
                    blocks, alpha, tip_labels, absent_state)

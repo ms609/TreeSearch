@@ -786,7 +786,7 @@ MaximizeParsimony <- function(
     hsjArgs$hsjAlpha <- as.double(hsj_alpha)
     # 0-based token index of the primary's "absent" state (depends on level
     # ordering, so computed from the data rather than hard-coded).
-    hsjArgs$hsjAbsentState <- hsj_absent_state(dataset)
+    hsjArgs$hsjAbsentState <- .HSJAbsentState(dataset)
 
     # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy
     adj_weight <- non_hierarchy_weights(dataset, hierarchy)
