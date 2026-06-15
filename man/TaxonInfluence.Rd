@@ -97,12 +97,14 @@ representative summary of comparisons between sets of trees.
 }
 
 \examples{
-#' # Load data for analysis in R
+# Load data for analysis in R
 library("TreeTools")
 data("congreveLamsdellMatrices", package = "TreeSearch")
 
 # Small dataset for demonstration purposes
 dataset <- congreveLamsdellMatrices[[42]][1:8, ]
+
+\donttest{ # The tree searches below take a few seconds to run
 bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
 
 # Calculate tip influence
@@ -120,13 +122,17 @@ bin <- cut(
 palette <- hcl.colors(nBin, "inferno")
 
 plot(bestTree, tip.color = palette[bin])
-PlotTools::SpectrumLegend(
-  "bottomleft",
-  palette = palette,
-  title = "Tip influence / bits",
-  legend = signif(seq(upperBound, 0, length.out = 4), 3),
-  bty = "n"
-)
+# SpectrumLegend() needs the PlotTools package (a Suggests)
+if (requireNamespace("PlotTools", quietly = TRUE)) {
+  PlotTools::SpectrumLegend(
+    "bottomleft",
+    palette = palette,
+    title = "Tip influence / bits",
+    legend = signif(seq(upperBound, 0, length.out = 4), 3),
+    bty = "n"
+  )
+}
+}
 }
 \references{
 \insertAllCited{}
