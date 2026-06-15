@@ -51,6 +51,7 @@ Imports:
 Suggests:
   cluster,
   future,
+  highs,
   knitr,
   phangorn (>= 2.2.1),
   PlotTools,
