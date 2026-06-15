@@ -8,9 +8,9 @@ library("TreeTools")
 
 # --- Internal wrappers ---
 ts_hsj_score <- TreeSearch:::ts_hsj_score
-build_tip_labels <- TreeSearch:::build_tip_labels
-hierarchy_to_blocks <- TreeSearch:::hierarchy_to_blocks
-non_hierarchy_weights <- TreeSearch:::non_hierarchy_weights
+.BuildTipLabels <- TreeSearch:::.BuildTipLabels
+.HierarchyToBlocks <- TreeSearch:::.HierarchyToBlocks
+.NonHierarchyWeights <- TreeSearch:::.NonHierarchyWeights
 .HSJAbsentState <- TreeSearch:::.HSJAbsentState
 
 # --- Helper: build a reductively-coded phyDat ---
@@ -21,11 +21,11 @@ make_hsj_dat <- function(mat, levels = c("-", "0", "1")) {
 # --- Helper: score a tree under HSJ via the Rcpp bridge ---
 hsj_score <- function(tree, dataset, hierarchy, alpha = 1.0) {
   at <- attributes(dataset)
-  adj_w <- non_hierarchy_weights(dataset, hierarchy)
+  adj_w <- .NonHierarchyWeights(dataset, hierarchy)
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = length(dataset), byrow = TRUE)
-  blocks <- hierarchy_to_blocks(hierarchy)
-  tl <- build_tip_labels(dataset)
+  blocks <- .HierarchyToBlocks(hierarchy)
+  tl <- .BuildTipLabels(dataset)
   # absent_state = 0-based token index of "0" (= 1 for levels c("-","0","1")),
   # computed the same way the driven pipeline does.
   ts_hsj_score(
@@ -435,7 +435,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
     "hsj_alpha"
   )
 
-  # IW + hsj (need a dataset with "-" for validate_hierarchy to pass)
+  # IW + hsj (need a dataset with "-" for ValidateHierarchy to pass)
   mat2 <- matrix(c(
     "0", "-", "0",
     "1", "0", "1",
@@ -453,7 +453,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
   )
 
   # profile + hsj: PrepareDataProfile() strips "-" before validation,
-  # so the error comes from validate_hierarchy rather than the profile check
+  # so the error comes from ValidateHierarchy rather than the profile check
   expect_error(
     MaximizeParsimony(ds2, hierarchy = h2, inapplicable = "hsj",
                       concavity = "profile", verbosity = 0L),

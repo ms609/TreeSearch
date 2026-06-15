@@ -51,140 +51,140 @@
 #' @seealso [CharacterHierarchy()], [MaximizeParsimony()]
 #' @keywords internal
 #' @export
-recode_hierarchy <- function(dataset, hierarchy) {
-  validate_hierarchy(hierarchy, dataset)
+RecodeHierarchy <- function(dataset, hierarchy) {
+  ValidateHierarchy(hierarchy, dataset)
 
   idx <- attr(dataset, "index")
-  all_levels <- attr(dataset, "allLevels")
-  n_char <- length(idx)
-  n_tip <- length(dataset)
+  allLevels <- attr(dataset, "allLevels")
+  nChar <- length(idx)
+  nTip <- length(dataset)
 
   # Original character matrix (taxon × char), as token strings
-  orig_mat <- do.call(rbind, lapply(dataset, function(x) {
-    all_levels[x[idx]]
+  origMat <- do.call(rbind, lapply(dataset, function(x) {
+    allLevels[x[idx]]
   }))
 
-  .recode_block <- function(node) {
+  .RecodeBlock <- function(node) {
     ctrl <- node$controlling
     deps <- node$dependents
 
     if (length(node$children) > 0L) {
-      stop("Nested hierarchies not yet supported in recode_hierarchy(). ",
+      stop("Nested hierarchies not yet supported in RecodeHierarchy(). ",
            "Block controlled by character ", ctrl, " has sub-hierarchies.")
     }
 
     # Informative levels for each secondary (exclude "-" and "?")
-    sec_levels <- lapply(deps, function(d) {
-      sort(setdiff(unique(orig_mat[, d]), c("-", "?")))
+    secLevels <- lapply(deps, function(d) {
+      sort(setdiff(unique(origMat[, d]), c("-", "?")))
     })
-    sec_nstates <- vapply(sec_levels, length, integer(1))
+    secNStates <- vapply(secLevels, length, integer(1))
 
-    n_present <- prod(sec_nstates)
-    n_states <- n_present + 1L
-    n_sec <- length(deps)
+    nPresent <- prod(secNStates)
+    nStates <- nPresent + 1L
+    nSec <- length(deps)
 
-    if (n_states > 32L) {
+    if (nStates > 32L) {
       warning(sprintf(
         paste0("Hierarchy block controlled by character %d produces %d states ",
                "(> 32). Large state spaces may be slow."),
-        ctrl, n_states
+        ctrl, nStates
       ))
     }
 
     # All present-state combinations (expand.grid: first dim varies fastest)
-    if (n_sec > 0L) {
-      combo_grid <- as.matrix(expand.grid(
-        lapply(sec_levels, seq_along)
+    if (nSec > 0L) {
+      comboGrid <- as.matrix(expand.grid(
+        lapply(secLevels, seq_along)
       ))
     } else {
       # No secondaries: 2 states (absent + one present)
-      combo_grid <- matrix(integer(0), nrow = 1L, ncol = 0L)
+      comboGrid <- matrix(integer(0), nrow = 1L, ncol = 0L)
     }
 
     # --- Cost matrix ---
-    gain_cost <- n_sec + 1L
-    cm <- matrix(0, n_states, n_states)
-    for (i in seq_len(n_states)) {
-      for (j in seq_len(n_states)) {
+    gainCost <- nSec + 1L
+    cm <- matrix(0, nStates, nStates)
+    for (i in seq_len(nStates)) {
+      for (j in seq_len(nStates)) {
         if (i == j) next
         if (i == 1L) {
-          cm[i, j] <- gain_cost  # absent → present
+          cm[i, j] <- gainCost  # absent → present
         } else if (j == 1L) {
-          cm[i, j] <- 1          # present → absent
+          cm[i, j] <- 1         # present → absent
         } else {
           # Hamming distance between present combinations
-          cm[i, j] <- sum(combo_grid[i - 1L, ] != combo_grid[j - 1L, ])
+          cm[i, j] <- sum(comboGrid[i - 1L, ] != comboGrid[j - 1L, ])
         }
       }
     }
 
     # --- Tip states ---
-    tip_states <- integer(n_tip)
-    for (t in seq_len(n_tip)) {
-      pri <- orig_mat[t, ctrl]
+    tipStates <- integer(nTip)
+    for (t in seq_len(nTip)) {
+      pri <- origMat[t, ctrl]
 
       if (pri == "?") {
-        tip_states[t] <- -1L  # fully ambiguous
+        tipStates[t] <- -1L  # fully ambiguous
         next
       }
       if (pri == "0" || pri == "-") {
-        tip_states[t] <- 0L   # absent
+        tipStates[t] <- 0L   # absent
         next
       }
       # Primary present: encode secondary combination
-      if (n_sec == 0L) {
-        tip_states[t] <- 1L   # only present state
+      if (nSec == 0L) {
+        tipStates[t] <- 1L   # only present state
         next
       }
 
-      sec_vals <- orig_mat[t, deps]
-      any_unknown <- FALSE
-      level_indices <- integer(n_sec)
+      secVals <- origMat[t, deps]
+      anyUnknown <- FALSE
+      levelIndices <- integer(nSec)
 
-      for (s in seq_len(n_sec)) {
-        if (sec_vals[s] %in% c("-", "?")) {
-          any_unknown <- TRUE
+      for (s in seq_len(nSec)) {
+        if (secVals[s] %in% c("-", "?")) {
+          anyUnknown <- TRUE
           break
         }
-        mi <- match(sec_vals[s], sec_levels[[s]])
+        mi <- match(secVals[s], secLevels[[s]])
         if (is.na(mi)) {
-          any_unknown <- TRUE
+          anyUnknown <- TRUE
           break
         }
-        level_indices[s] <- mi
+        levelIndices[s] <- mi
       }
 
-      if (any_unknown) {
-        tip_states[t] <- -2L  # present, unknown combination
+      if (anyUnknown) {
+        tipStates[t] <- -2L  # present, unknown combination
         next
       }
 
       # Mixed-radix encoding (first dim varies fastest, matching expand.grid)
-      row_idx <- 1L
+      rowIdx <- 1L
       multiplier <- 1L
-      for (s in seq_len(n_sec)) {
-        row_idx <- row_idx + (level_indices[s] - 1L) * multiplier
-        multiplier <- multiplier * sec_nstates[s]
+      for (s in seq_len(nSec)) {
+        rowIdx <- rowIdx + (levelIndices[s] - 1L) * multiplier
+        multiplier <- multiplier * secNStates[s]
       }
-      tip_states[t] <- row_idx  # 1-based present state = Sankoff state index
+      tipStates[t] <- rowIdx  # 1-based present state = Sankoff state index
     }
 
     list(
-      n_states = n_states,
+      n_states = nStates,
       cost_matrix = cm,
-      tip_states = tip_states,
+      tip_states = tipStates,
       forced_root_state = -1L,
       block_chars = c(ctrl, deps)
     )
   }
 
-  blocks <- lapply(hierarchy, .recode_block)
+  blocks <- lapply(hierarchy, .RecodeBlock)
 
-  h_chars <- hierarchy_chars(hierarchy)
-  non_h <- setdiff(seq_len(n_char), h_chars)
+  hChars <- HierarchyChars(hierarchy)
+  nonH <- setdiff(seq_len(nChar), hChars)
 
   list(
     sankoff_chars = blocks,
-    non_hierarchy_indices = non_h
+    non_hierarchy_indices = nonH
   )
 }

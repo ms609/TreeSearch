@@ -2,7 +2,7 @@
 skip_on_cran()
 
 # Tests for x-transformation (Goloboff et al. 2021) scoring via the
-# recode_hierarchy() → Sankoff pipeline and MaximizeParsimony(inapplicable="xform").
+# RecodeHierarchy() → Sankoff pipeline and MaximizeParsimony(inapplicable="xform").
 
 library("TreeTools")
 
@@ -35,7 +35,7 @@ test_that("Xform prefers single gain + losses over multiple gains", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L)
 
-  recoded <- recode_hierarchy(ds, h)
+  recoded <- RecodeHierarchy(ds, h)
   blk <- recoded$sankoff_chars[[1]]
   expect_equal(blk$cost_matrix[1, 2], 2)  # gain = n+1 = 2
   expect_equal(blk$cost_matrix[2, 1], 1)  # loss = 1
@@ -87,7 +87,7 @@ test_that("Xform penalizes secondary variation on present branches", {
   tree_v <- Renumber(RenumberTips(tree, names(ds_v)))
 
   score_fn <- function(ds, tr) {
-    rec <- recode_hierarchy(ds, h)
+    rec <- RecodeHierarchy(ds, h)
     blk <- rec$sankoff_chars[[1]]
     TreeSearch:::ts_sankoff_test(
       tr$edge, as.integer(blk$n_states),
@@ -251,7 +251,7 @@ test_that("Xform gain cost scales with number of secondaries", {
     ds <- make_dat(mat)
     h <- CharacterHierarchy("1" = seq(2L, n_cols))
 
-    rec <- recode_hierarchy(ds, h)
+    rec <- RecodeHierarchy(ds, h)
     blk <- rec$sankoff_chars[[1]]
 
     expected_gain <- n_sec + 1L

@@ -1,5 +1,20 @@
 # To integrate into 2.0.0 notes
 
+- HSJ (Hopkins & St John 2021) scoring is now invariant to the
+  arbitrary ordering of a `phyDat` object's `levels`.  Both the primary
+  absent/present term and the secondary-character dissimilarity term
+  previously depended on the internal token ordering, so the same dataset
+  could score differently under different (equivalent) `levels`.
+
+- Hierarchical-scoring helpers renamed to the package's `BigCamelCase`
+  convention (the snake_case names are removed): `recode_hierarchy()` ->
+  `RecodeHierarchy()`, `hierarchy_from_names()` -> `HierarchyFromNames()`,
+  `validate_hierarchy()` -> `ValidateHierarchy()`, `hierarchy_chars()` ->
+  `HierarchyChars()`, `hierarchy_controlling()` -> `HierarchyControlling()`.
+  The internal C++-bridge helpers (`build_tip_labels()`,
+  `hierarchy_to_blocks()`, `non_hierarchy_weights()`, `hsj_absent_state()`)
+  are now private and no longer exported.
+
 - `WideSample()` now dispatches to the appropriate Max-Min diversity (MMDP)
   solver from the `MaxMin` package, choosing the tier automatically
   from `length(trees)`.

@@ -1,7 +1,7 @@
 # Tier 2: skipped on CRAN; see tests/testing-strategy.md
 skip_on_cran()
 
-# Tests for recode_hierarchy(): x-transformation recoding of hierarchical
+# Tests for RecodeHierarchy(): x-transformation recoding of hierarchical
 # characters into step-matrix (Sankoff) characters.
 
 library("TreeTools")
@@ -25,7 +25,7 @@ test_that("Binary secondaries produce correct state count and cost matrix", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2:3)
 
-  result <- recode_hierarchy(ds, h)
+  result <- RecodeHierarchy(ds, h)
 
   # One block, no non-hierarchy chars
   expect_length(result$sankoff_chars, 1)
@@ -75,7 +75,7 @@ test_that("Tip states correctly encode absent and present combinations", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2:3)
 
-  blk <- recode_hierarchy(ds, h)$sankoff_chars[[1]]
+  blk <- RecodeHierarchy(ds, h)$sankoff_chars[[1]]
 
   # t1: absent → state 0
   expect_equal(blk$tip_states[1], 0L)
@@ -106,7 +106,7 @@ test_that("Single binary secondary gives 3 states", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L)
 
-  blk <- recode_hierarchy(ds, h)$sankoff_chars[[1]]
+  blk <- RecodeHierarchy(ds, h)$sankoff_chars[[1]]
   expect_equal(blk$n_states, 3L)
 
   # Gain cost = 1+1 = 2
@@ -132,7 +132,7 @@ test_that("Non-hierarchy characters are identified", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L)
 
-  result <- recode_hierarchy(ds, h)
+  result <- RecodeHierarchy(ds, h)
   expect_equal(sort(result$non_hierarchy_indices), c(3L, 4L))
 })
 
@@ -150,7 +150,7 @@ test_that("Multiple blocks are handled independently", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L, "4" = 5L)
 
-  result <- recode_hierarchy(ds, h)
+  result <- RecodeHierarchy(ds, h)
 
   expect_length(result$sankoff_chars, 2)
   expect_equal(result$non_hierarchy_indices, 3L)
@@ -178,7 +178,7 @@ test_that("3-state secondary gives 4 combined states", {
   ds <- make_dat(mat, levels = c("-", "0", "1", "2"))
   h <- CharacterHierarchy("1" = 2L)
 
-  blk <- recode_hierarchy(ds, h)$sankoff_chars[[1]]
+  blk <- RecodeHierarchy(ds, h)$sankoff_chars[[1]]
 
   # 1 secondary with 3 informative states → 3 + 1 = 4 states
   expect_equal(blk$n_states, 4L)
@@ -206,7 +206,7 @@ test_that("Two multistate secondaries produce correct state count", {
   ds <- make_dat(mat, levels = c("-", "0", "1", "2"))
   h <- CharacterHierarchy("1" = 2:3)
 
-  blk <- recode_hierarchy(ds, h)$sankoff_chars[[1]]
+  blk <- RecodeHierarchy(ds, h)$sankoff_chars[[1]]
 
   # 3 × 2 + 1 = 7
   expect_equal(blk$n_states, 7L)
@@ -228,7 +228,7 @@ test_that("Missing primary coded as fully ambiguous", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L)
 
-  blk <- recode_hierarchy(ds, h)$sankoff_chars[[1]]
+  blk <- RecodeHierarchy(ds, h)$sankoff_chars[[1]]
   expect_equal(blk$tip_states[1], -1L)  # fully ambiguous
 })
 
@@ -243,7 +243,7 @@ test_that("Present primary with unknown secondary coded as present-ambiguous", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L)
 
-  blk <- recode_hierarchy(ds, h)$sankoff_chars[[1]]
+  blk <- RecodeHierarchy(ds, h)$sankoff_chars[[1]]
   expect_equal(blk$tip_states[1], -2L)  # present but unknown
   expect_equal(blk$tip_states[2], 1L)   # present, state 0 → combo 1
   expect_equal(blk$tip_states[3], 0L)   # absent
@@ -263,7 +263,7 @@ test_that("Large state space triggers warning", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2:6)
 
-  expect_warning(recode_hierarchy(ds, h), "33 states")
+  expect_warning(RecodeHierarchy(ds, h), "33 states")
 })
 
 
@@ -280,9 +280,9 @@ test_that("Nested hierarchies produce informative error", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = list(2, "2" = 3L, 4))
 
-  # validate_hierarchy catches double-claiming before recode gets to the
+  # ValidateHierarchy catches double-claiming before recode gets to the
  # nesting check; either error message is acceptable
-  expect_error(recode_hierarchy(ds, h), "multiple|Nested")
+  expect_error(RecodeHierarchy(ds, h), "multiple|Nested")
 })
 
 
@@ -298,7 +298,7 @@ test_that("Cost matrix is asymmetric for gain vs loss", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L)
 
-  blk <- recode_hierarchy(ds, h)$sankoff_chars[[1]]
+  blk <- RecodeHierarchy(ds, h)$sankoff_chars[[1]]
 
   # gain (absent→present) ≠ loss (present→absent)
   expect_equal(blk$cost_matrix[1, 2], 2)  # gain = n+1 = 2
@@ -327,7 +327,7 @@ test_that("Recoded data scores correctly via Sankoff engine", {
   ds <- make_dat(mat)
   h <- CharacterHierarchy("1" = 2L)
 
-  result <- recode_hierarchy(ds, h)
+  result <- RecodeHierarchy(ds, h)
   blk <- result$sankoff_chars[[1]]
 
   tree <- ape::read.tree(text = "((t1,t2),(t3,t4));")

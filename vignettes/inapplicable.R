@@ -26,5 +26,5 @@ h <- CharacterHierarchy("1" = 2:5, "6" = 7:8)
 ## ----hierarchy-auto-----------------------------------------------------------
 names <- c("sup_tail", "sub_tail_colour", "sub_tail_shape",
            "sup_wing", "sub_wing_venation", "other_char")
-hierarchy_from_names(names)
+HierarchyFromNames(names)
 

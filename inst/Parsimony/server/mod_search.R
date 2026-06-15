@@ -158,7 +158,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       }
       h <- tryCatch(
         withCallingHandlers(
-          hierarchy_from_names(chars),
+          HierarchyFromNames(chars),
           warning = function(w) invokeRestart("muffleWarning")
         ),
         error = function(e) NULL
@@ -168,11 +168,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           "No hierarchy detected. Character names must follow the convention ",
           "<code>sup_tag</code> (primary) and ",
           "<code>sub_tag[_suffix]</code> (secondary); see ",
-          "<code>?hierarchy_from_names</code>."
+          "<code>?HierarchyFromNames</code>."
         )))
       } else {
         n_blocks <- length(h)
-        n_chars  <- length(hierarchy_chars(h))
+        n_chars  <- length(HierarchyChars(h))
         helpText(paste0(
           "Detected ", n_blocks, " hierarchy block(s) covering ",
           n_chars, " character(s)."
@@ -673,7 +673,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                              !is.null(r$chars) && length(r$chars) > 0L) {
         tryCatch(
           withCallingHandlers(
-            hierarchy_from_names(r$chars),
+            HierarchyFromNames(r$chars),
             warning = function(w) invokeRestart("muffleWarning")
           ),
           error = function(e) NULL
@@ -692,7 +692,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           paste0(
             "The \u201c", methodLabel, "\u201d method requires a character ",
             "hierarchy. Ensure character names follow the sup_<tag> / ",
-            "sub_<tag> convention (see ?hierarchy_from_names)."
+            "sub_<tag> convention (see ?HierarchyFromNames)."
           ),
           type = "error", duration = 10
         )

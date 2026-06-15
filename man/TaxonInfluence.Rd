@@ -136,15 +136,15 @@ Other tree scoring:
 \code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
 \code{\link[=CharacterLength]{CharacterLength()}},
 \code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
 \code{\link[=IWScore]{IWScore()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
 \code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
-\code{\link[=WideSample]{WideSample()}},
-\code{\link[=hierarchy_from_names]{hierarchy_from_names()}},
-\code{\link[=recode_hierarchy]{recode_hierarchy()}}
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
