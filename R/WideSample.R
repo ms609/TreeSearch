@@ -246,8 +246,7 @@ WideSample <- function(
     },
     # Tier 2: DropAdd returns the bare (sorted) index vector; it runs to its
     # deterministic plateau, with `maxSeconds` as a safety cap.
-    `2` = MaxMin::DropAdd(n, dmat, maxSeconds = maxSeconds,
-                          progress = FALSE),
+    `2` = MaxMin::DropAdd(n, dmat, maxSeconds = maxSeconds),
     # Tier 3: Grasp likewise returns the bare index vector (RNG-dependent).
     `3` = MaxMin::Grasp(n, dmat, maxSeconds = maxSeconds),
     # Tier 4: exact solver returns a list; take its `$indices`.
