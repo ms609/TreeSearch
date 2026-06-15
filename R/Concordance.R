@@ -311,12 +311,17 @@ ClusteringConcordance <- function(
              mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
              structure(ret, hMax = charMax, mcse = mcseInfo)
            } else {
-             # `ret` already honours `normalize`: with normalize = FALSE,
-             # zero = 0 so ret == charInfo / charMax; with normalize = TRUE,
-             # ret subtracts the random-expectation baseline. Returning
-             # charInfo / charMax here discarded the normalization, making
-             # normalize = TRUE (the default) silently behave like FALSE.
-             structure(ret, hMax = charMax)
+             # The characterwise return is deliberately NOT random-expectation
+             # normalized for logical `normalize`: `charInfo` is
+             # MutualClusteringInfo() against the whole tree, whereas the
+             # analytic `zero` baseline above is per-single-split expected MI, so
+             # subtracting it would mix incompatible quantities (and the
+             # entropy-weighted variant was abandoned -- see the note below the
+             # @return docs). Only the Monte-Carlo path (numeric `normalize`)
+             # offers a same-scale empirical baseline. So return charInfo scaled
+             # by its maximum (hBest-like), as shipped since the original
+             # implementation (#205).
+             structure(charInfo / charMax, hMax = charMax)
            }
          }, {
            # tree: Entropy-weighted mean across best character-split pairs
