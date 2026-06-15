@@ -50,6 +50,28 @@ ts::DataSet make_dataset(
   int n_tokens = contrast.nrow();
   int n_states = contrast.ncol();
 
+  // Validate parallel-vector lengths at the boundary: build_dataset() indexes
+  // these by raw pointer over [0, n_patterns)/[0, n_states), so a short vector
+  // is an out-of-bounds read. Public wrappers always size them correctly; this
+  // turns a direct internal call with mismatched lengths into a clean error
+  // rather than undefined behaviour.
+  if (weight.size() != n_patterns) {
+    Rcpp::stop("`weight` length (%d) must equal the number of characters (%d)",
+               static_cast<int>(weight.size()), n_patterns);
+  }
+  if (levels.size() != n_states) {
+    Rcpp::stop("`levels` length (%d) must equal ncol(contrast) (%d)",
+               static_cast<int>(levels.size()), n_states);
+  }
+  if (min_steps.size() > 0 && min_steps.size() != n_patterns) {
+    Rcpp::stop("`min_steps` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(min_steps.size()), n_patterns);
+  }
+  if (xpiwe && obs_count.size() > 0 && obs_count.size() != n_patterns) {
+    Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(obs_count.size()), n_patterns);
+  }
+
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
   for (int i = 0; i < n_states; ++i) {
@@ -1774,6 +1796,28 @@ List ts_resample_search(
   int n_tokens = contrast.nrow();
   int n_states = contrast.ncol();
 
+  // Validate parallel-vector lengths at the boundary: build_dataset() indexes
+  // these by raw pointer over [0, n_patterns)/[0, n_states), so a short vector
+  // is an out-of-bounds read. Public wrappers always size them correctly; this
+  // turns a direct internal call with mismatched lengths into a clean error
+  // rather than undefined behaviour.
+  if (weight.size() != n_patterns) {
+    Rcpp::stop("`weight` length (%d) must equal the number of characters (%d)",
+               static_cast<int>(weight.size()), n_patterns);
+  }
+  if (levels.size() != n_states) {
+    Rcpp::stop("`levels` length (%d) must equal ncol(contrast) (%d)",
+               static_cast<int>(levels.size()), n_states);
+  }
+  if (min_steps.size() > 0 && min_steps.size() != n_patterns) {
+    Rcpp::stop("`min_steps` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(min_steps.size()), n_patterns);
+  }
+  if (xpiwe && obs_count.size() > 0 && obs_count.size() != n_patterns) {
+    Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(obs_count.size()), n_patterns);
+  }
+
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
   for (int i = 0; i < n_states; ++i) {
@@ -1879,6 +1923,28 @@ List ts_parallel_resample(
   int n_patterns = tip_data.ncol();
   int n_tokens = contrast.nrow();
   int n_states = contrast.ncol();
+
+  // Validate parallel-vector lengths at the boundary: build_dataset() indexes
+  // these by raw pointer over [0, n_patterns)/[0, n_states), so a short vector
+  // is an out-of-bounds read. Public wrappers always size them correctly; this
+  // turns a direct internal call with mismatched lengths into a clean error
+  // rather than undefined behaviour.
+  if (weight.size() != n_patterns) {
+    Rcpp::stop("`weight` length (%d) must equal the number of characters (%d)",
+               static_cast<int>(weight.size()), n_patterns);
+  }
+  if (levels.size() != n_states) {
+    Rcpp::stop("`levels` length (%d) must equal ncol(contrast) (%d)",
+               static_cast<int>(levels.size()), n_states);
+  }
+  if (min_steps.size() > 0 && min_steps.size() != n_patterns) {
+    Rcpp::stop("`min_steps` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(min_steps.size()), n_patterns);
+  }
+  if (xpiwe && obs_count.size() > 0 && obs_count.size() != n_patterns) {
+    Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(obs_count.size()), n_patterns);
+  }
 
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
@@ -1996,6 +2062,28 @@ List ts_successive_approx(
   int n_patterns = tip_data.ncol();
   int n_tokens = contrast.nrow();
   int n_states = contrast.ncol();
+
+  // Validate parallel-vector lengths at the boundary: build_dataset() indexes
+  // these by raw pointer over [0, n_patterns)/[0, n_states), so a short vector
+  // is an out-of-bounds read. Public wrappers always size them correctly; this
+  // turns a direct internal call with mismatched lengths into a clean error
+  // rather than undefined behaviour.
+  if (weight.size() != n_patterns) {
+    Rcpp::stop("`weight` length (%d) must equal the number of characters (%d)",
+               static_cast<int>(weight.size()), n_patterns);
+  }
+  if (levels.size() != n_states) {
+    Rcpp::stop("`levels` length (%d) must equal ncol(contrast) (%d)",
+               static_cast<int>(levels.size()), n_states);
+  }
+  if (min_steps.size() > 0 && min_steps.size() != n_patterns) {
+    Rcpp::stop("`min_steps` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(min_steps.size()), n_patterns);
+  }
+  if (xpiwe && obs_count.size() > 0 && obs_count.size() != n_patterns) {
+    Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
+               "(%d)", static_cast<int>(obs_count.size()), n_patterns);
+  }
 
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);

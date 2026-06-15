@@ -40,6 +40,16 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
   if (missing(sequence)) {
     sequence <- taxa[[1]]
   } else if (is.numeric(sequence)) {
+    # Reject non-positive, fractional, out-of-range or duplicated indices before
+    # subsetting: R's `taxa[i]` would otherwise silently drop (`i <= 0`),
+    # truncate (fractional) or recycle, yielding a tree that ignores the
+    # requested order rather than erroring.
+    if (anyNA(sequence) || any(sequence != round(sequence)) ||
+        any(sequence < 1L) || any(sequence > nTaxa) ||
+        anyDuplicated(sequence)) {
+      stop("numeric `sequence` must be distinct whole-number indices ",
+           "between 1 and ", nTaxa, " (the number of taxa in `dataset`)")
+    }
     sequence <- taxa[sequence]
   }
   if (anyNA(sequence) || !all(sequence %in% taxa)) {
