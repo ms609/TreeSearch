@@ -53,6 +53,18 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
+  // T-306: the incremental NNI accept-path computes new_score as a Fitch-only
+  // EW delta (best_score + delta) or an IW/profile rescore from per-pattern
+  // step counts.  For HSJ/XFORM scoring, score_tree() additionally adds a
+  // topology-dependent hierarchy-DP (HSJ) or Sankoff (XFORM) term that neither
+  // delta captures, so fall back to a full score_tree() rescore for those modes
+  // (the same scoring-mode classification used by the T-275/T-303 guards).
+  const bool incremental_ok =
+      ds.scoring_mode == ScoringMode::EW ||
+      ds.scoring_mode == ScoringMode::IW ||
+      ds.scoring_mode == ScoringMode::XPIWE ||
+      ds.scoring_mode == ScoringMode::PROFILE;
+
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -72,8 +84,10 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
         ++n_iterations;
 
         double new_score;
-        if (has_na) {
-          // NA datasets: fall back to full rescore (three-pass needed)
+        if (has_na || !incremental_ok) {
+          // NA datasets need the three-pass algorithm; HSJ/XFORM (T-306) need
+          // the full hierarchy-DP / Sankoff contribution.  Both recompute the
+          // authoritative score via score_tree().
           tree.build_postorder();
           new_score = score_tree(tree, ds);
         } else {
@@ -118,12 +132,14 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
         }
 
         tree.nni_undo(undo);
-        if (!has_na) {
+        if (!has_na && incremental_ok) {
           // Restore prelim/local_cost by re-scoring the original topology
           tree.clip_undo_stack.clear();
           fitch_incremental_downpass(tree, ds, c);
           tree.clip_undo_stack.clear();
         } else {
+          // NA and HSJ/XFORM (T-306) evaluate via a full score_tree() each
+          // iteration, so just restore a valid postorder for the next pass.
           tree.build_postorder();
         }
       }

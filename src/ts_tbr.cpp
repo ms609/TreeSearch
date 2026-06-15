@@ -593,6 +593,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
+  // T-306: the SPR accept-path computes `actual` as an incremental delta on
+  // top of best_score — a Fitch-only EW delta (best_score + delta) or an
+  // IW/profile rescore from per-pattern step counts.  For HSJ/XFORM scoring,
+  // score_tree() additionally adds a topology-dependent hierarchy-DP (HSJ) or
+  // Sankoff (XFORM) term that neither delta captures, so best_score would
+  // drift from the authoritative score and corrupt accept/reject decisions.
+  // Restrict the incremental fast path to scoring modes whose total equals the
+  // Fitch/IW result; HSJ and XFORM fall back to full_rescore (the same scoring
+  // -mode classification used by the T-275/T-303 guards).
+  const bool incremental_ok =
+      ds.scoring_mode == ScoringMode::EW ||
+      ds.scoring_mode == ScoringMode::IW ||
+      ds.scoring_mode == ScoringMode::XPIWE ||
+      ds.scoring_mode == ScoringMode::PROFILE;
+
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -1145,7 +1160,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // datasets fall back to full_rescore.
         bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
         double actual;
-        if (is_spr && !has_na) {
+        if (is_spr && !has_na && incremental_ok) {
           int delta = fitch_dirty_downpass(tree, ds, nz, nx);
           fitch_dirty_uppass(tree, ds, nz, nx);
           if (use_iw) {
@@ -1155,7 +1170,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           } else {
             actual = best_score + static_cast<double>(delta);
           }
-        } else if (is_spr && has_na) {
+        } else if (is_spr && has_na && incremental_ok) {
           // T-300 NA variant: dirty-set Pass 1 + Pass 2 instead of full
           // rescore.  Pass 3 still runs over the full tree because it
           // populates internal down2 (read by extract_char_steps) and
@@ -1176,6 +1191,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             actual = static_cast<double>(ew_total) + ds.ew_offset;
           }
         } else {
+          // Non-trivial TBR rerooting, or a scoring mode whose incremental
+          // delta is not exact (HSJ/XFORM, see incremental_ok): recompute the
+          // authoritative score via score_tree().
           actual = full_rescore(tree, ds);
         }
 
