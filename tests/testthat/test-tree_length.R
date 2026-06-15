@@ -184,8 +184,8 @@ test_that("TreeLength() handles unrooted / non-preorder trees", {
   
   expect_equal(TreeLength(RootTree(Postorder(unrooted), 1), mat),
                TreeLength(RootTree(unrooted, 1), mat))
-  expect_warning(
-    scores <- TreeLength(c(unrooted, Postorder(unrooted)), mat),
+  expect_warning(suppressMessages(
+    scores <- TreeLength(c(unrooted, Postorder(unrooted)), mat)),
     "rooted on tip 1")
   expect_equal(scores[[1]], scores[[2]])
   expect_equal(TreeLength(RootTree(unrooted, 1), mat), scores[[1]])

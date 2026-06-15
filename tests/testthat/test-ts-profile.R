@@ -251,7 +251,7 @@ test_that("Infeasible multi-state chars reduced to binary in PrepareDataProfile"
   # Sun2018-like dataset with 3+ state characters and many tips.
   # Without the feasibility guard, PrepareDataProfile would hang.
   sun_file <- system.file("datasets/Sun2018.nex", package = "TreeSearch")
-  sun <- ReadAsPhyDat(sun_file)
+  sun <- suppressWarnings(ReadAsPhyDat(sun_file))
 
   # Should complete in reasonable time (< 10 s) with warning suppressed
   pds <- suppressWarnings(PrepareDataProfile(sun))

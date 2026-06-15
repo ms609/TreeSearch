@@ -277,14 +277,9 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   }
 
   tree[] <- RenumberTips(tree, dataset)
-  tree[] <- lapply(tree, function(tr) {
-    if (TreeIsRooted(tr)) {
-      tr
-    } else {
-      warning("Unrooted tree rooted on tip 1.")
-      RootTree(tr, 1)
-    }
-  })
+  needRoot <- !vapply(tree, TreeIsRooted, logical(1L))
+  if (any(needRoot)) warning("Unrooted tree rooted on tip 1.")
+  tree[] <- lapply(tree, function(tr) if (TreeIsRooted(tr)) tr else RootTree(tr, 1))
 
   nEdge <- unique(vapply(tree, function(tr) dim(tr[["edge"]])[1], integer(1)))
   if (length(nEdge) > 1L) {

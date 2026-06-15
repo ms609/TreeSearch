@@ -162,12 +162,26 @@ test_that("Mismatched tree/dataset handled with warnings", {
     Morphy(..., ratchIter = 0, maxHits = 1, verbosity = 0)
   )
 
-  expect_warning(r1 <- QP(datAf, treeBg));                        expect_equal(5, unname(NTip(r1)))
-  expect_warning(r2 <- QP(datAe, treeAf));                        expect_equal(5, unname(NTip(r2)))
-  expect_warning(r3 <- QP(datAg, treeAf));                        expect_equal(6, unname(NTip(r3)))
-  expect_warning(r4 <- QP(datAf, treeBg, constraint = datAe));    expect_equal(5, unname(NTip(r4)))
+  # Some calls emit multiple R warnings (one per mismatch type: tree-only,
+  # dataset-only, constraint-only).  expect_warning() only captures the first;
+  # additional warnings propagate as "unexpected" in edition 3.  Use a helper
+  # that muffles every warning while asserting at least one was raised.
+  check_warns <- function(expr) {
+    warns <- 0L
+    val <- withCallingHandlers(expr, warning = function(w) {
+      warns <<- warns + 1L
+      invokeRestart("muffleWarning")
+    })
+    expect_gt(warns, 0L)
+    val
+  }
+
+  r1 <- check_warns(QP(datAf, treeBg));                        expect_equal(5, unname(NTip(r1)))
+  r2 <- check_warns(QP(datAe, treeAf));                        expect_equal(5, unname(NTip(r2)))
+  r3 <- check_warns(QP(datAg, treeAf));                        expect_equal(6, unname(NTip(r3)))
+  r4 <- check_warns(QP(datAf, treeBg, constraint = datAe));    expect_equal(5, unname(NTip(r4)))
   expect_equal(6, unname(NTip(QP(datAf, treeAf, constraint = datAe))))
-  expect_warning(r5 <- QP(datAf, treeAf, constraint = datAg));    expect_equal(6, unname(NTip(r5)))
+  r5 <- check_warns(QP(datAf, treeAf, constraint = datAg));    expect_equal(6, unname(NTip(r5)))
 })
 
 test_that("Root retained if not 1", {
