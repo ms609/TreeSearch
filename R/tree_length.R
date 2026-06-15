@@ -101,7 +101,7 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
     if (!inherits(hierarchy, "CharacterHierarchy")) {
       stop("`hierarchy` must be a CharacterHierarchy object.")
     }
-    validate_hierarchy(hierarchy, dataset)
+    ValidateHierarchy(hierarchy, dataset)
     if (.UseProfile(concavity)) {
       stop("Profile parsimony is not currently supported with inapplicable = \"",
            inapplicable, "\".")
@@ -172,21 +172,21 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
     contrast <- at$contrast
     tip_data <- matrix(unlist(dataset, use.names = FALSE),
                        nrow = length(dataset), byrow = TRUE)
-    adj_weight <- non_hierarchy_weights(dataset, hierarchy)
+    adj_weight <- .NonHierarchyWeights(dataset, hierarchy)
     ts_hsj_score(tree[["edge"]], contrast, tip_data,
                  as.integer(adj_weight), at$levels,
-                 hierarchy_to_blocks(hierarchy),
+                 .HierarchyToBlocks(hierarchy),
                  as.double(hsj_alpha),
-                 build_tip_labels(dataset),
-                 0L)
+                 .BuildTipLabels(dataset),
+                 .HSJAbsentState(dataset))
   } else if (useXform) {
     tree <- RenumberTips(Renumber(tree), names(dataset))
     at <- attributes(dataset)
     contrast <- at$contrast
     tip_data <- matrix(unlist(dataset, use.names = FALSE),
                        nrow = length(dataset), byrow = TRUE)
-    adj_weight <- as.integer(non_hierarchy_weights(dataset, hierarchy))
-    recoded <- recode_hierarchy(dataset, hierarchy)
+    adj_weight <- as.integer(.NonHierarchyWeights(dataset, hierarchy))
+    recoded <- RecodeHierarchy(dataset, hierarchy)
     xform <- .PrepareXformArgs(recoded, length(dataset))
     fitch_part <- ts_fitch_score(tree[["edge"]], contrast, tip_data,
                                  adj_weight, at$levels)
@@ -247,7 +247,7 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
     if (!inherits(hierarchy, "CharacterHierarchy")) {
       stop("`hierarchy` must be a CharacterHierarchy object.")
     }
-    validate_hierarchy(hierarchy, dataset)
+    ValidateHierarchy(hierarchy, dataset)
     if (useProfile) {
       stop("Profile parsimony is not currently supported with inapplicable = \"",
            inapplicable, "\".")
@@ -317,17 +317,18 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   obsCount <- if (useXpiwe) .ObsCount(dataset) else integer(0)
 
   if (useHSJ) {
-    adj_weight <- as.integer(non_hierarchy_weights(dataset, hierarchy))
-    blocks <- hierarchy_to_blocks(hierarchy)
+    adj_weight <- as.integer(.NonHierarchyWeights(dataset, hierarchy))
+    blocks <- .HierarchyToBlocks(hierarchy)
     alpha <- as.double(hsj_alpha)
-    tip_labels <- build_tip_labels(dataset)
+    tip_labels <- .BuildTipLabels(dataset)
+    absent_state <- .HSJAbsentState(dataset)
     vapply(tree, function(tr) {
       ts_hsj_score(tr[["edge"]], contrast, tip_data, adj_weight, levels,
-                   blocks, alpha, tip_labels, 0L)
+                   blocks, alpha, tip_labels, absent_state)
     }, double(1))
   } else if (useXform) {
-    adj_weight <- as.integer(non_hierarchy_weights(dataset, hierarchy))
-    recoded <- recode_hierarchy(dataset, hierarchy)
+    adj_weight <- as.integer(.NonHierarchyWeights(dataset, hierarchy))
+    recoded <- RecodeHierarchy(dataset, hierarchy)
     xform <- .PrepareXformArgs(recoded, length(dataset))
     vapply(tree, function(tr) {
       fitch_part <- ts_fitch_score(tr[["edge"]], contrast, tip_data,
@@ -363,7 +364,7 @@ TreeLength.NULL <- function(tree, dataset, concavity = Inf,
                             hierarchy = NULL, inapplicable = "bgs",
                             hsj_alpha = 1.0) NULL
 
-# Pack recode_hierarchy() output into the format ts_sankoff_test() expects.
+# Pack RecodeHierarchy() output into the format ts_sankoff_test() expects.
 .PrepareXformArgs <- function(recoded, n_tip) {
   chars <- recoded$sankoff_chars
   n_chars <- length(chars)

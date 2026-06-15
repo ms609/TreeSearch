@@ -36,42 +36,42 @@ test_that("print.CharacterHierarchy runs", {
   expect_output(print(h), "Char 6 controls")
 })
 
-test_that("hierarchy_chars extracts all indices", {
+test_that("HierarchyChars extracts all indices", {
   h <- CharacterHierarchy("1" = 2:5, "6" = 7:8)
-  chars <- hierarchy_chars(h)
+  chars <- HierarchyChars(h)
   expect_setequal(chars, 1:8)
 
   # Nested
   h2 <- CharacterHierarchy("1" = list(2, 3, "3" = 9:10))
-  chars2 <- hierarchy_chars(h2)
+  chars2 <- HierarchyChars(h2)
   expect_setequal(chars2, c(1, 2, 3, 9, 10))
 })
 
-test_that("hierarchy_controlling returns top-level controllers", {
+test_that("HierarchyControlling returns top-level controllers", {
   h <- CharacterHierarchy("1" = 2:5, "6" = 7:8)
-  expect_equal(hierarchy_controlling(h), c(1L, 6L))
+  expect_equal(HierarchyControlling(h), c(1L, 6L))
 })
 
-test_that("hierarchy_from_names parses TNT-style names", {
+test_that("HierarchyFromNames parses TNT-style names", {
   nms <- c("sup_tail", "sub_tail_colour", "sub_tail_shape",
            "sup_wing", "sub_wing_venation", "eyes")
-  h <- hierarchy_from_names(nms)
+  h <- HierarchyFromNames(nms)
   expect_s3_class(h, "CharacterHierarchy")
-  expect_setequal(hierarchy_controlling(h), c(1L, 4L))
-  expect_setequal(hierarchy_chars(h), c(1, 2, 3, 4, 5))
+  expect_setequal(HierarchyControlling(h), c(1L, 4L))
+  expect_setequal(HierarchyChars(h), c(1, 2, 3, 4, 5))
 })
 
-test_that("hierarchy_from_names returns NULL with no hierarchy", {
+test_that("HierarchyFromNames returns NULL with no hierarchy", {
   nms <- c("eyes", "legs", "wings")
-  expect_null(hierarchy_from_names(nms))
+  expect_null(HierarchyFromNames(nms))
 })
 
-test_that("hierarchy_from_names warns on orphan sub_ tags", {
+test_that("HierarchyFromNames warns on orphan sub_ tags", {
   nms <- c("sup_tail", "sub_tail_colour", "sub_arm_length")
-  expect_warning(hierarchy_from_names(nms), "no corresponding sup_")
+  expect_warning(HierarchyFromNames(nms), "no corresponding sup_")
 })
 
-test_that("validate_hierarchy passes on well-formed data", {
+test_that("ValidateHierarchy passes on well-formed data", {
   mat <- matrix(c(
     "0", "-", "-", "1",
     "0", "-", "-", "0",
@@ -82,10 +82,10 @@ test_that("validate_hierarchy passes on well-formed data", {
   ds <- phangorn::phyDat(mat, type = "USER",
                          levels = c("-", "0", "1"), ambiguity = "?")
   h <- CharacterHierarchy("1" = 2:3)
-  expect_silent(validate_hierarchy(h, ds))
+  expect_silent(ValidateHierarchy(h, ds))
 })
 
-test_that("validate_hierarchy catches non-inapplicable secondaries", {
+test_that("ValidateHierarchy catches non-inapplicable secondaries", {
   mat <- matrix(c(
     "0", "1", "1",
     "1", "0", "1",
@@ -95,10 +95,10 @@ test_that("validate_hierarchy catches non-inapplicable secondaries", {
   ds <- phangorn::phyDat(mat, type = "USER",
                          levels = c("-", "0", "1"), ambiguity = "?")
   h <- CharacterHierarchy("1" = 2:3)
-  expect_error(validate_hierarchy(h, ds), "non-inapplicable")
+  expect_error(ValidateHierarchy(h, ds), "non-inapplicable")
 })
 
-test_that("validate_hierarchy catches non-binary controlling character", {
+test_that("ValidateHierarchy catches non-binary controlling character", {
   mat <- matrix(c(
     "0", "-",
     "1", "0",
@@ -108,19 +108,19 @@ test_that("validate_hierarchy catches non-binary controlling character", {
   ds <- phangorn::phyDat(mat, type = "USER",
                          levels = c("-", "0", "1", "2"), ambiguity = "?")
   h <- CharacterHierarchy("1" = 2L)
-  expect_error(validate_hierarchy(h, ds), "binary")
+  expect_error(ValidateHierarchy(h, ds), "binary")
 })
 
-test_that("validate_hierarchy catches out-of-range indices", {
+test_that("ValidateHierarchy catches out-of-range indices", {
   mat <- matrix(c("0", "-", "1", "0"), nrow = 2, byrow = TRUE)
   rownames(mat) <- c("A", "B")
   ds <- phangorn::phyDat(mat, type = "USER",
                          levels = c("-", "0", "1"), ambiguity = "?")
   h <- CharacterHierarchy("1" = 99L)
-  expect_error(validate_hierarchy(h, ds), "out of range")
+  expect_error(ValidateHierarchy(h, ds), "out of range")
 })
 
-test_that("validate_hierarchy catches double-claimed characters", {
+test_that("ValidateHierarchy catches double-claimed characters", {
   mat <- matrix(c(
     "0", "-", "-", "0", "-",
     "1", "0", "1", "1", "0",
@@ -130,10 +130,10 @@ test_that("validate_hierarchy catches double-claimed characters", {
   ds <- phangorn::phyDat(mat, type = "USER",
                          levels = c("-", "0", "1"), ambiguity = "?")
   h <- CharacterHierarchy("1" = 2:3, "4" = c(3L, 5L))
-  expect_error(validate_hierarchy(h, ds), "multiple hierarchy blocks")
+  expect_error(ValidateHierarchy(h, ds), "multiple hierarchy blocks")
 })
 
-test_that("non_hierarchy_weights subtracts hierarchy chars", {
+test_that(".NonHierarchyWeights subtracts hierarchy chars", {
   mat <- matrix(c(
     "0", "-", "0", "1",
     "1", "0", "1", "0",
@@ -145,7 +145,7 @@ test_that("non_hierarchy_weights subtracts hierarchy chars", {
 
   h <- CharacterHierarchy("1" = 2L)
   w_orig <- attr(ds, "weight")
-  w_adj <- non_hierarchy_weights(ds, h)
+  w_adj <- .NonHierarchyWeights(ds, h)
 
   # Adjusted weights should be non-negative
 
@@ -154,7 +154,7 @@ test_that("non_hierarchy_weights subtracts hierarchy chars", {
   expect_equal(sum(w_adj), sum(w_orig) - 2L)
 })
 
-test_that("build_tip_labels creates correct matrix", {
+test_that(".BuildTipLabels creates correct matrix", {
   mat <- matrix(c(
     "0", "-", "1",
     "1", "0", "0",
@@ -164,16 +164,16 @@ test_that("build_tip_labels creates correct matrix", {
   ds <- phangorn::phyDat(mat, type = "USER",
                          levels = c("-", "0", "1"), ambiguity = "?")
 
-  tl <- build_tip_labels(ds)
+  tl <- .BuildTipLabels(ds)
   expect_equal(nrow(tl), 3L)
   expect_equal(ncol(tl), 3L)
   # Values should be 0-based token indices
   expect_true(all(tl >= 0L))
 })
 
-test_that("hierarchy_to_blocks converts to 0-based flat list", {
+test_that(".HierarchyToBlocks converts to 0-based flat list", {
   h <- CharacterHierarchy("1" = 2:4, "5" = 6:7)
-  blocks <- hierarchy_to_blocks(h)
+  blocks <- .HierarchyToBlocks(h)
   expect_length(blocks, 2)
   expect_equal(blocks[[1]]$primary, 0L)
   expect_equal(blocks[[1]]$secondaries, 1:3)
@@ -181,9 +181,9 @@ test_that("hierarchy_to_blocks converts to 0-based flat list", {
   expect_equal(blocks[[2]]$secondaries, 5:6)
 })
 
-test_that("hierarchy_to_blocks flattens nested hierarchies", {
+test_that(".HierarchyToBlocks flattens nested hierarchies", {
   h <- CharacterHierarchy("1" = list(2, 4, "3" = 9:10))
-  blocks <- hierarchy_to_blocks(h)
+  blocks <- .HierarchyToBlocks(h)
   expect_gte(length(blocks), 2)
   # First block: primary=0, secondaries should include 1 and 3 (chars 2 and 4)
   expect_equal(blocks[[1]]$primary, 0L)
@@ -193,7 +193,7 @@ test_that("hierarchy_to_blocks flattens nested hierarchies", {
   expect_equal(nested$secondaries, c(8L, 9L))
 })
 
-test_that("non_hierarchy_weights preserves non-hierarchy patterns", {
+test_that(".NonHierarchyWeights preserves non-hierarchy patterns", {
   mat <- matrix(c(
     "0", "-", "0",
     "1", "0", "1",
@@ -206,11 +206,11 @@ test_that("non_hierarchy_weights preserves non-hierarchy patterns", {
   h <- CharacterHierarchy("1" = 2L)
   idx <- attr(ds, "index")
   w_orig <- attr(ds, "weight")
-  w_adj <- non_hierarchy_weights(ds, h)
+  w_adj <- .NonHierarchyWeights(ds, h)
 
   # Character 3 is not in the hierarchy; its pattern should keep its weight
   # unless it shares a pattern with a hierarchy character
-  non_h_chars <- setdiff(seq_along(idx), hierarchy_chars(h))
+  non_h_chars <- setdiff(seq_along(idx), HierarchyChars(h))
   for (ci in non_h_chars) {
     pat <- idx[ci]
     # Pattern weight should be at least 1 for non-hierarchy chars

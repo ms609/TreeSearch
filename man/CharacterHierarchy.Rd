@@ -44,20 +44,20 @@ h <- CharacterHierarchy("1" = list(2, 3, 4, 5, "3" = 9:10))
 \insertAllCited{}
 }
 \seealso{
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}}, \code{\link[=hierarchy_from_names]{hierarchy_from_names()}}
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}}, \code{\link[=HierarchyFromNames]{HierarchyFromNames()}}
 
 Other tree scoring:
 \code{\link[=CharacterLength]{CharacterLength()}},
 \code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
 \code{\link[=IWScore]{IWScore()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
 \code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
 \code{\link[=TaxonInfluence]{TaxonInfluence()}},
-\code{\link[=WideSample]{WideSample()}},
-\code{\link[=hierarchy_from_names]{hierarchy_from_names()}},
-\code{\link[=recode_hierarchy]{recode_hierarchy()}}
+\code{\link[=WideSample]{WideSample()}}
 }
 \concept{tree scoring}

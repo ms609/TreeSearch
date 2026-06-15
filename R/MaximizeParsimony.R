@@ -292,7 +292,7 @@
 #'   secondaries.  Required when `inapplicable` is `"hsj"` or `"xform"`;
 #'   ignored when `inapplicable = "bgs"` (the default).
 #'   See [`CharacterHierarchy()`] for how to construct one, and
-#'   [`hierarchy_from_names()`] for automated construction from
+#'   [`HierarchyFromNames()`] for automated construction from
 #'   TNT-style character names.
 #' @param inapplicable Character: method for handling inapplicable characters.
 #'   Case-insensitive.
@@ -664,7 +664,7 @@ MaximizeParsimony <- function(
     if (!inherits(hierarchy, "CharacterHierarchy")) {
       stop("`hierarchy` must be a CharacterHierarchy object.")
     }
-    validate_hierarchy(hierarchy, dataset)
+    ValidateHierarchy(hierarchy, dataset)
     if (useProfile) {
       stop("Profile parsimony is not currently supported with inapplicable = \"",
            inapplicable, "\".")
@@ -781,14 +781,15 @@ MaximizeParsimony <- function(
   hsjArgs <- list()
   useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
   if (useHSJ) {
-    hsjArgs$hierarchyBlocks <- hierarchy_to_blocks(hierarchy)
-    hsjArgs$hsjTipLabels <- build_tip_labels(dataset)
+    hsjArgs$hierarchyBlocks <- .HierarchyToBlocks(hierarchy)
+    hsjArgs$hsjTipLabels <- .BuildTipLabels(dataset)
     hsjArgs$hsjAlpha <- as.double(hsj_alpha)
-    # Absent state is typically 0 (first level in reductive coding)
-    hsjArgs$hsjAbsentState <- 0L
+    # 0-based token index of the primary's "absent" state (depends on level
+    # ordering, so computed from the data rather than hard-coded).
+    hsjArgs$hsjAbsentState <- .HSJAbsentState(dataset)
 
     # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy
-    adj_weight <- non_hierarchy_weights(dataset, hierarchy)
+    adj_weight <- .NonHierarchyWeights(dataset, hierarchy)
     weight <- as.integer(adj_weight)
   }
 
@@ -796,11 +797,11 @@ MaximizeParsimony <- function(
   xformArgs <- list()
   useXform <- !is.null(hierarchy) && identical(inapplicable, "xform")
   if (useXform) {
-    recoded <- recode_hierarchy(dataset, hierarchy)
+    recoded <- RecodeHierarchy(dataset, hierarchy)
     xformArgs$xformChars <- recoded$sankoff_chars
 
     # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy
-    adj_weight <- non_hierarchy_weights(dataset, hierarchy)
+    adj_weight <- .NonHierarchyWeights(dataset, hierarchy)
     weight <- as.integer(adj_weight)
   }
 

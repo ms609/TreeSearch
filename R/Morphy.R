@@ -945,15 +945,15 @@ Morphy <- function(dataset, tree,
       c(list(block), unlist(child_blocks, recursive = FALSE))
     }
     hsjBase$blocks_per_top <- lapply(hierarchy, .FlattenOneTop)
-    hsjBase$hsjTipLabels <- build_tip_labels(dataset)
+    hsjBase$hsjTipLabels <- .BuildTipLabels(dataset)
     hsjBase$hsjAlpha <- as.double(hsj_alpha)
-    hsjBase$hsjAbsentState <- 0L
+    hsjBase$hsjAbsentState <- .HSJAbsentState(dataset)
   }
 
   # Prepare full xform args (before resampling)
   xformBase <- list()
   if (identical(inapplicable, "xform")) {
-    recoded <- recode_hierarchy(dataset, hierarchy)
+    recoded <- RecodeHierarchy(dataset, hierarchy)
     xformBase$all_chars <- recoded$sankoff_chars
   }
 
@@ -1001,10 +1001,10 @@ Morphy <- function(dataset, tree,
     if (identical(inapplicable, "hsj")) {
       # Expand retained flat blocks (supports bootstrap: block sampled >1 time)
       rep_blocks <- list()
-      for (bi in seq_along(resamp$block_counts)) {
-        if (resamp$block_counts[bi] > 0L) {
+      for (bi in seq_along(resamp$blockCounts)) {
+        if (resamp$blockCounts[bi] > 0L) {
           top_blocks <- hsjBase$blocks_per_top[[bi]]
-          for (k in seq_len(resamp$block_counts[bi])) {
+          for (k in seq_len(resamp$blockCounts[bi])) {
             rep_blocks <- c(rep_blocks, top_blocks)
           }
         }
@@ -1017,9 +1017,9 @@ Morphy <- function(dataset, tree,
 
     if (identical(inapplicable, "xform")) {
       rep_xf <- list()
-      for (bi in seq_along(resamp$block_counts)) {
-        if (resamp$block_counts[bi] > 0L) {
-          for (k in seq_len(resamp$block_counts[bi])) {
+      for (bi in seq_along(resamp$blockCounts)) {
+        if (resamp$blockCounts[bi] > 0L) {
+          for (k in seq_len(resamp$blockCounts[bi])) {
             rep_xf <- c(rep_xf, list(xformBase$all_chars[[bi]]))
           }
         }
@@ -1034,7 +1034,7 @@ Morphy <- function(dataset, tree,
 
     result <- ts_driven_search(
       contrast, tip_data,
-      as.integer(resamp$non_hierarchy_weights), levels,
+      as.integer(resamp$nonHierarchyWeights), levels,
       resampleControl, resampleRuntime, resampleScoring,
       constraintCfg, hsjCfg, xformCfg
     )
@@ -1172,7 +1172,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     if (!inherits(hierarchy, "CharacterHierarchy")) {
       stop("`hierarchy` must be a CharacterHierarchy object.")
     }
-    validate_hierarchy(hierarchy, dataset)
+    ValidateHierarchy(hierarchy, dataset)
   }
   if (!is.numeric(hsj_alpha) || length(hsj_alpha) != 1L ||
       hsj_alpha < 0 || hsj_alpha > 1) {

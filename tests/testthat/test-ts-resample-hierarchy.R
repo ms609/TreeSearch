@@ -43,11 +43,11 @@ test_that("HierarchicalResampleWeights returns correct structure", {
   set.seed(7421)
   result <- HRW(ds, h, bootstrap = FALSE, proportion = 2 / 3)
 
-  expect_named(result, c("non_hierarchy_weights", "block_counts"))
-  expect_length(result$non_hierarchy_weights, length(attr(ds, "weight")))
-  expect_length(result$block_counts, 2L)  # 2 top-level blocks
-  expect_true(all(result$non_hierarchy_weights >= 0L))
-  expect_true(all(result$block_counts >= 0L))
+  expect_named(result, c("nonHierarchyWeights", "blockCounts"))
+  expect_length(result$nonHierarchyWeights, length(attr(ds, "weight")))
+  expect_length(result$blockCounts, 2L)  # 2 top-level blocks
+  expect_true(all(result$nonHierarchyWeights >= 0L))
+  expect_true(all(result$blockCounts >= 0L))
 })
 
 test_that("Jackknife drops some units", {
@@ -58,7 +58,7 @@ test_that("Jackknife drops some units", {
   set.seed(8312)
   n_sampled <- replicate(50, {
     r <- HRW(ds, h, bootstrap = FALSE, proportion = 2 / 3)
-    sum(r$non_hierarchy_weights > 0L) + sum(r$block_counts > 0L)
+    sum(r$nonHierarchyWeights > 0L) + sum(r$blockCounts > 0L)
   })
   # Should always be < total units (4)
   expect_true(all(n_sampled < 4L))
@@ -74,7 +74,7 @@ test_that("Bootstrap can duplicate units", {
   set.seed(5519)
   has_dup <- any(replicate(100, {
     r <- HRW(ds, h, bootstrap = TRUE, proportion = 2 / 3)
-    any(r$block_counts > 1L) || any(r$non_hierarchy_weights > 1L)
+    any(r$blockCounts > 1L) || any(r$nonHierarchyWeights > 1L)
   }))
   expect_true(has_dup)
 })
@@ -89,8 +89,8 @@ test_that("Block counts correspond to top-level blocks", {
   dropped_2 <- FALSE
   for (i in 1:200) {
     r <- HRW(ds, h, bootstrap = FALSE, proportion = 0.5)
-    if (r$block_counts[1] == 0L) dropped_1 <- TRUE
-    if (r$block_counts[2] == 0L) dropped_2 <- TRUE
+    if (r$blockCounts[1] == 0L) dropped_1 <- TRUE
+    if (r$blockCounts[2] == 0L) dropped_2 <- TRUE
     if (dropped_1 && dropped_2) break
   }
   expect_true(dropped_1)
@@ -106,12 +106,12 @@ test_that("Non-hierarchy weights only count free chars", {
   # Run many times and check that nh_weights never include hierarchy char
   # contributions
   n_nh_patterns <- length(attr(ds, "weight"))
-  full_nh_w <- TreeSearch:::non_hierarchy_weights(ds, h)
+  full_nh_w <- TreeSearch:::.NonHierarchyWeights(ds, h)
 
   for (i in 1:20) {
     r <- HRW(ds, h, bootstrap = TRUE, proportion = 2 / 3)
     # Non-hierarchy weights should never exceed original nh_weights * max_count
-    total_nh <- sum(r$non_hierarchy_weights)
+    total_nh <- sum(r$nonHierarchyWeights)
     # Free chars: 2 chars total. Bootstrap samples 4 units so free chars
     # can appear at most once each (they're individual units)
     # In a 4-unit bootstrap, a free char unit can be sampled multiple times

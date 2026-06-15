@@ -32,7 +32,7 @@
 #' @references
 #' \insertAllCited{}
 #' @family tree scoring
-#' @seealso [MaximizeParsimony()], [hierarchy_from_names()]
+#' @seealso [MaximizeParsimony()], [HierarchyFromNames()]
 #' @export
 CharacterHierarchy <- function(...) {
   args <- list(...)
@@ -52,13 +52,13 @@ CharacterHierarchy <- function(...) {
     stop("Every element of `...` must be named with the controlling ",
          "character index.")
   }
-  controlling_indices <- suppressWarnings(as.integer(names(args)))
-  if (anyNA(controlling_indices)) {
+  controllingIndices <- suppressWarnings(as.integer(names(args)))
+  if (anyNA(controllingIndices)) {
     stop("Controlling character names must be integer indices.")
   }
 
   lapply(seq_along(args), function(i) {
-    ctrl <- controlling_indices[i]
+    ctrl <- controllingIndices[i]
     val <- args[[i]]
     .ParseOneBlock(ctrl, val)
   })
@@ -89,14 +89,14 @@ CharacterHierarchy <- function(...) {
         dependents <- c(dependents, as.integer(val[[j]]))
       } else {
         # Named: a sub-hierarchy
-        sub_ctrl <- suppressWarnings(as.integer(nms[j]))
-        if (is.na(sub_ctrl)) {
+        subCtrl <- suppressWarnings(as.integer(nms[j]))
+        if (is.na(subCtrl)) {
           stop("Sub-hierarchy names must be integer character indices, got '",
                nms[j], "'.")
         }
         # The sub-controlling character is also a dependent of this block
-        dependents <- c(dependents, sub_ctrl)
-        children <- c(children, list(.ParseOneBlock(sub_ctrl, val[[j]])))
+        dependents <- c(dependents, subCtrl)
+        children <- c(children, list(.ParseOneBlock(subCtrl, val[[j]])))
       }
     }
     return(list(
@@ -118,7 +118,7 @@ print.CharacterHierarchy <- function(x, ...) {
   cat("CharacterHierarchy\n")
   .PrintBlock <- function(node, indent = 1L) {
     pad <- strrep("  ", indent)
-    leaf_deps <- setdiff(
+    leafDeps <- setdiff(
       node$dependents,
       vapply(node$children, `[[`, integer(1), "controlling")
     )
@@ -152,7 +152,7 @@ print.CharacterHierarchy <- function(x, ...) {
 #' @keywords internal
 #' @importFrom utils head
 #' @export
-validate_hierarchy <- function(hierarchy, dataset) {
+ValidateHierarchy <- function(hierarchy, dataset) {
   if (!inherits(hierarchy, "CharacterHierarchy")) {
     stop("`hierarchy` must be a CharacterHierarchy object.")
   }
@@ -160,25 +160,25 @@ validate_hierarchy <- function(hierarchy, dataset) {
     stop("`dataset` must be a phyDat object.")
   }
 
-  n_char <- length(attr(dataset, "index"))
-  all_levels <- attr(dataset, "allLevels")
+  nChar <- length(attr(dataset, "index"))
+  allLevels <- attr(dataset, "allLevels")
   levels <- attr(dataset, "levels")
   contrast <- attr(dataset, "contrast")
 
   # Identify the inapplicable token
-  inapp_token <- "-"
-  if (!inapp_token %in% all_levels) {
+  inappToken <- "-"
+  if (!inappToken %in% allLevels) {
     stop("Dataset does not contain an inapplicable token ('-').")
   }
 
   # Build the original character matrix
   idx <- attr(dataset, "index")
-  orig_mat <- do.call(rbind, lapply(dataset, function(x) {
-    all_levels[x[idx]]
+  origMat <- do.call(rbind, lapply(dataset, function(x) {
+    allLevels[x[idx]]
   }))
 
   # Identify the "0" state (absence) in the controlling primary
-  absence_state <- "0"
+  absenceState <- "0"
 
   # Track all characters claimed by any block
 
@@ -189,49 +189,49 @@ validate_hierarchy <- function(hierarchy, dataset) {
     deps <- node$dependents
 
     # Check indices exist
-    all_idx <- c(ctrl, deps)
-    bad <- all_idx[all_idx < 1L | all_idx > n_char]
+    allIdx <- c(ctrl, deps)
+    bad <- allIdx[allIdx < 1L | allIdx > nChar]
     if (length(bad) > 0L) {
       stop(sprintf(
         "Character index(es) %s out of range [1, %d].",
-        paste(bad, collapse = ", "), n_char
+        paste(bad, collapse = ", "), nChar
       ))
     }
 
     # Check no double-claiming
-    overlap <- intersect(all_idx, claimed)
+    overlap <- intersect(allIdx, claimed)
     if (length(overlap) > 0L) {
       stop(sprintf(
         "Character(s) %s appear in multiple hierarchy blocks.",
         paste(overlap, collapse = ", ")
       ))
     }
-    claimed <<- c(claimed, all_idx)
+    claimed <<- c(claimed, allIdx)
 
     # Check controlling character is binary (has exactly states "0" and "1",
     # possibly with inapplicable/missing)
-    ctrl_vals <- unique(orig_mat[, ctrl])
-    ctrl_informative <- setdiff(ctrl_vals, c("?", "-"))
-    if (!all(ctrl_informative %in% c("0", "1"))) {
+    ctrlVals <- unique(origMat[, ctrl])
+    ctrlInformative <- setdiff(ctrlVals, c("?", "-"))
+    if (!all(ctrlInformative %in% c("0", "1"))) {
       stop(sprintf(
         paste0("Controlling character %d must be binary (states '0' and '1'),",
                " but has states: %s."),
-        ctrl, paste(ctrl_informative, collapse = ", ")
+        ctrl, paste(ctrlInformative, collapse = ", ")
       ))
     }
 
     # Check secondaries are "-" where controlling is "0"
-    absent_taxa <- which(orig_mat[, ctrl] == absence_state)
-    if (length(absent_taxa) > 0L) {
+    absentTaxa <- which(origMat[, ctrl] == absenceState)
+    if (length(absentTaxa) > 0L) {
       for (d in deps) {
-        dep_vals <- orig_mat[absent_taxa, d]
-        bad_taxa <- which(!dep_vals %in% c("-", "?"))
-        if (length(bad_taxa) > 0L) {
-          bad_names <- rownames(orig_mat)[absent_taxa[bad_taxa]]
+        depVals <- origMat[absentTaxa, d]
+        badTaxa <- which(!depVals %in% c("-", "?"))
+        if (length(badTaxa) > 0L) {
+          badNames <- rownames(origMat)[absentTaxa[badTaxa]]
           stop(sprintf(
             paste0("Secondary character %d has non-inapplicable values for ",
                    "taxa where controlling character %d is absent: %s."),
-            d, ctrl, paste(head(bad_names, 5), collapse = ", ")
+            d, ctrl, paste(head(badNames, 5), collapse = ", ")
           ))
         }
       }
@@ -259,7 +259,7 @@ validate_hierarchy <- function(hierarchy, dataset) {
 #' character and its dependents.  Nested hierarchies are detected when a
 #' `sub_` character is also a `sup_` for further characters.
 #'
-#' @param char_names Character vector of names, one per original character.
+#' @param charNames Character vector of names, one per original character.
 #'
 #' @return A [`CharacterHierarchy`] object, or `NULL` if no hierarchy is
 #'   detected.
@@ -267,90 +267,90 @@ validate_hierarchy <- function(hierarchy, dataset) {
 #' @examples
 #' names <- c("sup_tail", "sub_tail_colour", "sub_tail_shape",
 #'             "sup_wing", "sub_wing_venation", "eyes")
-#' hierarchy_from_names(names)
+#' HierarchyFromNames(names)
 #'
 #' @family tree scoring
 #' @seealso [CharacterHierarchy()]
 #' @export
-hierarchy_from_names <- function(char_names) {
-  if (!is.character(char_names) || length(char_names) == 0L) {
-    stop("`char_names` must be a non-empty character vector.")
+HierarchyFromNames <- function(charNames) {
+  if (!is.character(charNames) || length(charNames) == 0L) {
+    stop("`charNames` must be a non-empty character vector.")
   }
 
   # Find sup_ and sub_ characters
-  sup_idx <- grep("^sup_", char_names)
-  sub_idx <- grep("^sub_", char_names)
+  supIdx <- grep("^sup_", charNames)
+  subIdx <- grep("^sub_", charNames)
 
-  if (length(sup_idx) == 0L) {
+  if (length(supIdx) == 0L) {
     return(NULL)
   }
 
   # Extract tags
-  sup_tags <- sub("^sup_", "", char_names[sup_idx])
-  sub_tags_full <- sub("^sub_", "", char_names[sub_idx])
+  supTags <- sub("^sup_", "", charNames[supIdx])
+  subTagsFull <- sub("^sub_", "", charNames[subIdx])
   # The tag is the first component before any additional underscore-suffix
   # e.g. "sub_tail_colour" → tag = "tail"
-  sub_tags <- sub("_.*", "", sub_tags_full)
+  subTags <- sub("_.*", "", subTagsFull)
 
   # Build mapping: tag → controlling index, tag → dependent indices
-  tag_to_sup <- setNames(sup_idx, sup_tags)
+  tagToSup <- setNames(supIdx, supTags)
 
   # Group sub characters by tag
-  tag_to_subs <- split(sub_idx, sub_tags)
+  tagToSubs <- split(subIdx, subTags)
 
   # Check for sub_ characters referencing nonexistent sup_ tags
-  orphan_tags <- setdiff(names(tag_to_subs), sup_tags)
-  if (length(orphan_tags) > 0L) {
+  orphanTags <- setdiff(names(tagToSubs), supTags)
+  if (length(orphanTags) > 0L) {
     warning(sprintf(
       "sub_ characters reference tags with no corresponding sup_: %s",
-      paste(orphan_tags, collapse = ", ")
+      paste(orphanTags, collapse = ", ")
     ))
   }
 
   # Detect nested hierarchies: a sub_ character that is also a sup_
-  # Find sub_ chars that are also in sup_idx
-  sub_also_sup <- intersect(sub_idx, sup_idx)
+  # Find sub_ chars that are also in supIdx
+  subAlsoSup <- intersect(subIdx, supIdx)
 
   # Build hierarchy
   # First pass: create flat blocks for all sup_ tags
   args <- list()
-  for (tag in sup_tags) {
-    ctrl <- tag_to_sup[[tag]]
-    subs <- tag_to_subs[[tag]]
+  for (tag in supTags) {
+    ctrl <- tagToSup[[tag]]
+    subs <- tagToSubs[[tag]]
     if (is.null(subs)) subs <- integer(0)
 
     # Check which subs are themselves controlling (nested hierarchy)
-    nested_subs <- intersect(subs, sup_idx)
-    flat_subs <- setdiff(subs, sup_idx)
+    nestedSubs <- intersect(subs, supIdx)
+    flatSubs <- setdiff(subs, supIdx)
 
-    if (length(nested_subs) == 0L) {
+    if (length(nestedSubs) == 0L) {
       # Simple block
       args[[as.character(ctrl)]] <- as.integer(subs)
     } else {
       # Nested: build list with named sub-hierarchies
-      block <- as.list(as.integer(flat_subs))
-      for (ns in nested_subs) {
-        ns_tag <- sup_tags[sup_idx == ns]
-        ns_subs <- tag_to_subs[[ns_tag]]
-        if (is.null(ns_subs)) ns_subs <- integer(0)
-        block[[as.character(ns)]] <- as.integer(ns_subs)
+      block <- as.list(as.integer(flatSubs))
+      for (ns in nestedSubs) {
+        nsTag <- supTags[supIdx == ns]
+        nsSubs <- tagToSubs[[nsTag]]
+        if (is.null(nsSubs)) nsSubs <- integer(0)
+        block[[as.character(ns)]] <- as.integer(nsSubs)
       }
       args[[as.character(ctrl)]] <- block
     }
   }
 
-  # Filter out sup_ chars whose index also appears in sub_idx
+  # Filter out sup_ chars whose index also appears in subIdx
   # (they'll be included as children of their parent)
-  top_level_sup <- setdiff(sup_idx, sub_idx)
-  if (length(top_level_sup) == 0L) {
+  topLevelSup <- setdiff(supIdx, subIdx)
+  if (length(topLevelSup) == 0L) {
     # All sup_ characters are also sub_ — circular or all nested.
     # Fall back to treating all as top-level with a warning.
     warning("All sup_ characters are also sub_ characters. ",
             "Treating all as top-level.")
-    top_level_sup <- sup_idx
+    topLevelSup <- supIdx
   }
-  top_level_ctrls <- as.character(top_level_sup)
-  args <- args[top_level_ctrls]
+  topLevelCtrls <- as.character(topLevelSup)
+  args <- args[topLevelCtrls]
 
   do.call(CharacterHierarchy, args)
 }
@@ -369,7 +369,7 @@ hierarchy_from_names <- function(char_names) {
 #'
 #' @keywords internal
 #' @export
-hierarchy_chars <- function(hierarchy) {
+HierarchyChars <- function(hierarchy) {
   .CollectIndices <- function(node) {
     c(node$controlling, node$dependents,
       unlist(lapply(node$children, .CollectIndices)))
@@ -384,83 +384,80 @@ hierarchy_chars <- function(hierarchy) {
 #' @return Integer vector of top-level controlling character indices.
 #' @keywords internal
 #' @export
-hierarchy_controlling <- function(hierarchy) {
+HierarchyControlling <- function(hierarchy) {
   vapply(hierarchy, `[[`, integer(1), "controlling")
 }
 
 
-#' Build tip_labels matrix for HSJ scoring
-#'
-#' Converts a `phyDat` dataset into an integer matrix of per-tip per-character
-#' state labels (0-based) for the HSJ C++ scoring function.
-#'
-#' @param dataset A `phyDat` object.
-#' @return An integer matrix with `length(dataset)` rows (tips) and
-#'   `length(attr(dataset, "index"))` columns (original characters).
-#'   Each entry is a 0-based token index.
-#' @keywords internal
-#' @export
-build_tip_labels <- function(dataset) {
+# Build the tip-labels matrix for HSJ scoring.
+#
+# Converts a phyDat dataset into an integer matrix of per-tip, per-character
+# state labels (0-based) for the C++ HSJ scorer: length(dataset) rows (tips) by
+# length(attr(dataset, "index")) columns (original characters).
+.BuildTipLabels <- function(dataset) {
   idx <- attr(dataset, "index")
-  n_tip <- length(dataset)
-  n_char <- length(idx)
+  nTip <- length(dataset)
+  nChar <- length(idx)
 
   # dataset is a list of integer vectors (pattern indices per tip)
   # Expand via index to original characters, convert to 0-based
-  mat <- matrix(0L, nrow = n_tip, ncol = n_char)
-  for (t in seq_len(n_tip)) {
-    pattern_tokens <- dataset[[t]]    # token indices for each pattern
-    mat[t, ] <- pattern_tokens[idx] - 1L  # 0-based
+  mat <- matrix(0L, nrow = nTip, ncol = nChar)
+  for (t in seq_len(nTip)) {
+    patternTokens <- dataset[[t]]    # token indices for each pattern
+    mat[t, ] <- patternTokens[idx] - 1L  # 0-based
   }
   mat
 }
 
 
-#' Convert CharacterHierarchy to list for C++
-#'
-#' Converts a [`CharacterHierarchy`] object into a flat list of hierarchy
-#' blocks that can be passed to the C++ `ts_hsj_score()` bridge function.
-#' Each block is a list with `primary` (0-based) and `secondaries` (0-based).
-#'
-#' @param hierarchy A [`CharacterHierarchy`] object.
-#' @return A list of lists, each with elements `primary` (integer, 0-based)
-#'   and `secondaries` (integer vector, 0-based).
-#' @keywords internal
-#' @export
-hierarchy_to_blocks <- function(hierarchy) {
-  .flatten_block <- function(node) {
+# Identify the primary "absent" state for HSJ scoring.
+#
+# Returns the 0-based token index of the controlling primary character's
+# *absent* state, for the C++ HSJ scorer's `absent_state` argument.
+#
+# Under reductive coding (Hopkins & St John 2021) the primary codes a
+# structure's presence/absence, conventionally "0" = absent, "1" = present.
+# The index of "0" depends on the dataset's `levels` ordering (e.g. it is 1 for
+# c("-", "0", "1") but 0 for c("0", "1")), so it must be computed rather than
+# hard-coded.  The inapplicable token "-" is also treated as absent by the
+# scorer; if no "0" level exists, the index of "-" is returned.
+.HSJAbsentState <- function(dataset) {
+  lv <- attr(dataset, "levels")
+  idx <- match("0", lv)
+  if (is.na(idx)) {
+    idx <- match("-", lv)
+  }
+  if (is.na(idx)) 0L else as.integer(idx - 1L)
+}
+
+
+# Convert a CharacterHierarchy into a flat list of hierarchy blocks for the C++
+# ts_hsj_score() bridge.  Each block is a list with `primary` (0-based) and
+# `secondaries` (0-based integer vector).
+.HierarchyToBlocks <- function(hierarchy) {
+  .FlattenBlock <- function(node) {
     block <- list(
       primary = node$controlling - 1L,
       secondaries = node$dependents - 1L
     )
-    child_blocks <- lapply(node$children, .flatten_block)
-    c(list(block), unlist(child_blocks, recursive = FALSE))
+    childBlocks <- lapply(node$children, .FlattenBlock)
+    c(list(block), unlist(childBlocks, recursive = FALSE))
   }
-  unlist(lapply(hierarchy, .flatten_block), recursive = FALSE)
+  unlist(lapply(hierarchy, .FlattenBlock), recursive = FALSE)
 }
 
 
-#' Compute non-hierarchy pattern weights
-#'
-#' Given a `phyDat` dataset and a [`CharacterHierarchy`], returns a weight
-#' vector with hierarchy characters' contributions subtracted.
-#' Patterns that appear only in hierarchy characters will have weight 0.
-#'
-#' @param dataset A `phyDat` object.
-#' @param hierarchy A [`CharacterHierarchy`] object.
-#'
-#' @return An integer vector of adjusted pattern weights (same length as
-#'   `attr(dataset, "weight")`).
-#'
-#' @keywords internal
-#' @export
-non_hierarchy_weights <- function(dataset, hierarchy) {
+# Compute non-hierarchy pattern weights: given a phyDat dataset and a
+# CharacterHierarchy, return the integer weight vector (same length as
+# attr(dataset, "weight")) with hierarchy characters' contributions subtracted.
+# Patterns appearing only in hierarchy characters end up with weight 0.
+.NonHierarchyWeights <- function(dataset, hierarchy) {
   w <- attr(dataset, "weight")
   idx <- attr(dataset, "index")
-  h_chars <- hierarchy_chars(hierarchy)
+  hChars <- HierarchyChars(hierarchy)
 
   adjusted <- as.integer(w)
-  for (ci in h_chars) {
+  for (ci in hChars) {
     if (ci < 1L || ci > length(idx)) next
     pat <- idx[ci]
     if (pat >= 1L && pat <= length(adjusted) && adjusted[pat] > 0L) {
@@ -479,61 +476,61 @@ non_hierarchy_weights <- function(dataset, hierarchy) {
 # unit.  Jackknife or bootstrap operates on these units.
 #
 # Returns a list with:
-#   non_hierarchy_weights: pattern weights for Fitch scoring (non-hierarchy
+#   nonHierarchyWeights: pattern weights for Fitch scoring (non-hierarchy
 #     chars only, reflecting which free chars were sampled)
-#   block_counts: integer vector (length = number of top-level blocks)
+#   blockCounts: integer vector (length = number of top-level blocks)
 #     giving how many times each block was sampled (0/1 for jackknife,
 #     0+ for bootstrap)
 .HierarchicalResampleWeights <- function(dataset, hierarchy, bootstrap,
                                          proportion) {
   idx <- attr(dataset, "index")
-  n_patterns <- length(attr(dataset, "weight"))
-  n_chars <- length(idx)
+  nPatterns <- length(attr(dataset, "weight"))
+  nChars <- length(idx)
 
   # Collect chars per top-level block (includes nested dependents)
   .CollectAll <- function(node) {
     c(node$controlling, node$dependents,
       unlist(lapply(node$children, .CollectAll)))
   }
-  n_blocks <- length(hierarchy)
-  block_chars <- lapply(hierarchy, function(node) unique(.CollectAll(node)))
-  h_chars_set <- unique(unlist(block_chars))
+  nBlocks <- length(hierarchy)
+  blockChars <- lapply(hierarchy, function(node) unique(.CollectAll(node)))
+  hCharsSet <- unique(unlist(blockChars))
 
-  free_chars <- setdiff(seq_len(n_chars), h_chars_set)
-  n_free <- length(free_chars)
-  n_units <- n_free + n_blocks
+  freeChars <- setdiff(seq_len(nChars), hCharsSet)
+  nFree <- length(freeChars)
+  nUnits <- nFree + nBlocks
 
-  if (n_units < 2L) {
+  if (nUnits < 2L) {
     # Degenerate: can't jackknife with < 2 units
     return(list(
-      non_hierarchy_weights = non_hierarchy_weights(dataset, hierarchy),
-      block_counts = rep(1L, n_blocks)
+      nonHierarchyWeights = .NonHierarchyWeights(dataset, hierarchy),
+      blockCounts = rep(1L, nBlocks)
     ))
   }
 
   if (bootstrap) {
-    sampled <- sample.int(n_units, n_units, replace = TRUE)
+    sampled <- sample.int(nUnits, nUnits, replace = TRUE)
   } else {
-    n_keep <- max(1L, ceiling(proportion * n_units))
-    n_keep <- min(n_keep, n_units - 1L)
-    sampled <- sample.int(n_units, n_keep, replace = FALSE)
+    nKeep <- max(1L, ceiling(proportion * nUnits))
+    nKeep <- min(nKeep, nUnits - 1L)
+    sampled <- sample.int(nUnits, nKeep, replace = FALSE)
   }
 
-  unit_counts <- tabulate(sampled, nbins = n_units)
+  unitCounts <- tabulate(sampled, nbins = nUnits)
 
   # Non-hierarchy pattern weights from retained free chars
-  nh_weights <- integer(n_patterns)
-  for (i in seq_len(n_free)) {
-    if (unit_counts[i] > 0L) {
-      pat <- idx[free_chars[i]]
-      nh_weights[pat] <- nh_weights[pat] + unit_counts[i]
+  nhWeights <- integer(nPatterns)
+  for (i in seq_len(nFree)) {
+    if (unitCounts[i] > 0L) {
+      pat <- idx[freeChars[i]]
+      nhWeights[pat] <- nhWeights[pat] + unitCounts[i]
     }
   }
 
-  block_counts <- unit_counts[n_free + seq_len(n_blocks)]
+  blockCounts <- unitCounts[nFree + seq_len(nBlocks)]
 
   list(
-    non_hierarchy_weights = nh_weights,
-    block_counts = block_counts
+    nonHierarchyWeights = nhWeights,
+    blockCounts = blockCounts
   )
 }

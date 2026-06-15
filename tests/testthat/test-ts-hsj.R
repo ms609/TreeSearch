@@ -8,9 +8,10 @@ library("TreeTools")
 
 # --- Internal wrappers ---
 ts_hsj_score <- TreeSearch:::ts_hsj_score
-build_tip_labels <- TreeSearch:::build_tip_labels
-hierarchy_to_blocks <- TreeSearch:::hierarchy_to_blocks
-non_hierarchy_weights <- TreeSearch:::non_hierarchy_weights
+.BuildTipLabels <- TreeSearch:::.BuildTipLabels
+.HierarchyToBlocks <- TreeSearch:::.HierarchyToBlocks
+.NonHierarchyWeights <- TreeSearch:::.NonHierarchyWeights
+.HSJAbsentState <- TreeSearch:::.HSJAbsentState
 
 # --- Helper: build a reductively-coded phyDat ---
 make_hsj_dat <- function(mat, levels = c("-", "0", "1")) {
@@ -20,12 +21,13 @@ make_hsj_dat <- function(mat, levels = c("-", "0", "1")) {
 # --- Helper: score a tree under HSJ via the Rcpp bridge ---
 hsj_score <- function(tree, dataset, hierarchy, alpha = 1.0) {
   at <- attributes(dataset)
-  adj_w <- non_hierarchy_weights(dataset, hierarchy)
+  adj_w <- .NonHierarchyWeights(dataset, hierarchy)
   tip_data <- matrix(unlist(dataset, use.names = FALSE),
                      nrow = length(dataset), byrow = TRUE)
-  blocks <- hierarchy_to_blocks(hierarchy)
-  tl <- build_tip_labels(dataset)
-  # absent_state = 1 (token index for "0" when levels = c("-", "0", "1"))
+  blocks <- .HierarchyToBlocks(hierarchy)
+  tl <- .BuildTipLabels(dataset)
+  # absent_state = 0-based token index of "0" (= 1 for levels c("-","0","1")),
+  # computed the same way the driven pipeline does.
   ts_hsj_score(
     edge = tree$edge,
     contrast = at$contrast,
@@ -35,7 +37,7 @@ hsj_score <- function(tree, dataset, hierarchy, alpha = 1.0) {
     hierarchy_blocks_r = blocks,
     alpha = alpha,
     tip_labels_r = tl,
-    absent_state = 1L
+    absent_state = .HSJAbsentState(dataset)
   )
 }
 
@@ -433,7 +435,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
     "hsj_alpha"
   )
 
-  # IW + hsj (need a dataset with "-" for validate_hierarchy to pass)
+  # IW + hsj (need a dataset with "-" for ValidateHierarchy to pass)
   mat2 <- matrix(c(
     "0", "-", "0",
     "1", "0", "1",
@@ -451,7 +453,7 @@ test_that("MaximizeParsimony rejects bad HSJ parameters", {
   )
 
   # profile + hsj: PrepareDataProfile() strips "-" before validation,
-  # so the error comes from validate_hierarchy rather than the profile check
+  # so the error comes from ValidateHierarchy rather than the profile check
   expect_error(
     MaximizeParsimony(ds2, hierarchy = h2, inapplicable = "hsj",
                       concavity = "profile", verbosity = 0L),
@@ -566,6 +568,138 @@ test_that("HSJ handles extreme absent/present ratios", {
 
   score_one <- hsj_score(tree, ds_one, h, alpha = 1.0)
   expect_equal(score_one, 1)  # One gain (or loss from root)
+})
+
+
+# =========================================================================
+# Regression: absent_state must identify the primary's "0" (absent) state,
+# not the inapplicable "-" token, and must follow the level ordering.
+# (Driven pipeline previously hard-coded 0L = index of "-", so primaries
+#  coded "0" were treated as present and gain/loss was never counted.)
+# =========================================================================
+test_that(".HSJAbsentState() tracks the '0' token across level orderings", {
+  expect_equal(.HSJAbsentState(make_hsj_dat(
+    matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
+    levels = c("-", "0", "1"))), 1L)
+  expect_equal(.HSJAbsentState(make_hsj_dat(
+    matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
+    levels = c("0", "1", "-"))), 0L)
+  expect_equal(.HSJAbsentState(make_hsj_dat(
+    matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
+    levels = c("1", "-", "0"))), 2L)
+})
+
+test_that("HSJ is sensitive to primary present/absent at alpha=0", {
+  # At alpha=0 the block score counts only primary gains/losses, so a primary
+  # absence MUST register.  Before the fix this returned 0 (absence invisible).
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(paste0("t", 1:4), NULL))
+  ds <- make_hsj_dat(mat)
+  tree <- Renumber(RenumberTips(
+    ape::read.tree(text = "((t1,t2),(t3,t4));"), names(ds)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  # One absent tip among three present → one gain.
+  expect_equal(hsj_score(tree, ds, h, alpha = 0), 1)
+
+  # Make every tip present → no gain/loss → block score 0.
+  mat_all <- mat
+  mat_all["t1", ] <- c("1", "0", "0")
+  ds_all <- make_hsj_dat(mat_all)
+  expect_equal(hsj_score(tree, ds_all, h, alpha = 0), 0)
+})
+
+test_that("driven HSJ (TreeLength) agrees with direct ts_hsj_score()", {
+  # The driven pipeline and the test bridge must compute the same absent_state.
+  mat <- matrix(c(
+    "0",  "-",  "-",  "0",
+    "0",  "-",  "-",  "1",
+    "1",  "0",  "1",  "0",
+    "1",  "1",  "0",  "1",
+    "1",  "0",  "0",  "0",
+    "1",  "1",  "1",  "1"
+  ), nrow = 6, byrow = TRUE,
+  dimnames = list(paste0("t", 1:6), NULL))
+  ds <- make_hsj_dat(mat)
+  tree <- Renumber(RenumberTips(ape::read.tree(
+    text = "((t1,t2),((t3,t4),(t5,t6)));"), names(ds)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  for (a in c(0, 0.5, 1)) {
+    expect_equal(
+      TreeLength(tree, ds, hierarchy = h, inapplicable = "hsj", hsj_alpha = a),
+      hsj_score(tree, ds, h, alpha = a)
+    )
+  }
+})
+
+test_that("HSJ score is invariant to phyDat level ordering", {
+  # A parsimony-style score must not depend on the arbitrary internal ordering
+  # of phyDat `levels`.  Two contributions could leak the ordering:
+  #   * the PRIMARY absent/present term  — guarded by .HSJAbsentState() (T-307);
+  #   * the SECONDARY dissimilarity term — the Fitch uppass in fitch_label_char()
+  #     formerly resolved ambiguous internal nodes to the LOWEST SET BIT, whose
+  #     token depends on `levels`.  It now resolves toward the best-supported
+  #     token (subtree count, ties by smallest tip index), which is keyed on the
+  #     tokens and tree rather than the bit encoding.
+  # The secondary term only bites at alpha > 0, so test alpha in {0, 0.5, 1}.
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(paste0("t", 1:4), NULL))
+  tree <- Renumber(RenumberTips(
+    ape::read.tree(text = "((t1,t2),(t3,t4));"),
+    paste0("t", 1:4)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  # All six orderings of the three tokens.
+  orderings <- list(c("-", "0", "1"), c("-", "1", "0"), c("0", "-", "1"),
+                    c("0", "1", "-"), c("1", "-", "0"), c("1", "0", "-"))
+  for (a in c(0, 0.5, 1)) {
+    scores <- vapply(orderings, function(lv) {
+      hsj_score(tree, make_hsj_dat(mat, levels = lv), h, alpha = a)
+    }, double(1))
+    # Every ordering must agree (this dataset returned 2.5 vs 2.0 before the fix
+    # at alpha = 1; the absent_state regression earlier made alpha = 0 disagree).
+    expect_equal(scores, rep(scores[[1]], length(orderings)),
+                 info = sprintf("hsj_alpha = %s", a))
+  }
+})
+
+test_that("HSJ secondary dissimilarity is level-order invariant (multistate)", {
+  # Stress the secondary term with a 3-state secondary and missing data, where
+  # internal ambiguity is common and the lowest-bit tie-break was most exposed.
+  mat <- matrix(c(
+    "1",  "0",  "1",
+    "1",  "2",  "?",
+    "0",  "-",  "-",
+    "1",  "1",  "0",
+    "1",  "0",  "2",
+    "1",  "2",  "1"
+  ), nrow = 6, byrow = TRUE,
+  dimnames = list(paste0("t", 1:6), NULL))
+  tree <- Renumber(RenumberTips(ape::read.tree(
+    text = "((t1,t2),((t3,t4),(t5,t6)));"), paste0("t", 1:6)))
+  h <- CharacterHierarchy("1" = 2:3)
+
+  toks <- c("-", "0", "1", "2")
+  orderings <- list(toks, rev(toks), c("0", "1", "2", "-"),
+                    c("2", "0", "-", "1"), c("1", "-", "2", "0"))
+  for (a in c(0.5, 1)) {
+    scores <- vapply(orderings, function(lv) {
+      hsj_score(tree, make_hsj_dat(mat, levels = lv), h, alpha = a)
+    }, double(1))
+    expect_equal(scores, rep(scores[[1]], length(orderings)),
+                 info = sprintf("hsj_alpha = %s", a))
+  }
 })
 
 
