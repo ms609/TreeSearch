@@ -15,9 +15,7 @@ WideSample(
 \arguments{
 \item{trees}{A \code{multiPhylo} object, or a single \code{phylo} (coerced silently).}
 
-\item{n}{Integer: number of trees to retain. If \code{n >= length(trees)}, all
-trees are returned unchanged.  If \code{n == 1}, the single most central tree
-(the medoid) is returned.}
+\item{n}{Integer specifying number of trees to retain.}
 
 \item{dist}{Either:
 \itemize{
@@ -40,14 +38,13 @@ is too large to store the distance matrix in memory; pass a pre-computed
 \code{dist} or use \code{effort = 1} for such sets.}
 
 \item{maxSeconds}{Numeric: wall-clock budget, in seconds, for the
-refinement (\code{effort = 2}, \code{3}) and exact (\code{effort = 4}) tiers; ignored by
-the matrix-free \code{FarFirst()} tier, which is effectively instantaneous.  The
-heuristic tiers terminate at an internal deterministic plateau, usually
-well within this budget, so it acts as a safety cap; a value small enough
-to interrupt the plateau makes the result machine-dependent.  Default \code{60}.}
+refinement (\code{effort = 2}, \code{3}) and exact (\code{effort = 4}) tiers.
+Default \code{60}.}
 }
 \value{
-A \code{multiPhylo} object of length \code{min(n, length(trees))}.
+A \code{multiPhylo} object of length \code{min(n, length(trees))} containing
+a uniform sample of \code{trees}.
+If \code{n == 1}, the single most central tree (the medoid) is returned.
 Attributes of the input (e.g. \code{score}, \code{hits_to_best}) are preserved.
 }
 \description{

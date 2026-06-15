@@ -62,9 +62,7 @@
 #' }
 #'
 #' @param trees A `multiPhylo` object, or a single `phylo` (coerced silently).
-#' @param n Integer: number of trees to retain. If `n >= length(trees)`, all
-#'   trees are returned unchanged.  If `n == 1`, the single most central tree
-#'   (the medoid) is returned.
+#' @param n Integer specifying number of trees to retain.
 #' @param dist Either:
 #'   \itemize{
 #'     \item A function giving pairwise distances (default:
@@ -87,8 +85,10 @@
 #'   refinement (`effort = 2`, `3`) and exact (`effort = 4`) tiers.
 #'   Default `60`.
 #'
-#' @return A `multiPhylo` object of length `min(n, length(trees))`.
-#'   Attributes of the input (e.g. `score`, `hits_to_best`) are preserved.
+#' @return A `multiPhylo` object of length `min(n, length(trees))` containing
+#' a uniform sample of `trees`.
+#' If `n == 1`, the single most central tree (the medoid) is returned.
+#' Attributes of the input (e.g. `score`, `hits_to_best`) are preserved.
 #'
 #' @examples
 #' library("TreeTools")
