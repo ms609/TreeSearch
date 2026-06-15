@@ -275,8 +275,8 @@ WideSample <- function(
 #' reachable past the build ceiling, whereas a distance function past the
 #' ceiling cannot reach them (building the matrix would exhaust memory). The
 #' exact tier is additionally gated on a (smaller) exact ceiling and on the
-#' \pkg{highs} package being installed; Grasp (`effort = 3`) is reachable only
-#' when forced, never auto-selected.
+#' \pkg{highs} package being installed; Grasp (`effort = 3`) is never
+#' auto-selected.
 #' @return Integer tier (1, 2, 3 or 4); errors when a forced effort is
 #'   unreachable.
 #' @keywords internal
