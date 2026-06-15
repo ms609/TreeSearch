@@ -15,9 +15,7 @@ WideSample(
 \arguments{
 \item{trees}{A \code{multiPhylo} object, or a single \code{phylo} (coerced silently).}
 
-\item{n}{Integer: number of trees to retain. If \code{n >= length(trees)}, all
-trees are returned unchanged.  If \code{n == 1}, the single most central tree
-(the medoid) is returned.}
+\item{n}{Integer specifying number of trees to retain.}
 
 \item{dist}{Either:
 \itemize{
@@ -32,22 +30,21 @@ matches \code{length(trees)}.
 }}
 
 \item{effort}{Integer solver tier, or \code{NULL} (default) to choose
-automatically by \code{length(trees)}.  \code{1} = FarFirst (fast, matrix-free),
-\code{2} = DropAdd (~99\%-optimal, deterministic), \code{3} = Grasp (highest-quality
-heuristic, higher cost), \code{4} = exact optimum.  Forcing \code{effort} 2, 3 or 4
-with a \emph{distance function} on a tree set too large to build the matrix is
-an error rather than a silent downgrade; pass a pre-computed \code{dist} or use
-\code{effort = 1} for such sets.}
+automatically by \code{length(trees)}.  \code{1} = \code{FarFirst()} (fast, matrix-free),
+\code{2} = \code{DropAdd()} (~99\%-optimal, deterministic), \code{3} = \code{Grasp()}
+(highest-quality heuristic, higher cost), \code{4} = exact optimum.
+Setting \code{effort} 2, 3 or 4 with a distance function fails when a tree set
+is too large to store the distance matrix in memory; pass a pre-computed
+\code{dist} or use \code{effort = 1} for such sets.}
 
 \item{maxSeconds}{Numeric: wall-clock budget, in seconds, for the
-refinement (\code{effort = 2}, \code{3}) and exact (\code{effort = 4}) tiers; ignored by
-the matrix-free FarFirst tier, which is effectively instantaneous.  The
-heuristic tiers terminate at an internal deterministic plateau, usually
-well within this budget, so it acts as a safety cap; a value small enough
-to interrupt the plateau makes the result machine-dependent.  Default \code{60}.}
+refinement (\code{effort = 2}, \code{3}) and exact (\code{effort = 4}) tiers.
+Default \code{60}.}
 }
 \value{
-A \code{multiPhylo} object of length \code{min(n, length(trees))}.
+A \code{multiPhylo} object of length \code{min(n, length(trees))} containing
+a uniform sample of \code{trees}.
+If \code{n == 1}, the single most central tree (the medoid) is returned.
 Attributes of the input (e.g. \code{score}, \code{hits_to_best}) are preserved.
 }
 \description{
@@ -64,27 +61,26 @@ region of tree space reflects the density of the parsimony landscape, not
 the likelihood or support for that topology.  A random draw over-represents
 topologies that sit on broad plateaux and under-represents isolated optima.
 \code{WideSample()} instead selects for topological \emph{spread}, density-blind, by
-dispatching to the appropriate MMDP solver from the \pkg{MaxMin}
+dispatching to the appropriate \acronym{MMDP}{Max-Min Diversity Problem}
+solver from the \pkg{MaxMin}
 package:
 
 \describe{
-\item{FarFirst (\code{effort = 1})}{Greedy farthest-first selection
-(Gonzalez 1985) from a deterministic peripheral seed.  Fast and
-matrix-free: it reads distances through an on-demand column oracle and
-never materializes the full distance matrix, so it is the only feasible
-option for very large tree sets.  RNG-free, hence deterministic.}
-\item{DropAdd (\code{effort = 2})}{Drop-add tabu search
-(Porumbel et al. 2011): a ~99\%-optimal heuristic that terminates at a
-deterministic plateau.  RNG-free, hence deterministic.  Requires the full
-distance matrix.}
-\item{Grasp (\code{effort = 3})}{GRASP with path relinking
-(Resende et al. 2010): attains the highest \eqn{T_k} of the package's
+\item{\code{FarFirst()} (\code{effort = 1})}{Greedy farthest-first selection
+\insertCite{Gonzalez1985}{TreeSearch} from a peripheral seed.
+Fast and matrix-free: the only feasible option for very large tree sets.}
+\item{\code{DropAdd()} (\code{effort = 2})}{Drop-add tabu search
+\insertCite{Porumbel2011}{TreeSearch}: a ~99\%-optimal heuristic that
+terminates at a deterministic plateau.
+Requires the full distance matrix.}
+\item{\code{Grasp()} (\code{effort = 3})}{GRASP with path relinking
+\insertCite{@Resende2010}{TreeSearch}: attains the highest \eqn{T_k} of the package's
 heuristics, at a cost that grows steeply with \code{n}.  Requires the full
 distance matrix.  Draws on the session RNG, so the particular trees it
 returns vary between runs unless you call \code{\link[=set.seed]{set.seed()}} first (the
 achieved diversity is essentially unaffected).}
 \item{exact (\code{effort = 4})}{Node-packing integer program
-(Sayyady & Fathi 2016): the proven optimum.  The solver is now
+\insertCite{@Sayyady2016}{TreeSearch}: the proven optimum.  The solver is now
 sparse-matrix and heuristic warm-started, so it is practical up to a few
 hundred trees; it needs the \pkg{highs} package.  The optimal
 \emph{diversity} is deterministic, but when several subsets are tied-optimal
@@ -93,19 +89,20 @@ the particular trees returned can vary with the session RNG.}
 
 With \code{effort = NULL} (default) the tier is chosen automatically from
 \code{length(trees)}: the exact solver for small sets (up to ~200 trees, when
-\pkg{highs} is available), DropAdd while the distance matrix is affordable to
-build, and FarFirst beyond that.  Grasp (\code{effort = 3}) is never selected
-automatically -- its cost grows steeply with \code{n}, so it is opt-in.  A dense
+\pkg{highs} is available), \code{DropAdd()} while the distance matrix is
+affordable to build, and \code{FarFirst()} beyond that.
+\code{Grasp()} (\code{effort = 3}) is never selected automatically, as its cost grows
+steeply with \code{n}.  A dense
 distance matrix is roughly \code{8 * length(trees)^2} bytes (about 1.1 GB at
 12,000 trees, 12.8 GB at 40,000), so for the largest sets only the
-matrix-free FarFirst tier is reachable.
+matrix-free \code{FarFirst()} tier is reachable.
 
 Two size thresholds govern automatic selection; tune them for the host
 machine with \code{\link[=options]{options()}} rather than per call:
 \describe{
 \item{\code{WideSample.buildCeiling}}{Largest \code{length(trees)} for
 which a dense distance matrix is built from a distance function (default
-\code{12000}; ~1.1 GB).  Beyond it only the matrix-free FarFirst tier is
+\code{12000}; ~1.1 GB).  Beyond it only the matrix-free \code{FarFirst()} tier is
 reachable from a function (a pre-computed matrix is always honoured).}
 \item{\code{WideSample.exactCeiling}}{Largest \code{length(trees)} at
 which automatic selection reaches the exact tier (default \code{200}).}

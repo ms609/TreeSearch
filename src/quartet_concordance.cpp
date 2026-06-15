@@ -18,9 +18,20 @@ List quartet_concordance(const LogicalMatrix splits, const IntegerMatrix charact
   active_states.reserve(32);
 
   for (int c = 0; c < n_chars; ++c) {
-    // Cache character column for memory locality
+    // Cache character column and find max state in one pass
     std::vector<int> char_col(n_taxa);
-    for (int t = 0; t < n_taxa; ++t) char_col[t] = characters(t, c);
+    int max_state = 0;
+    for (int t = 0; t < n_taxa; ++t) {
+      int state = characters(t, c);
+      char_col[t] = state;
+      if (!IntegerVector::is_na(state) && state > max_state) max_state = state;
+    }
+    // Hoist resize outside split loop: only reallocate when a new character
+    // has states beyond the current buffer capacity.
+    if (max_state >= (int)n0.size()) {
+      n0.resize(max_state + 1, 0);
+      n1.resize(max_state + 1, 0);
+    }
 
     for (int s = 0; s < n_splits; ++s) {
       active_states.clear();
@@ -28,12 +39,7 @@ List quartet_concordance(const LogicalMatrix splits, const IntegerMatrix charact
       for (int t = 0; t < n_taxa; ++t) {
         int state = char_col[t];
         if (IntegerVector::is_na(state)) continue;
-        
-        if (state >= (int)n0.size()) {
-          n0.resize(state + 1, 0);
-          n1.resize(state + 1, 0);
-        }
-        
+
         if (n0[state] == 0 && n1[state] == 0) {
           active_states.push_back(state);
         }
