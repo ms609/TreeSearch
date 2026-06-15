@@ -42,6 +42,10 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
   } else if (is.numeric(sequence)) {
     sequence <- taxa[sequence]
   }
+  if (anyNA(sequence) || !all(sequence %in% taxa)) {
+    stop("`sequence` must list only taxa present in `dataset` ",
+         "(by name, or by valid index)")
+  }
   unlisted <- setdiff(taxa, sequence)
   if (length(unlisted) > 0L) {
     sequence <- c(sequence, sample(unlisted))
