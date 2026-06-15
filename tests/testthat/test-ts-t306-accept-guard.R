@@ -32,8 +32,8 @@ skip_on_cran()
 
 library("TreeTools")
 
-make_t306_dat <- function(mat, levels = c("-", "0", "1")) {
-  phangorn::phyDat(mat, type = "USER", levels = levels, ambiguity = "?")
+make_t306_dat <- function(mat) {
+  MatrixToPhyDat(mat)
 }
 
 # 7-tip dataset chosen so the full tree space (945 unrooted binaries) is
