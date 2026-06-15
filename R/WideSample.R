@@ -242,13 +242,14 @@ WideSample <- function(
       } else {
         .WideSampleColumnOracle(dist, trees, nTrees)
       }
-      MaxMin::FarFirst(colFn, k = n, N = nTrees)
+      MaxMin::FarFirst(n, colFn, N = nTrees)
     },
     # Tier 2: DropAdd returns the bare (sorted) index vector; it runs to its
     # deterministic plateau, with `maxSeconds` as a safety cap.
-    `2` = MaxMin::DropAdd(dmat, k = n, maxSeconds  = maxSeconds),
+    `2` = MaxMin::DropAdd(n, dmat, maxSeconds = maxSeconds,
+                          progress = FALSE),
     # Tier 3: Grasp likewise returns the bare index vector (RNG-dependent).
-    `3` = MaxMin::Grasp(dmat, k = n, maxSeconds  = maxSeconds),
+    `3` = MaxMin::Grasp(n, dmat, maxSeconds = maxSeconds),
     # Tier 4: exact solver returns a list; take its `$indices`.
     `4` = {
       if (nTrees > exactCeiling) {
@@ -257,7 +258,7 @@ WideSample <- function(
                 "or 3 (Grasp), or a larger `maxSeconds`.",
                 immediate. = TRUE)
       }
-      MaxMin::ExactMaxMin(dmat, k = n, maxSeconds = maxSeconds)$indices
+      MaxMin::ExactMaxMin(k = n, dmat, maxSeconds = maxSeconds)$indices
     }
   )
 
