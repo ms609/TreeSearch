@@ -106,7 +106,11 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
   ambigs <- which(contSums > 1L & contSums < ncol(cont))
   inappLevel <- which(colnames(cont) == "-")
   if (length(inappLevel) != 0L) {
-    cli_alert("Inapplicable tokens treated as ambiguous for profile parsimony")
+    # cli_inform() routes through message(), so callers can suppress it with
+    # suppressMessages() and tests can capture it; cli_alert() would print
+    # uncatchably to stdout.
+    cli::cli_inform(c("!" =
+      "Inapplicable tokens treated as ambiguous for profile parsimony"))
     inappLevel <- which(apply(unname(cont), 1, identical,
                               as.double(colnames(cont) == "-")))
     dataset[] <- lapply(dataset, function (i) {
@@ -152,7 +156,7 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
 
   
   if (maxInformative < 2L) {
-    cli_alert("No informative characters in `dataset`.")
+    cli::cli_inform(c("!" = "No informative characters in `dataset`."))
     # Construct empty phyDat manually (avoids [.phyDat issues with 0 columns)
     dataset[] <- lapply(dataset, function(x) integer(0))
     attr(dataset, "info.amounts") <- double(0)

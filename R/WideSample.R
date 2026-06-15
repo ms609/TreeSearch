@@ -259,7 +259,8 @@ WideSample <- function(
     `2` = MaxMin::DropAdd(n, dmat, maxSeconds = maxSeconds),
     # Tier 3: Grasp likewise returns the bare index vector (RNG-dependent).
     `3` = MaxMin::Grasp(n, dmat, maxSeconds = maxSeconds),
-    # Tier 4: exact solver returns a list; take its `$indices`.
+    # Tier 4: exact solver returns the bare (ascending) index vector, like the
+    # other tiers.
     `4` = {
       if (nTrees > exactCeiling) {
         warning("Exact MMDP (effort = 4) on ", nTrees,
@@ -267,7 +268,7 @@ WideSample <- function(
                 "or 3 (Grasp), or a larger `maxSeconds`.",
                 immediate. = TRUE)
       }
-      MaxMin::ExactMaxMin(k = n, dmat, maxSeconds = maxSeconds)$indices
+      MaxMin::ExactMaxMin(k = n, dmat, maxSeconds = maxSeconds)
     }
   )
 
