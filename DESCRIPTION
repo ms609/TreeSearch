@@ -10,14 +10,17 @@ Authors@R: c(
     ),
     person(
       given = "Martin", family = "Brazeau",
-      role = c("cph"),
-      comment = c(ORCID = "0000-0002-0650-1282", "Morphy library")
+      role = c("ctb"),
+      comment = c(ORCID = "0000-0002-0650-1282",
+                  "Brazeau-Guillerme-Smith inapplicable-data algorithm")
+    ),
+    person(
+      given = "Thomas", family = "Guillerme",
+      role = c("ctb"),
+      comment = "Brazeau-Guillerme-Smith inapplicable-data algorithm"
     )
   )
 License: GPL (>= 3)
-Copyright: Incorporates C/C++ code from
-   Morphy Phylogenetic Library by Martin Brazeau 
-   <https://github.com/mbrazeau/MorphyLib> (GPL3)
 Description: Reconstruct phylogenetic trees from discrete data using a
   high-performance C++ search engine with multi-replicate driven search.
   Supports equal weights, implied weights (Goloboff, 1993)
