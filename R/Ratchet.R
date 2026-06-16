@@ -73,11 +73,11 @@
 #' @family custom search functions
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
-Ratchet <- function(tree, dataset, 
-                    InitializeData = PhyDat2Morphy,
-                    CleanUpData    = UnloadMorphy,
-                    TreeScorer     = MorphyLength,
-                    Bootstrapper   = MorphyBootstrap,
+Ratchet <- function(tree, dataset, concavity = Inf,
+                    InitializeData = PrepareData,
+                    CleanUpData    = ReleaseData,
+                    TreeScorer     = EdgeListScore,
+                    Bootstrapper   = BootstrapTree,
                     swappers = list(TBRSwap, SPRSwap, NNISwap),
                     BootstrapSwapper = if (is.list(swappers))
                      swappers[[length(swappers)]] else swappers,
@@ -97,9 +97,13 @@ Ratchet <- function(tree, dataset,
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
-  initializedData <- InitializeData(dataset)
+  if (identical(InitializeData, PrepareData)) {
+    initializedData <- PrepareData(dataset, concavity = concavity)
+  } else {
+    initializedData <- InitializeData(dataset)
+  }
   on.exit(initializedData <- CleanUpData(initializedData))
-  
+
   bestScore <- TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
   
   if (verbosity > 0L) {

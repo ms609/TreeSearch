@@ -39,20 +39,35 @@
   been dropped; all parsimony scoring now runs through the native C++ kernel,
   which implements the Brazeau, Guillerme & Smith (2019) inapplicable-state
   algorithm correctly — including ambiguous-with-inapplicable tokens such as
-  `{1-}`, which MorphyLib mis-scored.  The custom-search functions
-  (`TreeSearch()`, `Ratchet()`, `Jackknife()`, `MorphyBootstrap()`,
-  `EdgeListSearch()`) keep their interfaces; `Jackknife()` and
-  `MorphyBootstrap()` now resample characters natively (the resampled weights
-  are scored by the native kernel rather than by mutating a MorphyLib object,
-  fixing a case where resampled weights could be ignored).
-  The low-level MorphyLib bindings (`mpl_*()`), together with the
+  `{1-}`, which MorphyLib mis-scored.
+
+- **`concavity` argument for `TreeSearch()`, `Ratchet()` and `Jackknife()`.**
+  Implied-weights and profile searches with the custom-search functions no
+  longer need a hand-written scorer: pass `concavity = k` (a finite constant)
+  for implied weights, `concavity = "profile"` for profile parsimony, or the
+  default `Inf` for equal weights.  (Adapted from the parallel T-200 work,
+  PR #216.)
+
+- **Custom-search scoring layer renamed** to drop the now-meaningless "Morphy"
+  branding.  `PhyDat2Morphy()` → `PrepareData()`; `UnloadMorphy()` →
+  `ReleaseData()`; `is.morphyPtr()` → `is.ParsimonyData()`; `SingleCharMorphy()`
+  → `SingleCharData()`; `MorphyLength()` → `EdgeListScore()`;
+  `MorphyTreeLength()` → `TreeScore()`; `MorphyBootstrap()` → `BootstrapTree()`;
+  `RandomMorphyTree()` → `RandomPostorderTree()`.  The old names remain as
+  deprecated aliases and will be removed in a future release.  `PrepareData()`
+  returns a lightweight, garbage-collected `ParsimonyData` object; only the
+  default `"inapplicable"` gap treatment is supported (recode data for the
+  missing/extra-state treatments).
+
+- `Jackknife()` and `BootstrapTree()` (formerly `MorphyBootstrap()`) now
+  resample characters natively, scoring the resampled weights through the
+  native kernel rather than by mutating a MorphyLib object — fixing a case
+  where resampled weights could be silently ignored.
+
+- The low-level MorphyLib bindings (`mpl_*()`), together with the
   `MorphyWeights()`, `SetMorphyWeights()`, `GapHandler()`, `MorphyErrorCheck()`,
   `GetMorphyLength()` and `C_MorphyLength()` helpers and the
-  `summary.morphyPtr()` method, have been removed.  `PhyDat2Morphy()`,
-  `SingleCharMorphy()`, `UnloadMorphy()` and `is.morphyPtr()` are retained but
-  now return lightweight, garbage-collected handles; only the default
-  `"inapplicable"` gap treatment is supported (recode data for the
-  missing/extra-state treatments).
+  `summary.morphyPtr()` method, have been removed.
 
 - `MaximizeParsimony()` results now carry a `candidates_evaluated` attribute:
   the number of TBR/SPR-class rearrangements examined during a single-threaded

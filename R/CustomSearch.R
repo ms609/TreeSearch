@@ -12,7 +12,7 @@
 #' @keywords internal
 #' @export
 EdgeListSearch <- function (edgeList, dataset,
-                            TreeScorer = MorphyLength,
+                            TreeScorer = EdgeListScore,
                             EdgeSwapper = RootedTBRSwap,
                             maxIter = 100, maxHits = 20, 
                             bestScore = NULL, stopAtScore = NULL, 
@@ -128,13 +128,19 @@ EdgeListSearch <- function (edgeList, dataset,
 #' Will be overridden if a passed function has an attribute `stopAtPlateau` set
 #' by `attr(FunctionName, "stopAtPlateau") <- TRUE`.
 #'
-#' @param InitializeData Function that sets up data object to prepare for tree search. 
-#'        The function will be passed the `dataset` parameter.
+#' @param concavity Determines the optimality criterion when the default native
+#' scorer is used: `Inf` (the default) for equal weights; a finite, positive
+#' number for implied weighting with that concavity constant
+#' \insertCite{Goloboff1993}{TreeSearch}; or `"profile"` for profile parsimony.
+#' Ignored if a custom `InitializeData` is supplied (prepare the data yourself).
+#' @param InitializeData Function that sets up data object to prepare for tree
+#'        search.  The default, [`PrepareData()`], is called with `concavity`;
+#'        a custom function will be passed only the `dataset` parameter.
 #'        Its return value will be passed to `TreeScorer()` and `CleanUpData()`.
-#' @param CleanUpData Function to destroy data object on function exit.
+#' @param CleanUpData Function to release the data object on function exit.
 #'        The function will be passed the value returned by `InitializeData()`.
 #' @param TreeScorer function to score a given tree.
-#'        The function will be passed three parameters, corresponding to the 
+#'        The function will be passed three parameters, corresponding to the
 #'        `parent` and `child` entries of a tree's edge list, and a dataset.
 #'
 #' @param verbosity Numeric specifying level of detail to display in console: 
@@ -166,15 +172,18 @@ EdgeListSearch <- function (edgeList, dataset,
 #'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
 #'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
 #'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
+#'
+#'   # Implied weighting (concavity constant k = 10):
+#'   TreeSearch(njtree, Lobo.phy, concavity = 10, maxIter = 20)
 #' }
 #' @template MRS
 #' @family custom search functions
 #' @importFrom TreeTools RenumberTips
 #' @export
-TreeSearch <- function (tree, dataset,
-                        InitializeData = PhyDat2Morphy,
-                        CleanUpData    = UnloadMorphy,
-                        TreeScorer     = MorphyLength,
+TreeSearch <- function (tree, dataset, concavity = Inf,
+                        InitializeData = PrepareData,
+                        CleanUpData    = ReleaseData,
+                        TreeScorer     = EdgeListScore,
                         EdgeSwapper    = RootedTBRSwap,
                         maxIter = 100L, maxHits = 20L,
                         stopAtPeak = FALSE, stopAtPlateau = 0L,
@@ -186,7 +195,13 @@ TreeSearch <- function (tree, dataset,
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
-  initializedData <- InitializeData(dataset)
+  # `concavity` is honoured only by the default native `PrepareData`; a custom
+  # `InitializeData` receives the dataset unchanged.
+  if (identical(InitializeData, PrepareData)) {
+    initializedData <- PrepareData(dataset, concavity = concavity)
+  } else {
+    initializedData <- InitializeData(dataset)
+  }
   on.exit(initializedData <- CleanUpData(initializedData))
 
   bestScore <- attr(tree, "score")

@@ -140,8 +140,8 @@ Other tree scoring:
 \code{\link{LengthAdded}()},
 \code{\link{MaximizeParsimony}()},
 \code{\link{MinimumLength}()},
-\code{\link{MorphyTreeLength}()},
 \code{\link{ParsSim}()},
+\code{\link{TreeScore}()},
 \code{\link{WideSample}()},
 \code{\link{hierarchy_from_names}()},
 \code{\link{recode_hierarchy}()}

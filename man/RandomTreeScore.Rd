@@ -7,8 +7,8 @@
 RandomTreeScore(dataset)
 }
 \arguments{
-\item{dataset}{A \code{phyDat} object (recommended) or a Morphy object created
-with \code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
+\item{dataset}{A \code{phyDat} object (recommended), or a \code{ParsimonyData} object
+created with \code{\link[=PrepareData]{PrepareData()}}.}
 }
 \value{
 \code{RandomTreeScore()} returns a numeric parsimony score.

@@ -110,9 +110,11 @@ criterion \insertCite{Farris1969}{TreeSearch}.
 }
 \seealso{
 Other custom search functions: 
+\code{\link{BootstrapTree}()},
 \code{\link{EdgeListSearch}()},
 \code{\link{Jackknife}()},
-\code{\link{MorphyBootstrap}()}
+\code{\link{PrepareData}()},
+\code{\link{SingleCharData}()}
 }
 \concept{custom search functions}
 \keyword{internal}

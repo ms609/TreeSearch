@@ -12,7 +12,7 @@
 EdgeListSearch(
   edgeList,
   dataset,
-  TreeScorer = MorphyLength,
+  TreeScorer = EdgeListScore,
   EdgeSwapper = RootedTBRSwap,
   maxIter = 100,
   maxHits = 20,
@@ -27,9 +27,10 @@ EdgeListSearch(
 TreeSearch(
   tree,
   dataset,
-  InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength,
+  concavity = Inf,
+  InitializeData = PrepareData,
+  CleanUpData = ReleaseData,
+  TreeScorer = EdgeListScore,
   EdgeSwapper = RootedTBRSwap,
   maxIter = 100L,
   maxHits = 20L,
@@ -88,11 +89,18 @@ larger numbers provide more verbose feedback to the user.}
 with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 
-\item{InitializeData}{Function that sets up data object to prepare for tree search.
-The function will be passed the \code{dataset} parameter.
+\item{concavity}{Determines the optimality criterion when the default native
+scorer is used: \code{Inf} (the default) for equal weights; a finite, positive
+number for implied weighting with that concavity constant
+\insertCite{Goloboff1993}{TreeSearch}; or \code{"profile"} for profile parsimony.
+Ignored if a custom \code{InitializeData} is supplied (prepare the data yourself).}
+
+\item{InitializeData}{Function that sets up data object to prepare for tree
+search.  The default, \code{\link[=PrepareData]{PrepareData()}}, is called with \code{concavity};
+a custom function will be passed only the \code{dataset} parameter.
 Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
 
-\item{CleanUpData}{Function to destroy data object on function exit.
+\item{CleanUpData}{Function to release the data object on function exit.
 The function will be passed the value returned by \code{InitializeData()}.}
 }
 \value{
@@ -130,6 +138,9 @@ if (interactive()) {
   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
+
+  # Implied weighting (concavity constant k = 10):
+  TreeSearch(njtree, Lobo.phy, concavity = 10, maxIter = 20)
 }
 }
 \seealso{
@@ -141,8 +152,10 @@ optima.
 }
 
 Other custom search functions: 
+\code{\link{BootstrapTree}()},
 \code{\link{Jackknife}()},
-\code{\link{MorphyBootstrap}()},
+\code{\link{PrepareData}()},
+\code{\link{SingleCharData}()},
 \code{\link{SuccessiveApproximations}()}
 }
 \author{

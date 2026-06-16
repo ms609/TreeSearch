@@ -7,10 +7,11 @@
 Jackknife(
   tree,
   dataset,
+  concavity = Inf,
   resampleFreq = 2/3,
-  InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength,
+  InitializeData = PrepareData,
+  CleanUpData = ReleaseData,
+  TreeScorer = EdgeListScore,
   EdgeSwapper = TBRSwap,
   jackIter = 5000L,
   searchIter = 4000L,
@@ -26,14 +27,21 @@ Edge lengths are not supported and will be removed.}
 
 \item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
 
+\item{concavity}{Determines the optimality criterion when the default native
+scorer is used: \code{Inf} (the default) for equal weights; a finite, positive
+number for implied weighting with that concavity constant
+\insertCite{Goloboff1993}{TreeSearch}; or \code{"profile"} for profile parsimony.
+Ignored if a custom \code{InitializeData} is supplied (prepare the data yourself).}
+
 \item{resampleFreq}{Double between 0 and 1 stating proportion of characters
 to resample.}
 
-\item{InitializeData}{Function that sets up data object to prepare for tree search.
-The function will be passed the \code{dataset} parameter.
+\item{InitializeData}{Function that sets up data object to prepare for tree
+search.  The default, \code{\link[=PrepareData]{PrepareData()}}, is called with \code{concavity};
+a custom function will be passed only the \code{dataset} parameter.
 Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
 
-\item{CleanUpData}{Function to destroy data object on function exit.
+\item{CleanUpData}{Function to release the data object on function exit.
 The function will be passed the value returned by \code{InitializeData()}.}
 
 \item{TreeScorer}{function to score a given tree.
@@ -86,8 +94,10 @@ Other split support functions:
 \code{\link{SiteConcordance}}
 
 Other custom search functions: 
+\code{\link{BootstrapTree}()},
 \code{\link{EdgeListSearch}()},
-\code{\link{MorphyBootstrap}()},
+\code{\link{PrepareData}()},
+\code{\link{SingleCharData}()},
 \code{\link{SuccessiveApproximations}()}
 }
 \author{

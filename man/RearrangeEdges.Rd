@@ -8,7 +8,7 @@ RearrangeEdges(
   parent,
   child,
   dataset,
-  TreeScorer = MorphyLength,
+  TreeScorer = EdgeListScore,
   EdgeSwapper,
   scoreToBeat = TreeScorer(parent, child, dataset, ...),
   iter = "?",
@@ -71,10 +71,8 @@ tree <- TreeTools::NJTree(Lobo.phy)
 edge <- tree$edge
 parent <- edge[, 1]
 child <- edge[, 2]
-dataset <- PhyDat2Morphy(Lobo.phy)
+dataset <- PrepareData(Lobo.phy)
 RearrangeEdges(parent, child, dataset, EdgeSwapper = RootedNNISwap)
-# Remember to free memory:
-dataset <- UnloadMorphy(dataset)
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

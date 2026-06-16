@@ -19,29 +19,34 @@
 #' @family split support functions
 #' @family custom search functions
 #' @export
-Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
-                      InitializeData = PhyDat2Morphy,
-                      CleanUpData    = UnloadMorphy,
-                      TreeScorer     = MorphyLength,
+Jackknife <- function(tree, dataset, concavity = Inf,
+                      resampleFreq = 2 / 3,
+                      InitializeData = PrepareData,
+                      CleanUpData    = ReleaseData,
+                      TreeScorer     = EdgeListScore,
                       EdgeSwapper    = TBRSwap,
                       jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
                       verbosity = 1L, ...) {
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
-  
+
   tree <- RenumberTips(tree, names(dataset))
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
-  
-  morphyObj <- InitializeData(dataset)
-  on.exit(morphyObj <- CleanUpData(morphyObj))
-  
-  startWeights <- .MorphyWeight(morphyObj)
+
+  if (identical(InitializeData, PrepareData)) {
+    initializedData <- PrepareData(dataset, concavity = concavity)
+  } else {
+    initializedData <- InitializeData(dataset)
+  }
+  on.exit(initializedData <- CleanUpData(initializedData))
+
+  startWeights <- initializedData[["original_weight"]]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
-  
+
   if (charsToKeep < 1L) {
     stop("resampleFreq of ", resampleFreq, " is too low; can't keep 0 of ",
          length(deindexedChars), " characters.")
@@ -49,11 +54,11 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
     stop("resampleFreq of ", resampleFreq, " is too high; can't keep all ",
          length(deindexedChars), " characters.")
   }
-  
+
   if (verbosity > 10L) { #nocov start
     message(" * Beginning search:")
   } #nocov end
-  
+
   # Conduct jackIter replicates:
   jackEdges <- vapply(seq_len(jackIter), function (x) {
     if (verbosity > 0L) { #nocov start
@@ -61,8 +66,12 @@ Jackknife <- function(tree, dataset, resampleFreq = 2 / 3,
     } #nocov end
     resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
                            nbins = length(startWeights))
-    resampledObj <- .SetMorphyWeight(morphyObj, resampling)
-    res <- EdgeListSearch(edgeList[1:2], resampledObj, EdgeSwapper = EdgeSwapper,
+    # R copy-on-modify: the prepared data is scored with resampled weights
+    # without mutating `initializedData`.
+    resampledData <- initializedData
+    resampledData[["weight"]] <- as.integer(resampling)
+    res <- EdgeListSearch(edgeList[1:2], resampledData,
+                          TreeScorer = TreeScorer, EdgeSwapper = EdgeSwapper,
                           maxIter = searchIter, maxHits = searchHits,
                           verbosity = verbosity - 1L, ...)
     res[1:2]

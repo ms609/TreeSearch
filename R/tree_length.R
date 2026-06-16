@@ -515,79 +515,69 @@ FastCharacterLength <- function(tree, dataset) {
                 .ScaleWeight(at$weight), at$levels)
 }
 
-#' Calculate parsimony score from Morphy object
-#' 
-#' This function must be passed a valid Morphy object, or R may crash.
-#' For most users, the function [`TreeLength()`] will be more appropriate.
-#' 
+#' Score a tree from prepared data
+#'
+#' `TreeScore()` and `EdgeListScore()` compute the parsimony score of a tree
+#' with the native C++ Fitch engine, using a dataset prepared by
+#' [`PrepareData()`].
+#' `EdgeListScore()` is the low-level scorer used as the default `TreeScorer`
+#' by the custom-search functions; `TreeScore()` is a convenience wrapper that
+#' takes a `phylo` tree.  Most users want the higher-level [`TreeLength()`].
+#'
 #' @template labelledTreeParam
-#' @param morphyObj Object of class `morphy`, perhaps created with 
-#' [`PhyDat2Morphy()`].
+#' @param dataset A `ParsimonyData` object from [`PrepareData()`].
 #'
-#' @return `MorphyTreeLength()` returns the length of the tree,
-#' after applying weighting.
+#' @return `TreeScore()` returns the parsimony score of `tree` under the
+#' optimality criterion baked into `dataset` (equal weights, implied weights or
+#' profile parsimony).
 #'
-#' @seealso PhyDat2Morphy
+#' @seealso [`PrepareData()`]; user-facing scoring with [`TreeLength()`].
 #'
 #' @family tree scoring
 #' @author Martin R. Smith
 #' @keywords internal
+#' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
-MorphyTreeLength <- function(tree, morphyObj) {
-  if (!is.morphyPtr(morphyObj)) {
-    stop("`morphyObj` must be a valid Morphy pointer")
+TreeScore <- function(tree, dataset) {
+  if (!is.ParsimonyData(dataset)) {
+    stop("`dataset` must be a ParsimonyData object; see ?PrepareData.")
   }
-  native <- attr(morphyObj, "native", exact = TRUE)
-  if (is.null(native)) {
-    stop("`morphyObj` lacks native scoring data")
-  }
-  nTaxa <- native[["nTip"]]
+  nTaxa <- dataset[["nTip"]]
   if (nTaxa != length(tree[["tip.label"]])) {
-    stop ("Number of taxa in Morphy object (", nTaxa,
-          ") not equal to number of tips in tree")
+    stop("Number of taxa in dataset (", nTaxa,
+         ") not equal to number of tips in tree")
   }
-  treeOrder <- attr(tree, "order")
-  inPostorder <- (!is.null(treeOrder) && treeOrder == "postorder")
-  treeEdge <- tree[["edge"]]
-
+  tree <- RenumberTips(tree, dataset[["tip.label"]])
+  el <- RenumberEdges(tree[["edge"]][, 1], tree[["edge"]][, 2])
   # Return:
-  MorphyLength(treeEdge[, 1], treeEdge[, 2], morphyObj, inPostorder, nTaxa)
+  EdgeListScore(el[[1]], el[[2]], dataset)
 }
 
-#' @describeIn MorphyTreeLength Faster function that requires internal tree
-#'   parameters. Node numbering must increase monotonically away from root.
+#' @describeIn TreeScore Low-level scorer taking parent and child vectors; the
+#'   default `TreeScorer` for [`TreeSearch()`], [`Ratchet()`] and
+#'   [`Jackknife()`].  Scores via the native `ts_fitch_score()` kernel, which
+#'   handles the Brazeau-Guillerme-Smith inapplicable algorithm correctly
+#'   (including the `{1-}` case that MorphyLib mis-scored).
 #' @inheritParams RearrangeEdges
-#' @param inPostorder,nTaxa Retained for backwards compatibility; ignored.
-#' @author Martin R. Smith
+#' @param inPostorder Logical: are the edges already in postorder?  If `FALSE`
+#'   (the default) they are reordered before scoring.
+#' @param \dots Unused; for interface compatibility with custom `TreeScorer`s.
+#' @return `EdgeListScore()` returns the parsimony score (a numeric).
+#' @importFrom TreeTools Preorder PostorderOrder
 #' @export
-MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
-                         nTaxa = NULL) {
-  # MorphyLib-free scoring via the native Fitch kernel, which handles the
-  # Brazeau-Guillerme-Smith inapplicable algorithm (including the `{1-}` case
-  # that MorphyLib mis-scores).
-  native <- attr(morphyObj, "native", exact = TRUE)
-  if (is.null(native)) {
-    stop("`morphyObj` must be a valid Morphy object; see ?PhyDat2Morphy.")
+EdgeListScore <- function(parent, child, dataset, inPostorder = FALSE, ...) {
+  if (!inPostorder) {
+    edgeList <- Preorder(cbind(parent, child))
+    edgeList <- edgeList[PostorderOrder(edgeList), , drop = FALSE]
+    parent <- edgeList[, 1]
+    child <- edgeList[, 2]
   }
   # Return:
-  .NativeMorphyLength(parent, child, native)
-}
-
-# Score an edge list with the native Fitch kernel, reusing the verified
-# `FastCharacterLength()` pipeline (correct Brazeau-Guillerme-Smith handling of
-# inapplicable tokens, including the `{1-}` case that MorphyLib mis-scores).
-# `native` is the list attached by `.NativeMorphyData()`.
-#' @importFrom TreeTools Renumber RenumberTips
-.NativeMorphyLength <- function(parent, child, native) {
-  parent <- as.integer(parent)
-  child <- as.integer(child)
-  tree <- structure(
-    list(edge = cbind(parent, child),
-         tip.label = native[["tip.label"]],
-         Nnode = length(unique(parent))),
-    class = "phylo")
-  tree <- RenumberTips(Renumber(tree), native[["tip.label"]])
-  steps <- FastCharacterLength(tree, native[["phy"]])
-  as.integer(round(sum(steps * native[["weight"]])))
+  ts_fitch_score(cbind(parent, child),
+                 dataset[["contrast"]], dataset[["tip_data"]],
+                 dataset[["weight"]], dataset[["levels"]],
+                 min_steps = dataset[["min_steps"]],
+                 concavity = dataset[["concavity"]],
+                 infoAmounts = dataset[["info_amounts"]])
 }
 

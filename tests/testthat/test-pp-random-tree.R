@@ -1,4 +1,4 @@
-# `RandomMorphyTree()` uses C's MWC RNG (static global state in
+# `RandomPostorderTree()` uses C's MWC RNG (static global state in
 # build_postorder.h), which is NOT seeded by set.seed().
 # `RandomTreeScore()` builds a tree with TreeTools::RandomTree() (R's RNG) and
 # scores it with the native Fitch kernel, so it IS reproducible via set.seed().
@@ -8,7 +8,7 @@
 
 ScoreObj <- function (char) {
   # `char` is a Morphy token string without a trailing ";"
-  SingleCharMorphy(char)
+  SingleCharData(char)
 }
 
 test_that("four-tip trees are randomly distributed", {
@@ -17,7 +17,7 @@ test_that("four-tip trees are randomly distributed", {
   nTip <- 4
   expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees, 1/(nTip - 1))
   rTrees <- vapply(logical(nTrees), function (XX)
-    unlist(RandomMorphyTree(nTip)), integer((nTip * 4) - 3))
+    unlist(RandomPostorderTree(nTip)), integer((nTip * 4) - 3))
   expect_true(all(rTrees[1 + (seq_len(nTip - 1)), ] %in% nTip + seq_len(nTip - 2)))
   expect_lt(expectedBounds[1], sum(rTrees[2, ] == 5))
   expect_gt(expectedBounds[2], sum(rTrees[2, ] == 5))

@@ -39,8 +39,8 @@ test_that("Tree search finds shortest tree", {
   start_tree <- TreeTools::RenumberTips(ape::read.tree(
     text = "(((1, 6), 3), (2, (4, 5)));"), true_tree$tip.label)
   expect_equal(TreeLength(start_tree, dataset), 6)
-  morphyObj <- PhyDat2Morphy(dataset)
-  on.exit(morphyObj <- UnloadMorphy(morphyObj))
+  preparedData <- PrepareData(dataset)
+  on.exit(preparedData <- ReleaseData(preparedData))
   
   # NNI can reach a local optimum that SPR/TBR can escape.
   # Rooted swappers cannot move the root, so may stay at start-tree score.
@@ -91,11 +91,11 @@ test_that("Profile parsimony works in tree search", {
   rTree <- randomTree <- RandomTree(dataset, "1")
   expect_lte(TreeLength(rTree, readyData), TreeLength(rTree, dataset))
   
-  quickTS <- TreeSearch(rTree, dataset, TreeScorer = MorphyLength, EdgeSwapper = RootedNNISwap, 
+  quickTS <- TreeSearch(rTree, dataset, TreeScorer = EdgeListScore, EdgeSwapper = RootedNNISwap, 
                         maxIter = 1600, maxHits = 40, verbosity = 0)
   expect_equal(42L, attr(quickTS, "score"))
   
-  quickFitch <- Ratchet(rTree, dataset, TreeScorer = MorphyLength, suboptimal = 2, 
+  quickFitch <- Ratchet(rTree, dataset, TreeScorer = EdgeListScore, suboptimal = 2, 
                         swappers = RootySwappers, ratchHits = 3, searchHits = 15, 
                         searchIter = 100, ratchIter = 500,
                         verbosity = 0L)

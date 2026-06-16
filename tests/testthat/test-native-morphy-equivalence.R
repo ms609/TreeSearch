@@ -1,53 +1,48 @@
-# Stage 1 of dropping MorphyLib: MorphyLength() scores the default (inapplicable)
-# gap mode via the native Fitch kernel. We assert the CORRECT native
-# (Brazeau-Guillerme-Smith) scores -- NOT bit-equivalence with legacy MorphyLib,
-# which mis-scores `{1-}` ambiguous-with-inapplicable tokens (Lobo pattern 93).
+# The native scorer (PrepareData + TreeScore/EdgeListScore) computes the CORRECT
+# Brazeau-Guillerme-Smith inapplicable scores -- NOT bit-equivalence with legacy
+# MorphyLib, which mis-scored `{1-}` ambiguous-with-inapplicable tokens
+# (Lobo pattern 93).
 
-test_that("PhyDat2Morphy() attaches native data for the inapplicable mode", {
+test_that("PrepareData() builds a ParsimonyData handle", {
   data("Lobo", package = "TreeTools")
-  mo <- PhyDat2Morphy(Lobo.phy)                    # default gap = "inapplicable"
-  on.exit(UnloadMorphy(mo), add = TRUE)
-  expect_false(is.null(attr(mo, "native", exact = TRUE)))
-
-  # Non-inapplicable gap treatments are unsupported now that MorphyLib is gone.
-  expect_error(PhyDat2Morphy(Lobo.phy, "ambiguous"))
+  obj <- PrepareData(Lobo.phy)
+  expect_true(is.ParsimonyData(obj))
+  expect_equal(obj[["nTip"]], length(Lobo.phy))
 })
 
-test_that("native MorphyTreeLength() equals native TreeLength()", {
+test_that("native TreeScore() equals native TreeLength()", {
   data("Lobo", package = "TreeTools")
   data("inapplicable.datasets")
   datasets <- list(Lobo = Lobo.phy,
                    CL42 = congreveLamsdellMatrices[[42]],
                    CL10 = congreveLamsdellMatrices[[10]])
   for (ds in datasets) {
+    obj <- PrepareData(ds)
     for (tr in list(TreeTools::PectinateTree(names(ds)),
                     TreeTools::BalancedTree(names(ds)))) {
-      mo <- PhyDat2Morphy(ds)
-      expect_equal(MorphyTreeLength(tr, mo), round(TreeLength(tr, ds)))
-      UnloadMorphy(mo)
+      expect_equal(TreeScore(tr, obj), TreeLength(tr, ds))
     }
   }
 })
 
-test_that("native MorphyLength fixes the MorphyLib {1-} bug (Lobo pattern 93)", {
+test_that("native scorer fixes the MorphyLib {1-} bug (Lobo pattern 93)", {
   data("Lobo", package = "TreeTools")
   tr <- TreeTools::PectinateTree(names(Lobo.phy))
-  mo <- PhyDat2Morphy(Lobo.phy)
-  on.exit(UnloadMorphy(mo))
+  obj <- PrepareData(Lobo.phy)
   # Correct BGS length is 273; the legacy MorphyLib path returned 274.
-  expect_equal(MorphyTreeLength(tr, mo), 273)
+  expect_equal(TreeScore(tr, obj), 273)
 })
 
-test_that("SingleCharMorphy() + MorphyLength() score natively per character", {
+test_that("SingleCharData() + EdgeListScore() score natively per character", {
   data("Lobo", package = "TreeTools")
   ds <- Lobo.phy
-  tr <- TreeTools::PectinateTree(names(ds))
+  tr <- TreeTools::RenumberTips(TreeTools::PectinateTree(names(ds)), names(ds))
+  tr <- TreeTools::Postorder(tr)
   strs <- TreeTools::PhyToString(ds, byTaxon = FALSE, useIndex = FALSE,
                                  concatenate = FALSE)
-  mObjs <- lapply(strs, SingleCharMorphy)
-  on.exit(lapply(mObjs, UnloadMorphy))
+  objs <- lapply(strs, SingleCharData)
   e <- tr[["edge"]]
-  perChar <- vapply(mObjs, MorphyLength, parent = e[, 1], child = e[, 2],
-                    integer(1))
-  expect_equal(sum(perChar * attr(ds, "weight")), round(TreeLength(tr, ds)))
+  perChar <- vapply(objs, function(o) EdgeListScore(e[, 1], e[, 2], o),
+                    double(1))
+  expect_equal(sum(perChar * attr(ds, "weight")), TreeLength(tr, ds))
 })
