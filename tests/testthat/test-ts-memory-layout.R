@@ -122,7 +122,11 @@ test_that("TBR search correct with IW scoring", {
   tip_data <- matrix(unlist(ds, use.names = FALSE),
                      nrow = length(ds), byrow = TRUE)
 
-  min_steps <- pmax(apply(at$contrast, 2, function(x) sum(x > 0)) - 1L, 0L)
+  # Per-character minimum step counts (Farris's m), one value per pattern.
+  # `apply(at$contrast, 2, ...)` would iterate over contrast *columns* (states),
+  # yielding a length-nStates vector that the scorer rejects (and that formerly
+  # read out of bounds). Mirror MaximizeParsimony()'s own IW setup instead.
+  min_steps <- as.integer(MinimumLength(ds, compress = TRUE))
 
   set.seed(8816)
   tree <- TreeTools::RandomTree(names(ds), root = TRUE)

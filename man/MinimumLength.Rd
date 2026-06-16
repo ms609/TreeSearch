@@ -23,7 +23,7 @@ MinimumLength(x, compress = FALSE)
 
 MinimumSteps(x)
 
-MaximumLength(x, compress = TRUE)
+MaximumLength(x, compress = FALSE)
 
 \method{MaximumLength}{numeric}(x, compress = NA)
 }

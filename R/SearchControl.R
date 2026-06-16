@@ -289,6 +289,17 @@ SearchControl <- function(
     adaptiveStart = FALSE,
     enumTimeFraction = 0.1
 ) {
+  # Guard the count parameters whose non-positive values crash the C++ kernel:
+  # `xssPartitions`/`cssPartitions` divide the tip count in `xss_partition()`
+  # (integer division by zero -> SIGFPE), and `poolMaxSize` sizes the tree pool
+  # whose eviction branch reads `entries_[0]` once `size >= max_size`
+  # (an out-of-bounds read on an empty pool -> segfault). Each must be >= 1.
+  for (.p in c("xssPartitions", "cssPartitions", "poolMaxSize")) {
+    .v <- as.integer(get(.p))
+    if (length(.v) != 1L || is.na(.v) || .v < 1L) {
+      stop("`", .p, "` must be a single positive integer")
+    }
+  }
   structure(
     list(
       tbrMaxHits = as.integer(tbrMaxHits),
@@ -334,7 +345,7 @@ SearchControl <- function(
       pruneReinsertSelection = as.integer(pruneReinsertSelection),
       pruneReinsertTbrMoves = as.integer(pruneReinsertTbrMoves),
       pruneReinsertFullMoves = as.integer(pruneReinsertFullMoves),
-      pruneReinsertNni = as.integer(pruneReinsertNni),
+      pruneReinsertNni = as.logical(pruneReinsertNni),
       annealCycles = as.integer(annealCycles),
       annealPhases = as.integer(annealPhases),
       annealTStart = as.double(annealTStart),

@@ -51,7 +51,7 @@
 #'
 #' @examples
 #' library("TreeTools", quietly = TRUE)
-#' data("Lobo", package = "TreeSearch")
+#' data("Lobo", package = "TreeTools")
 #' result <- MaximizeParsimony(Lobo.phy, maxReplicates = 4L)
 #' sp <- ScoreSpectrum(result)
 #' print(sp)

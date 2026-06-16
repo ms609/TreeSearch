@@ -435,3 +435,32 @@ test_that("TreeLength xform on random trees", {
   expect_equal(length(scores), 3L)
   expect_true(all(is.numeric(scores)))
 })
+
+test_that("TreeLength xform treats '?' in controlling char as ambiguous", {
+  # Regression (RTS-002): the `-1` ("?") and `-2` (present, unknown secondary)
+  # sentinels emitted by RecodeHierarchy() were skipped when building Sankoff
+  # tip costs, leaving every state at INF, so any "?" forced the score to Inf.
+  mat4 <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE, dimnames = list(paste0("t", 1:4), NULL))
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  ds4 <- .make_hsj_dat(mat4)
+  tree4 <- TreeTools::BalancedTree(ds4)
+  score4 <- TreeLength(tree4, ds4, hierarchy = hier, inapplicable = "xform")
+
+  # Add a fully ambiguous taxon ('?' for every character) onto a fixed edge so
+  # the induced topology on t1..t4 is unchanged. An unconstrained tip adds no
+  # steps, so the score must stay finite and equal to the 4-taxon score.
+  mat5 <- rbind(mat4, t5 = c("?", "?", "?"))
+  ds5 <- .make_hsj_dat(mat5)
+  tree5 <- TreeTools::AddTip(tree4, where = which(tree4$tip.label == "t1"),
+                             label = "t5")
+  score5 <- TreeLength(tree5, ds5, hierarchy = hier, inapplicable = "xform")
+
+  expect_true(is.finite(score5))
+  expect_equal(score5, score4)
+})

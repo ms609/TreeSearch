@@ -26,6 +26,9 @@
 #' @export
 AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
 
+  if (!inherits(dataset, "phyDat")) {
+    stop("`dataset` must be a `phyDat` object")
+  }
   taxa <- names(dataset)
   nTaxa <- length(taxa)
 
@@ -37,7 +40,21 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
   if (missing(sequence)) {
     sequence <- taxa[[1]]
   } else if (is.numeric(sequence)) {
+    # Reject non-positive, fractional, out-of-range or duplicated indices before
+    # subsetting: R's `taxa[i]` would otherwise silently drop (`i <= 0`),
+    # truncate (fractional) or recycle, yielding a tree that ignores the
+    # requested order rather than erroring.
+    if (anyNA(sequence) || any(sequence != round(sequence)) ||
+        any(sequence < 1L) || any(sequence > nTaxa) ||
+        anyDuplicated(sequence)) {
+      stop("numeric `sequence` must be distinct whole-number indices ",
+           "between 1 and ", nTaxa, " (the number of taxa in `dataset`)")
+    }
     sequence <- taxa[sequence]
+  }
+  if (anyNA(sequence) || !all(sequence %in% taxa)) {
+    stop("`sequence` must list only taxa present in `dataset` ",
+         "(by name, or by valid index)")
   }
   unlisted <- setdiff(taxa, sequence)
   if (length(unlisted) > 0L) {
@@ -55,6 +72,12 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
       profileArgs$infoAmounts <- infoAmounts
     }
     concavity <- Inf
+  }
+  # NaN/NA slip past `is.finite() && <= 0` and would reach the kernel as a
+  # non-finite double, silently selecting equal weights; reject them explicitly.
+  if (!is.numeric(concavity) || length(concavity) != 1L || is.na(concavity)) {
+    stop("`concavity` must be a single number (or Inf for equal weights, ",
+         "or \"profile\" for profile parsimony).")
   }
   if (is.finite(concavity) && concavity <= 0) {
     stop("`concavity` must be positive (or Inf for equal weights, ",

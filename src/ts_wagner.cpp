@@ -363,7 +363,6 @@ static void wagner_update_constraint(
 
 // Check if an edge (above, below) is legal under the constraint.
 // `added_tips`: bitmask of tips already in the tree.
-// `n_added`: number of tips added so far (including the one being added).
 // For each constraint split where both sides have previously-added tips:
 //   - If the new tip is "inside" the split, the insertion must be inside
 //     the LCA clade of already-added inside tips.
@@ -372,7 +371,7 @@ static void wagner_update_constraint(
 static bool wagner_edge_violates_constraint(
     const TreeState& tree, int below, int tip,
     const ConstraintData& cd,
-    const std::vector<uint64_t>& added_tips, int n_added)
+    const std::vector<uint64_t>& added_tips)
 {
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
@@ -460,6 +459,11 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
     wagner_update_constraint(tree, *cd, added_tips);
   }
 
+  // Set if the constraint filter ever exhausted every legal edge and we fell
+  // back to the unconstrained root edge (see the guard below); warned once
+  // after construction so a constraint-violating tree is never returned mutely.
+  bool constraint_fallback = false;
+
   // Add remaining taxa one at a time
   for (int i = 3; i < n_tip; ++i) {
     int tip = order[i];
@@ -488,7 +492,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       // Evaluate edge (node, lc)
       if (!constrained ||
           !wagner_edge_violates_constraint(tree, lc, tip, *cd,
-                                            added_tips, i)) {
+                                            added_tips)) {
         int extra = fitch_indirect_length_bounded(
             tip_prelim, tree, ds, node, lc, best_extra);
         if (extra < best_extra) {
@@ -501,7 +505,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       // Evaluate edge (node, rc)
       if (!constrained ||
           !wagner_edge_violates_constraint(tree, rc, tip, *cd,
-                                            added_tips, i)) {
+                                            added_tips)) {
         int extra = fitch_indirect_length_bounded(
             tip_prelim, tree, ds, node, rc, best_extra);
         if (extra < best_extra) {
@@ -517,10 +521,12 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
 
     // Guard: if constraint filtered every edge, fall back to root edge.
     // This should not happen after the cn==root fix, but protects against
-    // any remaining edge case in constraint logic.
+    // any remaining edge case in constraint logic. The fallback edge is not
+    // constraint-checked, so flag it and warn after construction.
     if (best_above < 0 || best_below < 0) {
       best_above = n_tip;
       best_below = tree.left[0];
+      if (constrained) constraint_fallback = true;
     }
 
     // Insert tip at the best edge
@@ -544,6 +550,13 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   // Fitch; for NA datasets or IW, score_tree gives the authoritative result.
   tree.build_postorder();
   double score = score_tree(tree, ds);
+
+  if (constraint_fallback) {
+    Rf_warning(
+      "AdditionTree(): constraint could not be honoured for at least one "
+      "taxon insertion; the returned tree may violate the constraint. "
+      "Consider supplying a `sequence` that adds constrained taxa earlier.");
+  }
 
   WagnerResult result;
   result.score = score;

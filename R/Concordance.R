@@ -166,7 +166,7 @@ ClusteringConcordance <- function(
     return(NULL)
   }
   if (is.null(tree)) {
-    warning("Cannot calculate concordance without `dataset`.")
+    warning("Cannot calculate concordance without `tree`.")
     return(NULL)
   }
 
@@ -259,7 +259,17 @@ ClusteringConcordance <- function(
     charInfo <- MutualClusteringInfo(tree, charSplits)[at[["index"]]]
     if (is.numeric(normalize)) {
       rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
-      randInfo <- MutualClusteringInfo(rTrees, charSplits)[, attr(dataset, "index")]
+      # Score each random tree against `charSplits` separately: characters with
+      # ambiguous tokens yield splits over different tip subsets, and the
+      # vectorised `MutualClusteringInfo(<list of trees>, <list of splits>)`
+      # path cannot reconcile a single label set across them ("Old and new
+      # labels must match"). Looping one tree at a time mirrors the working
+      # `charInfo` call above.
+      randInfo <- t(vapply(
+        rTrees,
+        function(rt) MutualClusteringInfo(rt, charSplits),
+        double(length(charSplits))
+      ))[, attr(dataset, "index"), drop = FALSE]
       randMean <- colMeans(randInfo)
       var <- rowSums((t(randInfo) - randMean) ^ 2) / (normalize - 1)
       mcse <- sqrt(var / normalize)
@@ -311,6 +321,16 @@ ClusteringConcordance <- function(
              mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
              structure(ret, hMax = charMax, mcse = mcseInfo)
            } else {
+             # The characterwise return is deliberately NOT random-expectation
+             # normalized for logical `normalize`: `charInfo` is
+             # MutualClusteringInfo() against the whole tree, whereas the
+             # analytic `zero` baseline above is per-single-split expected MI, so
+             # subtracting it would mix incompatible quantities (and the
+             # entropy-weighted variant was abandoned -- see the note below the
+             # @return docs). Only the Monte-Carlo path (numeric `normalize`)
+             # offers a same-scale empirical baseline. So return charInfo scaled
+             # by its maximum (hBest-like), as shipped since the original
+             # implementation (#205).
              structure(charInfo / charMax, hMax = charMax)
            }
          }, {

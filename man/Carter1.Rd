@@ -27,6 +27,16 @@ are typically zero.}
 
 \item{a, b}{Number of leaves labelled \code{0} and \code{1}.}
 }
+\value{
+\code{Carter1()} returns the number of unrooted binary trees on which a
+binary character with \code{a} leaves in one state and \code{b} in the other can be
+reconstructed using exactly \code{m} steps.
+\code{Log2Carter1()} and \code{LogCarter1()} return that count logged to base 2 and to
+base \eqn{e}, respectively.
+\code{MaddisonSlatkin()} returns a numeric vector giving, for each requested
+\code{steps} count, the natural logarithm of the fraction of unrooted binary
+trees on which the character requires that number of steps.
+}
 \description{
 Calculate the number of unrooted binary trees on which Fitch parsimony
 reconstructs exactly \emph{m} steps for a character.

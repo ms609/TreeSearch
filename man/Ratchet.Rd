@@ -174,7 +174,11 @@ Defaults to a small value that will counter rounding errors.}
 \code{MorphyBootstrap()} returns a tree that is optimal under a random
 sampling of the original characters.
 
-\code{Ratchet()} returns a tree modified by parsimony ratchet iterations.
+When \code{returnAll = FALSE} (the default), \code{Ratchet()} returns a single
+optimal \code{phylo} tree, with its parsimony score in attribute \code{"score"}.
+When \code{returnAll = TRUE}, it returns a \code{multiPhylo} of the optimal (and
+near-optimal, within \code{suboptimal}) trees encountered, each carrying its own
+\code{"score"} attribute.
 
 \code{MultiRatchet()} returns a list of optimal trees
 produced by \code{nSearch} \code{Ratchet()} searches, from which a consensus tree can

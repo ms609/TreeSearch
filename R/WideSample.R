@@ -94,6 +94,9 @@
 #' library("TreeTools")
 #' trees <- as.phylo(0:99, nTip = 8)
 #'
+#' # WideSample() needs the MaxMin package (Max-Min diversity solvers)
+#' if (requireNamespace("MaxMin", quietly = TRUE)) {
+#'
 #' # Fast FarFirst subsample (deterministic, matrix-free)
 #' sub10 <- WideSample(trees, 10, effort = 1)
 #' length(sub10)  # 10
@@ -117,6 +120,8 @@
 #' }
 #' }
 #'
+#' }
+#'
 #' @references
 #' \insertRef{Gonzalez1985}{TreeSearch}
 #'
@@ -137,6 +142,11 @@ WideSample <- function(
     effort = NULL,
     maxSeconds = 60
 ) {
+  if (!requireNamespace("MaxMin", quietly = TRUE)) {
+    stop("`WideSample()` requires the 'MaxMin' package, which provides the ",
+         "Max-Min diversity solvers; install it from ",
+         "https://github.com/ms609/MaxMin", call. = FALSE)
+  }
   # Build ceiling: largest N for which we materialize a dense N x N matrix from
   # a distance function. ~1.1 GB at 12,000; as.matrix.dist overflows near
   # 46,340 (the dist half-vector exceeds .Machine$integer.max).
@@ -249,7 +259,8 @@ WideSample <- function(
     `2` = MaxMin::DropAdd(n, dmat, maxSeconds = maxSeconds),
     # Tier 3: Grasp likewise returns the bare index vector (RNG-dependent).
     `3` = MaxMin::Grasp(n, dmat, maxSeconds = maxSeconds),
-    # Tier 4: exact solver returns a list; take its `$indices`.
+    # Tier 4: exact solver returns the bare (ascending) index vector, like the
+    # other tiers.
     `4` = {
       if (nTrees > exactCeiling) {
         warning("Exact MMDP (effort = 4) on ", nTrees,
@@ -257,7 +268,7 @@ WideSample <- function(
                 "or 3 (Grasp), or a larger `maxSeconds`.",
                 immediate. = TRUE)
       }
-      MaxMin::ExactMaxMin(k = n, dmat, maxSeconds = maxSeconds)$indices
+      MaxMin::ExactMaxMin(k = n, dmat, maxSeconds = maxSeconds)
     }
   )
 

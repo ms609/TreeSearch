@@ -29,6 +29,39 @@ test_that("SearchControl() accepts custom values", {
  expect_equal(ctrl$xssRounds, 3L)
 })
 
+test_that("SearchControl() rejects crash-inducing count parameters (RT-CPP-01)", {
+  # Zero partitions -> integer division by zero in xss_partition() (SIGFPE);
+  # zero poolMaxSize -> out-of-bounds read in TreePool::add() (segfault). Both
+  # are uncatchable crashes, so they must be rejected at the R boundary.
+  expect_error(SearchControl(xssPartitions = 0L),  "xssPartitions.*positive")
+  expect_error(SearchControl(xssPartitions = -1L), "xssPartitions.*positive")
+  expect_error(SearchControl(xssPartitions = NA_integer_), "xssPartitions.*positive")
+  expect_error(SearchControl(cssPartitions = 0L),  "cssPartitions.*positive")
+  expect_error(SearchControl(poolMaxSize = 0L),    "poolMaxSize.*positive")
+  expect_error(SearchControl(poolMaxSize = -3L),   "poolMaxSize.*positive")
+  # The boundary value 1 (single sector / single-tree pool) is valid.
+  expect_equal(SearchControl(xssPartitions = 1L)$xssPartitions, 1L)
+  expect_equal(SearchControl(cssPartitions = 1L)$cssPartitions, 1L)
+  expect_equal(SearchControl(poolMaxSize = 1L)$poolMaxSize, 1L)
+})
+
+test_that("search survives a non-positive poolMaxSize via a raw control list", {
+  # A plain list control bypasses SearchControl()'s validation, so the C++
+  # TreePool must itself clamp max_size >= 1 (else entries_[0] on an empty
+  # pool segfaults). If the clamp regresses this crashes the worker, which is
+  # an acceptable loud signal for so severe a bug.
+  skip_on_cran()
+  set.seed(1)
+  dat <- TreeTools::MatrixToPhyDat(matrix(
+    sample(0:1, 24 * 30, replace = TRUE), nrow = 24,
+    dimnames = list(paste0("t", 1:24), NULL)))
+  ctrl <- SearchControl(ratchetCycles = 1L)
+  ctrl$poolMaxSize <- 0L
+  res <- MaximizeParsimony(dat, maxReplicates = 2L,
+                           verbosity = 0L, control = ctrl)
+  expect_true(is.finite(attr(res, "score")))
+})
+
 test_that("print.SearchControl works", {
   ctrl <- SearchControl()
   expect_output(print(ctrl), "SearchControl object")

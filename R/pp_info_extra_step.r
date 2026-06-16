@@ -337,10 +337,18 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #'   Only observed singleton states need non-zero counts; polymorphic entries
 #'   are typically zero.
 #' 
+#' @return `Carter1()` returns the number of unrooted binary trees on which a
+#' binary character with `a` leaves in one state and `b` in the other can be
+#' reconstructed using exactly `m` steps.
+#' `Log2Carter1()` and `LogCarter1()` return that count logged to base 2 and to
+#' base \eqn{e}, respectively.
+#' `MaddisonSlatkin()` returns a numeric vector giving, for each requested
+#' `steps` count, the natural logarithm of the fraction of unrooted binary
+#' trees on which the character requires that number of steps.
 #' @references \insertCite{Steel1993,Steel1995,Steel1996}{TreeSearch}
 #' \insertAllCited{}
 #' @importFrom TreeTools LogDoubleFactorial
-#' @examples 
+#' @examples
 #' # The character `0 0 0 1 1 1`
 #' Carter1(1, 3, 3) # Exactly one step
 #' Carter1(2, 3, 3) # Two steps (one extra step)
@@ -476,6 +484,9 @@ LogCarter1 <- function (m, a, b) {
 #' Number of trees with one extra step
 #' @param \dots Vector or series of integers specifying the number of leaves
 #' bearing each distinct non-ambiguous token.
+#' @return `WithOneExtraStep()` returns the number of unrooted binary trees on
+#' which a character with the specified token counts can be reconstructed using
+#' exactly one step more than the minimum.
 #' @importFrom TreeTools NRooted NUnrooted
 #' @examples
 #' WithOneExtraStep(1, 2, 3)

@@ -195,7 +195,7 @@ static bool solve_nnls(const Design& d, std::vector<double>& v) {
   if (B == 0) return true;
 
   std::vector<char> passive(B, 0);
-  std::vector<double> w(B), s(B, 0.0), grad(B);
+  std::vector<double> w(B), s(B, 0.0);
   std::vector<int> idx;
   idx.reserve(B);
 
