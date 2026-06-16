@@ -16,6 +16,42 @@ in `findings.md`.
 
 ---
 
+area: 10 (signal-resolution only — NOT a full finder round; last_focus left at 9)
+reviewed_by: Claude (cpp-search, /red-team orchestrator diagnostic)
+date: 2026-06-16
+tier: opus (orchestrator; finder not spent — signal dissolved by direct diagnostic)
+yield: 0 — the area-9 high-sev signal REFUTED with positive correctness evidence
+notes: User invoked `/red-team` to pick up the area-9 high-severity signal (kernel
+NA+IW score ≠ `TreeLength()` on Vinther2008). **Root-caused and REFUTED directly,
+without spending a finder** (best issues-per-token outcome). The area-9 finder
+mis-diagnosed it as "a different per-character minimum for inapplicable chars." It is
+actually **plain-IW vs XPIWE**: `TreeLength()` defaults to `extended_iw = TRUE`
+(XPIWE — Goloboff 2014 Extension-3 missing-data correction, `R/tree_length.R:144-156`:
+`f = 1 + r·(nTaxa−obs)/obs`, `eff_k = k/f`, `phi = (1+eff_k)/(1+k)`,
+`fit = h/(h+eff_k)`, `Σ fit·w·phi`), whereas the area-9 cross-check called the kernel
+via `ts_fitch_score(..., min_steps, concavity)` — **plain IW**, no XPIWE args. Two
+different objectives by construction; the "non-rational" 0.16573 the finder flagged is
+the `phi`/`eff_k` scaling (`eff_k≈9.3`), not a min-steps bug. **Three diagnostics
+(installed pkg, Vinther2008) settle it:** (1) `TreeLength(extended_iw=FALSE)` ==
+kernel `ts_fitch_score` plain IW, **exactly** (8.566683 == 8.566683). (2)
+`TreeLength(extended_iw=TRUE)` differs (8.371583) — the XPIWE correction, by design.
+(3) **kernel XPIWE == R XPIWE**: a real `MaximizeParsimony(concavity=10)` run's
+`attr(.,'score')` (XPIWE, since production sets `useXpiwe <- isTRUE(extended_iw) &&
+is.finite(concavity) && !useProfile`, `R/MaximizeParsimony.R:813-839`) == an
+independent `TreeLength()` XPIWE rescore of the returned tree, **exactly** (1.521827).
+So production **optimises and reports the same objective** in BOTH plain-IW and XPIWE
+modes — no optimise-vs-report mismatch. (Numbers are tree-dependent; the three
+equalities are not.) **Conclusion: NOT A BUG.** The signal raised in the area-9 entry
+below is resolved; do not carry it forward. **last_focus deliberately left at 9** — this
+was a targeted signal check, not a rotation round, so area 10 still earns a proper
+finder sweep next `/red-team`. **Residual (un-spent) area-10 surface for that future
+round:** profile delta capping (7cff7870), `e/(k+e)` delta, `precomputed_steps` offset,
+`info_amounts` capping, `concavity=1.0` profile sentinel, DAT-002 `obs==0` XPIWE
+division reachability, and the OPEN clipped-subtree IW-screening follow-up. With fable
+returning, that round is the natural escalation target (area-10 opus-class seam was dry
+2026-05-19 + 2026-05-26; XPIWE consistency now positively verified, so what remains is
+fable-class subtlety).
+
 area: 9
 reviewed_by: Claude (cpp-search, /red-team)
 date: 2026-06-16
