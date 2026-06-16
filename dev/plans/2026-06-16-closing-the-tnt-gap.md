@@ -167,8 +167,20 @@ save/restore at ~23% of TBR time (a full ~190 KB memcpy per accepted/rejected mo
 `reset_states` `std::fill` at ~4%. `apply_tbr_move` already knows the dirty nodes, so selective save/restore
 of only those rows is est. **10–16% wall-clock**, **dataset-agnostic, no score trade-off** — it cuts the
 time per candidate rather than the candidate count, which is orthogonal to the score floor and directly
-targets wall-clock. This is the next increment: a profiling-verified, behaviour-neutral kernel
-optimisation (gated by the smoke/iterate harness for score-identity, micro-benchmarked for the delta).
+targets wall-clock.
+
+**Correction on inspection (do NOT act on the stale figures above):**
+- The `reset_states` `std::fill` (design "fix #2", ~4%) was **already removed in T-261**
+  (`ts_tree.cpp:265-277` — "every array entry read is written before it is read"). That win is banked.
+- The cited StateSnapshot ~23% comes from a VTune doc that **predates T-261** (it *recommended* the
+  fill removal T-261 then made) and likely T-300's incremental-SPR accept path — so the figure is
+  **stale and the share has probably shrunk**. The remaining lever (selective `StateSnapshot`
+  save/restore) is intricate, correctness-critical surgery on the most-optimised code in the repo.
+- **Decision:** it must be **re-profiled in a fresh `/profile` (VTune) round** to confirm it is still a
+  meaningful hotspot *before* the surgery — not done on stale data at the tail of this round. Verification
+  when pursued: behaviour-neutral via **candidate-identity** (a correct timing optimisation must leave
+  `candidates_evaluated` and scores bit-identical vs baseline on the iterate gate) + a wall-clock
+  micro-benchmark for the delta; keep only if identical-and-faster, else revert.
 
 **Phase 3 — branch-collapsing search** (Goloboff 2023): search the reduced polytomy
 tree space, not just skip candidates/dedup as now. Structural swing; pursue only if
