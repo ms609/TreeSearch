@@ -31,6 +31,57 @@ static uint64_t fast_hash(const uint64_t* data, int n_words) {
   return hash;
 }
 
+// Reusable open-addressed hash set for per-clip virtual_prelim dedup (Phase 3A).
+// S-PROF round 3 / Tier 2: replaces a per-clip std::unordered_set<uint64_t>,
+// which heap-allocated a bucket array plus one node per insert on every clip of
+// the TBR hot loop. Declared once as a plain local before the clip loop — NOT
+// static thread_local: insert() runs per reroot candidate, and MinGW resolves
+// thread_local in a loaded DLL via emutls (a function call per access), which
+// cancelled the win in an earlier thread_local variant. A plain local in
+// tbr_search is already per-thread-safe (each thread owns its call frame) and
+// has zero TLS cost. Generation stamping makes reset() O(1): a slot counts as
+// occupied only while its stamp equals the current generation, so per-clip
+// clearing just bumps the generation. Dedup semantics are identical to
+// unordered_set<uint64_t> — insert() returns true iff this exact 64-bit key was
+// not already present this generation (distinct keys never merge; identical keys
+// always do; collisions resolve by linear probing). fast_hash is FNV-1a (weak
+// low-bit avalanche), so probe from Fibonacci-mixed high bits, not key & mask.
+struct VpHashSet {
+  std::vector<uint64_t> keys;
+  std::vector<uint32_t> stamp;
+  uint32_t cur = 0;
+  int shift = 64;
+  size_t mask = 0;
+
+  void reset(size_t expected) {
+    size_t cap = 16;
+    while (cap < (expected + 1) * 2) cap <<= 1;   // load factor < 0.5
+    if (keys.size() < cap) {
+      keys.assign(cap, 0);
+      stamp.assign(cap, 0);
+      cur = 0;                                     // all stamps 0 after grow
+    }
+    mask = keys.size() - 1;
+    shift = 64 - popcount64(mask);                 // keep top log2(cap) bits
+    if (++cur == 0) {                              // generation wrapped (2^32)
+      std::fill(stamp.begin(), stamp.end(), 0);
+      cur = 1;
+    }
+  }
+
+  // True if newly inserted; false if `key` was already present this generation.
+  bool insert(uint64_t key) {
+    size_t i = (key * 0x9E3779B97F4A7C15ULL) >> shift;
+    while (stamp[i] == cur) {
+      if (keys[i] == key) return false;
+      i = (i + 1) & mask;
+    }
+    keys[i] = key;
+    stamp[i] = cur;
+    return true;
+  }
+};
+
 // --- Helpers (file-local) ---
 
 static double full_rescore(TreeState& tree, const DataSet& ds) {
@@ -687,6 +738,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Pre-allocated below_actives cache (NA TBR rerooting)
   std::vector<uint64_t> below_actives_cache;
 
+  // Per-clip rerooting dedup table (Tier 2). Declared once here, reset() per
+  // clip — see VpHashSet above for why this is a plain local, not thread_local.
+  VpHashSet seen_vp_hashes;
+
   // Use flat FlatBlock variants for indirect scoring when weight==1 and no
   // upweight_mask is active.  This is true for normal EW search; false during
   // ratchet phases that apply upweighting.  Checked once per tbr_search call.
@@ -943,7 +998,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
         // Phase 3A: Symmetry-breaking — deduplicate equivalent rerootings.
         // Seed with clip_prelim hash (SPR case already evaluated above).
-        std::unordered_set<uint64_t> seen_vp_hashes;
+        // Reset the pre-loop dedup table (O(1) generation bump, no alloc).
+        seen_vp_hashes.reset(sub_edges.size());
         seen_vp_hashes.insert(fast_hash(clip_prelim, tree.total_words));
 
         for (auto& [sp, sc] : sub_edges) {
@@ -963,7 +1019,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           // Hash-based dedup: skip if we've seen this virtual_prelim before
           uint64_t vp_hash = fast_hash(virtual_prelim.data(),
                                          tree.total_words);
-          if (!seen_vp_hashes.insert(vp_hash).second) {
+          if (!seen_vp_hashes.insert(vp_hash)) {
             continue;  // Already evaluated an equivalent rerooting
           }
 
