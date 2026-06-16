@@ -170,3 +170,47 @@ test_that("LengthAdded() qm scalar-unwrap: ≥2 fully-ambiguous contrast rows", 
     expect_equal(unname(result[[tip]]), 0)
   }
 })
+
+test_that("LengthAdded() qm-empty: no fully-ambiguous contrast row", {
+  # Regression: when a character has a {-, state} (partial-inapplicable)
+  # ambiguity but NO fully ambiguous ("?") contrast row, `qm` was integer(0).
+  # A leaf whose starting token is inapplicable then hit
+  # `charQm[[leaf]] <- qm`, assigning integer(0) and silently corrupting the
+  # phyDat (dropping an element) — surfacing as a recycling warning and a
+  # wrong instability score.  The fix appends an all-ones fallback row.
+  skip_if_not_installed("phangorn")
+  nTips     <- 6L
+  tipLabels <- paste0("t", seq_len(nTips))
+  # t3 inapplicable ("-"); t6 has the {-,0} partial ambiguity (app AND inapp).
+  tipCodes  <- c("0", "1", "-", "0", "1", "{-0}")
+  names(tipCodes) <- tipLabels
+
+  # No "?" (all-ones) row exists, so `qm` is empty pre-fix.
+  levs <- c("-", "0", "1", "{-0}")
+  cont <- matrix(
+    c(1, 0, 0,   # "-"
+      0, 1, 0,   # "0"
+      0, 0, 1,   # "1"
+      1, 1, 0),  # "{-0}" — applicable AND inapplicable
+    nrow = 4L, ncol = 3L, byrow = TRUE,
+    dimnames = list(levs, c("-", "0", "1"))
+  )
+  char <- phangorn::phyDat(
+    setNames(as.list(tipCodes), tipLabels),
+    type = "USER", levels = levs, contrast = cont
+  )
+  set.seed(11L)
+  trees <- c(TreeTools::RandomTree(char, root = TRUE))
+
+  # Must not warn (phyDat recycling) and must return one finite, non-negative
+  # value per tip.
+  expect_no_warning(result <- LengthAdded(trees, char, concavity = 10))
+  expect_length(result, nTips)
+  expect_false(anyNA(result))
+  expect_true(all(result >= 0))
+
+  # EW path likewise.
+  expect_no_warning(resultEw <- LengthAdded(trees, char))
+  expect_length(resultEw, nTips)
+  expect_false(anyNA(resultEw))
+})

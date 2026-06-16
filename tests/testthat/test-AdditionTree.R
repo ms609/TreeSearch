@@ -112,3 +112,31 @@ test_that("AdditionTree() handles edge cases", {
     AdditionTree(dataset[1:4], conc = "profile")
   )))
 })
+
+test_that("AdditionTree() rejects duplicated `sequence` taxa", {
+  library("TreeTools", quietly = TRUE)
+  dataset <- MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 1,
+      0, 1, 1, 0, 0, 1), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  taxa <- names(dataset)
+
+  # A duplicated taxon name in a *character* sequence used to slip past
+  # validation and poison the C++ kernel's addition order: the repeated tip
+  # was inserted twice and a different tip never added, so AdditionTree()
+  # silently returned a phylo containing one taxon twice and dropping another
+  # (which still passed checkValidPhylo / is.binary).  The numeric path always
+  # rejected duplicates; the character path must too.
+  expect_error(AdditionTree(dataset, sequence = c(taxa[1], taxa[1], taxa[2])),
+               "more than once")
+  expect_error(
+    AdditionTree(dataset, sequence = c(taxa[1], taxa[2:5], taxa[1])),
+    "more than once")
+  # numeric duplicates remain rejected (regression guard for both paths)
+  expect_error(AdditionTree(dataset, sequence = c(1L, 1L, 2L)),
+               "distinct whole-number")
+
+  # Valid distinct sequences (full + partial) are unaffected.
+  expect_equal(NTip(AdditionTree(dataset, sequence = taxa)), 6L)
+  expect_equal(NTip(AdditionTree(dataset, sequence = taxa[c(3, 1)])), 6L)
+})

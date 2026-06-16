@@ -94,6 +94,18 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   } else {
     qmApp <- qmApp[[1L]]
   }
+  # If no fully ambiguous (`?`) token row exists, `qm` is empty; a leaf whose
+  # starting token is inapplicable would then be assigned `integer(0)` at
+  # `charQm[[leaf]] <- qm`, silently corrupting the phyDat (dropping an
+  # element).  Append an all-ones row (every state, applicable + inapplicable)
+  # and point `qm` at it.  Done after the `qmApp` fallback so the row indices
+  # of `cont`/`contApp`/`app`/`inapp` computed above remain consistent; this
+  # only adds an extra row to the contrast that `qm` references.
+  if (length(qm) == 0L) {
+    newContrast <- rbind(attr(char, "contrast"), rep(1, dim(cont)[2]))
+    attr(char, "contrast") <- newContrast
+    qm <- nrow(newContrast)
+  }
   
   QMScore <- function(leaf) {
     startToken <- char[[leaf]]

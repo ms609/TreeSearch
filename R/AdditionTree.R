@@ -56,6 +56,13 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
     stop("`sequence` must list only taxa present in `dataset` ",
          "(by name, or by valid index)")
   }
+  # A duplicated taxon poisons the C++ kernel's addition order: the repeated
+  # tip is inserted twice and a different tip is never added, so the returned
+  # tree silently contains one taxon twice and drops another (the numeric path
+  # already rejects duplicates; mirror that here for character `sequence`).
+  if (anyDuplicated(sequence)) {
+    stop("`sequence` must not list any taxon more than once")
+  }
   unlisted <- setdiff(taxa, sequence)
   if (length(unlisted) > 0L) {
     sequence <- c(sequence, sample(unlisted))
