@@ -621,6 +621,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     return result;
   }
 
+  // Reset the candidate-evaluation counter for this search (serial path).
+  ds.n_candidates_evaluated = 0;
+
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();
 
@@ -1105,6 +1108,8 @@ finish:
       result.strategy_successes[i] = strategy_tracker.successes(s);
     }
   }
+
+  result.candidates_evaluated = ds.n_candidates_evaluated;
 
   return result;
 }

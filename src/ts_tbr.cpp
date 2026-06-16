@@ -1427,6 +1427,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   bool converged = !(params.max_accepted_changes > 0
                      && n_accepted >= params.max_accepted_changes);
 
+  // Accumulate candidate count into the dataset-level diagnostic counter
+  // (one add per search call, not per candidate). See DataSet docs.
+  ds.n_candidates_evaluated += n_evaluated;
+
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
                    converged, std::move(diag_records)};
 }

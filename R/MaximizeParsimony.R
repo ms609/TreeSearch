@@ -421,6 +421,12 @@
 #'     \item{`replicate_scores`}{Numeric vector of the best parsimony score
 #'       found by each completed replicate.  Passed to [ScoreSpectrum()] for
 #'       Chao1-style landscape coverage estimation.}
+#'     \item{`candidates_evaluated`}{Number of TBR/SPR-class candidate
+#'       rearrangements evaluated across the whole search — the analogue of
+#'       TNT's "rearrangements examined", useful for comparing search
+#'       efficiency (candidates per unit of score improvement).  Counted only
+#'       for single-threaded searches (`0` when `nThreads > 1`); excludes
+#'       NNI-warmup and simulated-annealing candidates.}
 #'   }
 #'
 #' @examples
@@ -898,6 +904,7 @@ MaximizeParsimony <- function(
     timings = unlist(result$timings),
     strategy_diagnostics = result$strategy_diagnostics,
     replicate_scores = result$replicate_scores,
+    candidates_evaluated = result$candidates_evaluated,
     class = "multiPhylo"
   )
 }

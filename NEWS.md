@@ -1,5 +1,10 @@
 # To integrate into 2.0.0 notes
 
+- `MaximizeParsimony()` results now carry a `candidates_evaluated` attribute:
+  the number of TBR/SPR-class rearrangements examined during a single-threaded
+  search (the analogue of TNT's "rearrangements examined"), for diagnosing
+  search efficiency.
+
 - New `SearchControl()` option `stallEscalateFactor` (default `1`, disabled):
   when a driven search stalls, escalate ratchet perturbation strength for
   subsequent replicates so the search adapts to a difficult dataset at runtime.

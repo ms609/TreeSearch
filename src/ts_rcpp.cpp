@@ -1733,7 +1733,8 @@ List ts_driven_search(
       Named("perturb_stop") = result.perturb_stop,
       Named("timings") = timings,
       Named("strategy_diagnostics") = strategy_diag,
-      Named("replicate_scores") = rep_scores
+      Named("replicate_scores") = rep_scores,
+      Named("candidates_evaluated") = (double) result.candidates_evaluated
     );
   }
 
@@ -1760,7 +1761,8 @@ List ts_driven_search(
     Named("perturb_stop") = result.perturb_stop,
     Named("timings") = timings,
     Named("strategy_diagnostics") = strategy_diag,
-    Named("replicate_scores") = rep_scores
+    Named("replicate_scores") = rep_scores,
+    Named("candidates_evaluated") = (double) result.candidates_evaluated
   );
 }
 

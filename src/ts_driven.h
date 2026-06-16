@@ -300,6 +300,11 @@ struct DrivenResult {
   // Score from each completed replicate's local optimum, in order of
   // completion.  Used by ScoreSpectrum() for Chao1-style coverage estimation.
   std::vector<double> replicate_scores;
+
+  // Total TBR/SPR-class candidate rearrangements evaluated across the whole
+  // search (TNT "Total rearrangements examined" analogue). Serial path only;
+  // 0 when run in parallel. See DataSet::n_candidates_evaluated.
+  long long candidates_evaluated = 0;
 };
 
 // Result of a single replicate (tree + score, no pool interaction).

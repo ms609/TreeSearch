@@ -26,6 +26,19 @@ test_that("strategy = 'sprint' runs and returns valid result", {
   expect_equal(NTip(result[[1]]), NTip(ds))
 })
 
+test_that("candidates_evaluated attribute is reported for serial search", {
+  # Diagnostic counter (TNT "rearrangements examined" analogue): a positive,
+  # finite scalar for a single-threaded search. See MaximizeParsimony @return.
+  set.seed(3418)
+  result <- MaximizeParsimony(ds, strategy = "sprint",
+                               maxReplicates = 2L, targetHits = 1L,
+                               nThreads = 1L, verbosity = 0L)
+  ce <- attr(result, "candidates_evaluated")
+  expect_type(ce, "double")
+  expect_length(ce, 1L)
+  expect_true(is.finite(ce) && ce > 0)
+})
+
 test_that("strategy = 'default' runs and returns valid result", {
   set.seed(5726)
   result <- MaximizeParsimony(ds, strategy = "default",

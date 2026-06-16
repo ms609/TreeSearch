@@ -175,6 +175,15 @@ struct DataSet {
   // where stride = n_chars * max_states.
   // 0.0 = state allowed, INF = state disallowed.
   std::vector<double> sankoff_tip_costs;
+
+  // Diagnostic counter: total TBR/SPR-class candidate rearrangements evaluated
+  // (the analogue of TNT's "Total rearrangements examined"). Accumulated by
+  // tbr_search() across an entire serial driven_search. `mutable` because the
+  // kernels take `const DataSet&`. Valid only single-threaded: in parallel each
+  // worker copies the DataSet (ts_parallel.cpp), so per-worker counts are not
+  // aggregated. Excludes NNI-warmup and annealing candidates (neither funnels
+  // through tbr_search).
+  mutable long long n_candidates_evaluated = 0;
 };
 
 // Build a DataSet from R-side data.

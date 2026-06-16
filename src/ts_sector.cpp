@@ -738,6 +738,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
 
     // Build reduced dataset
     ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
+    const long long sector_cand0 = rd.data.n_candidates_evaluated;
 
     // Score the current sector topology
     double sector_current = score_tree(rd.subtree, rd.data);
@@ -746,6 +747,8 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     double sector_best = search_sector(rd, params.internal_ratchet_cycles,
                                        params.internal_max_hits, params.clip_order);
     ++result.n_sectors_searched;
+    // Propagate reduced-dataset candidates to the parent (diagnostics).
+    ds.n_candidates_evaluated += rd.data.n_candidates_evaluated - sector_cand0;
 
     bool improved = sector_best < sector_current;
     bool accept = improved ||
@@ -894,12 +897,15 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       // rejection (both paths call score_tree before continuing).
 
       ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
+      const long long sector_cand0 = rd.data.n_candidates_evaluated;
 
       double sector_current = score_tree(rd.subtree, rd.data);
       double sector_best = search_sector(
           rd, params.internal_ratchet_cycles, params.internal_max_hits,
           params.clip_order);
       ++result.n_sectors_searched;
+      // Propagate reduced-dataset candidates to the parent (diagnostics).
+      ds.n_candidates_evaluated += rd.data.n_candidates_evaluated - sector_cand0;
 
       bool improved = sector_best < sector_current;
       bool accept = improved ||

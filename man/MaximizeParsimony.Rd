@@ -220,6 +220,12 @@ the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
 \item{\code{replicate_scores}}{Numeric vector of the best parsimony score
 found by each completed replicate.  Passed to \code{\link[=ScoreSpectrum]{ScoreSpectrum()}} for
 Chao1-style landscape coverage estimation.}
+\item{\code{candidates_evaluated}}{Number of TBR/SPR-class candidate
+rearrangements evaluated across the whole search — the analogue of
+TNT's "rearrangements examined", useful for comparing search
+efficiency (candidates per unit of score improvement).  Counted only
+for single-threaded searches (\code{0} when \code{nThreads > 1}); excludes
+NNI-warmup and simulated-annealing candidates.}
 }
 }
 \description{
