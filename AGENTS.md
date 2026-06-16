@@ -311,9 +311,14 @@ matches the worktree directory basename.
 
 1. **Delete** the task row from `to-do.md`. If the task was the last open
    row in a section/group, delete the section header too.
-2. **Append** a summary row to `completed-tasks.md` under the current date
-   heading (create a new `## YYYY-MM-DD` heading if needed):
-   `| T-nnn | Short description | <id> | Brief notes |`
+2. **`completed-tasks.md` is decision-only — not an archive.** For a routine
+   fix, the commit/PR *is* the record; do **not** add a row. Add a row **only**
+   when the task closes without a routine fix — a **not-a-bug determination, a
+   superseded/ruled-out design, or a negative experimental result** whose
+   reasoning a future agent would otherwise re-investigate. When you do, append
+   one row to the matching section with the terminal decision + a pointer to the
+   write-up (e.g. `dev/benchmarks/*.md`). Keep it to a line or two; the detail
+   lives in the linked file, not the row.
 3. Update `coordination.md` if strategic objectives are affected.
 4. Run `bash dispatch.sh checkin <id> --done`.
 
@@ -388,7 +393,7 @@ Priority: P3 when ≥6 OPEN tasks, P2 when 3–5, P1 when <3.
 | `u.###` | General user issue reports → triage to matching section, then delete |
 | `to-do.md` | Task queue (active/open tasks only) |
 | `remote-jobs.md` | Pending async jobs (Hamilton SLURM, long GHA) — check at session start |
-| `completed-tasks.md` | Archive of completed tasks |
+| `completed-tasks.md` | Decision-only log: not-a-bug / superseded / negative-result closures. `grep` before reopening a closed task; don't archive routine fixes here |
 | `coordination.md` | Strategic plan |
 | `AGENTS.md` | Conventions + workflow reference |
 | `.dispatch/state.json` | Live dispatcher state (active agents, check-ins, budget tally) |
