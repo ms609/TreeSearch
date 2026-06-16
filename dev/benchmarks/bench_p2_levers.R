@@ -47,6 +47,16 @@ all_configs <- list(
     intraFuse = list(intraFuse = TRUE),
     wagner5   = list(wagnerStarts = 5L),
     combo     = list(intraFuse = TRUE, wagnerStarts = 5L)
+  ),
+  # Phase 3 probe: rebalance budget from ratchet toward EXACT sectorial (CSS),
+  # which avoids the approximate XSS/RSS miss-and-revert waste. Tests whether
+  # the cheapest exact phase, given more budget, carries more of the search.
+  rebalance = list(
+    baseline    = list(),
+    css4        = list(cssRounds = 4L),
+    ratchetDown = list(ratchetCycles = 8L),
+    rebalA      = list(ratchetCycles = 12L, cssRounds = 4L),
+    rebalB      = list(ratchetCycles = 8L, cssRounds = 4L, cssPartitions = 6L)
   )
 )
 configs <- all_configs[[Sys.getenv("TS_SWEEP", "ratchet")]]

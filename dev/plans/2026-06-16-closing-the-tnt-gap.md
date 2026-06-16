@@ -116,6 +116,60 @@ sectorial) — weeks-scale, the only thing that could move a ratchet-dominated p
 TNT's per-candidate frugality, but hard to justify for a residual +1/+3 steps. Recommendation:
 **(a)+(b)**, not (c) — the data does not justify a weeks-scale structural rewrite for this gap.
 
+## Phase 3 design (2026-06-16) — structural options scoped; cheap falsifiable probe first
+
+A 4-agent design workflow assessed three structural options to cut candidates-per-improvement;
+the user opted to commit to Phase 3, so it was scoped before any code.
+
+- **Branch-collapsing / full polytomy search (Goloboff 2023): REJECTED for this gap.** A 3–6 week
+  tree-representation + Fitch-kernel + TBR-clip rewrite touching the most-optimized code in the repo
+  (binary `left/right` in `ts_tree.h`, the 2-input SIMD primitives in `ts_fitch`, TBR clip/regraft).
+  It attacks the wrong axis (frugality, not the escape/depth ratchet owns), and its mechanism barely
+  fires: the project already measured ~0% collapsed-edge rate on near-optimal binary morphological
+  trees, and the advisory collapsed-flag skip (`ts_tbr.cpp:817-820,919-921`) + `add_collapsed` pool
+  dedup already bank the easy ~80%.
+- **Exact-scoring sectorial (CSS): ALREADY ACTIVE on the gap datasets.** `css_search`
+  (`ts_sector.cpp:1005-1073`) runs full-tree TBR restricted to a `sector_mask` — exact by
+  construction, no HTU pseudo-tip, no miss-and-revert. `thorough` sets `cssRounds=2`, `large`
+  `cssRounds=1`, and `auto` routes 65–119t→thorough / ≥120t→large. So "implement exact sectorial"
+  is largely already done; the residual is a ratchet→CSS budget-**rebalance experiment** (days), not
+  a kernel rewrite.
+- **Union-based region-merging (Lever 1): cheap (days) but likely a no-op.** `compute_collapsed_regions`
+  (`ts_collapsed.cpp:106-170`) is built but DEAD CODE (zero callers); wiring it merges equal-resolution
+  regraft positions. The 0%-collapsed-rate finding predicts it barely fires at the optimum on the hard panel.
+
+**Gap-closure risk: HIGH.** All three reduce candidates-per-improvement (frugality) but none finds
+lower-score basins (the escape/depth axis ratchet owns at 63–83% of wall-clock). The +1/+3 most likely
+remains after any rewrite — consistent with the Phase 2 floor finding.
+
+**Decision (data-gated):** do the smallest structural slice that decides the rest — a falsifiable probe:
+(1) ratchet→CSS rebalance sweep on the gap panel (`p3_rebalance.csv`); (2) a collapsed-region/edge-rate
+probe at the optimum (Lever-1 go/no-go). Escalate to wiring Lever 1 ONLY if the rebalance beats baseline
+(no per-dataset regression) AND regions are non-trivial; otherwise confirm the floor and rest on the
+shipped (a) accept-floor + (b) opt-in `intensive` preset. Branch-collapsing is pursued only if both
+probes reveal a large, real collapsed signal the advisory path leaves on the table — which the existing
+data predicts they will not.
+
+### Phase 3 outcome (2026-06-16) — structural search rewrite NOT justified; pivot to per-candidate wall-clock
+
+The ratchet→CSS rebalance probe (`p3_rebalance.csv`, 3 seeds) is **FLAT**: every config that trades
+ratchet budget for exact CSS saves 28–51% candidates but **regresses the hard datasets** (Zanol +4,
+Giles +2); none beats baseline without a per-dataset score regression. With the design verdict
+(branch-collapsing wrong-axis + ~0% collapsed rate; CSS already active on the gap datasets) this is the
+third convergent confirmation that **the EW-Fitch score gap is at the practical floor and is
+landscape/escape-bound, not frugality-bound** — no structural *frugality* lever closes it. The Lever-1
+region-merging precondition (rebalance must beat baseline) failed, so it is not pursued; branch-collapsing
+is rejected.
+
+**Pivot — the movable lever for the original ~2× WALL-CLOCK concern is per-candidate COST, not count.**
+The frugality analysis surfaced it as "option 4": VTune (`vtune_tbr_analysis.md`, T-260) puts StateSnapshot
+save/restore at ~23% of TBR time (a full ~190 KB memcpy per accepted/rejected move) and a redundant
+`reset_states` `std::fill` at ~4%. `apply_tbr_move` already knows the dirty nodes, so selective save/restore
+of only those rows is est. **10–16% wall-clock**, **dataset-agnostic, no score trade-off** — it cuts the
+time per candidate rather than the candidate count, which is orthogonal to the score floor and directly
+targets wall-clock. This is the next increment: a profiling-verified, behaviour-neutral kernel
+optimisation (gated by the smoke/iterate harness for score-identity, micro-benchmarked for the delta).
+
 **Phase 3 — branch-collapsing search** (Goloboff 2023): search the reduced polytomy
 tree space, not just skip candidates/dedup as now. Structural swing; pursue only if
 Phase 1/2 data shows the candidate-frugality gap justifies it.
