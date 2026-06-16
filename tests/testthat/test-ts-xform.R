@@ -262,3 +262,45 @@ test_that("Xform gain cost scales with number of secondaries", {
     }
   }
 })
+
+
+# ===== Heterogeneous-n_states blocks: cost-matrix stride (SK-01) ==============
+# Two hierarchy blocks of DIFFERENT n_states give max_states > min(n_states).
+# The live search path (score_tree) copied each block's cost matrix from the
+# [max_states x max_states] storage block verbatim but sankoff_score_char reads
+# it at the per-character n_states stride, so any block with n_states <
+# max_states had its rows s>0 read from the zero-padded gap -- silently treating
+# loss/transition costs as 0 and undercounting the score. The search-reported
+# score must agree with TreeLength() (independent ts_sankoff_test kernel) on the
+# returned tree, whichever tree the search settles on.
+
+test_that("Xform scores heterogeneous-n_states blocks consistently (SK-01)", {
+  mat <- matrix(c(
+    "1", "0", "1", "0", "0",
+    "1", "1", "1", "0", "1",
+    "0", "-", "1", "1", "0",
+    "1", "1", "0", "-", "-",
+    "0", "-", "1", "1", "1",
+    "1", "0", "0", "-", "-"
+  ), nrow = 6, byrow = TRUE, dimnames = list(paste0("t", 1:6), NULL))
+  ds <- make_dat(mat)
+  h <- CharacterHierarchy("1" = 2L, "3" = 4:5)
+
+  rec <- RecodeHierarchy(ds, h)
+  # Blocks must have differing state counts (3 and 5) to exercise the stride.
+  expect_equal(
+    sort(vapply(rec$sankoff_chars, function(b) as.integer(b$n_states), integer(1))),
+    c(3L, 5L)
+  )
+
+  set.seed(101)
+  res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "xform",
+                           maxReplicates = 4L, targetHits = 3L, verbosity = 0L)
+  # MaximizeParsimony (score_tree) and TreeLength (ts_sankoff_test) must report
+  # the same score for the SAME tree; they disagreed by the undercount before
+  # the stride was compacted to per-character n_states.
+  expect_equal(
+    attr(res, "score"),
+    TreeLength(res[[1]], ds, hierarchy = h, inapplicable = "xform")
+  )
+})

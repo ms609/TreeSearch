@@ -1021,13 +1021,28 @@ double score_tree(TreeState& tree, const DataSet& ds) {
       sd.max_states = ds.sankoff_max_states;
       sd.chars.resize(sd.n_chars);
       for (int ch = 0; ch < sd.n_chars; ++ch) {
-        sd.chars[ch].n_states = ds.sankoff_n_states[ch];
+        const int ns = ds.sankoff_n_states[ch];   // per-character state count
+        const int ms = ds.sankoff_max_states;     // source block row-stride
+        sd.chars[ch].n_states = ns;
         sd.chars[ch].forced_root_state = ds.sankoff_forced_root[ch];
-        int ns = ds.sankoff_max_states;
-        sd.chars[ch].cost_matrix.resize(ns * ns);
+        // sankoff_score_char reads cost_matrix at the per-character stride,
+        // cost_matrix[s * ns + t]; the source block in ds.sankoff_cost_matrices
+        // is laid out at the max_states stride (unpack_xform writes
+        // dst[r * max_states + c]). Compact the top-left ns x ns block down to
+        // the ns stride here, exactly as ts_sankoff_test does. Copying the whole
+        // max_states^2 block verbatim left a stride mismatch whenever
+        // ns < max_states (two recoded Sankoff chars of differing state counts):
+        // rows s > 0 were then read from the zero-padded gap, silently treating
+        // transition (loss) costs as 0 and undercounting the tree's score.
+        sd.chars[ch].cost_matrix.resize(static_cast<size_t>(ns) * ns);
         const double* src = ds.sankoff_cost_matrices.data() +
-            ch * ns * ns;
-        std::copy(src, src + ns * ns, sd.chars[ch].cost_matrix.begin());
+            static_cast<size_t>(ch) * ms * ms;
+        for (int r = 0; r < ns; ++r) {
+          for (int c = 0; c < ns; ++c) {
+            sd.chars[ch].cost_matrix[static_cast<size_t>(r) * ns + c] =
+                src[static_cast<size_t>(r) * ms + c];
+          }
+        }
       }
       sd.tip_costs = ds.sankoff_tip_costs;
 
