@@ -82,6 +82,40 @@ candidates-per-improvement + score vs baseline; default-off until validated:**
 - *Next instrumentation:* per-phase candidate counter (mirror `PhaseTimings`/`ph_lap`) to
   confirm the clock→candidate correspondence before committing to a ratchet rewrite.
 
+### Phase 2 results (2026-06-16) — cheap/medium levers tested, no robust global win
+
+Via `bench_p2_levers.R` (gap panel, fixed 20 reps; the fast loop made each round ~90s).
+Deltas vs the `auto` baseline (`iterate_baseline_auto.csv`):
+
+- **Ratchet/sectorial knobs (round 1, `p2_levers.csv`):** `ratchetCycles` {3,6},
+  `adaptiveLevel=off`, `xss/rss` rounds doubled, ratchet→sectorial `rebalance` — **none beats
+  baseline.** Cutting ratchet saves 30–60% candidates but costs +0.5–2.5 steps on hard
+  datasets (ratchet does real work); more sectorial rounds tie-or-worsen; `adaptiveLevel=off`
+  is exactly neutral. The `auto` preset is near-Pareto-optimal for these knobs.
+- **`accept_equal` (the #1 untried lever; hard-coded on via the fast loop, then reverted):**
+  neutral-to-worse (Zanol +3, Giles +1), candidates barely move (0 to −3%). **Why it fails
+  here:** sectorial is only 7–23% of our wall-clock (Phase 1), so its acceptance criterion has
+  little leverage — the opposite of TNT (~67% sectorial). The built-but-off infrastructure is
+  not the lever *for our pipeline shape*.
+- **Fusing/ordering/starts (round 2, `p2_levers_fuse.csv` 2-seed, `p2_fuse_5seed.csv` 5-seed):**
+  5-seed medians confirm a *real but per-dataset* signal: **`wagnerStarts=5` and `intraFuse`
+  each robustly improve Wortley (−3/−2) and Zhu (−2/−3, → 626 vs TNT 624)** but **regress
+  Zanol/Giles by +1**; Eklund/Dikow neutral. `fuseAcceptEqual` ≡ `intraFuse`. `clipOrder=2`
+  saves 22–32% candidates at +1–2 steps (worse). **No feature cleanly separates helped (Wortley
+  37t/8st, Zhu 75t/4st) from hurt (Zanol 74t/9st, Giles 78t/4st)** — so no safe global default.
+
+**Conclusion — apples-to-apples Fitch gap is at the practical parameter-tuning floor.** No
+single config improves all panel datasets; the only real gains (−2/−3 on Wortley/Zhu) are
+dataset-specific and come with +1 regressions elsewhere, failing the "no regression on any
+dataset" ship gate. `accept_equal` (the headline untried lever) has no leverage in our
+ratchet-dominated pipeline. Remaining options, by cost: **(a) accept the floor** — declare the
+EW-Fitch gap effectively closed (+1/+3 on the hardest datasets), redirect effort; **(b) ship an
+opt-in variant** (`intraFuse`/extra Wagner starts in `thorough`) so the Wortley/Zhu wins are
+available without touching `auto`; **(c) Phase 3 structural** (branch-collapsing / exact-scoring
+sectorial) — weeks-scale, the only thing that could move a ratchet-dominated pipeline toward
+TNT's per-candidate frugality, but hard to justify for a residual +1/+3 steps. Recommendation:
+**(a)+(b)**, not (c) — the data does not justify a weeks-scale structural rewrite for this gap.
+
 **Phase 3 — branch-collapsing search** (Goloboff 2023): search the reduced polytomy
 tree space, not just skip candidates/dedup as now. Structural swing; pursue only if
 Phase 1/2 data shows the candidate-frugality gap justifies it.
