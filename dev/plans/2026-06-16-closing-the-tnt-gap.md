@@ -47,18 +47,40 @@ Fitch **78** = TNT **78** (gap B = 0); TreeSearch *raw* (Brazeau) **79** (gap A 
   Behaviour-neutral; valid `nThreads=1` only; excludes NNI-warmup/annealing.
 - *0b (DONE)*: `dev/benchmarks/bench_tnt_headtohead.R` — TreeSearch (Fitch + raw) vs
   TNT, capturing score, candidates, TNT rearrangements, wall-clock; separates gaps A/B/C.
-- *0c (IN PROGRESS)*: gap-panel baseline → `dev/benchmarks/headtohead_phase0.csv`.
+- *0c (DONE)*: gap-panel baseline (`headtohead_phase0.csv`, 2 seeds, converged).
+  **Gap B = 0..+3.5 steps** (Zanol +3.5, Wortley +3, Zhu +2.5, Giles +1.5, Dikow/Eklund 0).
+  **Gap A** (raw − Fitch) = +50/+39/+12 on high-inapplicable Zanol/Giles/Zhu, 0 on
+  Wortley/Eklund — pure scoring method, tracks inapplicable fraction. **Candidates-per-
+  improvement ~1.3–1.9×** on real datasets (the Vinther 6.3× was a tiny-dataset outlier),
+  and TNT lands a *better* score — more efficient on both axes. Wall-clock ≈1.3–2.5× vs
+  *32-bit* TNT (larger vs fair 64-bit), ≈ or above the candidate ratio (per-candidate
+  overhead is a co-contributor).
 
-**Phase 1 — phase-yield diagnosis.** Add a per-phase candidate counter (mirror
-`PhaseTimings`/`ph_lap`) so we can attribute candidates-per-improvement to each phase
-(sectorial vs ratchet vs final-TBR vs fuse). Localises *where* the 6× lives before building.
+**Phase 1 — phase-yield diagnosis (DONE; REDIRECTS Phase 2).** `bench_phase_yield.R`
+(per-phase wall-clock share + total candidates + `late_frac`):
+- **Ratchet dominates wall-clock: 63–83%** (Wortley 83, Eklund 76, Dikow 68, Giles 66,
+  Zanol 66, Zhu 63). **Sectorial is minor: 7–23%.** final-TBR 2%, init-TBR 2–5%, fuse 0–2%.
+- **44–98% of replicates land AFTER the last improvement** (`late_frac`: Eklund 0.98,
+  Giles 0.90, Wortley 0.81, Dikow 0.79, Zanol 0.61, Zhu 0.44) — large post-convergence waste.
+- **Implication:** the cost centre is RATCHET, not sectorial — the *opposite* of TNT
+  (~67% sectorial). We pour 66–83% of wall-clock into ratchet and still finish +2/+3 worse.
+  *Caveat (to verify):* this is wall-clock share; sectorial's reduced-dataset candidates are
+  cheaper per candidate, so a **per-phase CANDIDATE counter** is the next instrumentation to
+  confirm ratchet also dominates candidate *count*, not just clock. `adaptive_level` likely
+  scales ratchet_cycles UP on stalled (hard) datasets — pumping effort into the wasteful phase.
 
-**Phase 2 — attack sectorial search**, in priority order:
-1. Wire + **gate `accept_equal`** (built, off). Goloboff 2014 §5.4 flat-landscape lever
-   (1881/2500 vs 1/2500 MPT on missing-data matrices). Gate to engage on plateaus.
-2. **Drift done right**: large `numsub` (Goloboff Fig 8C) + equal-score acceptance —
-   the untested combination (drift is off in all presets and was only tested without these).
-3. Exact HTU sector scoring (kills the rescore/miss path) + adaptive sector sizing.
+**Phase 2 — REDIRECTED by Phase 1 data. Experiments, cheapest first, each gated on
+candidates-per-improvement + score vs baseline; default-off until validated:**
+1. **Cut wasted ratchet.** 44–98% of reps are post-convergence. Test tighter stopping
+   (`perturbStopFactor`, `targetHits`), fewer `ratchetCycles`, and capping/disabling the
+   `adaptive_level` ratchet up-scaling on stalled datasets. Cheapest, biggest wall-clock lever.
+2. **Rebalance ratchet → sectorial.** Shift budget toward sectorial (TNT's efficient phase):
+   more `xss/rss` rounds, fewer ratchet cycles.
+3. **Make sectorial plateau-capable** so leaning on it pays: wire + gate `accept_equal`
+   (`ts_sector.h:24`, built/off) — Goloboff 2014 flat-landscape lever for high-inapp
+   Zanol/Giles; + drift-done-right (large `numsub` + equal acceptance).
+- *Next instrumentation:* per-phase candidate counter (mirror `PhaseTimings`/`ph_lap`) to
+  confirm the clock→candidate correspondence before committing to a ratchet rewrite.
 
 **Phase 3 — branch-collapsing search** (Goloboff 2023): search the reduced polytomy
 tree space, not just skip candidates/dedup as now. Structural swing; pursue only if

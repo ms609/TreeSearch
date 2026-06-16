@@ -35,6 +35,12 @@ You are agent **{{AGENT_ID}}**, assigned to task **{{TASK_ID}}**: `{{TASK_ROW}}`
      rm -rf "$TMPBUILD"
    ```
 
+   **Fast C++-only iteration** (single session; not for final validation): instead of the
+   full tarball install above, use `Rscript dev/build-fast.R .agent-{{AGENT_ID}}` — incremental
+   `-O2` compile (ccache + `-j8`) that hot-swaps the DLL into the lib (~3s vs ~90s). A full
+   install is still required for R / roxygen / `[[Rcpp::export]]`-signature changes and any
+   commit/CI validation. Measurement tiers + rules in `dev/expertise/fast-iteration.md`.
+
 5. **Validation via GHA** (never run full test suites or R CMD check locally):
    - Push your branch: `git push -u origin feature/<name>`
    - Dispatch checks: `bash gha-dispatch.sh agent-check.yml feature/<name>`
