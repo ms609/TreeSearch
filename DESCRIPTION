@@ -17,7 +17,8 @@ Authors@R: c(
     person(
       given = "Thomas", family = "Guillerme",
       role = c("ctb"),
-      comment = "Brazeau-Guillerme-Smith inapplicable-data algorithm"
+      comment = c(ORCID = "0000-0003-4325-1275",
+                  "Brazeau-Guillerme-Smith inapplicable-data algorithm")
     )
   )
 License: GPL (>= 3)
