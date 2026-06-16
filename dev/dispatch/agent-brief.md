@@ -54,7 +54,9 @@ You are agent **{{AGENT_ID}}**, assigned to task **{{TASK_ID}}**: `{{TASK_ROW}}`
 
    **When complete**:
    - Update `to-do.md` (delete task row; create new sections if needed)
-   - Append summary row to `completed-tasks.md` under today's date
+   - Add a row to `completed-tasks.md` **only** if this closed without a routine
+     fix (not-a-bug / superseded / negative result). Routine fixes are recorded
+     by the commit/PR — do not duplicate them there.
    - Call:
      ```bash
      bash dispatch.sh checkin {{AGENT_ID}} --done
