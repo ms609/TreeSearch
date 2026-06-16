@@ -63,8 +63,8 @@ test_output.txt
 dev/profiling/result_*/
 dev/profiling/drivers/*-profvis.html
 dev/profiling/drivers/*-profvis_files/
-dev/profiling/*.vtune-lib/
-dev/profiling/.vtune-lib-*/
+dev/profiling/*-lib/
+dev/profiling/*-lib-*/
 
 # Dispatcher state and logs (ephemeral runtime files)
 .dispatch/
