@@ -39,6 +39,17 @@ test_that("candidates_evaluated attribute is reported for serial search", {
   expect_true(is.finite(ce) && ce > 0)
 })
 
+test_that("strategy = 'intensive' (opt-in) runs and returns valid result", {
+  set.seed(5726)
+  result <- MaximizeParsimony(ds, strategy = "intensive",
+                               maxReplicates = 2L, targetHits = 1L,
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_true(is.finite(attr(result, "score")))
+  expect_equal(attr(result, "score"), TreeLength(result[[1]], ds),
+               tolerance = 0.01)
+})
+
 test_that("strategy = 'default' runs and returns valid result", {
   set.seed(5726)
   result <- MaximizeParsimony(ds, strategy = "default",

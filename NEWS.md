@@ -1,5 +1,10 @@
 # To integrate into 2.0.0 notes
 
+- New opt-in `MaximizeParsimony(strategy = "intensive")` preset: `"thorough"` plus
+  extra Wagner starts for more starting-basin diversity.  On difficult datasets it
+  finds shorter trees (a few steps) at neutral-to-lower search cost; never selected
+  by `strategy = "auto"`, so choose it explicitly.
+
 - `MaximizeParsimony()` results now carry a `candidates_evaluated` attribute:
   the number of TBR/SPR-class rearrangements examined during a single-threaded
   search (the analogue of TNT's "rearrangements examined"), for diagnosing

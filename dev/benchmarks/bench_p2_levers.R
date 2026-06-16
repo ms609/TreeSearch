@@ -41,6 +41,12 @@ all_configs <- list(
     fuseEqual  = list(intraFuse = TRUE, fuseAcceptEqual = TRUE),
     clipTips   = list(clipOrder = 2L),
     wagner5    = list(wagnerStarts = 5L)
+  ),
+  optin = list(
+    baseline  = list(),
+    intraFuse = list(intraFuse = TRUE),
+    wagner5   = list(wagnerStarts = 5L),
+    combo     = list(intraFuse = TRUE, wagnerStarts = 5L)
   )
 )
 configs <- all_configs[[Sys.getenv("TS_SWEEP", "ratchet")]]

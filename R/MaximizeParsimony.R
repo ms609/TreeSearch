@@ -142,6 +142,29 @@
     maxOuterResets = 3L,
     adaptiveStart = TRUE
   ),
+  # Opt-in "intensive" preset: `thorough` plus extra Wagner starts for more
+  # starting-basin diversity.  Never auto-selected (.AutoStrategy returns only
+  # sprint/default/thorough/large); the user opts in with strategy = "intensive".
+  # Phase-2 sweep (2026-06-16, 5 seeds, EW Fitch): wagnerStarts 3->5 improved the
+  # hardest datasets (Wortley2006 -3, Zhu2013 -2 toward the TNT optimum) at
+  # neutral-to-lower candidate cost, with a ~+1-step trade-off on a couple of
+  # others (Zanol2014, Giles2015) -- hence opt-in rather than a default change.
+  intensive = SearchControl(
+    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
+    ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
+    ratchetAdaptive = TRUE,
+    nniPerturbCycles = 0L,
+    driftCycles = 0L,
+    xssRounds = 5L, xssPartitions = 6L,
+    rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
+    sectorMinSize = 6L, sectorMaxSize = 80L,
+    fuseInterval = 2L, fuseAcceptEqual = TRUE,
+    tabuSize = 200L, wagnerStarts = 5L,
+    nniFirst = TRUE, sprFirst = FALSE,
+    outerCycles = 2L,
+    maxOuterResets = 3L,
+    adaptiveStart = TRUE
+  ),
   # Large-tree preset (>=120 tips): at 180 tips each TBR convergence takes
   # ~5-7s, so phase costs scale sharply. Key design decisions (T-179):
   # - Fewer perturbation cycles: ratchet 12, drift 4 (vs thorough 20/12)
@@ -339,11 +362,16 @@
 #'       sector sizes, 1-cycle simulated annealing instead of drift
 #'       (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 #'       or exceeds `"thorough"` at 180 tips across all time budgets.}
-#'   All presets enable consensus-stability stopping: the search stops early
-#'   if the strict consensus of best-score trees has been unchanged for
-#'   `consensusStableReps` consecutive replicates.
+#'     \item{`"intensive"`}{Opt-in (never auto-selected): `"thorough"` plus extra
+#'       Wagner starts (5) for more starting-basin diversity.  Improves the
+#'       hardest datasets by a few steps at neutral-to-lower candidate cost, with
+#'       an occasional ~+1-step trade-off elsewhere; choose it explicitly when
+#'       pushing for the shortest tree on a difficult matrix.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
+#'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement
+#'   rule; `consensusStableReps` (consensus-stability stopping) is off by default
+#'   and is not enabled by any preset.
 #'   Explicit `control` fields always override the preset; for example,
 #'   `strategy = "sprint", control = SearchControl(ratchetCycles = 10L)` uses
 #'   sprint defaults for everything except `ratchetCycles`.

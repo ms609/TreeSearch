@@ -129,11 +129,16 @@ perturbation, single biased Wagner start (Goloboff 2014), larger
 sector sizes, 1-cycle simulated annealing instead of drift
 (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 or exceeds \code{"thorough"} at 180 tips across all time budgets.}
-All presets enable consensus-stability stopping: the search stops early
-if the strict consensus of best-score trees has been unchanged for
-\code{consensusStableReps} consecutive replicates.
+\item{\code{"intensive"}}{Opt-in (never auto-selected): \code{"thorough"} plus extra
+Wagner starts (5) for more starting-basin diversity.  Improves the
+hardest datasets by a few steps at neutral-to-lower candidate cost, with
+an occasional ~+1-step trade-off elsewhere; choose it explicitly when
+pushing for the shortest tree on a difficult matrix.}
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
+Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
+rule; \code{consensusStableReps} (consensus-stability stopping) is off by default
+and is not enabled by any preset.
 Explicit \code{control} fields always override the preset; for example,
 \verb{strategy = "sprint", control = SearchControl(ratchetCycles = 10L)} uses
 sprint defaults for everything except \code{ratchetCycles}.}
