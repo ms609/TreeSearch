@@ -2,6 +2,7 @@
 # options("TreeSearch.write.code" = TRUE) # Show code as it is written to log
 logging <- isTRUE(getOption("TreeSearch.logging"))
 options(shiny.maxRequestSize = 1024 ^ 3) # Allow max 1 GB files
+options(MaxMin.progress = FALSE) # Suppress DropAdd progress messages in app
 
 # Development: prepend .agent-shiny library so library("TreeSearch") finds
 # the pre-built v2.0.0 install, preventing pkgload from intercepting and
