@@ -225,16 +225,21 @@ test_that("Wagner on NA + IW matches fitch_score", {
   pd <- inapplicable.phyData[["Vinther2008"]]
   d <- make_ts_data(pd)
 
+  # T-322: pass min_steps exactly as MaximizeParsimony()'s IW path does, so the
+  # cross-check exercises the production formula h = steps - min_steps (not the
+  # degenerate h = steps - 0). Vinther2008 has inapplicable chars => non-zero.
+  min_steps <- as.integer(MinimumLength(pd, compress = TRUE))
+
   for (k in c(3, 10)) {
     set.seed(8514)
     result <- TreeSearch:::ts_random_wagner_tree(
       d$contrast, d$tip_data, d$weight, d$levels,
-      concavity = k
+      min_steps = min_steps, concavity = k
     )
 
     fitch_check <- TreeSearch:::ts_fitch_score(
       result$edge, d$contrast, d$tip_data, d$weight, d$levels,
-      concavity = k
+      min_steps = min_steps, concavity = k
     )
     expect_equal(result$score, fitch_check, tolerance = 1e-6,
                  info = paste("IW k =", k))
