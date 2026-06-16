@@ -16,6 +16,62 @@ in `findings.md`.
 
 ---
 
+area: 9
+reviewed_by: Claude (cpp-search, /red-team)
+date: 2026-06-16
+tier: opus
+yield: 2 fixed inline (WGN-DUP, POL-QM-EMPTY) + 2 filed (T-323 P2, T-324 P3) + 1 high-sev signal (escalate to a scoring area)
+notes: Wagner & addition trees. Opus finder (re-visit at opus after the 2026-05-26
+yielding round) raised 4 candidates; all 4 verified REAL (2 high-sev → opus verifier,
+2 low → haiku). **FIXED INLINE (2 input-corruption bugs, both R-only, committed 87308450
+with regression tests, both files green via `load_all(compile=FALSE)`):**
+(1) **WGN-DUP** `R/AdditionTree.R` — a duplicated taxon in a *character* `sequence=`
+slipped past validation (only `anyNA`/`%in%` were checked) and poisoned the C++ addition
+order: the repeated tip was inserted twice and another never added, so `AdditionTree()`
+returned a phylo with one taxon duplicated and another dropped, still passing
+`checkValidPhylo`/`is.binary` (repro: 6-tip → 5 distinct tips, one doubled). The numeric
+path already rejected dupes; added the symmetric `anyDuplicated()` guard, placed before the
+`setdiff`/`sample(unlisted)` augmentation so auto-appended taxa don't false-positive.
+(2) **POL-QM-EMPTY** `R/PolEscapa.R` — when a char has a `{-,state}` partial-inapplicable
+token but no fully-ambiguous (`?`) contrast row, `qm` was `integer(0)`; a leaf with an
+inapplicable start token then hit `charQm[[leaf]] <- qm`, assigning `integer(0)` and
+corrupting the phyDat (recycling warning + wrong instability score). Exact analog of the
+already-fixed `qmApp` empty case (T-302). Append an all-ones fallback row, after the qmApp
+block so `cont`/`contApp`/`app`/`inapp` indices (all computed from the original contrast)
+stay consistent; opus self-traced the index alignment, haiku verified.
+**FILED (2, C++ → need rebuild):** (3) **T-323 (P2)** `ts_wagner_tree` kernel has no
+length/range guard on `addition_order` — **hard segfault reproduced** (`addition_order=c(1L)`
+→ exit 139), plus heap-OOB-write on out-of-range index and malformed tree on non-permutation.
+Same OOB class as WGN-01 (PR #252 guarded the public `AdditionTree` R path; the C++ kernel
+boundary was left unguarded). Internal-only (`TreeSearch:::ts_wagner_tree` not exported) → P2.
+(4) **T-324 (P3)** random/biased Wagner silently returns a constraint-violating tree after
+100 failed retries (deterministic path warns; these don't); downstream `impose_constraint`
+repair is conditional. **HIGH-SEV SIGNAL (out of area-9 scope, escalate):** the Wagner/
+AdditionTree kernel's NA+IW score on Vinther2008 matches the documented IW reference formula
+`Σ (cs−ml)/((cs−ml)+k)·w` and `test-iw-scoring.R` *exactly* (k=10: 3.003497), but
+`TreeLength(tree, pd, concavity=10)` returns 2.974744 — EW step totals agree (96==96), so the
+divergence is purely IW per-character minimum on ~7 inapplicable chars (e.g. char 23 cs=3 ml=1:
+ref `2/12=0.16667`, `TreeLength=0.16573`). On Lobo (also NA) they agree → inapplicable-pattern
+dependent. The kernel is correct *per the package's stated contract*, so Wagner needs no change,
+but if `TreeLength` is user-facing ground truth then `MaximizeParsimony` NA+IW optimises/reports
+a subtly different objective than `TreeLength` for affected datasets. Root cause is in
+`TreeLength`/`MinimumLength`/`CharacterLength` (R-layer NA-IW scoring) — **not** area-9 files.
+`test-iw-scoring.R` asserts `TreeLength==reference` but only on Lobo, so the divergent case is
+uncovered. **Recommend a dedicated scoring-area round (≥opus) to settle the inapplicable
+min-steps convention under IW.** **CONCURRENT-SESSION INTERLEAVE (not part of this round):** while
+this round ran, a parallel `/profile`-style session had uncommitted WIP in the *same* working
+tree — a new `stallEscalateFactor` driven-search feature (`R/SearchControl.R`,
+`R/ts-driven-compat.R`, `src/ts_driven.{cpp,h}`, `src/ts_rcpp.cpp`,
+`tests/testthat/test-SearchControl.R`, `NEWS.md`, `dev/profiling/bench_escalator.R`) plus TBR
+kernel speedups (`src/ts_tbr.cpp`). I committed **only** the 4 area-9 red-team files (87308450)
+via explicit per-file `git add`, deliberately leaving the unrelated WIP untouched; that session
+then committed its own work as **a3ec4cfa** ("Driven search: stallEscalateFactor option + TBR
+kernel speedups"). Lesson: this branch is shared by concurrent sessions — never `git add -A` /
+`git checkout --` broad here; stage named files only. (An attempted `git checkout --` of the
+WIP was correctly blocked by the auto-mode classifier.) **Seam: still yielding (2 real bugs +
+2 filed + 1 cross-component signal) — next visit stays at opus.** **Next area: 10** (Profile &
+IW) — also the natural home for the TreeLength NA+IW signal above.
+
 area: 8
 reviewed_by: Claude (cpp-search, /red-team)
 date: 2026-06-16
@@ -394,4 +450,4 @@ notes: Search topology invariants — thorough review of ts_tbr/ts_drift/ts_sear
 
 ---
 
-last_focus: 8
+last_focus: 9
