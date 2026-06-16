@@ -403,7 +403,38 @@ are the levers — exactly what TNT minimises (Goloboff 1996). This corroborates
    the source FILE but not always the line (DWARF5 line tables).
 
 Full round notes + ranked candidates: `dev/profiling/log.md` (Round 3),
-`dev/profiling/findings.md` (T-S3a/b/c), `dev/profiling/baselines.md`.
+`dev/profiling/findings.md` (T-S3a/b/c/d), `dev/profiling/baselines.md`.
+
+**Wins shipped this round (per-clip allocation churn).** Tier 1 (T-S3a, committed):
+hoist per-clip scratch (`dirty`, DFS stacks, preorder) to reusable buffers ≈ **4%**.
+Tier 2 (T-S3d, uncommitted): replace the per-clip `unordered_set<uint64_t>`
+rerooting-dedup with a reusable open-addressed table (generation-stamped O(1) reset)
+≈ **3%**. Both behaviour-neutral (score 627 unchanged; scores identical on 6 datasets
+× {NA, standard} via `dev/profiling/bench_equiv.R`). On the fast standard-Fitch path,
+per-clip *allocation* is a bigger proportional share than on the NA path (T-260 saw
+the dedup destructor at ~0.4%, but the full alloc footprint — bucket array + a node
+malloc per insert + teardown, every internal-node clip — is several %).
+
+**emutls gotcha (cost two rebuilds — record for next time).** Tier 2 was *neutral*
+when first written as `static thread_local`: MinGW resolves a `thread_local` living
+in a **dynamically-loaded DLL** via **emutls** = a function call (`__emutls_get_address`)
+on *every access*. For a buffer touched once per clip (Tier 1) that's invisible, but
+the dedup table's `insert()` runs *per reroot candidate*, so the per-access TLS call
+cancelled the allocation saving. Fix: a **plain local declared once before the loop**
+— in a per-thread-entered function (each search thread calls `tbr_search` with its own
+`TreeState`) a stack local is already per-thread-safe and has *zero* TLS cost. Rule:
+prefer hoisted plain locals over `static thread_local` on per-inner-iteration hot paths;
+reserve `thread_local` for buffers inside helpers you can't hoist (Tier 1's case).
+
+**Verifying from a temp lib (two traps).** (1) `test_dir()` switches CWD to
+`tests/testthat/`, so a **relative** `lib.loc` breaks package-data lazy-load
+(`cannot open .../data/Rdata.rdb`) even though `library()` loaded fine — pass an
+**absolute** `lib.loc`. (2) There is a **flaky `nThreads=2` crash** (exit 127, no R
+error) in the parallel test files under `Rscript`; it reproduces on the *unmodified*
+build too (not change-specific) and passes on re-run, so the full `ts-` suite is not a
+reliable gate from a temp lib — verify behaviour-neutrality with a single-threaded
+score-equivalence harness instead (`bench_equiv.R`). [Flaky parallel crash: open
+question — real concurrency bug vs Rscript/sandbox thread-resource artifact.]
 
 ## What to Profile
 
