@@ -14,6 +14,25 @@ power profile) so future regressions can be compared apples-to-apples.
 | dev/profiling/drivers/ratchet.R     | Zhu2013 / 1 rep thorough nThreads=1 | 2.80 (median of 3) | ts_driven_search (>95 %; no VTune; from profvis) | >95 % | 2026-05-18 | Windows 10 i-series, R-devel, .vtune-lib debug build |
 | dev/profiling/drivers/tbr-rescore.R | Zhu2013 / 12 ratchet reps nCycles=12 nThreads=1 | 3.9 | ts::fitch_na_score (full_rescore path via callstack) | 18.2 % | 2026-05-19 | Windows 10 EARTHSCI-PJJG18, 2.904 GHz 16-core, R-devel, .vtune-lib-20260519061049 (HEAD c504ea87) |
 | dev/profiling/t300_na_bench.R       | Zhu2013 / 12 ratchet reps nCycles=12 nThreads=1 | 3.29 (median of 5, score 647) | (post T-300 NA dirty-set; fitch_na_pass3_score expected dominant; not VTune-attributed yet) | n/a | 2026-05-19 | Same machine, HEAD 5b210fdd; 15.2 % wall-time speedup vs c504ea87 baseline (3.88 s median of 3) |
+| dev/profiling/drivers/fitch-tnt.R   | Zhu2013 `-`→`?` / 8 reps auto→thorough nThreads=1 | 5.57 (0.56 s/rep, score 627) | ts::tbr_search (orchestration self) | 25.1 % | 2026-06-16 | Same machine, HEAD 841eead3, .vtune-lib-20260616052323 (-O2 -g). STANDARD-Fitch path (has_na=FALSE) — TNT-parity objective; TNT 1.6 = 624 |
+
+### Round 3 top hotspots (TreeSearch.dll, Zhu2013 75t **standard-Fitch** `-`→`?`, total 2.70 s)
+
+Different path from rounds 1-2 (NA): no `fitch_na_*`; flat/x4 kernels.
+Names via `nm` (VTune CSV shows `func@0x…`; image base 0x2cc1a0000 stable).
+
+| Rank | Function                              | Self time | % of DLL | Notes |
+|------|---------------------------------------|-----------|----------|-------|
+| 1    | ts::tbr_search (orchestration)        | 0.678 s   | 25.1 %   | candidate-loop control + collapsed/sector vector<bool> bit-tests + inlined scoring |
+| 2    | ts::simd::any_hit_reduce_avx2         | 0.392 s   | 14.5 %   | 2-op Fitch reduce; AT-LIMIT (compiler-optimal, disasm-confirmed) |
+| 3    | ts::uppass_node                       | 0.357 s   | 13.2 %   | incremental uppass; scalar update loop; AT-LIMIT (1.22× micro-bench, nil for 2-state) |
+| 4    | ts::simd::any_hit_reduce3_avx2        | 0.171 s   | 6.3 %    | 3-op reduce (SPR bounded) |
+| 5    | ts::TreeState::build_postorder_prealloc | 0.141 s | 5.2 %    | O(n) per clip + per accept — top per-clip-bookkeeping target |
+| 6    | ts::fitch_incremental_downpass        | 0.110 s   | 4.1 %    | per clip |
+| 7    | ts::fitch_indirect_bounded_flat       | 0.109 s   | 4.0 %    | SPR candidate scoring (flat) |
+| 8    | ts::hash_tree                         | 0.078 s   | 2.9 %    | pool/tabu dedup |
+| 8    | ts::fitch_indirect_length_cached      | 0.078 s   | 2.9 %    | scalar cached (MIXED-ratchet perturbed sub-search) |
+| 8    | ts::validate_topology                 | 0.077 s   | 2.9 %    | per-accept DFS sanity check (allocates 2 vectors/call) |
 
 ### Round 2 top-5 hotspots (TreeSearch.dll, Zhu2013 75t ratchet)
 

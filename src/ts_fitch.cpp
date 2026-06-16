@@ -222,7 +222,13 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
 
   // Use reverse postorder, but only visit nodes whose ancestor's final
   // may have changed. We track this with a "dirty" flag per node.
-  std::vector<bool> dirty(tree.n_node, false);
+  // Reusable per-thread scratch (S-PROF round 3 / Tier 1): this function runs
+  // once per clip in the TBR hot loop, so a fresh vector<bool> here was a
+  // per-clip heap allocation. thread_local keeps it per-thread-safe (each
+  // search thread owns its TreeState); char avoids vector<bool> proxy-bit
+  // access in the reverse scan below. assign() reuses capacity after warmup.
+  static thread_local std::vector<char> dirty;
+  dirty.assign(tree.n_node, 0);
 
   // Mark root as dirty (we just updated it; its children need checking)
   dirty[root] = root_changed;

@@ -70,4 +70,59 @@ at the bottom of the file before saving.
 
 ---
 
-last_focus: 4
+### Round 3 — 2026-06-16 — area #13 (standard-Fitch TNT-parity path) — NEW AREA
+First profile of the **standard-Fitch** path (inapplicable `-`→`?`, so
+`has_na=FALSE`, flat/x4 kernels). Rounds 1-2 profiled the NA three-pass path
+on raw `inapplicable.phyData`; that path is ~20× slower per replicate with an
+entirely different hotspot mix (`fitch_na_*` dominate). Standard Fitch is the
+path the TNT benchmark actually compares against.
+
+- Driver:        dev/profiling/drivers/fitch-tnt.R   (bare: 5.57 s / 8 reps = 0.56 s/rep; Zhu2013 75t, auto→thorough, nThreads=1, score 627 vs TNT 624)
+- Build:         dev/profiling/.vtune-lib-20260616052323 (HEAD 841eead3, -O2 -g)
+    ⚠ GOTCHA: default Windows R build STRIPS the DLL (`DLLFLAGS=-s` in Makeconf)
+    → VTune shows `func@0x…`/`[Unknown]`. Override `MAKEFLAGS="DLLFLAGS=-static-libgcc"`
+    to drop `-s`; verify `objdump -h DLL | grep debug_info` + `nm DLL` (23089 syms).
+    ⚠ GOTCHA2: even symboled, VTune's CSV reporter emits `func@0x…` (MinGW DWARF
+    unparsed). Resolve via `nm -C DLL` — image base 0x2cc1a0000 is stable across
+    builds, so VTune addresses map 1:1 to nm addresses.
+- profvis/Rprof:  99.5 % self-time in `ts_driven_search` (single .Call); R <0.5 %; no [Port].
+- Phase dist (attr "timings", 3 reps): ratchet 63.0 %, rss 9.2 %, xss 9.2 %,
+    css 6.8 %, wagner 5.5 %, tbr 4.0 %, final_tbr 2.3 %, drift/nni/anneal 0 %.
+- VTune top fns (TreeSearch.dll self, total 2.70 s; names via nm):
+    1. ts::tbr_search (orchestration, 2 ranges)   25.1 %  — candidate-loop control + collapsed/sector vector<bool> bit-tests + inlined scoring
+    2. ts::simd::any_hit_reduce_avx2              14.5 %  — core 2-op Fitch reduce
+    3. ts::uppass_node                            13.2 %  — incremental uppass; SCALAR state-update loop (cf. vectorised fitch_combine)
+    4. ts::simd::any_hit_reduce3_avx2              6.3 %  — 3-op reduce (SPR bounded)
+    5. ts::TreeState::build_postorder_prealloc     5.2 %  — O(n) postorder rebuild, per clip AND per accept
+    6. ts::fitch_incremental_downpass              4.1 %
+    7. ts::fitch_indirect_bounded_flat             4.0 %
+    8. hash_tree / fitch_indirect_length_cached (scalar) / validate_topology  ~2.9 % each
+   (Scoring SIMD+wrappers ≈ 50 %; per-clip bookkeeping ≈ 18 %; orchestration 25 %.)
+- Findings:
+    [AT-LIMIT] SIMD `any_hit_reduce` (21 %): disasm of `hor_or256` shows GCC
+      already elides the store-reload (vextracti128/vpsrldq/vpor/vmovq, register-only)
+      → compiler-optimal. No win.
+    [AT-LIMIT] `uppass_node` vectorisation (13 %): micro-bench
+      dev/profiling/microbench/bench_uppass_combine.cpp — AVX2 update loop
+      bit-identical (value+changed flag) but only **1.22×** at n_states=4, and the
+      4-wide path does NOT trigger for 2-state (binary) morph chars → ~1 % wall,
+      not worth the incremental-uppass correctness risk.
+    [Optimise, modest] Per-clip/accept allocation churn (~3-4 %): compute_from_above,
+      collect_main_edges/collect_subtree_edges, validate_topology heap-alloc
+      std::vector scratch per call (_M_realloc_append 1.1 %). Extend existing
+      prealloc pattern (work_stack/saved_postorder/clip_actives_buf). Low risk.
+    [Strategic] Standard-Fitch is **bookkeeping- + strategy-bound**, not
+      scoring-bound. Per-candidate scoring is at the AVX2/compiler limit; remaining
+      levers are (a) reduce per-clip O(n) bookkeeping (postorder rebuild +
+      incremental passes ≈ 18 %), (b) ratchet evaluation economy (63 %). Both align
+      with the TNT-outperformance analysis (strategy > code). Score near parity.
+- Filed:         findings.md row T-S3a (allocation churn) + AT-LIMIT rows.
+- Cleanup:       result_fitch_tnt_* + result_fitch_sym_* removed; stripped lib
+    .vtune-lib-20260616051420 removed; symboled lib kept pending follow-up. microbench kept.
+- Next reviewer: code lever for parity is per-clip bookkeeping (incremental
+    postorder across clip/unclip), NOT the scoring kernel. Strategy lever: ratchet
+    eval economy (time-adjusted expected-best).
+
+---
+
+last_focus: 13

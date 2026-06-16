@@ -1,0 +1,53 @@
+# Red-team focus areas — TreeSearch
+
+Rotation table for the `/red-team` skill. Built once, edited rarely. Each `/red-team`
+invocation reviews **one** area (the next in rotation, see `last_focus:` at the bottom of
+`log.md`) at its earned tier, then records the round in `log.md`. Verified non-trivial
+findings are filed in `findings.md`. Durable lessons (bug patterns, fragile areas) live in
+`../expertise/red-team.md`.
+
+## start_tier
+
+`start_tier` is the tier a **never-visited or freshly-rotated** area starts at. Unlike the
+skill's default (everything `sonnet`), these tiers **encode measured maturity** from the
+ported round history (`log.md`): areas whose seams have only ever yielded subtle,
+opus-class bugs start higher; immature seams that still bleed cheap bugs start at `sonnet`.
+The rotation still adjusts per recorded yield — a dry round escalates one tier, a yielding
+round re-visits at the same tier with a fresh agent, a high-severity signal escalates
+immediately. Treat these as the starting point, not a ceiling.
+
+| # | Area | Files | start_tier | Key questions |
+|---|------|-------|-----------|---------------|
+| 1 | **Fitch scoring correctness** | `src/ts_fitch.h/.cpp`, `src/ts_fitch_na.h`, `src/ts_fitch_na_incr.h`, `src/ts_fitch_na_dirty.h` | **opus** | Does incremental / dirty-set scoring match full `score_tree()`? Bounded variants bail correctly? NA three-pass edge cases? Write a targeted test if you find a gap. |
+| 2 | **Search topology invariants** | `src/ts_tbr.cpp`, `src/ts_drift.cpp`, `src/ts_search.cpp` | **opus** | After every rejected move, is topology fully restored? Undo stack correct? No stale `postorder`? Constraint metadata re-synced on *all* reject paths (incl. tabu)? Symmetry-breaking hash collisions? |
+| 3 | **Ratchet & perturbation** | `src/ts_ratchet.cpp`, `src/ts_sector.cpp`, `src/ts_fuse.cpp`, `src/ts_prune_reinsert.cpp` | **opus** | `active_mask`/`upweight_mask`/`flat_blocks` fully restored after perturbation? Sectorial reinsertion reverts on worse score? `build_reduced_dataset` copies all needed fields? Fuse handles tied scores? |
+| 4 | **Parallelism & RNG** | `src/ts_parallel.cpp`, `src/ts_rng.h/.cpp`, `src/ts_driven.cpp`, `src/ts_resample.cpp` | **opus** | Thread-local RNG set before any search call? **No R API (incl. `unif_rand`/`Get/PutRNGstate`) from worker threads** — note the resample path. Pool mutex correct? Atomic stop-flag races? Seeds drawn from R RNG before spawn? |
+| 5 | **Data pipeline & simplification** | `src/ts_data.h/.cpp`, `src/ts_simplify.h/.cpp`, `src/ts_constraint.h/.cpp` | **opus** | `build_dataset` handles edge cases (all-ambiguous, single-state, zero-weight, `n_states==32` UBSAN)? `build_reduced_dataset` copies all fields? XPIWE `obs==0` division? Constraint column-major indexing correct? |
+| 6 | **R ↔ C++ interface** | `src/ts_rcpp.cpp`, `src/TreeSearch-init.c`, `R/RcppExports.R`, `R/MaximizeParsimony.R`, `R/SearchControl.R` | **sonnet** | Arg counts match? Concavity sentinel translated? Edge-matrix conventions? Return value attributes/types set (frozen-API `logical` vs `integer`)? Parameter validation in R layer? |
+| 7 | **Shiny module wiring** | `inst/Parsimony/server.R`, `inst/Parsimony/server/mod_*.R`, `inst/Parsimony/server/events.R` | **sonnet** | Forward-ref callbacks resolve? Cross-module `updateXxxInput` namespaces correct? Re-entrancy / double-launch guards? Stale dataset-hash on async tasks? `onStop` cleanup (cancel signal + temp files)? Orphaned observers? |
+| 8 | **Test suite health** | `tests/testthat/test-ts-*.R`, `tests/testthat/helper-ts.R` | **sonnet** | Tier guards correct? Vacuous (always-pass) assertions? Missing `TreeSearch:::` prefixes? `set.seed()` before `sample()`? Edge-case coverage gaps (3-tip, single-char, all-NA)? Enduring regression for incremental-rescore? |
+| 9 | **Wagner & addition trees** | `src/ts_wagner.h/.cpp`, `R/AdditionTree.R`, `R/PolEscapa.R` | **opus** | NA-incremental scoring staleness acceptable? Constraint mapping (LCA-based) correct? Retry loop fires? 3-taxon base case handles all orderings? R-layer index/`sequence` validation (OOB-write guard)? |
+| 10 | **Profile & IW scoring** | `src/ts_fitch.cpp` (IW/profile paths), `src/ts_data.cpp` (precompute) | **opus** | `e/(k+e)` delta correct? Profile `info_amounts` lookup + capping matches? `concavity = 1.0` sentinel activates weighted path? `precompute_profile_delta` includes `precomputed_steps` offset? Clipped-subtree homoplasy in screening? |
+
+### Maturity / tier rationale (one line each)
+
+- **1 Fitch correctness — opus.** Crown jewel; T-300 (systematic delta=−3) and T-306 were
+  opus-class subtle bugs. Prime **fable**-escalation target the moment opus runs dry.
+- **2 Topology invariants — opus.** Deep state-restore subtleties; T-235 (SPR stale state),
+  T-316 (P1 stale constraint metadata after tabu rejection).
+- **3 Ratchet & perturbation — opus.** Mature, but the `build_reduced_dataset` /
+  mask-sync class (T-275, T-303) keeps recurring.
+- **4 Parallelism & RNG — opus.** Looked mature until T-309 (P1: R RNG API on worker
+  threads via the parallel `Resample()` path, 2026-06-15). Concurrency = P1-capable.
+- **5 Data pipeline — opus.** DAT-001 (`1u<<32` UBSAN at `n_states==32`), DAT-002 (XPIWE
+  `obs==0` division). Edge inputs still bite.
+- **6 R ↔ C++ interface — sonnet.** Mostly mechanical arg-count / sentinel audits; cheap to
+  run. T-310 (frozen-API `pruneReinsertNni` type) shows it still occasionally yields —
+  escalate if a sonnet pass goes dry.
+- **7 Shiny wiring — sonnet.** **Immature seam:** a Sonnet pass found 5 bugs on 2026-06-16
+  (T-309…T-313). Keep mining cheap until it runs dry.
+- **8 Test suite health — sonnet.** Reliably yields inline fixes (`set.seed`, vacuous
+  asserts) and test-gap notes (T-304).
+- **9 Wagner & addition — opus.** Kernel code; WGN-01 (P1 OOB write via `AdditionTree(sequence=)`).
+- **10 Profile & IW — opus.** Numerical delta algebra; subtle conservative bugs (profile
+  delta capping). Secondary **fable**-candidate alongside area 1.

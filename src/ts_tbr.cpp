@@ -44,7 +44,9 @@ static void collect_main_edges(
     std::vector<std::pair<int,int>>& edges)
 {
   edges.clear();
-  std::vector<int> stack;
+  // Reusable per-thread DFS stack (Tier 1): avoids a heap alloc per clip.
+  static thread_local std::vector<int> stack;
+  stack.clear();
   stack.push_back(tree.n_tip);
 
   while (!stack.empty()) {
@@ -70,7 +72,9 @@ static void collect_subtree_edges(
   edges.clear();
   if (subtree_root < tree.n_tip) return;
 
-  std::vector<int> stack;
+  // Reusable per-thread DFS stack (Tier 1): avoids a heap alloc per clip.
+  static thread_local std::vector<int> stack;
+  stack.clear();
   stack.push_back(subtree_root);
 
   while (!stack.empty()) {
@@ -121,9 +125,12 @@ static void compute_from_above(
 {
   int tw = tree.total_words;
 
-  std::vector<int> preorder;
+  // Reusable per-thread scratch (Tier 1): avoids two heap allocs per clip.
+  static thread_local std::vector<int> preorder;
+  preorder.clear();
   {
-    std::vector<int> stack;
+    static thread_local std::vector<int> stack;
+    stack.clear();
     stack.push_back(subtree_root);
     while (!stack.empty()) {
       int node = stack.back();

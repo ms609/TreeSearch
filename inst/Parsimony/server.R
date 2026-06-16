@@ -192,6 +192,12 @@ server <- function(input, output, session) {
     # Clean cached input files from tempdir (data, tree, and excel)
     unlink(list.files(tempdir(), pattern = "^(data|tree|excel)File-",
                       full.names = TRUE))
+    # T-312: also remove search/profile cancel + progress signal files; the
+    # pattern above does not match them, so they otherwise leak on error /
+    # interrupt / disconnect paths and accumulate across searches.
+    unlink(list.files(tempdir(),
+                      pattern = "^ts_(cancel|progress|profile_prog|profile_cancel)_",
+                      full.names = TRUE))
     if (logging) {
       LogMsg("Session has ended")
       on.exit(close(logMsgFile))

@@ -356,6 +356,55 @@ Dataset: Zhu2013 (75t, 253 chars). Strategy: auto → thorough.
 4. **wag+NNI at 1.3%**: biased Wagner + 3 starts + NNI warmup adds ~214ms per
    replicate start. Negligible at this scale; confirms T-246/NNI-warmup tuning is fine.
 
+### Round 7 — 2026-06-16 — STANDARD-FITCH path (TNT-parity), first profile
+
+**Critical distinction:** all rounds above profiled the **NA three-pass path**
+(raw `inapplicable.phyData`). The TNT benchmark compares the **standard-Fitch**
+path: inapplicable `-` replaced with `?` so `has_na=FALSE` and the flat / 4-wide
+(T-245) kernels run — NOT `fitch_na_*`. This path is **much cheaper per replicate**
+(0.56 s/rep here) with a *completely different* hotspot mix — the NA three-pass adds
+~3-4× scoring work plus subtree_actives bookkeeping. (The round-6 NA ~11 s/rep figure
+is NOT a clean comparison — it also ran now-disabled phases, NNI-perturb + outer resets.)
+Driver:
+`dev/profiling/drivers/fitch-tnt.R` (Zhu2013 `-`→`?`, auto→thorough, nThreads=1).
+Score 627 vs TNT 1.6 = 624 (was +11 in March; now +3 — near parity).
+
+Phase distribution (standard Fitch, attr "timings"): **ratchet 63%**, rss 9.2%,
+xss 9.2%, css 6.8%, wagner 5.5%, tbr 4%, final_tbr 2.3%. (Contrast the NA/thorough
+round-6 table above — there ratchet 46% + NNI-perturb 34%; NNI-perturb now off.)
+
+VTune top functions (TreeSearch.dll self, total 2.70 s; names via `nm`):
+| % DLL | function | note |
+|------:|----------|------|
+| 25.1 | `tbr_search` (orchestration self) | candidate-loop control + `vector<bool>` collapsed/sector bit-tests + inlined scoring |
+| 14.5 | `simd::any_hit_reduce_avx2` | **AT-LIMIT** — disasm: GCC already elides the `hor_or256` store-reload |
+| 13.2 | `uppass_node` | scalar update loop; **AT-LIMIT** — vectorising = 1.22× only, nil for 2-state (micro-bench) |
+|  6.3 | `any_hit_reduce3_avx2` | SPR-bounded reduce |
+|  5.2 | `build_postorder_prealloc` | O(n) rebuild **per clip AND per accept** |
+|  4.1 | `fitch_incremental_downpass` | per clip |
+|  4.0 | `fitch_indirect_bounded_flat` | SPR candidate scoring |
+| ~2.9 | `hash_tree` / `fitch_indirect_length_cached` (scalar) / `validate_topology` | |
+
+**Conclusion:** per-candidate scoring is at the AVX2/compiler limit. Standard-Fitch
+is **bookkeeping- + strategy-bound**: per-clip O(n) work (postorder rebuild +
+incremental passes + edge/from_above/vroot construction ≈ 18%) and ratchet (63%)
+are the levers — exactly what TNT minimises (Goloboff 1996). This corroborates
+`.positai/plans/2026-03-21-tnt-outperformance-analysis.md` (strategy > code).
+
+**Two build gotchas for VTune on this MinGW/Windows toolchain** (cost an hour):
+1. The default R Windows build **strips** the DLL (`DLLFLAGS=-s` in Makeconf) →
+   VTune shows `func@0x…`/`[Unknown]`. Override with
+   `MAKEFLAGS="DLLFLAGS=-static-libgcc"` (drops `-s`); the personal `~/.R/Makevars`
+   supplies `-g` via `CXXFLAGS` (and zeroes `PKG_CXXFLAGS`, so a package
+   `src/Makevars.win PKG_CXXFLAGS` is ignored). Verify: `objdump -h DLL | grep debug_info`.
+2. Even with symbols, VTune's CSV reporter still prints `func@0x…` (MinGW DWARF
+   unparsed). Resolve names with `nm -C DLL`; the image base (0x2cc1a0000) is stable
+   across rebuilds, so VTune addresses map 1:1 to `nm` addresses. `addr2line` gives
+   the source FILE but not always the line (DWARF5 line tables).
+
+Full round notes + ranked candidates: `dev/profiling/log.md` (Round 3),
+`dev/profiling/findings.md` (T-S3a/b/c), `dev/profiling/baselines.md`.
+
 ## What to Profile
 
 Status key: ✅ resolved, ⚠ partially explored, ❌ not yet investigated

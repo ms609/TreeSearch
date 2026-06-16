@@ -189,6 +189,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     profileNotification <- reactiveVal(NULL)
     profileProgressFile <- reactiveVal(NULL)
     profileCancelFile   <- reactiveVal(NULL)
+    # T-309: hash of the dataset actually sent to prep, captured at invoke time.
+    # Stamped onto profileDataHash at completion so that a dataset swap *during*
+    # prep is detected by the StartSearch() guard (rather than stamping the
+    # current r$dataHash, which may have changed while prep was running).
+    profilePrepHash     <- reactiveVal(NULL)
 
     # Inlines PrepareDataProfile() logic so the slow StepInformation loop
     # can report per-pattern progress and check a cancel file.
@@ -378,6 +383,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       nid <- showNotification("Preparing profile scores\u2026",
                               duration = NULL, type = "message")
       profileNotification(nid)
+      profilePrepHash(rlang::hash(dataset))  # T-309: remember what we prepared
       profilePrepTask$invoke(dataset, progPath, cancPath)
       TRUE
     }
@@ -437,7 +443,10 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         }
         if (!is.null(result)) {
           profileDataset(result)
-          profileDataHash(r$dataHash)
+          # T-309: stamp the hash of the dataset that was actually prepared
+          # (captured at invoke time), NOT the current r$dataHash, which may
+          # have changed if the user loaded new data while prep was running.
+          profileDataHash(profilePrepHash())
           # Auto-start the search that was deferred for profile preparation.
           # StartSearch() will see that profileDataHash matches and proceed
           # directly to the search without re-preparing.
@@ -578,6 +587,20 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     # polled by an invalidateLater observer to update the notification.
     progressFile <- reactiveVal(NULL)
 
+    # T-311: when the session ends (user disconnects or closes the app), signal
+    # any in-flight search or profile-prep worker to stop by creating its
+    # cancel-signal file. Without this the future::future() worker keeps running
+    # (up to the full timeout) orphaned after the client is gone.
+    session$onSessionEnded(function() {
+      try({
+        for (cf in c(isolate(cancelFile()), isolate(profileCancelFile()))) {
+          if (!is.null(cf) && nzchar(cf) && !file.exists(cf)) {
+            file.create(cf)
+          }
+        }
+      }, silent = TRUE)
+    })
+
     searchTask <- ExtendedTask$new(
       function(dataset, tree, concavity, extendedIw, strategy,
                maxReplicates, targetHits, maxSeconds, poolSuboptimal,
@@ -630,6 +653,16 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     ##########################################################################
 
     StartSearch <- function () {
+      # T-310: re-entrancy guard. shinyjs::disable("go") is an async browser
+      # round-trip, so a fast double-click (or go + modalGo) can fire input$go
+      # twice before the disable lands; ExtendedTask would queue the second
+      # invoke and clobber the single cancelFile/progressFile/notification
+      # state. The profile-prep branch below returns before searchInProgress is
+      # set TRUE, so the auto-restart from the prep-completion observer still
+      # proceeds past this guard.
+      if (isTRUE(r$searchInProgress)) {
+        return(invisible())
+      }
       if (!HaveData()) {
         Notification("No data loaded", type = "error")
         return(invisible())
@@ -1059,8 +1092,15 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           }
           # Keep existing last_improved_rep (new search didn't improve score)
           combined <- c(r$allTrees, newTrees)
-          # Deduplicate by canonical Newick (ladderized topology string)
+          # Deduplicate by canonical Newick (ladderized topology string).
+          # T-313: strip branch lengths (and any root edge) first — write.tree()
+          # serialises them, so topologically identical trees with different BLs
+          # (e.g. user-loaded trees carrying BLs alongside branch-length-free
+          # parsimony trees) would otherwise fail to deduplicate, inflating the
+          # pool and the displayed tree count.
           nwk <- vapply(combined, function(t) {
+            t[["edge.length"]] <- NULL
+            t[["root.edge"]] <- NULL
             write.tree(ape::ladderize(t))
           }, character(1L))
           combined <- combined[!duplicated(nwk)]
@@ -1134,6 +1174,12 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       r$searchConsensusStable <- FALSE
       r$searchTimedOut <- FALSE
       r$searchCount <- 0L
+      # T-309: invalidate any prepared profile data — it belonged to the old
+      # dataset. Clearing forces StartSearch() to re-prepare, and makes scores()
+      # return NULL (rather than stale numbers) until it does.
+      profileDataset(NULL)
+      profileDataHash(NULL)
+      profilePrepHash(NULL)
       nTip <- length(r$dataset)
       nChar <- sum(attr(r$dataset, "weight", exact = TRUE))
       defaultTimeout <- max(1L, min(15L, ceiling(nTip * nChar / 20000L)))
