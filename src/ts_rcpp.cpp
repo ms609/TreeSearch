@@ -1373,6 +1373,8 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.ratchet_adaptive         = as<bool>(ctrl["ratchetAdaptive"]);
   if (ctrl.containsElementNamed("ratchetTaper"))
     params.ratchet_taper          = as<bool>(ctrl["ratchetTaper"]);
+  if (ctrl.containsElementNamed("stallEscalateFactor"))
+    params.stall_escalate_factor  = as<double>(ctrl["stallEscalateFactor"]);
 
   // NNI perturbation
   params.nni_perturb_cycles   = as<int>(ctrl["nniPerturbCycles"]);

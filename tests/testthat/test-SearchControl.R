@@ -155,3 +155,33 @@ test_that("IW via control works", {
   tl <- TreeLength(result[[1]], ds, concavity = 10)
   expect_equal(score, tl, tolerance = 0.01)
 })
+
+test_that("stallEscalateFactor is validated and stored", {
+  expect_equal(SearchControl()$stallEscalateFactor, 1)
+  expect_equal(SearchControl(stallEscalateFactor = 2.5)$stallEscalateFactor, 2.5)
+  # A value < 1 would shrink perturbation on stalling (wrong direction); NA and
+  # non-scalar are also rejected at the R boundary.
+  expect_error(SearchControl(stallEscalateFactor = 0.5),
+               "stallEscalateFactor.*>= 1")
+  expect_error(SearchControl(stallEscalateFactor = NA_real_),
+               "stallEscalateFactor.*>= 1")
+  expect_error(SearchControl(stallEscalateFactor = c(1, 2)),
+               "stallEscalateFactor.*>= 1")
+})
+
+test_that("stallEscalateFactor escalates on stall and still scores correctly", {
+  skip_on_cran()
+  # Enough replicates that the search stalls (no improvement for >= nTip/10
+  # reps), which engages the escalator's stalled branch; the early reps exercise
+  # the non-stalled branch. Escalation alters the perturbation trajectory, not
+  # the achievable optimum, so the result is a valid, correctly-scored tree.
+  set.seed(8472)
+  result <- MaximizeParsimony(
+    ds, maxReplicates = 8L, targetHits = 99L, verbosity = 0L,
+    control = SearchControl(stallEscalateFactor = 3, ratchetCycles = 3L)
+  )
+  expect_s3_class(result, "multiPhylo")
+  score <- attr(result, "score")
+  expect_true(is.finite(score) && score > 0)
+  expect_equal(score, TreeLength(result[[1]], ds), tolerance = 0.01)
+})

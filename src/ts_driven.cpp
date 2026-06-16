@@ -19,6 +19,7 @@
 #include <Rmath.h>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -785,9 +786,42 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
+    // Cross-replicate stall escalation (per-dataset adaptive perturbation).
+    // When a run stalls (no improvement for >= ceil(nTip/10) replicates),
+    // ratchet up the perturbation probability for subsequent replicates and
+    // engage the within-replicate adaptive escalator (ratchet_adaptive). This
+    // supplies the cross-replicate memory the per-replicate ratchet lacks,
+    // letting the search discover the right perturbation strength for THIS
+    // dataset at runtime instead of baking in a constant (which the
+    // benchmarks show does not generalise across datasets). Reset is implicit:
+    // an improvement zeroes unsuccessful_reps below, so the next iteration
+    // takes the else branch and restores base. stall_escalate_factor == 1.0
+    // (default) makes the whole rule inert — a true no-op. Authoritative over
+    // ratchet_taper if both are set (opposite intent; not combined in presets).
+    if (params.stall_escalate_factor > 1.0) {
+      const int s0 = std::max(1, (ds.n_tips + 9) / 10);   // ceil(nTip / 10)
+      if (unsuccessful_reps >= s0) {
+        const int k = (unsuccessful_reps - s0) / s0;
+        const double mult = std::pow(params.stall_escalate_factor, k);
+        adaptive_params.ratchet_perturb_prob =
+            std::min(0.5, params.ratchet_perturb_prob * mult);
+        adaptive_params.ratchet_adaptive = true;
+        if (params.verbosity >= 2 && !has_callback) {
+          Rprintf("  Stall escalate: stalled %d rep(s) (s0=%d) -> "
+                  "perturb_prob=%.3f, ratchet_adaptive=on\n",
+                  unsuccessful_reps, s0,
+                  adaptive_params.ratchet_perturb_prob);
+        }
+      } else {
+        adaptive_params.ratchet_perturb_prob = params.ratchet_perturb_prob;
+        adaptive_params.ratchet_adaptive     = params.ratchet_adaptive;
+      }
+    }
+
     // Use adaptive_params when any per-replicate adaptation is active
     const DrivenParams& rep_params =
-        (params.adaptive_level || params.ratchet_taper)
+        (params.adaptive_level || params.ratchet_taper ||
+         params.stall_escalate_factor > 1.0)
         ? adaptive_params : params;
 
     // Conflict-guided sector selection: compute pool split frequencies

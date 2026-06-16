@@ -21,6 +21,7 @@ SearchControl(
   ratchetPerturbMaxMoves = 5L,
   ratchetAdaptive = FALSE,
   ratchetTaper = FALSE,
+  stallEscalateFactor = 1,
   nniPerturbCycles = 0L,
   nniPerturbFraction = 0.5,
   driftCycles = 0L,
@@ -127,6 +128,16 @@ use a reduced probability for finer local exploration.  The effective
 probability is \code{ratchetPerturbProb * max(floor, 1 - strength * hitRate)}
 where \code{hitRate} is the fraction of replicates that found the current
 best score.  Default \code{FALSE}.}
+
+\item{stallEscalateFactor}{Numeric (>= 1); cross-replicate stall escalation.
+When a driven search stalls -- no improvement for \code{ceiling(nTip / 10)}
+consecutive replicates -- the ratchet perturbation probability is
+multiplied by this factor for each further \code{ceiling(nTip / 10)} replicates
+without improvement (capped at 0.5), and adaptive perturbation
+(\code{ratchetAdaptive}) is engaged, until an improvement resets the strength to
+its base value.  This lets a search discover at runtime the perturbation
+strength a difficult dataset needs, rather than relying on a fixed value.
+The default \code{1} disables escalation, leaving search behaviour unchanged.}
 
 \item{nniPerturbCycles}{Integer; number of stochastic NNI-perturbation
 cycles per replicate.  Each cycle randomly applies NNI swaps to a

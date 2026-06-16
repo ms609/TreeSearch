@@ -44,6 +44,15 @@
 #'   probability is `ratchetPerturbProb * max(floor, 1 - strength * hitRate)`
 #'   where `hitRate` is the fraction of replicates that found the current
 #'   best score.  Default `FALSE`.
+#' @param stallEscalateFactor Numeric (>= 1); cross-replicate stall escalation.
+#'   When a driven search stalls -- no improvement for `ceiling(nTip / 10)`
+#'   consecutive replicates -- the ratchet perturbation probability is
+#'   multiplied by this factor for each further `ceiling(nTip / 10)` replicates
+#'   without improvement (capped at 0.5), and adaptive perturbation
+#'   (`ratchetAdaptive`) is engaged, until an improvement resets the strength to
+#'   its base value.  This lets a search discover at runtime the perturbation
+#'   strength a difficult dataset needs, rather than relying on a fixed value.
+#'   The default `1` disables escalation, leaving search behaviour unchanged.
 #' @param driftCycles Integer; number of drift search cycles.
 #' @param driftAfdLimit Integer; maximum absolute fit difference (steps) for
 #'   accepting a suboptimal drift move.
@@ -242,6 +251,7 @@ SearchControl <- function(
     ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
     ratchetTaper = FALSE,
+    stallEscalateFactor = 1.0,
     # NNI perturbation
     nniPerturbCycles = 0L,
     nniPerturbFraction = 0.5,
@@ -300,6 +310,13 @@ SearchControl <- function(
       stop("`", .p, "` must be a single positive integer")
     }
   }
+  # `stallEscalateFactor` multiplies the ratchet perturbation probability when a
+  # run stalls; a value < 1 would *shrink* perturbation on stalling (the wrong
+  # direction), and the C++ escalator treats exactly 1 as "off".
+  .se <- as.double(stallEscalateFactor)
+  if (length(.se) != 1L || is.na(.se) || .se < 1) {
+    stop("`stallEscalateFactor` must be a single number >= 1")
+  }
   structure(
     list(
       tbrMaxHits = as.integer(tbrMaxHits),
@@ -318,6 +335,7 @@ SearchControl <- function(
       ratchetPerturbMaxMoves = as.integer(ratchetPerturbMaxMoves),
       ratchetAdaptive = as.logical(ratchetAdaptive),
       ratchetTaper = as.logical(ratchetTaper),
+      stallEscalateFactor = as.double(stallEscalateFactor),
       nniPerturbCycles = as.integer(nniPerturbCycles),
       nniPerturbFraction = as.double(nniPerturbFraction),
       driftCycles = as.integer(driftCycles),
@@ -366,7 +384,7 @@ print.SearchControl <- function(x, ...) {
               "maxOuterResets"),
     "Ratchet" = c("ratchetCycles", "ratchetPerturbProb", "ratchetPerturbMode",
                    "ratchetPerturbMaxMoves", "ratchetAdaptive",
-                   "ratchetTaper"),
+                   "ratchetTaper", "stallEscalateFactor"),
     "NNI Perturbation" = c("nniPerturbCycles", "nniPerturbFraction"),
     "Drift" = c("driftCycles", "driftAfdLimit", "driftRfdLimit"),
     "Prune-Reinsert" = c("pruneReinsertCycles", "pruneReinsertDrop",

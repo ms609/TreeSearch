@@ -306,8 +306,10 @@ struct StateSnapshot {
 };
 
 // --- Topology validation (debug, catches bugs before they crash R) ---
+// [[maybe_unused]] because the sole call site (in tbr_search) is gated under
+// NDEBUG (Tier 3a) — in release builds this function is never referenced.
 
-static bool validate_topology(const TreeState& tree) {
+[[maybe_unused]] static bool validate_topology(const TreeState& tree) {
   int root = tree.n_tip;
 
   // DFS from root with visited check to detect cycles
@@ -1204,7 +1206,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // Topology mutated; states no longer match best_score.
         score_fresh = false;
 
-        if (!ok || !validate_topology(tree)) {
+        // apply_tbr_move's own success flag (`ok`) is the functional check.
+        // The full topology walk is debug-only paranoia (Tier 3a): compiled
+        // out of release (NDEBUG) builds, where it cost ~2-3% on the per-accept
+        // path. apply_tbr_move is trusted to produce a valid tree in release.
+        bool topo_ok = ok;
+#ifndef NDEBUG
+        topo_ok = topo_ok && validate_topology(tree);
+#endif
+        if (!topo_ok) {
           restore_topology(tree, snap);
           state_snap.restore(tree);
           score_fresh = true;

@@ -212,6 +212,16 @@ struct DrivenParams {
   double ratchet_taper_floor = 0.5;    // minimum taper factor (prob ≥ 50% of base)
   double ratchet_taper_strength = 0.6; // how aggressively to reduce (0..1)
 
+  // Cross-replicate stall escalation (per-dataset adaptive perturbation).
+  // When a run stalls (unsuccessful_reps >= ceil(nTip/10)), escalate ratchet
+  // perturbation for subsequent replicates:
+  //   ratchet_perturb_prob = min(0.5, base * stall_escalate_factor^k),
+  //   k = floor((unsuccessful_reps - s0) / s0),
+  // and force ratchet_adaptive = TRUE for that replicate. An improvement
+  // resets unsuccessful_reps to 0, which restores the base strength. The
+  // factor 1.0 (default) disables the whole rule — a true no-op.
+  double stall_escalate_factor = 1.0;
+
   // Cross-replicate consensus constraint tightening.
   // When true, after a minimum number of replicates, extract the strict
   // consensus splits from the pool and enforce them as topological

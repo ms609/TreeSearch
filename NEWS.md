@@ -1,5 +1,13 @@
 # To integrate into 2.0.0 notes
 
+- New `SearchControl()` option `stallEscalateFactor` (default `1`, disabled):
+  when a driven search stalls, escalate ratchet perturbation strength for
+  subsequent replicates so the search adapts to a difficult dataset at runtime.
+
+- Faster driven search: per-clip allocation churn in the TBR kernel removed
+  (reusable scratch buffers and an open-addressed rerooting-dedup table), and
+  the debug-only topology validation no longer runs in release builds.
+
 - HSJ (Hopkins & St John 2021) scoring is now invariant to the
   arbitrary ordering of a `phyDat` object's `levels`.  Both the primary
   absent/present term and the secondary-character dissimilarity term
