@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 # Exercises StrategyTracker via the ts_test_strategy_tracker() bridge.
 # The bridge creates a fresh tracker, draws `n_draws` selections, then
 # applies 5 successes to arm 0 (WAGNER_RANDOM) and 5 failures to arm 1

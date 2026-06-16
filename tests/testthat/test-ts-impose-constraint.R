@@ -1,3 +1,5 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
 ## Tests for impose_constraint() — post-hoc topology repair (T-213)
 
 library("TreeTools")

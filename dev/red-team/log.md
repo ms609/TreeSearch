@@ -16,6 +16,43 @@ in `findings.md`.
 
 ---
 
+area: 8
+reviewed_by: Claude (cpp-search, /red-team)
+date: 2026-06-16
+tier: sonnet
+yield: 1 filed (T-322) + 2 inline (skip_on_cran on impose-constraint, strategy)
+notes: Test suite health. Sonnet finder raised 11 candidates; severity-matched
+verification (sonnet for the 3 judgement-heavy, haiku for the 8-file skip cluster
+checked against the documented `tests/testing-strategy.md` tiers) confirmed 3, refuted 8.
+**CONFIRMED:** (1) **T-322 (P3)** `test-ts-wagner.R:223-242` "Wagner on NA + IW matches
+fitch_score" calls both `ts_random_wagner_tree` and `ts_fitch_score` with `concavity=k`
+but omits `min_steps` (defaults `integer(0)`) → both sides compute `k/(k+steps-0)`, a
+same-formula tautology that cannot catch a regression in the production NA+IW `min_steps`
+path (`R/MaximizeParsimony.R:834` always passes `min_steps=as.integer(MinimumLength(ds,
+compress=TRUE))`; Vinther2008 has inapplicable chars → MinimumLength non-zero, so the tested
+formula genuinely differs from production). Filed not fixed inline: the fix (add `min_steps`
+to both calls — fn accepts it, RcppExports.R:147) changes test numerics and must be confirmed
+by a test-run, and may itself surface a latent wagner NA+IW bug. Cross-links area 9.
+(2+3) **FIXED INLINE** — added the standard 2-line `skip_on_cran()` file guard to
+`test-ts-impose-constraint.R` and `test-ts-strategy.R`: both are Tier-2 by the strategy doc
+(absent from its Tier-1 and Tier-3 lists) yet ran on CRAN unguarded (impose-constraint fires
+~10 `MaximizeParsimony` calls). **REFUTED (8):** TS-8-01 "vacuous OR" at `test-ts-tbr-search.R:91`
+— actually a legitimate relaxed guard (an equal-accept search can wander into a worse-scoring
+basin, so both OR arms are independently falsifiable). TS-8-02 `inapplicable.phyData` used
+without `data()` in `test-ts-simd.R` — REFUTED: `DESCRIPTION` has `LazyData: true` +
+`data/inapplicable.phyData.rda` exists → lazy-loaded, no `data()` needed (this overturns the
+finder's high-sev flag; the 2026-05-19 explicit-`data()` additions were belt-and-braces, not
+strictly required). TS-8-03/04/05/08/09/10 "missing skip_on_cran" on
+`simd`/`memory-layout`/`start-tree`/`constraint-small`/`splits`/`pool` — all Tier-1 by design,
+guardless is correct (splits also already carries `skip_if_not_installed`). **LEADS for next
+reviewer:** `test-ts-memory-layout.R` (runs `ts_bench_tbr_phases` + several searches) and
+`test-ts-start-tree.R` (5× `MaximizeParsimony`) are documented Tier-1 but may exceed the
+"<2 s/file" Tier-1 budget — worth timing (their timing asserts are `>= 0`, so not flaky, only a
+runtime-budget question; if confirmed slow, reclassify to Tier 2). `check_constraint` helper is
+duplicated verbatim in `test-ts-constraint-multi.R` + `test-ts-impose-constraint.R` — consolidate
+into `helper-ts.R` if more constraint tests are added. **Seam: still yielding (1 real bug + 2
+CRAN-guard fixes) — next visit stays at sonnet.** **Next area: 9** (Wagner & addition trees).
+
 area: 7
 reviewed_by: Claude (cpp-search, /red-team)
 date: 2026-06-16
@@ -357,4 +394,4 @@ notes: Search topology invariants — thorough review of ts_tbr/ts_drift/ts_sear
 
 ---
 
-last_focus: 7
+last_focus: 8
