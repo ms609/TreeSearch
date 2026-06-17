@@ -1,0 +1,8 @@
+mxram 1500;
+proc project3763.tnt;
+rseed 5;
+hold 1000;
+timeout 0:10:00;
+xmult = hits 5 replic 10;
+best;
+quit;
