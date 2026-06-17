@@ -186,6 +186,41 @@ targets wall-clock.
 tree space, not just skip candidates/dedup as now. Structural swing; pursue only if
 Phase 1/2 data shows the candidate-frugality gap justifies it.
 
+## Challenge 2 closeout (2026-06-17) — ratchet now genuinely disableable; ratchet-OFF still trails TNT
+
+The "ratchet is untouched / disable it to match TNT" thread (user Challenge 2) is resolved.
+
+**Ratchet was never disableable.** `ratchetCycles = 0` still ran ratchet via three
+stacked floors in `ts_driven.cpp` (ceiling-division `max(1, …)`, an unconditional call
+site, and the `adaptive_level` re-floor `max(1, base * scale)`); `ratchet_search` also
+runs an initial TBR pass before its cycle loop. All three are now guarded — a no-op for
+every preset (all use `ratchetCycles ≥ 3`), covered by `test-ts-ratchet-disable.R`.
+
+**With ratchet genuinely off, TreeSearch does NOT match TNT.** Patched build,
+`adaptiveLevel = FALSE`, TNT-matched core, 4 datasets × 5 seeds, only `ratchetCycles`
+varied (`bench_ratchet_axis.R` → `ratchet_axis.csv`). Median gap to TNT `xmult`
+(arm − TNT, lower = better):
+
+| dataset | TNT | R0 (true off) | R1 | R12 | gap R0 | gap R12 |
+|---|---|---|---|---|---|---|
+| Giles2015   | 670  | 675  | 675  | 672  | +5 | +2 |
+| Wortley2006 | 480  | 485  | 487  | 482  | +4 | +2 |
+| Zanol2014   | 1262 | 1269 | 1268 | 1267 | +8 | +5 |
+| Zhu2013     | 624  | 631  | 631  | 629  | +7 | +5 |
+
+- Ratchet-off (R0) trails TNT by **+4…+8** on every dataset; even our single best
+  ratchet-off seed never reaches TNT's median. The deficit is **not** ratchet-caused
+  (TNT runs no ratchet on these either) → it is structural.
+- Ratchet helps **monotonically**: R12 closes the gap to +2…+5 (−2…−3 vs R0) at ~2–3×
+  wall-clock. "Disable ratchet to match, then switch on to pull ahead" inverts reality —
+  ratchet is *necessary to approach* TNT; it narrows but never erases the deficit.
+- The residual gap is **sectorial / fusing search efficiency** — re-examined against the
+  published algorithm in the Goloboff-1999 divergence analysis (2026-06-17,
+  `dev/plans/2026-06-17-sectorial-divergence.md`).
+
+Memory: `ratchet-not-disableable.md`. (Local TNT is 32-bit, so its wall-clock is not a
+fair reference; scores / rearrangement counts are. R0-vs-R12 wall-clock is comparable.)
+
 ## Methodology guardrails
 
 - **Optimise against candidates-per-improvement** (continuous, low-variance), not

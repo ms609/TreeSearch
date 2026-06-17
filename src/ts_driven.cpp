@@ -202,8 +202,14 @@ ReplicateResult run_single_replicate(
   const int n_outer = std::max(1, params.outer_cycles);
   const int max_resets = params.max_outer_resets;  // 0=none, -1=unlimited
   int resets_used = 0;
-  // Ceiling division: each outer cycle gets at least 1 ratchet cycle.
-  const int ratchet_per = std::max(1,
+  // Ceiling division: each outer cycle gets at least 1 ratchet cycle UNLESS
+  // ratchet is explicitly disabled (ratchet_cycles == 0), mirroring the
+  // drift / nni / prune guards immediately below. Without the `== 0 ? 0` case,
+  // ratchet_cycles == 0 still floored to max(1, 0) == 1, so ratchet was never
+  // actually disableable through the API. (Two further floors are guarded
+  // below: the unconditional call site at the ratchet block, and the
+  // adaptive_level re-floor `max(1, base_ratchet_cycles * scale)`.)
+  const int ratchet_per = (params.ratchet_cycles == 0) ? 0 : std::max(1,
       (params.ratchet_cycles + n_outer - 1) / n_outer);
   const int drift_per = (params.drift_cycles == 0) ? 0 : std::max(1,
       (params.drift_cycles + n_outer - 1) / n_outer);
@@ -299,8 +305,15 @@ ReplicateResult run_single_replicate(
       return result;
     }
 
-    // 4. Ratchet perturbation to escape local optima
-    {
+    // 4. Ratchet perturbation to escape local optima.
+    // Skipped entirely when ratchet is disabled (ratchet_per == 0), mirroring
+    // the drift / nni-perturb guards below. This matters because ratchet_search()
+    // runs an initial TBR pass before its cycle loop (ts_ratchet.cpp), so calling
+    // it with n_cycles == 0 would still perturb the tree -- the guard, not
+    // n_cycles, is what makes ratchet truly off. ph_lap()/timing stay inside the
+    // guard so ratchet_ms is exactly 0 when ratchet does not run; the else-branch
+    // still laps to keep the phase clock aligned for the phases that follow.
+    if (ratchet_per > 0) {
       RatchetParams rp;
       rp.n_cycles = ratchet_per;
       rp.perturb_prob = params.ratchet_perturb_prob;
@@ -311,12 +324,14 @@ ReplicateResult run_single_replicate(
       rp.tabu_size = params.tabu_size;
       rp.clip_order = params.clip_order;
       ratchet_search(result.tree, ds, rp, cd, check_timeout);
-    }
-    result.timings.ratchet_ms += ph_lap();
-    if (verbosity >= 2) {
-      Rprintf("  %s score: %.5g [%.0f ms total]\n",
-              outer_label("Ratchet").c_str(),
-              score_tree(result.tree, ds), result.timings.ratchet_ms);
+      result.timings.ratchet_ms += ph_lap();
+      if (verbosity >= 2) {
+        Rprintf("  %s score: %.5g [%.0f ms total]\n",
+                outer_label("Ratchet").c_str(),
+                score_tree(result.tree, ds), result.timings.ratchet_ms);
+      }
+    } else {
+      ph_lap();  // reset the phase clock; ratchet_ms stays 0 when disabled
     }
 
     if (ts::check_interrupt() || check_timeout()) {
@@ -754,7 +769,12 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
         scale = 1.0;     // use base values
       }
 
-      adaptive_params.ratchet_cycles = std::max(
+      // Mirror the ratchet_per zero-guard: adaptive_level must not resurrect a
+      // disabled ratchet. base_ratchet_cycles == 0 (user set ratchetCycles = 0)
+      // stays 0; otherwise keep the >= 1 floor so adaptive never zeroes an
+      // enabled ratchet. (drift below already uses max(0, ...), so only ratchet
+      // needed this guard.)
+      adaptive_params.ratchet_cycles = (base_ratchet_cycles == 0) ? 0 : std::max(
           1, static_cast<int>(base_ratchet_cycles * scale));
       adaptive_params.drift_cycles = std::max(
           0, static_cast<int>(base_drift_cycles * scale));
