@@ -22,6 +22,7 @@ inst/ape
 inst/doc
 results-*
 revdep/
+.tnt-survey/
 tests/testthat/_snaps/*.new.*
 vignettes/*.html
 vignettes/*.pdf
