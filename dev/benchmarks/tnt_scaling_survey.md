@@ -55,25 +55,42 @@ project3763 **29/42**.
 
 ---
 
-## The 205-taxon failure
+## The 205-taxon failure — three distinct modes
 
 At 205 taxa, TNT's sector size is pinned at 45 (the n=90–450 plateau). With
 only ~4–5 sectors tiling the tree, the within-sector RAS restarts cover a
 small fraction of tree space. Without global perturbation, the search stalls.
 
-| Config at 205t | Median score | Seeds reached B |
-|:---------------|-------------:|----------------:|
-| sect+ratchet   |         1290 |             3/3 |
-| sect+drift     |         1291 |             3/3 |
-| sect+fuse      |         1291 |             3/3 |
-| all            |         1291 |             3/3 |
-| default        |         1296 |             1/3 |
-| level0–10      |     1294–NA  |             0/3 |
-| ratchet-only   |           NA |             0/3 |
-| sect-only      |           NA |             0/3 |
+Three distinct failure modes are present; "censored at 300 s" ≠ "incapable":
 
-sect+ratchet actually finds 1290 (better than Phase-1 B=1292), confirming the
-Phase-1 search was not exhaustive enough for this matrix.
+| Config at 205t | Actual TTT (s) | Median score | Seeds reached B | Mode |
+|:---------------|---------------:|-------------:|----------------:|:-----|
+| sect+ratchet   |          62–181|         1290 |             3/3 | ✓    |
+| sect+drift     |          54–100|         1291 |             3/3 | ✓    |
+| all            |          83–297|         1291 |             3/3 | ✓    |
+| sect+fuse      |          ~300  |         1291 |             3/3 | ✓ barely |
+| default        |         179–301|         1296 |             1/3 | converged short |
+| level0         |         101–121|         1294 |             0/3 | converged short |
+| level1         |          96–154|         1294 |             0/3 | converged short |
+| level2         |         203–212|         1294 |             0/3 | converged short |
+| sect-only      |          ~300  |           NA |             0/3 | timeout+parse¹ |
+| ratchet-only   |          ~300  |           NA |             0/3 | timeout+parse¹ |
+| level3         |       20–227   |           NA |             0/3 | unstable²      |
+| level4/5/10    |       0.3–25   |           NA |             0/3 | crash/OOM²     |
+
+¹ Ran to full 300 s internal timeout; "Best score:" output not parsed by our
+  regex when the TNT `timeout` command fires mid-replicate. Actual score unknown.
+
+² Erratic termination times (0.3–227 s) with no parseable score suggest TNT
+  crashes or runs out of the 1500 MB mxram allocation at high `level N` settings
+  (XSS on a 205t matrix likely requires more memory).
+
+**Level 0/1/2** terminated *early* (95–212 s) because `hits 5` was satisfied —
+they converged to a local optimum 1–4 steps from B and stopped. More seeds or
+restarts would likely find B eventually; they are stuck, not hopeless.
+
+sect+ratchet finds 1290 (better than Phase-1 B=1292), confirming the Phase-1
+search was not exhaustive enough for this matrix.
 
 ---
 
