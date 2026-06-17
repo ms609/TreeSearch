@@ -102,9 +102,11 @@ to_fitch <- function(phy) {
   MatrixToPhyDat(m)
 }
 
-#' Export one dataset to <dir>/<name>.tnt (Fitch mode)
+#' Export one dataset to <dir>/<name>.tnt (Fitch mode).
+#' Dispatches to export_nexus_dataset() for MorphoBank scaling sets.
 #' Returns list(ntip, nchar)
 export_dataset <- function(name, dir = STAGING) {
+  if (name %in% names(SCALE_DATASETS)) return(export_nexus_dataset(name, dir))
   phy <- inapplicable.phyData[[name]]
   if (is.null(phy)) stop("Dataset not found: ", name)
   d <- to_fitch(phy)
@@ -435,6 +437,73 @@ tnt_settings_full <- function(datasets   = NULL,
   cat("\n")
 
   outfile <- file.path("dev/benchmarks", "tnt_settings_survey.csv")
+  results <- run_survey(datasets, B_map, CONFIGS, run_seeds, run_timeout,
+                        outfile = outfile)
+  cat(sprintf("\nResults written incrementally to %s\n", outfile))
+  results
+}
+
+# ---------------------------------------------------------------------------
+# Scaling survey: larger MorphoBank datasets (above n=90 sector inflection)
+# ---------------------------------------------------------------------------
+
+NEOTRANS_DIR <- normalizePath("../neotrans/inst/projects", winslash = "/",
+                               mustWork = FALSE)
+
+SCALE_DATASETS <- list(
+  "project691"  = list(path = file.path(NEOTRANS_DIR, "project691.nex")),
+  "project4230" = list(path = file.path(NEOTRANS_DIR, "project4230.nex")),
+  "project4103" = list(path = file.path(NEOTRANS_DIR, "project4103.nex")),
+  "project3763" = list(path = file.path(NEOTRANS_DIR, "project3763.nex"))
+)
+
+#' Export a MorphoBank NEXUS dataset to <dir>/<name>.tnt (Fitch mode).
+#' Parenthesised polymorphisms (e.g. "(0,1)") are recoded as "?" before reading.
+export_nexus_dataset <- function(name, dir = STAGING) {
+  info <- SCALE_DATASETS[[name]]
+  if (is.null(info)) stop("Unknown scaling dataset: ", name)
+  if (!requireNamespace("phangorn", quietly = TRUE))
+    stop("phangorn required for NEXUS reading: install.packages('phangorn')")
+  lines <- readLines(info$path)
+  lines <- gsub("\\([0-9,]+\\)", "?", lines, perl = TRUE)
+  tmp <- tempfile(fileext = ".nex")
+  on.exit(unlink(tmp), add = TRUE)
+  writeLines(lines, tmp)
+  phy <- phangorn::read.phyDat(tmp, format = "nexus", type = "STANDARD")
+  d <- to_fitch(phy)
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  WriteTntCharacters(d, file.path(dir, paste0(name, ".tnt")))
+  list(ntip = length(d), nchar = sum(attr(d, "weight")))
+}
+
+#' Scaling survey: 4 MorphoBank datasets (103-205 taxa), all 14 configs, 3 seeds.
+#' Uses longer timeouts than the gap-dataset survey (300s/run, 600s Phase-1).
+tnt_scaling_full <- function(datasets    = names(SCALE_DATASETS),
+                              b_timeout  = 600L,
+                              b_seeds    = seq_len(5L),
+                              run_timeout = 300L,
+                              run_seeds  = seq_len(3L)) {
+  check_tnt()
+  if (!requireNamespace("phangorn", quietly = TRUE))
+    stop("phangorn required: install.packages('phangorn')")
+
+  cat("=== TNT 1.6 Scaling Survey ===\n")
+  cat(sprintf("Machine : %s\n", MACHINE$hostname))
+  cat(sprintf("CPU     : %s\n", MACHINE$cpu))
+  cat(sprintf("RAM     : %.1f GB\n", MACHINE$ram_gb))
+  cat(sprintf("TNT     : %s\n", TNT_EXE))
+  cat(sprintf("Date    : %s\n", format(Sys.time(), "%Y-%m-%d %H:%M:%S")))
+  cat(sprintf("Datasets: %s\n", paste(datasets, collapse = ", ")))
+  cat(sprintf("Configs : %d\n", length(CONFIGS)))
+  cat(sprintf("Seeds   : %d\n", length(run_seeds)))
+  cat(sprintf("Timeout : %ds per run\n\n", run_timeout))
+
+  B_map <- establish_B(datasets, b_seeds, b_timeout)
+  cat("\nB values:\n")
+  print(B_map)
+  cat("\n")
+
+  outfile <- file.path("dev/benchmarks", "tnt_scaling_survey.csv")
   results <- run_survey(datasets, B_map, CONFIGS, run_seeds, run_timeout,
                         outfile = outfile)
   cat(sprintf("\nResults written incrementally to %s\n", outfile))
