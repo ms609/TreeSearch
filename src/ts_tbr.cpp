@@ -768,6 +768,50 @@ static bool try_root_edge_moves(TreeState& tree, const DataSet& ds,
   return true;
 }
 
+// FNV-1a hash over canonical (min,max) child pairs; root-position-independent
+// because we sort each child pair before mixing, so any rooting of the same
+// unrooted topology produces the same hash.
+static inline uint64_t tree_topo_hash(const TreeState& tree) {
+  uint64_t h = 14695981039346656037ULL;
+  for (int i = 0; i < tree.n_tip - 1; ++i) {
+    int a = tree.left[i], b = tree.right[i];
+    if (a > b) { int t = a; a = b; b = t; }
+    h ^= (uint64_t)a * 2246822519ULL;
+    h *= 1099511628211ULL;
+    h ^= (uint64_t)b * 2654435761ULL;
+    h *= 1099511628211ULL;
+  }
+  return h;
+}
+
+// Dataset fingerprint: mix n_tips, n_blocks, and every tip_states word so that
+// any dataset change (adding a char, changing a tip state) produces a new key.
+// The cache is cleared whenever the fingerprint changes.
+static inline uint64_t ds_fingerprint(const DataSet& ds) {
+  uint64_t h = (uint64_t)ds.n_tips * 2654435761ULL
+             ^ (uint64_t)ds.n_blocks * 2246822519ULL;
+  for (uint64_t v : ds.tip_states) { h ^= v; h *= 1099511628211ULL; }
+  return h;
+}
+
+// Weighting-regime fingerprint.  The ratchet mutates the per-block active_mask
+// and upweight_mask and the IW pattern_freq IN PLACE on the live DataSet (see
+// save_perturb_state / restore_perturb_state in ts_ratchet.cpp — these three
+// fields ARE the "scoring state that varies mid-search"), and NA scoring reads
+// all three (ts_fitch_na*.h).  exact_verify therefore scores a topology
+// differently in the perturbed vs base regime, so the regime must be part of
+// the cache key.  Mixing the same three fields here covers the regime by
+// construction.
+static inline uint64_t weight_fingerprint(const DataSet& ds) {
+  uint64_t h = 14695981039346656037ULL;
+  for (const auto& blk : ds.blocks) {
+    h ^= blk.active_mask;   h *= 1099511628211ULL;
+    h ^= blk.upweight_mask; h *= 1099511628211ULL;
+  }
+  for (int f : ds.pattern_freq) { h ^= (uint64_t)(uint32_t)f; h *= 1099511628211ULL; }
+  return h;
+}
+
 // Exact full-neighbourhood TBR verification, for scorers whose indirect scan is
 // only APPROXIMATE (inapplicables / NA).  Under Brazeau's three-pass the
 // divided+reconnect decomposition is not exact (the clipped subtree's internal
@@ -796,6 +840,27 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
 
   tree.build_postorder();
   best_score = full_rescore(tree, ds);   // sync to the current (converged) tree
+
+  // Topology cache: exact_verify is a pure function of (topology, dataset,
+  // weighting regime).  A FALSE result for topology T means every unrooted-TBR
+  // neighbour is no better UNDER THE CURRENT WEIGHTS, and no state changes
+  // between calls could make that untrue.  The ratchet mutates the weighting in
+  // place (active_mask / upweight_mask / pattern_freq; ts_ratchet.cpp) and runs
+  // NA TBR under both perturbed and base weights within one cycle, so the
+  // weighting MUST be in the key — otherwise a base-regime "optimal" verdict
+  // would be reused during a perturbed pass (or vice-versa), silently skipping
+  // the very improving moves the ratchet exists to find.  Key on
+  // hash(child-pairs) XOR dataset-fingerprint XOR weight-fingerprint; only the
+  // dataset-fingerprint is the clear-trigger (a true dataset switch), so
+  // base-regime entries survive across perturbation excursions and are reused.
+  static thread_local std::unordered_set<uint64_t> evs_false_cache;
+  static thread_local uint64_t evs_last_fp = 0;
+  const uint64_t fp = ds_fingerprint(ds);
+  const uint64_t weight_fp = weight_fingerprint(ds);
+  if (fp != evs_last_fp) { evs_false_cache.clear(); evs_last_fp = fp; }
+  const uint64_t cache_key = tree_topo_hash(tree) ^ fp ^ weight_fp;
+  if (evs_false_cache.count(cache_key)) return false;
+
   save_topology(tree, snap);
   in_sub.assign(tree.n_node, 0);
 
@@ -855,6 +920,7 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   restore_topology(tree, snap);               // true optimum: restore clean tree
   tree.build_postorder();
   best_score = full_rescore(tree, ds);
+  evs_false_cache.insert(cache_key);          // memoize: this topology is optimal
   return false;
 }
 
