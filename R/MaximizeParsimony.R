@@ -142,19 +142,19 @@
     maxOuterResets = 3L,
     adaptiveStart = TRUE
   ),
-  # Opt-in "intensive" preset: `thorough` plus extra Wagner starts and TNT-faithful
-  # per-sector random-addition restarts.  Never auto-selected (.AutoStrategy returns
-  # only sprint/default/thorough/large); the user opts in with strategy = "intensive".
+  # Opt-in "intensive" preset: `thorough` plus extra Wagner starts for more
+  # starting-basin diversity.  Never auto-selected (.AutoStrategy returns only
+  # sprint/default/thorough/large); the user opts in with strategy = "intensive".
   # Phase-2 sweep (2026-06-16, 5 seeds, EW Fitch): wagnerStarts 3->5 improved the
   # hardest datasets (Wortley2006 -3, Zhu2013 -2 toward the TNT optimum) at
   # neutral-to-lower candidate cost, with a ~+1-step trade-off on a couple of
   # others (Zanol2014, Giles2015) -- hence opt-in rather than a default change.
-  # rasStarts 1->3 (2026-06-18): TNT runs 3 RAS+TBR restarts per sector; on a
-  # post-(Wagner+build_ras_sector)-fix build this closes the sectorial gap from
-  # ~+7/+8 to ~+1 over the MPT and WINS time-matched by 5-8 steps at a 30s rss
-  # budget (Zanol/Zhu), with no further gain at 6 (diag_sectras_{sweep,timematched}.R).
-  # Held to opt-in pending a full-search time-matched (Hamilton) gate before the
-  # auto-selected `thorough` preset adopts it.
+  # NB rasStarts=3 (TNT-faithful per-sector restarts) was evaluated 2026-06-18:
+  # it closes the rss-ONLY gap (+7/+8 -> +1, wins time-matched) but is REDUNDANT
+  # in the full thorough pipeline (Zanol/Zhu reach the optimum at rasStarts=1,
+  # 60s) -- so NOT adopted.  Revisit for larger datasets / shorter budgets where
+  # the full search can't reach the optimum (diag_thorough_rasstarts_tm.R +
+  # the Hamilton grid t29_thorough_rasstarts_hamilton.sh).
   intensive = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
@@ -162,7 +162,7 @@
     nniPerturbCycles = 0L,
     driftCycles = 0L,
     xssRounds = 5L, xssPartitions = 6L,
-    rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L, rasStarts = 3L,
+    rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
     fuseInterval = 2L, fuseAcceptEqual = TRUE,
     tabuSize = 200L, wagnerStarts = 5L,
