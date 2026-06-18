@@ -718,10 +718,19 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
   // search_sector()'s score_tree() is the authoritative scorer.
   int pool_idx = 0;
   std::vector<int> stack;
+  // Exact DIRECTIONAL edge-set scoring (same fix as wagner_tree): the candidate
+  // insertion cost is #chars where the tip downpass misses E(A,D) =
+  // combine(prelim[D], up[D]) -- NOT the union-of-finals proxy, which undercounts
+  // and degrades greedy placement.  Recomputed each step (the tree grows).  The
+  // up-message at sub-sr_mapped nodes correctly carries the HTU (rest-of-tree)
+  // state, so sector-internal placement accounts for the anchored context.
+  std::vector<uint64_t> edge_set;
   for (int i = 2; i < n_real; ++i) {
     const int tip = order[i];
     const uint64_t* tip_prelim =
         &rd.data.tip_states[static_cast<size_t>(tip) * tw];
+
+    compute_insertion_edge_sets(t, rd.data, edge_set);
 
     int best_above = -1, best_below = -1, best_extra = INT_MAX;
     stack.clear();
@@ -734,14 +743,14 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
       int lc = t.left[ni];
       int rc = t.right[ni];
       if (lc >= 0) {
-        int extra = fitch_indirect_length_bounded(tip_prelim, t, rd.data,
-                                                  node, lc, best_extra);
+        int extra = fitch_indirect_length_cached(
+            tip_prelim, &edge_set[static_cast<size_t>(lc) * tw], rd.data, best_extra);
         if (extra < best_extra) { best_extra = extra; best_above = node; best_below = lc; }
         if (lc >= n_tip) stack.push_back(lc);
       }
       if (rc >= 0) {
-        int extra = fitch_indirect_length_bounded(tip_prelim, t, rd.data,
-                                                  node, rc, best_extra);
+        int extra = fitch_indirect_length_cached(
+            tip_prelim, &edge_set[static_cast<size_t>(rc) * tw], rd.data, best_extra);
         if (extra < best_extra) { best_extra = extra; best_above = node; best_below = rc; }
         if (rc >= n_tip) stack.push_back(rc);
       }
