@@ -133,16 +133,21 @@ VERIFICATION:
   | 20     | 1264  | 1287      | 1261   |
   One fixed start now beats twenty buggy starts; +3 over the optimum vs +26.
 
-## TODO before merge to cpp-search
-- Remove validation scaffolding: debug exports `ts_wagner_tree_dir`,
+## Done before landing
+- Validation scaffolding REMOVED: debug exports `ts_wagner_tree_dir`,
   `ts_reinsert_scan`, the reference `directional_wagner_tree`, and the
-  `TS_WAGNER_UNION` env diagnostic (+ their init.c registrations).
-- Optional perf: `compute_insertion_edge_sets` allocates its up[] scratch per
-  call; reuse a buffer if a /profile pass flags TBR overhead.
-- IW/NA insertion cost still uses union-of-finals (out of scope; separate task if
-  it matters for those objectives).
+  `TS_WAGNER_UNION` env diagnostic (+ their init.c registrations + RcppExports
+  stubs). The landed commit touches only ts_fitch.cpp/.h, ts_wagner.cpp,
+  ts_tbr.cpp, test-wagner-quality.R.
+
+## Remaining (optional / out of scope)
+- Perf: `compute_insertion_edge_sets` allocates its up[] scratch per call; reuse
+  a buffer if a /profile pass flags TBR overhead (UNMEASURED).
+- IW/NA insertion cost still uses union-of-finals (separate task if it matters
+  for those objectives).
 
 ## Status
-SHIPPED in worktree (fix + vroot + test, 0 regressions, end-to-end gap +26→+3 on
-the core engine). Not yet on cpp-search. Unrooted TBR handled separately by the
-chip ([[tbr-rooted-vs-unrooted]]).
+SHIPPED on cpp-search (commit 2b299e4b, merged + pushed via bf5b9541). Fix +
+vroot + test, 0 regressions, end-to-end gap +26→+3 on the core engine; Wagner
+distribution now statistically indistinguishable from TNT. Unrooted TBR handled
+separately by the chip ([[tbr-rooted-vs-unrooted]]).
