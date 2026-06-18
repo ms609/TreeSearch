@@ -2927,7 +2927,8 @@ List ts_tbr_diagnostics(
     int maxChanges = 0,
     IntegerVector min_steps = IntegerVector(),
     double concavity = -1.0,
-    int clipOrder = 0)
+    int clipOrder = 0,
+    bool unrooted = false)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);
@@ -2943,6 +2944,7 @@ List ts_tbr_diagnostics(
   params.max_accepted_changes = maxChanges;
   params.diagnostics = true;
   params.clip_order = static_cast<ts::ClipOrder>(clipOrder);
+  params.unrooted = unrooted;
 
   ts::TBRResult result = ts::tbr_search(tree, ds, params);
 

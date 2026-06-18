@@ -220,7 +220,7 @@ ts_test_strategy_tracker <- function(seed, n_draws) {
     .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws)
 }
 
-ts_tbr_diagnostics <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L, min_steps = integer(), concavity = -1.0, clipOrder = 0L) {
-    .Call(`_TreeSearch_ts_tbr_diagnostics`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity, clipOrder)
+ts_tbr_diagnostics <- function(edge, contrast, tip_data, weight, levels, maxHits = 1L, acceptEqual = FALSE, maxChanges = 0L, min_steps = integer(), concavity = -1.0, clipOrder = 0L, unrooted = FALSE) {
+    .Call(`_TreeSearch_ts_tbr_diagnostics`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity, clipOrder, unrooted)
 }
 

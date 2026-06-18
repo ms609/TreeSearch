@@ -62,7 +62,7 @@ extern SEXP _TreeSearch_mc_fitch_scores(SEXP, SEXP);
 extern SEXP _TreeSearch_ts_wagner_bias_bench(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* ts_stochastic_tbr and ts_parallel_temper removed — on feature/parallel-temper */
 extern SEXP _TreeSearch_ts_test_strategy_tracker(SEXP, SEXP);
-extern SEXP _TreeSearch_ts_tbr_diagnostics(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_tbr_diagnostics(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_ls_fit(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_ls_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
@@ -144,7 +144,7 @@ static const R_CallMethodDef callMethods[] = {
   {"RANDOM_TREE",                   (DL_FUNC) &RANDOM_TREE, 1},
   {"RANDOM_TREE_SCORE",             (DL_FUNC) &RANDOM_TREE_SCORE, 2},
   {"_TreeSearch_ts_test_strategy_tracker", (DL_FUNC) &_TreeSearch_ts_test_strategy_tracker, 2},
-  {"_TreeSearch_ts_tbr_diagnostics", (DL_FUNC) &_TreeSearch_ts_tbr_diagnostics, 11},
+  {"_TreeSearch_ts_tbr_diagnostics", (DL_FUNC) &_TreeSearch_ts_tbr_diagnostics, 12},
   {"_TreeSearch_ts_ls_fit", (DL_FUNC) &_TreeSearch_ts_ls_fit, 4},
   {"_TreeSearch_ts_ls_search", (DL_FUNC) &_TreeSearch_ts_ls_search, 6},
   {NULL, NULL, 0}

@@ -89,6 +89,43 @@ static double full_rescore(TreeState& tree, const DataSet& ds) {
   return score_tree(tree, ds);
 }
 
+// Re-root the tree so tip `t` is a direct child of the root pseudo-node n_tip.
+// Parsimony length is root-invariant, so this only changes the representation
+// (which edges are clippable and where the root edge sits) — it lets the search
+// reach moves the current rooting hides.  Rebuilds postorder; does NOT refresh
+// Fitch state arrays, so the caller must full_rescore() afterwards.
+// Generalises reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
+static void reroot_at_tip(TreeState& tree, int t) {
+  const int n_tip = tree.n_tip;
+  const int root = n_tip;
+  if (tree.parent[t] == root) return;            // already a child of root
+
+  std::vector<int> path;                          // t's parent .. child-of-root
+  int cur = tree.parent[t];
+  while (cur != root) { path.push_back(cur); cur = tree.parent[cur]; }
+  std::reverse(path.begin(), path.end());
+
+  const int path_len = static_cast<int>(path.size());
+  const int root_ni = 0;
+  const int root_other = (tree.left[root_ni] == path[0])
+                             ? tree.right[root_ni] : tree.left[root_ni];
+  for (int i = 0; i < path_len; ++i) {
+    const int node = path[i];
+    const int ni = node - n_tip;
+    const int toward = (i + 1 < path_len) ? path[i + 1] : t;
+    const int replacement = (i == 0) ? root_other : path[i - 1];
+    if (tree.left[ni] == toward) tree.left[ni] = replacement;
+    else                          tree.right[ni] = replacement;
+    tree.parent[replacement] = node;
+  }
+  const int last_path = path[path_len - 1];
+  tree.left[root_ni] = t;
+  tree.right[root_ni] = last_path;
+  tree.parent[t] = root;
+  tree.parent[last_path] = root;
+  tree.build_postorder();
+}
+
 // Collect (parent, child) edge pairs reachable from root of main tree.
 static void collect_main_edges(
     const TreeState& tree,
@@ -779,6 +816,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   int accepted_clip_size = 0;
   std::vector<TBRPassRecord> diag_records;
 
+  // ===== Outer unrooted reroot loop (params.unrooted) =====
+  // After the inner loop converges at one rooting, re-root at the next tip and
+  // re-descend; stop when a full tip-sweep yields no strict improvement (=> a
+  // true unrooted-TBR optimum).  Gated to the plain search — sector/constraint/
+  // tabu/pool keep node-id-keyed state that re-rooting would invalidate.
+  const bool do_reroot = params.unrooted && sector_mask == nullptr
+      && cd == nullptr && params.tabu_size == 0 && collect_pool == nullptr
+      && tree.n_tip >= 4;
+  int reroot_tip = 0;
+  int reroot_clean = 0;            // consecutive reroots with no strict gain
+  double reroot_prev = HUGE_VAL;
+  bool first_descent = true;
+
+  for (;;) {
+   keep_going = true;
   while (keep_going && !timed_out) {
     keep_going = false;
 
@@ -1462,7 +1514,28 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         && n_accepted >= params.max_accepted_changes) {
       break;
     }
+  }  // end inner convergence while
+
+  // ----- outer reroot control -----
+  if (!do_reroot || timed_out
+      || (params.max_accepted_changes > 0
+          && n_accepted >= params.max_accepted_changes)) break;
+  if (!first_descent) {
+    // Did the descent since the last re-root strictly improve?
+    if (best_score < reroot_prev - eps) reroot_clean = 0;
+    else ++reroot_clean;
+    // A full cycle of distinct tip rootings with no improvement => optimal
+    // under every rooting => a true unrooted-TBR local optimum.
+    if (reroot_clean >= tree.n_tip) break;
   }
+  first_descent = false;
+  reroot_prev = best_score;
+  reroot_at_tip(tree, reroot_tip);
+  reroot_tip = (reroot_tip + 1) % tree.n_tip;
+  best_score = full_rescore(tree, ds);   // root-invariant; refreshes states
+  score_fresh = true;
+  if (!collapsed.empty()) compute_collapsed_flags(tree, ds, collapsed);
+  }  // end outer reroot for(;;)
 
   tree.prealloc_undo = nullptr;
 
