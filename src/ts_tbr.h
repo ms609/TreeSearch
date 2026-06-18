@@ -36,13 +36,12 @@ struct TBRParams {
   int tabu_size = 0;             // tabu list capacity (0 = disabled)
   ClipOrder clip_order = ClipOrder::RANDOM;
   bool diagnostics = false;      // collect per-pass diagnostic records
-  // Opt-in true unrooted TBR: after converging at one rooting, re-root at each
-  // tip and re-descend until a full tip-sweep finds no improvement.  Reaches a
-  // true unrooted-TBR optimum (the rooted representation otherwise cannot break
-  // the root edge, nor — with the smaller-subtree clip filter — clip edges whose
-  // smaller side holds the root).  Score is root-invariant; default off pending
-  // a perf/quality decision.  See dev/plans/2026-06-18-tbr-shared-start.md.
-  bool unrooted = false;
+  // True unrooted TBR (default on).  At apparent convergence the kernel checks
+  // the one root edge and (for NA) performs an exact full-neighbourhood sweep,
+  // ensuring the result is a genuine unrooted-TBR optimum.  Gated out when
+  // sector_mask / cd / tabu / pool are active (state would be invalidated).
+  // See dev/plans/2026-06-18-tbr-shared-start.md.
+  bool unrooted = true;
 };
 
 // Per-pass diagnostic record (populated only when TBRParams::diagnostics

@@ -2928,7 +2928,7 @@ List ts_tbr_diagnostics(
     IntegerVector min_steps = IntegerVector(),
     double concavity = -1.0,
     int clipOrder = 0,
-    bool unrooted = false)
+    bool unrooted = true)
 {
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
                                 min_steps, concavity);

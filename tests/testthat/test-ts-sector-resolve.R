@@ -13,10 +13,10 @@ test_that("rasStarts is exposed and defaulted by SearchControl", {
 
 test_that("rasStarts > 1 makes the sector search do strictly more work", {
   set.seed(42)
-  r1 <- MaximizeParsimony(ds, rasStarts = 1L, maxReplicates = 2L, targetHits = 1L,
+  r1 <- MaximizeParsimony(ds, rasStarts = 1L, maxReplicates = 2L, targetHits = 99L,
                           nThreads = 1L, verbosity = 0L)
   set.seed(42)
-  r3 <- MaximizeParsimony(ds, rasStarts = 3L, maxReplicates = 2L, targetHits = 1L,
+  r3 <- MaximizeParsimony(ds, rasStarts = 3L, maxReplicates = 2L, targetHits = 99L,
                           nThreads = 1L, verbosity = 0L)
   expect_s3_class(r3, "multiPhylo")
   # Each extra RAS restart rebuilds + TBRs the sector from scratch, so re-solve
