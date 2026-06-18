@@ -502,6 +502,272 @@ static bool apply_tbr_move(
   return true;
 }
 
+// Reroot the subtree rooted at `frag_root` so `reroot_parent` becomes its new
+// top, by reversing parent/child links along the path frag_root..reroot_parent.
+// `reroot_child` selects reroot_parent's off-path child. Touches ONLY
+// fragment-internal links; the CALLER must set the new top's parent pointer.
+// Returns the new top (reroot_parent) or -1 on failure.  Faithful copy of
+// apply_tbr_move() Step 2 — keep the (reroot_parent,reroot_child)/from_above
+// pairing identical so the root-edge scan score equals the applied score.
+// (TODO: de-duplicate with apply_tbr_move once both are settled.)
+static int reroot_fragment(TreeState& tree, int frag_root,
+                           int reroot_parent, int reroot_child) {
+  if (reroot_parent < 0 || reroot_parent == frag_root) return frag_root;
+
+  std::vector<int> path;
+  {
+    std::vector<int> dfs_stack;
+    std::vector<int> sub_parent(tree.n_node, -1);
+    dfs_stack.push_back(frag_root);
+    while (!dfs_stack.empty()) {
+      int node = dfs_stack.back();
+      dfs_stack.pop_back();
+      if (node == reroot_parent) break;
+      if (node < tree.n_tip) continue;
+      int ni = node - tree.n_tip;
+      int lc = tree.left[ni];
+      int rc = tree.right[ni];
+      sub_parent[lc] = node;
+      sub_parent[rc] = node;
+      dfs_stack.push_back(lc);
+      dfs_stack.push_back(rc);
+    }
+    int cur = reroot_parent;
+    while (cur != frag_root && cur >= 0) {
+      path.push_back(cur);
+      cur = sub_parent[cur];
+    }
+    if (cur < 0) return -1;          // reroot_parent not in subtree
+    path.push_back(frag_root);
+    std::reverse(path.begin(), path.end());
+  }
+  if (path.size() < 2) return -1;
+
+  for (size_t j = 0; j + 1 < path.size(); ++j) {
+    int A = path[j];
+    int B = path[j + 1];
+    int ai = A - tree.n_tip;
+    int bi = B - tree.n_tip;
+    int B_off_path;
+    if (j + 2 < path.size()) {
+      int next_on_path = path[j + 2];
+      B_off_path = (tree.left[bi] == next_on_path)
+                   ? tree.right[bi] : tree.left[bi];
+    } else {
+      B_off_path = (tree.left[bi] == reroot_child)
+                   ? tree.right[bi] : tree.left[bi];
+    }
+    if (tree.left[ai] == B) tree.left[ai] = B_off_path;
+    else tree.right[ai] = B_off_path;
+    tree.parent[B_off_path] = A;
+    if (tree.left[bi] == B_off_path) tree.left[bi] = A;
+    else tree.right[bi] = A;
+    tree.parent[A] = B;
+  }
+  return reroot_parent;
+}
+
+// IW/NA variant of the root-edge enumeration: the EW additive split
+// (base_split + Fitch join) is invalid for implied weights (concave) and
+// inapplicables (3-pass), so here we score each candidate by APPLYING it and
+// full-rescoring (exact for any scorer).  Same (L-rooting x R-rooting)
+// enumeration as the EW path; only the scoring/acceptance differs.  Lazy
+// (convergence only).  Snapshot the clean topology once, then
+// restore->apply->rescore per candidate so each starts clean.
+static bool try_root_edge_moves_rescore(TreeState& tree, const DataSet& ds,
+                                        double& best_score) {
+  const int n_tip = tree.n_tip;
+  const int cL = tree.left[0];
+  const int cR = tree.right[0];
+  const double eps = std::isfinite(ds.concavity) ? 1e-10 : 0.0;
+
+  best_score = full_rescore(tree, ds);
+
+  // Rerooting metadata for each half: identity {-1,-1} plus each internal edge
+  // (sp,sc) with sp != croot (same distinct-rootings set as the EW path).
+  static thread_local std::vector<std::pair<int,int>> metaL, metaR, edges;
+  auto build_meta = [&](int croot, std::vector<std::pair<int,int>>& meta) {
+    meta.clear();
+    meta.push_back({-1, -1});
+    if (croot < n_tip) return;
+    collect_subtree_edges(tree, croot, edges);
+    for (auto& [sp, sc] : edges) if (sp != croot) meta.push_back({sp, sc});
+  };
+  build_meta(cL, metaL);
+  build_meta(cR, metaR);
+  const int nL = static_cast<int>(metaL.size());
+  const int nR = static_cast<int>(metaR.size());
+
+  static thread_local TopoSnapshot snap;
+  save_topology(tree, snap);
+
+  auto rejoin = [&](int li, int ri) -> bool {
+    int topL = (metaL[li].first < 0) ? cL
+               : reroot_fragment(tree, cL, metaL[li].first, metaL[li].second);
+    int topR = (metaR[ri].first < 0) ? cR
+               : reroot_fragment(tree, cR, metaR[ri].first, metaR[ri].second);
+    if (topL < 0 || topR < 0) return false;
+    tree.left[0] = topL; tree.right[0] = topR;
+    tree.parent[topL] = n_tip; tree.parent[topR] = n_tip;
+    tree.build_postorder();
+    return true;
+  };
+
+  double best_cand = best_score;
+  int bestLi = -1, bestRi = -1;
+  for (int li = 0; li < nL; ++li) {
+    for (int ri = 0; ri < nR; ++ri) {
+      if (li == 0 && ri == 0) continue;            // identity = current tree
+      if (rejoin(li, ri)) {
+        double cand = full_rescore(tree, ds);
+        if (cand < best_cand - eps) { best_cand = cand; bestLi = li; bestRi = ri; }
+      }
+      restore_topology(tree, snap);                // back to clean state
+    }
+  }
+
+  // After the scan loop the topology is the restored clean one, but its
+  // postorder is stale (the last candidate's rejoin overwrote it and
+  // restore_topology does NOT restore postorder).  score_tree walks the
+  // postorder, so every full_rescore below MUST rebuild it first or best_score
+  // silently drifts from the returned tree (the bug that made IW look
+  // incomplete).  The improving branch rebuilds it inside rejoin().
+  if (bestLi < 0) {
+    tree.build_postorder();
+    best_score = full_rescore(tree, ds);
+    return false;
+  }
+
+  if (!rejoin(bestLi, bestRi)) {              // defensive: restore clean state
+    restore_topology(tree, snap);
+    tree.build_postorder();
+    best_score = full_rescore(tree, ds);
+    return false;
+  }
+  best_score = full_rescore(tree, ds);        // rejoin() already rebuilt postorder
+  return true;
+}
+
+// Direct in-pass enumeration of the ONE unrooted edge the root pseudo-node
+// n_tip sits on (cL—cR), which the rooted clip loop structurally skips
+// (parent==n_tip guard).  This is the whole residual that the physical-reroot
+// sweep used to cover at O(n_tip) full rescores — here it costs one edge.
+//
+// PURE-EW ONLY: Fitch length is root-invariant, so each half-fragment's
+// internal length is constant under rerooting, and a root-edge TBR move's
+// length decomposes exactly as
+//     base_split + fitch_join(stateL, stateR),
+// base_split = best_score - join(prelim[cL], prelim[cR])  (constant),
+// stateL/stateR = each half rerooted at the chosen connection edge.  This
+// additive split does NOT hold for IW (concave) or NA (3-pass), so the caller
+// gates this on ew_directional and routes IW/NA to the physical-reroot fallback.
+//
+// Reuses compute_from_above + fitch_indirect_length_cached exactly as the
+// normal rerooting scan.  Applies the best reconnection (if it beats the
+// current root join) via reroot_fragment on each half, rejoining at n_tip, and
+// returns true; else leaves the tree unchanged and returns false.
+static bool try_root_edge_moves(TreeState& tree, const DataSet& ds,
+                                double& best_score, bool ew_directional) {
+  // IW/NA cannot use the additive base_split decomposition below; route them to
+  // the apply+rescore variant (same enumeration, exact scoring).
+  if (!ew_directional) return try_root_edge_moves_rescore(tree, ds, best_score);
+
+  const int n_tip = tree.n_tip;
+  const int tw = tree.total_words;
+  const int cL = tree.left[0];      // root internal index = n_tip - n_tip = 0
+  const int cR = tree.right[0];
+
+  // Refresh states so prelim[] is current for cL/cR and every fragment node.
+  best_score = full_rescore(tree, ds);
+
+  const uint64_t* pL = &tree.prelim[static_cast<size_t>(cL) * tw];
+  const uint64_t* pR = &tree.prelim[static_cast<size_t>(cR) * tw];
+  const int rootjoin = fitch_indirect_length_cached(pL, pR, ds, INT_MAX);
+  const double base_split = best_score - rootjoin;
+
+  static thread_local std::vector<uint64_t> from_above;
+  static thread_local std::vector<uint64_t> rowsL, rowsR;
+  static thread_local std::vector<std::pair<int,int>> metaL, metaR;
+  static thread_local std::vector<std::pair<int,int>> edges;
+  from_above.assign(static_cast<size_t>(tree.n_node) * tw, 0ULL);
+
+  // Build the rerooting state-sets for one half.  Row 0 = identity (the half's
+  // current root prelim); rows 1.. = join(from_above[sc], prelim[sc]) for each
+  // internal edge (sp,sc) with sp != croot.  The sp==croot edges are skipped:
+  // from_above[child] = sibling prelim there, so their join reproduces the
+  // identity state-set (this is the normal scan's sp==clip_node guard, and it
+  // yields exactly the 2k-3 distinct rootings of a k-tip half).
+  auto build_half = [&](int croot, std::vector<uint64_t>& rows,
+                        std::vector<std::pair<int,int>>& meta) {
+    rows.clear();
+    meta.clear();
+    const uint64_t* prc = &tree.prelim[static_cast<size_t>(croot) * tw];
+    rows.insert(rows.end(), prc, prc + tw);          // row 0: identity
+    meta.push_back({-1, -1});
+    if (croot < n_tip) return;                        // single-tip half
+    compute_from_above(tree, ds, croot, from_above);
+    collect_subtree_edges(tree, croot, edges);
+    for (auto& [sp, sc] : edges) {
+      if (sp == croot) continue;
+      size_t base = rows.size();
+      rows.resize(base + tw);
+      fitch_join_states(&from_above[static_cast<size_t>(sc) * tw],
+                        &tree.prelim[static_cast<size_t>(sc) * tw],
+                        &rows[base], ds);
+      meta.push_back({sp, sc});
+    }
+  };
+  build_half(cL, rowsL, metaL);
+  build_half(cR, rowsR, metaR);
+
+  const int nL = static_cast<int>(metaL.size());
+  const int nR = static_cast<int>(metaR.size());
+
+  int best_join = rootjoin;
+  int bestLi = -1, bestRi = -1;
+  for (int li = 0; li < nL; ++li) {
+    const uint64_t* sL = &rowsL[static_cast<size_t>(li) * tw];
+    for (int ri = 0; ri < nR; ++ri) {
+      if (li == 0 && ri == 0) continue;               // identity = current tree
+      const uint64_t* sR = &rowsR[static_cast<size_t>(ri) * tw];
+      int j = fitch_indirect_length_cached(sL, sR, ds, best_join);
+      if (j < best_join) { best_join = j; bestLi = li; bestRi = ri; }
+    }
+  }
+
+  if (bestLi < 0 || best_join >= rootjoin) return false;   // no improvement
+
+  // Apply: reroot each half to its chosen connection edge, rejoin at n_tip.
+  int topL = cL, topR = cR;
+  if (metaL[bestLi].first >= 0)
+    topL = reroot_fragment(tree, cL, metaL[bestLi].first, metaL[bestLi].second);
+  if (metaR[bestRi].first >= 0)
+    topR = reroot_fragment(tree, cR, metaR[bestRi].first, metaR[bestRi].second);
+  if (topL < 0 || topR < 0) return false;                  // defensive
+
+  tree.left[0] = topL;
+  tree.right[0] = topR;
+  tree.parent[topL] = n_tip;
+  tree.parent[topR] = n_tip;
+  tree.build_postorder();
+
+  const double actual = full_rescore(tree, ds);
+
+  // Degree-2 tripwire (env TS_TBR_ASSERT): the applied length MUST equal the
+  // scan's prediction.  Any off-by-one in the reversal or the n_tip rewire
+  // trips here on the first accepted move.
+  if (std::getenv("TS_TBR_ASSERT")) {
+    double predicted = base_split + best_join;
+    if (std::fabs(actual - predicted) > 0.5) {
+      REprintf("ROOT-EDGE MISMATCH: actual=%.1f predicted=%.1f (base=%.1f join=%d)\n",
+               actual, predicted, base_split, best_join);
+    }
+  }
+
+  best_score = actual;
+  return true;
+}
+
 // --- Edge length computation ---
 
 // --- Subtree size computation ---
@@ -517,6 +783,59 @@ static void compute_subtree_sizes(const TreeState& tree,
     sizes[node] = sizes[tree.left[ni]] + sizes[tree.right[ni]];
   }
 }
+
+// Add the clipped subtree's INTERNAL Fitch steps (per pattern, standard blocks)
+// to char_steps.  The IW indirect scan needs base_iw = weighted(divided_tree +
+// clip_internal): the EW divided_length (best_score + delta - nx_cost) keeps the
+// clipped subtree's internal length, but extract_char_steps over the *clipped*
+// postorder omits it (spr_clip removed those nodes), so base_iw systematically
+// UNDER-counts by the clipped subtree's internal IW cost (small for tip/2-tip
+// clips, large for the L872 clip-both large fragment) — corrupting cross-clip
+// move ranking and leaving improving unrooted-TBR moves unreached.  X's internal
+// per-character step count is root-invariant and its nodes retain valid
+// local_cost after spr_clip (the clip only detaches clip_node; the incremental
+// downpass from nz never descends into X), so a plain DFS sum is exact.
+static void add_clip_internal_steps(const TreeState& tree, const DataSet& ds,
+                                    int clip_node,
+                                    std::vector<int>& char_steps) {
+  static thread_local std::vector<int> stack;
+  stack.clear();
+  stack.push_back(clip_node);
+  while (!stack.empty()) {
+    int node = stack.back();
+    stack.pop_back();
+    if (node < tree.n_tip) continue;            // tips carry no internal step
+    int ni = node - tree.n_tip;
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      if (blk.has_inapplicable || blk.active_mask == 0) continue;
+      uint64_t mask =
+          tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b];
+      while (mask) {
+        int c = ctz64(mask);
+        char_steps[blk.pattern_index[c]] += 1;
+        mask &= mask - 1;
+      }
+    }
+    stack.push_back(tree.left[ni]);
+    stack.push_back(tree.right[ni]);
+  }
+}
+
+// NOTE (NA clip-internal): the same base-score omission exists for inapplicable
+// data — `fitch_na_pass3_score` over the clipped postorder drops the clipped
+// subtree's internal NA homoplasy, so the NA indirect scan under-counts (scan
+// vs full_rescore mispredicts up to ~200 on Vinther2008 via TS_IW_SCANCHK). A
+// Pass-3 analog of add_clip_internal_steps was prototyped and DID collapse the
+// error (NA+IW 6–14 → ±0.5), but the residual is MIXED-SIGN: NA's Pass-3 reads
+// down2 (whole-tree uppass context), so the clipped subtree's internal count is
+// attachment-DEPENDENT and the indirect decomposition cannot be made exact the
+// way Fitch/IW can. The NA oracle (dev/benchmarks/tbr_oracle_na.R) confirms the
+// direct scan stays incomplete even with the prototype, while the physical
+// reroot path is 0-improving. So NA reaches true unrooted-TBR optima via the
+// physical-reroot path (has_na dispatch in tbr_search), and the NA scan is left
+// at production baseline. Making the rooted-NA scan more accurate (the prototype)
+// is a SEPARATE change that needs its own search-quality validation.
 
 // --- Precompute vroot cache for main edges ---
 
@@ -798,6 +1117,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // can hide improving moves.  NA (three-pass) and implied-weights keep their
   // existing scorers; edge_set_buf is reused across clips.
   const bool ew_directional = !has_na && !use_iw;
+  // Exact directional insertion edge sets apply to BOTH EW and IW (the join is
+  // a Fitch operation on state sets; IW just weights the resulting per-char
+  // steps).  Using them replaces the union-of-finals approximation
+  // (final[a]|final[d]) that mis-counts and hides improving moves -- the same
+  // bug the EW directional fix cured, now extended to IW.  NA keeps its own
+  // 3-pass scorers.
+  const bool use_directional = !has_na;
   std::vector<uint64_t> edge_set_buf;
 
   TopoSnapshot snap;
@@ -824,6 +1150,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   const bool do_reroot = params.unrooted && sector_mask == nullptr
       && cd == nullptr && params.tabu_size == 0 && collect_pool == nullptr
       && tree.n_tip >= 4;
+  // `do_reroot` == "the unrooted-completeness mechanism is live here" (plain
+  // search only).  It gates the three enumeration relaxations below AND the
+  // root-edge branch; the per-scorer split (EW additive vs IW/NA apply+rescore)
+  // happens inside try_root_edge_moves.  Sector/ratchet sub-searches keep the
+  // default (smaller-side clip, nz/ns skip) so they pay no extra cost.
   int reroot_tip = 0;
   int reroot_clean = 0;            // consecutive reroots with no strict gain
   double reroot_prev = HUGE_VAL;
@@ -866,10 +1197,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // CSS: skip clips outside the sector
       if (sector_mask && !(*sector_mask)[clip_node]) continue;
 
-      // Optimization #2: skip clips of the larger subtree.
-      // For each edge, only clip the side with fewer tips.
+      // Optimization #2: skip clips of the larger subtree (only clip the side
+      // with fewer tips).  RELAXED under the opt-in complete-TBR path: the
+      // Step-1 oracle factorial showed smaller-side-only is NOT complete —
+      // clipping the larger side recovers a distinct ~5/100 of missed moves
+      // (separate from the nz/ns and root-edge gaps; all three are needed for
+      // 0/N).  Default keeps the filter (a perf win) and stays byte-identical.
       int clip_size = subtree_sizes[clip_node];
-      if (clip_size > tree.n_tip / 2) continue;
+      if (!do_reroot && clip_size > tree.n_tip / 2) continue;
 
       // Skip collapsed edges: zero-length edge where clipping provably
       // cannot improve the score. Works for EW, IW, Profile, and NA.
@@ -932,6 +1267,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       if (use_iw) {
         std::fill(divided_steps.begin(), divided_steps.end(), 0);
         extract_char_steps(tree, ds, divided_steps);
+        // extract_char_steps walks only the clipped (divided) postorder, so the
+        // clipped subtree's internal steps are missing; add them back so base_iw
+        // matches the EW divided_length convention (divided_tree + clip_internal)
+        // and the indirect candidate base_iw + reconnect_delta is exact.
+        // Pure-IW only.  The clipped subtree's internal Fitch length is
+        // root- AND attachment-invariant, so adding it back makes the IW
+        // indirect candidate (base_iw + reconnect_delta) EXACT.  NOT applied
+        // under inapplicables: the NA Pass-3 internal step count is
+        // attachment-DEPENDENT (down2 reads whole-tree uppass context), so it
+        // cannot make the NA scan exact — it would be an unvalidated change to
+        // production rooted-NA scoring.  NA instead reaches true unrooted
+        // optima via the physical-reroot path (see the has_na dispatch below).
+        if (!has_na) {
+          add_clip_internal_steps(tree, ds, clip_node, divided_steps);
+        }
         base_iw = compute_weighted_score(ds, divided_steps);
         precompute_weighted_delta(ds, divided_steps, iw_delta);
       }
@@ -939,7 +1289,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // Exact directional insertion edge sets for the pure-EW path; computed
       // once per clip from the current (clipped) main-tree downpass, then used
       // by both the SPR scan and the rerooting vroot cache below.
-      if (ew_directional) {
+      if (use_directional) {
         compute_insertion_edge_sets(tree, ds, edge_set_buf);
       }
 
@@ -1006,9 +1356,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             candidate = divided_length + extra;
           }
         } else if (use_iw) {
-          candidate = indirect_iw_length_bounded(
-              clip_prelim, tree, ds, above, below, base_iw, iw_delta,
-              best_candidate);
+          // Exact directional cost (mirrors the EW path): the edge set above
+          // `below` is edge_set_buf[below], replacing the union-of-finals
+          // approximation that hid improving IW moves.
+          candidate = indirect_iw_length_cached(
+              clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
+              ds, base_iw, iw_delta, best_candidate);
         } else {
           int cutoff = (best_candidate < HUGE_VAL)
               ? static_cast<int>(best_candidate - divided_length + 1)
@@ -1035,11 +1388,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         compute_from_above(tree, ds, clip_node, from_above);
         collect_subtree_edges(tree, clip_node, sub_edges);
 
-        // Precompute vroot for all main edges (optimization #4).  Pure EW uses
-        // the exact directional edge set (vroot = edge_set_buf[below]); NA / IW
-        // keep the union-of-finals form their cached scorers expect.
+        // Precompute vroot for all main edges (optimization #4).  EW and IW use
+        // the exact directional edge set (vroot = edge_set_buf[below]); NA keeps
+        // the union-of-finals form its cached scorer expects.
         int n_main = static_cast<int>(main_edges.size());
-        if (ew_directional) {
+        if (use_directional) {
           vroot_cache.resize(static_cast<size_t>(n_main) * tw);
           for (int ei = 0; ei < n_main; ++ei) {
             int d = main_edges[ei].second;  // child endpoint (node_d)
@@ -1115,7 +1468,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               int b_n = 0;
               while (ei < n_main && b_n < 4) {
                 auto& [ab, bl] = main_edges[ei];
-                bool skip = (ab == nz && bl == ns)
+                // nz/ns identity skip: in the REROOTING loop this drops the
+                // distinct "rerooted fragment regrafted at its original
+                // (nz,ns) location" move (Step 0 oracle: removing it recovers
+                // 2-3/60). Relaxed only under the opt-in complete-TBR path so
+                // the default search stays byte-identical.
+                bool skip = ((ab == nz && bl == ns) && !do_reroot)
                     || (sector_mask && !(*sector_mask)[bl])
                     || (constrained && regraft_violates_constraint(bl, *cd))
                     || (!collapsed.empty() && collapsed[bl]);
@@ -1205,7 +1563,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 #endif
               }
               auto& [above, below] = main_edges[ei];
-              if (above == nz && below == ns) continue;
+              // See nz/ns note in the flat-batch loop above: relaxed on the
+              // plain-search complete-TBR path (do_reroot), all scorers.
+              if (!do_reroot && above == nz && below == ns) continue;
               if (sector_mask && !(*sector_mask)[below]) continue;
               if (constrained && regraft_violates_constraint(below, *cd))
                 continue;
@@ -1372,6 +1732,19 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           actual = full_rescore(tree, ds);
         }
 
+        // DIAGNOSTIC (env TS_IW_SCANCHK): compare the scan's predicted
+        // best_candidate against the authoritative post-apply score for EVERY
+        // scorer.  Pure EW should be 0 (its indirect length is exact); a
+        // mismatch under IW or NA flags the clip-internal omission (see
+        // add_clip_internal_steps).  reroot=1 => TBR rerooting accept, 0 => SPR.
+        // No-op unless the env var is set.
+        if (std::getenv("TS_IW_SCANCHK") &&
+            std::fabs(actual - best_candidate) > 1e-6) {
+          REprintf("SCANCHK-MISMATCH mode=%s reroot=%d pred=%.5f actual=%.5f diff=%.5f\n",
+                   has_na ? (use_iw ? "NA+IW" : "NA+EW") : (use_iw ? "IW" : "EW"),
+                   is_spr ? 0 : 1, best_candidate, actual, actual - best_candidate);
+        }
+
         // Post-hoc constraint validation: TBR rerooting can break
         // splits that were classified as UNCONSTRAINED during the
         // clip phase (the rerooting changes which constraint tips
@@ -1520,6 +1893,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   if (!do_reroot || timed_out
       || (params.max_accepted_changes > 0
           && n_accepted >= params.max_accepted_changes)) break;
+
+  // Direct in-pass root-edge enumeration for ALL scorers (EW fast additive;
+  // IW/NA apply+rescore).  Clean => no improving move on ANY edge (the inner
+  // loop certified the 2n-4 non-root edges) => true unrooted-TBR optimum.
+  // TS_PHYS_REROOT forces the legacy physical-reroot sweep (validation ref).
+  if (!std::getenv("TS_PHYS_REROOT")) {
+    if (!try_root_edge_moves(tree, ds, best_score, ew_directional)) break;
+    score_fresh = true;
+    if (!collapsed.empty()) compute_collapsed_flags(tree, ds, collapsed);
+    continue;                              // re-descend from the improved tree
+  }
+
+  // Legacy physical-reroot sweep (TS_PHYS_REROOT=1): scorer-agnostic, known
+  // complete; kept as the reference for validating the direct path above.
   if (!first_descent) {
     // Did the descent since the last re-root strictly improve?
     if (best_score < reroot_prev - eps) reroot_clean = 0;
