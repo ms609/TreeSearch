@@ -1,0 +1,16 @@
+"dataset","target","engine","config","seed","score","over","wall_s"
+"Giles2015",670,"TreeSearch","default",1,670,0,10
+"Giles2015",670,"TreeSearch","default",2,670,0,7.8
+"Giles2015",670,"TreeSearch","default",3,670,0,9.1
+"Giles2015",670,"TreeSearch","thorough",1,670,0,12.9
+"Giles2015",670,"TreeSearch","thorough",2,670,0,17
+"Giles2015",670,"TreeSearch","thorough",3,670,0,16.3
+"Giles2015",670,"TNT","mult-basic",1,670,0,0.8
+"Giles2015",670,"TNT","mult-basic",2,670,0,0.5
+"Giles2015",670,"TNT","mult-basic",3,670,0,0.4
+"Giles2015",670,"TNT","xmult-default",1,670,0,0.2
+"Giles2015",670,"TNT","xmult-default",2,670,0,0.2
+"Giles2015",670,"TNT","xmult-default",3,670,0,0.2
+"Giles2015",670,"TNT","xmult-level10",1,670,0,3.3
+"Giles2015",670,"TNT","xmult-level10",2,670,0,3.1
+"Giles2015",670,"TNT","xmult-level10",3,670,0,3.2
