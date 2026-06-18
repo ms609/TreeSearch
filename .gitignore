@@ -76,3 +76,11 @@ dev/profiling/*-lib-*/
 # T-300 NA benchmark artifacts
 dev/profiling/.bench-libs/
 dev/profiling/t300_na_bench_*.rds
+
+# dev/benchmarks throwaway outputs (regenerable from the bench_*/diag_* scripts)
+dev/benchmarks/*.csv
+dev/benchmarks/.*.csv
+dev/benchmarks/*.run
+dev/benchmarks/*.png
+dev/benchmarks/trace_*.txt
+dev/benchmarks/*_raw.txt
