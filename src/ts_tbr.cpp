@@ -755,6 +755,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Cache total_words as a local int to keep inner-loop expressions concise.
   const int tw = tree.total_words;
 
+  // Pure-EW path scores candidate edges with the EXACT directional insertion
+  // edge set (combine of the two directional Fitch messages) instead of the
+  // union-of-finals (final[A] | final[D]) approximation, which overcounts and
+  // can hide improving moves.  NA (three-pass) and implied-weights keep their
+  // existing scorers; edge_set_buf is reused across clips.
+  const bool ew_directional = !has_na && !use_iw;
+  std::vector<uint64_t> edge_set_buf;
+
   TopoSnapshot snap;
   bool keep_going = true;
   bool need_shuffle = true;  // optimization #6: defer reshuffle
@@ -876,6 +884,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         precompute_weighted_delta(ds, divided_steps, iw_delta);
       }
 
+      // Exact directional insertion edge sets for the pure-EW path; computed
+      // once per clip from the current (clipped) main-tree downpass, then used
+      // by both the SPR scan and the rerooting vroot cache below.
+      if (ew_directional) {
+        compute_insertion_edge_sets(tree, ds, edge_set_buf);
+      }
+
       collect_main_edges(tree, main_edges);
       // Partial shuffle: seed the first few evaluation positions with edges
       // from across the tree so the bounded indirect scoring gets a tight
@@ -946,11 +961,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           int cutoff = (best_candidate < HUGE_VAL)
               ? static_cast<int>(best_candidate - divided_length + 1)
               : INT_MAX;
-          int extra = use_flat
-              ? fitch_indirect_bounded_flat(clip_prelim, tree, ds,
-                    above, below, cutoff)
-              : fitch_indirect_length_bounded(clip_prelim, tree, ds,
-                    above, below, cutoff);
+          // Exact directional cost: the edge set above `below` (= node_d) is
+          // edge_set_buf[below], replacing the union-of-finals approximation.
+          int extra = fitch_indirect_length_cached(
+              clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
+              ds, cutoff);
           candidate = divided_length + extra;
         }
         ++n_evaluated;
@@ -968,9 +983,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         compute_from_above(tree, ds, clip_node, from_above);
         collect_subtree_edges(tree, clip_node, sub_edges);
 
-        // Precompute vroot for all main edges (optimization #4)
-        precompute_vroot_cache(tree, main_edges, vroot_cache);
+        // Precompute vroot for all main edges (optimization #4).  Pure EW uses
+        // the exact directional edge set (vroot = edge_set_buf[below]); NA / IW
+        // keep the union-of-finals form their cached scorers expect.
         int n_main = static_cast<int>(main_edges.size());
+        if (ew_directional) {
+          vroot_cache.resize(static_cast<size_t>(n_main) * tw);
+          for (int ei = 0; ei < n_main; ++ei) {
+            int d = main_edges[ei].second;  // child endpoint (node_d)
+            std::memcpy(&vroot_cache[static_cast<size_t>(ei) * tw],
+                        &edge_set_buf[static_cast<size_t>(d) * tw],
+                        static_cast<size_t>(tw) * sizeof(uint64_t));
+          }
+        } else {
+          precompute_vroot_cache(tree, main_edges, vroot_cache);
+        }
 
         // For NA: precompute per-edge below_actives (OR of applicable
         // subtree_actives words for node_d of each edge)
@@ -1190,6 +1217,29 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       tree.spr_unclip();
       // Restore saved postorder (topology identical to pre-clip state)
       tree.postorder.assign(saved_postorder.begin(), saved_postorder.end());
+
+      // DIAGNOSTIC (env TS_REVERT_CHECK): within a pass no move is accepted, so
+      // the tree is invariant and the clip-undo restore above MUST equal the
+      // pass-start snapshot (snap/state_snap, saved at 782-783).  Any mismatch =
+      // clip-undo (spr_clip/unclip + saved_postorder) is not a perfect inverse,
+      // leaving residue that accumulates across clips -- the latent bug the
+      // abandonment edit exposed.  Reports which array diverges.
+      if (std::getenv("TS_REVERT_CHECK")) {
+        bool topo = (tree.parent == snap.parent && tree.left == snap.left &&
+                     tree.right == snap.right);
+        size_t sb = state_snap.prelim.size() * sizeof(uint64_t);
+        size_t cb = state_snap.local_cost.size() * sizeof(uint64_t);
+        bool pre = sb == 0 || std::memcmp(tree.prelim.data(),
+                     state_snap.prelim.data(), sb) == 0;
+        bool fin = sb == 0 || std::memcmp(tree.final_.data(),
+                     state_snap.final_.data(), sb) == 0;
+        bool lc  = cb == 0 || std::memcmp(tree.local_cost.data(),
+                     state_snap.local_cost.data(), cb) == 0;
+        bool po  = (tree.postorder == state_snap.postorder);
+        if (!(topo && pre && fin && lc && po))
+          REprintf("CLIPUNDO-MISMATCH clip=%d topo=%d prelim=%d final=%d lc=%d post=%d\n",
+                   clip_node, (int)topo, (int)pre, (int)fin, (int)lc, (int)po);
+      }
 
       bool dominated = (best_candidate > best_score + eps) ||
                         (best_candidate > best_score - eps && !params.accept_equal);

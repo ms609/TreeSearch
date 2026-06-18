@@ -464,6 +464,11 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   // after construction so a constraint-violating tree is never returned mutely.
   bool constraint_fallback = false;
 
+  // Scratch buffer for the exact directional insertion edge sets, recomputed
+  // each step from the current downpass (prelim, kept current by the
+  // incremental rescore below).
+  std::vector<uint64_t> edge_set;
+
   // Add remaining taxa one at a time
   for (int i = 3; i < n_tip; ++i) {
     int tip = order[i];
@@ -471,6 +476,12 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
 
     const uint64_t* tip_prelim =
         &ds.tip_states[static_cast<size_t>(tip) * ds.total_words];
+
+    // Exact insertion cost: edge_set[D] = combine(prelim[D], up[D]).  Replaces
+    // the union-of-finals (final_[node] | final_[child]) approximation that
+    // undercut insertion cost and produced ~+30% Wagner trees.
+    compute_insertion_edge_sets(tree, ds, edge_set);
+    const int tw = tree.total_words;
 
     // Find best insertion edge via DFS from root
     int best_above = -1, best_below = -1;
@@ -493,8 +504,9 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       if (!constrained ||
           !wagner_edge_violates_constraint(tree, lc, tip, *cd,
                                             added_tips)) {
-        int extra = fitch_indirect_length_bounded(
-            tip_prelim, tree, ds, node, lc, best_extra);
+        int extra = fitch_indirect_length_cached(
+            tip_prelim, &edge_set[static_cast<size_t>(lc) * tw],
+            ds, best_extra);
         if (extra < best_extra) {
           best_extra = extra;
           best_above = node;
@@ -506,8 +518,9 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       if (!constrained ||
           !wagner_edge_violates_constraint(tree, rc, tip, *cd,
                                             added_tips)) {
-        int extra = fitch_indirect_length_bounded(
-            tip_prelim, tree, ds, node, rc, best_extra);
+        int extra = fitch_indirect_length_cached(
+            tip_prelim, &edge_set[static_cast<size_t>(rc) * tw],
+            ds, best_extra);
         if (extra < best_extra) {
           best_extra = extra;
           best_above = node;

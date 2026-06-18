@@ -115,6 +115,20 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
                                  const DataSet& ds,
                                  int cutoff);
 
+// Compute the EXACT per-node insertion edge set for every non-root node D:
+//   edge_set[D] = combine(prelim[D], up[D])   (per-character intersect-else-union)
+// where up[D] is the directional Fitch up-message
+//   up[D] = combine(up[parent(D)], prelim[sibling(D)])   (root degree-2 vertex:
+//   up[child] = prelim[other child]).
+// Inserting a clip with downpass set T on the edge above D then costs exactly
+// #chars where T & edge_set[D] == 0 (use fitch_indirect_length_cached with
+// edge_set[D] as the vroot).  This is the CORRECT replacement for the
+// union-of-finals (final_[A] | final_[D]) approximation, which undercounts.
+// Requires a current downpass (prelim).  `edge_set` is sized n_node*total_words;
+// the root entry is left unspecified.  Uses a scratch up-message buffer.
+void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
+                                 std::vector<uint64_t>& edge_set);
+
 // --- Flat EW specializations (skip weight/upweight overhead) ---
 //
 // These use FlatBlock metadata (1 cache line for all blocks) instead of
