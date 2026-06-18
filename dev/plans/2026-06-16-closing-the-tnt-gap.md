@@ -248,3 +248,59 @@ fair reference; scores / rearrangement counts are. R0-vs-R12 wall-clock is compa
 - **Drift / NNI-perturb / prune-reinsert / adaptiveStart in presets**: recorded-negative
   (T-274, T-289f, T-190); out of scope except drift's *specific* untested combination above.
 - **Raw speed** (AVX2/popcnt): real but won't close the strategic gap.
+
+## Phase 4 (2026-06-18) — UPDATE: the "floor" was a cost-formula bug; score gap CLOSED
+
+The Phase 1–3 / Challenge-2 conclusion that the EW-Fitch gap was a
+**"landscape/escape-bound floor, not frugality-bound"** with a "competitive
+per-candidate kernel" is **superseded**. Those phases predated finding a
+correctness bug in the candidate insertion-cost function.
+
+**Root cause (see `2026-06-18-wagner-insertion-cost-bug.md` + memory
+[[wagner-insertion-cost-bug]]).** `fitch_indirect_length*` scored a candidate
+insertion edge with the **union of the two endpoints' final states**
+(`final[A] | final[D]`), which is not the exact edge set — it undercounts on
+ambiguous trees and mis-ranks/mis-cuts moves on resolved ones. This (a) made RAS
+Wagner starts **~+30% over the optimum** (near-random greedy placement) and
+(b) gave TBR wrong cost magnitudes → wrong cutoffs / early abandonment. The fix
+is the exact **directional** edge set `E[D]=combine(prelim[D],up[D])`
+(`compute_insertion_edge_sets`, ts_fitch). Shipped to `wagner_tree`, the EW
+`tbr_search` SPR scan + rerooting vroot, and `build_ras_sector` (commits
+2b299e4b, 93071cae on cpp-search).
+
+**Result — full `thorough` search now reaches the MPT across the hard panel**
+(`diag_gap_panel_postfix.R`, 60s, 3 seeds):
+
+| dataset | target | post-fix (min / median) | pre-fix floor (Phase 2 / Challenge-2 R12) |
+|---|---|---|---|
+| Wortley2006 | 480  | **479 / 479 (−1)** | +3 / +2 |
+| Zanol2014   | 1261 | **1261 / 1261 (+0)** | +3.5 / +5 |
+| Zhu2013     | 624  | **624 / 624 (+0)** | +2.5 / +5 |
+| Giles2015   | 670  | **670 / 670 (+0)** | +1.5 / +2 |
+
+So the gap the plan repeatedly called "structural / escape-bound" was, in
+substantial part, this scoring-formula bug. Gap **B is now ~0** (was +1.5..+3.5).
+
+**Candidates-per-improvement (gap C) reversed.** Vinther2008 (the canonical tie,
+pre-fix "6.3× *more* candidates than TNT"): post-fix `bench_tnt_headtohead.R`
+gives TS 78 = TNT 78 with **cand_ratio 0.44** — TreeSearch now examines *less
+than half* TNT's rearrangements to reach the same score (counters tally slightly
+different events, so indicative — but a qualitative reversal). Wall-clock tied on
+this small case (0.4s = 0.4s).
+
+**Disposition of the open threads:**
+- **Core TBR/Wagner hill-climbing deficit (task #26): RESOLVED** — root-caused and
+  fixed; panel now at +0/−1.
+- **Drift-done-right for "+1 datasets" (task #25): MOOT** — the +1 datasets
+  (Zanol/Giles) it targeted are now +0; no score gap remains for drift to close.
+- **Race-to-common-target (task #22): target reached** across the panel;
+  candidates-per-improvement competitive-to-better. The *only* residual is the
+  authoritative **wall-clock ratio**, which is **Hamilton-gated** (local TNT is
+  32-bit) — the still-live wall-clock thread, not a quality gap.
+
+**Remaining (genuinely open):** authoritative wall-clock vs 64-bit TNT on
+Hamilton (the original ~2× concern — now partly addressed by the frugality
+reversal, but unconfirmed on large datasets), and the chip's TBR
+move-completeness fix (L812/nz/ns; small, poor-start-only — see
+[[tbr-rooted-vs-unrooted]]). The per-candidate `StateSnapshot` micro-opt
+(above) is independent and still available.
