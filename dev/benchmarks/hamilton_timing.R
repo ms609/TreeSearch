@@ -6,8 +6,9 @@
 #
 # Env: TS_LIB, TS_DATASET, TNT_EXE, OUTDIR, NSEED (default 3).
 #   Requires LD_LIBRARY_PATH=<tnt>/TNT-bin and TERM=xterm in the job env.
+.libPaths(c(Sys.getenv("TS_LIB", .libPaths()[1]), .libPaths()))
 suppressMessages({
-  library(TreeSearch, lib.loc = Sys.getenv("TS_LIB", .libPaths()[1]))
+  library(TreeSearch)
   library(TreeTools)
 })
 nm    <- Sys.getenv("TS_DATASET", "Zanol2014")
