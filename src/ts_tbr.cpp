@@ -1191,6 +1191,29 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // Restore saved postorder (topology identical to pre-clip state)
       tree.postorder.assign(saved_postorder.begin(), saved_postorder.end());
 
+      // DIAGNOSTIC (env TS_REVERT_CHECK): within a pass no move is accepted, so
+      // the tree is invariant and the clip-undo restore above MUST equal the
+      // pass-start snapshot (snap/state_snap, saved at 782-783).  Any mismatch =
+      // clip-undo (spr_clip/unclip + saved_postorder) is not a perfect inverse,
+      // leaving residue that accumulates across clips -- the latent bug the
+      // abandonment edit exposed.  Reports which array diverges.
+      if (std::getenv("TS_REVERT_CHECK")) {
+        bool topo = (tree.parent == snap.parent && tree.left == snap.left &&
+                     tree.right == snap.right);
+        size_t sb = state_snap.prelim.size() * sizeof(uint64_t);
+        size_t cb = state_snap.local_cost.size() * sizeof(uint64_t);
+        bool pre = sb == 0 || std::memcmp(tree.prelim.data(),
+                     state_snap.prelim.data(), sb) == 0;
+        bool fin = sb == 0 || std::memcmp(tree.final_.data(),
+                     state_snap.final_.data(), sb) == 0;
+        bool lc  = cb == 0 || std::memcmp(tree.local_cost.data(),
+                     state_snap.local_cost.data(), cb) == 0;
+        bool po  = (tree.postorder == state_snap.postorder);
+        if (!(topo && pre && fin && lc && po))
+          REprintf("CLIPUNDO-MISMATCH clip=%d topo=%d prelim=%d final=%d lc=%d post=%d\n",
+                   clip_node, (int)topo, (int)pre, (int)fin, (int)lc, (int)po);
+      }
+
       bool dominated = (best_candidate > best_score + eps) ||
                         (best_candidate > best_score - eps && !params.accept_equal);
 
