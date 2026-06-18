@@ -234,8 +234,11 @@ ReplicateResult run_single_replicate(
       sp.min_sector_size = params.sector_min_size;
       sp.max_sector_size = params.sector_max_size;
       sp.internal_ratchet_cycles = 0;
-      sp.internal_max_hits = 1;
+      sp.internal_max_hits = params.sector_max_hits;
       sp.clip_order = params.clip_order;
+      sp.ras_starts = params.ras_starts;  // Goloboff 1999 RSS re-solve (1 = polish)
+      sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
+      sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
 
       // XSS: systematic partitioning
       sp.n_partitions = params.xss_partitions;
@@ -349,8 +352,11 @@ ReplicateResult run_single_replicate(
       sp.min_sector_size = params.sector_min_size;
       sp.max_sector_size = params.sector_max_size;
       sp.internal_ratchet_cycles = 0;
-      sp.internal_max_hits = 1;
+      sp.internal_max_hits = params.sector_max_hits;
       sp.clip_order = params.clip_order;
+      sp.ras_starts = params.ras_starts;  // Goloboff 1999 RSS re-solve (1 = polish)
+      sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
+      sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
 
       if (params.xss_rounds > 0) {
         sp.n_partitions = params.xss_partitions;

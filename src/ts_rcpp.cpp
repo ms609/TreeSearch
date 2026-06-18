@@ -1394,6 +1394,14 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.sector_min_size = as<int>(ctrl["sectorMinSize"]);
   params.sector_max_size = as<int>(ctrl["sectorMaxSize"]);
   params.post_ratchet_sectorial = as<bool>(ctrl["postRatchetSectorial"]);
+  if (ctrl.containsElementNamed("rasStarts"))
+    params.ras_starts = as<int>(ctrl["rasStarts"]);
+  if (ctrl.containsElementNamed("sectorAcceptEqual"))
+    params.sector_accept_equal = as<bool>(ctrl["sectorAcceptEqual"]);
+  if (ctrl.containsElementNamed("sectorMaxHits"))
+    params.sector_max_hits = as<int>(ctrl["sectorMaxHits"]);
+  if (ctrl.containsElementNamed("sectorCollapseTarget"))
+    params.sector_collapse_target = as<int>(ctrl["sectorCollapseTarget"]);
 
   // Fuse / pool
   params.fuse_interval      = as<int>(ctrl["fuseInterval"]);

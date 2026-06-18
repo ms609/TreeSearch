@@ -26,6 +26,12 @@ struct SectorParams {
   int xss_rounds = 3;            // number of XSS rounds
   int internal_ratchet_cycles = 6;
   int internal_max_hits = 1;     // max_hits for internal TBR search
+  int ras_starts = 1;            // RAS+TBR restarts per sector (start 0 = TBR on
+                                 // the existing subtree; 1 = prior behaviour;
+                                 // TNT uses 3 random-addition restarts)
+  int collapse_target = 0;       // >0: collapse a selected clade's deep sub-clades
+                                 // into ~this many composite first-pass terminals
+                                 // (Goloboff 1999 coarse-grained sector). 0 = off.
 
   // Conflict-guided sector selection.
   // When non-null, RSS uses weighted random selection that biases toward

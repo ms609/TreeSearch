@@ -11,6 +11,8 @@
 #include <random>
 #include <vector>
 #include <cstring>
+#include <climits>
+#include <cstdlib>
 #include <R.h>
 
 namespace ts {
@@ -487,6 +489,157 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   return rd;
 }
 
+// Build a reduced dataset where deep sub-clades are COLLAPSED into composite
+// terminals -- Goloboff 1999's reduced dataset ("internal nodes represented by
+// their first-pass state sets"). The clade at sector_root is pruned at a frontier
+// of ~target_tips nodes; each frontier node is a reduced "tip" (a real tip keeps
+// its states; an internal sub-clade root takes its prelim/first-pass state set).
+// The reduced internals are the skeleton ABOVE the frontier, so TBR/RAS rearranges
+// the major sub-clades relative to one another -- the coarse-grained move TNT's
+// sectsch makes that a fully-resolved contiguous sector cannot reach.
+//
+// reinsert_sector() works unchanged: a collapsed root is a sector TIP, so its
+// full-tree sub-clade internals are never remapped (left intact) and the root is
+// merely reparented to its new skeleton position. Scoring uses the composite
+// state sets (approximate, like the HTU); the full-tree rescore after reinsertion
+// is exact and gates acceptance.
+static ReducedDataset build_reduced_dataset_collapsed(const TreeState& tree,
+                                                      const DataSet& ds,
+                                                      int sector_root,
+                                                      int target_tips) {
+  ReducedDataset rd;
+  rd.sector_root = sector_root;
+  rd.n_htus = 1;
+  const int tw = ds.total_words;
+
+  // Frontier: split the clade into ~target_tips sub-clades by repeatedly
+  // expanding the frontier node with the largest subtree. Expanded nodes form
+  // the skeleton (reduced internals, incl. sector_root); unexpanded frontier
+  // nodes are collapsed composite terminals.
+  std::vector<int> frontier;   // reduced tips: real tips + collapsed sub-clade roots
+  std::vector<int> skeleton;   // reduced internals (expanded nodes)
+  frontier.push_back(sector_root);
+  while (static_cast<int>(frontier.size()) < target_tips) {
+    int best_i = -1, best_sz = 1;
+    for (int i = 0; i < static_cast<int>(frontier.size()); ++i) {
+      int nd = frontier[i];
+      if (nd < tree.n_tip) continue;             // real tip: not expandable
+      int sz = count_clade_tips(tree, nd);
+      if (sz > best_sz) { best_sz = sz; best_i = i; }
+    }
+    if (best_i < 0) break;                       // nothing left to expand
+    int x = frontier[best_i];
+    int xi = x - tree.n_tip;
+    frontier[best_i] = tree.left[xi];
+    frontier.push_back(tree.right[xi]);
+    skeleton.push_back(x);
+  }
+
+  const int n_front = static_cast<int>(frontier.size());
+  rd.n_real_tips = n_front;                       // reduced tips excluding the HTU
+  const int n_sector_tips = n_front + rd.n_htus;  // + HTU
+  const int n_sector_internal = n_sector_tips - 1;
+  const int n_sector_node = 2 * n_sector_tips - 1;
+
+  rd.full_to_sector.assign(tree.n_node, -1);
+  rd.sector_to_full.assign(n_sector_node, -1);
+
+  for (int i = 0; i < n_front; ++i) {             // frontier -> reduced tips
+    rd.full_to_sector[frontier[i]] = i;
+    rd.sector_to_full[i] = frontier[i];
+  }
+  const int htu_sector_idx = n_front;
+  rd.sector_to_full[htu_sector_idx] = tree.parent[sector_root];
+
+  const int new_root = n_sector_tips;             // synthetic root
+  rd.sector_to_full[new_root] = -1;
+  int next_internal = new_root + 1;
+  for (int s : skeleton) {                        // skeleton -> reduced internals
+    rd.full_to_sector[s] = next_internal;
+    rd.sector_to_full[next_internal] = s;
+    ++next_internal;
+  }
+
+  rd.subtree.n_tip = n_sector_tips;
+  rd.subtree.n_internal = n_sector_internal;
+  rd.subtree.n_node = n_sector_node;
+  rd.subtree.total_words = ds.total_words;
+  rd.subtree.n_blocks = ds.n_blocks;
+  rd.subtree.parent.assign(n_sector_node, -1);
+  rd.subtree.left.assign(n_sector_internal, -1);
+  rd.subtree.right.assign(n_sector_internal, -1);
+
+  const int sr_mapped = rd.full_to_sector[sector_root];
+  const int nr_i = new_root - n_sector_tips;
+  rd.subtree.left[nr_i] = htu_sector_idx;
+  rd.subtree.right[nr_i] = sr_mapped;
+  rd.subtree.parent[new_root] = new_root;
+  rd.subtree.parent[htu_sector_idx] = new_root;
+  rd.subtree.parent[sr_mapped] = new_root;
+
+  for (int s : skeleton) {                        // map skeleton topology
+    const int sec_s = rd.full_to_sector[s];
+    const int s_i = s - tree.n_tip;
+    const int sec_lc = rd.full_to_sector[tree.left[s_i]];
+    const int sec_rc = rd.full_to_sector[tree.right[s_i]];
+    rd.subtree.left[sec_s - n_sector_tips] = sec_lc;
+    rd.subtree.right[sec_s - n_sector_tips] = sec_rc;
+    rd.subtree.parent[sec_lc] = sec_s;
+    rd.subtree.parent[sec_rc] = sec_s;
+  }
+
+  // Reduced DataSet (mirror build_reduced_dataset's block-structure copy).
+  rd.data.n_tips = n_sector_tips;
+  rd.data.n_blocks = ds.n_blocks;
+  rd.data.total_words = ds.total_words;
+  rd.data.blocks = ds.blocks;
+  rd.data.block_word_offset = ds.block_word_offset;
+  rd.data.flat_blocks = ds.flat_blocks;
+  rd.data.all_weight_one = ds.all_weight_one;
+  rd.data.n_patterns = ds.n_patterns;
+  rd.data.min_steps = ds.min_steps;
+  rd.data.pattern_freq = ds.pattern_freq;
+  rd.data.concavity = ds.concavity;
+  rd.data.eff_k = ds.eff_k;
+  rd.data.phi = ds.phi;
+  rd.data.scoring_mode = ds.scoring_mode;
+  rd.data.ew_offset = ds.ew_offset;
+  rd.data.precomputed_steps = ds.precomputed_steps;
+  rd.data.info_amounts = ds.info_amounts;
+  rd.data.info_max_steps = ds.info_max_steps;
+  rd.data.inapp_state = ds.inapp_state;
+
+  const size_t tip_state_size = static_cast<size_t>(n_sector_tips) * tw;
+  rd.data.tip_states.assign(tip_state_size, 0ULL);
+  for (int i = 0; i < n_front; ++i) {             // composite terminal states
+    const int node = frontier[i];
+    const size_t dst = static_cast<size_t>(i) * tw;
+    const uint64_t* src = (node < tree.n_tip)
+        ? &ds.tip_states[static_cast<size_t>(node) * tw]   // real tip
+        : &tree.prelim[static_cast<size_t>(node) * tw];    // collapsed sub-clade
+    for (int w = 0; w < tw; ++w) rd.data.tip_states[dst + w] = src[w];
+  }
+  {                                               // HTU: rest-of-tree first pass
+    std::vector<uint64_t> from_above_sr;
+    compute_from_above_for_sector(tree, ds, sector_root, from_above_sr);
+    const size_t dst = static_cast<size_t>(htu_sector_idx) * tw;
+    for (int w = 0; w < tw; ++w) rd.data.tip_states[dst + w] = from_above_sr[w];
+  }
+
+  const size_t state_size = static_cast<size_t>(n_sector_node) * tw;
+  rd.subtree.prelim.assign(state_size, 0ULL);
+  rd.subtree.final_.assign(state_size, 0ULL);
+  rd.subtree.down2.assign(state_size, 0ULL);
+  rd.subtree.subtree_actives.assign(state_size, 0ULL);
+  rd.subtree.local_cost.assign(
+      static_cast<size_t>(n_sector_node) * ds.n_blocks, 0ULL);
+
+  rd.subtree.load_tip_states(rd.data);
+  rd.subtree.build_postorder();
+
+  return rd;
+}
+
 // ---- Sector search ----
 
 // Note: Sector trees use score_tree() which dispatches appropriately.
@@ -494,46 +647,255 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
 // means the sector score is inexact, but the full-tree rescore after
 // reinsertion catches any discrepancies.
 
-// Search the reduced dataset and return the best score found.
-// Modifies rd.subtree in place.
-// Search the sector with TBR. The internal_ratchet_cycles parameter is
-// reserved for future use (ratchet perturbation within sectors).
-static double search_sector(ReducedDataset& rd, int /*internal_ratchet_cycles*/,
-                            int max_hits, int clip_order = 0) {
-  int htu_idx = rd.n_real_tips;
-  int root = rd.subtree.n_tip;
-  int sr_mapped = rd.full_to_sector[rd.sector_root];
+// Rebuild the sector's content topology from scratch by RAS Wagner: a random
+// taxon ORDER with greedy (best-edge) PLACEMENT, keeping the HTU anchored at
+// the synthetic root AND present throughout, so placements account for the
+// rest-of-tree state it summarises. This is the operation
+// TNT performs per sector (3 RAS+TBR restarts): it reaches sector topologies a
+// TBR on the *existing* sector subtree cannot, because TBR only locally
+// rearranges a tree the global TBR has already converged.
+//
+// The content is rooted at sr_mapped (= full_to_sector[sector_root]) — exactly
+// the node reinsert_sector grafts from — and the synthetic root is set to
+// (HTU, sr_mapped). So reinsert_sector and the root-structure check below work
+// unchanged. Internal node ids for the content come from the free pool (every
+// sector internal except new_root and sr_mapped); the pool size (n_real_tips-2)
+// matches the number of insertions exactly.
+static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
+  TreeState& t = rd.subtree;
+  const int n_real = rd.n_real_tips;
+  if (n_real < 4) return;  // too small to rebuild; leave existing topology
+  const int htu = n_real;                 // htu_sector_idx
+  const int n_tip = t.n_tip;
+  const int new_root = n_tip;             // synthetic root (= n_sector_tips)
+  const int sr_mapped = rd.full_to_sector[rd.sector_root];
+  const int tw = t.total_words;
 
-  // Save topology in case TBR disrupts root structure
-  auto save_left = rd.subtree.left;
-  auto save_right = rd.subtree.right;
-  auto save_parent = rd.subtree.parent;
+  // Reset topology pointers (tip states stay loaded; only the tree changes).
+  t.parent.assign(t.n_node, -1);
+  t.left.assign(t.n_internal, -1);
+  t.right.assign(t.n_internal, -1);
 
-  double original_score = score_tree(rd.subtree, rd.data);
-
-  TBRParams tp;
-  tp.max_hits = max_hits;
-  tp.clip_order = static_cast<ClipOrder>(clip_order);
-  TBRResult tr = tbr_search(rd.subtree, rd.data, tp);
-
-  // Verify root structure: HTU and sector_root_mapped must remain
-  // direct children of the synthetic root. TBR can regraft onto root
-  // edges, displacing nodes outside the clade — if so, discard result.
-  int root_i = root - rd.subtree.n_tip;
-  int root_lc = rd.subtree.left[root_i];
-  int root_rc = rd.subtree.right[root_i];
-  bool root_ok = (root_lc == htu_idx && root_rc == sr_mapped) ||
-                 (root_lc == sr_mapped && root_rc == htu_idx);
-
-  if (!root_ok) {
-    rd.subtree.left = save_left;
-    rd.subtree.right = save_right;
-    rd.subtree.parent = save_parent;
-    rd.subtree.build_postorder();
-    return original_score;
+  // Free pool of internal ids: every internal except new_root and sr_mapped.
+  std::vector<int> pool;
+  pool.reserve(t.n_internal);
+  for (int nd = n_tip; nd < t.n_node; ++nd) {
+    if (nd != new_root && nd != sr_mapped) pool.push_back(nd);
   }
 
-  return tr.best_score;
+  // Random addition order over the real tips (Fisher-Yates).
+  std::vector<int> order(n_real);
+  for (int i = 0; i < n_real; ++i) order[i] = i;
+  for (int i = n_real - 1; i > 0; --i) {
+    int j = std::uniform_int_distribution<int>(0, i)(rng);
+    std::swap(order[i], order[j]);
+  }
+
+  // Seed: anchor the HTU at the synthetic root and put the first two tips
+  // under sr_mapped, so the HTU (carrying the rest-of-tree state) is present
+  // before any scoring. Then score the seed so prelim/final_ are current for
+  // the first greedy placement.
+  const int nr_i = new_root - n_tip;
+  t.left[nr_i] = htu;
+  t.right[nr_i] = sr_mapped;
+  t.parent[htu] = new_root;
+  t.parent[sr_mapped] = new_root;
+  t.parent[new_root] = new_root;
+  const int sr_i = sr_mapped - n_tip;
+  t.left[sr_i] = order[0];
+  t.right[sr_i] = order[1];
+  t.parent[order[0]] = sr_mapped;
+  t.parent[order[1]] = sr_mapped;
+  t.build_postorder();
+  fitch_score(t, rd.data);
+
+  // Add the remaining tips by GREEDY placement: each goes at the edge that
+  // adds the fewest steps (Wagner), mirroring wagner_tree()'s inner loop.
+  // Candidate edges are restricted to the subtree below sr_mapped (never a root
+  // edge), so the HTU stays anchored at new_root and the content stays rooted
+  // at sr_mapped -- keeping reinsert_sector and the root-structure check valid.
+  // Placement uses the EW Fitch proxy even under IW/NA, exactly as wagner_tree;
+  // search_sector()'s score_tree() is the authoritative scorer.
+  int pool_idx = 0;
+  std::vector<int> stack;
+  for (int i = 2; i < n_real; ++i) {
+    const int tip = order[i];
+    const uint64_t* tip_prelim =
+        &rd.data.tip_states[static_cast<size_t>(tip) * tw];
+
+    int best_above = -1, best_below = -1, best_extra = INT_MAX;
+    stack.clear();
+    stack.push_back(sr_mapped);
+    while (!stack.empty()) {
+      int node = stack.back();
+      stack.pop_back();
+      if (node < n_tip) continue;  // tip -- no children to enumerate
+      int ni = node - n_tip;
+      int lc = t.left[ni];
+      int rc = t.right[ni];
+      if (lc >= 0) {
+        int extra = fitch_indirect_length_bounded(tip_prelim, t, rd.data,
+                                                  node, lc, best_extra);
+        if (extra < best_extra) { best_extra = extra; best_above = node; best_below = lc; }
+        if (lc >= n_tip) stack.push_back(lc);
+      }
+      if (rc >= 0) {
+        int extra = fitch_indirect_length_bounded(tip_prelim, t, rd.data,
+                                                  node, rc, best_extra);
+        if (extra < best_extra) { best_extra = extra; best_above = node; best_below = rc; }
+        if (rc >= n_tip) stack.push_back(rc);
+      }
+    }
+
+    // sr_mapped always has >= 2 descendant edges once seeded; guard anyway.
+    if (best_above < 0 || best_below < 0) {
+      best_above = sr_mapped;
+      best_below = t.left[sr_i];
+    }
+
+    const int new_internal = pool[pool_idx++];
+    insert_tip_at_edge(t, tip, new_internal, best_above, best_below);
+    wagner_incremental_rescore(t, rd.data, new_internal);
+  }
+
+  // Postorder for the subsequent score_tree()/TBR in search_sector().
+  t.build_postorder();
+}
+
+// Search the reduced dataset and return the best score found.
+// Modifies rd.subtree in place, leaving the best sector topology ready for
+// reinsertion.
+//
+// `ras_starts` = total starts to try. Start 0 is TBR on the EXISTING sector
+// subtree (so ras_starts=1 reproduces the prior single-TBR behaviour exactly,
+// and the existing topology is always a candidate floor). Starts 1.. are
+// HTU-anchored random-addition restarts (RAS+TBR) — TNT's per-sector tactic.
+static double search_sector(ReducedDataset& rd, int ras_starts,
+                            int max_hits, int clip_order,
+                            bool accept_equal, std::mt19937& rng) {
+  if (ras_starts < 1) ras_starts = 1;
+  const int htu_idx = rd.n_real_tips;
+  const int root = rd.subtree.n_tip;
+  const int sr_mapped = rd.full_to_sector[rd.sector_root];
+  const int root_i = root - rd.subtree.n_tip;
+
+  double best_score = 0.0;
+  bool have_best = false;
+  std::vector<int> best_left, best_right, best_parent;
+
+  // D1 confirm (env TS_FREE_HTU_PROBE): T0 sector's reduced length, baseline for
+  // the floating-HTU free re-solve reported after the loop.
+  double probe_orig = std::getenv("TS_FREE_HTU_PROBE")
+                          ? score_tree(rd.subtree, rd.data) : 0.0;
+
+  for (int s = 0; s < ras_starts; ++s) {
+    if (s > 0) {
+      build_ras_sector(rd, rng);
+      rd.subtree.build_postorder();
+    }
+
+    // Snapshot the (valid, HTU-anchored) pre-TBR topology for revert.
+    auto save_left = rd.subtree.left;
+    auto save_right = rd.subtree.right;
+    auto save_parent = rd.subtree.parent;
+
+    double original_score = score_tree(rd.subtree, rd.data);
+
+    TBRParams tp;
+    tp.max_hits = max_hits;
+    tp.clip_order = static_cast<ClipOrder>(clip_order);
+    // Let the sector RE-SOLVE itself walk equal-length plateaus (TNT `equals`:
+    // "accept equally good subtrees"), holding up to max_hits (sectorMaxHits)
+    // equal trees.  Without this the only equal-move path was a coincidental
+    // RAS-restart tie, which never fires on large sectors -> accept_equal inert
+    // there.  best_score is unchanged (equal moves never worsen it); only the
+    // returned topology differs, so reinsert can take the lateral step.
+    tp.accept_equal = accept_equal;
+    TBRResult tr = tbr_search(rd.subtree, rd.data, tp);
+
+    // Verify root structure: HTU and sector_root_mapped must remain direct
+    // children of the synthetic root. TBR can regraft onto root edges,
+    // displacing nodes outside the clade — if so the reduced result is
+    // unusable for reinsertion; revert to the (valid) pre-TBR topology.
+    int root_lc = rd.subtree.left[root_i];
+    int root_rc = rd.subtree.right[root_i];
+    bool root_ok = (root_lc == htu_idx && root_rc == sr_mapped) ||
+                   (root_lc == sr_mapped && root_rc == htu_idx);
+
+    // --- D1 warm test (env TS_FREE_HTU_PROBE): isolate the root_ok revert. ---
+    // root_ok=false means TBR's best reduced move FLOATS the HTU (re-roots the
+    // sector against the rest of the tree) -- the move discarded at the revert
+    // below.  By the reduced = full - const invariance (const = rest-of-tree
+    // standalone downpass length, independent of how the sector re-roots),
+    // tr.best_score < original_score with root_ok=false PROVES a strictly
+    // shorter FULL tree the anchored sectorial throws away.  GUARD: also reports
+    // root_ok, so a null can be told apart from "TBR never floats the HTU"
+    // (false-negative).  Run rasStarts=1 -> this is the warm T0 sector start.
+    if (std::getenv("TS_FREE_HTU_PROBE")) {
+      REprintf("REVERT sect=%d S=%d s=%d orig=%.0f tbr=%.0f root_ok=%d %s\n",
+               rd.sector_root, rd.n_real_tips, s, original_score, tr.best_score,
+               root_ok ? 1 : 0,
+               (!root_ok && tr.best_score < original_score) ? "<<FLOAT-IMPROVES" : "");
+    }
+
+    double this_score;
+    if (!root_ok) {
+      rd.subtree.left = save_left;
+      rd.subtree.right = save_right;
+      rd.subtree.parent = save_parent;
+      rd.subtree.build_postorder();
+      this_score = original_score;
+    } else {
+      this_score = tr.best_score;
+    }
+
+    // Strictly-better always wins. With accept_equal, an equal-length RAS
+    // rebuild (s>0) also REPLACES the kept topology -- this is the only way a
+    // sector escapes onto a different equal-length arrangement (plateau walk),
+    // which iterated sector picks then build a strict improvement from. At the
+    // default ras_starts=1 there is no s>0, so this is a guaranteed no-op.
+    bool take = !have_best || this_score < best_score ||
+                (accept_equal && s > 0 && this_score == best_score);
+    if (take) {
+      best_score = this_score;
+      best_left = rd.subtree.left;
+      best_right = rd.subtree.right;
+      best_parent = rd.subtree.parent;
+      have_best = true;
+    }
+  }
+
+  // Restore the best topology found across starts, ready for reinsertion.
+  rd.subtree.left = best_left;
+  rd.subtree.right = best_right;
+  rd.subtree.parent = best_parent;
+  rd.subtree.build_postorder();
+
+  // D1 SCORING-ONLY CONFIRM (env TS_FREE_HTU_PROBE), NO reinsertion: does an
+  // UNCONSTRAINED reduced search -- HTU = ordinary floating leaf among rd.data's
+  // (S+1) tips -- find a LOWER reduced score than the anchored search (best_score)
+  // or T0 (probe_orig)?  By the reduced = full - const invariance, free < anchored
+  // PROVES a shorter FULL tree the anchored sectorial cannot reach (audit D1).  20
+  // free RAS+TBR restarts so medium sectors reach their true optimum (free >= orig
+  // on a LARGE sector may be cold-search weakness -- weigh the medium sectors).
+  if (std::getenv("TS_FREE_HTU_PROBE")) {
+    double free_min = HUGE_VAL;
+    for (int fs = 0; fs < 20; ++fs) {
+      TreeState ft;
+      random_wagner_tree(ft, rd.data, nullptr);
+      TBRParams ftp;
+      ftp.max_hits = max_hits;
+      ftp.clip_order = static_cast<ClipOrder>(clip_order);
+      TBRResult ftr = tbr_search(ft, rd.data, ftp);
+      if (ftr.best_score < free_min) free_min = ftr.best_score;
+    }
+    REprintf("FREEHTU sect=%d S=%d orig=%.0f anchored=%.0f free=%.0f %s\n",
+             rd.sector_root, rd.n_real_tips, probe_orig, best_score, free_min,
+             free_min < best_score ? "<<D1-CONFIRM" : "");
+  }
+
+  // Return: best score across starts
+  return best_score;
 }
 
 // ---- Reinsertion ----
@@ -736,16 +1098,22 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     // score_tree above, or from the previous iteration's acceptance
     // (which calls score_tree) or rejection (which also rescores).
 
-    // Build reduced dataset
-    ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
+    // Build reduced dataset; collapse deep sub-clades into composite terminals
+    // when collapse_target is set and the clade is larger (Goloboff 1999).
+    int clade_sz_ = count_clade_tips(tree, sector_root);
+    ReducedDataset rd =
+        (params.collapse_target > 0 && clade_sz_ > params.collapse_target)
+        ? build_reduced_dataset_collapsed(tree, ds, sector_root, params.collapse_target)
+        : build_reduced_dataset(tree, ds, sector_root);
     const long long sector_cand0 = rd.data.n_candidates_evaluated;
 
     // Score the current sector topology
     double sector_current = score_tree(rd.subtree, rd.data);
 
     // Search the sector
-    double sector_best = search_sector(rd, params.internal_ratchet_cycles,
-                                       params.internal_max_hits, params.clip_order);
+    double sector_best = search_sector(rd, params.ras_starts,
+                                       params.internal_max_hits, params.clip_order,
+                                       params.accept_equal, rng);
     ++result.n_sectors_searched;
     // Propagate reduced-dataset candidates to the parent (diagnostics).
     ds.n_candidates_evaluated += rd.data.n_candidates_evaluated - sector_cand0;
@@ -762,6 +1130,11 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
       reinsert_sector(tree, rd);
       tree.build_postorder();
       double new_score = score_tree(tree, ds);
+      if (std::getenv("TS_SECT_DEBUG"))
+        REprintf("  sect[%2d] red_cur=%.0f red_best=%.0f full_new=%.0f full_best=%.0f %s\n",
+                 sector_root, sector_current, sector_best, new_score, result.best_score,
+                 new_score < result.best_score ? "STRICT" :
+                 (new_score == result.best_score ? "EQUAL-keep" : "WORSE-revert"));
 
       // Post-hoc constraint check
       if (constrained && violates_constraint_posthoc(tree, *cd)) {
@@ -771,13 +1144,31 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         continue;
       }
 
+      bool kept;
       if (new_score < result.best_score) {
         result.total_steps_saved +=
             static_cast<int>(result.best_score - new_score);
         result.best_score = new_score;
         ++result.n_sectors_improved;
+        kept = true;
+      } else if (new_score == result.best_score && params.accept_equal) {
+        // Equal-length lateral move accepted (plateau walk): topology changed
+        // but score did not.  This MUST refresh subtree_size / eligible just
+        // like a strict improvement (shared block below).  Omitting it left a
+        // STALE candidate set for every subsequent pick of the walk, so the
+        // plateau walk drew sectors against the pre-move topology and made no
+        // headway -- accept_equal was observably inert across the walk.
+        kept = true;
+      } else {
+        // HTU approximation caused full-tree score to worsen; revert
+        restore_clade(tree, snap);
+        tree.build_postorder();
+        score_tree(tree, ds);
+        kept = false;
+      }
 
-        // Recompute subtree sizes and eligible list after topology change
+      if (kept) {
+        // Recompute subtree sizes and eligible list after the topology change
         for (int i = 0; i < tree.n_tip; ++i) subtree_size[i] = 1;
         for (int node : tree.postorder) {
           int ni = node - tree.n_tip;
@@ -806,24 +1197,12 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         // Re-sync constraint metadata to the updated topology.  The
         // global TBR cleanup at the end of rss_search passes `cd`
         // directly; stale constraint_node mapping after a sector
-        // improvement would cause false-positive or false-negative
+        // change would cause false-positive or false-negative
         // constraint violations for the first TBR clips.
         if (cd && cd->active) {
           map_constraint_nodes(tree, *cd);
           compute_dfs_timestamps(tree, *cd);
         }
-      } else if (new_score == result.best_score && params.accept_equal) {
-        // Equal score accepted — topology changed but score didn't.
-        // Re-sync constraint metadata for the same reason as above.
-        if (cd && cd->active) {
-          map_constraint_nodes(tree, *cd);
-          compute_dfs_timestamps(tree, *cd);
-        }
-      } else {
-        // HTU approximation caused full-tree score to worsen; revert
-        restore_clade(tree, snap);
-        tree.build_postorder();
-        score_tree(tree, ds);
       }
     }
 
@@ -896,13 +1275,17 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       // score_tree above, or from the previous sector's acceptance/
       // rejection (both paths call score_tree before continuing).
 
-      ReducedDataset rd = build_reduced_dataset(tree, ds, sector_root);
+      int clade_sz_ = count_clade_tips(tree, sector_root);
+      ReducedDataset rd =
+          (params.collapse_target > 0 && clade_sz_ > params.collapse_target)
+          ? build_reduced_dataset_collapsed(tree, ds, sector_root, params.collapse_target)
+          : build_reduced_dataset(tree, ds, sector_root);
       const long long sector_cand0 = rd.data.n_candidates_evaluated;
 
       double sector_current = score_tree(rd.subtree, rd.data);
       double sector_best = search_sector(
-          rd, params.internal_ratchet_cycles, params.internal_max_hits,
-          params.clip_order);
+          rd, params.ras_starts, params.internal_max_hits,
+          params.clip_order, params.accept_equal, rng);
       ++result.n_sectors_searched;
       // Propagate reduced-dataset candidates to the parent (diagnostics).
       ds.n_candidates_evaluated += rd.data.n_candidates_evaluated - sector_cand0;
