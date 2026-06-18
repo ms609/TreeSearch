@@ -768,6 +768,96 @@ static bool try_root_edge_moves(TreeState& tree, const DataSet& ds,
   return true;
 }
 
+// Exact full-neighbourhood TBR verification, for scorers whose indirect scan is
+// only APPROXIMATE (inapplicables / NA).  Under Brazeau's three-pass the
+// divided+reconnect decomposition is not exact (the clipped subtree's internal
+// count is attachment-dependent — down2 reads whole-tree uppass context), so the
+// fast inner clip loop can declare convergence while improving moves remain
+// (confirmed by dev/benchmarks/tbr_oracle_na.R: both the direct scan AND the
+// physical-reroot path leave improving NA neighbours).  At convergence this
+// sweeps the ENTIRE unrooted-TBR neighbourhood, scoring each candidate EXACTLY
+// via apply_tbr_move + full_rescore, applies the first strict improver found
+// (first-improvement: the cheap approximate loop re-climbs between calls), and
+// returns true; returns false only at a genuine unrooted-TBR optimum.  Mirrors
+// the scan's enumeration — clip_node x {identity + fragment rerootings} x
+// divided-tree regraft edges — but the regraft edges are built directly from the
+// unclipped tree (every (parent[c], c) with c outside the clipped subtree, plus
+// the merged (nz, ns) edge that replaces nz-nx-ns), so apply_tbr_move re-clips
+// from the original tree exactly as the scan's accept path does.  EW/IW never
+// use this (their scan is exact); the caller gates it on has_na, so the default
+// and EW/IW paths are byte-identical.
+static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
+                               double& best_score) {
+  const double eps = std::isfinite(ds.concavity) ? 1e-9 : 0.5;
+  static thread_local TopoSnapshot snap;
+  static thread_local std::vector<std::pair<int,int>> sub_edges;
+  static thread_local std::vector<char> in_sub;
+  static thread_local std::vector<int> dfs, marked;
+
+  tree.build_postorder();
+  best_score = full_rescore(tree, ds);   // sync to the current (converged) tree
+  save_topology(tree, snap);
+  in_sub.assign(tree.n_node, 0);
+
+  for (int clip_node = 0; clip_node < tree.n_node; ++clip_node) {
+    if (clip_node == tree.n_tip) continue;            // display root
+    int nx = tree.parent[clip_node];
+    if (nx < 0 || nx == tree.n_tip) continue;         // root child (scan parity)
+    int nz = tree.parent[nx];
+    int nxi = nx - tree.n_tip;
+    int ns = (tree.left[nxi] == clip_node) ? tree.right[nxi] : tree.left[nxi];
+
+    // Mark the clipped subtree (invalid regraft targets), tracking set nodes
+    // for O(subtree) reset.
+    dfs.clear(); dfs.push_back(clip_node); marked.clear();
+    while (!dfs.empty()) {
+      int nd = dfs.back(); dfs.pop_back();
+      in_sub[nd] = 1; marked.push_back(nd);
+      if (nd >= tree.n_tip) {
+        int ni = nd - tree.n_tip;
+        dfs.push_back(tree.left[ni]);
+        dfs.push_back(tree.right[ni]);
+      }
+    }
+
+    collect_subtree_edges(tree, clip_node, sub_edges);   // fragment rerootings
+    const int n_reroot = 1 + static_cast<int>(sub_edges.size());
+
+    bool found = false;
+    for (int ri = 0; ri < n_reroot && !found; ++ri) {
+      int rp = (ri == 0) ? -1 : sub_edges[ri - 1].first;   // -1 => SPR (no reroot)
+      int rc = (ri == 0) ? -1 : sub_edges[ri - 1].second;
+      for (int below = 0; below < tree.n_node; ++below) {
+        if (below == tree.n_tip || in_sub[below] || below == nx) continue;
+        int above = tree.parent[below];
+        if (below == ns) above = nz;          // merged edge after the clip
+        if (above < 0 || above == nx) continue;
+        if (ri == 0 && below == ns) continue; // identity (no reroot, original spot)
+
+        if (!apply_tbr_move(tree, clip_node, rp, rc, above, below)) {
+          restore_topology(tree, snap);
+          continue;
+        }
+        tree.build_postorder();
+        double s = full_rescore(tree, ds);
+        if (s < best_score - eps) {           // keep this improver applied
+          best_score = s;
+          found = true;
+          break;
+        }
+        restore_topology(tree, snap);
+      }
+    }
+    for (int nd : marked) in_sub[nd] = 0;
+    if (found) return true;
+  }
+
+  restore_topology(tree, snap);               // true optimum: restore clean tree
+  tree.build_postorder();
+  best_score = full_rescore(tree, ds);
+  return false;
+}
+
 // --- Edge length computation ---
 
 // --- Subtree size computation ---
@@ -1899,7 +1989,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // loop certified the 2n-4 non-root edges) => true unrooted-TBR optimum.
   // TS_PHYS_REROOT forces the legacy physical-reroot sweep (validation ref).
   if (!std::getenv("TS_PHYS_REROOT")) {
-    if (!try_root_edge_moves(tree, ds, best_score, ew_directional)) break;
+    // EW/IW: the indirect scan is exact, so the inner loop already certified
+    // the 2n-4 non-root edges — only the root edge remains (try_root_edge_moves,
+    // fast additive for EW / apply+rescore for IW).  NA: the indirect scan is
+    // only approximate, so an EXACT full-neighbourhood sweep is required to
+    // certify a true unrooted-TBR optimum (see exact_verify_sweep).
+    bool improved = has_na
+        ? exact_verify_sweep(tree, ds, best_score)
+        : try_root_edge_moves(tree, ds, best_score, ew_directional);
+    if (!improved) break;
     score_fresh = true;
     if (!collapsed.empty()) compute_collapsed_flags(tree, ds, collapsed);
     continue;                              // re-descend from the improved tree
