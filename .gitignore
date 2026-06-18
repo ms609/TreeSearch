@@ -57,6 +57,9 @@ test_output.txt
 /.tnt-bench
 /.vtune*
 /vtune*
+dev/profiling/.vtune-lib-*/
+dev/profiling/.build-*
+dev/profiling/.Makevars.symboled
 /.claude
 
 # /profile skill — VTune results and profvis HTML are large and stale fast

@@ -1,10 +1,22 @@
-MAKEFLAGS = -j2
-
+# Profiling build flags for /profile (VTune/perf): release -O2 + debug symbols.
+#
+# PREFERRED: use the bundled  build-symboled-lib.ps1  (in the /profile skill dir).
+# It writes a PKG_CXXFLAGS Makevars like this one, builds an ISOLATED tarball so a
+# shared src/ is never touched (safe under concurrent sessions), installs to a
+# timestamped lib, and HARD-FAILS if .debug_info is absent. This file is the
+# manual fallback.
+#
+# Debug flags go in PKG_CXXFLAGS (NOT CXXFLAGS): they are then appended to EVERY
+# translation unit regardless of C++ standard. Setting only CXXFLAGS is silently
+# bypassed for C++17 files (R uses CXX17FLAGS) -- the trap that left
+# -fno-omit-frame-pointer off in the 2026-06-17 round (-g still landed by luck of
+# the toolchain default). -O2 + -msse2 come from R's default CXX17FLAGS; these
+# lines only ADD debug info + ccache.
 CCACHE = ccache
-CC = $(CCACHE) gcc
-CXX = $(CCACHE) g++
+CC    = $(CCACHE) gcc
+CXX   = $(CCACHE) g++
 CXX11 = $(CCACHE) g++
 CXX14 = $(CCACHE) g++
 CXX17 = $(CCACHE) g++
-
-CXXFLAGS = -O2 -g -fno-omit-frame-pointer -Wall -mfpmath=sse -msse2 -mstackrealign
+PKG_CFLAGS   = -g -fno-omit-frame-pointer
+PKG_CXXFLAGS = -g -fno-omit-frame-pointer

@@ -125,4 +125,34 @@ path the TNT benchmark actually compares against.
 
 ---
 
+### Round 4 — 2026-06-17 — area #13 (standard-Fitch) — StateSnapshot re-profile + build-protocol hardening
+- Trigger: re-confirm the stale "StateSnapshot ~23%" before the deferred
+  selective save/restore surgery (task #10), on a FRESH symboled build.
+- Driver:  dev/profiling/drivers/fitch-tnt.R (Zhu2013, 12 reps; bare ~3.5 s)
+- Build:   **build-symboled-lib.ps1 (NEW, in /profile skill dir)** — isolated
+  tarball (src/ untouched, concurrent-safe) + PKG_CXXFLAGS `-g -fno-omit-frame-pointer`
+  + DLLFLAGS=-static-libgcc; HARD-FAILS if no .debug_info. 23,221 syms.
+  ⚠ GOTCHA caught: the prior `Makevars.vtune` set `CXXFLAGS`, which R SILENTLY
+  BYPASSES for C++17 (uses CXX17FLAGS) → only ~214 KB .debug_info (partial; -g
+  on cache-hit TUs only, -fno-omit-frame-pointer absent). PKG_CXXFLAGS fixes it
+  → 19 MB .debug_info (all TUs). resolve_syms.R maps VTune `func@0x` via `nm`.
+- VTune top (resolved, % of total CPU): ts::tbr_search 12.8 %, simd any_hit_reduce
+  ×2 = 14.2 % (AT-LIMIT), uppass_node 7.7 % (AT-LIMIT), memcpy 5.0 %, malloc+free
+  6.4 %, fitch_indirect* ~17 %, build_postorder 3.1 %, save_node_state 2.5 %,
+  hash_tree 2.3 %.
+- Finding: **[AT-LIMIT] selective StateSnapshot (task #10) — NOT worth it.**
+  save/restore (save_node_state 2.5 % + its memcpy share) ≈ 3-5 % ceiling;
+  selective restore reclaims ~half → ~2 % for risky surgery on the most
+  correctness-critical code. The cited "23 %" was stale NA-path (pre-T-261/T-300).
+  Per-candidate cost is at floor; ~19 % is alloc/copy churn. The 2× gap is
+  candidates-per-improvement (SEARCH STRATEGY) → see TNT sectorial reverse-
+  engineering: [[tnt-sectorial-recipe]] memory + dev/benchmarks/tnt_sector_defaults.csv.
+- Cleanup: result_statesnap_* removed; old partial-symbol libs removed; kept
+  .vtune-lib-20260617081344 (validated symboled). build-symboled-lib.ps1 +
+  resolve_syms.R retained.
+- Next reviewer: profile the NEW multi-start sectorial once built (regenerate
+  the symboled lib with build-symboled-lib.ps1 first — never reuse a stale one).
+
+---
+
 last_focus: 13
