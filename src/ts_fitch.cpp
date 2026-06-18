@@ -472,6 +472,75 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
   return extra_steps;
 }
 
+// Exact per-node insertion edge sets via directional Fitch messages.
+// See the header for the formula.  O(n * chars): one preorder up-pass plus one
+// combine per node.
+void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
+                                 std::vector<uint64_t>& edge_set) {
+  const int n_tip = tree.n_tip;
+  const int tw    = tree.total_words;
+  const int nb    = ds.n_blocks;
+  const int root  = n_tip;
+
+  edge_set.assign(static_cast<size_t>(tree.n_node) * tw, 0ULL);
+  std::vector<uint64_t> up(static_cast<size_t>(tree.n_node) * tw, 0ULL);
+
+  // Preorder over current in-tree nodes (parents before children).
+  std::vector<int> pre;
+  pre.reserve(tree.n_node);
+  {
+    std::vector<int> st;
+    st.push_back(root);
+    while (!st.empty()) {
+      int nd = st.back(); st.pop_back();
+      pre.push_back(nd);
+      if (nd >= n_tip) {
+        int ni = nd - n_tip;
+        st.push_back(tree.left[ni]);
+        st.push_back(tree.right[ni]);
+      }
+    }
+  }
+
+  // Fitch combine (per character intersect-else-union) of a & b into dst.
+  auto combine = [&](uint64_t* dst, const uint64_t* a, const uint64_t* b) {
+    for (int bi = 0; bi < nb; ++bi) {
+      const CharBlock& blk = ds.blocks[bi];
+      int off = ds.block_word_offset[bi];
+      uint64_t any_isect = 0;
+      for (int s = 0; s < blk.n_states; ++s) any_isect |= a[off + s] & b[off + s];
+      uint64_t needs_union = ~any_isect & blk.active_mask;
+      for (int s = 0; s < blk.n_states; ++s)
+        dst[off + s] = ((a[off + s] & b[off + s]) & any_isect)
+                     | ((a[off + s] | b[off + s]) & needs_union);
+    }
+  };
+
+  // Directional up-pass: up[D] = combine(up[parent], prelim[sibling]);
+  // root is a degree-2 vertex so up[child] = prelim[other child].
+  for (int D : pre) {
+    if (D == root) continue;
+    int A   = tree.parent[D];
+    int ai  = A - n_tip;
+    int Sib = (tree.left[ai] == D) ? tree.right[ai] : tree.left[ai];
+    uint64_t* uD       = &up[static_cast<size_t>(D) * tw];
+    const uint64_t* pS = &tree.prelim[static_cast<size_t>(Sib) * tw];
+    if (A == root) {
+      for (int w = 0; w < tw; ++w) uD[w] = pS[w];
+    } else {
+      combine(uD, &up[static_cast<size_t>(A) * tw], pS);
+    }
+  }
+
+  // Edge set above each non-root node: E[D] = combine(prelim[D], up[D]).
+  for (int D : pre) {
+    if (D == root) continue;
+    combine(&edge_set[static_cast<size_t>(D) * tw],
+            &tree.prelim[static_cast<size_t>(D) * tw],
+            &up[static_cast<size_t>(D) * tw]);
+  }
+}
+
 
 // --- Flat EW specializations ---
 //
