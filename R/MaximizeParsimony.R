@@ -149,6 +149,12 @@
   # hardest datasets (Wortley2006 -3, Zhu2013 -2 toward the TNT optimum) at
   # neutral-to-lower candidate cost, with a ~+1-step trade-off on a couple of
   # others (Zanol2014, Giles2015) -- hence opt-in rather than a default change.
+  # NB rasStarts=3 (TNT-faithful per-sector restarts) was evaluated 2026-06-18:
+  # it closes the rss-ONLY gap (+7/+8 -> +1, wins time-matched) but is REDUNDANT
+  # in the full thorough pipeline (Zanol/Zhu reach the optimum at rasStarts=1,
+  # 60s) -- so NOT adopted.  Revisit for larger datasets / shorter budgets where
+  # the full search can't reach the optimum (diag_thorough_rasstarts_tm.R +
+  # the Hamilton grid t29_thorough_rasstarts_hamilton.sh).
   intensive = SearchControl(
     tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
