@@ -768,9 +768,22 @@ static bool try_root_edge_moves(TreeState& tree, const DataSet& ds,
   return true;
 }
 
-// FNV-1a hash over canonical (min,max) child pairs; root-position-independent
-// because we sort each child pair before mixing, so any rooting of the same
-// unrooted topology produces the same hash.
+// FNV-1a hash over each internal node's (min,max) child pair.  Sorting the pair
+// canonicalizes only the LEFT/RIGHT child order WITHIN a node (the same rooted
+// tree hashes identically however its two children happen to be stored); it does
+// NOT make the hash root-independent.  Different rootings renumber the internal
+// nodes and flip parent/child directions along the reroot path, so they hash
+// differently (verified: two rootings of one unrooted tree differ at 55/73
+// nodes).  That root-DEPENDENCE is REQUIRED, not a limitation: exact_verify_sweep
+// is itself root-dependent — it skips root-child clips, so each rooting has a
+// different neighbourhood and a separately-valid optimum verdict (the residual
+// completeness gap, task #19) — so each rooting MUST be cached separately.  Safe
+// because the NA path never physically reroots mid-search (the legacy reroot
+// sweep is TS_PHYS_REROOT-only) and restores preserve the exact rooting, so a
+// converged optimum is always re-verified at the rooting it was cached under.
+// Do NOT "canonicalize" this to a root-independent hash unless/until
+// exact_verify_sweep is made root-complete (task #19), or cross-rooting hits
+// would suppress improvers one rooting finds and another misses.
 static inline uint64_t tree_topo_hash(const TreeState& tree) {
   uint64_t h = 14695981039346656037ULL;
   for (int i = 0; i < tree.n_tip - 1; ++i) {
