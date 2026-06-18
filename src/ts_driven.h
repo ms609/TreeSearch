@@ -87,6 +87,20 @@ struct DrivenParams {
   int css_partitions = 4;       // partitions for CSS
   int sector_min_size = 6;
   int sector_max_size = 50;
+  int ras_starts = 1;           // RAS+TBR restarts per sector (1 = polish the
+                                // existing subtree; >1 rebuilds it that many
+                                // times and keeps best, per Goloboff 1999 RSS;
+                                // TNT uses 3). Plumbs SectorParams::ras_starts.
+  bool sector_accept_equal = false;  // accept equal-score sector resolutions
+                                     // (Goloboff 2014 plateau traversal);
+                                     // plumbs SectorParams::accept_equal.
+  int sector_max_hits = 1;           // equal-length trees the internal sector TBR
+                                     // holds while swapping (1 = old; TNT holds
+                                     // many). Plumbs SectorParams::internal_max_hits.
+  int sector_collapse_target = 0;    // >0: collapse a big selected clade's deep
+                                     // sub-clades into ~this many composite
+                                     // first-pass terminals (Goloboff 1999 coarse
+                                     // sector). Plumbs SectorParams::collapse_target.
 
   // Post-ratchet sectorial search (T-257).
   // When true, run XSS+RSS+CSS again after ratchet perturbation using the

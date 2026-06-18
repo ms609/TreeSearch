@@ -26,6 +26,12 @@ struct SectorParams {
   int xss_rounds = 3;            // number of XSS rounds
   int internal_ratchet_cycles = 6;
   int internal_max_hits = 1;     // max_hits for internal TBR search
+  int ras_starts = 1;            // RAS+TBR restarts per sector (start 0 = TBR on
+                                 // the existing subtree; 1 = prior behaviour;
+                                 // TNT uses 3 random-addition restarts)
+  int collapse_target = 0;       // >0: collapse a selected clade's deep sub-clades
+                                 // into ~this many composite first-pass terminals
+                                 // (Goloboff 1999 coarse-grained sector). 0 = off.
 
   // Conflict-guided sector selection.
   // When non-null, RSS uses weighted random selection that biases toward
@@ -68,6 +74,25 @@ int count_clade_tips(const TreeState& tree, int node);
 SectorResult rss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params,
                         ConstraintData* cd = nullptr);
+
+// Beam sectorial search (experimental; env-gated by TS_BEAM in the driven loop).
+//
+// Runs RSS over a RETAINED, EVOLVING buffer of diverse equal-optimal trees
+// instead of a single tree. Each round picks a tree from the beam, runs ONE
+// rss_search pass (with accept_equal forced ON so equal-length rearrangements
+// diversify the buffer), and writes the distinct result back. Improvements found
+// on one tree become starting points for later picks — the shared-buffer
+// mechanism by which TNT's sectsch=rss escapes single-tree plateaus that effort
+// and diverse starts alone cannot (see dev/plans/2026-06-18-beam-sectorial.md).
+//
+// Buffer width is a knob: env TS_BEAM_SUBOPT (default 0 = best-equal retention;
+// >0 holds a length band), TS_BEAM_MAXSIZE (default 1000), TS_BEAM_PICKALL
+// (sample the whole buffer vs only the best-equal set). `rounds` × picks-per-pass
+// is the sector-search budget; match it to the single-tree baseline.
+// On return, `tree` holds the best tree found.
+SectorResult beam_sectorial(TreeState& tree, DataSet& ds,
+                            const SectorParams& params,
+                            ConstraintData* cd, int rounds);
 
 // Exclusive Sectorial Search: partition tree into non-overlapping sectors.
 // Modifies `tree` in place.

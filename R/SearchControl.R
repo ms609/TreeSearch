@@ -66,6 +66,26 @@
 #' @param cssPartitions Integer; number of partitions in CSS.
 #' @param sectorMinSize,sectorMaxSize Integer; minimum and maximum clade
 #'   sizes for sectorial search.
+#' @param rasStarts Integer; random-addition restarts (RAS + TBR) per sector in
+#'   XSS/RSS.  `1` (default) polishes the current sector with a single TBR pass;
+#'   `n > 1` rebuilds the sector from scratch `n` times and keeps the best,
+#'   following \insertCite{Goloboff1999;textual}{TreeSearch} RSS (TNT uses 3).
+#'   Lets the search escape sector-local optima that a single TBR cannot leave.
+#' @param sectorAcceptEqual Logical; accept equal-score sector resolutions in
+#'   XSS/RSS (default `FALSE`).  On flat (e.g. missing-data) landscapes this lets
+#'   the search traverse equally-parsimonious plateaus laterally rather than
+#'   reverting every non-improving sector move, following Goloboff (2014).
+#' @param sectorMaxHits Integer; equal-length trees the internal sector TBR holds
+#'   while swapping a sector (default `1`).  TNT holds many; higher values let the
+#'   sector search traverse equally-parsimonious plateaus (pairs with
+#'   `sectorAcceptEqual`).
+#' @param sectorCollapseTarget Integer; when `> 0`, a selected sector clade larger
+#'   than this is **collapsed** into approximately this many composite terminals
+#'   (deep sub-clades replaced by their first-pass state sets), so the sector
+#'   search rearranges major sub-clades as a coarse skeleton rather than shuffling
+#'   tips within a contiguous clade -- the reduced-dataset construction of
+#'   \insertCite{Goloboff1999;textual}{TreeSearch}.  `0` (default) keeps the full
+#'   fully-resolved clade.
 #' @param postRatchetSectorial Logical; when `TRUE`, run XSS+RSS+CSS again
 #'   after ratchet perturbation using the same round counts.  Approximates
 #'   TNT's interleaved sectorial pattern.  Default: `FALSE`.
@@ -267,6 +287,10 @@ SearchControl <- function(
     cssPartitions = 4L,
     sectorMinSize = 6L,
     sectorMaxSize = 50L,
+    rasStarts = 1L,
+    sectorAcceptEqual = FALSE,
+    sectorMaxHits = 1L,
+    sectorCollapseTarget = 0L,
     postRatchetSectorial = FALSE,
     # Fuse / pool
     fuseInterval = 3L,
@@ -348,6 +372,10 @@ SearchControl <- function(
       cssPartitions = as.integer(cssPartitions),
       sectorMinSize = as.integer(sectorMinSize),
       sectorMaxSize = as.integer(sectorMaxSize),
+      rasStarts = as.integer(rasStarts),
+      sectorAcceptEqual = as.logical(sectorAcceptEqual),
+      sectorMaxHits = as.integer(sectorMaxHits),
+      sectorCollapseTarget = as.integer(sectorCollapseTarget),
       postRatchetSectorial = as.logical(postRatchetSectorial),
       fuseInterval = as.integer(fuseInterval),
       fuseAcceptEqual = as.logical(fuseAcceptEqual),
@@ -394,7 +422,8 @@ print.SearchControl <- function(x, ...) {
                      "annealTEnd", "annealMovesPerPhase"),
     "Sectorial" = c("xssRounds", "xssPartitions", "rssRounds",
                      "cssRounds", "cssPartitions",
-                     "sectorMinSize", "sectorMaxSize",
+                     "sectorMinSize", "sectorMaxSize", "rasStarts",
+                     "sectorAcceptEqual", "sectorMaxHits", "sectorCollapseTarget",
                      "postRatchetSectorial"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),

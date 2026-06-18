@@ -234,8 +234,11 @@ ReplicateResult run_single_replicate(
       sp.min_sector_size = params.sector_min_size;
       sp.max_sector_size = params.sector_max_size;
       sp.internal_ratchet_cycles = 0;
-      sp.internal_max_hits = 1;
+      sp.internal_max_hits = params.sector_max_hits;
       sp.clip_order = params.clip_order;
+      sp.ras_starts = params.ras_starts;  // Goloboff 1999 RSS re-solve (1 = polish)
+      sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
+      sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
 
       // XSS: systematic partitioning
       sp.n_partitions = params.xss_partitions;
@@ -258,13 +261,25 @@ ReplicateResult run_single_replicate(
       // RSS: random sector picks (conflict-guided when pool data available)
       if (params.rss_rounds > 0) {
         sp.split_freq = split_freq;
-        for (int rr = 0; rr < params.rss_rounds; ++rr) {
-          rss_search(result.tree, ds, sp, cd);
-
+        // Beam sectorial (experimental, env-gated): run RSS over a retained
+        // diverse buffer instead of a single tree.  Default path (TS_BEAM
+        // unset) is byte-identical to the single-tree loop below.
+        if (std::getenv("TS_BEAM") != nullptr) {
+          beam_sectorial(result.tree, ds, sp, cd, params.rss_rounds);
           if (ts::check_interrupt() || check_timeout()) {
             result.interrupted = true;
             result.score = score_tree(result.tree, ds);
             return result;
+          }
+        } else {
+          for (int rr = 0; rr < params.rss_rounds; ++rr) {
+            rss_search(result.tree, ds, sp, cd);
+
+            if (ts::check_interrupt() || check_timeout()) {
+              result.interrupted = true;
+              result.score = score_tree(result.tree, ds);
+              return result;
+            }
           }
         }
         result.timings.rss_ms += ph_lap();
@@ -349,8 +364,11 @@ ReplicateResult run_single_replicate(
       sp.min_sector_size = params.sector_min_size;
       sp.max_sector_size = params.sector_max_size;
       sp.internal_ratchet_cycles = 0;
-      sp.internal_max_hits = 1;
+      sp.internal_max_hits = params.sector_max_hits;
       sp.clip_order = params.clip_order;
+      sp.ras_starts = params.ras_starts;  // Goloboff 1999 RSS re-solve (1 = polish)
+      sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
+      sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
 
       if (params.xss_rounds > 0) {
         sp.n_partitions = params.xss_partitions;
