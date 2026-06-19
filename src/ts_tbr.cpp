@@ -1317,6 +1317,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // 3-pass scorers.
   const bool use_directional = !has_na;
   std::vector<uint64_t> edge_set_buf;
+  // Caller-owned scratch for compute_insertion_edge_sets, reused across clips
+  // (size-ensured, non-zeroing) so the up-message buffer and preorder list are
+  // not reallocated/zeroed every clip.
+  std::vector<uint64_t> edge_set_up;
+  std::vector<int> edge_set_pre;
 
   TopoSnapshot snap;
   bool keep_going = true;
@@ -1482,7 +1487,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // once per clip from the current (clipped) main-tree downpass, then used
       // by both the SPR scan and the rerooting vroot cache below.
       if (use_directional) {
-        compute_insertion_edge_sets(tree, ds, edge_set_buf);
+        compute_insertion_edge_sets(tree, ds, edge_set_buf,
+                                    edge_set_up, edge_set_pre);
       }
 
       collect_main_edges(tree, main_edges);

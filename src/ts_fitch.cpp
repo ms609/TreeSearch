@@ -2,6 +2,7 @@
 #include "ts_hsj.h"
 #include "ts_sankoff.h"
 #include <vector>
+#include <cassert>
 #include <R.h>
 
 namespace ts {
@@ -476,18 +477,29 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
 // See the header for the formula.  O(n * chars): one preorder up-pass plus one
 // combine per node.
 void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
-                                 std::vector<uint64_t>& edge_set) {
+                                 std::vector<uint64_t>& edge_set,
+                                 std::vector<uint64_t>& up,
+                                 std::vector<int>& pre) {
   const int n_tip = tree.n_tip;
   const int tw    = tree.total_words;
   const int nb    = ds.n_blocks;
   const int root  = n_tip;
 
-  edge_set.assign(static_cast<size_t>(tree.n_node) * tw, 0ULL);
-  std::vector<uint64_t> up(static_cast<size_t>(tree.n_node) * tw, 0ULL);
+  // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
+  // monotonically across calls, so after the first call no zero-fill happens
+  // (resize value-inits only NEW elements).  Every slot a downstream reader
+  // touches is edge_set[D] for a non-root in-tree node D, and the two combine
+  // loops below overwrite exactly those slots before any read; the stale
+  // contents of grown-but-unwritten slots (the root slot, and slots for
+  // clipped-out nodes that are not edges of the current tree) are never
+  // observed.  This removes the per-call assign() zero-fill and the per-call
+  // up/pre heap allocations that VTune flagged as ~27% of EW Fitch CPU.
+  const size_t N = static_cast<size_t>(tree.n_node) * tw;
+  if (edge_set.size() < N) edge_set.resize(N);
+  if (up.size() < N) up.resize(N);
 
   // Preorder over current in-tree nodes (parents before children).
-  std::vector<int> pre;
-  pre.reserve(tree.n_node);
+  pre.clear();
   {
     std::vector<int> st;
     st.push_back(root);
@@ -533,12 +545,31 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
   }
 
   // Edge set above each non-root node: E[D] = combine(prelim[D], up[D]).
+#ifndef NDEBUG
+  // Debug-only write-before-read guard: the non-zeroing size-ensure relies on
+  // every reader index (edge_set[D] for a non-root in-tree node D) being
+  // overwritten this call.  Record which non-root nodes are written and assert
+  // completeness against the in-tree node set, so a stale slot can never be
+  // read.  Release builds (NDEBUG) compile none of this.
+  std::vector<char> written(static_cast<size_t>(tree.n_node), 0);
+#endif
   for (int D : pre) {
     if (D == root) continue;
     combine(&edge_set[static_cast<size_t>(D) * tw],
             &tree.prelim[static_cast<size_t>(D) * tw],
             &up[static_cast<size_t>(D) * tw]);
+#ifndef NDEBUG
+    written[static_cast<size_t>(D)] = 1;
+#endif
   }
+#ifndef NDEBUG
+  // Every in-tree node except the root must have its edge_set slot written.
+  for (int D : pre) {
+    if (D == root) continue;
+    assert(written[static_cast<size_t>(D)] &&
+           "compute_insertion_edge_sets: in-tree node left unwritten");
+  }
+#endif
 }
 
 

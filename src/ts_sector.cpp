@@ -725,12 +725,17 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
   // up-message at sub-sr_mapped nodes correctly carries the HTU (rest-of-tree)
   // state, so sector-internal placement accounts for the anchored context.
   std::vector<uint64_t> edge_set;
+  // Caller-owned scratch reused across the insertion loop (size-ensured,
+  // non-zeroing) so compute_insertion_edge_sets does not reallocate/zero its
+  // up-message buffer and preorder list each step.
+  std::vector<uint64_t> edge_set_up;
+  std::vector<int> edge_set_pre;
   for (int i = 2; i < n_real; ++i) {
     const int tip = order[i];
     const uint64_t* tip_prelim =
         &rd.data.tip_states[static_cast<size_t>(tip) * tw];
 
-    compute_insertion_edge_sets(t, rd.data, edge_set);
+    compute_insertion_edge_sets(t, rd.data, edge_set, edge_set_up, edge_set_pre);
 
     int best_above = -1, best_below = -1, best_extra = INT_MAX;
     stack.clear();

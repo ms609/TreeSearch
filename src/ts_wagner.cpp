@@ -466,8 +466,12 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
 
   // Scratch buffer for the exact directional insertion edge sets, recomputed
   // each step from the current downpass (prelim, kept current by the
-  // incremental rescore below).
+  // incremental rescore below).  edge_set_up / edge_set_pre are caller-owned
+  // scratch reused across the insertion loop (size-ensured, non-zeroing) so
+  // compute_insertion_edge_sets avoids per-step allocation and zero-fill.
   std::vector<uint64_t> edge_set;
+  std::vector<uint64_t> edge_set_up;
+  std::vector<int> edge_set_pre;
 
   // Add remaining taxa one at a time
   for (int i = 3; i < n_tip; ++i) {
@@ -480,7 +484,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
     // Exact insertion cost: edge_set[D] = combine(prelim[D], up[D]).  Replaces
     // the union-of-finals (final_[node] | final_[child]) approximation that
     // undercut insertion cost and produced ~+30% Wagner trees.
-    compute_insertion_edge_sets(tree, ds, edge_set);
+    compute_insertion_edge_sets(tree, ds, edge_set, edge_set_up, edge_set_pre);
     const int tw = tree.total_words;
 
     // Find best insertion edge via DFS from root

@@ -125,9 +125,15 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
 // edge_set[D] as the vroot).  This is the CORRECT replacement for the
 // union-of-finals (final_[A] | final_[D]) approximation, which undercounts.
 // Requires a current downpass (prelim).  `edge_set` is sized n_node*total_words;
-// the root entry is left unspecified.  Uses a scratch up-message buffer.
+// the root entry is left unspecified.  `up` (n_node*total_words scratch up-
+// message buffer) and `pre` (preorder node list) are caller-owned and reused
+// across calls; pass the same vectors on every call to avoid per-call
+// allocation and zero-fill.  They are size-ensured (non-zeroing) and fully
+// overwritten internally, so the caller need not initialize them.
 void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
-                                 std::vector<uint64_t>& edge_set);
+                                 std::vector<uint64_t>& edge_set,
+                                 std::vector<uint64_t>& up,
+                                 std::vector<int>& pre);
 
 // --- Flat EW specializations (skip weight/upweight overhead) ---
 //

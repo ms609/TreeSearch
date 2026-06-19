@@ -18,6 +18,12 @@
   (reusable scratch buffers and an open-addressed rerooting-dedup table), and
   the debug-only topology validation no longer runs in release builds.
 
+- Further driven-search speedup: the exact directional insertion edge-set
+  computation now reuses caller-owned scratch and skips its per-clip zero-fill
+  (under a write-before-read invariant, debug-asserted), saving up to ~16% wall
+  on large datasets where the `O(n_node * words)` zero-fill dominated.  Search
+  results are bit-identical (score and `candidates_evaluated` unchanged).
+
 - HSJ (Hopkins & St John 2021) scoring is now invariant to the
   arbitrary ordering of a `phyDat` object's `levels`.  Both the primary
   absent/present term and the secondary-character dissimilarity term
