@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <chrono>
+#include <cstdio>
 #include <random>
 #include "ts_data.h"
 #include "ts_tree.h"
@@ -2982,4 +2983,68 @@ List ts_tbr_diagnostics(
     Named("converged")     = result.converged,
     Named("passes")        = passes
   );
+}
+
+// Regression probe for the exact_verify_sweep optimum cache (test-ts-na-evcache.R).
+// Returns the EXACT 64-bit cache key the NA convergence certifier would use for
+// this (topology, dataset, weighting-regime) triple, as a 16-hex-digit string,
+// by calling ts::exact_verify_cache_key — the same helper the cache itself uses.
+//
+// The three perturbation flags reproduce the ratchet mutating the live DataSet
+// in place (ts_ratchet.cpp): `zero_active` clears one active_mask bit (ZERO_ONLY,
+// the DEFAULT NA ratchet strategy), `set_upweight` sets one upweight_mask bit
+// (UPWEIGHT/MIXED modes), `bump_pattern_freq` increments pattern_freq (IW).  Each
+// must change the returned key; if it does not, a base-regime "optimal" verdict
+// would leak into a perturbed pass and silently skip the improving moves the
+// ratchet exists to find.  None of these flags touch ds_fingerprint's inputs
+// (n_tips/n_blocks/tip_states), so any observed key change is attributable to the
+// weighting-regime term alone — pinning that weight_fingerprint is XORed into the
+// composite key, not merely that it exists.
+// [[Rcpp::export]]
+std::string ts_ev_cache_key_probe(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    double concavity = -1.0,
+    bool zero_active = false,
+    bool set_upweight = false,
+    bool bump_pattern_freq = false)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                IntegerVector(), concavity);
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+
+  if (zero_active) {
+    // Clear the lowest set active bit in the first block that has one, keeping
+    // the FlatBlock cache in sync (exactly perturb_zero's bookkeeping).
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      uint64_t m = ds.blocks[b].active_mask;
+      if (m) {
+        ds.blocks[b].active_mask = m & (m - 1);          // clear lowest set bit
+        ds.flat_blocks[b].active_mask = ds.blocks[b].active_mask;
+        break;
+      }
+    }
+  }
+  if (set_upweight) {
+    // Set the lowest active bit in upweight_mask (must be a subset of active).
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      uint64_t a = ds.blocks[b].active_mask;
+      if (a) {
+        ds.blocks[b].upweight_mask |= (a & (~a + 1));    // lowest set active bit
+        break;
+      }
+    }
+  }
+  if (bump_pattern_freq && !ds.pattern_freq.empty()) {
+    ds.pattern_freq[0] += 1;
+  }
+
+  uint64_t key = ts::exact_verify_cache_key(tree, ds);
+  char buf[17];
+  std::snprintf(buf, sizeof(buf), "%016llx", (unsigned long long)key);
+  return std::string(buf);
 }

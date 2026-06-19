@@ -77,6 +77,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      TreePool* collect_pool = nullptr,
                      std::function<bool()> check_timeout = nullptr);
 
+// Cache key used by exact_verify_sweep's optimum memoization (the NA
+// convergence certifier).  A FALSE ("genuine optimum") verdict for a topology
+// is valid only under the current (topology, dataset, weighting-regime) triple,
+// so all three are mixed in.  The ratchet mutates the weighting regime
+// (active_mask / upweight_mask / pattern_freq) in place mid-search, so the
+// regime MUST be in the key or a base-regime verdict leaks into a perturbed
+// pass and silently skips improvers.  Exposed so the regression test
+// (test-ts-na-evcache.R) can assert the key is sensitive to each regime field
+// AND to topology, using the exact code the cache uses.
+uint64_t exact_verify_cache_key(const TreeState& tree, const DataSet& ds);
+
 } // namespace ts
 
 #endif // TS_TBR_H

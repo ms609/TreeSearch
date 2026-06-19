@@ -856,3 +856,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_ev_cache_key_probe
+std::string ts_ev_cache_key_probe(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, double concavity, bool zero_active, bool set_upweight, bool bump_pattern_freq);
+RcppExport SEXP _TreeSearch_ts_ev_cache_key_probe(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP concavitySEXP, SEXP zero_activeSEXP, SEXP set_upweightSEXP, SEXP bump_pattern_freqSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< bool >::type zero_active(zero_activeSEXP);
+    Rcpp::traits::input_parameter< bool >::type set_upweight(set_upweightSEXP);
+    Rcpp::traits::input_parameter< bool >::type bump_pattern_freq(bump_pattern_freqSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_ev_cache_key_probe(edge, contrast, tip_data, weight, levels, concavity, zero_active, set_upweight, bump_pattern_freq));
+    return rcpp_result_gen;
+END_RCPP
+}

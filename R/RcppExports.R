@@ -224,3 +224,7 @@ ts_tbr_diagnostics <- function(edge, contrast, tip_data, weight, levels, maxHits
     .Call(`_TreeSearch_ts_tbr_diagnostics`, edge, contrast, tip_data, weight, levels, maxHits, acceptEqual, maxChanges, min_steps, concavity, clipOrder, unrooted)
 }
 
+ts_ev_cache_key_probe <- function(edge, contrast, tip_data, weight, levels, concavity = -1.0, zero_active = FALSE, set_upweight = FALSE, bump_pattern_freq = FALSE) {
+    .Call(`_TreeSearch_ts_ev_cache_key_probe`, edge, contrast, tip_data, weight, levels, concavity, zero_active, set_upweight, bump_pattern_freq)
+}
+

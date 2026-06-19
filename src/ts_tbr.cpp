@@ -825,6 +825,15 @@ static inline uint64_t weight_fingerprint(const DataSet& ds) {
   return h;
 }
 
+// Shared cache key for exact_verify_sweep's optimum memoization (declared in
+// ts_tbr.h).  Both the cache below AND the regression probe
+// (ts_ev_cache_key_probe -> test-ts-na-evcache.R) call THIS one function, so
+// dropping any term here — topology, dataset, or weighting regime — is caught
+// by a deterministic test rather than only by a silent search-quality drop.
+uint64_t exact_verify_cache_key(const TreeState& tree, const DataSet& ds) {
+  return tree_topo_hash(tree) ^ ds_fingerprint(ds) ^ weight_fingerprint(ds);
+}
+
 // Exact full-neighbourhood TBR verification, for scorers whose indirect scan is
 // only APPROXIMATE (inapplicables / NA).  Under Brazeau's three-pass the
 // divided+reconnect decomposition is not exact (the clipped subtree's internal
@@ -868,11 +877,19 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   // base-regime entries survive across perturbation excursions and are reused.
   static thread_local std::unordered_set<uint64_t> evs_false_cache;
   static thread_local uint64_t evs_last_fp = 0;
-  const uint64_t fp = ds_fingerprint(ds);
-  const uint64_t weight_fp = weight_fingerprint(ds);
+  const uint64_t fp = ds_fingerprint(ds);   // clear-trigger: a true dataset switch
   if (fp != evs_last_fp) { evs_false_cache.clear(); evs_last_fp = fp; }
-  const uint64_t cache_key = tree_topo_hash(tree) ^ fp ^ weight_fp;
-  if (evs_false_cache.count(cache_key)) return false;
+  const uint64_t cache_key = exact_verify_cache_key(tree, ds);
+
+  // TS_EV_AUDIT (dev/bench only): distrust cache hits.  On a hit, run the full
+  // sweep anyway and abort if it finds an improver the cached FALSE claimed
+  // absent — the live tripwire for weighting-regime contamination of the key.
+  // Off by default: a hit returns FALSE immediately and the default path is
+  // unchanged.  getenv is read only on a hit (convergence-frequency, never in
+  // the inner loop) and not cached, so the env var toggles reliably.  The
+  // deterministic guard is test-ts-na-evcache.R.
+  const bool cache_hit = evs_false_cache.count(cache_key) != 0;
+  if (cache_hit && !std::getenv("TS_EV_AUDIT")) return false;
 
   save_topology(tree, snap);
   in_sub.assign(tree.n_node, 0);
@@ -919,6 +936,12 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
         tree.build_postorder();
         double s = full_rescore(tree, ds);
         if (s < best_score - eps) {           // keep this improver applied
+          if (cache_hit) {                    // TS_EV_AUDIT: cache lied
+            Rcpp::stop("TS_EV_AUDIT: exact_verify cache returned FALSE (optimum) "
+                       "for a topology with an improving neighbour (%.4f < %.4f) "
+                       "- weighting-regime contamination in the cache key.",
+                       s, best_score);
+          }
           best_score = s;
           found = true;
           break;
