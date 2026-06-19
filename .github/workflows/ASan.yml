@@ -48,3 +48,8 @@ jobs:
       - uses: ms609/actions/asan@main
         with:
           test: ${{ matrix.config.test }}
+          # Rogue hard-imports Rfast, a ~30-min source build under ASAN that
+          # adds no coverage to TreeSearch's own compiled code.  All Rogue use
+          # (two vignettes + the Shiny consensus module) is requireNamespace-
+          # guarded and skips cleanly when absent.
+          exclude-packages: Rogue
