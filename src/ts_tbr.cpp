@@ -841,17 +841,20 @@ uint64_t exact_verify_cache_key(const TreeState& tree, const DataSet& ds) {
 // fast inner clip loop can declare convergence while improving moves remain
 // (confirmed by dev/benchmarks/tbr_oracle_na.R: both the direct scan AND the
 // physical-reroot path leave improving NA neighbours).  At convergence this
-// sweeps the ENTIRE unrooted-TBR neighbourhood, scoring each candidate EXACTLY
-// via apply_tbr_move + full_rescore, applies the first strict improver found
-// (first-improvement: the cheap approximate loop re-climbs between calls), and
-// returns true; returns false only at a genuine unrooted-TBR optimum.  Mirrors
-// the scan's enumeration — clip_node x {identity + fragment rerootings} x
-// divided-tree regraft edges — but the regraft edges are built directly from the
-// unclipped tree (every (parent[c], c) with c outside the clipped subtree, plus
-// the merged (nz, ns) edge that replaces nz-nx-ns), so apply_tbr_move re-clips
-// from the original tree exactly as the scan's accept path does.  EW/IW never
-// use this (their scan is exact); the caller gates it on has_na, so the default
-// and EW/IW paths are byte-identical.
+// sweeps every NON-root edge's TBR neighbourhood (the 2n-4 edges not incident on
+// the display root), scoring each candidate EXACTLY via apply_tbr_move +
+// full_rescore, applies the first strict improver found (first-improvement: the
+// cheap approximate loop re-climbs between calls), and returns true.  The clip
+// loop structurally skips root-child clips, so the ONE root edge (cL-cR) is
+// enumerated separately at the optimum exit via try_root_edge_moves_rescore;
+// together they cover all 2n-3 unrooted edges, so a false return is a genuine
+// unrooted-TBR optimum.  The clip enumeration is clip_node x {identity + fragment
+// rerootings} x divided-tree regraft edges, with the regraft edges built directly
+// from the unclipped tree (every (parent[c], c) with c outside the clipped
+// subtree, plus the merged (nz, ns) edge that replaces nz-nx-ns), so
+// apply_tbr_move re-clips from the original tree exactly as the scan's accept
+// path does.  EW/IW never use this (their scan is exact); the caller gates it on
+// has_na, so the default and EW/IW paths are byte-identical.
 static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
                                double& best_score) {
   const double eps = std::isfinite(ds.concavity) ? 1e-9 : 0.5;
@@ -953,10 +956,21 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
     if (found) return true;
   }
 
-  restore_topology(tree, snap);               // true optimum: restore clean tree
+  restore_topology(tree, snap);               // clip loop found no improver
   tree.build_postorder();
   best_score = full_rescore(tree, ds);
-  evs_false_cache.insert(cache_key);          // memoize: this topology is optimal
+
+  // The clip loop skips root-child clips (the nx==n_tip guard above), so the ONE
+  // unrooted edge n_tip sits on (cL-cR) is never enumerated — one blind edge with
+  // a large neighbourhood, the residual that let poor NA starts converge with a
+  // root-edge improver still present (tbr_oracle_na.R: was 2/20 on Zanol2014).
+  // Enumerate it exactly here (apply + full_rescore, the same path IW uses at
+  // convergence) before declaring an optimum, so the verdict — and the memoized
+  // FALSE — means a TRUE unrooted-TBR optimum over all 2n-3 edges, not just the
+  // 2n-4 non-root ones.
+  if (try_root_edge_moves_rescore(tree, ds, best_score)) return true;
+
+  evs_false_cache.insert(cache_key);          // memoize: true unrooted-TBR optimum
   return false;
 }
 
