@@ -233,3 +233,25 @@ real-in-principle but MOOTED; porting adds the per-clip precompute for ~zero ben
 ACTION. Remaining bounded sites all benign: drift (opt-in, rank-then-reconverge, T-F1),
 temper (preset-only defensible tradeoff, T-F1), ts_rcpp.cpp:2339 (standalone export, not
 the recipe). **Scoring-approximation sweep now COMPLETE across the whole search.**
+
+### 2026-06-20 — PHASE-0 CONNECTIVE TISSUE — CLOSED, no addressable production fat
+Read of the driven-search orchestration loop (ts_driven.cpp). Full `score_tree`
+(O(N·chars)) call inventory at the DEFAULT verbosity (`verbosity=1L`, MP.R:505):
+- **All per-phase score prints are `verbosity>=2`-gated** (XSS/RSS/CSS/ratchet/post-sect/
+  NNI/drift/SA/PruneRI/TBR/fuse, ts_driven.cpp:249-588) ⇒ DO NOT fire at default v=1.
+- **Interrupt/timeout exit branches** (257/269/299/307/431/505/539/563) ⇒ run once on exit.
+- **Per-outer-cycle, un-gated:** `score_before_cycle` (:224) + `score_after_cycle` (:594)
+  for the convergence/reset check = 2 full rescores/cycle; `score_before_cycle`(N+1) ≡
+  `score_after_cycle`(N) (tree unmodified between :594 and next :224) ⇒ one is REDUNDANT.
+- **Final:** `result.score = score_tree` (:617) once per replicate.
+A full score_tree on Zanol ≈ O(74·210·9) ≈ 140K ops ≈ µs; ~1–few outer cycles/replicate
+(outerCycles=1 in `large`) ⇒ total ≈ **0.001% of wall** (seconds of phase work dominate;
+score_tree was NOT in the T-P5o hotspot list — consistent). **Step-switching:** each phase
+owns/maintains its own prelim/final_ incrementally; the only orchestrator-level state
+rebuild is intra-fuse `build_postorder()+reset_states()` (:581-582, preset-only, 1/cycle).
+R/C marshalling already T-P5o'd (R.dll 12% = amortizable GC/glue + one-time LoadLibraryA,
+startup-inflated by the tiny profiling workload). **VERDICT: Phase-0 AT-LIMIT** — the one
+redundant `score_before_cycle` is a sub-floor (~0.001%) bit-identical micro-bank, NOT worth
+the convergence-logic risk. This closes the last undone NON-GATED, non-other-agent aspect of
+the component-isolation plan. Remaining: gate-2 races (Hamilton-confirmatory; sectorial=other
+agent) + composition #40 (gated, where the addressable wall now lives: orchestration / T-S6e).
