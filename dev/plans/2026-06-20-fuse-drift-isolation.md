@@ -255,3 +255,24 @@ redundant `score_before_cycle` is a sub-floor (~0.001%) bit-identical micro-bank
 the convergence-logic risk. This closes the last undone NON-GATED, non-other-agent aspect of
 the component-isolation plan. Remaining: gate-2 races (Hamilton-confirmatory; sectorial=other
 agent) + composition #40 (gated, where the addressable wall now lives: orchestration / T-S6e).
+
+### 2026-06-20 — bit-packing reopen CLOSED + cherry-pick build-check + Hamilton-KPI BLOCKED
+- **ns=9 representation/bit-packing reopen CLOSED analytically (T-P5r, advisor-gated, no build):**
+  transposed bitset already bit-dense (9 state-words × 64 patterns = 0.14 op/pattern, 4 states/
+  AVX2 instr); states-per-word packing SERIALIZES patterns → strictly worse at 210 patterns;
+  the scalar/representation reopen is **ns≤4 only**, deader at ns=9 ⇒ residual ~2× heavy-
+  multistate is a genuine ACCEPTED CONSTANT FACTOR, no representation lever. (The T-P5p
+  "UNPINNED" tag was the tell — a 21-agent audit had found no concrete scheme.)
+- **Cherry-pick build-check PASSED:** clean detached-worktree build of cpp-search HEAD
+  (ac8e808a fuse fix + 8671fdaa comment) = INSTALL exit 0; fuse 22/0, tbr 28/0, prune-reinsert
+  44/0. No stale-object ABI issue ([[stale-object-abi-gotcha]] cleared). Shared branch safe.
+- **Hamilton mission-KPI re-measurement (advisor's highest-value non-gated item) — BLOCKED,
+  FLAGGED FOR USER:** the stale TS-vs-TNT wall gap is worth refreshing (predates getenv ~20-26%
+  + ratchet 12→6 ~20-38%, which shifted the phase mix). BUT a clean dispatch is blocked: the
+  **ratchet 12→6 flip is UNCOMMITTED in the shared working tree** (R/SearchControl.R wt=`6L`;
+  origin/cpp-search AND local HEAD both =`12L`), alongside `M` R/MaximizeParsimony.R +
+  R/RcppExports.R — another session's in-flight work I must not touch/commit (concurrent-git-
+  hazard) and not authorized to push. Cloning origin → measures stale ratchet=12; transferring
+  the wt → bundles unowned multi-session WIP. ⇒ cannot define a clean reproducible code-state
+  unattended. NEEDS USER: commit the ratchet flip (it's a major banked lever sitting only in the
+  working tree — at risk of loss on any `git checkout -- .`) + authorize the Hamilton run.
