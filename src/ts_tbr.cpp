@@ -1253,9 +1253,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   if (!collect_pool) {
     compute_collapsed_flags(tree, ds, collapsed);
   }
+  // Hoisted per-call-invariant flags. collapsed's empty-ness never changes
+  // within a tbr_search call (the reroot-loop recompute is guarded on
+  // non-empty and only refreshes contents); the diagnostic env vars are
+  // constant for the process. Avoids a per-candidate vector::empty() and a
+  // per-clip / per-accept getenv scan. Byte-identical (gates the same checks).
+  const bool use_collapsed = !collapsed.empty();
+  const bool revert_check = std::getenv("TS_REVERT_CHECK") != nullptr;
+  const bool iw_scanchk = std::getenv("TS_IW_SCANCHK") != nullptr;
 
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
+  std::vector<int> kept_ei;  // per-clip non-skipped main-edge indices (reroot)
 
   // Temporary buffers
   std::vector<uint64_t> from_above(
@@ -1420,7 +1429,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // Skip collapsed edges: zero-length edge where clipping provably
       // cannot improve the score. Works for EW, IW, Profile, and NA.
       // Disabled during MPT enumeration (collapsed is empty).
-      if (!collapsed.empty() && collapsed[clip_node]) {
+      if (use_collapsed && collapsed[clip_node]) {
         ++n_zero_skipped;
         continue;
       }
@@ -1534,6 +1543,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
       const uint64_t* clip_prelim = &tree.prelim[clip_base];
 
+      // EW/NA bail cutoff, maintained across this clip's SPR + reroot loops.
+      // Recomputed ONLY inside an accept block (when best_candidate improves) —
+      // divided_length is clip-constant, so this is byte-identical to the old
+      // per-candidate `(best_candidate<HUGE_VAL)?(int)(best_candidate-
+      // divided_length+1):INT_MAX`, just computed O(improvements) not
+      // O(candidates).  Unused on the IW path (which bounds on best_candidate
+      // directly).  best_candidate == HUGE_VAL here ⇒ INT_MAX matches the
+      // old ternary's first-candidate branch.
+      int cutoff = INT_MAX;
+
       for (auto& [above, below] : main_edges) {
         if (above == nz && below == ns) continue;
         if (sector_mask && !(*sector_mask)[below]) continue;
@@ -1545,7 +1564,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // region (where collapsed[below] == 0 but the node is in the region)
         // is always evaluated, and it dominates interior positions because
         // its vroot includes states from outside the region.
-        if (!collapsed.empty() && collapsed[below]) {
+        if (use_collapsed && collapsed[below]) {
           continue;
         }
 
@@ -1557,9 +1576,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 clip_actives, tree, ds, above, below, base_iw, iw_delta,
                 best_candidate);
           } else {
-            int cutoff = (best_candidate < HUGE_VAL)
-                ? static_cast<int>(best_candidate - divided_length + 1)
-                : INT_MAX;
             int extra = use_flat
                 ? fitch_na_indirect_bounded_flat(clip_prelim, clip_actives,
                       tree, ds, above, below, cutoff)
@@ -1575,9 +1591,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
               ds, base_iw, iw_delta, best_candidate);
         } else {
-          int cutoff = (best_candidate < HUGE_VAL)
-              ? static_cast<int>(best_candidate - divided_length + 1)
-              : INT_MAX;
           // Exact directional cost: the edge set above `below` (= node_d) is
           // edge_set_buf[below], replacing the union-of-finals approximation.
           int extra = fitch_indirect_length_cached(
@@ -1592,6 +1605,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           best_below = below;
           best_reroot_parent = -1;
           best_reroot_child = -1;
+          cutoff = static_cast<int>(best_candidate - divided_length + 1);
         }
       }
 
@@ -1648,6 +1662,23 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         seen_vp_hashes.reset(sub_edges.size());
         seen_vp_hashes.insert(fast_hash(clip_prelim, tree.total_words));
 
+        // Precompute the non-skipped main-edge indices ONCE per clip.  The skip
+        // predicate (nz/ns identity, sector_mask, constraint, collapsed) is
+        // sub_edge-INVARIANT — it depends only on ei via main_edges[ei] — yet
+        // both reroot inner loops below re-evaluate it for every (sub_edge, ei)
+        // pair.  Filtering here removes that n_sub_edges x redundancy.  kept_ei
+        // is in ascending ei order, so the candidate sequence (hence the
+        // strict-< tie-break) is byte-identical to the per-candidate skips.
+        kept_ei.clear();
+        for (int ei = 0; ei < n_main; ++ei) {
+          const int ab = main_edges[ei].first, bl = main_edges[ei].second;
+          const bool skip = ((ab == nz && bl == ns) && !do_reroot)
+              || (sector_mask && !(*sector_mask)[bl])
+              || (constrained && regraft_violates_constraint(bl, *cd))
+              || (use_collapsed && collapsed[bl]);
+          if (!skip) kept_ei.push_back(ei);
+        }
+
         for (auto& [sp, sc] : sub_edges) {
           if (sp == clip_node) continue;
 
@@ -1674,29 +1705,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             // Collect up to 4 non-skipped candidates per iteration and
             // evaluate them simultaneously.  4 independent vroot_cache rows
             // are read in parallel, hiding L2 latency for large trees.
-            int ei = 0;
-            while (ei < n_main) {
+            // Batch 4 at a time from the pre-filtered kept_ei (skips already
+            // applied once per clip above) — byte-identical b_ei sequence.
+            size_t ki = 0;
+            const size_t n_kept = kept_ei.size();
+            while (ki < n_kept) {
               int b_ei[4];
               int b_n = 0;
-              while (ei < n_main && b_n < 4) {
-                auto& [ab, bl] = main_edges[ei];
-                // nz/ns identity skip: in the REROOTING loop this drops the
-                // distinct "rerooted fragment regrafted at its original
-                // (nz,ns) location" move (Step 0 oracle: removing it recovers
-                // 2-3/60). Relaxed only under the opt-in complete-TBR path so
-                // the default search stays byte-identical.
-                bool skip = ((ab == nz && bl == ns) && !do_reroot)
-                    || (sector_mask && !(*sector_mask)[bl])
-                    || (constrained && regraft_violates_constraint(bl, *cd))
-                    || (!collapsed.empty() && collapsed[bl]);
-                if (!skip) b_ei[b_n++] = ei;
-                ++ei;
+              while (ki < n_kept && b_n < 4) {
+                b_ei[b_n++] = kept_ei[ki++];
               }
               if (b_n == 0) break;
 
-              int cutoff_b = (best_candidate < HUGE_VAL)
-                  ? static_cast<int>(best_candidate - divided_length + 1)
-                  : INT_MAX;
+              // cutoff is maintained across the clip (recomputed only on
+              // improvement); byte-identical to the old per-batch recompute.
+              int cutoff_b = cutoff;
               // Initialise to cutoff_b so partial-batch trailing slots
               // never accidentally improve best_candidate.
               int scores[4] = {cutoff_b, cutoff_b, cutoff_b, cutoff_b};
@@ -1754,37 +1777,31 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                   best_below = main_edges[b_ei[k]].second;
                   best_reroot_parent = sp;
                   best_reroot_child = sc;
+                  cutoff = static_cast<int>(best_candidate - divided_length + 1);
                 }
               }
             }
           } else {
             // === Scalar path (IW, or ratchet with upweight_mask) ===
-            for (int ei = 0; ei < n_main; ++ei) {
-              // Prefetch vroot data for a future iteration.
+            const int n_kept = static_cast<int>(kept_ei.size());
+            for (int ki = 0; ki < n_kept; ++ki) {
+              const int ei = kept_ei[ki];
+              // Prefetch the NEXT kept vroot row.
               // At 180 tips vroot_cache is ~140 KB (L2); prefetch hides
               // the ~10-cycle L2 latency. No-op on small trees (L1-resident).
-              if (ei + 2 < n_main) {
+              if (ki + 2 < n_kept) {
+                const size_t pf =
+                    static_cast<size_t>(kept_ei[ki + 2]) * tree.total_words;
 #if defined(__GNUC__) || defined(__clang__)
-                __builtin_prefetch(
-                    &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words],
-                    0, 0);
+                __builtin_prefetch(&vroot_cache[pf], 0, 0);
 #elif defined(_MSC_VER) && defined(TS_SIMD_SSE2)
-                _mm_prefetch(reinterpret_cast<const char*>(
-                    &vroot_cache[static_cast<size_t>(ei + 2) * tree.total_words]),
-                    _MM_HINT_T0);
+                _mm_prefetch(reinterpret_cast<const char*>(&vroot_cache[pf]),
+                             _MM_HINT_T0);
 #endif
               }
               auto& [above, below] = main_edges[ei];
-              // See nz/ns note in the flat-batch loop above: relaxed on the
-              // plain-search complete-TBR path (do_reroot), all scorers.
-              if (!do_reroot && above == nz && below == ns) continue;
-              if (sector_mask && !(*sector_mask)[below]) continue;
-              if (constrained && regraft_violates_constraint(below, *cd))
-                continue;
-              // Collapsed-region regraft merging (same as SPR loop above).
-              if (!collapsed.empty() && collapsed[below]) {
-                continue;
-              }
+              // Skip predicate (nz/ns, sector, constraint, collapsed) already
+              // applied once per clip via kept_ei — no per-candidate re-check.
               double candidate;
               if (has_na) {
                 if (use_iw) {
@@ -1795,9 +1812,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                           static_cast<size_t>(ei) * ds.n_blocks],
                       ds, base_iw, iw_delta, best_candidate);
                 } else {
-                  int cutoff = (best_candidate < HUGE_VAL)
-                      ? static_cast<int>(best_candidate - divided_length + 1)
-                      : INT_MAX;
                   int extra = fitch_na_indirect_length_cached(
                       virtual_prelim.data(), clip_actives,
                       &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
@@ -1813,9 +1827,6 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                     &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
                     ds, base_iw, iw_delta, iw_cutoff);
               } else {
-                int cutoff = (best_candidate < HUGE_VAL)
-                    ? static_cast<int>(best_candidate - divided_length + 1)
-                    : INT_MAX;
                 int extra = fitch_indirect_length_cached(
                     virtual_prelim.data(),
                     &vroot_cache[static_cast<size_t>(ei) * tree.total_words],
@@ -1829,6 +1840,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 best_below = below;
                 best_reroot_parent = sp;
                 best_reroot_child = sc;
+                cutoff = static_cast<int>(best_candidate - divided_length + 1);
               }
             }
           }
@@ -1848,7 +1860,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // clip-undo (spr_clip/unclip + saved_postorder) is not a perfect inverse,
       // leaving residue that accumulates across clips -- the latent bug the
       // abandonment edit exposed.  Reports which array diverges.
-      if (std::getenv("TS_REVERT_CHECK")) {
+      if (revert_check) {
         bool topo = (tree.parent == snap.parent && tree.left == snap.left &&
                      tree.right == snap.right);
         size_t sb = state_snap.prelim.size() * sizeof(uint64_t);
@@ -1950,7 +1962,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // mismatch under IW or NA flags the clip-internal omission (see
         // add_clip_internal_steps).  reroot=1 => TBR rerooting accept, 0 => SPR.
         // No-op unless the env var is set.
-        if (std::getenv("TS_IW_SCANCHK") &&
+        if (iw_scanchk &&
             std::fabs(actual - best_candidate) > 1e-6) {
           REprintf("SCANCHK-MISMATCH mode=%s reroot=%d pred=%.5f actual=%.5f diff=%.5f\n",
                    has_na ? (use_iw ? "NA+IW" : "NA+EW") : (use_iw ? "IW" : "EW"),
