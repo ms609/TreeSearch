@@ -61,9 +61,8 @@ region of tree space reflects the density of the parsimony landscape, not
 the likelihood or support for that topology.  A random draw over-represents
 topologies that sit on broad plateaux and under-represents isolated optima.
 \code{WideSample()} instead selects for topological \emph{spread}, density-blind, by
-dispatching to the appropriate \acronym{MMDP}{Max-Min Diversity Problem}
-solver from the \pkg{MaxMin}
-package:
+dispatching to the appropriate Max-Min Diversity Problem solver from the
+\pkg{MaxMin} package:
 
 \describe{
 \item{\code{FarFirst()} (\code{effort = 1})}{Greedy farthest-first selection

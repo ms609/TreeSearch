@@ -12,9 +12,8 @@
 #' the likelihood or support for that topology.  A random draw over-represents
 #' topologies that sit on broad plateaux and under-represents isolated optima.
 #' `WideSample()` instead selects for topological *spread*, density-blind, by
-#' dispatching to the appropriate \acronym{MMDP}{Max-Min Diversity Problem}
-#' solver from the \pkg{MaxMin}
-#' package:
+#' dispatching to the appropriate Max-Min Diversity Problem solver from the
+#' \pkg{MaxMin} package:
 #'
 #  TODO replace {TreeSearch} refs with {MaxMin} once package on CRAN and 
 #  imported, and remove refs from inst/REFERENCES.bib (DRY)

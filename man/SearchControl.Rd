@@ -15,7 +15,7 @@ SearchControl(
   wagnerBiasTemp = 0.3,
   outerCycles = 1L,
   maxOuterResets = 0L,
-  ratchetCycles = 12L,
+  ratchetCycles = 6L,
   ratchetPerturbProb = 0.25,
   ratchetPerturbMode = 0L,
   ratchetPerturbMaxMoves = 5L,
@@ -34,6 +34,10 @@ SearchControl(
   cssPartitions = 4L,
   sectorMinSize = 6L,
   sectorMaxSize = 50L,
+  rasStarts = 1L,
+  sectorAcceptEqual = FALSE,
+  sectorMaxHits = 1L,
+  sectorCollapseTarget = 0L,
   postRatchetSectorial = FALSE,
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
@@ -173,6 +177,30 @@ sectorial search.}
 
 \item{sectorMinSize, sectorMaxSize}{Integer; minimum and maximum clade
 sizes for sectorial search.}
+
+\item{rasStarts}{Integer; random-addition restarts (RAS + TBR) per sector in
+XSS/RSS.  \code{1} (default) polishes the current sector with a single TBR pass;
+\code{n > 1} rebuilds the sector from scratch \code{n} times and keeps the best,
+following \insertCite{Goloboff1999;textual}{TreeSearch} RSS (TNT uses 3).
+Lets the search escape sector-local optima that a single TBR cannot leave.}
+
+\item{sectorAcceptEqual}{Logical; accept equal-score sector resolutions in
+XSS/RSS (default \code{FALSE}).  On flat (e.g. missing-data) landscapes this lets
+the search traverse equally-parsimonious plateaus laterally rather than
+reverting every non-improving sector move, following Goloboff (2014).}
+
+\item{sectorMaxHits}{Integer; equal-length trees the internal sector TBR holds
+while swapping a sector (default \code{1}).  TNT holds many; higher values let the
+sector search traverse equally-parsimonious plateaus (pairs with
+\code{sectorAcceptEqual}).}
+
+\item{sectorCollapseTarget}{Integer; when \verb{> 0}, a selected sector clade larger
+than this is \strong{collapsed} into approximately this many composite terminals
+(deep sub-clades replaced by their first-pass state sets), so the sector
+search rearranges major sub-clades as a coarse skeleton rather than shuffling
+tips within a contiguous clade -- the reduced-dataset construction of
+\insertCite{Goloboff1999;textual}{TreeSearch}.  \code{0} (default) keeps the full
+fully-resolved clade.}
 
 \item{postRatchetSectorial}{Logical; when \code{TRUE}, run XSS+RSS+CSS again
 after ratchet perturbation using the same round counts.  Approximates
