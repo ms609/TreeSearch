@@ -382,13 +382,20 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
                           const TreeState& tree,
                           const DataSet& ds,
                           int node_a, int node_d) {
-  // Virtual root Y at edge (A, D) is the union of final states:
+  // Approximate the virtual root Y at edge (A, D) as the union of the endpoint
+  // final states:
   //   Y = final(A) | final(D)
-  // All states present at either endpoint are available on that edge.
-  // Extra steps = count of characters where clip_prelim & Y = 0.
+  // Extra steps = count of characters where clip_prelim & Y == 0.
   //
-  // This is exact for non-additive characters (Goloboff 1996).
-  // Using Fitch intersection-then-union here would narrow Y and overcount.
+  // NOTE: this is an APPROXIMATION, not exact.  The union of the two endpoints'
+  // final sets is a superset of the true directional Fitch edge set, so it makes
+  // more states appear "available" on the edge than any most-parsimonious
+  // reconstruction allows — hence it UNDER-counts the true insertion cost (never
+  // over-counts).  The exact cost uses the directional edge set
+  //   edge_set[D] = combine(prelim[D], up[D])   (per-character intersect-else-union)
+  // via compute_insertion_edge_sets() + fitch_indirect_length_cached(); see
+  // ts_fitch.h.  This cheaper union variant is retained for callers (temper) that
+  // rank candidates approximately and then re-score the chosen move exactly.
 
   int extra_steps = 0;
 
