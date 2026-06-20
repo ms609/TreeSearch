@@ -261,3 +261,38 @@ test_that("Fuse exchanges clades when bipartition has flipped orientation", {
   expect_true(result$score <= scoreB,
               info = paste("Fused:", result$score, "Donor:", scoreB))
 })
+
+test_that("Fusing is correct on >64-tip trees (wps>=2 regression)", {
+  # Regression for a segfault in tree_fuse on >64 tips. reroot_at_tip0 ran once
+  # before the round loop, but the round-end TBR moves tip 0 out of the root, so
+  # round >=2 split-matching matched a clade against its complement; the
+  # size-mismatched node bijection in replace_subtree then corrupted the tree.
+  # Only manifested at >64 tips (split words wps>=2). Fuse tests otherwise cap
+  # at 50 tips, so this path had no coverage. Fix: re-root at tip 0 every round.
+  n_tip <- 80L
+  set.seed(20260617L)
+  mat <- matrix(sample(0:1, n_tip * 40L, replace = TRUE), nrow = n_tip,
+                dimnames = list(paste0("t", seq_len(n_tip)), NULL))
+  ds <- make_ts_data(MatrixToPhyDat(mat))
+
+  # Recipient AND donors are TBR-optimized => they share many splits, so
+  # exchanges are accepted; with accept_equal this drives several rounds, and
+  # each round's TBR moves tip 0 -- the formerly-crashing path.
+  pool <- make_pool(ds, n_tip, 6L, seed = 4242L)
+  recipient <- ts_tbr(as.phylo(7L, n_tip), ds, maxHits = 3L)
+  rec_tree <- as.phylo(7L, n_tip)
+  rec_tree$edge <- recipient$edge
+
+  result <- ts_fuse(rec_tree, ds, pool$edges, pool$scores,
+                    accept_equal = TRUE, max_rounds = 10L)
+
+  # Must not crash; must return a structurally valid tree over all tips.
+  expect_equal(nrow(result$edge), 2L * (n_tip - 1L))
+  tips_in_tree <- sort(result$edge[result$edge[, 2] <= n_tip, 2])
+  expect_equal(tips_in_tree, seq_len(n_tip))
+  # Fusing never worsens the recipient, and must have actually run multiple
+  # rounds of exchanges (else the regression path was not exercised).
+  expect_lte(result$score, recipient$score)
+  expect_gt(result$n_exchanges, 0L)
+  expect_gte(result$n_rounds, 2L)
+})

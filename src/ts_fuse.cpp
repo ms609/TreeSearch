@@ -246,6 +246,17 @@ static void replace_subtree(TreeState& recipient, const TreeState& donor,
   std::sort(r_rest.begin(), r_rest.end());
   std::sort(d_rest.begin(), d_rest.end());
 
+  // Defence in depth: matched clades must have identical internal-node counts
+  // (same tip set => same size for binary clades). A mismatch would mean a
+  // spurious match against a complementary clade; mapping then reads r_rest
+  // out of range / leaves donor nodes unmapped (operator[] -> 0), corrupting
+  // the tree. The reroot-every-round invariant prevents this upstream; this
+  // guard turns any future regression into a skipped (no-op) exchange rather
+  // than a segfault.
+  if (r_rest.size() != d_rest.size()) {
+    return;  // leave recipient unchanged; caller rescores and continues
+  }
+
   // Map: donor node → recipient node
   // Tips map to themselves.
   std::unordered_map<int, int> dtor;
@@ -357,6 +368,15 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
   while (improved && result.n_rounds < params.max_rounds) {
     improved = false;
     ++result.n_rounds;
+
+    // Re-root at tip 0 EVERY round: the round-end TBR (below) rearranges the
+    // tree and can move tip 0 out of the root, breaking the "no non-root clade
+    // contains tip 0" invariant that split matching relies on. Without this,
+    // round >=2 produces flipped clades that spuriously match their complement
+    // in a donor, and replace_subtree then corrupts the tree (segfault on
+    // trees with >64 tips, where wps>=2). reroot early-returns when already
+    // rooted at tip 0, so round 1 pays nothing.
+    reroot_at_tip0(recipient);
 
     // Compute recipient's tip bits and split info (changes each round)
     std::vector<uint64_t> r_tip_bits = compute_tip_bits(recipient);
