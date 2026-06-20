@@ -1265,10 +1265,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // within a tbr_search call (the reroot-loop recompute is guarded on
   // non-empty and only refreshes contents); the diagnostic env vars are
   // constant for the process. Avoids a per-candidate vector::empty() and a
-  // per-clip / per-accept getenv scan. Byte-identical (gates the same checks).
+  // per-clip / per-accept / per-reroot getenv scan. Byte-identical (gates the
+  // same checks). getenv is ~2.4 us/call on Windows/ucrt (linear env-block
+  // scan); its cost hides in VTune's ucrtbase self-time, so a per-clip read is
+  // a real, profiler-invisible cost (see findings.md T-P5n).
   const bool use_collapsed = !collapsed.empty();
   const bool revert_check = std::getenv("TS_REVERT_CHECK") != nullptr;
   const bool iw_scanchk = std::getenv("TS_IW_SCANCHK") != nullptr;
+  // TS_PHYS_REROOT selects the legacy physical-reroot reference path; it is read
+  // once per outer reroot-loop iteration below (>=1/call), so hoist it too.
+  const bool phys_reroot = std::getenv("TS_PHYS_REROOT") != nullptr;
 
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
@@ -2130,7 +2136,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // IW/NA apply+rescore).  Clean => no improving move on ANY edge (the inner
   // loop certified the 2n-4 non-root edges) => true unrooted-TBR optimum.
   // TS_PHYS_REROOT forces the legacy physical-reroot sweep (validation ref).
-  if (!std::getenv("TS_PHYS_REROOT")) {
+  if (!phys_reroot) {
     // EW/IW: the indirect scan is exact, so the inner loop already certified
     // the 2n-4 non-root edges — only the root edge remains (try_root_edge_moves,
     // fast additive for EW / apply+rescore for IW).  NA: the indirect scan is
