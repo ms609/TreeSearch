@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdint>
 #include <vector>
+#include <unordered_set>
 
 namespace ts {
 
@@ -184,6 +185,24 @@ struct DataSet {
   // aggregated. Excludes NNI-warmup and annealing candidates (neither funnels
   // through tbr_search).
   mutable long long n_candidates_evaluated = 0;
+
+  // Exact-verify optimum memoization (NA path; see exact_verify_sweep in
+  // ts_tbr.cpp).  A topology certified a true unrooted-TBR optimum under the
+  // current weighting regime is cached here so repeated convergences — notably
+  // across the ratchet's regime excursions — skip the O(n^2) full-neighbourhood
+  // sweep.  Keyed by hash(child-pairs) ^ dataset-fp ^ weight-fp; cleared when
+  // the dataset fingerprint changes.
+  //
+  // Lives on DataSet (NOT a function-local `static thread_local`) deliberately:
+  // each parallel worker owns a private `ds_local` copy for its whole lifetime,
+  // so this gives the same per-thread, cross-replicate persistence the old
+  // thread_local had — but WITHOUT MinGW emutls, whose thread_local teardown
+  // across std::thread spawn/exit corrupted the heap (parallel-only crash).
+  // `mutable` because the scorer takes `const DataSet&`.  Single-writer per
+  // copy: workers touch only their own ds_local; the shared prototype's cache
+  // is written solely in the post-join (single-threaded) MPT phase.
+  mutable std::unordered_set<uint64_t> evs_false_cache;
+  mutable uint64_t evs_last_fp = 0;
 };
 
 // Build a DataSet from R-side data.
