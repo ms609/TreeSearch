@@ -41,7 +41,7 @@ vignettes/\.RData
 ^\.AGENTS
 ^\.RESUME
 ^AGENTS\.md$
-^agent-.*\.md$
+^agent-.*$
 ^check_init\.R$
 ^coordination\.md$
 ^to-do\.md$
