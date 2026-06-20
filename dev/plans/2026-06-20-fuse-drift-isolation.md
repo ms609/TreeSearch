@@ -187,3 +187,37 @@ NO getenv; ratchet = `perturb_upweight` (cheap O(chars) reweight) + `tbr_search`
 ⇒ **gate-1 (AT-LIMIT) now COMPLETE across ALL components** (scoring/TBR/sectorial/fuse/
 drift/ratchet). Remaining isolation work = gate-2 TNT races (Hamilton-confirmatory:
 sectorial=other agent, ratchet+fuse/drift low-priority) + #53 + composition #40 (gated).
+
+### 2026-06-20 — #53 RESOLUTION — backwards comment fixed; prune_reinsert Δ-probe DONE; port PREPARED; A/B composition-gated
+**(1) DOC BUG FIXED + LANDED on cpp-search** (8671fdaa): ts_fitch.cpp:385-391 backwards
+comment ("union exact; intersect overcounts") corrected to match header :118-126 (union
+UNDER-counts; the directional edge_set is exact). Doc-only, mission-safe.
+
+**(2) Δ-PROBE (not flip-count — advisor: tally exact-suboptimality, not edge-identity):**
+gated `-DTS_SCOREAPPROX_PROBE` in expand_and_reinsert, non-perturbing (production still
+inserted at the `_bounded` choice). Per placement tallied Δ = exact_cost(E_bounded) −
+min_E exact_cost(E), exact scorer = compute_insertion_edge_sets + fitch_indirect_length_cached,
+no cutoff. `prelim` confirmed current (wagner_incremental_rescore maintains it) + in-tree
+fully binary from root ⇒ precompute safe. Result on Zanol (forced pruneReinsertCycles):
+**~62% of placements strictly worse, mean ~6 steps, max 37, ~48% greedy-regret SHARE**
+(bounded_exact_sum 6406 vs min_exact_sum 4315). Corroborates the validated +30% Wagner bug.
+
+**(3) PORT PREPARED + VALIDATED (worktree claude/scoreapprox-probe, 41b0d237; NOT cpp-search):**
+swapped the two `_bounded` calls for the exact `_cached`+edge_set (mirror ts_wagner.cpp:487).
+After port the probe reports **Δ=0 at every placement** (production == exact argmin). Tests:
+prune-reinsert 44/0, drift 22/0, ratchet 17/0, tbr 28/0.
+
+**(4) PATH-RELEVANCE KILL for the heavy A/B (the decisive gate):** prune_reinsert auto-enables
+ONLY at nTip≥120 (`large` preset, MP.R:249). **NO mission dataset reaches 120t** — full
+inapplicable.phyData roster max = Dikow2009 88t; Zhu2013 75t, Zanol 74t, Giles 78t (all
+`thorough` or smaller). So this path runs on ZERO default mission searches ⇒ the 48% is
+greedy-regret SHARE on a config the mission suite never triggers, NOT a wall-clock
+opportunity. blame: `_bounded` = afbf531f (2026-03-27, original T-266) PREDATES the June
+directional fix ⇒ a genuine MISS, not a deliberate large-N tradeoff. `large` polish is NNI
+(weaker than TBR) ⇒ regret survives more ⇒ fix WOULD matter at ≥120t.
+
+**(5) DISPOSITION:** land + time-matched A/B (needs a ≥120t dataset + the `large`-preset
+budget tradeoff, since the exact scorer ADDS an O(N·blocks·9-states) precompute the bounded
+path skips) = **COMPOSITION #40** (user: composition waits until all pieces finished). Port
+is ready + cost-characterizable for that phase. Component made best-known-correct in
+isolation; the enable/wall-clock decision is recipe-level. #53 investigation CLOSED.
