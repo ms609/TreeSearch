@@ -221,3 +221,15 @@ budget tradeoff, since the exact scorer ADDS an O(N·blocks·9-states) precomput
 path skips) = **COMPOSITION #40** (user: composition waits until all pieces finished). Port
 is ready + cost-characterizable for that phase. Component made best-known-correct in
 isolation; the enable/wall-clock decision is recipe-level. #53 investigation CLOSED.
+
+**(6) spr_search loose-end RESOLVED (the T-F1 "could silently miss" exception):**
+ts_search.cpp `spr_search` (the Fitch SPR, :197) uses the bounded scorer (:365) BUT (a)
+fires ONLY when sprFirst=TRUE — FALSE in every preset (off the default path); (b) accepts
+ONLY on EXACT `full_rescore` improvement (:388-402) ⇒ can never false-accept, recorded
+score always exact (gapB=0 preserved); (c) is a one-shot SPR WARMUP immediately followed by
+exact `tbr_search` (ts_driven.cpp `if(!nni_wagner && spr_first){spr_search;} ... tbr_search`)
+which re-explores and catches any improver a bounded mis-rank missed. ⇒ the silent-miss is
+real-in-principle but MOOTED; porting adds the per-clip precompute for ~zero benefit. NO
+ACTION. Remaining bounded sites all benign: drift (opt-in, rank-then-reconverge, T-F1),
+temper (preset-only defensible tradeoff, T-F1), ts_rcpp.cpp:2339 (standalone export, not
+the recipe). **Scoring-approximation sweep now COMPLETE across the whole search.**
