@@ -55,7 +55,13 @@ static void compute_from_above_for_sector(
     }
   }
 
-  // 3. Walk down the path, computing from_above at each child step
+  // 3. Walk down the path, computing from_above at each child step.
+  // `new_from_above` is allocated ONCE and swapped each step (O(1)) instead of
+  // heap-allocated per step. Byte-identical: the inner loop overwrites every
+  // state word each step, and any padding words (total_words > sum n_states)
+  // start at 0 in both buffers and are never written, so they stay 0 — same as
+  // the original fresh-zeroed allocation. (Sectorial micro-bank, T-S6c.)
+  std::vector<uint64_t> new_from_above(tw);
   for (size_t i = 0; i + 1 < path.size(); ++i) {
     int node = path[i];
     int next = path[i + 1]; // child on the path
@@ -69,7 +75,6 @@ static void compute_from_above_for_sector(
     const uint64_t* sib_prelim =
         &tree.prelim[static_cast<size_t>(sib) * tw];
 
-    std::vector<uint64_t> new_from_above(tw);
     for (int b = 0; b < ds.n_blocks; ++b) {
       int off = ds.block_word_offset[b];
       int ns = ds.blocks[b].n_states;
@@ -84,7 +89,7 @@ static void compute_from_above_for_sector(
         new_from_above[off + s] = (isect & any_isect) | (uni & no_isect);
       }
     }
-    from_above_cur = std::move(new_from_above);
+    std::swap(from_above_cur, new_from_above);
   }
 
   std::memcpy(from_above_out.data(), from_above_cur.data(),
@@ -797,10 +802,14 @@ static double search_sector(ReducedDataset& rd, int ras_starts,
   bool have_best = false;
   std::vector<int> best_left, best_right, best_parent;
 
+  // search_sector runs once per sector pick (1000s of times/search). std::getenv
+  // is µs-scale on Windows/ucrt (linear env scan), so the per-pick D1-probe gate
+  // is read ONCE into a static, not per pick/per start (T-S6c micro-bank).
+  static const bool _free_htu_probe = std::getenv("TS_FREE_HTU_PROBE") != nullptr;
+
   // D1 confirm (env TS_FREE_HTU_PROBE): T0 sector's reduced length, baseline for
   // the floating-HTU free re-solve reported after the loop.
-  double probe_orig = std::getenv("TS_FREE_HTU_PROBE")
-                          ? score_tree(rd.subtree, rd.data) : 0.0;
+  double probe_orig = _free_htu_probe ? score_tree(rd.subtree, rd.data) : 0.0;
 
   for (int s = 0; s < ras_starts; ++s) {
     if (s > 0) {
@@ -845,7 +854,7 @@ static double search_sector(ReducedDataset& rd, int ras_starts,
     // shorter FULL tree the anchored sectorial throws away.  GUARD: also reports
     // root_ok, so a null can be told apart from "TBR never floats the HTU"
     // (false-negative).  Run rasStarts=1 -> this is the warm T0 sector start.
-    if (std::getenv("TS_FREE_HTU_PROBE")) {
+    if (_free_htu_probe) {
       REprintf("REVERT sect=%d S=%d s=%d orig=%.0f tbr=%.0f root_ok=%d %s\n",
                rd.sector_root, rd.n_real_tips, s, original_score, tr.best_score,
                root_ok ? 1 : 0,
@@ -868,22 +877,35 @@ static double search_sector(ReducedDataset& rd, int ras_starts,
     // sector escapes onto a different equal-length arrangement (plateau walk),
     // which iterated sector picks then build a strict improvement from. At the
     // default ras_starts=1 there is no s>0, so this is a guaranteed no-op.
-    bool take = !have_best || this_score < best_score ||
-                (accept_equal && s > 0 && this_score == best_score);
-    if (take) {
+    if (ras_starts == 1) {
+      // Single-start fast path (the default): rd.subtree already holds the
+      // final (TBR-result or reverted) topology, so the best_* snapshot here
+      // and the post-loop restore are a provable no-op round-trip — skip both.
+      // reinsert_sector reads only left/right/parent (never postorder), so the
+      // post-loop build_postorder is also unneeded. (T-S6c micro-bank.)
       best_score = this_score;
-      best_left = rd.subtree.left;
-      best_right = rd.subtree.right;
-      best_parent = rd.subtree.parent;
       have_best = true;
+    } else {
+      bool take = !have_best || this_score < best_score ||
+                  (accept_equal && s > 0 && this_score == best_score);
+      if (take) {
+        best_score = this_score;
+        best_left = rd.subtree.left;
+        best_right = rd.subtree.right;
+        best_parent = rd.subtree.parent;
+        have_best = true;
+      }
     }
   }
 
   // Restore the best topology found across starts, ready for reinsertion.
-  rd.subtree.left = best_left;
-  rd.subtree.right = best_right;
-  rd.subtree.parent = best_parent;
-  rd.subtree.build_postorder();
+  // (Skipped at ras_starts==1: rd.subtree already holds it — see fast path.)
+  if (ras_starts > 1) {
+    rd.subtree.left = best_left;
+    rd.subtree.right = best_right;
+    rd.subtree.parent = best_parent;
+    rd.subtree.build_postorder();
+  }
 
   // D1 SCORING-ONLY CONFIRM (env TS_FREE_HTU_PROBE), NO reinsertion: does an
   // UNCONSTRAINED reduced search -- HTU = ordinary floating leaf among rd.data's
@@ -892,7 +914,7 @@ static double search_sector(ReducedDataset& rd, int ras_starts,
   // PROVES a shorter FULL tree the anchored sectorial cannot reach (audit D1).  20
   // free RAS+TBR restarts so medium sectors reach their true optimum (free >= orig
   // on a LARGE sector may be cold-search weakness -- weigh the medium sectors).
-  if (std::getenv("TS_FREE_HTU_PROBE")) {
+  if (_free_htu_probe) {
     double free_min = HUGE_VAL;
     for (int fs = 0; fs < 20; ++fs) {
       TreeState ft;
@@ -1019,6 +1041,9 @@ static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
 SectorResult rss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params,
                         ConstraintData* cd) {
+  // Hoist the per-accept debug-trace gate (µs-scale ucrt getenv) to a static
+  // (T-S6c micro-bank).
+  static const bool _sect_debug = std::getenv("TS_SECT_DEBUG") != nullptr;
   bool constrained = cd && cd->active && cd->has_posthoc;
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
@@ -1144,7 +1169,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
       reinsert_sector(tree, rd);
       tree.build_postorder();
       double new_score = score_tree(tree, ds);
-      if (std::getenv("TS_SECT_DEBUG"))
+      if (_sect_debug)
         REprintf("  sect[%2d] red_cur=%.0f red_best=%.0f full_new=%.0f full_best=%.0f %s\n",
                  sector_root, sector_current, sector_best, new_score, result.best_score,
                  new_score < result.best_score ? "STRICT" :
