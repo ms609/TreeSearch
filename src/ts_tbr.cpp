@@ -133,7 +133,7 @@ static void collect_main_edges(
 {
   edges.clear();
   // Reusable per-thread DFS stack (Tier 1): avoids a heap alloc per clip.
-  static thread_local std::vector<int> stack;
+  std::vector<int> stack;
   stack.clear();
   stack.push_back(tree.n_tip);
 
@@ -161,7 +161,7 @@ static void collect_subtree_edges(
   if (subtree_root < tree.n_tip) return;
 
   // Reusable per-thread DFS stack (Tier 1): avoids a heap alloc per clip.
-  static thread_local std::vector<int> stack;
+  std::vector<int> stack;
   stack.clear();
   stack.push_back(subtree_root);
 
@@ -214,10 +214,10 @@ static void compute_from_above(
   int tw = tree.total_words;
 
   // Reusable per-thread scratch (Tier 1): avoids two heap allocs per clip.
-  static thread_local std::vector<int> preorder;
+  std::vector<int> preorder;
   preorder.clear();
   {
-    static thread_local std::vector<int> stack;
+    std::vector<int> stack;
     stack.clear();
     stack.push_back(subtree_root);
     while (!stack.empty()) {
@@ -585,7 +585,7 @@ static bool try_root_edge_moves_rescore(TreeState& tree, const DataSet& ds,
 
   // Rerooting metadata for each half: identity {-1,-1} plus each internal edge
   // (sp,sc) with sp != croot (same distinct-rootings set as the EW path).
-  static thread_local std::vector<std::pair<int,int>> metaL, metaR, edges;
+  std::vector<std::pair<int,int>> metaL, metaR, edges;
   auto build_meta = [&](int croot, std::vector<std::pair<int,int>>& meta) {
     meta.clear();
     meta.push_back({-1, -1});
@@ -598,7 +598,7 @@ static bool try_root_edge_moves_rescore(TreeState& tree, const DataSet& ds,
   const int nL = static_cast<int>(metaL.size());
   const int nR = static_cast<int>(metaR.size());
 
-  static thread_local TopoSnapshot snap;
+  TopoSnapshot snap;
   save_topology(tree, snap);
 
   auto rejoin = [&](int li, int ri) -> bool {
@@ -685,10 +685,10 @@ static bool try_root_edge_moves(TreeState& tree, const DataSet& ds,
   const int rootjoin = fitch_indirect_length_cached(pL, pR, ds, INT_MAX);
   const double base_split = best_score - rootjoin;
 
-  static thread_local std::vector<uint64_t> from_above;
-  static thread_local std::vector<uint64_t> rowsL, rowsR;
-  static thread_local std::vector<std::pair<int,int>> metaL, metaR;
-  static thread_local std::vector<std::pair<int,int>> edges;
+  std::vector<uint64_t> from_above;
+  std::vector<uint64_t> rowsL, rowsR;
+  std::vector<std::pair<int,int>> metaL, metaR;
+  std::vector<std::pair<int,int>> edges;
   from_above.assign(static_cast<size_t>(tree.n_node) * tw, 0ULL);
 
   // Build the rerooting state-sets for one half.  Row 0 = identity (the half's
@@ -858,10 +858,14 @@ uint64_t exact_verify_cache_key(const TreeState& tree, const DataSet& ds) {
 static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
                                double& best_score) {
   const double eps = std::isfinite(ds.concavity) ? 1e-9 : 0.5;
-  static thread_local TopoSnapshot snap;
-  static thread_local std::vector<std::pair<int,int>> sub_edges;
-  static thread_local std::vector<char> in_sub;
-  static thread_local std::vector<int> dfs, marked;
+  // Plain locals (not thread_local): MinGW emutls thread_local teardown across
+  // std::thread spawn/exit corrupted the heap on the parallel path.  Each worker
+  // owns its call frame, so plain locals are per-thread-safe; the per-clip
+  // (re)allocation is in the noise (measured <=1.6% on 88-tip data).
+  TopoSnapshot snap;
+  std::vector<std::pair<int,int>> sub_edges;
+  std::vector<char> in_sub;
+  std::vector<int> dfs, marked;
 
   tree.build_postorder();
   best_score = full_rescore(tree, ds);   // sync to the current (converged) tree
@@ -878,10 +882,14 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   // hash(child-pairs) XOR dataset-fingerprint XOR weight-fingerprint; only the
   // dataset-fingerprint is the clear-trigger (a true dataset switch), so
   // base-regime entries survive across perturbation excursions and are reused.
-  static thread_local std::unordered_set<uint64_t> evs_false_cache;
-  static thread_local uint64_t evs_last_fp = 0;
+  // Memoization lives on the (per-worker) DataSet, NOT a function-local
+  // thread_local — MinGW emutls thread_local teardown across std::thread
+  // spawn/exit corrupted the heap.  ds_local has the same per-thread,
+  // cross-replicate lifetime, so the cache's persistence is unchanged.  See
+  // the evs_false_cache / evs_last_fp comment in ts_data.h.
+  std::unordered_set<uint64_t>& evs_false_cache = ds.evs_false_cache;
   const uint64_t fp = ds_fingerprint(ds);   // clear-trigger: a true dataset switch
-  if (fp != evs_last_fp) { evs_false_cache.clear(); evs_last_fp = fp; }
+  if (fp != ds.evs_last_fp) { evs_false_cache.clear(); ds.evs_last_fp = fp; }
   const uint64_t cache_key = exact_verify_cache_key(tree, ds);
 
   // TS_EV_AUDIT (dev/bench only): distrust cache hits.  On a hit, run the full
@@ -1004,7 +1012,7 @@ static void compute_subtree_sizes(const TreeState& tree,
 static void add_clip_internal_steps(const TreeState& tree, const DataSet& ds,
                                     int clip_node,
                                     std::vector<int>& char_steps) {
-  static thread_local std::vector<int> stack;
+  std::vector<int> stack;
   stack.clear();
   stack.push_back(clip_node);
   while (!stack.empty()) {

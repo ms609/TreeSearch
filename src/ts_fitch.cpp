@@ -228,7 +228,7 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
   // per-clip heap allocation. thread_local keeps it per-thread-safe (each
   // search thread owns its TreeState); char avoids vector<bool> proxy-bit
   // access in the reverse scan below. assign() reuses capacity after warmup.
-  static thread_local std::vector<char> dirty;
+  std::vector<char> dirty;
   dirty.assign(tree.n_node, 0);
 
   // Mark root as dirty (we just updated it; its children need checking)
