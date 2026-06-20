@@ -39,6 +39,7 @@ vignettes/\.RData
 ^\.claude$
 ^\.agent-
 ^\.AGENTS
+^\.RESUME
 ^AGENTS\.md$
 ^agent-.*\.md$
 ^check_init\.R$
