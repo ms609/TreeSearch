@@ -283,6 +283,143 @@ long long g_sect_fp_blocks = 0, g_sect_tot_blocks = 0;
 unsigned long long g_sect_calls = 0;
 #endif
 
+// ---- Per-sector column-axis reduction (#56, EW only, opt-in TS_SECT_COLREDUCE) ----
+// A character CONSTANT-within-{sector tips + HTU} (some single state shared by
+// every tip) contributes 0 Fitch steps in every sector topology, so dropping it
+// leaves every candidate's score UNCHANGED (ew_offset is untouched) -> the inner
+// sector-search trajectory is byte-identical. Re-packing the informative
+// survivors into fewer 64-char blocks shrinks the per-node block scan that
+// dominates the inner-sector TBR -- especially the no-bail compute_insertion_
+// edge_sets precompute (which scans every block at every node). Gated to the
+// plain EW case (weight 1, no ratchet upweighting, no inapplicable) so the
+// "0-step" invariance argument holds exactly.
+static const bool kSectColReduce = []{
+  const char* e = std::getenv("TS_SECT_COLREDUCE");
+  return e != nullptr && e[0] == '1';
+}();
+
+static void reduce_sector_columns_ew(ReducedDataset& rd, int n_sector_tips) {
+  DataSet& d = rd.data;
+  if (d.scoring_mode != ScoringMode::EW || !d.all_weight_one) return;
+  for (int b = 0; b < d.n_blocks; ++b)
+    if (d.blocks[b].upweight_mask != 0 || d.blocks[b].has_inapplicable) return;
+
+  const int otw = d.total_words;
+
+  // 1. Collect informative survivors (n_states, old word offset, old bit).
+  struct Surv { int n_states; int old_off; int old_bit; };
+  std::vector<Surv> surv;
+  int tot_active = 0;
+  for (int b = 0; b < d.n_blocks; ++b) {
+    const uint64_t active = d.blocks[b].active_mask;
+    if (!active) continue;
+    const int off = d.block_word_offset[b];
+    const int nst = d.blocks[b].n_states;
+    tot_active += popcount64(active);
+    uint64_t constant = 0ULL;            // bit c set iff some state shared by ALL tips
+    for (int s = 0; s < nst; ++s) {
+      uint64_t all = ~0ULL;
+      for (int t = 0; t < n_sector_tips; ++t)
+        all &= d.tip_states[static_cast<size_t>(t) * otw + off + s];
+      constant |= all;
+    }
+    uint64_t inf = active & ~constant;
+    while (inf) {
+      const int c = static_cast<int>(__builtin_ctzll(inf));
+      inf &= inf - 1;
+      surv.push_back({nst, off, c});
+    }
+  }
+  if (surv.empty() ||
+      static_cast<int>(surv.size()) >= tot_active) return;  // nothing to drop
+
+  // 2. Group survivors by n_states (stable within group) -> one n_states/block.
+  std::stable_sort(surv.begin(), surv.end(),
+                   [](const Surv& a, const Surv& b) { return a.n_states < b.n_states; });
+
+  // 3. New block layout: <=64 survivors per block, all of one n_states.
+  std::vector<CharBlock> nb;
+  std::vector<int> nbwo;
+  int ntw = 0;
+  for (size_t i = 0; i < surv.size();) {
+    const int nst = surv[i].n_states;
+    size_t j = i;
+    while (j < surv.size() && surv[j].n_states == nst &&
+           (j - i) < static_cast<size_t>(MAX_CHARS_PER_BLOCK)) ++j;
+    const int nchar = static_cast<int>(j - i);
+    CharBlock cb{};
+    cb.n_chars = nchar;
+    cb.n_states = nst;
+    cb.weight = 1;
+    cb.has_inapplicable = false;
+    cb.active_mask = (nchar == 64) ? ~0ULL : ((1ULL << nchar) - 1ULL);
+    cb.upweight_mask = 0;
+    for (int k = 0; k < nchar; ++k) cb.pattern_index[k] = k;  // identity (EW)
+    nbwo.push_back(ntw);
+    ntw += nst;
+    nb.push_back(cb);
+    i = j;
+  }
+  const int nblk = static_cast<int>(nb.size());
+
+  // 4. Repack tip_states: move each survivor's state-words to its new bit/offset.
+  std::vector<uint64_t> nts(static_cast<size_t>(d.n_tips) * ntw, 0ULL);
+  size_t si = 0;
+  for (int blk = 0; blk < nblk; ++blk) {
+    const int nst   = nb[blk].n_states;
+    const int noff  = nbwo[blk];
+    const int nchar = nb[blk].n_chars;
+    for (int local = 0; local < nchar; ++local, ++si) {
+      const int o_off = surv[si].old_off;
+      const int o_bit = surv[si].old_bit;
+      for (int t = 0; t < d.n_tips; ++t) {
+        const size_t src = static_cast<size_t>(t) * otw + o_off;
+        const size_t dst = static_cast<size_t>(t) * ntw + noff;
+        for (int s = 0; s < nst; ++s) {
+          const uint64_t bit = (d.tip_states[src + s] >> o_bit) & 1ULL;
+          nts[dst + s] |= (bit << local);
+        }
+      }
+    }
+  }
+
+  // 5. flat_blocks mirror the new blocks.
+  std::vector<FlatBlock> nfb(nblk);
+  for (int blk = 0; blk < nblk; ++blk) {
+    nfb[blk].offset = nbwo[blk];
+    nfb[blk].n_states = nb[blk].n_states;
+    nfb[blk].active_mask = nb[blk].active_mask;
+    nfb[blk].has_inapplicable = 0;
+  }
+
+  // 6. Commit. Per-pattern arrays (n_patterns/min_steps/precomputed_steps/
+  //    pattern_freq) and ew_offset are left untouched: the EW indirect scorers
+  //    read ONLY the block structure, and the dropped chars' 0 contribution keeps
+  //    scores exact. (Extending past the EW gate would require remapping those
+  //    per-pattern arrays over the survivors.)
+#ifdef TS_AUDIT_PROBE
+  static bool announced = false;
+  if (!announced) {
+    announced = true;
+    Rprintf("COLREDUCE active: blocks %d->%d, words %d->%d\n",
+            d.n_blocks, nblk, otw, ntw);
+  }
+#endif
+  d.blocks = std::move(nb);
+  d.block_word_offset = std::move(nbwo);
+  d.flat_blocks = std::move(nfb);
+  d.tip_states = std::move(nts);
+  d.total_words = ntw;
+  d.n_blocks = nblk;
+  // CRITICAL: the TreeState carries its OWN stride fields (set from ds.* before
+  // this call); every consumer of the reduced state arrays (load_tip_states,
+  // fitch_downpass, compute_insertion_edge_sets, the inner tbr_search undo) reads
+  // the stride from rd.subtree, NOT rd.data. Re-sync them or they index the
+  // new-sized buffers with the old stride (heap OOB + wrong scores).
+  rd.subtree.total_words = ntw;
+  rd.subtree.n_blocks = nblk;
+}
+
 ReducedDataset build_reduced_dataset(const TreeState& tree,
                                      const DataSet& ds,
                                      int sector_root) {
@@ -524,14 +661,18 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
   }
 #endif
 
-  // Allocate state arrays and load tip states
-  size_t state_size = static_cast<size_t>(n_sector_node) * ds.total_words;
+  // #56: optionally drop constant-within-sector columns + re-pack (EW only).
+  if (kSectColReduce) reduce_sector_columns_ew(rd, n_sector_tips);
+
+  // Allocate state arrays and load tip states (sized by rd.data, which the
+  // reduction above may have shrunk; equals ds.* when the reduction is off).
+  size_t state_size = static_cast<size_t>(n_sector_node) * rd.data.total_words;
   rd.subtree.prelim.assign(state_size, 0ULL);
   rd.subtree.final_.assign(state_size, 0ULL);
   rd.subtree.down2.assign(state_size, 0ULL);
   rd.subtree.subtree_actives.assign(state_size, 0ULL);
   rd.subtree.local_cost.assign(
-      static_cast<size_t>(n_sector_node) * ds.n_blocks, 0ULL);
+      static_cast<size_t>(n_sector_node) * rd.data.n_blocks, 0ULL);
 
   rd.subtree.load_tip_states(rd.data);
   rd.subtree.build_postorder();
