@@ -483,10 +483,34 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
 // Exact per-node insertion edge sets via directional Fitch messages.
 // See the header for the formula.  O(n * chars): one preorder up-pass plus one
 // combine per node.
+#ifdef TS_AUDIT_PROBE
+#include <chrono>
+#include <cstdio>
+// Audit #56: time the no-bail precompute to measure its share of SECTOR wall
+// (run via ts_rss_search, where every call is a sector call). precompute_share
+// x 0.40 (measured block reduction) x 0.30 (sectorial mission share) = the
+// realizable mission saving from column reduction. RAII so all exits are timed.
+static long long g_precompute_ns = 0;
+static long long g_precompute_calls = 0;
+struct PrecomputeTimer {
+  std::chrono::steady_clock::time_point t0;
+  PrecomputeTimer() : t0(std::chrono::steady_clock::now()) {}
+  ~PrecomputeTimer() {
+    g_precompute_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::steady_clock::now() - t0).count();
+    if ((++g_precompute_calls % 50000LL) == 0)
+      std::fprintf(stderr, "PRECOMPUTE_NS calls=%lld ns=%lld\n",
+                   g_precompute_calls, g_precompute_ns);
+  }
+};
+#endif
 void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
                                  std::vector<uint64_t>& edge_set,
                                  std::vector<uint64_t>& up,
                                  std::vector<int>& pre) {
+#ifdef TS_AUDIT_PROBE
+  PrecomputeTimer _pt;
+#endif
   const int n_tip = tree.n_tip;
   const int tw    = tree.total_words;
   const int nb    = ds.n_blocks;
