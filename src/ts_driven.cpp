@@ -957,14 +957,22 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
       int hits_before = pool.hits_to_best();
       double best_before = pool.best_score();
+      int pool_sz = static_cast<int>(pool.size());
 
       TreeState fused = pool.best().tree;
       FuseParams fp;
       fp.accept_equal = params.fuse_accept_equal;
       fp.max_rounds = 10;
-      tree_fuse(fused, ds, pool, fp);
+      FuseResult fr = tree_fuse(fused, ds, pool, fp);
 
       double fused_score = score_tree(fused, ds);
+      // Diagnostic (verbosity>=2): a fuse ATTEMPT (this block only runs when the
+      // pool has >=2 trees). exchanges>0 means tree_fuse actually recombined;
+      // pair with "Fuse improved" to tell "fires-but-useless" from "never-fires".
+      if (params.verbosity >= 2 && !has_callback) {
+        Rprintf("  Fuse attempt: pool=%d exchanges=%d  %.5g -> %.5g\n",
+                pool_sz, fr.n_exchanges, best_before, fused_score);
+      }
 
       // Check and repair constraint violations on fused tree.
       // impose_constraint() is heuristic — verify the repair succeeded

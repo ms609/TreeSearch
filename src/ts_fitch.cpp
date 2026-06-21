@@ -713,6 +713,17 @@ int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
 // branch-prediction overhead on the hot path — all 4 comparisons are always
 // evaluated and combined into a single bitmask test.
 
+#ifdef TS_AUDIT_PROBE
+#include <cstdio>
+// Audit #57: x4 reroot-batch wasted-block counter. The x4 scans all four members
+// to the DEEPEST-bailing member's depth (breaks only when ALL four exceed cutoff).
+// "wasted" = per-member blocks scanned AFTER that member individually crossed the
+// cutoff; frac = wasted / total-scanned. Measures the ceiling for a force-scalar
+// reroot (ILP-confounded, so a large frac still needs a wall A/B to settle sign).
+static long long g_x4_waste = 0;
+static long long g_x4_total = 0;
+static unsigned long long g_x4_calls = 0;
+#endif
 void fitch_indirect_cached_flat_x4(
     const uint64_t* clip_prelim,
     const uint64_t* vroot0, const uint64_t* vroot1,
@@ -720,6 +731,10 @@ void fitch_indirect_cached_flat_x4(
     const DataSet& ds, int cutoff, int out[4]) {
   const FlatBlock* fb = ds.flat_blocks.data();
   int es0 = 0, es1 = 0, es2 = 0, es3 = 0;
+#ifdef TS_AUDIT_PROBE
+  int bail[4] = {-1, -1, -1, -1};
+  int nb = 0;
+#endif
 
   for (int b = 0; b < ds.n_blocks; ++b) {
     const int  off  = fb[b].offset;
@@ -736,11 +751,34 @@ void fitch_indirect_cached_flat_x4(
     es1 += popcount64(~a1 & mask);
     es2 += popcount64(~a2 & mask);
     es3 += popcount64(~a3 & mask);
+#ifdef TS_AUDIT_PROBE
+    nb = b + 1;
+    if (bail[0] < 0 && es0 >= cutoff) bail[0] = nb;
+    if (bail[1] < 0 && es1 >= cutoff) bail[1] = nb;
+    if (bail[2] < 0 && es2 >= cutoff) bail[2] = nb;
+    if (bail[3] < 0 && es3 >= cutoff) bail[3] = nb;
+#endif
 
     // Bitwise & avoids short-circuit, keeping branch count low.
     if ((es0 >= cutoff) & (es1 >= cutoff) & (es2 >= cutoff) & (es3 >= cutoff))
       break;
   }
+#ifdef TS_AUDIT_PROBE
+  {
+    int B = (nb > 0) ? nb : ds.n_blocks;
+    for (int i = 0; i < 4; ++i) {
+      int bi = (bail[i] < 0) ? B : bail[i];
+      g_x4_waste += (B - bi);
+    }
+    g_x4_total += 4LL * B;
+    if ((++g_x4_calls % 5000000ULL) == 0) {
+      std::fprintf(stderr, "X4_WASTE calls=%llu wasted=%lld total=%lld frac=%.4f\n",
+                   (unsigned long long)g_x4_calls, (long long)g_x4_waste,
+                   (long long)g_x4_total,
+                   g_x4_total ? (double)g_x4_waste / (double)g_x4_total : 0.0);
+    }
+  }
+#endif
 
   out[0] = es0; out[1] = es1; out[2] = es2; out[3] = es3;
 }
