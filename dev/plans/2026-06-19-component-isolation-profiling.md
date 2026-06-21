@@ -141,9 +141,14 @@ and the strongest survivor (fuse) is itself a #40 input. Tasks #55-57; #40 block
   for any class: run a sector-score ORACLE (reduced vs full, same topology, mixed state)
   — an accept-gated search can't discriminate a masked packing bug. **#56 = a #40
   ingredient (enable per-class where it helps; never Zanol), not standalone.**
-- **#57 x4 reroot waste → DEFERRED (sub-floor).** Probe `17533033`: X4_WASTE frac=0.137
-  = ~1.9% EW gross ceiling, ILP-confounded ⇒ net ~0. Counter committed (`5c069e54`).
-  Force-scalar A/B is the only discriminator but low-EV; not pursued.
+- **#57 x4 reroot waste → SETTLED: x4-optimal, force-scalar REJECTED.** Counter probe
+  (`17533033`) measured X4_WASTE frac=0.137 = ~1.9% EW gross ceiling. The force-scalar
+  A/B (`17533065`, runtime flag `TS_REROOT_SCALAR`, separate processes) settles the sign:
+  GATE PASSED (dScore=0 **and** dCand=0 9/9 = byte-identical score+candidates), wall
+  speedup x4/scalar = Giles 0.939, Zhu 0.945 (scalar **5-6% slower**), Zanol 1.001 (dead
+  heat); overall 0.946. ⇒ the ~1.9% ceiling is **not realizable** — the x4 ILP (4
+  independent `any_hit_reduce` chains) more than covers it; forfeiting it loses 5-6% on
+  mixed-state and breaks even on ns=9. Flag reverted (measurement-only). Closed.
 
 **Audit follow-ups closed. #40 composition is the next deliberate, supervised move
 (gated: recompose-from-scratch on any step-cost change ⇒ all pieces finished first).**
