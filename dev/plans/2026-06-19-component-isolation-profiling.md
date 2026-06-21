@@ -150,6 +150,20 @@ and the strongest survivor (fuse) is itself a #40 input. Tasks #55-57; #40 block
   independent `any_hit_reduce` chains) more than covers it; forfeiting it loses 5-6% on
   mixed-state and breaks even on ns=9. Flag reverted (measurement-only). Closed.
 
+### CROSS-CUTTING LEVER characterised (2026-06-21): `clipOrder=2L` = per-class, Zanol-only safe
+
+The switches reference flagged tips-first clip ordering as an untested cheap throughput
+trial. Now measured (`17533071`@20-rep + `17541277`@40-rep, 3 seeds, EW): `clipOrder=2L`
+is ~1.25× faster / ~26% fewer candidates overall, but it **biases the search trajectory**
+(not byte-identical) and is a **per-class TRADEOFF, not a global win**:
+- **Zanol (uniform ns=9): CLEAN win** — 3/3 reach 1261, consistently ~1.5× faster.
+- **Zhu (mixed): quality tradeoff** — loses +1 on 1 seed *even at 40 reps* (doubling the
+  budget did NOT recover it ⇒ a genuine trajectory effect, not under-budget).
+- **Giles (mixed): wall unstable** (one seed examined 60% more candidates).
+⇒ #40 may enable `clipOrder=2L` **on Zanol-type data only**; it complements
+`TS_SECT_COLREDUCE` (clipOrder helps the uniform-ns case col-reduce can't, and hurts the
+mixed-state case col-reduce helps). Default stays `0L`. Recorded in the switches doc §3a.
+
 **Audit follow-ups closed. #40 composition is the next deliberate, supervised move
 (gated: recompose-from-scratch on any step-cost change ⇒ all pieces finished first).**
 

@@ -83,7 +83,7 @@ class go without losing the reliable optimum?*
 | switch | default | relevance |
 |---|---|---|
 | `tbrMaxHits` | `1L` | Equal-score trees held per TBR pass. `1`=fastest descent; thorough uses 3 (more plateau capture, slower). Raise only when MPT diversity matters. |
-| `clipOrder` | `0L` (random) | **Documented throughput lever**: `2L` (tips-first) "typically +5–15% replicate throughput on ≥65 tips" by trying high-probability improvements first. *Not* independently validated this session — **a cheap #40 experiment** (byte-identical-trajectory? verify). |
+| `clipOrder` | `0L` (random) | **MEASURED (jobs `17533071`@20-rep + `17541277`@40-rep, 3 seeds) = a per-class TRADEOFF, NOT a safe global win.** `2L` (tips-first) is ~1.25× faster overall / ~26% fewer candidates, but it biases the *trajectory* (not byte-identical): **clean win on Zanol-class** (uniform ns=9 — 3/3 reach 1261, consistently ~1.5× faster at 40-rep); **quality tradeoff on Zhu** (loses +1 on 1 seed even at 2× budget — doubling reps did NOT recover it ⇒ not a budget artifact); **wall unstable on Giles** (one seed 60% *more* candidates). So enable `2L` **per-class on Zanol-type data**; do NOT apply blindly. Complements `TS_SECT_COLREDUCE` — clipOrder helps the uniform-ns case col-reduce can't, and hurts the mixed-state case col-reduce helps. N=3 ⇒ directional. |
 | `tabuSize` | `100L` | TBR plateau tabu list. `0`=off (sprint). Larger = more plateau exploration, more memory. Marginal for EW; leave at preset. |
 
 ### 3b. Starting trees (Wagner)
@@ -173,9 +173,9 @@ These are **hypotheses for #40 to validate**, not settled recipes:
 
 - **Small / few-char (Wortley-class, <100 patterns or ≤30t):** `default` (or `sprint` ≤30t). Thorough is pointless on flat landscapes (0/6 benefited). Low `maxReplicates` + `targetHits` stop early.
 - **Mixed-`n_states` structured (Giles/Zhu/Dikow-class, 65–88t):** `thorough`-ish but trim toward `default`; **enable `TS_SECT_COLREDUCE`** (9–17% sectorial); ratchet 6; **drop fuse**; add a `targetHits`/`perturbStopFactor` stop. `rasStarts=1` (full pipeline converges).
-- **Uniform ns=9 hard (Zanol-class, ~74t):** thoroughness is **load-bearing** for the reliable 1261 — do NOT strip ratchet/sectorial aggressively. `TS_SECT_COLREDUCE` gives ~0% here (skip). The win is *stopping at the right time*, not running lighter. Consider `stallEscalateFactor>1` to auto-find the perturbation strength.
+- **Uniform ns=9 hard (Zanol-class, ~74t):** thoroughness is **load-bearing** for the reliable 1261 — do NOT strip ratchet/sectorial aggressively. `TS_SECT_COLREDUCE` gives ~0% here (skip). **`clipOrder=2L` IS a clean ~1.5× throughput win here (measured, 3/3 optima)** — the one place it's safe. The win is otherwise *stopping at the right time*, not running lighter. Consider `stallEscalateFactor>1` to auto-find the perturbation strength.
 - **Large (≥120t, not in mission roster):** `large` preset; `pruneReinsert`+NNI; biased Wagner; anneal; **land the prepared exact-scorer port** (41b0d237) + A/B; `rasStarts=3` may re-enter (short-budget/large).
-- **Cross-cutting cheap trials:** `clipOrder=2L` (≥65t, +5–15% throughput — verify byte-identical); consolidate the 3× sequential trailing sectorial TBRs (T-S6e); the redundant trailing TBRs generally.
+- **Cross-cutting cheap trials:** `clipOrder=2L` is **measured = per-class, Zanol-only safe** (see §3a — ~1.5× on Zanol, but +1 quality cost on Zhu at 2× budget), NOT a global flip; consolidate the 3× sequential trailing sectorial TBRs (T-S6e); the redundant trailing TBRs generally.
 
 ## 6. Hard constraints for #40
 
