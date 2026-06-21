@@ -1,6 +1,6 @@
 # Component-isolation profiling program (2026-06-19)
 
-## STATUS (updated 2026-06-20)
+## STATUS (updated 2026-06-21)
 
 Progress against the per-component "two gates" (AT-LIMIT VTune + shared-start TNT
 race) and the standing ordering:
@@ -61,26 +61,34 @@ overreach:
     reroot-crash fix to port ([[fuse-reroot-segfault]]). Both still owe the two
     isolation gates.
 
-### Next task (this program)
-TBR is now CLOSED on **all** gates including the middle-level algorithm (T-P5p
-verdict landed: TS already runs quick-TBR's incremental-length method; no buildable
-algorithmic lever on this data class). **Critically, "redirect from TBR" does NOT
-mean escaping the TBR kernel** — it is cross-cutting (≈½ EW CPU; 96 % of sectorial
-wall is `tbr_search`) and now proven at-limit, so what is left to optimise is the
-**ORCHESTRATION around it** (recipe / candidate-selection / the T-S6e redundant
-trailing TBRs), i.e. **composition #40** — not more per-component throughput (which
-is why sectorial also reads at-limit). Sectorial is owned by the sectorial agent;
-ratchet is TBR-inherited and paired with it under #39. So the **cleanest unowned
-element-isolation slot is fuse / drift (component 4)** — currently untouched (fuse
-also has a pending >64-tip reroot-crash fix to port, [[fuse-reroot-segfault]]) —
-ahead of **recipe composition (#40)**. **lever-c (bound-then-verify) is now SETTLED
-dead-by-proof-plus-magnitude (T-P5q / #51, proof artifact
-`dev/red-team/proofs/lever-c-bound-then-verify.md`)** — so there is no longer any
-open TBR-side *algorithmic* item; the only residual TBR thread is sub-lever (d)
-per-candidate fused edge-set (bit-identical, refutable-not-proven, ~2-6% predicted
-wash — flagged for human, not a blocker). Data-class reopen conditions recorded in
-T-P5p/T-P5q (large-N/molecular → revive incremental-VIEW; binary/DNA ns≤4 → S2 split
-shifts / scalar scorer; S1 + the S3 lemma are data-independent).
+### Status: ALL COMPONENTS CLOSED — program complete (2026-06-21)
+
+Every component is through **both** gates and measured at-limit:
+- **scoring** ✅ · **TBR** (kernel + precompute + scorer + middle-level algorithm,
+  T-P5p) ✅ · **sectorial** ✅ (probe-closed + branch merged `00967d77`) ·
+  **ratchet** ✅ (cycle-parity isolated race, 2026-06-21, job `17533025`) ·
+  **fuse/drift** ✅ (at-limit-by-inheritance; gate-2 low-priority confirmatory) ·
+  **connective tissue** ✅.
+- The 2026-06-21 mission KPI (above) confirms the synthesis end-to-end: quality
+  ≥ TNT, candidate-efficiency ~1.5× near-parity, throughput ~2× at-limit ⇒ the wall
+  gap is **budget/composition**, NOT per-component throughput.
+
+Residual TBR thread = only sub-lever (d) per-candidate fused edge-set (bit-identical,
+~2-6% predicted wash, flagged-for-human — not a blocker). lever-c SETTLED dead
+(T-P5q/#51). Data-class reopens recorded in T-P5p/T-P5q (large-N/molecular → revive
+incremental-VIEW; binary/DNA ns≤4 → scalar scorer / S2 split shift; S1 + S3 lemma
+data-independent).
+
+### GATE BEFORE COMPOSITION #40 — fresh-eyes component re-audit (2026-06-21, user-ordered)
+
+Before tuning the recipe: **"what did we MISS in the individual components?"** An
+adversarial completeness pass — independent auditors per component, tasked to
+*break* the at-limit verdicts (find an untested lever, a wrong assumption, an
+uncovered data-class, a measurement blind-spot), NOT to re-confirm them. The getenv
+hoist (~20-26% mission wall, VTune-invisible) is the precedent: the biggest win of
+the program was something the standard measurement *missed*. Survivors that are
+genuinely new feed back into the relevant component; composition #40 begins only once
+this pass is dry. [Results appended below as they land.]
 
 ## Why this reframe
 
@@ -141,8 +149,8 @@ Only if Step 0 shows a large 64-bit throughput gap do we proceed to build.
 |---|---|---|---|
 | scoring (Fitch EW) | `bench_score_micro.R` / `std::chrono` | `length;` (no loop exposed — hard to race fairly) | ns/score; prior AT-LIMIT T-S3b/c |
 | **TBR** (keystone) | `ts_tbr_diagnostics(tree=…)` | `tread <start>; bbreak=tbr;` (NO xmult) | score@opt, rearr-to-opt |
-| sectorial | xss/rss/css R entry — **TBD (may need export)** | `sectsch` settings, no ratchet/fuse (see [[tnt-sectorial-recipe]]) | score, #sectors |
-| ratchet | `ratchet_search` R entry — **TBD (may need export)** | ratchet-only command — **syntax TBD** | score, #cycles |
+| sectorial | ✅ `rss_search` instrumented directly (no export needed) | `sectsch` settings, no ratchet/fuse (see [[tnt-sectorial-recipe]]) | score, #sectors |
+| ratchet | ✅ `ts_ratchet_search` (exported, RcppExports.R:135) | ✅ `ratchet=iter N;` via **STDIN pipe** (runfile-arg → curses, fails headless) | score@iters, wall (examined-count N/A — `RatchetResult` lacks it) |
 | fuse / drift | later | `tfuse` / drift flags | later |
 
 ## Shared-start plumbing (NEW — does not exist in bench_tnt_headtohead.R)
