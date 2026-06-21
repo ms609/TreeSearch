@@ -88,7 +88,38 @@ uncovered data-class, a measurement blind-spot), NOT to re-confirm them. The get
 hoist (~20-26% mission wall, VTune-invisible) is the precedent: the biggest win of
 the program was something the standard measurement *missed*. Survivors that are
 genuinely new feed back into the relevant component; composition #40 begins only once
-this pass is dry. [Results appended below as they land.]
+this pass is dry.
+
+**RESULTS (2026-06-21, workflow `wf_24dc492a`, 27 agents, 8 component lenses):
+18 candidates → 3 survived adversarial verification → 15 killed as rediscoveries/
+refuted. The core kernel/TBR THROUGHPUT verdicts STAND — no second getenv-class
+hidden hotspot.** Confirmed solid-at-limit, nothing new: scoring-kernel, TBR
+precompute (incremental-length=quick-TBR already done), ratchet (12→6 banked),
+starting-trees/Wagner. The 3 survivors (all MODEST — none a confirmed multi-x win):
+- **#55 (rank 1, fuse, HIGH conf) — getenv-class-in-KIND:** all fuse-VALUE evidence
+  on the >64t mission datasets predates the 2026-06-20 reroot fix (`ac8e808a`); the
+  recipe's "fuse is free / +1 intraFuse regression" rests on pre-fix runs whose
+  multi-round path was skipped/truncated/corrupting. Fuse is **unmeasured on correct
+  code**. (Default `poolSuboptimal=0` ⇒ pool size 1 ⇒ inter-replicate fuse SKIPPED
+  entirely.) Re-measure dispatched (Hamilton job `17533029`): count productive
+  `Fuse improved` events with `poolSuboptimal=5`+`intraFuse` on Zanol/Zhu/Giles.
+  Binary → either a #40 simplification (drop wasted fuse) or a recovered quality
+  lever on the hardest datasets. **Direct #40 input.**
+- **#56 (rank 2, sectorial, MED conf) — NEW throughput lever:** `build_reduced_dataset`
+  (ts_sector.cpp:431-440) copies the full block structure; `active_mask` is GLOBAL ⇒
+  constant-within-sector-but-globally-informative columns scanned at every inner-sector
+  node (~96% of sectorial wall). Offline (reproduced): ~40-60% fewer SIMD blocks on
+  Zhu/Zanol/Giles (weakest on Zanol). Column analog of the row-only
+  `sectorCollapseTarget`. GATED by early-abandonment ⇒ realizable only if front-packing
+  cuts blocks-reached-before-bail; correctness needs the HTU pseudo-tip state. Net
+  realistic low-single-digit to ~10%.
+- **#57 (rank 3, tbr-scaffold, LOW conf, likely sub-floor):** x4 reroot batch scores
+  every member to the deepest-bailing member's depth; gross ceiling ~1-2% EW,
+  ILP-confounded. Cheap wasted-block counter as a kill-gate.
+
+Net: the at-limit picture holds; the addressable wall stays in orchestration (#40),
+and the strongest survivor (fuse) is itself a #40 input. Tasks #55-57; #40 blocked-by
+#55,#56.
 
 ## Why this reframe
 
