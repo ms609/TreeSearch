@@ -4,6 +4,10 @@
 #include <vector>
 #include <cassert>
 #include <R.h>
+#ifdef TS_AUDIT_PROBE
+#include <chrono>
+#include <cstdio>
+#endif
 
 namespace ts {
 
@@ -484,8 +488,6 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
 // See the header for the formula.  O(n * chars): one preorder up-pass plus one
 // combine per node.
 #ifdef TS_AUDIT_PROBE
-#include <chrono>
-#include <cstdio>
 // Audit #56: time the no-bail precompute to measure its share of SECTOR wall
 // (run via ts_rss_search, where every call is a sector call). precompute_share
 // x 0.40 (measured block reduction) x 0.30 (sectorial mission share) = the
@@ -738,7 +740,6 @@ int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
 // evaluated and combined into a single bitmask test.
 
 #ifdef TS_AUDIT_PROBE
-#include <cstdio>
 // Audit #57: x4 reroot-batch wasted-block counter. The x4 scans all four members
 // to the DEEPEST-bailing member's depth (breaks only when ALL four exceed cutoff).
 // "wasted" = per-member blocks scanned AFTER that member individually crossed the
