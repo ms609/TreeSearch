@@ -275,6 +275,14 @@ static void collect_clade_nodes(const TreeState& tree, int node,
 
 // ---- Reduced dataset construction ----
 
+#ifdef TS_AUDIT_PROBE
+#include <cstdio>
+// Audit #56: realized per-sector column-axis reduction counters.
+long long g_sect_inf_chars = 0, g_sect_tot_chars = 0;
+long long g_sect_fp_blocks = 0, g_sect_tot_blocks = 0;
+unsigned long long g_sect_calls = 0;
+#endif
+
 ReducedDataset build_reduced_dataset(const TreeState& tree,
                                      const DataSet& ds,
                                      int sector_root) {
@@ -478,6 +486,43 @@ ReducedDataset build_reduced_dataset(const TreeState& tree,
       rd.data.tip_states[dst_base + w] = from_above_sr[w];
     }
   }
+
+#ifdef TS_AUDIT_PROBE
+  // Audit #56: a character is CONSTANT-within-sector iff some single state is
+  // shared by ALL sector tips (incl. the HTU pseudo-tip) -> 0 Fitch steps in
+  // every sector topology -> droppable (ranking-preserving). fp_blocks = blocks
+  // the informative survivors re-pack into; drives the no-bail precompute saving
+  // in compute_insertion_edge_sets (which scans all n_blocks per node).
+  {
+    const int tw_ = rd.data.total_words;
+    long long inf_chars = 0, tot_chars = 0;
+    for (int b = 0; b < rd.data.n_blocks; ++b) {
+      uint64_t active = rd.data.blocks[b].active_mask;
+      if (!active) continue;
+      const int off = rd.data.block_word_offset[b];
+      const int nst = rd.data.blocks[b].n_states;
+      uint64_t constant = 0ULL;
+      for (int s = 0; s < nst; ++s) {
+        uint64_t all = ~0ULL;
+        for (int t = 0; t < n_sector_tips; ++t)
+          all &= rd.data.tip_states[static_cast<size_t>(t) * tw_ + off + s];
+        constant |= all;
+      }
+      const uint64_t informative = active & ~constant;
+      inf_chars += ts::popcount64(informative);
+      tot_chars += ts::popcount64(active);
+    }
+    const long long fp_blocks = (inf_chars + 63) / 64;
+    g_sect_inf_chars += inf_chars; g_sect_tot_chars += tot_chars;
+    g_sect_fp_blocks += fp_blocks; g_sect_tot_blocks += rd.data.n_blocks;
+    if ((++g_sect_calls % 2000ULL) == 0)
+      std::fprintf(stderr,
+        "SECT_REDUCE sectors=%llu inf/tot_chars=%.3f fp/tot_blocks=%.3f\n",
+        (unsigned long long)g_sect_calls,
+        g_sect_tot_chars ? (double)g_sect_inf_chars / (double)g_sect_tot_chars : 0.0,
+        g_sect_tot_blocks ? (double)g_sect_fp_blocks / (double)g_sect_tot_blocks : 0.0);
+  }
+#endif
 
   // Allocate state arrays and load tip states
   size_t state_size = static_cast<size_t>(n_sector_node) * ds.total_words;
