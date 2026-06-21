@@ -121,6 +121,33 @@ Net: the at-limit picture holds; the addressable wall stays in orchestration (#4
 and the strongest survivor (fuse) is itself a #40 input. Tasks #55-57; #40 blocked-by
 #55,#56.
 
+### AUDIT FOLLOW-UPS — RESOLVED (2026-06-21, all measured on Hamilton)
+
+- **#55 fuse → DROP (dead weight).** Probe `17533029`: fuse FIRES on the >64t mission
+  class (7 attempts/run, 60-70 exchanges/run) but **0 improvements** across
+  Zanol/Zhu/Giles × pool/intra × 2 seeds. Not pool-collapse — genuinely useless. #40
+  input: drop fuse / raise `fuseInterval` for this class (it is already off-by-default
+  since `poolSuboptimal=0` ⇒ pool size 1).
+- **#56 sectorial column reduction → SHIPPED opt-in (`830b8cc3`, `TS_SECT_COLREDUCE`,
+  off by default).** `reduce_sector_columns_ew` drops constant-within-{sector tips+HTU}
+  chars (0 Fitch steps ⇒ scores exact) + repacks survivors into fewer n_states-grouped
+  blocks. Adversarial review (`wf_3727ea63`) caught a CRITICAL stale-`rd.subtree`-stride
+  OOB that the in-process-toggle A/B had FALSE-PASSED (flag read once at static init ⇒
+  both arms ran OFF); fixed. Re-validated (`17533059`): dScore=0 9/9, valgrind clean,
+  review-verified invariance+bit-arithmetic. **Saving (rss-isolated): Giles 17%, Zhu 9%,
+  Zanol ~0%** (uniform ns=9 = least reduction = the load-bearing case). `dCand≠0` on
+  mixed-n_states (block reorder shifts bail timing ⇒ equally-optimal different path;
+  Zanol uniform = byte-identical) ⇒ **OPT-IN, never a default flip.** Before default-on
+  for any class: run a sector-score ORACLE (reduced vs full, same topology, mixed state)
+  — an accept-gated search can't discriminate a masked packing bug. **#56 = a #40
+  ingredient (enable per-class where it helps; never Zanol), not standalone.**
+- **#57 x4 reroot waste → DEFERRED (sub-floor).** Probe `17533033`: X4_WASTE frac=0.137
+  = ~1.9% EW gross ceiling, ILP-confounded ⇒ net ~0. Counter committed (`5c069e54`).
+  Force-scalar A/B is the only discriminator but low-EV; not pursued.
+
+**Audit follow-ups closed. #40 composition is the next deliberate, supervised move
+(gated: recompose-from-scratch on any step-cost change ⇒ all pieces finished first).**
+
 ## Why this reframe
 
 The previous round optimised "the expensive phase of the current recipe"
