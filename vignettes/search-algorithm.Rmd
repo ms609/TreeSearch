@@ -310,7 +310,7 @@ perturbed weights, and the original weights are restored.
 The resulting tree generally occupies a different basin of attraction.
 
 TreeSearch runs multiple ratchet cycles per replicate
-(`ratchetCycles`, default 12).
+(`ratchetCycles`, default 6).
 Each cycle draws characters for perturbation with probability
 `ratchetPerturbProb` (default 0.25), runs a limited number of TBR moves
 (`ratchetPerturbMaxMoves`, default 5), then restores original weights

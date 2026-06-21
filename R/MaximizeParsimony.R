@@ -114,7 +114,11 @@
     nniFirst = TRUE, sprFirst = FALSE
   ),
   default = SearchControl(
-    tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
+    # ratchetCycles 12->6 (T-P5d, 2026-06-19): profiling found the ratchet
+    # over-provisioned -- halving cycles saved 20-38% wall on the mid-size EW
+    # benchmarks (Wills/Zanol/Zhu/Giles) at zero quality loss.  Provisional;
+    # the planned dataset-property grid will confirm across sizes.
+    tbrMaxHits = 1L, ratchetCycles = 6L, ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 0L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = FALSE,
     driftCycles = 0L,
