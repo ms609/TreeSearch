@@ -119,3 +119,39 @@ test_that("TBR dirty-set rescore matches full rescore (NA-IW dataset, many accep
     validate_result(result, n_tip)
   }
 })
+
+test_that("XPIWE x4 + dirty-region opts are byte-identical to opts-off (port guard)", {
+  # Regression guard for the IW->XPIWE opt port (src/ts_tbr.cpp `iw_family`
+  # gate): the x4 reroot batch + extract_char_steps dirty-region must produce
+  # byte-identical scores to the opts-off scalar path on the PRODUCTION XPIWE
+  # path (MaximizeParsimony defaults to extended IW => ScoringMode::XPIWE).
+  # Before the port these opts were gated to plain ScoringMode::IW and so never
+  # ran under MaximizeParsimony; this asserts the widening did not perturb
+  # XPIWE scores. Requires:
+  #   - pure-XPIWE: recode "-"->"?" so has_na = FALSE (the opts are !has_na-gated)
+  #   - ratchetCycles >= 3: a perturbation can then fully deactivate a block,
+  #     the regime that surfaced the nx_cs/active_mask consistency bug (the
+  #     dirty-region's per-clip internal invariant is itself guarded by the C++
+  #     TS_IW_DIRTYCHK oracle; this test guards the opts' externally-visible
+  #     byte-identity).
+  skip_if_not_installed("TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
+  m <- PhyDatToMatrix(inapplicable.phyData[["Vinther2008"]], ambigNA = FALSE)
+  m[m == "-"] <- "?"                      # pure-XPIWE: has_na = FALSE
+  d <- MatrixToPhyDat(m)
+  ctrl <- SearchControl(ratchetCycles = 4L, xssRounds = 0L, rssRounds = 0L,
+                        cssRounds = 0L, driftCycles = 0L)
+  run <- function(opts_on) {
+    if (opts_on) { Sys.unsetenv("TS_IW_NOX4");   Sys.unsetenv("TS_IW_NODIRTY") }
+    else         { Sys.setenv(TS_IW_NOX4 = "1"); Sys.setenv(TS_IW_NODIRTY = "1") }
+    set.seed(909)
+    r <- suppressWarnings(MaximizeParsimony(
+      d, concavity = 10, maxReplicates = 1L, nThreads = 1L,
+      verbosity = 0L, control = ctrl))
+    min(attr(r, "score"))
+  }
+  on.exit({ Sys.unsetenv("TS_IW_NOX4"); Sys.unsetenv("TS_IW_NODIRTY") }, add = TRUE)
+  score_on  <- run(TRUE)
+  score_off <- run(FALSE)
+  expect_equal(score_on, score_off, tolerance = 0)
+})
