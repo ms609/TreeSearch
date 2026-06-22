@@ -210,7 +210,12 @@ void fitch_na_indirect_cached_flat_x4(
 // Full three-pass score for datasets with inapplicable characters.
 // Handles both standard blocks (one-pass Fitch) and inapplicable blocks
 // (Brazeau et al. three-pass algorithm). Returns the total EW score.
-int fitch_na_score(TreeState& tree, const DataSet& ds);
+// If char_steps_out != nullptr, also fills it with per-pattern (unweighted) step
+// counts during the existing passes (standard blocks in Pass1, NA blocks in
+// Pass3) — byte-identical to a separate extract_char_steps() call, but fused into
+// the score walk so the IW path avoids a redundant full-tree re-walk.
+int fitch_na_score(TreeState& tree, const DataSet& ds,
+                   std::vector<int>* char_steps_out = nullptr);
 
 // --- Incremental NA-aware scoring for SPR/TBR ---
 

@@ -1290,21 +1290,28 @@ double fitch_score_ew(TreeState& tree, const DataSet& ds) {
     }
   }
 
-  // Weighted scoring (IW or profile): run Fitch, extract steps, transform
+  // Weighted scoring (IW or profile): run Fitch, extract per-pattern steps,
+  // transform. Reusable scratch: this fires per accept / convergence check /
+  // sector+Wagner rescore AND per exact_verify candidate (IW/profile only — EW
+  // returns above). thread_local keeps capacity across calls.
+  static thread_local std::vector<int> char_steps;
+  char_steps.resize(ds.n_patterns);
+
+  // FUSED extraction (NA path): fitch_na_score fills char_steps per-pattern
+  // during its own Pass1/Pass3, avoiding a redundant full-tree extract_char_steps
+  // re-walk (~14.6% of the per-candidate NA-IW rescore; see native-na-tbr-frontier).
+  // Byte-identical. TS_NA_NOFUSE (read once) restores the separate-walk path for A/B.
+  static const bool na_nofuse = std::getenv("TS_NA_NOFUSE") != nullptr;
+  if (has_na && !na_nofuse) {
+    fitch_na_score(tree, ds, &char_steps);
+    return compute_weighted_score(ds, char_steps);
+  }
+
   if (has_na) {
     fitch_na_score(tree, ds);
   } else {
     fitch_score(tree, ds);
   }
-
-  // Reusable scratch: this weighted-path full rescore fires per accept /
-  // convergence check / sector+Wagner rescore (IW/profile only — EW returns
-  // above). A fresh per-call heap alloc here is getenv/L1-class invisible;
-  // a thread_local keeps capacity across calls (one emutls fetch per call is
-  // negligible vs the O(n_node x n_block) extract). extract_char_steps zeroes
-  // it, so resize (not assign) suffices.
-  static thread_local std::vector<int> char_steps;
-  char_steps.resize(ds.n_patterns);
   extract_char_steps(tree, ds, char_steps);
   return compute_weighted_score(ds, char_steps);
 }

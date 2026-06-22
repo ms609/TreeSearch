@@ -1,7 +1,8 @@
 // This file is #included at the end of ts_fitch.cpp
 // Inapplicable (NA) three-pass scoring (Brazeau et al. 2019)
 
-int fitch_na_score(TreeState& tree, const DataSet& ds) {
+int fitch_na_score(TreeState& tree, const DataSet& ds,
+                   std::vector<int>* char_steps_out) {
   bool has_any_na = false;
   for (int b = 0; b < ds.n_blocks; ++b) {
     if (ds.blocks[b].has_inapplicable) { has_any_na = true; break; }
@@ -9,6 +10,10 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
   if (!has_any_na) return fitch_score(tree, ds);
 
   int total_steps = 0;
+  // Fused per-pattern step extraction (replaces a separate extract_char_steps
+  // re-walk on the IW path). Zero once; standard blocks bucketed in Pass1,
+  // NA blocks in Pass3 — byte-identical to extract_char_steps.
+  if (char_steps_out) std::fill(char_steps_out->begin(), char_steps_out->end(), 0);
 
   // ==== Pass 1: First downpass ====
   for (int node : tree.postorder) {
@@ -36,6 +41,10 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
         if (blk.upweight_mask) nu += popcount64(needs_union & blk.upweight_mask);
         total_steps += blk.weight * nu;
         tree.local_cost[static_cast<size_t>(node) * tree.n_blocks + b] = needs_union;
+        if (char_steps_out) {            // fused extract: standard-block steps
+          uint64_t m = needs_union;
+          while (m) { int c = ctz64(m); (*char_steps_out)[blk.pattern_index[c]]++; m &= m - 1; }
+        }
         for (int s = 0; s < k; ++s) {
           uint64_t isect = L[s] & R[s];
           N[s] = (isect & any_isect) | ((L[s] | R[s]) & needs_union);
@@ -261,6 +270,10 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
       int ns_p3 = popcount64(needs_step);
       if (blk.upweight_mask) ns_p3 += popcount64(needs_step & blk.upweight_mask);
       total_steps += blk.weight * ns_p3;
+      if (char_steps_out) {              // fused extract: NA-block steps
+        uint64_t m = needs_step;
+        while (m) { int c = ctz64(m); (*char_steps_out)[blk.pattern_index[c]]++; m &= m - 1; }
+      }
 
       // Compute down2 for this node (matches morphy exactly):
       // Applicable node with any intersection:
