@@ -21,8 +21,8 @@ module load gcc/14.2
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
-LIB=/nobackup/$USER/TreeSearch/lib
-REPO=/nobackup/$USER/TreeSearch-a
+LIB=${TS_LIB:-/nobackup/$USER/TreeSearch/lib}
+REPO=${TS_REPO:-/nobackup/$USER/TreeSearch-t29}
 export R_LIBS_USER=$LIB
 export TS_LIB=$LIB
 export PARTIAL_DIR=/nobackup/$USER/TreeSearch/iw_wall_partials
