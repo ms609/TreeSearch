@@ -1393,12 +1393,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // IW dirty-region buffers: F = full-tree char_steps (refreshed when the tree
   // changes, f_dirty), cs_delta = per-clip path delta (filled by the downpass),
   // nx_cs = clip-parent's per-pattern contribution. Pure-IW only.
-  // Both opts are restricted to implied weights (ScoringMode::IW). `use_iw`
-  // (isfinite concavity) is ALSO true for PROFILE/XPIWE, which share the
-  // weighted indirect scan but NOT the char_steps conventions the dirty-region
-  // assumes (profile diverged in validation); they keep the original path.
-  const bool iw_mode = (ds.scoring_mode == ScoringMode::IW);
-  const bool iw_dirty_active = iw_mode && !has_na && iw_dirty;
+  // The char_steps dirty-region + x4 reroot opts apply to BOTH implied-weights
+  // modes: plain IW and extended XPIWE. Both score via compute_iw /
+  // precompute_iw_delta from the SAME per-pattern char_steps (extract_char_steps
+  // is weighting-agnostic; min_steps identical), differing ONLY in the per-pattern
+  // eff_k[p]/phi[p] arrays — which those downstream functions already consume. So
+  // the dirty-region derivation (divided_steps = F + cs_delta - nx) and the x4
+  // gather are byte-identical across IW and XPIWE. PROFILE is excluded: it scores
+  // via compute_profile (info_amounts table + precomputed_steps offset), a
+  // genuinely different char_steps convention. NOTE: production MaximizeParsimony
+  // defaults to XPIWE (xpiwe=TRUE + obs_count; ts_data.cpp), so gating on plain
+  // IW alone left these opts DEAD on the production path for every dataset.
+  const bool iw_family = (ds.scoring_mode == ScoringMode::IW ||
+                          ds.scoring_mode == ScoringMode::XPIWE);
+  const bool iw_dirty_active = iw_family && !has_na && iw_dirty;
   std::vector<int> full_char_steps, cs_delta, nx_cs;
   if (iw_dirty_active) {
     full_char_steps.resize(ds.n_patterns, 0);
@@ -1614,9 +1622,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           int nu = popcount64(lc);
           if (ds.blocks[b].upweight_mask) nu += popcount64(lc & ds.blocks[b].upweight_mask);
           nx_cost += ds.blocks[b].weight * nu;
-          if (iw_dirty_active) {
-            // nx is spliced out by the divided tree; capture its per-pattern
-            // contribution (raw local_cost bits, matching extract_char_steps).
+          // nx is spliced out by the divided tree; capture its per-pattern
+          // contribution (raw local_cost bits). MUST mirror extract_char_steps,
+          // which skips fully-inactive blocks (active_mask == 0): under a ratchet
+          // perturbation that zeroes a block, F (the pass-top extract_char_steps
+          // cache) omits that block's patterns, so subtracting nx_cs for them
+          // drove divided_steps negative (DIRTYCHK: dirty=-1 ref=0 on
+          // Dikow2009/Vinther2008 at ratchetCycles>=3). The candidate scan masks
+          // needs_step by active_mask so the score was unaffected, but the
+          // intermediate per-pattern step counts must stay consistent with F.
+          // EW nx_cost above is intentionally left counting all blocks (its own
+          // best_score/delta length convention is internally consistent).
+          if (iw_dirty_active && ds.blocks[b].active_mask != 0) {
             const int* pidx = ds.blocks[b].pattern_index;
             uint64_t m = lc;
             while (m) { int c = ctz64(m); nx_cs[pidx[c]]++; m &= m - 1; }
@@ -1965,8 +1982,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 }
               }
             }
-          } else if (iw_mode && !has_na && iw_x4) {
-            // === IW 4-wide batch (pure-IW; T-245 ILP ported to IW) ===
+          } else if (iw_family && !has_na && iw_x4) {
+            // === IW 4-wide batch (pure-IW/XPIWE; T-245 ILP ported to IW) ===
             // Same candidate-selection + bookkeeping as the EW flat-x4 above,
             // but scores via indirect_iw_cached_flat_x4 (double accumulators).
             int ei = 0;
