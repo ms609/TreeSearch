@@ -917,6 +917,74 @@ void indirect_iw_cached_flat_x4(
   out[0] = es0; out[1] = es1; out[2] = es2; out[3] = es3;
 }
 
+// 4-wide NA-IW batch (inapplicable characters + implied-weights TBR rerooting).
+// Fuses the NA active-mask candidate selection of fitch_na_indirect_cached_flat_x4
+// (standard vs has_inapplicable blocks; from1 reduce; shared clip_has_active;
+// per-candidate below_actives AND) with the per-candidate iw_delta ctz-gather of
+// indirect_iw_cached_flat_x4. Each es{k} keeps the exact scalar add order of
+// indirect_na_iw_length_cached, so per-candidate results are bit-identical; the
+// shared (all-4 >= cutoff) bail only changes early-exit on cutoff-LOSING
+// candidates (their partial sum may then differ from the scalar early-return) --
+// any sub-cutoff candidate the caller actually reads is fully accumulated, so the
+// search outcome (argmin) is byte-identical. 4 data-independent any_hit_reduce
+// streams over distinct vroot_cache rows hide the L2 load latency (the T-245 ILP
+// win, now on the IW-NA path).
+void indirect_na_iw_cached_flat_x4(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const uint64_t* vroot0, const uint64_t* vroot1,
+    const uint64_t* vroot2, const uint64_t* vroot3,
+    const uint64_t* ba0, const uint64_t* ba1,
+    const uint64_t* ba2, const uint64_t* ba3,
+    const DataSet& ds, double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff, double out[4]) {
+  double es0 = base_iw, es1 = base_iw, es2 = base_iw, es3 = base_iw;
+
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    const CharBlock& blk = ds.blocks[b];
+    if (blk.active_mask == 0) continue;   // mirror scalar indirect_na_iw_length_cached
+    const int off = ds.block_word_offset[b];
+    const int k = blk.n_states;
+
+    uint64_t ns0, ns1, ns2, ns3;
+
+    if (!blk.has_inapplicable) {
+      // Standard block: plain any_hit_reduce (states 0..k-1), invert & mask.
+      uint64_t a0 = simd::any_hit_reduce(&clip_prelim[off], &vroot0[off], k);
+      uint64_t a1 = simd::any_hit_reduce(&clip_prelim[off], &vroot1[off], k);
+      uint64_t a2 = simd::any_hit_reduce(&clip_prelim[off], &vroot2[off], k);
+      uint64_t a3 = simd::any_hit_reduce(&clip_prelim[off], &vroot3[off], k);
+      ns0 = ~a0 & blk.active_mask;
+      ns1 = ~a1 & blk.active_mask;
+      ns2 = ~a2 & blk.active_mask;
+      ns3 = ~a3 & blk.active_mask;
+    } else {
+      // NA block: from1 reduce skips the inapplicable state; clip_has_active is
+      // shared across all 4 candidates; AND with each candidate's below_actives.
+      uint64_t clip_ha = simd::or_reduce(&clip_actives[off], k, 1);
+      uint64_t a0 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot0[off], k);
+      uint64_t a1 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot1[off], k);
+      uint64_t a2 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot2[off], k);
+      uint64_t a3 = simd::any_hit_reduce_from1(&clip_prelim[off], &vroot3[off], k);
+      ns0 = ~a0 & clip_ha & ba0[b] & blk.active_mask;
+      ns1 = ~a1 & clip_ha & ba1[b] & blk.active_mask;
+      ns2 = ~a2 & clip_ha & ba2[b] & blk.active_mask;
+      ns3 = ~a3 & clip_ha & ba3[b] & blk.active_mask;
+    }
+
+    while (ns0) { int c = ctz64(ns0); es0 += iw_delta[blk.pattern_index[c]]; ns0 &= ns0 - 1; }
+    while (ns1) { int c = ctz64(ns1); es1 += iw_delta[blk.pattern_index[c]]; ns1 &= ns1 - 1; }
+    while (ns2) { int c = ctz64(ns2); es2 += iw_delta[blk.pattern_index[c]]; ns2 &= ns2 - 1; }
+    while (ns3) { int c = ctz64(ns3); es3 += iw_delta[blk.pattern_index[c]]; ns3 &= ns3 - 1; }
+
+    if ((es0 >= cutoff) & (es1 >= cutoff) & (es2 >= cutoff) & (es3 >= cutoff))
+      break;
+  }
+
+  out[0] = es0; out[1] = es1; out[2] = es2; out[3] = es3;
+}
+
 // --- Per-character step extraction ---
 
 void extract_char_steps(const TreeState& tree, const DataSet& ds,

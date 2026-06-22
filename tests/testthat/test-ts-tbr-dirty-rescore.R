@@ -155,3 +155,31 @@ test_that("XPIWE x4 + dirty-region opts are byte-identical to opts-off (port gua
   score_off <- run(FALSE)
   expect_equal(score_on, score_off, tolerance = 0)
 })
+
+test_that("NA-IW x4 reroot batch is byte-identical to scalar (NA port guard)", {
+  # Regression guard for indirect_na_iw_cached_flat_x4 (src/ts_fitch.cpp) wired
+  # into the iw_family scan branch (src/ts_tbr.cpp): the 4-wide NA-IW reroot
+  # batch must produce byte-identical scores to the one-at-a-time scalar
+  # indirect_na_iw_length_cached on the IW+NA / XPIWE+NA path.  This is the
+  # complement of the port guard above: that one RECODES "-"->"?" (has_na =
+  # FALSE, exercising the no-NA IW x4); this one KEEPS the inapplicable
+  # characters (has_na = TRUE) so the NA-aware batch kernel actually fires.
+  # TS_IW_NOX4 toggles the batch off (falls through to the scalar `else`).
+  skip_if_not_installed("TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
+  d <- inapplicable.phyData[["Vinther2008"]]   # keep "-"; has_na = TRUE
+  ctrl <- SearchControl(ratchetCycles = 4L, xssRounds = 0L, rssRounds = 0L,
+                        cssRounds = 0L, driftCycles = 0L)
+  run <- function(x4_on) {
+    if (x4_on) Sys.unsetenv("TS_IW_NOX4") else Sys.setenv(TS_IW_NOX4 = "1")
+    set.seed(717)
+    r <- suppressWarnings(MaximizeParsimony(
+      d, concavity = 10, maxReplicates = 1L, nThreads = 1L,
+      verbosity = 0L, control = ctrl))
+    min(attr(r, "score"))
+  }
+  on.exit(Sys.unsetenv("TS_IW_NOX4"), add = TRUE)
+  score_x4  <- run(TRUE)
+  score_scalar <- run(FALSE)
+  expect_equal(score_x4, score_scalar, tolerance = 0)
+})
