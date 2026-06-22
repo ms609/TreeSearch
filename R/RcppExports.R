@@ -200,6 +200,10 @@ ts_bench_tbr_phases <- function(edge, contrast, tip_data, weight, levels, min_st
     .Call(`_TreeSearch_ts_bench_tbr_phases`, edge, contrast, tip_data, weight, levels, min_steps, concavity)
 }
 
+ts_iw_gather_bench <- function(contrast, tip_data, weight, levels, edge, min_steps = integer(), concavity = 10.0, n_repeat = 3000L) {
+    .Call(`_TreeSearch_ts_iw_gather_bench`, contrast, tip_data, weight, levels, edge, min_steps, concavity, n_repeat)
+}
+
 ts_simplify_diag <- function(contrast, tip_data, weight, levels) {
     .Call(`_TreeSearch_ts_simplify_diag`, contrast, tip_data, weight, levels)
 }

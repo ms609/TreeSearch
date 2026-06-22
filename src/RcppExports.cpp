@@ -754,6 +754,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_iw_gather_bench
+List ts_iw_gather_bench(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, IntegerMatrix edge, IntegerVector min_steps, double concavity, int n_repeat);
+RcppExport SEXP _TreeSearch_ts_iw_gather_bench(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP edgeSEXP, SEXP min_stepsSEXP, SEXP concavitySEXP, SEXP n_repeatSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type min_steps(min_stepsSEXP);
+    Rcpp::traits::input_parameter< double >::type concavity(concavitySEXP);
+    Rcpp::traits::input_parameter< int >::type n_repeat(n_repeatSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_iw_gather_bench(contrast, tip_data, weight, levels, edge, min_steps, concavity, n_repeat));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ts_simplify_diag
 List ts_simplify_diag(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels);
 RcppExport SEXP _TreeSearch_ts_simplify_diag(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP) {

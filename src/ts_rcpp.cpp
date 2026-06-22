@@ -2514,6 +2514,95 @@ List ts_bench_tbr_phases(
   );
 }
 
+// Faithful microbench for the IW gather lever: the per-candidate inner loop
+// accumulates iw_delta over set bits.  CURRENT uses a double indirection
+// (iw_delta[pattern_index[c]]); DENSE precomputes a per-block-contiguous table
+// (dense[b*64+c] == iw_delta[pattern_index[c]]) so the loop does one contiguous
+// load with no dependent pattern_index load.  Realistic masks = the tree's real
+// local_cost bit patterns (real density + the real pattern_index mapping).
+// Isolates JUST the gather (no any_hit_reduce) to settle whether the indirection
+// has slack x4's ILP didn't already cover.
+// [[Rcpp::export]]
+List ts_iw_gather_bench(
+    NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight,
+    CharacterVector levels, IntegerMatrix edge,
+    IntegerVector min_steps = IntegerVector(),
+    double concavity = 10.0, int n_repeat = 3000) {
+  using Clock = std::chrono::high_resolution_clock;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+  tree.reset_states(ds);
+  (void) ts::score_tree(tree, ds);
+
+  std::vector<int> char_steps(ds.n_patterns, 0);
+  ts::extract_char_steps(tree, ds, char_steps);
+  std::vector<double> iw_delta(ds.n_patterns, 0.0);
+  ts::precompute_weighted_delta(ds, char_steps, iw_delta);
+
+  // Block-local dense table.
+  std::vector<double> dense(static_cast<size_t>(ds.n_blocks) * 64, 0.0);
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    uint64_t am = ds.blocks[b].active_mask;
+    while (am) {
+      int c = __builtin_ctzll(am);
+      dense[(size_t)b * 64 + c] = iw_delta[ds.blocks[b].pattern_index[c]];
+      am &= am - 1;
+    }
+  }
+
+  // Realistic masks from local_cost.
+  std::vector<int> mblk;
+  std::vector<uint64_t> mmask;
+  for (int node : tree.postorder)
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      uint64_t m = tree.local_cost[(size_t)node * tree.n_blocks + b];
+      if (m) { mblk.push_back(b); mmask.push_back(m); }
+    }
+  size_t nm = mblk.size();
+  double total_bits = 0;
+  for (size_t i = 0; i < nm; ++i) total_bits += __builtin_popcountll(mmask[i]);
+
+  volatile double sink = 0;
+  double cur_sum = 0, dns_sum = 0;
+
+  auto t0 = Clock::now();
+  for (int r = 0; r < n_repeat; ++r) {
+    double acc = 0;
+    for (size_t i = 0; i < nm; ++i) {
+      const int* pidx = ds.blocks[mblk[i]].pattern_index;
+      uint64_t m = mmask[i];
+      while (m) { int c = __builtin_ctzll(m); acc += iw_delta[pidx[c]]; m &= m - 1; }
+    }
+    sink += acc; cur_sum = acc;
+  }
+  auto t1 = Clock::now();
+  for (int r = 0; r < n_repeat; ++r) {
+    double acc = 0;
+    for (size_t i = 0; i < nm; ++i) {
+      const double* db = &dense[(size_t)mblk[i] * 64];
+      uint64_t m = mmask[i];
+      while (m) { int c = __builtin_ctzll(m); acc += db[c]; m &= m - 1; }
+    }
+    sink += acc; dns_sum = acc;
+  }
+  auto t2 = Clock::now();
+
+  double cur_ns = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(t1 - t0).count();
+  double dns_ns = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count();
+  double bits_total = total_bits * n_repeat;
+  return List::create(
+    Named("n_masks") = (double)nm,
+    Named("bits_per_repeat") = total_bits,
+    Named("current_ns_per_bit") = cur_ns / std::max(1.0, bits_total),
+    Named("dense_ns_per_bit") = dns_ns / std::max(1.0, bits_total),
+    Named("speedup") = cur_ns / std::max(1.0, dns_ns),
+    Named("sums_match") = (std::fabs(cur_sum - dns_sum) < 1e-9),
+    Named("sink") = (double)sink
+  );
+}
+
 // [[Rcpp::export]]
 List ts_simplify_diag(
     NumericMatrix contrast,
