@@ -2094,10 +2094,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 }
               }
             }
-          } else if (iw_family && !has_na && iw_x4) {
-            // === IW 4-wide batch (pure-IW/XPIWE; T-245 ILP ported to IW) ===
+          } else if (iw_family && iw_x4) {
+            // === IW/XPIWE 4-wide batch (pure-IW/XPIWE and IW+NA; T-245 ILP) ===
             // Same candidate-selection + bookkeeping as the EW flat-x4 above,
-            // but scores via indirect_iw_cached_flat_x4 (double accumulators).
+            // but scores via the IW double-accumulator kernels.  has_na selects
+            // the NA-aware kernel (indirect_na_iw_cached_flat_x4 full batch /
+            // indirect_na_iw_length_cached scalar tail), which ANDs in
+            // clip_has_active + each candidate's below_actives row; the no-NA
+            // path is byte-identical to before this branch handled NA.  When
+            // iw_x4 is disabled (TS_IW_NOX4) this whole branch is skipped and
+            // both NA and no-NA IW fall through to the scalar `else` below.
             int ei = 0;
             while (ei < n_main) {
               int b_ei[4];
@@ -2116,19 +2122,44 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               double scores[4] = {best_candidate, best_candidate,
                                   best_candidate, best_candidate};
               if (b_n == 4) {
-                indirect_iw_cached_flat_x4(
-                    virtual_prelim.data(),
-                    &vroot_cache[static_cast<size_t>(b_ei[0]) * tw],
-                    &vroot_cache[static_cast<size_t>(b_ei[1]) * tw],
-                    &vroot_cache[static_cast<size_t>(b_ei[2]) * tw],
-                    &vroot_cache[static_cast<size_t>(b_ei[3]) * tw],
-                    ds, base_iw, iw_delta, best_candidate, scores);
+                if (has_na) {
+                  indirect_na_iw_cached_flat_x4(
+                      virtual_prelim.data(), clip_actives,
+                      &vroot_cache[static_cast<size_t>(b_ei[0]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[1]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[2]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[3]) * tw],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[0]) * ds.n_blocks],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[1]) * ds.n_blocks],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[2]) * ds.n_blocks],
+                      &below_actives_cache[
+                          static_cast<size_t>(b_ei[3]) * ds.n_blocks],
+                      ds, base_iw, iw_delta, best_candidate, scores);
+                } else {
+                  indirect_iw_cached_flat_x4(
+                      virtual_prelim.data(),
+                      &vroot_cache[static_cast<size_t>(b_ei[0]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[1]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[2]) * tw],
+                      &vroot_cache[static_cast<size_t>(b_ei[3]) * tw],
+                      ds, base_iw, iw_delta, best_candidate, scores);
+                }
               } else {
                 for (int k = 0; k < b_n; ++k) {
-                  scores[k] = indirect_iw_length_cached(
-                      virtual_prelim.data(),
-                      &vroot_cache[static_cast<size_t>(b_ei[k]) * tw],
-                      ds, base_iw, iw_delta, best_candidate);
+                  scores[k] = has_na
+                      ? indirect_na_iw_length_cached(
+                            virtual_prelim.data(), clip_actives,
+                            &vroot_cache[static_cast<size_t>(b_ei[k]) * tw],
+                            &below_actives_cache[
+                                static_cast<size_t>(b_ei[k]) * ds.n_blocks],
+                            ds, base_iw, iw_delta, best_candidate)
+                      : indirect_iw_length_cached(
+                            virtual_prelim.data(),
+                            &vroot_cache[static_cast<size_t>(b_ei[k]) * tw],
+                            ds, base_iw, iw_delta, best_candidate);
                 }
               }
 
