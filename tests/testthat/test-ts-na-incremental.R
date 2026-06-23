@@ -223,3 +223,66 @@ test_that("More replicates improve NA search scores", {
   # Longer should be at least as good
   expect_true(long$best_score <= short$best_score)
 })
+
+
+# --- Test 10: incremental exact_verify rescore == legacy full_rescore ---
+# exact_verify_sweep (native-NA unrooted-TBR completeness, ~95% of native-NA TBR
+# wall) scores each candidate via a 3-seed dirty rescore (nz, nx, clip_node) +
+# Pass3 instead of full_rescore -- the production default. It MUST be byte-
+# identical to the legacy path (kill-switch TS_NA_NOINCR). ts_tbr_search runs the
+# unrooted reroot loop for plain search, so a direct climb exercises exact_verify.
+
+ts_tbr_climb <- function(tree, ds, concavity, min_steps) {
+  TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data, ds$weight,
+                             ds$levels, maxHits = 1L, min_steps = min_steps,
+                             concavity = concavity)
+}
+
+test_that("incremental exact_verify rescore is byte-identical to legacy (TS_NA_NOINCR)", {
+  skip_if_not_installed("TreeTools")
+  data(inapplicable.phyData)
+  on.exit(Sys.unsetenv("TS_NA_NOINCR"), add = TRUE)
+
+  for (nm in c("Vinther2008", "DeAssis2011")) {
+    dataset <- inapplicable.phyData[[nm]]
+    ds <- make_ts_data(dataset)
+    n_tip <- length(dataset)
+    minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
+    for (concavity in c(-1, 10)) {       # EW (+ew_offset) and IW (weighted) paths
+      for (start in c(1, 42)) {
+        tree <- as.phylo(start, n_tip)
+
+        Sys.unsetenv("TS_NA_NOINCR")          # default: incremental
+        set.seed(100 + start)
+        s_incr <- ts_tbr_climb(tree, ds, concavity, minSteps)$score
+
+        Sys.setenv(TS_NA_NOINCR = "1")        # kill-switch: legacy full_rescore
+        set.seed(100 + start)
+        s_legacy <- ts_tbr_climb(tree, ds, concavity, minSteps)$score
+        Sys.unsetenv("TS_NA_NOINCR")
+
+        expect_equal(s_incr, s_legacy, tolerance = 0,
+                     info = paste(nm, "concavity", concavity, "start", start))
+      }
+    }
+  }
+})
+
+# --- Test 11: TS_NA_INCR_AUDIT cross-check runs clean ---
+test_that("TS_NA_INCR_AUDIT cross-check runs clean (per-candidate incr == full)", {
+  # In audit mode exact_verify scores every candidate BOTH ways and Rcpp::stop()s
+  # on any mismatch, so clean completion IS the assertion; decisions use
+  # full_rescore so the search result is still valid.
+  skip_if_not_installed("TreeTools")
+  data(inapplicable.phyData)
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  ds <- make_ts_data(dataset)
+  n_tip <- length(dataset)
+  minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
+  on.exit(Sys.unsetenv("TS_NA_INCR_AUDIT"), add = TRUE)
+  Sys.setenv(TS_NA_INCR_AUDIT = "1")
+  set.seed(123)
+  res <- expect_no_error(ts_tbr_climb(as.phylo(1, n_tip), ds, 10, minSteps))
+  Sys.unsetenv("TS_NA_INCR_AUDIT")
+  validate_result(res, n_tip)
+})
