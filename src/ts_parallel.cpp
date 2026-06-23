@@ -48,13 +48,38 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
   int hits_before = pool_.hits_to_best();
   double best_before = pool_.best_score();
 
-  TreeState fused = pool_.best().tree;
   FuseParams fp;
   fp.accept_equal = params.fuse_accept_equal;
   fp.max_rounds = 10;
-  tree_fuse(fused, ds, pool_, fp);
 
+  // See ts_driven.cpp for the rationale. Default: fuse into the global best
+  // only (recombines nothing on the mission class). Opt-in TS_FUSE_PAIRWISE=1:
+  // also fuse into a few genuinely suboptimal recipients (requires
+  // poolSuboptimal>0), the configuration where recombination can strictly win.
+  const char* fp_env = std::getenv("TS_FUSE_PAIRWISE");
+  const bool fuse_pairwise = fp_env && fp_env[0] == '1';
+
+  TreeState fused = pool_.best().tree;
+  tree_fuse(fused, ds, pool_, fp);
   double fused_score = score_tree(fused, ds);
+
+  if (fuse_pairwise) {
+    const auto& entries = pool_.all();
+    const double bs = pool_.best_score();
+    std::vector<int> recip;
+    for (int ei = 0; ei < static_cast<int>(entries.size()); ++ei) {
+      if (entries[ei].score > bs) recip.push_back(ei);
+    }
+    std::sort(recip.begin(), recip.end(),
+              [&](int a, int b) { return entries[a].score > entries[b].score; });
+    const int n_recip = std::min<int>(recip.size(), 4);
+    for (int ri = 0; ri < n_recip; ++ri) {
+      TreeState cand = entries[recip[ri]].tree;
+      tree_fuse(cand, ds, pool_, fp);
+      double cs = score_tree(cand, ds);
+      if (cs < fused_score) { fused = std::move(cand); fused_score = cs; }
+    }
+  }
 
   bool fused_ok = true;
   if (cd && cd->active &&

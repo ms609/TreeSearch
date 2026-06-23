@@ -959,13 +959,74 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       double best_before = pool.best_score();
       int pool_sz = static_cast<int>(pool.size());
 
-      TreeState fused = pool.best().tree;
       FuseParams fp;
       fp.accept_equal = params.fuse_accept_equal;
       fp.max_rounds = 10;
-      FuseResult fr = tree_fuse(fused, ds, pool, fp);
 
-      double fused_score = score_tree(fused, ds);
+      TreeState fused;
+      double fused_score;
+      FuseResult fr;
+
+      // Default path: fuse INTO the global best only. On the mission data class
+      // this recombines nothing (the best tree's shared clades are already
+      // locally optimal, so a donor clade is never a strict improvement) — see
+      // dev/plans/2026-06-22-tree-fuse-zero-exchanges.md.
+      // Opt-in (TS_FUSE_PAIRWISE=1): fuse into a few SUBOPTIMAL pool trees as
+      // well, the Goloboff-1999 configuration where a better donor clade can
+      // strictly improve a weaker recipient. Requires poolSuboptimal>0 to have
+      // any suboptimal recipients. Read per-fuse (fusing fires only every
+      // fuse_interval reps, so the getenv cost is negligible — and a plain
+      // read stays togglable per-call, unlike a process-lifetime static).
+      const char* fp_env = std::getenv("TS_FUSE_PAIRWISE");
+      const bool fuse_pairwise = fp_env && fp_env[0] == '1';
+
+      if (!fuse_pairwise) {
+        fused = pool.best().tree;
+        fr = tree_fuse(fused, ds, pool, fp);
+        fused_score = score_tree(fused, ds);
+      } else {
+        // Start from the global best as the baseline result.
+        fused = pool.best().tree;
+        fr = tree_fuse(fused, ds, pool, fp);
+        fused_score = score_tree(fused, ds);
+        // Then try a few genuinely suboptimal recipients; keep the best fused
+        // result. Recipients chosen by score, NOT by pool index (entries are
+        // append-order, not sorted — picking by index could re-select only
+        // tied-best trees and reduce to best-only fuse).
+        const auto& entries = pool.all();
+        const double bs = pool.best_score();
+        std::vector<int> recip;
+        for (int ei = 0; ei < static_cast<int>(entries.size()); ++ei) {
+          if (entries[ei].score > bs) recip.push_back(ei);
+        }
+        // Worst-scoring suboptimal recipients first (most headroom to improve).
+        std::sort(recip.begin(), recip.end(),
+                  [&](int a, int b) { return entries[a].score > entries[b].score; });
+        const int n_recip = std::min<int>(recip.size(), 4);
+        int pw_total_exch = 0;
+        for (int ri = 0; ri < n_recip; ++ri) {
+          double pre = entries[recip[ri]].score;
+          TreeState cand = entries[recip[ri]].tree;
+          FuseResult cfr = tree_fuse(cand, ds, pool, fp);
+          double cs = score_tree(cand, ds);
+          pw_total_exch += cfr.n_exchanges;
+          if (params.verbosity >= 2 && !has_callback) {
+            Rprintf("    pairwise recip %d/%d: %.5g -> %.5g (exch=%d)\n",
+                    ri + 1, n_recip, pre, cs, cfr.n_exchanges);
+          }
+          if (cs < fused_score) {
+            fused = std::move(cand);
+            fused_score = cs;
+            fr = cfr;
+          }
+        }
+        // Surface mechanism activity even when no recipient beat the best:
+        // fr only reflects the WINNER, so report total recombination separately.
+        if (params.verbosity >= 2 && !has_callback) {
+          Rprintf("    pairwise: %d suboptimal recip, total exchanges=%d\n",
+                  n_recip, pw_total_exch);
+        }
+      }
       // Diagnostic (verbosity>=2): a fuse ATTEMPT (this block only runs when the
       // pool has >=2 trees). exchanges>0 means tree_fuse actually recombined;
       // pair with "Fuse improved" to tell "fires-but-useless" from "never-fires".
