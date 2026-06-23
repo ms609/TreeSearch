@@ -874,10 +874,13 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   // (nz, nx, clip_node) + Pass3 + (IW: extract+compute_iw | EW: +ew_offset),
   // mirroring the SPR accept path but covering reroot via the clip_node seed.
   const bool na_incr_audit = std::getenv("TS_NA_INCR_AUDIT") != nullptr;
-  // TS_NA_INCR: the FAST path — use the incremental dirty rescore for the actual
-  // decision (not just audit). Validated end-to-end by byte-identical search
-  // outcome vs the legacy full_rescore path (TS_NA_INCR on vs off).
-  const bool na_incr = std::getenv("TS_NA_INCR") != nullptr && !na_incr_audit;
+  // Incremental dirty rescore is the PRODUCTION DEFAULT for exact_verify
+  // candidates (validated byte-identical to legacy full_rescore: per-candidate
+  // audit + 180/180 roster climbs + 40/40 mission cells; ~25-30% native-NA
+  // mission wall). Kill-switch TS_NA_NOINCR restores the legacy full_rescore
+  // path. Disabled in audit mode (which uses full_rescore for decisions).
+  // getenv is read per exact_verify call (per-convergence, not per-candidate).
+  const bool na_incr = std::getenv("TS_NA_NOINCR") == nullptr && !na_incr_audit;
   // Mirror score_tree/fitch_score_ew's dispatch exactly (NOT isfinite(concavity)):
   // weighted modes (IW/XPIWE/PROFILE) extract per-pattern steps + compute_weighted;
   // EW adds ew_offset. HSJ/XFORM have extra DP/Sankoff scoring score_tree wraps
