@@ -178,8 +178,9 @@ sectorial search.}
 \item{sectorMinSize, sectorMaxSize}{Integer; minimum and maximum clade
 sizes for sectorial search.}
 
-\item{rasStarts}{Integer; random-addition restarts (RAS + TBR) per sector in
-XSS/RSS.  \code{1} (default) polishes the current sector with a single TBR pass;
+\item{rasStarts}{Integer; random-addition sequence (\acronym{RAS}) + TBR
+restarts per sector in XSS/RSS. \code{1} (default) polishes the current sector
+with a single TBR pass;
 \code{n > 1} rebuilds the sector from scratch \code{n} times and keeps the best,
 following \insertCite{Goloboff1999;textual}{TreeSearch} RSS (TNT uses 3).
 Lets the search escape sector-local optima that a single TBR cannot leave.}

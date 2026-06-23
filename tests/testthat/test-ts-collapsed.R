@@ -157,9 +157,9 @@ test_that("Regraft merging: sparse data search succeeds with region skipping", {
   expect_gt(result2$n_zero_skipped, 0)
 })
 
-test_that("Collapsed pool dedup: driven search works with collapsed dedup", {
+test_that("Collapsed pool de-duplication: driven search works with collapsed de-duplication", {
   # Small dataset: run driven search and verify it completes without error.
-  # The collapsed pool dedup is exercised in the driven pipeline.
+  # The collapsed pool de-duplication is exercised in the driven pipeline.
   ds <- make_ts_data(TreeSearch::inapplicable.phyData[["Vinther2008"]])
 
   set.seed(7192)
