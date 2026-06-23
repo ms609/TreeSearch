@@ -12,12 +12,17 @@
 #include <climits>
 #include <cmath>
 #include <cstring>
+#include <chrono>
 
 #include <Rcpp.h>
 #include <R.h>
 #include <Rinternals.h>
 
 namespace ts {
+
+// Exact directional (Regime-C) NA TBR scoring — header-only; nests as ts::nadir.
+// Used by exact_verify_sweep's per-candidate audit (TS_NA_DIR_AUDIT).
+#include "ts_fitch_na_directional.h"
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
 // Word-at-a-time multiply-xor hash (faster than byte-by-byte FNV-1a).
@@ -866,6 +871,21 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   std::vector<std::pair<int,int>> sub_edges;
   std::vector<char> in_sub;
   std::vector<int> dfs, marked;
+  // M2 audit (dev-only): assert the exact directional NA score == full_rescore on
+  // EVERY candidate, in BOTH EW (concavity non-finite) and IW/profile (the default,
+  // concavity=-1) regimes.  candidate_score/whole_score dispatch on ds.scoring_mode.
+  // Runs on first-time scans (cached-optimal topologies covered by their first scan).
+  const bool na_dir_audit = std::getenv("TS_NA_DIR_AUDIT") != nullptr;
+  const double na_dir_tol = std::isfinite(ds.concavity) ? 1e-6 : 0.5;
+  // M3: the exact directional combine CAN be the per-candidate scorer (audited
+  // byte-identical to full_rescore in EW + IW).  Default OFF (opt-in via
+  // TS_NA_DIRECTIONAL): the first full-table implementation was ~85x SLOWER than
+  // the block-bitwise SIMD full_rescore (per-char scalar + per-candidate Msg
+  // allocation); under optimisation (on-demand single-entry combine) before any
+  // default flip.  Audit mode keeps the legacy path + cross-check, so the
+  // directional scorer is non-audit only.
+  const bool na_dir_scorer = std::getenv("TS_NA_DIRECTIONAL") != nullptr && !na_dir_audit;
+  nadir::ClipFolds na_dir_cf;
 
   // TS_NA_INCR_AUDIT: validate the incremental dirty-rescore of each candidate
   // against full_rescore (the prospective fast path for exact_verify). Decisions
@@ -895,6 +915,22 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
 
   tree.build_postorder();
   best_score = full_rescore(tree, ds);   // sync to the current (converged) tree
+
+  if (na_dir_audit) {
+    // Whole-tree cross-check (in whatever regime the search uses, EW or IW).
+    // Per-candidate cross-checks happen in the scan loop below.  The directional
+    // weighting arithmetic (weight*(1+upweight) + inactive-char skip) was
+    // separately validated against full_rescore under an imposed perturbed regime
+    // (upweight_mask set + active_mask sparse); that one-shot scaffolding has been
+    // removed (finding recorded in dev/plans/2026-06-19-na-directional-cpp-port.md
+    // §M2 — exact_verify_sweep itself never runs under perturbed weights, since the
+    // ratchet's TBR passes a non-null collapse cd that disables do_reroot).
+    double s_whole = nadir::whole_score(tree, ds);
+    if (std::fabs(s_whole - best_score) > na_dir_tol) {
+      Rcpp::stop("TS_NA_DIR_AUDIT whole-tree mismatch: directional=%.4f full_rescore=%.4f",
+                 s_whole, best_score);
+    }
+  }
 
   // Topology cache: exact_verify is a pure function of (topology, dataset,
   // weighting regime).  A FALSE result for topology T means every unrooted-TBR
@@ -955,6 +991,11 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
     collect_subtree_edges(tree, clip_node, sub_edges);   // fragment rerootings
     const int n_reroot = 1 + static_cast<int>(sub_edges.size());
 
+    // Build directional folds for this clip on the CLEAN tree (folds depend only
+    // on clip_node).  Tree is clean here: clip-loop start, subtree marking does
+    // not change topology, and each candidate restores before the next.
+    if (na_dir_scorer || na_dir_audit) nadir::build_clip_folds(tree, ds, clip_node, na_dir_cf);
+
     bool found = false;
     for (int ri = 0; ri < n_reroot && !found; ++ri) {
       int rp = (ri == 0) ? -1 : sub_edges[ri - 1].first;   // -1 => SPR (no reroot)
@@ -966,6 +1007,35 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
         if (above < 0 || above == nx) continue;
         if (ri == 0 && below == ns) continue; // identity (no reroot, original spot)
 
+        // FAST PATH: score the candidate WITHOUT applying it (O(1)/char exact).
+        // Non-improvers (the vast majority) cost only the combine — no
+        // apply_tbr_move / build_postorder / full_rescore / restore.
+        if (na_dir_scorer) {
+          double s = nadir::candidate_score(ds, na_dir_cf, rp, rc, below);
+          if (s >= best_score - eps) continue;   // not an improver: tree untouched
+          // improver: materialize it (apply + exact full_rescore to sync state)
+          if (!apply_tbr_move(tree, clip_node, rp, rc, above, below)) {
+            restore_topology(tree, snap);
+            continue;
+          }
+          tree.build_postorder();
+          double s_act = full_rescore(tree, ds);
+          if (s_act < best_score - eps) {
+            if (cache_hit) {                     // TS_EV_AUDIT: cache lied
+              Rcpp::stop("TS_EV_AUDIT: exact_verify cache returned FALSE (optimum) "
+                         "for a topology with an improving neighbour (%.4f < %.4f) "
+                         "- weighting-regime contamination in the cache key.",
+                         s_act, best_score);
+            }
+            best_score = s_act;
+            found = true;
+            break;
+          }
+          restore_topology(tree, snap);          // directional flagged it but exact
+          continue;                              // disagreed at eps boundary: skip
+        }
+
+        // LEGACY / AUDIT PATH: apply, full_rescore, (optionally) cross-check.
         if (!apply_tbr_move(tree, clip_node, rp, rc, above, below)) {
           restore_topology(tree, snap);
           continue;
@@ -1307,6 +1377,26 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Floating-point tolerance for score equality
   const double eps = use_iw ? 1e-10 : 0.0;
 
+  // DIAGNOSTIC (env TS_IW_TIMING): isolate IW-specific cost under REAL bail
+  // (production cutoffs), EW vs IW on the same data. Read ONCE (no per-clip
+  // getenv). t_clip_ns = the bail-INDEPENDENT per-clip IW precompute
+  // (extract_char_steps + compute_iw base + iw_delta; no EW analog); t_scan_ns
+  // = the bail-DEPENDENT per-candidate scan (EW x4-flat/popcount vs IW
+  // scalar-gather), normalised by n_evaluated. No-op unless the var is set.
+  const bool iw_timing = std::getenv("TS_IW_TIMING") != nullptr;
+  long long t_clip_ns = 0, t_spr_ns = 0, t_rer_ns = 0;
+  long long n_clips_t = 0, n_spr_t = 0, n_rer_t = 0;
+  // Pure-IW reroot 4-wide batching (T-245 ILP ported to IW). On by default;
+  // kill-switch TS_IW_NOX4 reverts to the scalar reroot path (for A/B). Read
+  // once (no per-clip getenv, per the getenv-cost lesson).
+  const bool iw_x4 = std::getenv("TS_IW_NOX4") == nullptr;
+  // Pure-IW extract_char_steps dirty-region: derive per-clip divided_steps
+  // incrementally (full_char_steps + cs_delta - nx) instead of the O(n_node)
+  // walk. On by default; kill-switch TS_IW_NODIRTY reverts to extract+add.
+  const bool iw_dirty = std::getenv("TS_IW_NODIRTY") == nullptr;
+  // DIAGNOSTIC: per-clip compare dirty divided_steps vs extract+add baseline.
+  const bool iw_dirtychk = std::getenv("TS_IW_DIRTYCHK") != nullptr;
+
   // Check if any block has inapplicable characters (for state snapshot)
   bool has_na = false;
   for (int b = 0; b < ds.n_blocks; ++b) {
@@ -1400,6 +1490,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   if (use_iw) {
     divided_steps.resize(ds.n_patterns, 0);
     iw_delta.resize(ds.n_patterns, 0.0);
+  }
+  // IW dirty-region buffers: F = full-tree char_steps (refreshed when the tree
+  // changes, f_dirty), cs_delta = per-clip path delta (filled by the downpass),
+  // nx_cs = clip-parent's per-pattern contribution. Pure-IW only.
+  // Both opts are restricted to implied weights (ScoringMode::IW). `use_iw`
+  // (isfinite concavity) is ALSO true for PROFILE/XPIWE, which share the
+  // weighted indirect scan but NOT the char_steps conventions the dirty-region
+  // assumes (profile diverged in validation); they keep the original path.
+  const bool iw_mode = (ds.scoring_mode == ScoringMode::IW);
+  const bool iw_dirty_active = iw_mode && !has_na && iw_dirty;
+  std::vector<int> full_char_steps, cs_delta, nx_cs;
+  if (iw_dirty_active) {
+    full_char_steps.resize(ds.n_patterns, 0);
+    cs_delta.resize(ds.n_patterns, 0);
+    nx_cs.resize(ds.n_patterns, 0);
   }
 
   // Subtree sizes for smaller-subtree filtering
@@ -1516,6 +1621,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     save_topology(tree, snap);
     state_snap.save(tree);
 
+    // IW dirty-region: refresh the full-tree char_steps cache F at the pass
+    // start. clip-undo restores every clip in this pass to exactly this tree
+    // (verified by TS_REVERT_CHECK), so F is valid for all clips in the pass;
+    // per-clip derivation is F + cs_delta - nx_cs.  Refreshing here (not on
+    // accept) aligns F with the snapshot the clips actually restore to.
+    if (iw_dirty_active) extract_char_steps(tree, ds, full_char_steps);
+
     // Reset per-pass diagnostic counters
     pass_clips_tried = 0;
     pass_candidates_evaluated = 0;
@@ -1592,41 +1704,80 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         fitch_na_incremental_uppass(tree, ds, nz);
         divided_length = static_cast<double>(fitch_na_pass3_score(tree, ds));
       } else {
-        int delta = fitch_incremental_downpass(tree, ds, nz);
+        int delta = fitch_incremental_downpass(tree, ds, nz,
+            iw_dirty_active ? &cs_delta : nullptr);
         fitch_incremental_uppass(tree, ds, nz);
 
+        if (iw_dirty_active) std::fill(nx_cs.begin(), nx_cs.end(), 0);
         int nx_cost = 0;
         for (int b = 0; b < ds.n_blocks; ++b) {
           uint64_t lc = tree.local_cost[static_cast<size_t>(nx) * tree.n_blocks + b];
           int nu = popcount64(lc);
           if (ds.blocks[b].upweight_mask) nu += popcount64(lc & ds.blocks[b].upweight_mask);
           nx_cost += ds.blocks[b].weight * nu;
+          if (iw_dirty_active) {
+            // nx is spliced out by the divided tree; capture its per-pattern
+            // contribution (raw local_cost bits, matching extract_char_steps).
+            const int* pidx = ds.blocks[b].pattern_index;
+            uint64_t m = lc;
+            while (m) { int c = ctz64(m); nx_cs[pidx[c]]++; m &= m - 1; }
+          }
         }
         divided_length = best_score + delta - nx_cost;
       }
 
       // For weighted scoring (IW or profile): precompute base score and deltas
       double base_iw = 0.0;
+      std::chrono::steady_clock::time_point _t_clip;
+      if (iw_timing) _t_clip = std::chrono::steady_clock::now();
       if (use_iw) {
-        std::fill(divided_steps.begin(), divided_steps.end(), 0);
-        extract_char_steps(tree, ds, divided_steps);
-        // extract_char_steps walks only the clipped (divided) postorder, so the
-        // clipped subtree's internal steps are missing; add them back so base_iw
-        // matches the EW divided_length convention (divided_tree + clip_internal)
-        // and the indirect candidate base_iw + reconnect_delta is exact.
-        // Pure-IW only.  The clipped subtree's internal Fitch length is
-        // root- AND attachment-invariant, so adding it back makes the IW
-        // indirect candidate (base_iw + reconnect_delta) EXACT.  NOT applied
-        // under inapplicables: the NA Pass-3 internal step count is
-        // attachment-DEPENDENT (down2 reads whole-tree uppass context), so it
-        // cannot make the NA scan exact — it would be an unvalidated change to
-        // production rooted-NA scoring.  NA instead reaches true unrooted
-        // optima via the physical-reroot path (see the has_na dispatch below).
-        if (!has_na) {
-          add_clip_internal_steps(tree, ds, clip_node, divided_steps);
+        if (iw_dirty_active) {
+          // Dirty-region: divided_steps = (divided tree + clip internal) char
+          // counts = F + cs_delta - nx_cs.  This is the per-pattern analog of
+          // the EW divided_length = best_score + delta - nx_cost computed above
+          // (which likewise keeps the attachment-invariant clip-internal steps),
+          // so it equals extract_char_steps + add_clip_internal_steps but in
+          // O(path) not O(n_node).  Pure-IW only (NA Pass-3 is attachment-dep).
+          for (int p = 0; p < ds.n_patterns; ++p)
+            divided_steps[p] = full_char_steps[p] + cs_delta[p] - nx_cs[p];
+          if (iw_dirtychk) {
+            // Oracle: per-clip compare against the extract+add baseline.
+            std::vector<int> ref(ds.n_patterns, 0);
+            extract_char_steps(tree, ds, ref);
+            add_clip_internal_steps(tree, ds, clip_node, ref);
+            for (int p = 0; p < ds.n_patterns; ++p)
+              if (ref[p] != divided_steps[p]) {
+                REprintf("DIRTYCHK clip=%d p=%d dirty=%d ref=%d\n",
+                         clip_node, p, divided_steps[p], ref[p]);
+                break;
+              }
+          }
+        } else {
+          std::fill(divided_steps.begin(), divided_steps.end(), 0);
+          extract_char_steps(tree, ds, divided_steps);
+          // extract_char_steps walks only the clipped (divided) postorder, so the
+          // clipped subtree's internal steps are missing; add them back so base_iw
+          // matches the EW divided_length convention (divided_tree + clip_internal)
+          // and the indirect candidate base_iw + reconnect_delta is exact.
+          // Pure-IW only.  The clipped subtree's internal Fitch length is
+          // root- AND attachment-invariant, so adding it back makes the IW
+          // indirect candidate (base_iw + reconnect_delta) EXACT.  NOT applied
+          // under inapplicables: the NA Pass-3 internal step count is
+          // attachment-DEPENDENT (down2 reads whole-tree uppass context), so it
+          // cannot make the NA scan exact — it would be an unvalidated change to
+          // production rooted-NA scoring.  NA instead reaches true unrooted
+          // optima via the physical-reroot path (see the has_na dispatch below).
+          if (!has_na) {
+            add_clip_internal_steps(tree, ds, clip_node, divided_steps);
+          }
         }
         base_iw = compute_weighted_score(ds, divided_steps);
         precompute_weighted_delta(ds, divided_steps, iw_delta);
+      }
+      if (iw_timing) {
+        t_clip_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now() - _t_clip).count();
+        ++n_clips_t;
       }
 
       // Exact directional insertion edge sets for the pure-EW path; computed
@@ -1676,6 +1827,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // old ternary's first-candidate branch.
       int cutoff = INT_MAX;
 
+      std::chrono::steady_clock::time_point _t_scan;
+      long long _e_spr = n_evaluated;
+      if (iw_timing) _t_scan = std::chrono::steady_clock::now();
       for (auto& [above, below] : main_edges) {
         if (above == nz && below == ns) continue;
         if (sector_mask && !(*sector_mask)[below]) continue;
@@ -1741,6 +1895,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           best_reroot_child = -1;
           cutoff = static_cast<int>(best_candidate - divided_length + 1);
         }
+      }
+      if (iw_timing) {
+        t_spr_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now() - _t_scan).count();
+        n_spr_t += n_evaluated - _e_spr;
       }
 
       // TBR candidates (rerooting) — with vroot cache (optimization #4)
@@ -1813,6 +1972,9 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           if (!skip) kept_ei.push_back(ei);
         }
 
+        std::chrono::steady_clock::time_point _t_scan2;
+        long long _e_rer = n_evaluated;
+        if (iw_timing) _t_scan2 = std::chrono::steady_clock::now();
         for (auto& [sp, sc] : sub_edges) {
           if (sp == clip_node) continue;
 
@@ -1915,6 +2077,56 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 }
               }
             }
+          } else if (iw_mode && !has_na && iw_x4) {
+            // === IW 4-wide batch (pure-IW; T-245 ILP ported to IW) ===
+            // Same candidate-selection + bookkeeping as the EW flat-x4 above,
+            // but scores via indirect_iw_cached_flat_x4 (double accumulators).
+            int ei = 0;
+            while (ei < n_main) {
+              int b_ei[4];
+              int b_n = 0;
+              while (ei < n_main && b_n < 4) {
+                auto& [ab, bl] = main_edges[ei];
+                bool skip = ((ab == nz && bl == ns) && !do_reroot)
+                    || (sector_mask && !(*sector_mask)[bl])
+                    || (constrained && regraft_violates_constraint(bl, *cd))
+                    || (!collapsed.empty() && collapsed[bl]);
+                if (!skip) b_ei[b_n++] = ei;
+                ++ei;
+              }
+              if (b_n == 0) break;
+
+              double scores[4] = {best_candidate, best_candidate,
+                                  best_candidate, best_candidate};
+              if (b_n == 4) {
+                indirect_iw_cached_flat_x4(
+                    virtual_prelim.data(),
+                    &vroot_cache[static_cast<size_t>(b_ei[0]) * tw],
+                    &vroot_cache[static_cast<size_t>(b_ei[1]) * tw],
+                    &vroot_cache[static_cast<size_t>(b_ei[2]) * tw],
+                    &vroot_cache[static_cast<size_t>(b_ei[3]) * tw],
+                    ds, base_iw, iw_delta, best_candidate, scores);
+              } else {
+                for (int k = 0; k < b_n; ++k) {
+                  scores[k] = indirect_iw_length_cached(
+                      virtual_prelim.data(),
+                      &vroot_cache[static_cast<size_t>(b_ei[k]) * tw],
+                      ds, base_iw, iw_delta, best_candidate);
+                }
+              }
+
+              n_evaluated += b_n;
+              for (int k = 0; k < b_n; ++k) {
+                double candidate = scores[k];
+                if (candidate < best_candidate) {
+                  best_candidate = candidate;
+                  best_above = main_edges[b_ei[k]].first;
+                  best_below = main_edges[b_ei[k]].second;
+                  best_reroot_parent = sp;
+                  best_reroot_child = sc;
+                }
+              }
+            }
           } else {
             // === Scalar path (IW, or ratchet with upweight_mask) ===
             const int n_kept = static_cast<int>(kept_ei.size());
@@ -1978,6 +2190,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               }
             }
           }
+        }
+        if (iw_timing) {
+          t_rer_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
+              std::chrono::steady_clock::now() - _t_scan2).count();
+          n_rer_t += n_evaluated - _e_rer;
         }
       }
 
@@ -2314,6 +2531,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     Rprintf("[B2_CEILING] aggressive-skippable SPR-regraft candidates: "
             "%lld / %lld evaluated = %.3f%% (work-weighted ceiling)\n",
             n_b2_aggr, n_b2_eval, 100.0 * n_b2_aggr / n_b2_eval);
+  }
+  if (iw_timing) {
+    REprintf("IWT regime=%s clips=%.0f clip_us/clip=%.3f | "
+             "SPR n=%.0f %.2fns | REROOT n=%.0f %.2fns | total %.1fms\n",
+             use_iw ? "IW" : "EW", (double)n_clips_t,
+             n_clips_t ? t_clip_ns / 1000.0 / (double)n_clips_t : 0.0,
+             (double)n_spr_t, n_spr_t ? (double)t_spr_ns / (double)n_spr_t : 0.0,
+             (double)n_rer_t, n_rer_t ? (double)t_rer_ns / (double)n_rer_t : 0.0,
+             (t_clip_ns + t_spr_ns + t_rer_ns) / 1e6);
   }
 
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
