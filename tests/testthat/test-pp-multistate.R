@@ -260,3 +260,27 @@ test_that("log-quadratic interpolation produces monotone IC", {
   # First entry has positive information
   expect_true(info[1L] > 0)
 })
+
+test_that("Monte Carlo step information is reproducible under set.seed()", {
+  # Regression: random_tree() drew from an unseeded global MWC generator whose
+  # state advanced across calls and ignored R's RNG, so the Monte Carlo
+  # information estimate varied between identical calls -- the root cause of
+  # non-deterministic profile parsimony under a fixed seed. mc_fitch_scores()
+  # now seeds that generator from R's RNG.
+  sc <- c(8L, 8L, 7L)
+  set.seed(99L); a <- TreeSearch:::mc_fitch_scores(sc, 20000L)
+  set.seed(99L); b <- TreeSearch:::mc_fitch_scores(sc, 20000L)
+  expect_identical(a, b)
+
+  # The seed must actually control the stream: a different seed gives a
+  # different (over-)whelmingly-improbable-to-collide draw.
+  set.seed(7L); cc <- TreeSearch:::mc_fitch_scores(sc, 20000L)
+  expect_false(identical(a, cc))
+
+  # The same property must hold one level up, through StepInformation()'s MC
+  # path (infeasible 3-state character forces approx = "mc").
+  char <- rep(c("0", "1", "2"), c(13, 13, 12))
+  set.seed(123L); s1 <- StepInformation(char, approx = "mc", n_mc = 20000L)
+  set.seed(123L); s2 <- StepInformation(char, approx = "mc", n_mc = 20000L)
+  expect_identical(s1, s2)
+})

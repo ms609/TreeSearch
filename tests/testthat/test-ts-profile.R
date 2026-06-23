@@ -305,3 +305,32 @@ test_that("Binary-only dataset: profile scores unchanged by multi-state code", {
                                verbosity = 0L)
   expect_true(is.finite(attr(result, "score")))
 })
+
+test_that("profile search with Monte Carlo info is reproducible under set.seed()", {
+  # Regression: the Monte Carlo profile-information estimate (used when the
+  # exact solver is infeasible) drew random trees from an unseeded generator,
+  # so two MaximizeParsimony(concavity = "profile") runs with the same seed
+  # returned different scores.  Forcing profile_approx = "mc" exercises that
+  # path on a small dataset; the same seed must now give an identical result,
+  # and a different seed a (near-certainly) different one.  Replicate-bounded
+  # (maxSeconds = 0) so the only remaining randomness is the seeded RNG.
+  data("inapplicable.phyData", package = "TreeSearch")
+  phy0 <- inapplicable.phyData[["Vinther2008"]]
+  m <- TreeTools::PhyDatToMatrix(phy0, ambigNA = FALSE)
+  m[m == "-"] <- "?"                       # pure Fitch (has_na = FALSE)
+  phy <- TreeTools::MatrixToPhyDat(m)
+
+  searchScore <- function(seed) {
+    set.seed(seed)
+    min(attr(suppressWarnings(suppressMessages(
+      MaximizeParsimony(phy, concavity = "profile", profile_approx = "mc",
+                        maxReplicates = 2L, maxSeconds = 0, nThreads = 1L,
+                        verbosity = 0L))), "score"))
+  }
+
+  s_a <- searchScore(99L)
+  s_b <- searchScore(99L)
+  s_c <- searchScore(42L)
+  expect_equal(s_a, s_b)                          # same seed -> identical
+  expect_false(isTRUE(all.equal(s_a, s_c)))       # different seed -> different
+})

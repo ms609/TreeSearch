@@ -10,7 +10,18 @@
 
 /* Global static variables: */
 static unsigned long z = 362436069, w = 521288629;
-/* Use random seeds to reset z and w*/
+
+/* Reseed the MWC generator so that callers can make random-tree generation
+ * reproducible under R's set.seed().  Without this the generator runs from a
+ * fixed initial state that advances across calls and ignores R's RNG entirely,
+ * making any consumer (e.g. the Monte Carlo profile-parsimony information
+ * estimate in mc_fitch_scores) non-deterministic under a fixed seed.
+ * A zero z or w collapses the corresponding MWC stream to a fixed point, so
+ * fall back to the original non-zero constants if a zero seed is supplied. */
+void seed_random_tree(unsigned long zs, unsigned long ws) {
+  z = zs ? zs : 362436069UL;
+  w = ws ? ws : 521288629UL;
+}
 
 void insert_tip_below (const int *new_tip,
                        const int *add_below, const int *new_node,

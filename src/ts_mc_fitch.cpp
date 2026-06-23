@@ -7,6 +7,7 @@
 
 extern "C" {
   void random_tree(int *parent_of, int *left, int *right, const int *n_tip);
+  void seed_random_tree(unsigned long zs, unsigned long ws);
 }
 
 using namespace Rcpp;
@@ -33,6 +34,14 @@ IntegerVector mc_fitch_scores(IntegerVector state_counts, int n_mc) {
   int n = 0;
   for (int i = 0; i < k; i++) n += state_counts[i];
   if (n < 2) return IntegerVector(n_mc, 0);
+
+  // Seed the random-tree MWC generator from R's RNG so that profile parsimony
+  // (whose Monte Carlo information estimate scores random trees via this path)
+  // is reproducible under set.seed().  The Rcpp wrapper has already established
+  // an RNGScope, so R's RNG state is loaded; draw two non-zero 32-bit seeds.
+  unsigned long zs = 1UL + static_cast<unsigned long>(R::unif_rand() * 4294967294.0);
+  unsigned long ws = 1UL + static_cast<unsigned long>(R::unif_rand() * 4294967294.0);
+  seed_random_tree(zs, ws);
 
   // Build tip state bitmasks: one bit per state
   std::vector<uint32_t> tip_state(n);
