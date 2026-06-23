@@ -119,3 +119,69 @@ test_that("TBR dirty-set rescore matches full rescore (NA-IW dataset, many accep
     validate_result(result, n_tip)
   }
 })
+
+test_that("XPIWE x4 + dirty-region opts are byte-identical to opts-off (port guard)", {
+  # Regression guard for the IW->XPIWE opt port (src/ts_tbr.cpp `iw_family`
+  # gate): the x4 reroot batch + extract_char_steps dirty-region must produce
+  # byte-identical scores to the opts-off scalar path on the PRODUCTION XPIWE
+  # path (MaximizeParsimony defaults to extended IW => ScoringMode::XPIWE).
+  # Before the port these opts were gated to plain ScoringMode::IW and so never
+  # ran under MaximizeParsimony; this asserts the widening did not perturb
+  # XPIWE scores. Requires:
+  #   - pure-XPIWE: recode "-"->"?" so has_na = FALSE (the opts are !has_na-gated)
+  #   - ratchetCycles >= 3: a perturbation can then fully deactivate a block,
+  #     the regime that surfaced the nx_cs/active_mask consistency bug (the
+  #     dirty-region's per-clip internal invariant is itself guarded by the C++
+  #     TS_IW_DIRTYCHK oracle; this test guards the opts' externally-visible
+  #     byte-identity).
+  skip_if_not_installed("TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
+  m <- PhyDatToMatrix(inapplicable.phyData[["Vinther2008"]], ambigNA = FALSE)
+  m[m == "-"] <- "?"                      # pure-XPIWE: has_na = FALSE
+  d <- MatrixToPhyDat(m)
+  ctrl <- SearchControl(ratchetCycles = 4L, xssRounds = 0L, rssRounds = 0L,
+                        cssRounds = 0L, driftCycles = 0L)
+  # Opts are default-OFF on the shared branch: the "on" arm explicitly enables
+  # them (TS_IW_X4 / TS_IW_DIRTY) so the kernel fires; "off" is the scalar base.
+  run <- function(opts_on) {
+    if (opts_on) { Sys.setenv(TS_IW_X4 = "1"); Sys.setenv(TS_IW_DIRTY = "1") }
+    else         { Sys.unsetenv("TS_IW_X4");   Sys.unsetenv("TS_IW_DIRTY") }
+    set.seed(909)
+    r <- suppressWarnings(MaximizeParsimony(
+      d, concavity = 10, maxReplicates = 1L, nThreads = 1L,
+      verbosity = 0L, control = ctrl))
+    min(attr(r, "score"))
+  }
+  on.exit({ Sys.unsetenv("TS_IW_X4"); Sys.unsetenv("TS_IW_DIRTY") }, add = TRUE)
+  score_on  <- run(TRUE)
+  score_off <- run(FALSE)
+  expect_equal(score_on, score_off, tolerance = 0)
+})
+
+test_that("NA-IW x4 reroot batch is byte-identical to scalar (NA port guard)", {
+  # Regression guard for indirect_na_iw_cached_flat_x4 (src/ts_fitch.cpp) wired
+  # into the iw_family scan branch (src/ts_tbr.cpp): the 4-wide NA-IW reroot
+  # batch must produce byte-identical scores to the one-at-a-time scalar
+  # indirect_na_iw_length_cached on the IW+NA / XPIWE+NA path.  This is the
+  # complement of the port guard above: that one RECODES "-"->"?" (has_na =
+  # FALSE, exercising the no-NA IW x4); this one KEEPS the inapplicable
+  # characters (has_na = TRUE) so the NA-aware batch kernel actually fires.
+  # Default-OFF: TS_IW_X4 toggles the batch on; off falls through to scalar.
+  skip_if_not_installed("TreeSearch")
+  data("inapplicable.phyData", package = "TreeSearch")
+  d <- inapplicable.phyData[["Vinther2008"]]   # keep "-"; has_na = TRUE
+  ctrl <- SearchControl(ratchetCycles = 4L, xssRounds = 0L, rssRounds = 0L,
+                        cssRounds = 0L, driftCycles = 0L)
+  run <- function(x4_on) {
+    if (x4_on) Sys.setenv(TS_IW_X4 = "1") else Sys.unsetenv("TS_IW_X4")
+    set.seed(717)
+    r <- suppressWarnings(MaximizeParsimony(
+      d, concavity = 10, maxReplicates = 1L, nThreads = 1L,
+      verbosity = 0L, control = ctrl))
+    min(attr(r, "score"))
+  }
+  on.exit(Sys.unsetenv("TS_IW_X4"), add = TRUE)
+  score_x4  <- run(TRUE)
+  score_scalar <- run(FALSE)
+  expect_equal(score_x4, score_scalar, tolerance = 0)
+})

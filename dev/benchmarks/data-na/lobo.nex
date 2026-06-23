@@ -1,0 +1,1812 @@
+#NEXUS
+
+    [ File output by Morphobank v3.0 (http://www.morphobank.org); 2023-05-09 11.38.24 ]
+
+    BEGIN TAXA;
+    DIMENSIONS NTAX=102;
+    TAXLABELS
+    		'Gastrotricha'
+		'Lineus'
+		'Solenogastres'
+		'Nereis annelida'
+		'Eokinorhynchus rara'
+		'K antygomonas paulae'
+		'K cateria gerlachi'
+		'K campyloderes cf vanhoeffeni'
+		'K centroderes spinosus'
+		'K dracoderes abei'
+		'K echinoderes dujardinii'
+		'K zelinkaderes klepali'
+		'K paracentrophyes anurus'
+		'K pycnophyes zelinkaei'
+		'K franciscideres kalenesos'
+		'Nanaloricus mysticus'
+		'Pliciloricus'
+		'Eolorica deadwoodensis'
+		'Sirilorica carlsbergi'
+		'Orstenoloricus shergoldii'
+		'Acosmia'
+		'Shergoldana australiensis'
+		'Gordioid nmorpha Chordodes'
+		'Nematomorpha nectonema'
+		'Nematoda kinonchulus'
+		'Nematoda anatonchus'
+		'Acanthopriapulus horridus'
+		'Halicryptus spinulosus'
+		'Maccabeus'
+		'Meiopriapulus fijiensis'
+		'Priapulopsis bicaudatus'
+		'Priapulus caudatus'
+		'Tubiluchus lemburgi'
+		'Tubiluchus vanuatensis'
+		'Markuelia lauriei'
+		'Ancalagon minor'
+		'Eopriapulites sphinx'
+		'Eximipriapulus globocaudata'
+		'Fieldia lanceolata'
+		'Laojieella thecata'
+		'Ottoia prolifica'
+		'Ottoia tricuspida'
+		'Palaeopriapulites parvus'
+		'Paratubiluchus bicaudatus'
+		'Priapulites konecniorum'
+		'Scolecofurca rara'
+		'Selkirkia columbia'
+		'Paraselkirkia sinica'
+		'Sicyophorus rarus'
+		'Xiaoheiqingella peculiaris'
+		'CHALAZOSCOLEX pharkus'
+		'CORYNETIS brevis'
+		'CRICOCOSMIA jinningensis'
+		'GUANDUSCOLEX minor'
+		'LOUISELLA pedunculata'
+		'MAFANGSCOLEX'
+		'MAOTIANSHANIA cylindrica'
+		'PALAEOSCOLEX piscatorum'
+		'SCHISTOSCOLEX umbilicatus'
+		'SCATHASCOLEX minor'
+		'TABELLISCOLEX hexagonus'
+		'TYLOTITES petiolaris'
+		'WRONASCOLEX antiquus'
+		'WRONASCOLEX iacoborum'
+		'XYSTOSCOLEX boreogyrus'
+		'YUNNANOSCOLEX magnus'
+		'Aysheaia'
+		'Siberion'
+		'Onychodictyon ferox'
+		'Onychodictyon gracilis'
+		'Diania'
+		'Xenusion'
+		'Paucipodia'
+		'Microdictyon'
+		'Cardiodictyon'
+		'Hallucigenia sparsa'
+		'Hallucigenia fortis'
+		'Hallucigenia hongmeia'
+		'Luolishania'
+		'Collins monster Emu Bay'
+		'Orstenotubulus'
+		'Antennacanthopodia'
+		'Ilyodes'
+		'Euperipatoides onychophora'
+		'Actinarctus heterotardigrada'
+		'Halobiotus eutardigrada'
+		'Siberian orsten tardigrade'
+		'Megadictyon'
+		'Jianshanopodia'
+		'Hadranax'
+		'Kerygmachela'
+		'Pambdelurion'
+		'Opabinia'
+		'Anomalocaris'
+		'Peytoia'
+		'Hurdia'
+		'Fuxianhuia'
+		'Chengjiangocaris'
+		'Leanchoilia'
+		'Alalcomenaeus'
+		'Misszhouia longicaudata'
+		'Kuamaia lata'
+    ;
+    ENDBLOCK;
+
+    BEGIN CHARACTERS;
+	DIMENSIONS NCHAR=251;
+	FORMAT DATATYPE=STANDARD GAP=- MISSING=? SYMBOLS="0123456";
+	CHARLABELS
+		 [1] 'Paired appendages'
+		 [2] 'Mouth opening orientation'
+		 [3] 'Anterior region covered by sclerites'
+		 [4] 'Head shield formed by fused cephalic segments'
+		 [5] 'Arcuate anterior sclerite associated with eye-stalks'
+		 [6] 'Serially repeated mid-gut glands'
+		 [7] 'Polythyridium'
+		 [8] 'Nature of post-ocular (post-protocerebral) body appendages'
+		 [9] 'Sclerotization of pre-ocular (protocerebral) limb pair'
+		 [10] 'Pre-ocular (protocerebral) limb pair with arthrodial membranes'
+		 [11] 'Nature of post-ocular lobopodous inner branch'
+		 [12] 'Nature of first post-ocular (deutocerebral) appendage'
+		 [13] 'Deutocerebral limb pair structurally differentiated from rest of trunk appendages'
+		 [14] 'Position of pre-ocular (protocerebral) appendage pair'
+		 [15] 'Pre-ocular (protocerebral) appendage pair fused'
+		 [16] 'Nature of pre-ocular (protocerebral) appendage fusion'
+		 [17] 'Spines/spinules on pre-ocular (protocerebral) appendage'
+		 [18] 'Number of spine/spinule series on pre-ocular (protocerebral) frontal appendage'
+		 [19] 'Coplanar spine/spinule series in pre-ocular (protocerebral) frontal appendages'
+		 [20] 'Multifurcate distal termination of protocerebral appendage'
+		 [21] 'Eyes'
+		 [22] 'Eye attachment'
+		 [23] 'Type of eyes'
+		 [24] 'Aspect ratio of body length to (maximum) trunk width in adult'
+		 [25] 'Clear differentiation of dorsal and ventral trunk'
+		 [26] 'Epidermal segmentation'
+		 [27] 'Annulations'
+		 [28] 'Organization of trunk annulation'
+		 [29] 'Circular body musculature'
+		 [30] 'Skeletal musculature'
+		 [31] 'Distinct introvert'
+		 [32] 'Differentiated region of anterior trunk'
+		 [33] 'Undifferentiated anterior trunk annulations become indistinct'
+		 [34] 'Posterior trunk with localised bulbous widening'
+		 [35] 'Tergal plates, connected by arthrodial membranes'
+		 [36] 'Sternites connected by arthrodial membranes'
+		 [37] 'Anterior margin of first sternite bears lateral projections'
+		 [38] 'Anterior margin of first sternites bears medial notch'
+		 [39] 'Posterior ventral spine on first sternite'
+		 [40] 'Second segment is a single ring'
+		 [41] 'Sternal plates in trunk segments 7+'
+		 [42] 'Sternal plates in third and fourth segment'
+		 [43] 'Sternal plates in terminal segment'
+		 [44] 'Lateroventral notches in posterior sternite margins'
+		 [45] 'Dorsal extension of posterior sternite margins'
+		 [46] 'Dorsal extension of posterior sternite margins extended into spinose process'
+		 [47] 'Dorsal bands of lanceolate blades'
+		 [48] 'Setae on sternal plates'
+		 [49] 'Posterior sternal plate bears lateral terminal spines'
+		 [50] 'Posterior sternal plate bears lateral accessory spines'
+		 [51] 'Posterior sternal plate bears medial spine'
+		 [52] 'Adult trunk covered with epidermal papillae or plates'
+		 [53] 'Epidermal plates constitution'
+		 [54] 'Epidermal plates shape'
+		 [55] 'Epidermal plates include trunk tubuli'
+		 [56] 'Epidermal plates profile'
+		 [57] 'Epidermal plates nodes'
+		 [58] 'Epidermal plate nodes number of rings'
+		 [59] 'Epidermal plate nodes number in central ring'
+		 [60] 'Epidermal plate nodes number in central ring is constant'
+		 [61] 'Epidermal plate nodes exact number of nodes in central ring (if four to six)'
+		 [62] 'Epidermal plates distribution'
+		 [63] 'Epidermal papillae distribution in two ventral rows'
+		 [64] 'Epidermal plate rows distribution'
+		 [65] 'Epidermal plate rows number of plate fields'
+		 [66] 'Epidermal plate rows distribution of plates within fields'
+		 [67] 'Epidermal plates platelets present in addition to plates'
+		 [68] 'Epidermal platelets with radial supporting buttresses'
+		 [69] 'Epidermal plates microplates present in addition to plates'
+		 [70] 'Epidermal plates tessellation'
+		 [71] 'Regularly spaced dorsolateral epidermal specializations'
+		 [72] 'Nature of paired epidermal specialization'
+		 [73] 'Proportions of epidermal trunk evaginations'
+		 [74] 'Trunk epidermal evaginations with acute distal termination'
+		 [75] 'Acute distal termination in epidermal evagination is curved'
+		 [76] 'Sclerotization of epidermal evaginations'
+		 [77] 'Dorsal trunk sclerite ornament'
+		 [78] 'Sclerites consist of a stack of constituent elements'
+		 [79] 'Maximum number of dorsal epidermal specializations in each transverse band'
+		 [80] 'Trunk exites'
+		 [81] 'Form of exite'
+		 [82] 'Exite and endopod fused (biramy)'
+		 [83] 'Antero-posteriorly compressed protopodite with gnathobasic endites in post-deutocerebral appendage pair'
+		 [84] 'Secondary structures on lobopodous limbs'
+		 [85] 'Nature of secondary structure'
+		 [86] 'Papillae on lobopodous limbs'
+		 [87] 'Finger-like elements in distal tip of limbs'
+		 [88] 'Terminal claws on trunk limbs'
+		 [89] 'Terminal claws with multiple branches '
+		 [90] 'Number of claws on trunk limbs '
+		 [91] 'External branch expressed as lateral flaps (body extends laterally into imbricated, unsclerotized flaps)'
+		 [92] 'Longitudinal (gill-like) wrinkling on distal part of (outer branch) flaps'
+		 [93] 'Strengthening rays in lateral flaps'
+		 [94] 'Posterior tapering of lateral flaps'
+		 [95] 'Lobopodous limbs differentiated into two batches of multiple anterior/long and posterior/short limbs'
+		 [96] 'Appendages comprise 15 or more podomeres'
+		 [97] 'Posterior tagma composed of three paired lateral flaps'
+		 [98] 'Posteriormost pair of trunk appendages structurally differentiated'
+		 [99] 'Nature of differentiated posteriormost appendages'
+		 [100] 'Nature of appendicular tail'
+		 [101] 'Direction of claws on posteriormost appendage pair'
+		 [102] 'Invaginable introvert'
+		 [103] 'Extent of introvert invagination'
+		 [104] 'Two rings of introvert retractors attach through the collar-shaped brain'
+		 [105] 'Eversible pharynx'
+		 [106] 'Zone III eversible'
+		 [107] 'Pharynx permanently everted'
+		 [108] 'Size of pharynx when everted'
+		 [109] 'Introvert or pharynx employed in locomotion'
+		 [110] 'Pharyngeal lumina symmetry'
+		 [111] 'Introvert symmetry pentaradial'
+		 [112] 'Introvert symmetry twentyfive-fold'
+		 [113] 'Introvert symmetry hexaraidal'
+		 [114] 'Introvert symmetry nineteen-fold'
+		 [115] 'Elements that comprise first three circlets define number of longitudinal rows of elements on the introvert'
+		 [116] 'Zone III wider than Zone II'
+		 [117] 'Bulb at terminal pharynx'
+		 [118] 'Large dorsal tooth'
+		 [119] 'Zone I armature'
+		 [120] 'Zone I armature direction'
+		 [121] 'Zone I armature number of circlets'
+		 [122] 'Zone I armature elements in two superposed series'
+		 [123] 'Zone I armature arrangement,'
+		 [124] 'Zone I armature: row orientation'
+		 [125] 'Zone I armature cuticularized'
+		 [126] 'Zone I armature elements solid'
+		 [127] 'Zone I armature elements elongate'
+		 [128] 'Zone I armature elements curved'
+		 [129] 'Zone I armature elements bifurcating'
+		 [130] 'Zone I armature elements dentate'
+		 [131] 'Zone I armature elements comprising articulated units'
+		 [132] 'Zone I armature elements bearing setules'
+		 [133] 'Zone I armature elements telescopic'
+		 [134] 'Zone I armature elements hooded'
+		 [135] 'Zone II armature'
+		 [136] 'Zone II armature element constitution'
+		 [137] 'Zone II armature differentiated scalids'
+		 [138] 'Zone II armature number of elements in proximal circlet'
+		 [139] 'Zone II armature element morphology'
+		 [140] 'Zone II armature elements with multiple cusps'
+		 [141] 'Proximal circlet of Zone II armature fused to introvert'
+		 [142] 'Zone III armature'
+		 [143] 'Zone III armature retained to adulthood'
+		 [144] 'Zone III armature composition'
+		 [145] 'Zone III armature number of circlets'
+		 [146] 'Zone III armature number of pentagonal circlets in proximal region'
+		 [147] 'Proximal circlet of Zone III armature number of elements'
+		 [148] 'Proximal circlet of Zone III armature which multiple of five'
+		 [149] 'Proximal circlet of Zone III armature dorsal element reduced'
+		 [150] 'Proximal circlet of Zone III armature massively reduced'
+		 [151] 'Proximal circlet of Zone III armature of alternating size'
+		 [152] 'Proximal circlet of Zone III armature is morphologically differentiated'
+		 [153] 'Proximal circlet of Zone III armature elements with prominent central spine'
+		 [154] 'Proximal circlet of Zone III armature prominent central spine recurved (hooked)'
+		 [155] 'Proximal circlet of Zone III armature elements bear additional robust spines (multispinose) or pectinate fringe'
+		 [156] 'Proximal circlet of Zone III armature elements comprise articulated units'
+		 [157] 'Middle circlets of Zone III armature present'
+		 [158] 'Middle circlets of Zone III armature element morphology'
+		 [159] 'Distal circlets of Zone III armature morphologically distinct'
+		 [160] 'Distal circlets of Zone III armature element morphology'
+		 [161] 'Distal circlets of Zone III armature trend of element size'
+		 [162] 'Neck forms segment-like ring'
+		 [163] 'Trichoscalids'
+		 [164] 'Trichoscalids nature of separation between trichoscalids and Zone I armature'
+		 [165] 'Trichoscalids number'
+		 [166] 'Trichoscalids basal plates'
+		 [167] 'Lorica in larval stage'
+		 [168] 'Lorica in adult stage'
+		 [169] 'Lorica number of cuticular plates in anteriormost ring'
+		 [170] 'Lorica second series of lorical plates'
+		 [171] 'Lorica cuticle thickened in dorsal and ventral lorical plates'
+		 [172] 'Lorica ornament of plates'
+		 [173] 'Lorical plates shape of distal margins'
+		 [174] 'Neck encircled by ring of cuticular plates'
+		 [175] 'Cuticular neck plates form closing mechanism when adult head retracted into trunk'
+		 [176] 'Cuticular neck plate closing apparatus symmetry'
+		 [177] 'Cuticular neck plates number'
+		 [178] 'Cuticular neck plates distal margin shape'
+		 [179] 'Cuticular neck plates attachment to first trunk segment'
+		 [180] 'Middle of trunk bears single pair of elongated lateral cuspidate spines'
+		 [181] 'Flosculi or sensory spots'
+		 [182] 'Type of sensory spots'
+		 [183] 'Flosculi with petals'
+		 [184] 'Number of petals in flosculi'
+		 [185] 'Clavulae'
+		 [186] 'Clavula stalk length'
+		 [187] 'Clavula has distal bulb'
+		 [188] 'Bullulae'
+		 [189] 'Tube'
+		 [190] 'Posterior projections (i.e. spines or hooks)'
+		 [191] 'Posterior projections are sclerotized'
+		 [192] 'Posterior projections with basal diameter >20% trunk diameter'
+		 [193] 'Posterior projections number'
+		 [194] 'Posterior projections arrangement'
+		 [195] 'Posterior ring papillae'
+		 [196] 'Posterior abdomen greatly extensible'
+		 [197] 'Anus position'
+		 [198] 'Posterior trunk divided into appendages'
+		 [199] 'Caudal appendages'
+		 [200] 'Caudal appendage eversible'
+		 [201] 'Caudal appendage length'
+		 [202] 'Caudal appendages divided'
+		 [203] 'Caudal appendage single'
+		 [204] 'Caudal appendage position'
+		 [205] 'Caudal appendage surface'
+		 [206] 'Posterior warts'
+		 [207] 'Posterior wart size'
+		 [208] 'Circumpharyngeal brain'
+		 [209] 'Circumpharyngeal brain: Subpharyngeal main region with weak suprapharyngeal commissure'
+		 [210] 'Dorsal condensed brain'
+		 [211] 'Number of neuromeres integrated into the dorsal condensed brain'
+		 [212] 'Mouth innervation relative to brain neuromeres'
+		 [213] 'Nerve cord lateralized'
+		 [214] 'Ventral nerve cord is paired'
+		 [215] 'Ventral nerve cord with paired ganglia'
+		 [216] 'Ventral nerve cords merge caudally'
+		 [217] 'Dorsal nerve cord'
+		 [218] 'Dorsal nerve cord paired'
+		 [219] 'Brain neuropil sandwiched by perikarya'
+		 [220] 'Apical brain composed of perikarya'
+		 [221] 'Tooth ganglia connected by diagonal nerve net'
+		 [222] 'Tanycytes'
+		 [223] 'Developmental mode'
+		 [224] 'Larval cuticle dorso-ventrally flattened with six accordion-like lateral plates'
+		 [225] 'Larval neck crenulated like an accordion'
+		 [226] 'Collar region present in neck during larval  stage'
+		 [227] 'Larvae/juveniles with long pharynx retractor muscles'
+		 [228] 'Larval body divided into proboscis + abdomen'
+		 [229] 'Diaphragm separates larval thorax from abdomen'
+		 [230] 'Pair of spines at anterior of larval abdomen'
+		 [231] 'Caudal spines or appendages at posterior of larval abdomen'
+		 [232] 'Larval buccal canal morphology'
+		 [233] 'Larva large mesenchyme cells'
+		 [234] 'Cloaca in both sexes'
+		 [235] 'Protonephridia'
+		 [236] 'Protonephridia integrated into the gonad'
+		 [237] 'Protonephridia compound filter, built by two or more terminal cells'
+		 [238] 'Protonephridial sieve plates'
+		 [239] 'Protonephridia terminal cells with circumciliary microvilli'
+		 [240] 'Urogenital system attached to the body wall by a ligament'
+		 [241] 'Flagellate spermatozoa'
+		 [242] 'Perigenital setae'
+		 [243] 'Primary constituent of cuticle'
+		 [244] 'Layer of cuticle containing abundant chitin'
+		 [245] 'Middle layer of cuticle has distinct composition'
+		 [246] 'Cross-wise fibres in cuticle'
+		 [247] 'Large helical fibres in cuticle'
+		 [248] 'Voluminous primary body cavity'
+		 [249] 'Heart'
+		 [250] 'Muscle cell organization '
+		 [251] 'Nucleation of "peritoneal" membrane'
+	;
+	STATELABELS
+		1
+		'absent'
+		'present'
+		,
+		2
+		'anterior'
+		'ventral'
+		'posterior'
+		,
+		3
+		'absent'
+		'present'
+		,
+		4
+		'absent'
+		'present'
+		,
+		5
+		'absent'
+		'present'
+		,
+		6
+		'absent'
+		'reniform, submillimetric lamellar'
+		,
+		7
+		'absent'
+		'present'
+		,
+		8
+		'''lobopodous'' (unsclerotized; arthrodial membranes absent)'
+		'arthropodized (sclerotized; arthrodial membranes present)'
+		'parapodia'
+		,
+		9
+		'not sclerotized'
+		'sclerotized'
+		,
+		10
+		'absent'
+		'present'
+		,
+		11
+		'cylindrical/subconical appendage'
+		'laterally expanded swimming flap'
+		,
+		12
+		'lobopodous limb'
+		'sclerotized jaw'
+		'arthropodized antenniform with distinct podomeres'
+		'arthropodized short great-appendage'
+		,
+		13
+		'undifferentiated, or differentiated in size only'
+		'structurally differentiated'
+		,
+		14
+		'lateral'
+		'ventral'
+		'terminal'
+		,
+		15
+		'not fused'
+		'fused'
+		,
+		16
+		'basal only, with separate distal elements'
+		'fused into a reduced labrum'
+		,
+		17
+		'absent'
+		'present(anomalocaridids, gilled lobopodians, certain lobopodians)'
+		,
+		18
+		'one series (e.g. Aysheaia, Kerygmachela, Opabinia)'
+		'two series (e.g. anomalocaridids, Onychodictyon ferox)'
+		,
+		19
+		'no (as in Radiodonta)'
+		'yes (as in Onychodictyon ferox)'
+		,
+		20
+		'absent'
+		'present'
+		,
+		21
+		'absent'
+		'present'
+		,
+		22
+		'eyes sessile'
+		'eyes stalked'
+		,
+		23
+		'ocellus-like or pigment spots'
+		'multiple visual units (including compound eyes)'
+		,
+		24
+		'<10'
+		'10-20'
+		'>20'
+		,
+		25
+		'trunk cylindrical and undifferentiated on dorsoventral axis'
+		'dorsal and/or ventral surface recognizable by shape, armature, or location of appendages'
+		,
+		26
+		'absent'
+		'present'
+		,
+		27
+		'absent'
+		'present'
+		,
+		28
+		'homonomous'
+		'heteronomous'
+		,
+		29
+		'absent'
+		'present'
+		,
+		30
+		'peripheral longitudinal and circular muscle'
+		'metamerically arranged skeletal muscle'
+		,
+		31
+		'absent'
+		'present'
+		,
+		32
+		'trunk of uniform construction'
+		'anterior trunk differentiated from posterior trunk by abrupt change in thickness, annulations, armature and/or appendage construction'
+		,
+		33
+		'annulations continue unaltered for full length of anterior trunk'
+		'annulations becoming indistinct anteriad'
+		,
+		34
+		'absent'
+		'present'
+		,
+		35
+		'absent'
+		'present'
+		,
+		36
+		'absent'
+		'present'
+		,
+		37
+		'projections absent'
+		'angular projections on anterolateral corners of first sternites'
+		,
+		38
+		'straight'
+		'medially incised'
+		,
+		39
+		'absent'
+		'spinose midventral process'
+		,
+		40
+		'second segment an undivided ring'
+		'second segment divided into sternites and tergites'
+		,
+		41
+		'one tergal plate with midventral articulation'
+		'one tergal and two sternal plates'
+		,
+		42
+		'as in segments 7+'
+		'differentiated'
+		,
+		43
+		'as in segments 7+'
+		'differentiated'
+		,
+		44
+		'entire'
+		'deep lateroventral notches, with or without spines'
+		,
+		45
+		'absent'
+		'present'
+		,
+		46
+		'not extended'
+		'spinose process extending well beyond posterior segment margin'
+		,
+		47
+		'absent'
+		'present'
+		,
+		48
+		'absent'
+		'present'
+		,
+		49
+		'absent'
+		'lateral terminal spines present'
+		,
+		50
+		'absent'
+		'lateral terminal accessory spines present'
+		,
+		51
+		'absent'
+		'midterminal spine present'
+		,
+		52
+		'absent'
+		'present'
+		,
+		53
+		'sclerotized'
+		'mineralized'
+		,
+		54
+		'essentially circular'
+		'elongated parallel to body axis'
+		,
+		55
+		'absent'
+		'present'
+		,
+		56
+		'flat disc, with or without nodes'
+		'conical spine'
+		'central element stands proud of flat basal region'
+		,
+		57
+		'absent'
+		'present'
+		,
+		58
+		'single ring'
+		'two rings'
+		,
+		59
+		'four to six'
+		'eight to ten'
+		,
+		60
+		'variable within an individual'
+		'constant number'
+		,
+		61
+		'three'
+		'four'
+		'five'
+		,
+		62
+		'disordered'
+		'in transverse fields'
+		'in longitudinal fields'
+		,
+		63
+		'absent'
+		'two transverse rows of accentuated papillae present'
+		,
+		64
+		'linear; each transverse row identical to last'
+		'alternate transverse rows offset, so sclerites produce quincunx'
+		'no direct correspondence between plates of one row to the next'
+		,
+		65
+		'single primary field of large plates on each annulation'
+		'two separate primary fields of large plates on each annulation, one on each margin'
+		,
+		66
+		'single series of plates'
+		'plates occur in pairs along each field'
+		'three rows of plates within each field'
+		'four rows of plates within each field'
+		,
+		67
+		'single size of sclerite (plates) only'
+		'large plates and smaller platelets (or tumuli)'
+		,
+		68
+		'absent'
+		'radial buttresses, giving stellate appearance'
+		,
+		69
+		'single size of sclerite (plates) only'
+		'large plates and smaller platelets'
+		,
+		70
+		'gaps between plates'
+		'tessellate to cover entire surface of organism'
+		,
+		71
+		'absent'
+		'present'
+		,
+		72
+		'epidermal depressions'
+		'epidermal evaginations'
+		,
+		73
+		'wider than tall (e.g. nodes or plates)'
+		'taller than wide (e.g. spines)'
+		,
+		74
+		'absent'
+		'present'
+		,
+		75
+		'absent'
+		'present'
+		,
+		76
+		'absent'
+		'present'
+		,
+		77
+		'unornamented'
+		'net-like'
+		'scaly'
+		,
+		78
+		'absent'
+		'present'
+		,
+		79
+		'one'
+		'two'
+		'three'
+		'four'
+		,
+		80
+		'absent'
+		'present'
+		,
+		81
+		'lanceolate blades in association with lateral lobes'
+		'simple oval paddle with marginal spines'
+		'bipartite shaft with lamellar setae'
+		,
+		82
+		'not fused'
+		'fused'
+		,
+		83
+		'absent'
+		'present'
+		,
+		84
+		'absent'
+		'present'
+		,
+		85
+		'spines/setae'
+		'appendicules'
+		,
+		86
+		'absent'
+		'present'
+		,
+		87
+		'absent'
+		'present'
+		,
+		88
+		'absent'
+		'present'
+		'Number of claws on trunk limbs'
+		,
+		89
+		'absent'
+		'present'
+		,
+		90
+		'one'
+		'two'
+		'three'
+		'four'
+		'seven'
+		,
+		91
+		'absent'
+		'present'
+		,
+		92
+		'absent'
+		'present'
+		,
+		93
+		'absent'
+		'present'
+		,
+		94
+		'absent'
+		'present'
+		,
+		95
+		'absent'
+		'present'
+		,
+		96
+		'Fewer than 15 podomeres'
+		'15 or more podomeres'
+		,
+		97
+		'absent'
+		'present'
+		,
+		98
+		'undifferentiated'
+		'differentiated'
+		,
+		99
+		'appendicular tail'
+		'partially fused/reduced walking legs'
+		'????'
+		,
+		100
+		'tail rami'
+		'tail flaps'
+		,
+		101
+		'same direction as claws on other appendages'
+		'rotated anteriad'
+		,
+		102
+		'introvert not present or not invaginable'
+		'introvert invaginable'
+		,
+		103
+		'invaginable to part of Zone I or equivalent'
+		'completely invaginable into the trunk (i.e. to the base of Zone I)'
+		,
+		104
+		'absent'
+		'present'
+		,
+		105
+		'pharynx (mouth cone) permanently inverted'
+		'pharynx eversible'
+		,
+		106
+		'complete'
+		'incomplete (but beyond proximal teeth only)'
+		'restricted (only as far as proximal teeth)'
+		,
+		107
+		'pharynx eversible and invaginable'
+		'pharynx permanently everted'
+		,
+		108
+		'diminutive (<2% of animal length)'
+		'very large (>30% of animal length)'
+		'enlarged base (e.g. Onychophora claws)'
+		,
+		109
+		'neither introvert nor pharynx involved in locomotion'
+		'introvert or pharynx involved in locomotion'
+		,
+		110
+		'round'
+		'triradiate'
+		,
+		111
+		'not a multiple of five'
+		'a multiple of five'
+		,
+		112
+		'not a multiple of 25'
+		'a multiple of 25'
+		,
+		113
+		'not a multiple of six'
+		'a multiple of six'
+		,
+		114
+		'not a multiple of nineteen'
+		'a multiple of nineteen'
+		,
+		115
+		'no'
+		'yes'
+		,
+		116
+		'not substantially (i.e. less than 2??) wider'
+		'substantially (at least 2??) wider'
+		,
+		117
+		'absent'
+		'present'
+		,
+		118
+		'absent'
+		'present'
+		,
+		119
+		'unarmed'
+		'armed (whether in larva or adult)'
+		,
+		120
+		'concave surface directed anteriad when introvert is everted (or equivalent)'
+		'concave surface directed posteriad when introvert is everted'
+		,
+		121
+		'single circlet'
+		'multiple circlets'
+		,
+		122
+		'elements as a single series, whether or not morphology differs'
+		'elements organized into two or more transverse bands or series, possibly with different element morphologies within each series, but the sequence of morphologies being comparable between subsequent series'
+		,
+		123
+		'not in rows'
+		'in prominent rows (excepting transverse rows)'
+		,
+		124
+		'discrete parallel longitudinal rows'
+		'rows aligned diagonal to the anterior-posterior axis of the animal, possibly producing a quincunx'
+		,
+		125
+		'papillae only'
+		'cuticularized spines, hooks or scalids'
+		,
+		126
+		'hollow'
+		'solid'
+		,
+		127
+		'not elongate'
+		'extreme elongation'
+		'more than 20 times longer than wide'
+		,
+		128
+		'dead straight'
+		'spinose/conical'
+		'curved or hooked'
+		,
+		129
+		'not bifurcate'
+		'bifurcating'
+		,
+		130
+		'edentate'
+		'dentate'
+		'pectinate'
+		,
+		131
+		'lacking articulation'
+		'articulated joints'
+		,
+		132
+		'absent'
+		'present'
+		,
+		133
+		'not telescopic'
+		'telescopic'
+		,
+		134
+		'without hood'
+		'with hood'
+		,
+		135
+		'absent'
+		'radially arranged circumpharyngeal structures present at base of introvert Zone II'
+		,
+		136
+		'labile papillae or lamellae'
+		'cuticularized scalids or plates'
+		,
+		137
+		'undifferentiated'
+		'three or four scalids are enlarged (i.e. Radiodonta)'
+		,
+		138
+		'six'
+		'seven'
+		'eight'
+		'nine'
+		'many'
+		,
+		139
+		'less than four times longer than wide'
+		'elongate spines'
+		'at least ten times longer than wide'
+		,
+		140
+		'ring commissures incomplete or absent'
+		'polycuspate'
+		,
+		141
+		'unfused'
+		'fused to introvert'
+		,
+		142
+		'unarmed'
+		'armed (whether in larvae or adults)'
+		,
+		143
+		'lost at metamorphosis, or primarily absent'
+		'retained to adulthood'
+		,
+		144
+		'composed exclusively of cuticle'
+		'outer covering of cuticle with central cavity'
+		,
+		145
+		'one'
+		'four'
+		'many'
+		'State 3?'
+		'State 4?'
+		'State 5?'
+		,
+		146
+		'five'
+		'six'
+		'seven'
+		'eight'
+		,
+		147
+		'multiple of five'
+		'multiple of six'
+		'multiple of eight'
+		,
+		148
+		'five'
+		'ten'
+		,
+		149
+		'not reduced'
+		'reduced'
+		,
+		150
+		'not reduced'
+		'reduced'
+		,
+		151
+		'uniform size'
+		'alternate elements large then small'
+		,
+		152
+		'armature not differentiated'
+		'armature of proximal circlet (or few proximal circlets) is morphologically differentiated from rest of Zone III armature'
+		,
+		153
+		'without prominent central spine'
+		'with prominent central spine'
+		,
+		154
+		'straight'
+		'strongly recurved (hooked)'
+		'appendicules'
+		,
+		155
+		'absent  #TODO Check that 1 actually means abasent!'
+		'present'
+		'needle-like'
+		,
+		156
+		'not articulated'
+		'articulated'
+		,
+		157
+		'reduced'
+		'not reduced'
+		,
+		158
+		'papillae or simple cone (no spine, wider than tall)'
+		'single spine'
+		'multiple spines'
+		'pectinate'
+		,
+		159
+		'distal circlets not differentiated, or only differentiated in size or aspect ratio'
+		'teeth in distal armature field morphologically distinct from teeth in other circlets'
+		,
+		160
+		'papillae (no spine, wider and longer than tall)'
+		'single spine'
+		'multiple spines'
+		'pectinate'
+		,
+		161
+		'approximately equal'
+		'decreasing distally (distalmost elements less than half the size of proximal)'
+		,
+		162
+		'no segment-like ring'
+		'neck forms segment-like ring'
+		,
+		163
+		'absent'
+		'present'
+		,
+		164
+		'constriction (as in loriciferans)'
+		'insertion of muscles (as in kinorhynchs)'
+		,
+		165
+		'six'
+		'seven'
+		'nine'
+		'fourteen'
+		'fifteen'
+		,
+		166
+		'absent; trichoscalids attach directly to introvert'
+		'trichoscalid plate present'
+		,
+		167
+		'absent'
+		'Ring of cuticular plates post-introvert (i.e. girdling neck / cervical region) present at any point in ontogeny'
+		,
+		168
+		'absent'
+		'present'
+		,
+		169
+		'six'
+		'seven'
+		'fourteen'
+		'twenty'
+		,
+		170
+		'absent'
+		'present'
+		,
+		171
+		'absent'
+		'present'
+		,
+		172
+		'smooth'
+		'longitudinal rows of narrow (sub)rectangular fields'
+		,
+		173
+		'straight'
+		'rectangular with straight margin and angular corners'
+		'spikes present on anterior margin of plate'
+		,
+		174
+		'absent'
+		'present (placids or lips)'
+		,
+		175
+		'absent'
+		'present'
+		,
+		176
+		'radial'
+		'bilateral'
+		,
+		177
+		'six'
+		'seven'
+		'nine'
+		'fourteen'
+		'sixteen'
+		,
+		178
+		'straight'
+		'rectangular with straight margin and angular corners'
+		'tripartite'
+		'spikes present on anterior margin of plate'
+		,
+		179
+		'fused with first trunk segment'
+		'articulated'
+		,
+		180
+		'absent'
+		'present at some point during ontogeny'
+		,
+		181
+		'absent'
+		'present'
+		,
+		182
+		'flosculi, including N-flosculi and P-flosculi'
+		'sensory spots'
+		,
+		183
+		'no petals'
+		'petals'
+		,
+		184
+		'variable'
+		'invariably eight'
+		,
+		185
+		'absent'
+		'present'
+		,
+		186
+		'short'
+		'long'
+		,
+		187
+		'distal bulb absent'
+		'distal bulb present'
+		,
+		188
+		'absent'
+		'present'
+		,
+		189
+		'absent'
+		'tube composed of plant debris'
+		'tube comprised of chitin'
+		,
+		190
+		'absent'
+		'present'
+		,
+		191
+		'tubulae'
+		'sclerites or setae'
+		,
+		192
+		'smaller'
+		'larger'
+		,
+		193
+		'two'
+		'three'
+		'four'
+		'six'
+		'eight'
+		,
+		194
+		'irregular'
+		'bilateral arc'
+		'radial ring'
+		,
+		195
+		'absent'
+		'present'
+		,
+		196
+		'absent'
+		'present'
+		,
+		197
+		'terminal'
+		'in abdomen'
+		,
+		198
+		'absent'
+		'present'
+		'tubular portion of the body extends beyond the last observable appendage pair'
+		,
+		199
+		'absent'
+		'present'
+		,
+		200
+		'not eversible'
+		'eversible'
+		,
+		201
+		'shorter than body'
+		'longer than body'
+		,
+		202
+		'undivided'
+		'pseudo-segmented'
+		,
+		203
+		'single'
+		'bicaudal'
+		,
+		204
+		'terminal'
+		'dorso-medial'
+		,
+		205
+		'smooth'
+		'vesiculate'
+		'bearing large warts'
+		,
+		206
+		'absent'
+		'present'
+		,
+		207
+		'small'
+		'large'
+		,
+		208
+		'absent'
+		'present'
+		,
+		209
+		'absent'
+		'present'
+		,
+		210
+		'absent'
+		'present'
+		,
+		211
+		'one'
+		'two'
+		'three'
+		,
+		212
+		'protocerebral innervation'
+		'deutocerebral innervation'
+		'innervation from multiple neuromeres'
+		'tritocerebral innervation'
+		,
+		213
+		'absent (Alalcomenaeus, Fuxianhuia, Tardigrada)'
+		'present (Onychophora)'
+		,
+		214
+		'unpaired throughout full length'
+		'papired'
+		,
+		215
+		'absent'
+		'present'
+		,
+		216
+		'absent'
+		'present'
+		,
+		217
+		'absent'
+		'present'
+		,
+		218
+		'unpaired'
+		'paired'
+		,
+		219
+		'equal distribution of perikarya'
+		'brain consisting of perikarya-neuropil-perikarya'
+		,
+		220
+		'apical perikarya lost'
+		'apical perikarya retained'
+		,
+		221
+		'absent'
+		'present'
+		,
+		222
+		'absent'
+		'present'
+		,
+		223
+		'direct'
+		'biphasic'
+		,
+		224
+		'absent'
+		'present'
+		,
+		225
+		'larval neck smooth'
+		'larval neck crenulated'
+		,
+		226
+		'absent'
+		'present'
+		,
+		227
+		'absent'
+		'present'
+		,
+		228
+		'division not evident'
+		'body divided'
+		,
+		229
+		'absent'
+		'present'
+		,
+		230
+		'absent'
+		'present'
+		,
+		231
+		'absent'
+		'present'
+		,
+		232
+		'short, linear or sacculose'
+		'elongate, curving'
+		,
+		233
+		'not present in both sexes'
+		'present in both sexes'
+		,
+		234
+		'absent'
+		'present'
+		,
+		235
+		'fused with first trunk segment'
+		'articulated'
+		,
+		236
+		'not integrated into the gonad'
+		'integrated into, or flow into, the gonad'
+		,
+		237
+		'absent'
+		'present'
+		,
+		238
+		,
+		239
+		'circumciliary microvilli absent'
+		'circumciliary microvilli present'
+		,
+		240
+		'no'
+		'yes'
+		,
+		241
+		'spermatozoa lack flagellum'
+		'spermatozoa with flagellum'
+		,
+		242
+		'absent'
+		'present (whether or not reduced)'
+		,
+		243
+		'alpha-chitin'
+		'collagen'
+		,
+		244
+		'exocuticle (middle cuticle layer)'
+		'endocuticle (lowermost cuticle layer)'
+		,
+		245
+		'composition not distinct'
+		'distinct composition'
+		,
+		246
+		'absent'
+		'present'
+		,
+		247
+		'absent'
+		'present'
+		,
+		248
+		'absent'
+		'present'
+		,
+		249
+		'absent'
+		'present'
+		,
+		250
+		'platymyariant'
+		'coelomyarian'
+		,
+		251
+		'membrane without nuclei or simply with ameobocytes in association with the surface'
+		'membrane containing scattered nuclei'
+		
+	;
+	MATRIX
+	'Gastrotricha'		                           0?0--?0-----0-0000-01000?0001?1??000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---0?-?-?--1????--000?--------00??000-0--0?00-----00000-0?--0--?--??00--0--???????0??-0-000??0??000000-0---0-0?????10011000000?0?0?????010???0100-0000???
+	'Lineus'		                                 0?0--?0-----0-0000-0100??000?????000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---???????????????????????----00??000-0????00-??????????????????????00--0--00----?????????0????????000-0---???????????????????????????????????10?????????
+	'Solenogastres'		                          0?0--?0-----0-0000-000-?1000?????000000---0-00-0000111010----0?---000-0------0-0-000--000--00-0-00---???????????????????????----00??000-0????00-??????????????????????00--0--00----?????????0????????000-0---???????????????????????????????????10?????????
+	'Nereis annelida'		                        100--?020---0-0000-010021110??0??000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---??-?-????????--000?--------00??000-0--0?00-----00000-0?--0--?--??00--0--00----?0-0-0-0?0??0??000000-0---000?1--01000-0?-?10?0?0??????10???010??????0??
+	'Eokinorhynchus rara'		                    000--0?-----0-0000-000-01010??100000000---0-00-0000101010----10000000-1101110010-000--000--00-0-00---1??1(0,1)00??????00?01110111?00000000110400?11??-2-00000000010--001-000--0--00----0????0-00011?21?00000-0---00????????????????????????????????????????????
+	'K antygomonas paulae'		                   000--00-----0-0000-000-011-01?1000110101100100-0111???????????????????0------0-0-000--000--00-0-00---1111200001000000011100-10100?????110??0011?1-????0????110??-0113000--0--111401?100-0-0000----000000-0---0-1??????1011110?0000-0000-0010???0100010000?0
+	'K cateria gerlachi'		                     000--00-----0-0000-000-011-01?1000110001010100-0111???????????????????0------0-0-000--000--00-0-00---??11200001000000011100-10101???????0??00????-?????????1?????0113000--0--00----?100-0-0000----000000-0---0-1??????1011110?0000-0000-0010???0100010000?0
+	'K campyloderes cf vanhoeffeni'		          000--00-----0-0000-000-011-01?1000110001100000-0111???????????????????0------0-0-000--000--00-0-00---1111200001000000011100-1010021000110??0011?1-????0????110??-0113100--0--1103010100-0-0000----000000-0---0-1??????1011110?0000-0000-0010???0100010000?0
+	'K centroderes spinosus'		                 000--00-----0-0000-000-011-01?1000110011100000-0111???????????????????0------0-0-000--000--00-0-00---??11200001000000011100-10100???????0??00????-?????????1?????0113000--0--110401?100-0-0000----000000-0---0-1??????1011110?0000-0000-0010???0100010000?0
+	'K dracoderes abei'		                      000--00-----0-0000-000-011-01?1000110001100000-0100???????????????????0------0-0-000--000--00-0-00---11112000?1000000011100-1010001000111??0011?1-???10????110??-0112000--0--1112010100-0-0000----000000-0---0-1??????1011110?0000-0000-0010???0100010000?0
+	'K echinoderes dujardinii'		               000--00-----0-0000-000-011-01?1000110000100000-0110???????????????????0------0-0-000--000--00-0-00---1111200001000000011100-10100010000-0--001111-0110011011100--0110100--0--1104010100-0-0000----000000-0---0-1?0--?01011110?0000-0000-0010???0100010000?0
+	'K zelinkaderes klepali'		                 000--00-----0-0000-000-011-01?1000110000000100-0111???????????????????0------0-0-000--000--00-0-00---??112000?1000000011100-10100?????110??0011?1-????0????1????-0113000--0--110410?100-0-0000----000000-0---0-1??????1011110?0000-0000-0010???0100010000?0
+	'K paracentrophyes anurus'		               000--00-----0-0000-000-011-011100011100110101001101???????????????????0------0-0-000--000--00-0-00---11112000?1000000011100-10100000000-0--00111?-0111011011????00113000--0--1111010100-0-0000----000000-0---0-1??????1011110?0000-0000-00?????0100010000?0
+	'K pycnophyes zelinkaei'		                 000--00-----0-0000-000-011-01?100011100110001011100???????????????????0------0-0-000--000--00-0-00---??11200011000000011100-1010000000??0??00111?-?????????0????00113000--0--1110010100-0-0000----000000-0---0-1??????101111010000-0000-00101?00100010000?0
+	'K franciscideres kalenesos'		             000--00-----0-0000-000-011-01?1000110000001100-0111???????????????????0------0-0-000--000--00-0-00---??112000?1000000011100-1010?00000??0??00111?-?????????1????0111?000--0--10----0100-0-0000----000000-0---0-1??????1011110?0000-0000-0010???0100010000?0
+	'Nanaloricus mysticus'		                   000--00-----0-0000-000-0000010100000000---0-00-0000???????????????????0------0-0-000--000--00-0-00---011101?0100100000111010101000110011020011100-1-00010000--0--01041110000100----0100-0-0000----000000-0---0-1?0--?10011110110101111111011???110011000-?0
+	'Pliciloricus'		                           000--00-----0-0000-000-0000010100000000---0-00-0000???????????????????0------0-0-000--000--00-0-00---011101?010010000011101010100011001102001(0,1)100-1-00010000--0--0104111?000000----0100-0-0000----000000-0---0-1?0--?100?????1101111111??011???110011000-?0
+	'Eolorica deadwoodensis'		                 000--??-----0-0000-000-00000??100000000---0-00-0000???????????????????0------0-0-000--000--00-0-00---0????????????????111???1010001100110000???????????????0?????01???113000000----0????????00----?00000-0---0-????????????????????????????????????????????
+	'Sirilorica carlsbergi'		                  000--??-----0-0000-000-00000??100000000---0-00-0000???????????????????0------0-0-000--000--00-0-00---?????????0010?000????????????????110001??0-----00000-00--0--00--0111100100----0????0-0?00----?00000-0---0-???????????????100????00????????????????????
+	'Orstenoloricus shergoldii'		              000--??-----0-0000-000-?0000????0000000---0-00-0000???????????????????0------?-0-000--000--00-0-00---?????????????????0???????????????????????????????????????????????1?3000000----0?????????????-??00?????????????????????????010?1?10????????????????????
+	'Acosmia'		                                000--00-----0-0000-000-00010??10?000000-?-0-00-00001?0010----?0???????0------0-0-000--000--00-0-00---0-?0-1-???0?0--100---------??????100?0000???????????????????00--??0--0--00----00-0-0-0000----?0?0???0---0-?????10--???????????????????????????????????
+	'Shergoldana australiensis'		              000--??-----0-0000-000-?0000????0000000---0-00-0000???????????????????0------?-0-000--000--00-0-00---?????????0010????101?????01000000????????????????????????????????00--0--00----0????????????????00?????????????????????????010?1?01????????????????????
+	'Gordioid nmorpha Chordodes'		             000--00-----0-0000-000-2000000100000000---0-00-0000100010----00---10000------0-0-000--000--00-0-00---0-00-0-0-00(0,1)1--0011100-11010000000-0--0010????????????0?????00--000--0--00----0?-0-0-0000----001000-0---0-110--000110110?100001101?11000?-0001101100??
+	'Nematomorpha nectonema'		                 000--00-----0-0000-000-2000000100000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---0-00-0-00????--001?1???11000000000-0--0??0????????????0?????00--000--0--00----00-0-0-0000----001000-0---0-110--000110110?1?????1??111000?-0001101100??
+	'Nematoda kinonchulus'		                   000--00-----0-0000-000-2001000100000000---0-00-0000101010----00---00--0------0-0-000--000--00-0-00---1-?0---11001000111110101?01000000110000011?0-1-??0?10000-0--0100000--0--00----00-0-0-0000----001000-0---0-1?0--0001101100???????????1000?-00011???00??
+	'Nematoda anatonchus'		                    000--00-----0-0000-000-2001000100000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---0-00-0-010010-0111000--11010000001000000110?-????000-001111000--000--0--00----00-0-0-0000----000000-0---0-1?0--0001101100100000?00??1000?-000111(0,1)1001?
+	'Acanthopriapulus horridus'		              000--00-----0-0000-000-0001010100?00000---0-00-0000100010----00---00000------0-0-000--000--00-0-00---11112011011001?001110101000000000??????0111?????????????????00--0?0?????00----?0-0-0-000?????101010010110-1?0--000-11111????????????011???11?0???010?1
+	'Halicryptus spinulosus'		                 000--00-----0-0000-000-0001010100000000---0-00-0000100010----00---00000------0-0-000--000--00-0-00---111120(0,1)101100100011101010010100001004000111530000110-00120-100--0102011000----00-0-0-0001100-101000-0---101?0--000-11111?11001100100011???1110110010?1
+	'Maccabeus'		                              000--00-----0-0000-000-0001010100000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---111120(0,1)101100100010101010010100001102?10111520000110-001211000--010?011000----110100-001110?2010000-0---0-1?0--000-11111?11001100000011???1110???010?0
+	'Meiopriapulus fijiensis'		                000--01-----0-0000-000-0000010110000000---0-00-0000100110----00---1?000------0-0-000--000--00-0-00---111110(0,1)1011000000111010100102000111020001115-2-00000-00130-000--000--0--00----010110-000110?2000000-0---0-1?0--000-1110110000-0000-0011???1110??1010?0
+	'Priapulopsis bicaudatus'		                000--00-----0-0000-000-0001010100000000---0-00-0000100010----00---11000------0-0-000--000--00-0-00---1111201101100110010111010000000101102000111500000011010120-100--010??11-00----?0-0-0-0000----101010001-10-1?0--000-11111?110011?01??011???1110????10?1
+	'Priapulus caudatus'		                     000--00-----0-0000-000-0001010100000000---0-00-0000100010----00---00000------0-0-000--000--00-0-00---1111201101100110011111010000000001102000111520000000-00120-100--0102011000----10-0-0-0000----10101001011111?0--000-11111?11001100100011???1110010010?1
+	'Tubiluchus lemburgi'		                    000--01-----0-0000-000-0001010110000000---0-00-0000100110----20---11000------0-0-000--000--00-0-00---111110(0,1)1011001000111010100102000011020001115-0000010-001313000--0103000000----01011101100----001010100000-1?0--000-11101110001110100011???1110???010?0
+	'Tubiluchus vanuatensis'		                 000--01-----0-0000-000-00010101?0000000---0-00-0000???1???????0???11??0------0-0-000--000--00-0-00---111100(0,1)1011001000111010100102000010040001115-????0????01313000--0103000000----010101???00----001010000000-1?0--000-11101110001110100011???1110???010?0
+	'Markuelia lauriei'		                      000--?0-----0-0000-000-10?10??100???????????????????????0----00---00--0------0-0-000--000--00-0-00---11???0???1100-??01110--10000000001104?00??1???????????0?????01??000--0--00----00-0-0-0??1113??00000-0---0-???????????????0000-0000-0??????????????????
+	'Ancalagon minor'		                        000--00-----0-0000-000-10010??1?0000000---0-00-00001000??????00---00000------0-0-000--000--00-0-00---1??120????????0001110111?010000000-0--0011?0-????0011000-0-000--0?0?????00----0????0-0?00----?00000-0---0-????????????????????????????????????????????
+	'Eopriapulites sphinx'		                   000--??-----0-0000-000-10010??1?0000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---???1?????00100???11101??0010000001104?00111??????0????011???00--0?0?????00----0?????-0000----?00000-0---0-????????????????????????????????????????????
+	'Eximipriapulus globocaudata'		            000--00-----0-0000-000-00010??110100000---0-00-0000100010----00---00??0------0-0-000--000--00-0-00---???120????????0001110101?01000?00???????11?5????????????????00--0?0?????00----0????0-0?00----?00000-0---0-????????????????????????????????????????????
+	'Fieldia lanceolata'		                     000--00-----0-0000-000-10010??1?0000000---0-00-000010001?????00---00000------0-0-000--000--00-0-00---1??1?0????????0001110111?01000000???????11?02????00100?0-0-000--0?0?????00----0????0-0?00----??00???????0-????????????????????????????????????????????
+	'Laojieella thecata'		                     000--00-----0-0000-000-1001???1?0100000---0-00-00000-00-0-----0---00--0------?-0-000--000--00-0-00---11?100????????0001110111?000000000-0--0011?5-?????????01???000--0???????00----0????0-0?00----?00010001-00-????????????????????????????????????????????
+	'Ottoia prolifica'		                       000--00-----0-0000-000-00010?0100000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---11?100(0,1)???????110111011100101000011040001115-????0110101213000--0?0?????00----0????0-0001104-?00011000000-??0--10--?????????????????????????0?????????
+	'Ottoia tricuspida'		                      000--00-----0-0000-000-00010?0100000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---11?100(0,1)???????110111011100101000011040001115-????0110101213000--0?0?????00----0????0-0001104-?00011000000-??????0?-?????????????????????????0?????????
+	'Palaeopriapulites parvus'		               000--00-----0-0000-000-000?0??1?0100000---0-00-00000-00-0-----0---00--0------?-0-000--000--00-0-00---1??1?01???0??1??01110101?010?0?00???????111?????????????????00--0?1?0??000----0????0-0000----?00000-0---0-????????????????????????????????????????????
+	'Paratubiluchus bicaudatus'		              000--0?-----0-0000-000-00000??11?000000---0-00-00000-00-0-----0---??--0------?-0-000--000--00-0-00---???1?01??????10?0111010??????????0-0--0011????????????01????00--0?0?????00----0?????-0?00----?0001?001-00-????????????????????????????????????????????
+	'Priapulites konecniorum'		                000--00-----0-0000-000-00010??1?0000000---0-00-00000-00-0-----0---00--0------0-0-000--000--00-0-00---1??1?0(0,1)??????1?001?11101?00?00000???????11??????????????????00--0?0?????00----0????0-0?00----?01010000100-????????????????????????????????????????????
+	'Scolecofurca rara'		                      000--00-----0-0000-000-??010??1?0000000---0-00-00000-00-0-----0---00--0------?-0-000--000--00-0-00---??????1???????1101110??1?000?0??0110--0011?5-?????????01???000--0?0?????00----0????0-0?0??????00000-0---0-????????????????????????????????????????????
+	'Selkirkia columbia'		                     000--00-----0-0000-000-(0,1)00???01??000000---0-00-0000100?10----101??????0------0-0-000--000--00-0-00---11?100(0,1)???????000111011100001000011040001115-????010-10120-000--0?0?????00----0????0-0?20----?000?0-0---0-????????????????????????????????????????????
+	'Paraselkirkia sinica'		                   000--00-----0-0000-000-(0,1)00???011?000000---0-00-00001??????????????????0------0-0-000--000--00-0-00---???100????????00011101110000?0000110?0001115-????0????0????000--0?0?????00----0????0-0?20----?000?0-0---0-????????????????????????????????????????????
+	'Sicyophorus rarus'		                      000--00-----0-0000-000-000?0??1?0100000---0-00-00000-00-0-----0---00--0------?-0-000--000--00-0-00---1??1?01???0??1?101110101?010?0?00???????111???????00-0?1?0-00?????1300?0??????0????0-0?00----?00000-0---0-????????????????????????????????????????????
+	'Xiaoheiqingella peculiaris'		             000--00-----0-0000-000-10010??100100000---0-00-0000100????????????????0------?-0-000--000--00-0-00---???1?0???110010?01110101?000000001102000111???????????01????00--0?0?????00----0????0-0?00----?0001?001-00-????????????????????????????????????????????
+	'CHALAZOSCOLEX pharkus'		                  000--??-----0-0000-000-1101010100000000---0-00-00001?00??????10?0000??110??1??(1,2)0-000--000--00-0-00---1???(0,1)??????????10111???1?00000000???????11??????????????????00--0?0?????00----0????0-0?0??????00?1?0000?0-????????????????????????????????????????????
+	'CORYNETIS brevis'		                       000--00-----0-0000-000-(0,1)0010?0100000000---0-00-0000100010----1010000??0------0-0-000--000--00-0-00---11?100(0,1)0??????0000---------000000110410011???00000????01(1,2,3)0-000--0?0?????00----0????0-0000----?0001?000000-????????????????????????????????????????????
+	'CRICOCOSMIA jinningensis'		               100--0000000010000-000-21010?0101000000---0-00-00000-00-0-----0---00--1100-11010-000--0100-00-0-00--0???1?0????????0?0110---1?01000000110400011????????????01???000--0?0?????00----0????0-0001110-?00000-0---0-????????????????????????????????????????????
+	'GUANDUSCOLEX minor'		                     000--00-----0-0000-000-10010?010?000000---0-00-0000110011100-101??00??0------0-0-000--000--00-0-00---???100????????0001?1011??????00?????????11??-????000-001???000--0?0?????00----0????0-0?011?0-?00000-0---0-????????????????????????????????????????????
+	'LOUISELLA pedunculata'		                  000--?0-----0-0000-000-11010?0110000000---0-00-0000100010----11???00??0------0-0-000--000--00-0-00---11?100(0,1)???????1101110110?000?0???110410011?5-????000-001(1,2,3)??000--0?0?????00----0????0-0000----?00011000000-??????????????????????????????????0?????????
+	'MAFANGSCOLEX'		                           000--00-----0-0000-000-20010?0111000000---0-00-0000110020----00---10010------0-0-000--000--00-0-00---1??1?????001010101110111?010?0?00110400011?5???????????1(1,2,3)??000--0?0?????00----0????0-0001110-?00000-0---0-????????????????????????????????????????????
+	'MAOTIANSHANIA cylindrica'		               000--00-----0-0000-000-20010?010?000000---0-00-0000110001001100---00??0------0-0-000--000--00-0-00---???100????????0001?1011?????????????????11???????000-0??????00--0?0?????00----0????0-0001110-?00000-0---0-????????????????????????????????????????????
+	'PALAEOSCOLEX piscatorum'		                000--?0-----0-0000-000-20010?0???000000---0-00-0000111001010-1021010110------0-0-000--000--00-0-00---??????????????????????????????????????????????????????????????????0???????????0????0-000??????00100-0---0-???????????????????????????????????1??11????
+	'SCHISTOSCOLEX umbilicatus'		              0??????-----0-0000-0????0010?0???000000---0-00-0000110021000-10?1000110------0-0-000--000--00-0-00---??????????????????????????????????????????????????????????????????????????????00-0-0-00010122?00100-0---0-???????????????????????????????????1????????
+	'SCATHASCOLEX minor'		                     000--??-----0-0000-000-2?010?010?000000---0-00-000011000100??10011000-0------0-0-000--000--00-0-00---???1??(0,1)??????-0?01100--1?01000000110400011??-????000-0012???00--0?0?????00----0????0-00011(0,1)21000000-0---0-????????????????????????????????????????????
+	'TABELLISCOLEX hexagonus'		                100--?0?????0?0000-000-21010?0?0?000000---0-00-00000-00-0-----0---00--1100-1??10-000--0100-00-0-00--0??????????????????????????????????????????????????????????????????0???????????0????0-0001110-?00000-0---0-????????????????????????????????????????????
+	'TYLOTITES petiolaris'		                   100--0000000010000-000-11010?011?000000---0-00-00001?0?10----1020000??0------?-0-000--0100-00-0-00--01??100????????0101?10111?01000000???????11?????????????????000--0?0?????00----0????0-0?01110-?00000-0---0-????????????????????????????????????????????
+	'WRONASCOLEX antiquus'		                   000--??-----0-0000-000-20010?010?000000---0-00-0000110001000-1020000110------0-0-000--000--00-0-00---0-?1??(0,1)??????-???1?00--1?0?????00???????????????????????????00--0?0?????00----0????0-00011121?00000-0---0-????????????????????????????????????????????
+	'WRONASCOLEX iacoborum'		                  0??????-----0-0000-0???20010?0???000000---0-00-0000110001001210210101?0------0-0-000--000--00-0-00---????????????????????????????????????????????????????????????0?????0?????00----0????0-000??????????????????????????????????????????????????????????????
+	'XYSTOSCOLEX boreogyrus'		                 000--??-----0-0000-000-(0,1)00101010?000000---0-00-00001?00???????????00??0------??0-000--000--00-0-00---???100???????????1110111?00000000110????11??????????????????00--0?0?????00----0????0-0?0??????0??00-0---0-????????????????????????????????????????????
+	'YUNNANOSCOLEX magnus'		                   0??????-----0-0000-0???(0,1)0010?0???000000---0-00-0000110001100-1010200110------?-0-000--000--00-0-00---??????????????????????????????????????????????????????????????????0?????00----0????0-0001110-?00000-0---0-????????????????????????????????????????????
+	'Aysheaia'		                               100--0000-00000010-100-11010?0100000000---0-00-0000100010----10?0000000------010-001010104-00-0-011-110?1-0-0?0010--000---------0000001000000???----00000-00--0--0---0?0?????00----0????0-0000----?00100-0---0-????????????????????????????????????????????
+	'Siberion'		                               100--??00-000010????00-(0,1)1010???00000000---0-00-000010?????????0????0??0------?-0-00??0????-00-0-0?????-???????????????0---------00000010???????????????????????????????0?????00----?????????0?????????00-0---??????????????????????????????????????????????
+	'Onychodictyon ferox'		                    100--0000-0000001110100(0,1)1011??100000000---0-00-0000100?10----11?0000001101011010-001100101-00-0-011-11??0-0-0?------000---------0000000-0--00??????????????0?????00--0?0?????00----0????0-0000----?00100-0---??????????????????????????????????????????????
+	'Onychodictyon gracilis'		                 10???0?0??000???????????101?????0000000---0-00-000010??????????????0??110?-1??10-00??00101-00-0-011-1?????????????????0---------000000?-0??????????????????????????????0?????00----?????????0????????000-0---??????????????????????????????????????????????
+	'Diania'		                                 100--0?00-00000000-000-?1011??000000000---0-00-00001000?0----10?00????1??0-0??00-001000?0--00-0-00--?0?????????????????????????????????-0??????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Xenusion'		                               1?0--??00-000000????00-?1011???00000000---0-00-000010??????????????0??1100-0-?10-001??????-00-0-00--???????????????????????????????????-0??????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Paucipodia'		                             100--0?00-00000000-000-?1010??000000000---0-00-00000-00-0-----0---?0--1???????10-000-00101-00-0-00--?0?????????????????????????????????-0??????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Microdictyon'		                           100--0000-00000000-000-11011??001000000---0-00-00000-00-0-----0---00--1100-11010-000-00101-00-0-00--00-?0-0--?------000------?--000000?-0--0????----00000-0?--0--?---0?0?????00----0????0-0?00----?00000-0---0-????????????????????????????????????????????
+	'Cardiodictyon'		                          100--0?00-00100000-010??1011??001000000---0-00-00000-00-0-----0---?0--1100-11?10-000-00101-00-0-00--00-????????????????????????????????-0??????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Hallucigenia sparsa'		                    100--?000-00100000-0???21000??010000000---0-00-00000-00-0-----0---00--1111012110-000-00101-00-0-00--?0-?0-0--?-----0000---------000000110410011???????000-0011??00---0?0?????00----00-0-0???00----?00?00-0---0-????????????????????????????????????????????
+	'Hallucigenia fortis'		                    100--0?00-00100000-0101?1011??011000000---0-00-00000-00-0-----0---?0--111111??10-000-00101-00-0-00--00?????????????????????????????????-0??????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Hallucigenia hongmeia'		                  1??????0??0?????????????1011?????000000---0-00-00000-00-0-----0---?0--1111111?10-000-00100-00-0-00--???????????????????????????????????????????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Luolishania'		                            10??-0?00-00000000-010??1011???11000000---0-00-000010??????????????0??111111??20-001010103-00-1-00--0??????????????????????????????????-0??????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Collins monster Emu Bay'		                1??????0??0?????????????1011???1?000000---0-00-0000???????????????????111111??20-001000100-00-1-0??????????????????????????????????????????????????????????????????????0?????00----?????????0??????????????????????????????????????????????????????????????
+	'Orstenotubulus'		                         1??????0??00????????????1011?0???000000---0-00-0000???????????????????1111?1??10-000-1????-00-0-0??????????????????????????????????????????????????????????????????????0?????00----?????????0??????????????????????????????????????????????????????????????
+	'Antennacanthopodia'		                     100--??00-00100000-0100?101???00?000000---0-00-0000???????????????????0------?-0-000-1000--00-0-00---0?????????????????????????????????-0??????????????????????????????0?????00----?????????0????????0?????????????????????????????????????????????????????
+	'Ilyodes'		                                1??????0??0?????????????1010?????000000---0-00-000010??????????????0??0------?-0-000-10101-00-0-0??????????????????????????????????????????????????????????????????????0?????00----?????????0??????????????????????????????????????????????????????????????
+	'Euperipatoides onychophora'		             110--0000-01100000-0100110101000?000000---0-00-0000100010----1020000000------1-0-000-10101-00-0-00--00-00-0--1------000---------0000000-0--0000-----00000-00--0--0---0?0--0--00----000000-0000----000000-0---0-1?11211000?0-0?000000000-00000?-0100110001??
+	'Actinarctus heterotardigrada'		           1110-0001000010000-01000100001100000000---0-00-0000???????????????????1100-110?0-000-01103-00-0-011-11??0-0-010010--0?0---------0000001100000110??--00000-00--0--00--0?0--0--00----000000-0000----000100-0---0-1?10001100?0-0?000000000-0(0,1)000?-010011000-??
+	'Halobiotus eutardigrada'		                100--0001000020000-01000100001100000000---0-00-0000???????????????????10-----010-000-01111-00-0-011-11??0-0-010010--0?0---------0000001100000110??--00000-00--0--00--0?0--0--00----000000-0000----000100-0---0-1?10001100?0-0?000000000-0(0,1)000?-010011000-??
+	'Siberian orsten tardigrade'		             100--??0??000???????????1000???00000000---0-00-0000??????????????????????--???-0-000-00111-00-0-01(1,2)-??????????????????????????????????1????????????????????????????????0?????00----?????????0????????1?????????????????????????????????????????????????????
+	'Megadictyon'		                            1?0--1?00-0000??10-100-?1011???0?000000---0-00-00000-00-0-----0---?0--?------?-0-001100???-00-0-0?????????????????????????????????????1????????????????????????????????0?????00----?????????0??????????????????????????????????????????????????????????????
+	'Jianshanopodia'		                         100--1?00-0000??10-?00-?1011???0?000000---0-00-00000-00-0-----0---?0--0------?-0-001100???-00-0-0101-???0-????-----00?0?-----?--0000001104100?1???????000-0?13????--???0?????00----?????????0????????1?????????????????????????????????????????????????????
+	'Hadranax'		                               1??????0??00????????????1011???0?000000---0-00-000010??????????????0??110??0-?30-000-1????-00-0-0??????????????????????????????????????????????????????????????????????0?????00----?????????0??????????????????????????????????????????????????????????????
+	'Kerygmachela'		                           100--1000-00001010-1???1101110000000000---0-00-00000-00-0-----0---00--1100-0-?310000-0000-11000-0100-0??0-0--?------0?0------?--0000001??--00???-?--00000-00--0--?-????0?????00----0????0-0?00----00?100-0--?0-????????????????????????????????????????????
+	'Pambdelurion'		                           110--1?00-00011010-?00-?101??100?000000---0-00-0000???????????????????????????-10000-0000-11000-?????0??0?0--?????????????????????????110?????0????????????????????????0?????00----?????????0??????????????????????????????????????????????????????????????
+	'Opabinia'		                               110--1?00-00011010-1111?1100??000000000---0-01-0000???????????????????0------0-10000-0000-10000-1101-0??0?0--?????????????????????????100????--????????????????????????0?????00----?????????0??????????????????????????????????????????????????????????????
+	'Anomalocaris'		                           111011?0111001101101111?1000?1000000000---0-01-0000???????????????????0------0-10000-0000-10110-1101-0??0?0--?????????????????????????1114100?0????????????????????????0?????00----?????????0????????1?????????????????????????????????????????????????????
+	'Peytoia'		                                111011?011?001101101111?1000??000000000---0-01-0000???????????????????0------0-10?0???????10110-00---0??0?0--?????????????????????????1114100?0????????????????????????0?????00----?????????0????????1?????????????????????????????????????????????????????
+	'Hurdia'		                                 11101??011?001101101111?1?00??000000000---0-01-0000???????????????????0------0-10?0???????10100-0101?0??0?0--?????????????????????????1114100?1????????????????????????0?????00----?????????0????????1?????????????????????????????????????????????????????
+	'Fuxianhuia'		                             121010?110-2111100-0111?11-0??0-0010?????????0????????????????????????0------0-11100--000-000-010101-0??0?0--?????????????????????????0-0????--????????????????????????0?????00----?????0-000????????-???????????121????????????????????????????????????1??
+	'Chengjiangocaris'		                       121010?110-2111100-0111?11-0??0-0010?????????0????????????????????????0------0-11100--000-000-010101-0??0?0--?????????????????????????0-0????--????????????????????????0?????00----?????0-000????????-??????????????011????????????????????????????????????
+	'Leanchoilia'		                            121101?110-3111100-0111?11-0??0-001??????????0????????????????????????0------0-11110--010(0,2)000-0000---0??0?0--?????????????????????????0-0????--????????????????????????0?????00----?????0-000????????-?????????????????????????????????????????????????????
+	'Alalcomenaeus'		                          121101?1??-31111????111?11-0??0-001??????????0????????????????????????0------0-11110--0100000-0000---0??0?0--?????????????????????????0-0????--????????????????????????0?????00----?????0-000????????-???????????121011????????????????????????????????????
+	'Misszhouia longicaudata'		                121111?110-2111100-0111?11-0?10-0011?????????0????????????????????????0------0-12110--0100000-0000---0??0?0--?????????????????????????0-0????--????????????????????????0?????00----?????0-000????????-?????????????????????????????????????????????????????
+	'Kuamaia lata'		                           121111?110-2111100-0111?11-0?10-0011?????????0????????????????????????0------0-12110--0102000-0000---0??0?0--?????????????????????????0-0????--????????????????????????0?????00----?????0-000????????-?????????????????????????????????????????????????????
+    ;
+    ENDBLOCK;
+
+          BEGIN NOTES;
+              [Taxon comments]
+        	TEXT TAXON=25 TEXT='Kinonchulus Riemann, 1972^n= Pseudonchulus Altherr, 1972 syn. n.^n^nsee Holovachov et al., 2008';
+
+        [Character comments]
+        	TEXT CHARACTER=1 TEXT='WTS26^nPresent in certain Higgins larvae!? e.g. see Heiner 2004; Kristensen and Gad 2004 – (Sørensen et al. 2008)';
+	TEXT CHARACTER=2 TEXT='Most lobopodian taxa possess an anterior mouth – for example Aysheaia  (Whittington 1978), Onychodictyon ferox (Ou et al. 2012) and Kerygmachela (Budd 1993, 1998a) – as do Eutardigrada (e.g. Halberg et al. 2009; Persson et al. 2012).  We code Hallucigenia sparsa as having a ventral-facing mouth because the putative head region is consistently preserved facing ventrally (Ramsköld 1992; Caron et al. 2013), indicative of an authentic life habit rather than post-mortem alteration. We score this transformation series as uncertain in Megadictyon as it is difficult to determine whether the mouth was originally ventral (cf. Liu et al. 2007) or whether this appearance results from compaction. The mouth opening is ventrally oriented in Pambdelurion (Budd 1998b), Opabinia (Budd 1996), anomalocaridids (Daley et al. 2009; Daley and Edgecombe 2014), Onychophora and Heterotardigrada (Eriksson and Budd 2000; Ou et al. 2012; de Sena Oliveira and Mayer 2013; Mayer et al. 2013b; Persson et al. 2014); it faces posteriad in euarthropods (Edgecombe and Ramsköld 1999; Haug et al. 2012b; Yang et al. 2013).^n?Subterminal in adult nematomorphs (Ehlers et al. 1996, cited in Schmidt Rhaesa 1997)^n';
+	TEXT CHARACTER=3 TEXT='Numerous lobopodians have been considered to have cephalic sclerites (Ma et al. 2014a), but in some cases this interpretation requires revision or confirmation through new material. Following recent data presented by Liu and Dunlop (2014), we score this transformation series as absent in Hallucigenia fortis (contra Hou and Bergström 1995), Onychodictyon ferox (contra Ou et al. 2012) and Cardiodictyon (see Hou and Bergström 1995).  We code it as uncertain where the anterior region is ambiguously preserved, as in Onychodictyon gracilis (Liu et al. 2008) and Hallucigenia hongmeia (Steiner et al. 2012).  An uncertain coding is also applied to Luolishania, as their apparent presence is only documented by a single specimen (Ma et al. 2009) whose ‘sclerites’ worryingly resemble features in other lobopodians whose original interpretation as sclerites has since been overthrown.  Taxa with an incomplete anterior region are coded as uncertain.';
+	TEXT CHARACTER=4 TEXT='(–) inapplicable: head sclerites (transformation series 2) absent^nWe score this transformation series as absent for fuxianhuiids, because the cephalic shield is not derived from fused segments (Chen et al. 1995b; Waloszek et al. 2005; Bergström et al. 2008; Yang et al. 2013), and in anomalocaridids, because the carapace-like structure on the head seems not to cover multiple cephalic segments (e.g. Daley et al. 2009; Daley and Edgecombe 2014)';
+	TEXT CHARACTER=5 TEXT='We score this transformation series as present in anomalocaridids because the dorsal carapace-like structure covering their heads is associated with eye-stalks (e.g. Daley et al. 2009; Daley and Edgecombe 2014). Anterior sclerites are widespread among Palaeozoic euarthropods including fuxianhuiids (Budd 2008; Yang et al. 2013), and artiopodans (e.g. Edgecombe and Ramsköld 1999; Ortega-Hernández et al. 2013).  Only the leanchoiliids are coded as absent.';
+	TEXT CHARACTER=6 TEXT='Transformation series 42 in Ma et al. (Ma et al. 2014a); transformation series 16 in Daley et al. (2009).  Coded as uncertain in Antennacanthopodia (Ou et al. 2011) because the dark infilling of the type material may represent decayed internal organs.  The nature of the mid-gut glands of Megadictyon, Jianshanopodia, Pambdelurion and Opabinia is elucidated by Vannier et al. (2014). ';
+	TEXT CHARACTER=7 TEXT='WTS51.^nThe polythyridium is a component of the gut surrounding the entrance to the intestine.  Present in Tubiluchus.  Coded as ambiguous in Paratubiluchus (Han et al. 2004)';
+	TEXT CHARACTER=8 TEXT='(–) inapplicable: paired appendages (trans. ser. 1) absent';
+	TEXT CHARACTER=9 TEXT='We code this transformation series as present in any taxon with sclerotized pre-ocular (protocerebral) limbs, including the podomeres in anomalocaridid ‘great appendages’ (Daley and Edgecombe 2014) and the hypostome that covers the euarthropod labrum (e.g. Edgecombe and Ramsköld 1999; Yang et al. 2013). We score this transformation series as uncertain in taxa where the presence of a hypostome is suggested, but not verified (e.g. Alalcomenaeus), and in the Siberian ‘Orsten’ tardigrade (Maas and Waloszek 2001), where (assuming its modification to a stylet, as in modern tardigrades) it cannot be directly observed.';
+	TEXT CHARACTER=10 TEXT='(–) inapplicable: protocerebral limbs (trans. ser. 6) not sclerotized^nThis transformation series distinguishes the arthropodized ‘great appendages’ of anomalocaridids (Daley and Edgecombe 2014) from the hypostome of Euarthropoda (e.g. Edgecombe and Ramsköld 1999; Yang et al. 2013) and the stylet of Tardigrada (e.g. Halberg et al. 2009), both of which are sclerotized but lack soft arthrodial membranes.';
+	TEXT CHARACTER=11 TEXT='(–) inapplicable: post-ocular limbs, if present, are arthropodized (trans. ser. 5 = 1)^nThe cylindrical ambulacral lobopodous leg characteristic of lobopodians is also found in Opabinia (Budd 1996; Budd and Daley 2012), Kerygmachela (Budd 1993, 1998a) and Pambdelurion (Budd 1998b).  Van Roy et al. (2013) recently reported that anomalocaridids possess two sets of lateral flaps that are likely homologous to the outer and inner branches of the appendages in euarthropods, and thus represent a derived state relative to the presence of cylindrical ambulatory legs.';
+	TEXT CHARACTER=12 TEXT='This character is coded as a single transformation series with four states because each state is seemingly independent.';
+	TEXT CHARACTER=13 TEXT='(~) inapplicable: paired appendages (trans. ser. 1) absent.^nThere are various taxa in which the deutocerebral appendage pair is morphologically differentiated from the rest of the trunk appendages (see references in Liu and Dunlop 2014). For example, Antennacanthopodia has a second set of antenna-like limbs that are morphologically distinct from the walking legs (Ou et al. 2011). Daley and Edgecombe (2014) recently redescribed Anomalocaris canadensis and reported the presence of a smaller set of flaps in proximity with the putative head region; given that this differentiation is expressed in size, rather than structural identity, we score the deutocerebral limbs as undifferentiated in Anomalocaris. The first pair of legs in Tardigrada is serially homologous with the deutocerebral segment of Euarthropoda (Mayer et al. 2013b), and thus is not structurally different from the rest of the trunk appendages. The deutocerebral jaws of Onychophora are significantly modified relative to the rest of the appendages in the body (Eriksson et al. 2010; de Sena Oliveira and Mayer 2013).  In Euarthropoda, this morphological differentiation is generally expressed in the presence of an antenniform (e.g. Edgecombe and Ramsköld 1999; Ma et al. 2012; Yang et al. 2013) or raptorial (Chen et al. 2004; Haug et al. 2012b; Tanaka et al. 2013) deutocerebral appendage.^n';
+	TEXT CHARACTER=14 TEXT='(–) inapplicable: paired appendages (trans. ser. 1) absent^nWe score this transformation series as ventral in Euarthropoda given that the reduced protocerebral appendage pair, transformed into the labrum, occupies a ventral position in association with the mouth (e.g. Scholtz and Edgecombe 2006). The forward-facing stylet apparatus of Eutardigrada is internalized into the mouth cone (Halberg et al. 2009), and is thus considered as having a terminal position relative to the body; in Heterotardigrada, however, the mouth is oriented ventrally and the stylet apparatus is thus scored as having a ventral position.';
+	TEXT CHARACTER=15 TEXT='(~) inapplicable: paired appendages (trans. ser. 1) absent^nModified from transformation series 16 in Ma et al. (Ma et al. 2014a) to reflect the posited homology between the anterior appendages of lobopodians and the euarthropod labrum (cf. Eriksson and Budd 2000; Budd 2002): specifically, the euarthropod labrum is coded as a fused pair of appendages (Scholtz and Edgecombe 2006; Liu et al. 2009, 2010; Posnien et al. 2009). The stylet apparatus of Tardigrada is not coded as fused, as each stylet within the buccal tube remains independent despite significant modification (Dewel and Eibye-Jacobsen 2006; Halberg et al. 2009; Guidetti et al. 2012).  Jianshanopodia is coded uncertain due to unclear preservation (Liu et al. 2006).^n';
+	TEXT CHARACTER=16 TEXT='(~) inapplicable: protocerebral appendages not fused (trans. ser. 12 = 0)^nIn lobopodians, appendage fusion is restricted to the proximal component (cf. Budd 1993, 1998a; Daley et al. 2009; Dzik 2011; Daley and Edgecombe 2014).  Per transformation series 12 above, the euarthropod labrum is coded as a set of fully fused appendages.^n';
+	TEXT CHARACTER=17 TEXT='(~) inapplicable: paired appendages (trans. ser. 1) absent^nThis transformation series refers to the spines/spinules present in the most anterior appendage pair of anomalocaridids (Daley et al. 2009; Daley and Edgecombe 2014), gilled lobopodians (Kerygmachela, see Budd 1993, 1998; Pambdelurion, see Budd 1997; Opabinia, see Budd 1996) and certain lobopodians (e.g. Aysheaia, see Whittington 1978; Jianshanopodia, see Liu et al. 2006; Megadictyon, see Liu et al. 2007; Onychodictyon ferox, see Ou et al. 2012).';
+	TEXT CHARACTER=18 TEXT='(0) one series (e.g. Aysheaia, Kerygmachela, Opabinia) (Whittington 1978; Budd 1993, 1996, 1998a)^n(1) two series (e.g. anomalocaridids, Onychodictyon ferox) (Daley and Budd 2010; Ou et al. 2012; Daley and Edgecombe 2014)^n(–) inapplicable: spines/spinules on the protocerebral appendage (trans. ser. 14) absent';
+	TEXT CHARACTER=19 TEXT='(–) inapplicable: spine/spinules, if present, in single series (trans. ser. 15 = 0)^nThis transformation series distinguishes the coplanar spinules found in Onychodictyon ferox (Ou et al. 2012) from those of anomalocaridids (Daley et al. 2009; Daley and Budd 2010; Daley and Edgecombe 2014), where both spine rows face in the same direction.';
+	TEXT CHARACTER=20 TEXT='(~) inapplicable: spines/spinules not present on the protocerebral appendage (trans. ser. 14 = 0)^nThis transformation series describes the multifurcate termination observed in the protocerebral appendages of dinocaridids (Budd 1996; Daley et al. 2009; Daley and Budd 2010; Budd and Daley 2012; Daley and Edgecombe 2014) and certain lobopodians – such as Aysheaia  (Whittington 1978), Megadictyon (Liu et al. 2007) and Kerygmachela (Budd 1993, 1998a) – but absent in Onychodictyon ferox (Ou et al. 2012).';
+	TEXT CHARACTER=21 TEXT='Transformation series 10 in Daley et al. (2009) and 25 in Ma et al. (Ma et al. 2014a). Eyes as treated as present in Onychodictyon ferox (cf. Ou et al. 2012) and Hallucigenia fortis (cf. Liu and Dunlop 2014).';
+	TEXT CHARACTER=22 TEXT='Transformation series 26 in Ma et al. (Ma et al. 2014a).';
+	TEXT CHARACTER=23 TEXT='(–) inapplicable: eyes (trans. ser. 23) absent^nTransformation series 27 in Ma et al. (Ma et al. 2014a).  This transformation series is scored as uncertain in Luolishania because the fragmentary preservation of its visual units does not allow full resolution of the level of structural organization (see Ma et al. 2009)^n';
+	TEXT CHARACTER=24 TEXT='WTS25.  Taxa within 25% of the borderline between tokens are coded ambiguous for either token.^nDimensions for palaeoscolecids from (García-Bellido et al. 2013a). Eopriapulites follows (Shao et al. 2016).  Xystoscolex measured from photographs (Conway Morris and Peel 2010) at close to 10; scored ambiguous (0, 1).  Selkirkia around 7–10, depending on how much of tube the body occupies; scored as ambiguous (0, 1).  Paraselkirkia , measured from photographs (Hou et al. 2017)almost exactly 10';
+	TEXT CHARACTER=25 TEXT='This character distinguishes essentially cylindrical worms such as Palaeoscolex from taxa with clearly defined dorsal and ventral surfaces, whether by the presence of appendages (such as Louisella and lobopodians) or plates (such as Cricocosmia and Tabelliscolex) or by the differential expression of spinose armature (such as Tylotites).  Differentiation that is restricted to the proboscis or the posterior trunk, such as the location of the anus or presence of tail hooks or caudal appendages, is not included in this character.^nCoded as ambiguous in Mafangscolex as there are unpublished reports of trunk papillae in two rows (Han et al. 2007b)^nAbsent in Shergoldana (Maas et al. 2007a)as not clear that plate distribution follows dorsal-ventral axis.^nCoded as present in Halicryptus, as both species bear a ventral grove (Shirley and Storch 1999) ^nCoded as present in Chalazoscolex to reflect the three lateral zones (Conway Morris and Peel 2010)';
+	TEXT CHARACTER=26 TEXT='Transformation series 25 in Daley et al. (2009).  Epidermal segmentation is a distinguishing feature of Euarthropoda (e.g. Budd 2001a; Edgecombe 2009). Although the body of Onychophora and Tardigrada is metamerically organized, both at the level of segment polarity gene expression (Gabriel and Goldstein 2007; Eriksson et al. 2009) and musculature (e.g. Halberg et al. 2009; Marchioro et al. 2013), this pattern is not expressed on the epidermis: we thus score it as absent in these phyla.  We code Opabinia as present since has discrete body segments separated by furrows (Budd 1996; Zhang and Briggs 2007; Budd and Daley 2012). Epidermal segmentation is not evident in anomalocaridids (e.g. Daley and Edgecombe 2014), which we score absent.  Hurdia is the exception: because the only complete specimen is partly disarticulated (Daley et al. 2009), we consider the presence of epidermal segmentation to be ambiguous. Kinorhynchs and annelids also exhibit a segmented epidermis; though this presumably has an independent derivation from the segmentation of arthropods, the lack of a clear morphological basis for discrimination means separate character states cannot be assigned to these phyla.  It is not clear that the repeated elements of Eokinorhynchus reflect segmentation rather than annulations or serial iteration; this taxon is not coded as segmented.';
+	TEXT CHARACTER=27 TEXT='(–) inapplicable: sclerotized dorsal integument with arthrodial membranes (trans. ser. 27) present^nTransformation series 26 in Daley et al. (2009); WTS27. Annulations are repeated superficial integument rings. Coded as present in Eokinorhynchus, reflecting ring-like nature of epidermal ‘segments’ (Zhang et al. 2015).  Present in Fieldia, reflected by transverse arrangement in spines in certain specimens (e.g. USNM57715, see (Caron 2011))  The cuticle of Anatonchus bears hints of fine annulations on its tip (Peneva et al. 1999; Choudhary et al. 2009); the cuticle of Kinonchulus is ‘delicately annulated’ (Riemann 1972)1.  Coded ambiguous in Selkirkia and Paraselkirkia as the trunk is concealed by the tube, and ambiguous in Palaeopriapulites and Sicyophorus as the ‘trunk’ is putatively concealed by a lorica (Hou et al. 2017).';
+	TEXT CHARACTER=28 TEXT='(~) inapplicable: annulations (trans. ser. 29) not present^nTransformation series 29 in Liu et al. (2011); trans. ser. 27 in Daley et al. 2009; WTS27.  This transformation series distinguishes between annulation patterns that are uniform along the length of the trunk (homonomous) from those which display serially-repeated differentiated fields (heteronomous), usually associated with the location of limbs. We code Pambdelurion as uncertain, reflecting the poor preservation of the trunk (Budd 1998b).';
+	TEXT CHARACTER=29 TEXT='WTS87.^nNanaloricus bears circular muscles around the neck (Neves et al. 2013)^nCircular muscles are reduced in adult Nematoids (Sørensen et al. 2008)';
+	TEXT CHARACTER=30 TEXT='Budd (2001a) proposes the distribution of musculature as a key phylogenetic character.  The musculature of tardigrades, Pambdelurion, Anomalocaris and more derived euarthropods is metamerically arranged and runs through the body cavity, whereas muscles in cycloneuralians, onychophorans and Kerygmachela are seemingly dominated by longitudinal and circular structures (Budd 1998c, 2001a; (Neves et al. 2013).  A longitudinal arrangement of musculature is suggested by the longitudinal wrinkling present in Carbotubulus (Haug et al. 2012c). The metameric distribution of musculature in artiopodans is inferred by comparison with Campanamuta (Budd 2011).';
+	TEXT CHARACTER=31 TEXT='(–) inapplicable: WHY@^nThe anterior trunk of Aysheaia and Onychodictyon ferox is differentiated into a stout ‘proboscis’, distinct from the trunk by virtue of its shape and its lack of annulations (Ou et al. 2012).  This ‘proboscis’ is considered homologous to the cycloneuralian worm introvert (=armature Zone I).  This region is reduced in taxa such as Hallucigenia (where it has become part of the buccal cavity) and Anomalocaris (where it has been reduced and is no longer evident).  It remains present in tardigrades, in certain species bearing oral papillae.^n';
+	TEXT CHARACTER=32 TEXT='After transformation series 54 in Smith & Caron (2015). The differentiation observed in lobopodians (see below) is also reflected in the organisation of Louisella and Tylotites (Conway Morris 1977a; Han et al. 2007c; Zhang et al. 2015), where the anterior trunk has a different annulation pattern to the posterior portion, with an abrupt change separating the two regions. The “neck” of Eokinorhynchus is not consistently distinguishable from the introvert, and is considered to represent part of that structure.  The same is arguably true in Halicryptus higginsi, though not in H. spinulosus.  The anterior annulations of H. higginsi are much more closely spaced and bear denser setae than the posterior annulations (Shirley and Storch 1999), but in the absence of a sharp distinction between the regions this character is scored as ambiguous.  Coded absent in Cricocosmia (Hou et al. 2017); the diminution of annulations anteriad is reflected in a separate transformation series, and there is no clear morphological division of an anterior portion of the trunk.^nThis transformation series reflects the pronounced differentiation of the posterior and anterior trunk – not just the trunk appendages – in certain lobopodians.  In  Hallucigenia sparsa, the region of the trunk anterior of the third appendage pair is narrower, lacks dorsal armature, and expresses differentiated appendages (this study).  The short constricted region anterior of the first spine pair in H. fortis is associated with two differentiated appendage pairs (Ramsköld and Chen 1998) and apparently corresponds with the ‘neck’ of H. sparsa.  In luolishaniids, the anterior body bears elongate limbs with accentuated armature (Ma et al. 2009; García-Bellido et al. 2013).  The portion of the trunk in Carbotubulus corresponding to the first two or three leg pairs is substantially narrower than the posterior trunk and its associated appendages are narrower and less prominent than the posterior appendages, indicating trunk differentiation (Haug et al. 2012c).  Although the width of the trunk narrows gradually towards the front of Paucipodia, this tapering is gradual and does not correspond to the differentiation of the anterior trunk (Chen et al. 1995a; Hou et al. 2004).  Coded ambiguous in Orstenotubulus, Hallucigenia hongmeia, and Ilyodes due to incomplete preservation (Thompson and Jones 1980; Maas et al. 2007; Steiner et al. 2012).^nCoded as absent in loriciferans (Neves et al. 2016), Sirilorica (Peel et al. 2013).^nThe anterior 5–8% of the trunk of Meiopriapulus bears trunk scalids and lacks the wrinkles, tubercles and other structures of the posterior trunk (Sørensen et al. 2012a)^nTubiluchus lemburgi has a distinctive anterior trunk marked by a change in diameter and surface ornament (Schmidt-Rhaesa et al. 2013)^nCoded as present in Paratubiluchus (Han et al. 2004).^nPresent in Paraselkirkia, where armature becomes enhanced (Hou et al. 2017); not evident in Selkirkia, even USNM 57624 in which the trunk is well extended; but coded ambiguous as posterior trunk unknown.^nCoded as present in Eximipriapulus (Ma et al. 2014b), though with the caveat that the differential appearance of the neck might conceivably be attributed to preservational factors^nCoded absent in Markuelia; the unannulated region in e.g. Dong et al. fig. 10D seems to correspond to the introvert, as suggested by the presence of a single row of spines (cf. trichoscalids, anterior head setae of nematodes); it is not demarked from the rest of the trunk by a change of thickness etc.';
+	TEXT CHARACTER=33 TEXT='The  bulbous heads of Hallucigenia fortis, Microdictyon, Cardiodictyon and Luolishania also lack annulations (Chen et al. 1995b; Ma et al. 2009, 2012a; Liu and Dunlop 2014). In contrast, annulations continue to the tip of the head in Paucipodia, Onychodictyon gracilis, and Diania (whichever end of Diania is interpreted as anterior) (Chen et al. 1995a; Hou et al. 2004; Liu et al. 2008b; Ma et al. 2014).  ^nAnnulations are not clearly preserved in the anterior region of Jianshanopodia and Megadictyon (Liu et al. 2006, 2007), making this transformation series difficult to score with confidence.  Annulations in the pharynx of Kerygmachela continue to the terminal mouth (Budd 1998a); given the position of the prominent annulated appendages, it seems likely that the head also expressed external annulations.  ^nCoded ambiguous in Guanduscolex (Hu et al. 2008) as the apparent absence of anterior annulations may be preservational.^nCoded absent in Eokinorhynchus as the ‘neck’ region is considered part of the introvert (Zhang et al. 2015).^nCoded ambiguous in Paratubiluchus (Han et al. 2004) as annulations are not clearly enough preserved to evaluate their distribution in the neck area.^nCoded as continuing to front in Halicryptus.  A deep groove separates the region that is adorned with Zone I armature, but this area seems to bear faint annulations (that are not in associated with the armature) (Shirley and Storch 1999). Continuing to the front in Priapulus (Hammond 1970).';
+	TEXT CHARACTER=34 TEXT='Observed in Laojieella, Eximipriapulus, Xiaoheiqingella^nIncludes the lorical region of Palaeopriapulites and Sicyophorus. (Hou et al. 2017)';
+	TEXT CHARACTER=35 TEXT='The development of sclerotized tergal plates connected by arthrodial membranes is distinctive of body arthrodization, and thus exclusive to Euarthropoda (e.g. Edgecombe and Ramsköld 1999; Haug et al. 2012b; Yang et al. 2013). Given the morphological similarity between arthropod tergites and the articulated tergal plates of kinorhynchs (e.g. Sørensen 2008), the latter are also scored as present.  The small plates of Eokinorhynchus do not appear to have fused into discrete terga or sterna, so are not scored as such; their regular arrangement is instead considered as annulation. Although some heterotardigrades possess dorsal plates (e.g. Nelson 2002; Marchioro et al. 2013; Persson et al. 2014), these are not connected by arthrodial membranes and thus score the heterotardigrade terminal Actinarctus as absent for this transformation series.  ';
+	TEXT CHARACTER=36 TEXT='Sternites – ventral sclerotized plates – are a key feature of most Euarthropoda, and are well documented in Artiopoda (e.g. Whittington 1993; Edgecombe and Ramsköld 1999; Ortega-Hernández and Brena 2012).  Sternites are notably absent in Fuxianhuiida (Chen et al. 1995b; Waloszek et al. 2005; Bergström et al. 2008; Yang et al. 2013), even though these taxa have a sclerotized dorsal exoskeleton. We code sternites as uncertain in leanchoiliids.  Given the morphological similarity between arthropod sternites and the articulated sternal plates of kinorhynchs (e.g. Sørensen 2008), the latter are also scored as present.';
+	TEXT CHARACTER=37 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nPresent in Pycnophyidae and Neocentrophyidae (Kinorhyncha); see character 14 in (Sørensen et al. 2015)^n^nPresent in Pycnophyidae and Neocentrophyidae (Kinorhyncha); see character 14 in (Sørensen et al. 2015)';
+	TEXT CHARACTER=38 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nSee character 17 in (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=39 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nSee character 23 in (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=40 TEXT='(–) inapplicable: sternites absent^nSee character 19 in (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=41 TEXT='See character 21 in (Sørensen et al. 2015)';
+	TEXT CHARACTER=42 TEXT='(–) inapplicable: sternites absent (trans. ser. ##)^nModified from character 20 in (Sørensen et al. 2015); comparison with other plates avoids over-weighting the presence/absence of two sternal plates';
+	TEXT CHARACTER=43 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nModified from character 22 in (Sørensen et al. 2015); comparison with other plates avoids over-weighting the presence/absence of two sternal plates^n';
+	TEXT CHARACTER=44 TEXT='(–) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nSee character 24 in (Sørensen et al. 2015)';
+	TEXT CHARACTER=45 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nSee character 25 in (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=46 TEXT='(~) inapplicable: ^nSee character 26 in (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=47 TEXT='Transformation series 41 in Daley et al. (2009).  A series of parallel-oriented lanceolate blades that are attached at one end and free-hanging towards the posterior of each trunk segment.';
+	TEXT CHARACTER=48 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nSee character 27 in (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=49 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nSee character 40 in (Sørensen et al. 2015)^nMost kinorhynchs (though not, for example, Kinorhynchus, Neocentrophyes) exhibit prominent lateroterminal spines (Sørensen and Pardos 2008), clearly distinguished from palaeoscolecid/priapulid posterior hooks by their position and morphology.';
+	TEXT CHARACTER=50 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nCertain kinorhynchs (Antygomonas, Franciscideres, Cateria, Campyloderes, Centroderes, Echinoderes, Zelnkaderes) exhibit an secondary spine alongside their lateroterminal spine (Higgins 1968; Sørensen and Pardos 2008; Dal Zotto et al. 2013; Neuhaus and Sørensen 2013; Neuhaus et al. 2014; Altenburger et al. 2015; Landers and Sørensen 2016).  Others (Pyconophyes, Dracoderes, Paracentrophyes) do not (Sørensen et al. 2010, 2012b; Herranz et al. 2014; Sánchez et al. 2016). See character 38 in (Sørensen et al. 2015).';
+	TEXT CHARACTER=51 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^nSee character 41 in (Sørensen et al. 2015); modified to present in Franciscideres (Dal Zotto et al. 2013) and Paracentrophyes (Sørensen et al. 2010)^nFollowing the coding of Sorensen where this contradicts the data from (Sørensen and Pardos 2008; Dal Zotto et al. 2013)^n';
+	TEXT CHARACTER=52 TEXT='(?) inapplicable: covered with sternites or lorica^nTransformation series 41 in Ma et al. (Ma et al. 2014a) and 30 (and  cf. 29) in Wills (2012).  We code Orstenotubulus as uncertain as its papillae are not clearly observed throughout the trunk region (Maas et al. 2007b).  The epidermal plates of palaeoscolecids conceivably represent an end-member of a continuum taking in the spine-like ornament of Tylotites (Han et al. 2007c), papilla-like spines of Louisella (Conway Morris 1977a), and the rings of papillae in certain lobopodians (e.g. Aysheaia, onychophoran); plate-like structures are coded as representing toughened components associated with papillae.^nPresent in Eokinorhynchus (Zhang et al. 2015).^nOccur, seemingly in rings, in Markuelia (Haug and Maas 2009; Dong et al. 2010)^nAbsent in Cricocosmia and Tabelliscolex (Han et al. 2007b).^nDetails of Mafangscolex given by (Liu et al. 2016)^nDetail of Maotianshania mentioned in (Hu et al. 2012)^nAmbiguous in Shergoldana as adult state unknown.^nAmbiguous in Antennacanthopoda (Ou et al. 2011) as preservational quality insufficient to discern,^nAreoles in Chordodes (Bolek et al. 2010) are treated as epidermal plates.^nRound non-mineralized plates adorn the posterior trunk of Ancalagon (pers. obs.)^nSpines adorn the surface of Fieldia (ROM 93-1678; Conway Morris 1977a) ^nSmall spines (setae) occur on Halicryptus and Priapulopsis (van der Land 1970). Somatic setae occur irregularly on Kinonchulus (Riemann 1972) and in other onchulids (Olovachov et al. 2008)^nAbsent in Maccabeus (Por and Bromley 1974)^nRobustly-topped spines in Aysheaia (Whittington 1978)^nSpines are present at least in the anterior trunk of Selkirkia and Paraselkirkia (termed ‘Zone C of the proboscis’ by Conway Morris 1977); this was variably emergent from the tube (see Caron 2011)^nThe ambiguous token is selected for inapplicable tokens as the presence of a trunk covering may obscure XYZ.^nNot reported in Kerygmachema (Budd 1998a)^n';
+	TEXT CHARACTER=53 TEXT='(–) inapplicable: trunk is not armoured (trans. ser. ###)^nPlates in Louisella have the same properties as non-mineralized cuticular structures.^nNematomorph areoles are cuticular, not mineralized (Bolek et al. 2010)^nSpines are heavily chitinised in Acanthopriapulus (van der Land 1970)^nSpines of Corynetis are not obviously mineralized (Huang et al. 2004a)^n';
+	TEXT CHARACTER=54 TEXT='(~) inapplicable: trunk is not armoured (trans. ser. ###)^nCircular in Scathascolex, Wronascolex spp., ^nElongated parallel to body axis in Palaeoscolex piscatorum,^nEssentially circular in Chordodes (Bolek et al. 2010)^ncf. WTS30';
+	TEXT CHARACTER=55 TEXT='(~) inapplicable: dorsal sclerotized integument (trans. ser. 36) absent^n^nWTS34^nTubuli are short tube-like projections arising from the trunk in certain priapulids (e.g. Janssen et al. 2009).  In Tubilucus, these are adhesive organs with a bulbous base and a stiff tapering tube (Todaro and Shirley 2003)^n';
+	TEXT CHARACTER=56 TEXT='(–) inapplicable: plates absent (trans. ser. ##)^nSetae (conical spines) in Chordodes (Bolek et al. 2010)^n';
+	TEXT CHARACTER=57 TEXT='(~) inapplicable: plates absent (trans. ser. ##)^nNodes are raised lumps, arranged in a series parallel to the plate margin^nBlackberry areoles in Chordodes have a similar construction, even if the nodes are irregularly distributed (Bolek et al. 2010) – but these areoles are perhaps better considered as equivalent to platelets, by comparison with priapulid tumuli.^nSchistoscolex has four nodes in an irregular ring (Müller and Hinz-Schallreuter 1993)^n';
+	TEXT CHARACTER=58 TEXT='(–) inapplicable: nodes absent (trans. ser. ##)';
+	TEXT CHARACTER=59 TEXT='(–) inapplicable: number of nodes in central ring is constant (trans. ser. XX)';
+	TEXT CHARACTER=60 TEXT='(–) inapplicable: no nodes in central ring (trans. ser. ###)^nPalaeoscolex piscatorum has eight to ten nodes on its plates (Conway Morris 1997)^nScathascolex sometimes has five, perhaps sometimes has four as well?^nWronascolex antiquus has four to six ^nWronascolex iacoborum has five, always^n';
+	TEXT CHARACTER=61 TEXT='(–) inapplicable: number of nodes in central ring is not constant (trans. ser. 150)';
+	TEXT CHARACTER=62 TEXT='(–) inapplicable: plates absent (trans. ser. ##)^nPlates of Corynetis form clear transverse rows (Huang et al. 2004a)^nThose of Tubiluchus lemburgi form longitudinal rows that occasionally arise or pinch out (Schmidt-Rhaesa et al. 2013)^nTaxa with a differentiated fore-trunk (e.g. Eximipriapulus, Meiopriapulus) often show a more regular arrangement in their ‘neck’; the arrangement in the trunk (which is typically irregular) is what is coded here.^nSome ordering is apparent in Selkirkia, where the rows are clearly diagonal/quincuncial^n';
+	TEXT CHARACTER=63 TEXT='(~) inapplicable^nLouisella and Onychodictyon ferox bear transverse rows of ventral papillae (Conway Morris 1977a; Ou et al. 2012)^n';
+	TEXT CHARACTER=64 TEXT='(–) inapplicable; ^nThe plates of Corynetis form a quincuncial arrangement, a consequence of each subsequent transverse row being offset relative to the previous (Huang et al. 2004a).  IN Palaeoscolex piscatorum, plates do not correspond exactly to their neighbours on the next annulation (Conway Morris 1997)^n';
+	TEXT CHARACTER=65 TEXT=' (–) inapplicable: plates disordered (trans. ser. ###)^nWronascolex antiquus has a single row of plates on each annulation.  Scathascolex minor has a row of plates on each margin of each annulation; within each row, sclerites are  longitudinally paired.  I have interpreted this as two primary fields per annulation, each comprising two rows of sclerites.   cf. WTS30^nAmbiguous (at best) in Louisella (Conway Morris 1977a, 1997; Smith 2015)^nProminently single in Tylotites (Han et al. 2007c)^nSeemingly single in Chalazoscolex  (Conway Morris and Peel 2010)^n';
+	TEXT CHARACTER=66 TEXT='(–) inapplicable; plates disordered (trans. ser. ###)';
+	TEXT CHARACTER=67 TEXT='(~) inapplicable: plates absent (trans. ser. ##)^nPlatelets are smaller than plates but have an equivalent distribution and ornamentation^nIn taxa with non-mineralized papillae, the distinction of microplates is less clear; tumuli (as in Tubiluchus) are included here.^nWTS33^nTumuli are small papillae.  In Tubiluchus they are supported at their periphery by cuticular ridges, giving them a star-shaped aspect (Todaro and Shirley 2003).^nVariation in plate size in Chordodes is neither systematic nor substantive (Bolek et al. 2010); this taxon is coded as having plates of a single size.^n';
+	TEXT CHARACTER=68 TEXT='(~) inapplicable: epidermal platelets absent^nPriapulid tumuli have a distinctively star-shaped appearance (Schmidt-Rhaesa et al. 2013)^n';
+	TEXT CHARACTER=69 TEXT='(~) inapplicable: plates absent (trans. ser. ##)^nMicroplates are smaller than plates and platelets and are expressed as a patterning of the cuticle. [tbc]^nAmbiguous in Louisella and Tylotites as plates are not strongly preserved; preservational quality is inadequate to assess the presence of microplates^n';
+	TEXT CHARACTER=70 TEXT='(–) inapplicable: platelets absent (trans. ser. ##)';
+	TEXT CHARACTER=71 TEXT='(?) inapplicable: sclerotized exoskeleton (trans. ser. ##) present^nGiven the possibility that lobopodian sclerites derived from the plates of palaeoscolecid worms (Dzik and Krumbiegel 1989), we have reformulated this transformation series from (Smith and Ortega-Hernández 2014) to encapsulate the ‘two longitudinal rows’ of sclerites envisioned by trans. ser. 31 in Wills et al. (2012).  We still code these as present in tardigrades to represent the possible homology of their epidermal depressions with the epidermal evaginations of other lobopodians (Smith and Ortega-Hernández 2014).  Aysheaia is coded as absent as its ‘plates’ (reported by Liu and Dunlop 2014) seem to represent the impressions of the opposite pair of legs (see Whittington 1978). Eokinorhynchus is coded as present as its spines are regularly paired; the seemingly ventral position of the first pair may represent relocation late in development, or deformation of the specimen during preservation. Shergoldana is coded absent as the specializations belong to a tessellating series of plates rather than occurring in transverse pairs (Maas et al. 2007a). Chalazoscolex  is coded present, with the “two to three” individual sclerites occupying the width of each segment (Conway Morris and Peel 2010) assumed to reflect sclerites of the dorsal zone';
+	TEXT CHARACTER=72 TEXT='(–) inapplicable: epidermal specializations (trans. ser. 32) absent^nThe nodes, plates and spines of lobopodian taxa (TS32) represent epidermal evaginations; the paired sclerotized dorsal plates of Actinarctus (Heterotardigrada) are also interpreted as epidermal evaginations (e.g. Nelson 2002; Marchioro et al. 2013; Persson et al. 2014). Halobiotus (Eutardigrada) has epidermal depressions, represented by the paired pits that serve as muscle attachment sites (Halberg et al. 2009; Marchioro et al. 2013). We code Paucipodia, Diania and Aysheaia as uncertain; their preservation is insufficient to establish whether the paired specializations are node-like evaginations or pit-like depressions (Chen et al. 1995a; Liu and Dunlop 2014; Ma et al. 2014a).^nShergoldana bears three rings of four epidermal evaginations (Maas et al. 2007a); we follow the model of Dzik and Krumbiegel (Dzik and Krumbiegel 1989) and code these in the same fashion as the trunk developments of certain palaeoscolecids (e.g. Cricocosmia) and lobopodians (e.g. Microdictyon).^n';
+	TEXT CHARACTER=73 TEXT='(–) inapplicable: epidermal evaginations (trans. ser. 33) absent^nLobopodians’ epidermal evaginations fall into two geometric categories: flat nodes or plates (token 0) and tall spines (token 1). Although the distal portions of the evaginations of Orstenotubulus are not preserved (Maas et al. 2007b), we infer a spine-like habit from the proportions of the spine stubs. ^n';
+	TEXT CHARACTER=74 TEXT='(–) inapplicable: epidermal evaginations (trans. ser. 33) absent^nThis transformation series refers solely to the shape of the trunk evaginations’ apices. It is independent from the evaginations’ proportions (trans. ser. 34), as demonstrated by Onychodictyon ferox, where sclerites are wider than tall (i.e. plates) but display an acute distal termination (Zhang and Aldridge 2007; Ou et al. 2012; Topper et al. 2013).  O. gracilis is coded as uncertain due to its ambiguous preservation (Liu et al. 2008).';
+	TEXT CHARACTER=75 TEXT='(–) inapplicable: epidermal evaginations, if present, lack an acute distal terminus (trans. ser. 35)^nThe spines of Hallucigenia fortis (Hou and Bergström 1995), H. hongmeia (Steiner et al. 2012), Luolishania (Ma et al. 2009) and the Emu Bay ‘Collins Monster’ (García-Bellido et al. 2013b) are distinctively curved, whereas those of H. sparsa (Conway Morris 1977b) and Onychodictyon ferox (Topper et al. 2013) are essentially straight.^n';
+	TEXT CHARACTER=76 TEXT='(–) inapplicable: epidermal evaginations (trans. ser. 33) absent^nThe epidermal evaginations of ‘armoured’ lobopodians are substantially sclerotized (Hou and Bergström 1995; Steiner et al. 2012; Caron et al. 2013), in contrast to those of Xenusion (Dzik and Krumbiegel 1989), Hadranax (Budd and Peel 1998) and Kerygmachela (Budd 1993, 1998a).^nThe robust preservation and narrow spinose projections of the evaginations of Shergoldana (Maas et al. 2007a) suggest primary sclerotization.';
+	TEXT CHARACTER=77 TEXT='(–) inapplicable: sclerotized epidermal evaginations (trans. ser. 37) absent^nWe code this transformation series as uncertain in taxa that are not well enough preserved for the ornament to be apparent. Hallucigenia sparsa has a scaly ornament (Caron et al. 2013) whereas H. hongmeia bears a net-like pattern (Steiner et al. 2012) shared with Onychodictyon and Microdictyon (e.g. Topper et al. 2013); Cardiodictyon specimens show a comparable ornament (Liu and Dunlop 2014 fig. 4f).  Actinarctus sclerites also exhibit a net-like ornament (Marchioro et al. 2013).^n';
+	TEXT CHARACTER=78 TEXT='(~) inapplicable: sclerites absent^nThis transformation series is coded as present in any taxon where exoskeletal elements (claws or epidermal evaginations) comprise stacked constituent elements at all stages of growth (as in Hallucigenia sparsa and Euperipatoides, see main text), not just during ecdysis (as in Onychodictyon, see Topper et al. 2013).  Aysheaia does not have stacked elements (Extended Data Fig. 1p¬–q); stacked elements .  Where sclerites are not preserved in sufficient detail to assess their construction, this transformation series is coded as ambiguous.^n';
+	TEXT CHARACTER=79 TEXT='(–) inapplicable: epidermal specializations (trans. ser. 32) absent^nWe score Cardiodictyon as having two epidermal specializations (token 1), following suggestions that the apparently single dorsal sclerite is formed by the fusion of a pair of elements (Liu and Dunlop 2014).  Following the hypothesis of Dzik and Krumbiegel (Dzik and Krumbiegel 1989), we score Shergoldana as having two specialisations in each band, assuming that only the dorsal sclerites are homologous with the specializations of lobopodian taxa.^nCf. WTS32.^n';
+	TEXT CHARACTER=80 TEXT='(~) inapplicable: paired appendages (trans. ser. 1) absent^nTransformation series 31 in Daley et al. (2009).^n';
+	TEXT CHARACTER=81 TEXT='(–) inapplicable: trunk exites (trans. ser. 44) absent';
+	TEXT CHARACTER=82 TEXT='(~) inapplicable: exites (trans. ser. 44) absent^nWe follow Daley et al. (2009, trans. ser. 34) in considering the lanceolate blades and lateral lobes of lobopodians and anomalocaridids as exites, and trunk walking legs as endopods. Anomalocaris is coded as unfused (token 0) based on the recently reported presence of a second set of lateral flaps (Van Roy et al. 2013). Peytoia and Hurdia (Daley et al. 2009) are coded as uncertain as the possible presence of a second pair of lateral flaps has not been explicitly discounted.';
+	TEXT CHARACTER=83 TEXT='(~) inapplicable: limbs (trans. ser. 5) not arthropodized^nTransformation series 8 of Ma et al. (Ma et al. 2014a), 35 in Daley et al. (2009).  Gnathobasic appendages are absent in fuxianhuiids (Chen et al. 1995b; Waloszek et al. 2005; Bergström et al. 2008; Yang et al. 2013) but present in Artiopoda (Edgecombe and Ramsköld 1999; Ortega-Hernández et al. 2013) and megacheirans (Chen et al. 2004; Haug et al. 2012a, b).^n';
+	TEXT CHARACTER=84 TEXT='(~) inapplicable: limbs (trans. ser. 5) not lobopodous^nThis transformation series is modified from transformation series 9 in Ma et al. (Ma et al. 2014a).  We code as O. gracilis as uncertain as its longitudinal series of dot-like structures (Liu et al. 2008, fig. 2A6). 2A6) could indicate an organization of appendicules similar to those of O. ferox (see Ou et al. 2012, fig. 2a). Siberion is coded as uncertain because its limbs are poorly preserved (Dzik 2011). Hurdia and Peytoia as scored as uncertain pending new data on the structure of the second set of flaps and their morphology (see Van Roy et al. 2013).^n';
+	TEXT CHARACTER=85 TEXT='(–) inapplicable: no secondary structures on the lobopodous limbs (trans. ser. 48)^nSpines and setae taper to sharp point, whereas appendicules have a uniform length and a flattened terminus.^n';
+	TEXT CHARACTER=86 TEXT='(–) inapplicable: limbs (trans. ser. 5) not lobopodous^nTransformation series 10 in Ma et al. (Ma et al. 2014a).  In contrast to appendicules and spines, papillae are short projections associated with the annulations.^n';
+	TEXT CHARACTER=87 TEXT='(~) inapplicable: paired appendages (trans. ser. 1) absent^nThe finger-like projections in the legs of tardigrades can bear sets of terminal claws or sucking discs (Schuster et al. 1980; Nelson 2002).^n';
+	TEXT CHARACTER=88 TEXT='(~) inapplicable: paired appendages (trans. ser. 1) absent^nWe score terminal claws as absent in Opabinia following Budd and Daley (2012). Hurdia and Peytoia are coded as ambiguous as there is no definitive information on the presence of lobopodous limbs or a second set of flaps (Van Roy et al. 2013). Jianshanopodia (Liu et al. 2006) and Megadictyon (Liu et al. 2007) are also coded as uncertain as the preservation of the type material does not allow the presence or absence of terminal claws to be confirmed. Diania too is scored as uncertain, as it is difficult to distinguish possible terminal claws from its myriad accessory spines (Liu et al. 2011; Ma et al. 2014a).^n';
+	TEXT CHARACTER=89 TEXT='(~) inapplicable: terminal claws (trans. ser. 52) absent^nComplex claws are present in Eutardigrada (Schuster et al. 1980; Nelson 2002; Halberg et al. 2009) and the Siberian Orsten-type tardigrade (Maas and Waloszek 2001), but not in heterotardigrades or any Palaeozoic lobopodian.';
+	TEXT CHARACTER=90 TEXT='(–) inapplicable: terminal claws (trans. ser. 52) absent^nModified from transformation series 18 in Ma et al. (Ma et al. 2014a) to better reflect the diversity of claw number in Cambrian lobopodians. Cardiodictyon unambiguously has two claws (Ramsköld and Chen 1998).  Leanchoilia is coded as ambiguous for tokens 0 and 2 (one or three claws) to reflect the conflicting interpretations of García-Bellido and Collins (2007) and Haug et al. (2012a).^n';
+	TEXT CHARACTER=91 TEXT='(–) inapplicable: exites (trans. ser. 44) absent^nTransformation series 31 in Ma et al. (Ma et al. 2014a); trans. ser. 36 in Daley et al. (2009). The definition has been slightly modified reflect the presence of two pairs of lateral flaps in Anomalocaridida (Van Roy et al. 2013).^n';
+	TEXT CHARACTER=92 TEXT='(~) inapplicable: lateral flaps (trans. ser. 55) not present^nTransformation series 38 in Daley et al. (2009). ^n';
+	TEXT CHARACTER=93 TEXT='(~) inapplicable: lateral flaps (trans. ser. 55) not present^nTransformation series 37 in Daley et al. (2009)^n';
+	TEXT CHARACTER=94 TEXT='(–) inapplicable: lateral flaps (trans. ser. 55) not present^nTransformation series 40 in Daley et al. (2009)^n';
+	TEXT CHARACTER=95 TEXT='(~) inapplicable: limbs (trans. ser. 5) not lobopodous^nTransformation series 38 in Ma et al. (Ma et al. 2014a).^n';
+	TEXT CHARACTER=96 TEXT='(–) inapplicable: limbs (trans. ser. 5) not arthropodized^nThe endopods of certain taxa in the euarthropod stem-group, such as fuxianhuiids, bear 15 or more podomeres and are considered ‘multipodomerous’ (Chen et al. 1995b; Waloszek et al. 2005; Bergström et al. 2008; Yang et al. 2013).^n';
+	TEXT CHARACTER=97 TEXT='(~) inapplicable: lateral flaps (trans. ser. 55) absent^nTransformation series 42 in Daley et al. (2009)^n';
+	TEXT CHARACTER=98 TEXT='(~) inapplicable: paired appendages (trans. ser. 1) absent^nWe score Jianshanopodia (Liu et al. 2006) as present because the lateral extensions of the tail fan likely correspond to a modified pair of appendages.  Onychophora are scored as undifferentiated: their posteriormost region does not express appendages (Mayer and Koch 2005), but the appendages are lost (not structurally differentiated); the  posteriormost appendage pair that are expressed are not structurally differentiated.  See also transformation series 35 in Ma et al. (Ma et al. 2014a).^n';
+	TEXT CHARACTER=99 TEXT='(–) inapplicable: posterior appendages unmodified (trans. ser. 63 = 0)^nIn fuxianhuiids, the posteriormost appendage pair is modified into a tail fan or tail flukes (e.g. Chen et al. 1995b; Yang et al. 2013); a similar condition is also observed in Opabinia (Whittington 1975; Budd 1996; Budd and Daley 2012), Anomalocaris (Daley and Edgecombe 2014) and Hurdia (Daley et al. 2009). The paired tail rami of Kerygmachela (Budd 1993, 1998a) likely represent modified appendages. The last appendage pair of Jianshanopodia is modified into a set of lateral flaps, which form a tail fan together with the flattened terminal portion of the body (Liu et al. 2006).  Partial fusion of the last pair of legs occurs in Aysheaia (Whittington 1978), Onychodictyon gracilis (Liu et al. 2008), O. ferox (Ou et al. 2012) and Tardigrada (e.g. Halberg et al. 2009; Marchioro et al. 2013); in these taxa, this characteristic is expressed as an incipient fusion of the medioproximal bases of the posteriormost appendage pair.  The Siberian Orsten tardigrade is scored as having a reduced posteriormost appendage pair based on the vestigial rudiment present on its posteroventral body region (Maas and Waloszek 2001).  We score Pambdelurion as uncertain because its posterior trunk is poorly known (Budd 1998b).^n';
+	TEXT CHARACTER=100 TEXT='(–) inapplicable: appendicular tail not present (trans. ser. 64 ≠ 0)^nThis transformation series distinguishes the long tail rami of Kerygmachela (Budd 1993, 1998a) from the flaps observed in Jianshanopodia (Liu et al. 2006), Opabinia (Budd 1996; Budd and Daley 2012), anomalocaridids (Daley et al. 2009; Daley and Edgecombe 2014), and fuxianhuiids (e.g. Yang et al. 2013).^n';
+	TEXT CHARACTER=101 TEXT='(–) inapplicable: posterior appendages lack claws (trans. ser.  52 = 0)^nThe last pair of legs are rotated anteriad in tardigrades (e.g. Marchioro et al. 2013), Aysheaia (Whittington 1978), Onychodictyon gracilis (Liu et al. 2008) and O. ferox (Ou et al. 2012), but not in Cardiodictyon, Hallucigenia fortis or Microdictyon (Hou and Bergström 1995).  Hallucigenia sparsa is coded as ambiguous owing to the poor preservation of its posterior end.  We score Siberian Orsten tardigrade (Maas et al. 2007b) as uncertain.^n';
+	TEXT CHARACTER=102 TEXT='(~) inapplicable: mouth not terminal (trans. ser. ##)^nAfter transformation series 1 in Wills et al.  (2012).  The introvert is the region of the trunk that corresponds to the Zone I armature zone in the scheme of Conway Morris (1977). (Zones II and III are on the pharynx, which is often termed the ‘mouth cone’ in the priapulid and kinorhynch literature.)^nTaxa without such a region, or where the region is extremely short (as in Scathascolex and Wronascolex), do not have an invaginable introvert.  This character cannot readily be applied to taxa with a non-terminal mouth.^nThe introvert of Eokinorhynchus is partly inverted in some specimens, fully everted in others; the maximum extent of its invagination is unknown (Zhang et al. 2015).^nCoded as ambiguous in Sirilorica (Peel et al. 2013); introvert never seen invaginated but sample size insufficient to determine whether this was not biologically possible.^nAn introvert is not present in adult Chordodidae (Poinar Jr. and Doelman 1974).^nAmbiguous in Xiaoheiqingella as the introvert is not retracted in any specimen (Han et al. 2004; Huang et al. 2004b; Han and Hu 2006; HU et al. 2017) ^nSeemingly invaginable to some extent in Chalazoscolex; unclear in Xystoscolex (Conway Morris and Peel 2010)?^nInvaginable in tardigrades (Guidetti et al. 2013b)^nThe loriciferan introvert can be telescopically retracted inside the lorica, but not inverted (Kristensen 1983), so these are coded as not invaginable.^nPartially inversible in Aysheaia (Whittington 1978)^n';
+	TEXT CHARACTER=103 TEXT='(–) inapplicable: proboscis (trans. ser. 73) not eversible^nAfter transformation series 1 in Wills et al. (2012).  It is not clear how Wills established that the introverts of Louisella and Selkirkia/Paraselkirkia could not be fully retracted; as such these taxa are left ambiguous.^nAmbiguous in Scathascolex (Smith 2015)^n';
+	TEXT CHARACTER=104 TEXT='Proposed by Nielsen (2001, 2012)as a synapomorphy of kinorhynchs, loriciferans and extant priapulids.';
+	TEXT CHARACTER=105 TEXT='After transformation series 4 in Wills et al. (2012).^nScathascolex and Wronascolex are coded as ambiguous as available material is insufficient to determine the invagibility of the pharynx.^nA pharynx, permanently inverted, is present in Chordodes; it is degenerate in adults and there is pharyngeal armature is not recorded (though it exists in larval stages) (Bolek et al. 2010).^nEversible in Xystoscolex; and seemingly Chalazoscolex  (Conway Morris and Peel 2010)^nAn everted pharynx can be observed in some specimens of Aysheaia (e.g. USNM 58655; Whittington 1978)^n';
+	TEXT CHARACTER=106 TEXT='(–) inapplicable: pharynx not eversible^nWTS22^nCoded ambiguous in Scathascolex as there are insufficient specimens to determine whether the pharynx is preserved in its fully everted position.  Coded as complete or incomplete in Eokinorhynchus as a specimen is preserved with eversion beyond proximal teeth (Zhang et al. 2015)^n';
+	TEXT CHARACTER=107 TEXT='(~) inapplicable: pharynx not eversible^nAfter transformation series 4 in Wills et al. (2012).^nScathascolex and Wronascolex are coded as ambiguous as available material is insufficient to determine the invagibility of the pharynx.  Scolecofurca is viewed as having its narrow pharynx in a minimally everted position.^nLoriciferans are coded as permanently everted as the mouth cone remains everted even when the introvert is retracted (Neves et al. 2013)^n';
+	TEXT CHARACTER=108 TEXT='(–) inapplicable: pharynx not eversible (trans. ser. ##)^nCf. WTS83. This formulation reflects the proposed homology between megaintroverts [Lemburg 1999] without attaching undue significance to subtle variations in introvert length.  It is phrased as ‘foregut’ rather than ‘introvert’ to recognize the proposed homology between the panarthropod foregut and the cycloneuralian introvert.';
+	TEXT CHARACTER=109 TEXT='(–) inapplicable: pharynx not eversible (trans. ser. ##)^nCf. WTS85.^nCoded as absent in Corynetis following the interpretation of (Huang et al. 2004a). Movement of pharynx is interpreted as having a role in locomotion in Kinonchulus (Riemann 1972), but it is not clear whether this employs peristalsis.. Both Kinorhyncha (Neuhaus and Higgins 2002) and Loricifera employ their introvert in locomotion (Sørensen et al. 2008), though seemingly through the use movement of individual scalids rather than peristaltic contraction of the entire introvert.';
+	TEXT CHARACTER=110 TEXT='WTS86.  A triradiate introvert is a putative synapomorphy of Loricifera, Priapulida + Kinorhyncha (Yamasaki et al. 2015). The pharynx is also triradiate in most nematodes (Altun and Hall 2017), including Kinonchulus (Riemann 1972) and in some larval onychophorans (Schmidt-Rhaesa et al. 1998)^nTriradiate in Pycnophyes and Kinorhynchus, but round in Cyclorhagida (Neuhaus and Higgins 2002)^n';
+	TEXT CHARACTER=111 TEXT='Modified from transformation series 9 in Wills et al. (2012).  In order to capture homology due to a radial arrangement, the armature number is formulated a number of transformation series, each corresponding to a common factor and thus a potential homology of symmetry.  Priapulids, with 25 rows, also exhibit pentaradial symmetry.  (A taxon could conceivably exhibit 30-fold symmetry, which would have both pentaradial and hexaradial symmetry.) In priapulids, the symmetry of the pharynx is defined by the number of elements that comprise the first three circlets and, hence, defining the number of longitudinal rows of elements on the introvert.^nTaxa with 25 scalid rows: Recent Priapulidae, Halicryptidae,  Tubiluchidae and Maccabeus (Adrianov and Malakhov 2001), Xiaoheiqingella, Yunnanpriapulus (Huang et al. 2004b), Markuelia (Dong et al. 2010)^nThe first three rows contain 8 + 9 + 8 = 25 scalids in Meiopriapulus even if they do not define the symmetry (Adrianov and Malakhov 2001)^nEximipriapulus: “More than 30” (Ma et al. 2014b)^nfewer than 25 – c. 10 on each side – in Sicyophorus and Palaeopriapulites (Maas et al. 2007c)^n6+6+7=19 in nematomorphs (Conway Morris 1977a) – but does this reflect an underlying 6-fold symmetry (see below)?^nShergoldana’s armature comprises a ring of cushion-like folds, each bearing a single tooth.  Each fold is associated with two round humps, and a further round hump occurs between each pair of folds (Maas et al. 2007a).  This arrangement suggests a six-fold symmetry.^nThe armature of kinorhynchs is arranged in a pentaradial fashion (Sørensen et al. 2008)^nA six-fold symmetry is observed in Chordodes, Shergoldana (Maas et al. 2007a), larval nematodes (despite lack of Zone I armature), and loriciferans (Sørensen et al. 2008).  In Halicryptus, the hatching larva has seven-fold symmetry, becoming eightfold in the Higgins larva (Storch and Higgins 1991; Janssen et al. 2009)^nThe six oral papillae of Aysheaia (Whittington 1978) and Tardigrada (Urban 2013) are taken to indicate a 6-fold pharyngeal symmetry, reflected by the six oral plates of Actinarctus (Boesgaard and Kristensen 2001) and Halobiotus (Biserova and Kuznetsova 2012).  The six denticles of Sirilorica (Peel 2010; Peel et al. 2013)are interpreted in the same way^n';
+	TEXT CHARACTER=112 TEXT='(–) inapplicable: not a multiple of five';
+	TEXT CHARACTER=115 TEXT='Although the first three circlets of Meiopriapulus contain 25 sclerites, these do not define longitudinal rows of sclerites or a 25-fold symmetry of the introvert (Adrianov and Malakhov 2001)^nThe circlets of Maccabeus contain 25 elements apiece; the first circlet is interpreted as representing an amalgamation of the first three circlets (Adrianov and Malakhov 2001)^nNot so in Kinorhynchs (Herranz et al. 2013), or either Kinonchulus or Eopriapulites sphinx (where it is the first one row that defines the symmetry) (Liu et al. 2014)^n';
+	TEXT CHARACTER=116 TEXT='WTS20^nSlightly narrower in Corynetis (Huang et al. 2004a; Hu et al. 2012)^nNot substantially wider in Cricocosmia (Hou and Bergström 1994)^nNot wider in Halicryptus (Merriman 1981; Shirley and Storch 1999; Adrianov and Malakhov 2001)^n';
+	TEXT CHARACTER=117 TEXT='(~) inapplicable: pharynx not eversible^nWTS21.^nThe fully everted pharynx of Ottoia, Sirilorica and Louisella expresses a  marked increase in width; this bulb-like feature is armed in Louisella  (Peel et al. 2013)(Conway Morris 1977a).^nCoded ambiguous in Scathascolex as there are insufficient specimens to determine whether the pharynx is preserved in its fully everted position.^nCoded ambiguous in Cricocosmia (Hou and Bergström 1994); the material on which the reconstruction of (Han et al. 2007b) is based is not figured.^nCoded present in nematodes as pharynx (though not eversible) bears bulbs (Altun and Hall 2017).^nCoded ambiguous in Paratubiluchus as the ‘bulb’ may represent gut contents (Han et al. 2004)^n';
+	TEXT CHARACTER=118 TEXT='The dorsal stylet (large dorsal tooth of Kinonchulus) arises outside the pharynx, as revealed during moulting and by the possession of its own set of musculature (p 191 Bird and Bird 1991); it is not considered part of the pharyngeal armature.  Its dorsal position indicates that it is not homologous with the (ventral) tardigrade stylet.';
+	TEXT CHARACTER=119 TEXT='(~) inapplicable; introvert absent or armature not comparable to priapulid proboscis zones^nAfter transformation series 5 in Wills et al. (2012).^nAmbiguous in Tabelliscolex due to low preservational fidelity (Han et al. 2003b).^nAbsent in Corynetis (Hu et al. 2012).^nAmbiguous in Shergoldana and Orstenoloricus because these taxa are presumed to represent larvae, meaning that the adult situation is unknown.^nCoded as ambiguous in Palaeoscolex piscatorum (Whittard 1953; Conway Morris 1997); not clear on what basis Wills et al. (2012) coded introvert features.^nThe specimens of Cricocosmia figured in (Hou et al. 2017) clearly shows that there is a single circlet of Zone I armature.^nMultiple circlets are evident in Tylotites (Han et al. 2007c)^nDetailed references: Nanaloricus (Kristensen et al. 2007); Pliciloricus, (Heiner and Kristensen 2005); Echinoderes (Sørensen and Pardos 2008; Herranz et al. 2014); Paracentrophyes, (Sørensen et al. 2010); Campyloderes, (Neuhaus and Sørensen 2013); CEntroderes, (Neuhaus et al. 2014); Zelinkaderes (Sørensen et al. 2007; Altenburger et al. 2015)^n';
+	TEXT CHARACTER=120 TEXT='(–) inapplicable: introvert unarmoured or not eversible^nScalids and pharyngeal teeth have been distinguished based on their orientation on the pharynx (Nielsen 2001 p. 332)^nCoded ambiguous in Tylotites as descriptions are ambiguous on this point (Han et al. 2003a, 2007c)^nDirected anteriad in Maccabeus (Por and Bromley 1974)^n';
+	TEXT CHARACTER=121 TEXT='Nematomorphs have two (Nectonema?) or three (Gordiida) circlets (Schmidt-Rhaesa 1996).  Kinonchulus has around seven. Shergoldana possibly has more than one.';
+	TEXT CHARACTER=122 TEXT='After transformation series 10 in Wills et al. (2012).';
+	TEXT CHARACTER=123 TEXT='Zone I sclerites arranged ‘raidally’, in longitudinal or diagonal lines; see transformation series 6 in Wills et al. (2012). The nature of the radial arrangement – pentaradial or hexaradial – is not independent of the number of longitudinal armature rows (trans. ser. 84) and is thus not coded separately here. A radial arrangement is not apparent in Eokinorhynchus (Zhang et al. 2015); this does not seem to represent preservation and is taken as authentic.^nNot in rows in Nematomorphs: they have a 6-6-7 arrangement (Schmidt-Rhaesa 1996)^nThe symmetric arrangement of kinorhynchs (Herranz et al. 2013) and loriciferans (Kristensen et al. 2007) does not qualify as neat rows; the character aims to capture the regimented organization of priapulids.  The armature of Ottoia and Selkirkia is in prominent diagonal rows, producing a quincunx arrangement (Smith et al. 2015). Inapplicable in Markuelia as the three rings preserved seem to correspond to those that define the prominent rows in priapulids (Dong et al. 2010).  ^n';
+	TEXT CHARACTER=124 TEXT='(–) inapplicable; Zone I without rows of armature (trans. ser. 82)^nAfter transformation series 6 in Wills et al. (2012).  Diagonal in Eokinorhynchus (Zhang et al. 2015).  Parallel in Nanaloricus, Pliciloricus (Neves et al. 2016).  The regular arrangement of scalids in Eolorica (Harvey and Butterfield 2017) is suggestive of a row-wise arrangement, though the orientation of such rows cannot be determined.^nDiagonal in Laojieella (Han et al. 2006)^nAmbiguous in Eopiapulites; although sclerites occur in more-or-less transverse rows, helical ridges suggest that the underlying organization may be spiral (Liu et al. 2014)^n';
+	TEXT CHARACTER=125 TEXT='This and the following transformation series attempt to extract the full phylogenetic information implicit in transformation series 8 of Wills et al. (2012).^nThe spines of Scolecofurca appear to have originally been cuticularized, based on images taken by Jean-Bernard Caron (Caron 2011). These depict simple posterior-directed spines, though finer subsidiary morphology is possible.^n';
+	TEXT CHARACTER=126 TEXT='The solid sclerites of nematomorphs differ from the structures borne by scalidophorans (Schmidt-Rhaesa 1996).  The construction of Zone II and Zone III armature elements is typically the same as that of Zone I elements, so this character statement stands for elements of all three zones.';
+	TEXT CHARACTER=127 TEXT='Maccabeus has long and short sclerites in Zone I (Por and Bromley 1974) so is coded as ambiguous.';
+	TEXT CHARACTER=128 TEXT='Coded as spinose in loriciferans (Neves et al. 2016)^nLimited information is available from Nectonema (Schmidt-Rhaesa 1996)^n## Todo might be worth reviewing?^n';
+	TEXT CHARACTER=129 TEXT='(~) inapplicable^nIn certain kinorhynch genera (here, Cateria), primary spinoscalids bifurcate at their base, giving the appearance that their number is twice its true figure (Sørensen et al. 2015).';
+	TEXT CHARACTER=130 TEXT='(~) inapplicable';
+	TEXT CHARACTER=131 TEXT='(~) inapplicable^nSpinoscalids and clavoscalids of many loriciferans, including Eolorica, bear articulated joints (Neves et al. 2016; Harvey and Butterfield 2017)^nSclerites of Dracoderes are also articulated (Sørensen et al. 2012b)';
+	TEXT CHARACTER=132 TEXT='(~) inapplicable^nSpinoscalids of many loriciferans, including Eolorica, bear small subsidiary setules (Neves et al. 2016; Harvey and Butterfield 2017)^n';
+	TEXT CHARACTER=133 TEXT='(~) inapplicable^nThe sclerites of Priapulopsis are telescopic (Storch et al. 1995).^n';
+	TEXT CHARACTER=134 TEXT='(~) inapplicable^nThe Zone I sclerites of Meiopriapulus bear a pectinate hood (Morse 1981)^n';
+	TEXT CHARACTER=135 TEXT='Zone II is considered to represent the base of the pharynx, and as such the proximal circlet of Zone II sclerites represent circumpharyngeal structures, which are coded as homologous with the radial mouthparts of Hallucigenia, Jianshanopodia et al. (see Smith and Caron 2015).^nSee transformation series 12 in Wills et al. (2012).^nThe grasping denticles of Sirilorica (Peel 2010; Peel et al. 2013) are interpreted as circumpharyngeal.^nThe ‘wrinkles’ at the base of Zone II in Eokinorhynchus (Zhang et al. 2015, fig. 1f) have a spinose shape and are considered to represent a ring of spines compressed to lie flat against an otherwise unarmed Zone II.^nThe outer oral styles  (Sørensen and Pardos 2008) are considered to mark the base of Zone II in kinorhynchs.^nThe six (?) peri-oral structures of Eolorica (Harvey and Butterfield 2017) are interpreted as robust oral ridges, preserved where the accompanying mouth cone has decayed.^nCoded as ambiguous in Tylotites (Han et al. 2003a, 2007c) as it is possible that the distinct and forward-oriented ring of introvert hooks corresponds to the spines at the base of Zone II.^nA single ring of elongate spines appears to gird the base of Zone II in Cricocosmia (Hou and Bergström 1994; Han et al. 2007b)^nThe buccal papillae of Halicryptus are assumed to correspond to the Zone II elements; these are not sclerotized and are irregularly distributed (Merriman 1981; Storch et al. 1990; Adrianov and Malakhov 2001).  A similar condition occurs in Tubiluchus (Calloway 1975)^nThe ‘double tentacles’ of Maccabeus are described as surrounding the mouth, but the eight trigger spines sit directly on the circumoral nerve ring (Por and Bromley 1974).  On this basis, the latter are homologized with the Zone II elements; the tentacles are considered to represent modified Zone I spines. ^nScolecofurca appears to have elongate Zone II elements visible at its anterior margin (Caron 2011)^nCoded ambiguous for Fieldia; just a hint of some form of structure around the base of the everted Zone II (Pers Obs of ROM 93-1678A)^nNot described in Guanduscolex (Hu et al. 2008), though it is possible that these have been overlooked on account of preservation (cf. the faint preservation in Mafangscolex mannus).^nXystoscolex has prominent ridge-like features at the boundary of the introvert and the pharynx (Conway Morris and Peel 2010); these presumably correspond to Zone II armature, though their detailed morphology remains ambiguous^nTODO Review in Aysheaia and Siberion whether the oral papillae might correspond to Zone I^n';
+	TEXT CHARACTER=136 TEXT='(–) inapplicable: radial circumpharyngeal structures (trans. ser. 19) absent^nPanarthropods express a considerable diversity of circumoral structures, which represent a symplesiomorphic feature of Ecdysozoa as a whole (e.g. Edgecombe 2009). Various lobopodians bear oral papillae/lamellae (e.g. Aysheaia  (Whittington 1978); Kerygmachela (Budd 1993, 1998a); Opabinia (Whittington 1975)); a similar feature occurs in the oral cone of Tardigrada (Dewel and Eibye-Jacobsen 2006; Guidetti et al. 2012).  Pambdelurion (Budd 1998b) and anomalocaridids (e.g. Daley et al. 2009; Daley and Edgecombe 2014) exhibit radially arranged plates that together form a mouth apparatus (Daley and Bergström 2012).  We code the nature of the circumoral structures in Megadictyon and Jianshanopodia (Liu et al. 2006, 2007; Vannier et al. 2014) as uncertain; in the former case, the type material does not unequivocally exhibit a plate-like nature; in the latter, the documentation of the plates is inconclusive.  The transformation series is scored as inapplicable in Onychophora because the bilaterally symmetrical lip papillae are demonstrably not homologous with the radially symmetrical structures of other taxa (Eriksson and Budd 2000; Martin and Mayer 2014)^n';
+	TEXT CHARACTER=137 TEXT='(~) inapplicable: circumoral structures, if present, are neither scalids nor plates (trans. ser. 20)^nThis transformation series distinguishes the somewhat indistinct organization of the mouth apparatus in Pambdelurion (Budd 1998b) from the radially arranged mouthparts of anomalocaridids (Daley et al. 2009; Daley and Bergström 2012; Daley and Edgecombe 2014). We score Megadictyon and Jianshanopodia as uncertain to reflect their mouthparts’ poor preservation (Liu et al. 2006, 2007).^n';
+	TEXT CHARACTER=138 TEXT='(–) inapplicable: Zone II not armoured (trans. ser. ##)^nAfter transformation series 12 in Wills et al. (2012).^nThe single circlet of large denticles in Sirilorica (Peel et al. 2013) is interpreted as the proximal circlet of Zone II.  There are at least six denticles; a seventh may be obscured by incomplete preservation (Peel et al. 2013).  Nanaloricidae, and most species of Pliciloricus, bear eight oral ridges (though ranging from six to twelve in Pliciloricidae) (Neves et al. 2016).  The six peri-oral sclerites preserved in Eolorica (Harvey and Butterfield 2017) are taken to represent the full complement.  Six in Actinarctus (Boesgaard and Kristensen 2001), Halobiotus (Biserova and Kuznetsova 2012), Aysheaia.  Twelve liplets corresponding to six lobes in Anatonchus (Borgonie et al. 1995), so coded as homologous to six as this is the underlying organization.  c. Eighteen in Eopriapulites (Liu et al. 2014)^n';
+	TEXT CHARACTER=139 TEXT='(–) inapplicable: Zone II not armoured (trans. ser. ##)^nAfter transformation series 13 in Wills et al. (2012).^nMaccabeus is coded ambiguous; the spines have a length:width ratio of 4:1 if the width is measured at its maximum in the basal region, but 12:1 if measured at the base of the elongate projection (Por and Bromley 1974).^n';
+	TEXT CHARACTER=140 TEXT='(~) inapplicable: no spines at base of Zone II^nThe spines of Sirilorica seem to have multiple cusps (Peel et al. 2013), as do the trigger spines of Maccabeus (Por and Bromley 1974).^nShergoldana is coded as ambiguous as it is not clear whether the ‘cushion-like folds’ (Maas et al. 2007a) are part of the spine or represent soft tissue.^n';
+	TEXT CHARACTER=141 TEXT='(~) inapplicable; reduced or not differentiated^nWhere present, the oral ridges of loriciferans (Neves et al. 2016) are interpreted as Zone II sclerites fused to the introvert. In other taxa, only the proximal part of the sclerites is attached to the trunk. ^nIn certain kinorhynchs (here, Campyloderes) the outer oral stylets (= Zone III sclerites) lie flat against the introvert, to which they are fused (Sørensen et al. 2015).  ^n';
+	TEXT CHARACTER=142 TEXT='The Zone III armature trans. series has been reformulated from Wills et al. (2012, trans. ser. 15–19) to better capture possible homologies between similar structures, and to avoid treating different character states as homologous.^n(–) inapplicable : WHY?^nAfter transformation series 3 in Wills et al. (2012).  Priapulids’ Zone III sclerites, and the microspines (proventricular acanthae) of the arthropod foregut, are included here.  The presence of comparable features in the foregut of Jianshanopodia (Vannier et al. 2014) demonstrates that comparable features can be observed in Cambrian lobopodians given suitable preservation; lobopodians are thus coded as ambiguous for this transformation series.  The features are absent in Onychophora (Elzinga 1998); electron-dense thickenings in the tardigrade pharynx (Dewel and Clark 1973b) are tentatively considered to represent armature that has been reduced in size due to the miniaturization of the tardigrade body.^nCorresponds to the inner rows of teeth in Hurdia (Transformation series 9 in Daley et al. (2009). ^nOral stylets are occasionally present (three, four or six) in Pliciloricus (Neves et al. 2016); eight are present in Nanaloricus mysticus (Kristensen 1983).^nPresence of armature in Priapulites (Schram 1973) indicated by robust preservation of pharyngeal region.^nThe adult condition is used, except where elements are present in larvae only.^nSimple spinose elements within the oral circlet of Eopriapulites (Liu et al. 2014) are interpreted as elements of Zone III.^n';
+	TEXT CHARACTER=143 TEXT='The situation in Zone III is assumed also to apply to Zone I armature, thus this character statement stands for both.';
+	TEXT CHARACTER=144 TEXT='After transformation series 3 in Wills et al. (2012).';
+	TEXT CHARACTER=145 TEXT='(–) inapplicable: Zone III lacking armature (trans. ser. 22)^nAfter transformation series 14 in Wills et al. (2012).  ^nThe oral stylets of loriciferans, where present, occur in a single circlet (Neves et al. 2016).^nCirclets of tardigrade mucrones are indistinct, and given presence of prominent deeper circlet in certain taxa, this is coded as ambiguous (Guidetti et al. 2013b)^nAnatonchus (Nematoda) has four circlets (Borgonie et al. 1995), in addition to three teeth (codedd as distal elements)^nMaotianshania has around 12 circlets (Hou and Bergström 1994)^nEokinorhynchus has at least two circlets; the full number is unknown as the pharynx may not be fully everted (Zhang et al. 2015).^nKinorhynchs have four circlets within Zone III: one ring of outer oral stylets, two rings of inner oral styles, and the helioscalids (Sørensen and Pardos 2008)^nOttoia has c. 40 (Smith et al. 2015)^nCorynetis has c. 60, if the armature is arranged in circlets rather than irregularly (Hu et al. 2012)^nHalluicgenia is coded as ?; its sclerites are not strictly arranged in circlets, and occur in a large number of rows (Smith and Caron 2015).^nHalycryptus has multiple circlets, with the number increasing during growth (Adrianov and Malakhov 2001)^nMany circlets in Maccabeus (Por and Bromley 1974)^nc. 50 in Priapulus (Adrianov and Malakhov 2001)^nAround 12 clear circlets in Tubiluchus, with further more distally (Kirsteuer 1976)^nAt least thirteen in Priapulopsis (van der Land 1970)^nVariable numbers reported in Meiopriapulus, possible changing with ontogeny (Sørensen et al. 2012a)^nc. 20 in Laojieella (Han et al. 2007a)^nSeemingly a single circlet in Ancalagon and Fieldia (Conway Morris 1977a) (and Pers. Obs)^n';
+	TEXT CHARACTER=146 TEXT='(–) inapplicable: number of elements in proximal circlet of Zone III armature not equal to five (trans. ser. ##), or fewer than ten circlets^nA distinct pentaradial symmetry is evident “only in the [first] eight circlets” in Halicryptus (Adrianov and Malakhov 2001)^nSeven (including the proximal circlet) in Maccabeus (Por and Bromley 1974)^nWTS19^n';
+	TEXT CHARACTER=147 TEXT=' (–) inapplicable: none present (trans. ser. ###)^nWTS18^nEight in Meiopriapulus (Sørensen et al. 2012a)^nFive in Tubiluchus lemburgi (Schmidt-Rhaesa et al. 2013), reflected by the five basal papillae (which represent a distinct circlet from the remainder of the pharyngeal teeth).^nSix in Namnaloricus, Pliciloricus (Neves et al. 2016), Kinochulus ^nMaotianshania has approximately 15 (Hou and Bergström 1994); coded as ?^nCoded ambiguous in Cricocosmia (Hou and Bergström 1994)?^nSixteen in Eokinorhynchus (Zhang et al. 2015)^nOttoia approx.. 24–30; probably not a constant number between specimens (Smith et al. 2015); coded ambiguous^nThe dorsal outer oral stylet in Kinorhyncha is understood to be secondarily reduced; the decaradial arrangement of the elements being clearly evident (Nebelsick 1993); these taxa are thus coded as ten.^nTwelve reported in Kinonchulus, though six drawn; possibly six are the Zone II ‘hooks’.^nAnatonchus > 40 (Borgonie et al. 1995), coded ambiguous ^nFive in Halicryptus (Adrianov and Malakhov 2001) and Priapulopsis (van der Land 1970)^nc. Sixteen in Fieldia? (pers. obs)';
+	TEXT CHARACTER=148 TEXT='The proximal circlet in kinorhynchs has an obvious relationship to the subsequent circlets, each containing vice – this suggests an underlying shared five-fold symmetry, hence linking these two options ';
+	TEXT CHARACTER=149 TEXT='(~) inapplicable';
+	TEXT CHARACTER=150 TEXT='(~) inapplicable: Zone III unarmoured (trans. ser. ##)^nReduction relates to size; this transformation series therefore applies whether or not the morphology of the proximal circlet is differentiated^n';
+	TEXT CHARACTER=151 TEXT='TODO in matrix, switch position with adjacent character – follow column headings^nFollowing Sørensen et al. 2015 character 1 (Sørensen et al. 2015), the outer oral stylets of neocentrophyid and dracoderid kinorhynchs alternate between prominent and less well-developed sizes; see for example Paracentrophyes (Sørensen et al. 2010)';
+	TEXT CHARACTER=152 TEXT='(~) inapplicable: Zone III lacking armature (trans.ser. ##)^nAfter transformation series 18 in Wills et al. (2012).^nDifferentiated circlets are depicted in the drawn reconstruction of Corynetis (Huang et al. 2004a), but not formally described or depicted; this taxon is coded as ambiguous.^nDifferentiated in Halicryptus, Priapulopsis (Conway Morris 1977a).^nScored as inapplicable in loriciferans (Neves et al. 2016), whose single circlet cannot be meaningfully coded as ‘proximal’, ‘medial’ or ‘distal’.^nScored as differentiated in Ancalagon and Fieldia as the medial Zone III armature is massively reduced or absent in these taxa (Conway Morris 1977a)^nThe circlet of five sclerotized trabeculae in Maccabeus (Por and Bromley 1974) are interpreted as a reduced circlet of Zone III teeth.^nIn Priapulopsis bicaudatus, the first ring of teeth feature a reduced central spine (van der Land 1970)^nDifferentiated in Ottoia and Selkirkia (Type A teeth) (Conway Morris 1977a; Smith et al. 2015)';
+	TEXT CHARACTER=153 TEXT='(~) inapplicable: proximal circlet of Zone III absent or reduced (trans. ser. 107)^nThis and the following transformation series have been modified from trans. ser. 15 in Wills et al. 2012 to better capture possible homologies between sclerite morphologies.^n';
+	TEXT CHARACTER=154 TEXT='(–)	inapplicable: proximal circlet of Zone III armature without prominent central spine (trans. ser. ##)';
+	TEXT CHARACTER=155 TEXT='(~)	inapplicable: proximal circlet of Zone III armature without prominent central spine  (trans. ser. ##)^nPectinate projections can occur from the fringe of a central cone (cf. trans. ser. 15, state 4 in Wills et al. 2012) or can occur along the margin of a scalid that lacks a central spine (cf. trans. ser. 15, state 6 in Wills et al. 2012).  There is a gradation from a pectinate fringe (cf. Ottoia) via a multispinose situation (cf. Selkirkia Type A) through multiple spines (cf. Pripaulopsis); as such, all of these are coded in a single character statement.^nA basal fringe is present in the outer oral stylets of certain kinorhynchs – Paracentrophyes (Sørensen et al. 2010), Dracoderes (Sørensen et al. 2012b)^n';
+	TEXT CHARACTER=156 TEXT='(~) inapplicable: not morphologically differentiated, or reduced^nThe outer oral stylets of many kinorhynchs (though not certain Pycnophyidae) consist of two to three rigid articulating units (Sørensen et al. 2015)';
+	TEXT CHARACTER=157 TEXT='(–) inapplicable: Zone III lacks armature (trans. ser. ##)^nFieldia and Ancalagon only possess a single ring of Zone III teeth (Conway Morris 1977a), which I consider to represent a differentiated proximal circlet; the middle circlets are perhaps reduced or indistinct in the fossil material.  The situation in loriciferans is taken to be the same: the Zone III armature comprises a single ring (typically) of oral ridges (i.e. a proximal circlet) and a single ring (where present) of oral stylets (a single distal circlet) (Neves et al. 2016).^nKinorhynchs have three rings of simple spinose styles (Sørensen and Pardos 2008; Herranz et al. 2014)^n';
+	TEXT CHARACTER=158 TEXT='(–) inapplicable: middle circlets in Zone III armature absent or reduced (trans. ser. ##)^nMultiple spines in Ottoia and Selkirkia (Smith et al. 2015). Simple spines in Eokinorhynchus (Zhang et al. 2015)^nSingle spines with pectinate fringe in Antygomonas (Bauer-Nebelsick 1996) and Centroderes (Neuhaus et al. 2014) coded as single spines; not clear that pectinate fringe is always clear enough to be unambiguously observed in other taxa.^n';
+	TEXT CHARACTER=159 TEXT='(~) inapplicable: Zone III unarmoured (trans. ser. ##)^nIn taxa such as Ottoia, the distal teeth in Zone III are morphologically and constitutionally distinct from the more proximal Zone III teeth (Smith et al. 2015). Scored as present if sclerites in the distal region of Zone III are morphologically distinct from those in the medial region, which are typically more robustly cuticularized.  Sclerites that arm the upstanding eversible ‘mouth cone’ of priapulids are not included as part of the Zone III armature.  Ambiguous in Louisella (Conway Morris 1977a).  ^nDifferentiated ‘curved, scimitar-shaped’ teeth at entrance to stomach in Maccabeus (Por and Bromley 1974)^n';
+	TEXT CHARACTER=160 TEXT='(–) inapplicable: distal circlets in Zone III armature not morphologically distinct (trans. ser. ##)^nPectinate in Ottoia (Smith et al. 2015).^nMorphologically distinct, though still pectinate, in Tubiluchus (Kirsteuer and Ruetzler 1973)^n';
+	TEXT CHARACTER=161 TEXT='WTS23.  If the proximal ring of elements is morphologically distinct, they are not included in this consideration.^nThe Zone III elements in Ottoia and Selkirkia do not change in size, just in angle of preservation (Smith et al. 2015).^nNo change in size is evident in Scathascolex.^n';
+	TEXT CHARACTER=162 TEXT='(~) inapplicable^nA feature of certain kinorhynchs, e.g. Franciscideres; see character 7 in (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=163 TEXT='Trichoscalids are scalids that occur posterior to the last spinoscalid ring of the introvert in kinorhynchs, distinguished from other scalids morphologically, by their ‘hairy’ appearance, and positionally, by the gap between them and the Zone I scalids (Neves et al. 2016). They are listed as features of the neck as trichoscalid plates, where present, are connected to the placids (Sørensen et al. 2015).  Wills et al. (2012) considered these as a separate ring of the Zone I armature (see their transformation series 11), but they are here treated separately. ^nThe fringed tips of sclerites in Eolorica (Harvey and Butterfield 2017) are taken to identify the presence of trichoscalids.^nCoded ambiguous in Sicyophorus, as there is a hint of spine-like structures at the base of the introvert of (fig. 3a Maas et al. 2007c) that could conceivably represent tricoscalids.^nCoded as present in Kinonchulus, corresponding to the articulated ‘anterior six head setae’, which occur immediately behind setae that are homologised with the ‘lip setae of other Onchulidae’ (Riemann 1972), which presumably themselves correspond to an additional row of trichoscalids or trichoscalid plates.  The row of backward pointing spines in Markuelia (Haug and Maas 2009) occupy an equivalent position and are coded as homologous.^n';
+	TEXT CHARACTER=164 TEXT='(–) inapplicable: single circlet (trans. ser. ##)^nAfter transformation series 11 in Wills et al. (2012).^n';
+	TEXT CHARACTER=165 TEXT='Following character 5 of (Sørensen et al. 2015). Loriciferans (Neves et al. 2016) have fifteen trichoscalids (seven of which are sometimes ‘double’, interpreted as basally bifurcating as they attach to the same trichoscalid plate).  ';
+	TEXT CHARACTER=166 TEXT='(~) inapplicable: trichoscalids absent^nTrichoscalid plates are large plates to which trichoscalids attach.  They are always present in lorificerans (Neves et al. 2016), and occur in certain kinorhynchs, where they connect at their posterior margin to the placids; see character 6 of (Sørensen et al. 2015)^n';
+	TEXT CHARACTER=167 TEXT='(~) inapplicable^nThe placids of kinorhynchs and the lorical ring of loriciferans and larval priapulids form cuticular plates that surround the neck region of the respective organisms (Wennberg et al. 2009; Peel et al. 2013; Sørensen et al. 2015); whilst placids conceivably represent reduced lorical plates, they are not considered homologous and are treated as two separate transformation series.  Coded absent in Shergoldana as the plates do not form clear rings and do not clearly girdle the neck (Maas et al. 2007a).^nCoded as present in Corynetis as a ring of robust plates seems to occur at the anterior margin of specimens with retracted introverts, though there is no indication that these could form a closing apparatus, their size being too large (Hu et al. 2012).^nCoded as ambiguous in Acanthopriapulus as larval stages are unknown (van der Land 1970; Higgins and Storch 1991)^nCf. WTS61.^n';
+	TEXT CHARACTER=168 TEXT='(~) inapplicable^nCf. WTS24.^nPlates not retained in Tubiluchus; no reference available to support retention in T. vanuatensis (Kirsteuer and Ruetzler 1973; Calloway 1975; Kirsteuer 1976)^nThere is a possibility that the ‘theca’ of Laojieella (Han et al. 2006) is homologous with loriciferan plates (cf. Priapulus Higgins larvae with a prominent dorsal and ventral plate, and Sirilorica with prominent regions of the trunk anterior and posterior of its lorica), but this cannot be substantiated, so Laojieella is coded as ambiguous.^nThe lorica of Sicyophorus is considered to represent the adult form due to the size of the organisms (Hou et al. 2017).  I consider Palaeopriapulites to have a lorical too; a distinct anterior margin is evident in some specimens (Hou et al. 2017).?^n';
+	TEXT CHARACTER=169 TEXT='(–) inapplicable; lorica absent (trans. ser. ##)^nSix in Nanaloricus mysticus, Franciscideres (Kristensen 1983; Sørensen et al. 2015)^nSix to ten in nanaloricidae; six in Nanaloricus mysticus (Kristensen 1983)^nSeven in Sirilorica (Peel et al. 2013), Paracentrophyes (Sørensen et al. 2015)^nTwenty in Eolorica (Harvey and Butterfield 2017), Orstenoloricus (Maas and Waloszek 2009) and Tubiluchus (Higgins and Storch 1989)^nCoded (tentatively) as twenty in Sicyophorus as c. 10 are evident on a single surface (Hou et al. 2017)^nIn Halicryptus and Priapulus caudatus there are 14 plates: a dorsal and a ventral, and on each side three pairs of accordion-like plates (Storch and Higgins 1991; Higgins et al. 1993). ^nNumbers that are unique to a single terminal in the dataset are coded with the ambiguous token as they contain no phylogenetic information.  These include Pliciloricus (typically 22, in some species 21, 30 or 44) (Neves et al. 2016).^nTen places in Maccabeus (Por and Bromley 1974)^n';
+	TEXT CHARACTER=170 TEXT='Shergoldana is coded as ambiguous as its plates with spine-bearing humps (Maas et al. 2007a) equivocally correspond to lorical plates.^nCoded as ambiguous in macrofossils that do not preserve loricae, as the early developmental stages are unknown.^n';
+	TEXT CHARACTER=171 TEXT='(~) inapplicable: plates absent ^nCf. WTS62^nPresent in Halicryptus (Storch and Higgins 1991)^nAbsent in Sicyophorus; may be present in Palaeopriapulites (coded ambiguous) (Maas et al. 2007c; Hou et al. 2017)^n';
+	TEXT CHARACTER=172 TEXT='‘Honeycomb’ ornament is considered equivalent to “rows of subrectangular fields”; the two intergrade in, for example, Halicryptus larvae (Storch and Higgins 1991)';
+	TEXT CHARACTER=173 TEXT='(–) inapplicable; cuticular plates absent (trans. ser. ##)^nSee character 11 in (Sørensen et al. 2015).^nSirilorica and Nanaloricus bear spikes on the anterior margins of their loricae (Peel et al. 2013; Neves et al. 2016); Pliciloricus and Eolorica do not (Neves et al. 2016; Harvey and Butterfield 2017)^n';
+	TEXT CHARACTER=174 TEXT='Placids are a ring of plates in the neck region of most kinorhynchs (though not Cateria), posterior to the introvert. See character 8 in (Sørensen et al. 2015).  Coded ambiguous in Sicyophorus, as there is a hint of spine-like structures at the base of the introvert (fig. 3a Maas et al. 2007c) that could conceivably correspond to placids or lips';
+	TEXT CHARACTER=175 TEXT='(~) inapplicable^n^nIn most cases, placids form a closing mechanism when the head is retracted into the trunk; see character 8 in (Sørensen et al. 2015).  Nematode ‘lips’ also serve to close the front of the trunk (Borgonie et al. 1995; Altun and Hall 2017) ^n';
+	TEXT CHARACTER=176 TEXT='In certain kinorhynch taxa, the arrangement of placids incorporates gaps that give rise to a bilaterally symmetric character; see character 13 in (Sørensen et al. 2015).';
+	TEXT CHARACTER=177 TEXT='(–) inapplicable; cuticular plates absent (trans. ser. ##)^nSee character 9 in (Sørensen et al. 2015).^nSix in Franciscideres; seven in Paracentrophyes; nine in Dracoderes; fourteen in Campyloderes; sixteen in Antygomonas, Centroderes , Echinoderes, Zelinkaderes (Sørensen et al. 2015).^n';
+	TEXT CHARACTER=178 TEXT='(–) inapplicable; cuticular plates absent (trans. ser. ##)^nSee character 11 in (Sørensen et al. 2015).^nSirilorica and Nanaloricus bear spikes on the anterior margins of their loricae (Peel et al. 2013; Neves et al. 2016); Pliciloricus and Eolorica do not (Neves et al. 2016; Harvey and Butterfield 2017)';
+	TEXT CHARACTER=179 TEXT='(–) inapplicable; cuticular plates or trunk segment absent (trans. ser. ##)^nSee character 12 in (Sørensen et al. 2015).^n';
+	TEXT CHARACTER=180 TEXT='A proposed synapomorphy of Scalidophora, though absent in loriciferans, and not really codable as present in priapulids (Sørensen et al. 2008) – thus alternatively proposed as a synapomorphy of kinorhynchs and loriciferans (Neuhaus and Higgins 2002)^nThis said, the spines in kinorhynchs (e.g. Zelinkaderes, Neuhaus and Higgins 2002) are not restricted to the mid-trunk – more occur more posteriorly ^n## For a more careful description see Schmidt-Rhaesa 1997⁄98; Lemburg 1999; Neuhaus and Higgins 2002^nUnambiguously absent in Halicryptus and Tubiluchus Higgins larvae (Higgins and Storch 1989; Storch and Higgins 1991; Higgins et al. 1993), but present in Pripaulus (van der Land 1970) and early larvae of Maccabeus (Por and Bromley 1974)^n';
+	TEXT CHARACTER=181 TEXT='WTS36^nFlosculi have been proposed as a synapomorphy of Scalidophora (Lemburg 1995; Nielsen 2012).^nAmong loricifera, present only in Nanaloricus and Pliciloricus (Neves and Kristensen 2014).^nCoded ambiguous in Chordodes (Bolek et al. 2010) as it is unclear whether any of its areoles might be considered equivalent to flosculi.^nFlosculi are really tiny (Storch and Alberti 1985) and the chances of picking them out from cuticular ridges in Burgess Shale-type fossils are slim – such taxa are coded ambiguous accordingly.  Coded absent in Schistoscolex as the preservation is of sufficient fidelity, and the posterior region of is preserved (Duan et al. 2012)^n';
+	TEXT CHARACTER=182 TEXT='(–) inapplicable: none present (trans. ser. ##)^nFlosculi in Maccabeus (Por and Bromley 1974), Meiopriapulus and Tubiluchus (Sørensen et al. 2012a), kinorhynchs and loriciferans [[Nematomorpha, Priapulida, Kinorhyncha, Loricifera^nedited by Andreas Schmidt-Rhaesa]]^n';
+	TEXT CHARACTER=183 TEXT='(~) inapplicable^nFlosculi in priapulids have petal-like structrues (typically eight) (Wills et al. 2012); in loriciferans they do not bear clear petals (Neves et al. 2016)^n';
+	TEXT CHARACTER=184 TEXT='WTS36';
+	TEXT CHARACTER=185 TEXT='‘Mushroom shaped’ structures present in the genital region of Tubiluchus (Priapulida). WTS37';
+	TEXT CHARACTER=186 TEXT='(–) inapplicable: clavula absent^nThe clavula of Tubiluchus lemburgi has a short stalk and moderately sized distal bulb (Schmidt-Rhaesa et al. 2013).^nT. corallicola, T. australiensis have a short-stalked clavula (Van Der Land 1982; Schmidt-Rhaesa et al. 2013)^nT. remanei has a long-stalked clavula (Van Der Land 1982)^n';
+	TEXT CHARACTER=187 TEXT='The clavula of Tubiluchus lemburgi has a short stalk and moderately sized distal bulb (Schmidt-Rhaesa et al. 2013).^nThe clavulae of T. remanei and T. corallicola are club-shaped with a  distal bulb (Van Der Land 1982)^n^nFrom Schmidt-Rhaesa et al. 2013:^nIn T. remanei (see van der Land, 1982),^nthere is a row of perigenital setae of varying shape and size and^nvery long stalked clavula on each side next to the cloacal opening.^nInT. corallicola(seevan der Land, 1970), the urogenital pore and^nthe anus are very small and almost invisible. Close to each pore is a^nclavula, posterior are two large setae and anterior is a row of small^nperigenital setae. This row leads to a broad ventral region, in which^nnormal setae, large perigenital setae and tubuli are present; most^nprominent is a group of large “normal” setae anterior to the row^nof small perigenital setae. InT. remanei(see van der Land, 1982),^nthere is a row of perigenital setae of varying shape and size and^nvery long stalked clavula on each side next to the cloacal opening.^nA comb-like series of cuticular ridges is described, but not figured.^nTubiluchus australensis (see van der Land, 1985) has a clavula with a^nlarge spherical distal end and a short stalk. Additionally, only a row^nof eight perigenital setae of varying shape and size is present on^neach side of the animal. Whereas the urogenital opening is almost^ninvisible in all previous species, it is quite large and funnel-shaped^ninT. philippinensis (see van der Land, 1985). With a length of about^n25µm the clavulae are very large, and their distal ends are clubshaped. Some setae are present close to each clavula, but the most^nconspicuous structures are a dense group of small perigenital setae^nanterior to each urogenital opening. InT. troglodytes(seeTodaro^nand Shirley, 2003), there are circular cuticular ridges, which in total^nhave the form of an “8”. Eight to 10 setae are present along the ridge^non each side, and a clavula and two setae are present in the anterior^nregion anterolateral of the ridges on each side. Anterior of these^nstructures is a dense group of up to 70 setae. The genital structures^nofT. arcticusandT. vanuatuensiscould not be included here (they^nare, e.g. not mentioned in the English summary of the species in^nAdrianov and Malakhov, 1996).^n';
+	TEXT CHARACTER=188 TEXT='Bullulae are small hemispherical elevations present in the genital region of certain priapulids, including Tubiluchus lemburgi (Schmidt-Rhaesa et al. 2013).^nPresent in T. corallicola (Van Der Land 1982)^n';
+	TEXT CHARACTER=189 TEXT='WTS38. These states are retained in a single transformation series as states 1 and 2 are mutually exclusive but are unlikely to be homologous.';
+	TEXT CHARACTER=190 TEXT='Cf. WTS39.^nLoriciferans bear posterior spines, interpreted as sensory setae (Neves and Kristensen 2014)^nEokinorhynchus has two pairs of caudal spines, distinguishing them from the series of lateral spines on the dorsal trunk (Zhang et al. 2015).  Coded as absent in loriciferans as posterior projections only occur in larval stages (Neves et al. 2016)^nAmbiguous in Shergoldana: larval hooks cannot be assumed to be retained to adulthood (cf. loriciferans, Neves et al. 2016).^nThe posterior bifurcations of adult nematomorphs are not considered as projections.^nTwo present in Halicryptus (Shirley and Storch 1999)^nAcanthopriapulus is covered in a profusion of hooks (van der Land 1970); tail hooks are not distinguished from other trunk hooks, so the character is scored as ambiguous.^nTail hooks are absent in Priapulus; it is possible that the posterior warts correspond to these structures, but I was unable to find any literature that documented their distribution.^nNo posterior structures present in Eopriapulites (Shao et al. 2016)^nAbsent in Fieldia (ROM93-1509)^nI know of no specimens of Palaeoscolex piscatorum that document the posterior end; it’s not clear how Wills et al. (2012) coded hooks as present.^nPosterior projections in kinorhynchs (Sørensen and Pardos 2008)(Herranz et al. 2014) differ fundamentally in position, distribution, morphology, and differentiation of morphology, and are not considered homologous to the caudal spines in palaeoscolecids and certain priapulids.^n';
+	TEXT CHARACTER=191 TEXT='Cf. WTS44.';
+	TEXT CHARACTER=192 TEXT='Cf. WTS49.^nCoded as ambiguous in Scathascolex and Eokinorhynchus as the tail hooks’ basal diameter is close to 20% of the trunk diameter; the preservation of the fossils makes it difficult to determine the exact diameter of the hooks.^n';
+	TEXT CHARACTER=193 TEXT='(–) inapplicable: no posterior projections (trans. ser. ###)^nScathascolex and Eokinorhynchus have four hooks.^nWronascolex antiquus is scored as having four hooks; the hooks are occluded by adpression in the specimens figured in (García-Bellido et al. 2013a)  but seem to occur in two pairs.^nMaccabeus has 40–65 hooks (Por and Bromley 1974)^nMeiopriapulus has 32–38 in a single ring (Sørensen et al. 2012a)^nSix in Markuelia (Dong et al. 2010)^n';
+	TEXT CHARACTER=194 TEXT=' (–) inapplicable; not more than two posterior spines or hooks (trans. ser. ###)^nCf WTS39.^nSchistoscolex has four projections, two bilateral pairs; they encircle the entire posterior surface of the organism and are thus coded as being a radial ring.^nThe pairs in Eokinorhynchus form an open arc (Zhang et al. 2015)^nThe condition in Markuelia is unclear (Dong et al. 2010)^nThe condition in Acanthopriapulus is taken to be irregular (van der Land 1970)^n';
+	TEXT CHARACTER=195 TEXT='WTS40.  Ring papillae are small peg-like structures tipped with a seta; they occur on the annulus/annuli closes to the anus.  They grade into abdominal setae, and are easily missed except with SEM analysis of living priapulids (Merriman 1981) and are thus coded ambiguous in fossil taxa except the exquisitely preserved Schistoscolex, where they are demonstrably absent.  Corynetis and Xiaoheiqingella, coded as present in Wills et al. 2012, do not obviously express a ring of papillae that are distinct from abdominal spines. ';
+	TEXT CHARACTER=196 TEXT='WTS42.';
+	TEXT CHARACTER=197 TEXT='WTS43.^nTerminal in Maccabeus (Por and Bromley 1974)^nTerminal in Onychophora and Tardigrada; not clear why coded as in abdomen in Wills et al. 2012^n';
+	TEXT CHARACTER=198 TEXT='(–) inapplicable: trunk stem not lobopodous^ni.e. terminal limbs of lobopodians; lumps of palaeoscolecids.  Distinguish from caudal appendages.  ^nThis transformation series has been modified by that of previous analyses (Ma et al. 2014a) to reflect the fact that, in extant Onychophorans, the posterior extension of the lobopodous trunk (i.e. anal cone) corresponds to a segment that has lost its appendage pair, as evinced by the prevalence of nephridia in this region (Mayer and Koch 2005).  As it is not possible to determine whether the posterior extension of the trunk in Palaeozoic lobopodians arises through the loss of the last appendage pair (as in Onychophora) or as an elongation of the trunk, we code this transformation series as present in all taxa where the trunk extends posteriad of the last observable pair of limbs.  We code this transformation series as absent in Kerygmachela (Budd 1993, 1998a), Jianshanopodia (Liu et al. 2006) and Anomalocaris (Daley and Edgecombe 2014) as their tails likely represent modified appendages (see transformation series 63 and 64).  There is possible, but inconclusive, evidence for a small posterior extension in Opabinia (Whittington 1975; Budd 1996; Budd and Daley 2012), which is thus coded as uncertain. Siberion is scored as uncertain as it is difficult to distinguish the possible body termination from a posterior leg or pair of legs (Dzik 2011). Hallucigenia sparsa is also coded as uncertain; the posterior part of its body is poorly known (Ramsköld 1992).  It is present in other species of Hallucigenia (e.g. Hou and Bergström 1995).^n';
+	TEXT CHARACTER=199 TEXT='Cf. WTS45.^nBy comparison with Corynetis (Huang et al. 2004a; Hu et al. 2012), the posterior trunk region of Louisella (Conway Morris 1977a) is coded as a caudal appendage.^nThe posterior lobes of nematomorphs are not considered to represent separate appendages or organs, so caudal appendages are coded as absent in this taxon.^nJust a hint of some form of caudal appendage in Fieldia (ROM 93-1509)^nCoded ambiguous in Selkirkia as the posterior trunk is not known; the posterior of the tube was apparently open. ^n';
+	TEXT CHARACTER=200 TEXT='WTS41.^nGiven the difficulty of distinguishing the ‘bursa’ in fossil worms such as Ottoia and Louisella (Conway Morris 1977a) from a caudal appendage, or indeed of clearly defining a distinction, a ‘bursa’ is coded as a caudal appendage; this transformation series refers to the eversibility of this appendage.^nThe identity of the posterior extension in Chalazascolex as a bursa is speculative (Conway Morris and Peel 2010);this taxon is coded ambiguous.^n';
+	TEXT CHARACTER=201 TEXT='(–) inapplicable: caudal appendage absent^nCf. WTS45. The caudal appendage of Tubiluchus lemburgi is distinctly longer than the body ';
+	TEXT CHARACTER=202 TEXT='(~) inapplicable: caudal appendage absent^nWTS46.^n';
+	TEXT CHARACTER=203 TEXT='(–) inapplicable: caudal appendage absent^nCf. WTS47. ^n';
+	TEXT CHARACTER=204 TEXT='(–) inapplicable: caudal appendage absent or bicaudal^nCf WTS47.^n';
+	TEXT CHARACTER=205 TEXT='(–) inapplicable: caudal appendage absent or bicaudal^nWTS48. ^n';
+	TEXT CHARACTER=206 TEXT='Cf. WTS50.';
+	TEXT CHARACTER=207 TEXT='(–) inapplicable: posterior warts absent (trans. ser. ###)^nCf. WTS50.^n';
+	TEXT CHARACTER=208 TEXT='WTS55. Proposed as a synapomorphy of Cycloneuralia (Nielsen 2012), though also present in Panarthropoda; Euperipatoides has been scored as present based on the homology of the supraoesophageal ganglion with the circumpharyngeal brain, as argued by (Eriksson and Budd 2000).  Present in Nematomorpha despite the absence of a pharynx (Henne et al. 2017)';
+	TEXT CHARACTER=209 TEXT='TO ADD See (Schmidt-Rhaesa 1997a) , Schmidt Rhaesa 1996 Monophyly.^nA synapomorphy of Nematomorpha.^n';
+	TEXT CHARACTER=210 TEXT='Whereas typical cycloneuralians have a circumoesophageal nerve ring (e.g. Storch 1991; Telford et al. 2008; Edgecombe 2009; Rothe and Schmidt-Rhaesa 2010), Panarthropoda is characterized by dorsal condensed brain neuromeres (Eriksson et al. 2003; Mittmann and Scholtz 2003; Harzsch et al. 2005; Mayer et al. 2010, 2013b). A dorsal condensed brain has been described in Fuxianhuia (Ma et al. 2012) and Alalcomenaeus (Tanaka et al. 2013).';
+	TEXT CHARACTER=211 TEXT='(–) inapplicable: dorsal condensed brain (trans. ser. 68) absent^nSee the introductory statements above.^n';
+	TEXT CHARACTER=212 TEXT='(–) inapplicable: dorsal condensed brain (trans. ser. 68) absent^nRecent fossil data suggest a likely deutocerebral innervation for the mouth in Fuxianhuia and Alalcomenaeus based on the position of the oesophageal foramen relative to the brain (Ma et al. 2012; Tanaka et al. 2013), which is congruent with the organization found in phylogenetically basal extant euarthropods such as Chelicerata and Myriapoda (e.g. Mittmann and Scholtz 2003; Harzsch et al. 2005; Scholtz and Edgecombe 2005, 2006).  Tritocerebral innervation is observed in Pancrustacea, but not among the taxa included in this study.  Onychophora are coded as state 2 to reflect their complex neurological organization: although the jaws have a deutocerebral segmental affinity and innervation, the lip papillae that delineate the oral opening are formed as epidermal derivatives of the three anteriormost body segments, and thus receive nervous terminals from the protocerebrum, deutocerebrum and part of the ventral nerve cord (Eriksson and Budd 2000; Martin and Mayer 2014). The tardigrade mouth cone is innervated from the protocerebrum (Mayer et al. 2013b).^n';
+	TEXT CHARACTER=213 TEXT='Transformation series 1 in Tanaka et al. (2013).  This transformation series distinguishes the organization of the ventral nerve cord in Onychophora (e.g. Mayer et al. 2013a) from that in other phyla.';
+	TEXT CHARACTER=214 TEXT='WTS52.^n“	Living priapulids possess unpaired ventral nerve cords, whereas gastrotrichs, onychophorans and loriciferans possess ventral nerve cords that are paired throughout their length, and the ventral nerve cords of nematomorphs and nematodes divide at points along their length (Schmidt-Rhaesa Phylogenetic relationships of the nematomorpha 203-216); the situation in kinorhynchs is unresolved (paired according to Kristensen and Higgins, 1991; unpaired according to Neuhaus 1994). The condition in Ottoia is common to extant priapulids (Conway Morris, 1977).”^nSee also (Martín-Durán et al. 2016)^nIn kinorhynchs there are seven to twelve nerve cords; the ventral nerve cord is unpaired in Echinoderes (Neuhaus and Higgins 2002)^n';
+	TEXT CHARACTER=215 TEXT='(–) inapplicable inapplicable in taxa where the ventral nerve cord is not paired!^nTransformation series 2 in Tanaka et al. (2013).  Tardigrada and Euarthropoda have a ganglionated ventral nerve cord (Schulze et al. 2014), in contrast to the ladder-like ventral nerve cord in Onychophora (Mayer et al. 2013a). Priapulida have an unpaired nerve cord associated with a net-like system of neural connectives (Storch 1991; Rothe and Schmidt-Rhaesa 2010). Recent data on the neurological organization of stem-euarthropods indicate that paired ganglia are present in Chengjiangocaris (Yang et al. 2013) and Alalcomenaeus (Tanaka et al. 2013).  Hou et al. (2004, figs 2f, 4f) reported faint paired structures adjacent to the gut of Paucipodia, which were interpreted as potential nerve ganglia.  We nevertheless code Paucipodia as ambiguous: the structures cannot be observed in the figured material, and are described as ‘faintly preserved with a pink colour’ in contrast to the conspicuously dark colouration of unambiguous nervous tissue in Chengjiang-type fossils (see Ma et al. 2012; Tanaka et al. 2013; Yang et al. 2013).^nVentral nerve cord of Kinorhynchs comprises two separate cords that are close together; paired ganglia are present. [[Structure and Evolution of Invertebrate Nervous Systems^nBy Andreas Schmidt-Rhaesa, Steffen Harzsch, Günter Purschke]]^n';
+	TEXT CHARACTER=216 TEXT='(–) inapplicable: ventral nerve cords not paired^nWTS53.^nForm a loop or have free ends in kinorhynchs [[Structure and Evolution of Invertebrate Nervous Systems^nBy Andreas Schmidt-Rhaesa, Steffen Harzsch, Günter Purschke]]^n';
+	TEXT CHARACTER=217 TEXT='Absent in panarthropods (Martin et al. 2017)';
+	TEXT CHARACTER=218 TEXT='(–) inapplicable^nCf. WTS54.^nUnpaired dorsal nerve cords are seen as a synapomorphy of Nematoida (Sørensen et al. 2008)^n';
+	TEXT CHARACTER=219 TEXT='WTS56. The cycloneuralian brain comprises three distinct regions: an anterior aggregation of somata from neurons (perikarya), followed by a central neuropil, followed posteriorly by a further region of perikarya (Rothe and Schmidt-Rhaesa 2010). This has been proposed as a synapomorphy of the cycloneuralians (Lemburg 1999): as the brains of panarthropods are arranged differently (Martin et al. 2017).  However, the perikarya has an equal distribution in nematomorpha (Schmidt-Rhaesa 1997a) ';
+	TEXT CHARACTER=220 TEXT='(–) inapplicable: brain not of cycloneuralian pattern ^nModified from Wills et al. (2012) character statement 57, which is understood to refer to a modification of the cycloneuralian brain in Tubiluchus and Meiopriapulus; the revised character is thus scored inapplicable in taxa without a cycloneuralian brain arrangement.  This avoids the difficulty in deciding which bit of the onychophoran brain, which contains abundant perikarya (Martin et al. 2017), is ‘apical’.^n';
+	TEXT CHARACTER=221 TEXT='WTS58. Lemburg (1999) recognizes the presence of this character as a synapomorphy of (extant) Priapulida';
+	TEXT CHARACTER=222 TEXT='Special types of glial/epidermal cells with characteristic bundles of tonofilaments, interpreted as a scalidophoran synapomorphy (though absent in certain Echinoderes species) (Nebelsick 1993).  Coded, following the references in Nebelsick, as present in Tubiluchus, Meiopriapulus, Pycnophyes and Loricifera, ambiguous in Echinoderes dujardinii, and absent in Nematoda.';
+	TEXT CHARACTER=223 TEXT='WTS60.  Biphasic encompasses the multiple phases of priapulid larvae (e.g. Wennberg et al. 2009), also documented in Sirilorica (Peel et al. 2013)^nThe nematode larva is morphologically similar to the adult, but lacks reproductive functions.^nLarvae of Priapulopsis are poorly known but are understood to be similar to Priapulus (van der Land 1970), and are coded equivalently herein.^n';
+	TEXT CHARACTER=224 TEXT='(~) inapplicable: loricate stage absent^nCf. WTS62^n';
+	TEXT CHARACTER=225 TEXT='(~) inapplicable: direct development, or larva without defined neck. ^nCrenulated in the Higgins larva of loriciferans (Neves et al. 2016)^nNot in Halicryptus (Storch and Higgins 1991; Janssen et al. 2009)^n';
+	TEXT CHARACTER=226 TEXT='(~) inapplicable: direct development^nPliciloricus and Urnaloricus have a collar region in their neck, whereas Nanaloricus and Tenuiloricus do not (Neves and Kristensen 2014).^n';
+	TEXT CHARACTER=227 TEXT='(–) inapplicable^nWTS63. Lemburg (1999) recognised the presence of this character as a synapomorphy of (extant) Priapulida. However, it has since been demonstrated that the larvae of nematomorphs also possess six pharyngeal retractor muscles (Kristensen 2003; Müller et al. 2004). Long pharynx retractor muscles are also present in loriciferans (at least within the Nanaloricidae) (Neves et al. 2013).^n';
+	TEXT CHARACTER=228 TEXT='(~) inapplicable: no larval form (direct development; trans. ser. ###)^nWTS65.^nA proposed synapomorphy of scalidophora, but also present in nematomorphs ^nPresent in Priapulid caudatus, Tubiluchis corallicola; absent in Kinorhyncha, Loricifera ; probably absent in Nectonema larvae yet present in adults (Schmidt-Rhaesa 1997a)^n';
+	TEXT CHARACTER=229 TEXT='(~) inapplicable^nProposed as a synapomorphy between nematomorphs and loriciferans (Kristensen 1983)^nNot reported in Halicryptus, Maccabeus or Priapulus (van der Land 1970; Por and Bromley 1974; Storch and Higgins 1991), but present in Tubiluchus (Higgins and Storch 1989)^n';
+	TEXT CHARACTER=230 TEXT='(~) inapplicable: proboscis and abdomen undivided^nThe larvae of Orstenoloricus (Maas and Waloszek 2009) possess a pair of spines at the anterior of the trunk.  These may correspond to the anteroventral setae of Tenuiloricus (Neves and Kristensen 2014).  Similar spines are present in Nanaloricidae and Pliciloricidae (Neves et al. 2016)^nThe tubuli present in the Halicryptus hatching larva are not paired, and disappear in the Higgins larval stage; paired spines are coded as absent in this taxon (Storch and Higgins 1991; Janssen et al. 2009)  similar structures present in Tubiluchus (Kirsteuer 1976)';
+	TEXT CHARACTER=231 TEXT='(~) inapplicable^nPresent in the Higgins larva of many loriciferans (Neves et al. 2016), Shergoldana (Maas et al. 2007a), ^nCoded as absent in Orstenoloricus (Maas and Waloszek 2009) as most specimens unambiguously lack them; only a single specimen has putative structures that are not unequivocally spines or appendages.^nPosterior protuberances occur at the posterior of the Halicryptus lorica (van der Land 1970); these probably ought to be coded in a separate transformation series but are included here for now.  Similar features (‘tubuli’) are present in Priapulus (Higgins et al. 1993)';
+	TEXT CHARACTER=232 TEXT='(–) inapplicable^nA similarity between the Nectonema and Nanaloricus larvae (Kristensen 1983)^nSac-like guts with single ‘fold’ in larvae of e.g. Tubiluchus (Higgins and Storch 1989)';
+	TEXT CHARACTER=233 TEXT='(~) inapplicable^nA similarity between nematomorpy and loriciferan larvae (Kristensen 1983)large mesenchyme cells^n';
+	TEXT CHARACTER=234 TEXT='WTS66.^nThe presence of a cloaca in both sexes is seen as a synapomorphy of Nematoida (Sørensen et al. 2008)^n';
+	TEXT CHARACTER=235 TEXT='Cf. WTS67.^nThe reduction of protonephridia is seen as a possible nematoid synapomorphy (Sørensen et al. 2008)^n';
+	TEXT CHARACTER=236 TEXT='(~) inapplicable: protonephridia absent (trans. ser. ###)  ^nCf. WTS67.^n';
+	TEXT CHARACTER=237 TEXT='(~) inapplicable^nA possible synapomorphy of Scalidophora (Sørensen et al. 2008)^nPresent in Pycnophyes (Neuhaus 1988)^nCheck Neuhaus 1994, Ultrastructure of alimentary canal and body cavity, ground pattern, and phylogenetic relationships of the Kinorhyncha , Microfauna marina for Zelinkaderes details.^n';
+	TEXT CHARACTER=238 TEXT='Not yet a character.  Homologous to cuticularized tubes of Pycnophyes (and Kinorhyncha) (Neuhaus 1988). In species of Echinoderidae, the protonephridial openings form two fairly conspicuous sieve plates, and due to their distinct appearance in LM as well as SEM, they are often reported in systematic and taxonomic studies. However, in non-echinoderid species there are no sieve plates and the nephridial pores are much more inconspicuous.';
+	TEXT CHARACTER=239 TEXT='(–) inapplicable^nThe absence of such microvilli is a possible synapomorphy of Priapulida + Kinorhyncha (Neuhaus and Higgins 2002)^n';
+	TEXT CHARACTER=240 TEXT='(~) inapplicable^nWTS68.^n';
+	TEXT CHARACTER=241 TEXT='WTS69.^nThe reduction of the flagellum is seen as a possible synapomorphy of Nematoids (Sørensen et al. 2008), though a flagelliform tail is found in Kinonchulus (Riemann 1972). A flagellum has been reported in Gordius, but this is probably a misinterpretation (Schmidt-Rhaesa 1997b) , so Chordodes is coded as lacking a flagellum.^n';
+	TEXT CHARACTER=242 TEXT='Cf. WTS72. ';
+	TEXT CHARACTER=243 TEXT='WTS73.^nSee (Bereiter-Hahn et al. 1984).  Nematodes and Nematomorphs have principally replaced chitin with collagen as the principle component of their cuticle, though vestiges of chitin remain (Nielsen 2012). Coded as present in Palaeoscolex as chambers in the cuticle are believed to correspond to collagen fibres (Kraft and Mergl 1989)^n';
+	TEXT CHARACTER=244 TEXT='(–) inapplicable: chitin not a substantial component of the cuticle^nCf. WTS74.^n';
+	TEXT CHARACTER=245 TEXT='WTS76.';
+	TEXT CHARACTER=246 TEXT='WTS78.';
+	TEXT CHARACTER=247 TEXT='Cf. WTS79.^n^nTo add^nIn the tardigrade Echiniscus viridis, the central cuticle comprises:^n-	An outer portion of alternating dense antd transparent layuers, with a much denser band proximally^n-	Within these, a region made up of hexagons (looking striated in transverse section), with a complex dense outer layer and a less dense inner one^n-	Proximal to that, an electron transparent zone containing dense rods^n-	Within that, and innermost, transversely oriented fibres^n-	The structure of the ventral cuticle is […] virtually identical to that described by Wright and Hope (1968) for the cuticle of the marine nematode, Acanthonchus (duplicatus Wieser, 1959 and quite similar to that described by Inglis (1964) and Watson (1965) for cuticles of certain other nematodes, including Elichromadora sp. Moreover, the striated layer found in the cuticle of E. viridi.s appears to be a nearly universal characteristic of nematode cuticles (cf. I,ee 1966, Wisse and Daems 1968 – (Crowe et al. 1970)^n';
+	TEXT CHARACTER=248 TEXT='WTS84. Not clear how this is to be coded for fossil taxa, so they are coded as ambiguous.';
+	TEXT CHARACTER=249 TEXT='Ma et al. (Ma et al. 2014a) described a dorsal heart in Fuxianhuia; all other fossil taxa are scored as ambiguous.  Budd (2001b) discussed the difficulty of interpreting the absence of a circulatory system in Tardigrada as ancestral or derived, given that a circulatory system is unnecessary in a miniaturized organism; he concluded that the most methodologically sound way to address this issue in a cladistic context is to score the character as inapplicable.';
+	TEXT CHARACTER=250 TEXT='Coelomyarian: myofibrils peripheral to muscle cell, present in larger nematodes; Platymyarian: myofibrils restricted toregion next to hypodermis.^nPresent in some derived nematomorphs; probably absent ancestrally: Schmidt Rhaesa 1997 phylo relationships^nSee for example J Ultrastruct Res. 1971 Mar;34(5):517-43.^nPrimitive muscle cells of nematodes: morphological aspects of platymyarian and shallow coelomyarian muscles in two plant parasitic nematodes, Trichodorus christiei and Longidorus elongatus.^n^nHirumi H, Raski DJ, Jones NO. ';
+	TEXT CHARACTER=251 TEXT='WTS88.';
+
+      [Attribute comments]
+      	TEXT TAXON=1 CHARACTER=2 TEXT='The mouth of Gastrotrich is anterior, in some species terminal, in others is sub-terminal^n-Ask M.S - should the sub-terminal species be coded as ventral?';
+	TEXT TAXON=56 CHARACTER=24 TEXT='30-50 times longer than wide (Yang et al., 2020)';
+	TEXT TAXON=56 CHARACTER=31 TEXT='Following Yang et al., 2020';
+	TEXT TAXON=56 CHARACTER=32 TEXT='Introvert is narrower than the trunk (Yang et al., 2020)';
+	TEXT TAXON=21 CHARACTER=32 TEXT='Anterior trunk not differentiated, the anterior papillae are part of the introvert (see Howard et al., 2020)';
+	TEXT TAXON=21 CHARACTER=102 TEXT='Following Howard et sl., 2020^n';
+	TEXT TAXON=21 CHARACTER=105 TEXT='Following Howard et al., 2020';
+	TEXT TAXON=25 CHARACTER=197 TEXT='Anus not terminal (Riemann 1972)';
+	TEXT TAXON=26 CHARACTER=250 TEXT='NEEDS REVIEWING';
+      ENDBLOCK;
+            BEGIN ASSUMPTIONS;
+      TYPESET * UNTITLED = unord: 1 - 251;
+      ENDBLOCK;
+      

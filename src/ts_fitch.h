@@ -42,8 +42,13 @@ int fitch_downpass_node(
 // recomputing prelim and local_cost. Stops when prelim stabilizes.
 // Returns the length delta (new_score - old_score for the main tree).
 // Saves old states to tree.clip_undo_stack for restoration.
+// cs_delta (optional, IW dirty-region): if non-null, accumulates the per-pattern
+// char_steps change over the visited path (new local_cost bits +1, old -1); the
+// function zeroes it first. Lets the IW path derive divided_steps incrementally
+// (full_char_steps + cs_delta - nx) instead of an O(n_node) extract_char_steps.
 int fitch_incremental_downpass(TreeState& tree, const DataSet& ds,
-                               int start_node);
+                               int start_node,
+                               std::vector<int>* cs_delta = nullptr);
 
 // Incremental uppass after clip: recompute final_ for nodes whose
 // ancestor's final states changed. Propagates from root downward,
@@ -349,6 +354,39 @@ double indirect_iw_length_cached(
     double base_iw,
     const std::vector<double>& iw_delta,
     double cutoff);
+
+// 4-wide IW batch for TBR rerooting (pure-IW, no inapplicables): the IW analog
+// of fitch_indirect_cached_flat_x4. 4 independent any_hit_reduce load streams +
+// 4 independent double accumulators (each candidate's weighted sum keeps its own
+// scalar add order => bit-identical to indirect_iw_length_cached per candidate;
+// the batch only shares the batch-start cutoff, which affects early-exit not the
+// final < best comparison => byte-identical search outcome).
+void indirect_iw_cached_flat_x4(
+    const uint64_t* clip_prelim,
+    const uint64_t* vroot0, const uint64_t* vroot1,
+    const uint64_t* vroot2, const uint64_t* vroot3,
+    const DataSet& ds, double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff, double out[4]);
+
+// 4-wide NA-IW batch for TBR rerooting (inapplicable characters + implied
+// weights): the NA analog of indirect_iw_cached_flat_x4. Fuses the NA
+// active-mask candidate logic of fitch_na_indirect_cached_flat_x4 with the
+// per-candidate iw_delta ctz-gather of indirect_iw_cached_flat_x4, so each
+// es{k} reproduces indirect_na_iw_length_cached's scalar add order exactly
+// (bit-identical per candidate; the shared all-4-exceed-cutoff bail only
+// affects early-exit, not the final < best comparison). ba0..ba3 are
+// below_actives_cache rows (1 uint64 per block) for each candidate.
+void indirect_na_iw_cached_flat_x4(
+    const uint64_t* clip_prelim,
+    const uint64_t* clip_actives,
+    const uint64_t* vroot0, const uint64_t* vroot1,
+    const uint64_t* vroot2, const uint64_t* vroot3,
+    const uint64_t* ba0, const uint64_t* ba1,
+    const uint64_t* ba2, const uint64_t* ba3,
+    const DataSet& ds, double base_iw,
+    const std::vector<double>& iw_delta,
+    double cutoff, double out[4]);
 
 // Precompute iw_delta[p] = marginal cost of one additional step for pattern p.
 // divided_steps: per-pattern step counts of the divided tree.
