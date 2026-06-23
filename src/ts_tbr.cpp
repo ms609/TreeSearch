@@ -1386,14 +1386,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   const bool iw_timing = std::getenv("TS_IW_TIMING") != nullptr;
   long long t_clip_ns = 0, t_spr_ns = 0, t_rer_ns = 0;
   long long n_clips_t = 0, n_spr_t = 0, n_rer_t = 0;
-  // Pure-IW reroot 4-wide batching (T-245 ILP ported to IW). On by default;
-  // kill-switch TS_IW_NOX4 reverts to the scalar reroot path (for A/B). Read
-  // once (no per-clip getenv, per the getenv-cost lesson).
-  const bool iw_x4 = std::getenv("TS_IW_NOX4") == nullptr;
+  // Pure-IW / NA-IW reroot 4-wide batching (T-245 ILP ported to IW). Default-
+  // OFF on the shared branch: mission-null at morphology scale, kept for the
+  // large-N / recipe-retune reopen. Opt-in via TS_IW_X4. Read once (no per-clip
+  // getenv, per the getenv-cost lesson).
+  const bool iw_x4 = std::getenv("TS_IW_X4") != nullptr;
   // Pure-IW extract_char_steps dirty-region: derive per-clip divided_steps
   // incrementally (full_char_steps + cs_delta - nx) instead of the O(n_node)
-  // walk. On by default; kill-switch TS_IW_NODIRTY reverts to extract+add.
-  const bool iw_dirty = std::getenv("TS_IW_NODIRTY") == nullptr;
+  // walk. Default-OFF; opt-in via TS_IW_DIRTY.
+  const bool iw_dirty = std::getenv("TS_IW_DIRTY") != nullptr;
   // DIAGNOSTIC: per-clip compare dirty divided_steps vs extract+add baseline.
   const bool iw_dirtychk = std::getenv("TS_IW_DIRTYCHK") != nullptr;
 
@@ -2102,7 +2103,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             // indirect_na_iw_length_cached scalar tail), which ANDs in
             // clip_has_active + each candidate's below_actives row; the no-NA
             // path is byte-identical to before this branch handled NA.  When
-            // iw_x4 is disabled (TS_IW_NOX4) this whole branch is skipped and
+            // iw_x4 is disabled (default; opt-in TS_IW_X4) this branch is skipped and
             // both NA and no-NA IW fall through to the scalar `else` below.
             int ei = 0;
             while (ei < n_main) {
