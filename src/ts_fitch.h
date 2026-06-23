@@ -239,8 +239,12 @@ void fitch_na_incremental_uppass(TreeState& tree, const DataSet& ds,
 // Full Pass 3 (second downpass) on a divided tree. Computes down2 for
 // all internal nodes, counts steps for both standard and NA blocks.
 // Requires Passes 1+2 to be current (from full or incremental scoring).
-// Returns the total EW score.
-int fitch_na_pass3_score(TreeState& tree, const DataSet& ds);
+// Returns the total EW score. If char_steps_out != nullptr, also fills it with
+// per-pattern (unweighted) step counts during the same walk (standard from
+// local_cost, NA from needs_step) -- byte-identical to extract_char_steps, so the
+// IW path can skip that redundant full walk.
+int fitch_na_pass3_score(TreeState& tree, const DataSet& ds,
+                         std::vector<int>* char_steps_out = nullptr);
 
 // NA-aware indirect length calculation. For standard blocks, identical to
 // fitch_indirect_length. For NA blocks, suppresses steps where either the
