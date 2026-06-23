@@ -105,6 +105,110 @@ void compute_collapsed_flags(
   }
 }
 
+void compute_collapsed_flags_aggressive(
+    const TreeState& tree,
+    const DataSet& ds,
+    std::vector<uint8_t>& collapsed) {
+
+  // Inapplicable characters: soft min-length-0 for the De-Laet 3-pass is not
+  // derived; fall back to the conservative (exact) flags so NA datasets are
+  // unaffected by the aggressive flag.
+  bool has_na = false;
+  for (int b = 0; b < ds.n_blocks; ++b) {
+    if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
+  }
+  if (has_na) { compute_collapsed_flags(tree, ds, collapsed); return; }
+
+  collapsed.assign(tree.n_node, 0);
+  if (tree.total_words == 0) return;
+
+  const int nb = ds.n_blocks;
+  const int tw = tree.total_words;
+
+  // We need the TRUE marginal MPR state sets (the set of states each node takes
+  // in SOME most-parsimonious reconstruction): edge (p,c) has minimum possible
+  // length 0 iff mpr[p] & mpr[c] != 0 for every character (criterion validated
+  // bit-for-bit against a brute-force oracle, b2_minlength_oracle.R).  The
+  // kernel's tree.final_ is a SIMPLER single-reconstruction final set (one
+  // valid MPR, not the full marginal set), so we cannot use it here — we
+  // recompute the marginal MPR sets from prelim + local_cost (both maintained
+  // for scoring) via the Swofford & Maddison second pass:
+  //   final[root] = prelim[root]
+  //   for v (preorder, parent p, children L,R):
+  //     if final[p] subset of prelim[v]:           final[v] = final[p]
+  //     elif v formed by INTERSECTION (not union):  final[v] = prelim[v] | (final[p] & (prelim[L]|prelim[R]))
+  //     else (v formed by union):                   final[v] = prelim[v] | final[p]
+  // local_cost[v][b] holds the per-character `needs_union` mask, so a character
+  // is an intersection node iff its bit is NOT set there.
+  std::vector<uint64_t> mpr(static_cast<size_t>(tree.n_node) * tw);
+  // tips & root: marginal MPR set == prelim (tips fixed; root's prelim is final)
+  for (int v = 0; v < tree.n_node; ++v) {
+    if (v >= tree.n_tip && v != tree.n_tip) continue;  // internal non-root: filled below
+    size_t vb = static_cast<size_t>(v) * tw;
+    std::memcpy(&mpr[vb], &tree.prelim[vb], static_cast<size_t>(tw) * sizeof(uint64_t));
+  }
+  // Preorder (root -> leaves) over internal non-root nodes; parent's mpr ready.
+  for (int i = static_cast<int>(tree.postorder.size()) - 1; i >= 0; --i) {
+    int v = tree.postorder[i];
+    if (v < tree.n_tip || v == tree.n_tip) continue;   // skip tips and root
+    int p = tree.parent[v];
+    int ni = v - tree.n_tip;
+    int lc = tree.left[ni], rc = tree.right[ni];
+    size_t vb = static_cast<size_t>(v) * tw, pb = static_cast<size_t>(p) * tw;
+    size_t lb = static_cast<size_t>(lc) * tw, rb = static_cast<size_t>(rc) * tw;
+    for (int b = 0; b < nb; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      if (blk.active_mask == 0) continue;
+      int off = ds.block_word_offset[b];
+      int k = blk.n_states;
+      uint64_t am = blk.active_mask;
+      uint64_t needs_union =
+          tree.local_cost[static_cast<size_t>(v) * nb + b] & am;
+      // subset mask: chars where final[p] is a subset of prelim[v]
+      uint64_t notsub = 0;
+      for (int s = 0; s < k; ++s)
+        notsub |= mpr[pb + off + s] & ~tree.prelim[vb + off + s];
+      uint64_t subset = ~notsub & am;
+      uint64_t intNonsub = (~needs_union) & (~subset) & am;  // intersection node, not subset
+      uint64_t uniNonsub = needs_union & (~subset) & am;     // union node, not subset
+      for (int s = 0; s < k; ++s) {
+        uint64_t fp = mpr[pb + off + s];
+        uint64_t pv = tree.prelim[vb + off + s];
+        uint64_t kids = tree.prelim[lb + off + s] | tree.prelim[rb + off + s];
+        uint64_t val = (fp & subset)
+                     | ((pv | (fp & kids)) & intNonsub)
+                     | ((pv | fp) & uniNonsub);
+        mpr[vb + off + s] = val;
+      }
+    }
+  }
+
+  // Min-length-0 test per INTERNAL, non-root, non-root-child edge.  TNT
+  // `collapse 3` collapses zero-length INTERNAL branches into polytomies;
+  // terminal (pendant) edges are never collapsed, so we flag internal nodes
+  // only (c >= n_tip).  This is both faithful to the operation and exactly
+  // matches the brute-force oracle on internal edges (the terminal-edge marginal
+  // test is confounded by the parsimony-uninformative characters the kernel
+  // simplifies away — see b2_collapsed_kernel_validate.R).
+  for (int c = tree.n_tip + 1; c < tree.n_node; ++c) {  // internal, skip root (= n_tip)
+    int p = tree.parent[c];
+    if (p == tree.n_tip) continue;          // root's children: skip (as conservative)
+    size_t cb = static_cast<size_t>(c) * tw;
+    size_t pb = static_cast<size_t>(p) * tw;
+    bool collapsible = true;
+    for (int b = 0; b < nb && collapsible; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      int off = ds.block_word_offset[b];
+      int k = blk.n_states;
+      uint64_t acc = 0;
+      for (int s = 0; s < k; ++s)
+        acc |= mpr[pb + off + s] & mpr[cb + off + s];
+      if ((acc & blk.active_mask) != blk.active_mask) collapsible = false;
+    }
+    if (collapsible) collapsed[c] = 1;
+  }
+}
+
 void compute_collapsed_regions(
     const TreeState& tree,
     const DataSet& ds,

@@ -104,6 +104,10 @@ ts_ls_search <- function(edge, dist, weight = NULL, method = 1L, maxHits = 1L, d
     .Call(`_TreeSearch_ts_ls_search`, edge, dist, weight, method, maxHits, doSpr)
 }
 
+ts_collapsed_flags_debug <- function(edge, contrast, tip_data, weight, levels, aggressive) {
+    .Call(`_TreeSearch_ts_collapsed_flags_debug`, edge, contrast, tip_data, weight, levels, aggressive)
+}
+
 ts_na_debug_char <- function(edge, contrast, tip_data, weight, levels, target_pattern) {
     .Call(`_TreeSearch_ts_na_debug_char`, edge, contrast, tip_data, weight, levels, target_pattern)
 }

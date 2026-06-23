@@ -1347,9 +1347,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Collapsed flags: edges that provably cannot yield an improvement
   // (clip skipping + regraft merging).  Disabled during MPT enumeration
   // (collect_pool) where equal-score topologies are collected.
+  //
+  // TS_COLLAPSE_AGGRESSIVE (default OFF, prototype): use the TNT `collapse 3`
+  // criterion (collapse min-length-0 INTERNAL branches) instead of the exact
+  // score-identity criterion.  This is a HEURISTIC neighbourhood reduction
+  // (Goloboff asymmetric reachability) — scoring stays exact, but some improving
+  // moves may be skipped.  Aimed at large/molecular/congruent datasets where
+  // zero-length branches are common (the morphological roster has ~0 of them).
+  // See dev/plans + b2_collapsed_kernel_validate.R.  Scoped to tbr_search's
+  // neighbourhood reduction only; pool dedup keeps the exact flags.
+  const bool collapse_aggr = std::getenv("TS_COLLAPSE_AGGRESSIVE") != nullptr;
   std::vector<uint8_t> collapsed;
   if (!collect_pool) {
-    compute_collapsed_flags(tree, ds, collapsed);
+    if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
+    else               compute_collapsed_flags(tree, ds, collapsed);
   }
   // Hoisted per-call-invariant flags. collapsed's empty-ness never changes
   // within a tbr_search call (the reroot-loop recompute is guarded on
@@ -1365,6 +1376,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // TS_PHYS_REROOT selects the legacy physical-reroot reference path; it is read
   // once per outer reroot-loop iteration below (>=1/call), so hoist it too.
   const bool phys_reroot = std::getenv("TS_PHYS_REROOT") != nullptr;
+  // B2 ceiling probe (measurement only, env-gated => production byte-identical):
+  // count SPR-regraft candidates that pass collapse Condition 1 (zero parent
+  // cost) but are NOT conservatively collapsed (Condition 3 fails) — the set an
+  // aggressive TNT-style collapse-on-equal-length could skip but the exact merge
+  // cannot.  Work-weighted against evaluated candidates = upper bound on B2's
+  // realizable regraft saving.  See dev/benchmarks/b2_collapsed_density.R.
+  const bool b2_ceiling = std::getenv("TS_B2_CEILING") != nullptr;
+  long long n_b2_eval = 0, n_b2_aggr = 0;
 
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
@@ -1703,6 +1722,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           candidate = divided_length + extra;
         }
         ++n_evaluated;
+        if (b2_ceiling) {
+          ++n_b2_eval;
+          int pbelow = tree.parent[below];
+          bool c1 = (pbelow != tree.n_tip);  // root-child edges aren't collapsible
+          for (int b = 0; b < ds.n_blocks && c1; ++b) {
+            if (ds.blocks[b].has_inapplicable) continue;
+            if (tree.local_cost[static_cast<size_t>(pbelow) * ds.n_blocks + b])
+              c1 = false;
+          }
+          if (c1) ++n_b2_aggr;  // Cond1 pass; reached here => not conservatively collapsed
+        }
         if (candidate < best_candidate) {
           best_candidate = candidate;
           best_above = above;
@@ -2237,7 +2267,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         : try_root_edge_moves(tree, ds, best_score, ew_directional);
     if (!improved) break;
     score_fresh = true;
-    if (!collapsed.empty()) compute_collapsed_flags(tree, ds, collapsed);
+    if (!collapsed.empty()) {
+      if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
+      else               compute_collapsed_flags(tree, ds, collapsed);
+    }
     continue;                              // re-descend from the improved tree
   }
 
@@ -2276,6 +2309,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Accumulate candidate count into the dataset-level diagnostic counter
   // (one add per search call, not per candidate). See DataSet docs.
   ds.n_candidates_evaluated += n_evaluated;
+
+  if (b2_ceiling && n_b2_eval > 0) {
+    Rprintf("[B2_CEILING] aggressive-skippable SPR-regraft candidates: "
+            "%lld / %lld evaluated = %.3f%% (work-weighted ceiling)\n",
+            n_b2_aggr, n_b2_eval, 100.0 * n_b2_aggr / n_b2_eval);
+  }
 
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
                    converged, std::move(diag_records)};
