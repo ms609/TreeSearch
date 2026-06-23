@@ -66,6 +66,7 @@ extern SEXP _TreeSearch_ts_tbr_diagnostics(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, S
 extern SEXP _TreeSearch_ts_ev_cache_key_probe(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_ls_fit(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_ls_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_collapsed_flags_debug(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_R_wrap_mpl_new_Morphy",        (DL_FUNC) &_R_wrap_mpl_new_Morphy, 0},
@@ -149,6 +150,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_ev_cache_key_probe", (DL_FUNC) &_TreeSearch_ts_ev_cache_key_probe, 9},
   {"_TreeSearch_ts_ls_fit", (DL_FUNC) &_TreeSearch_ts_ls_fit, 4},
   {"_TreeSearch_ts_ls_search", (DL_FUNC) &_TreeSearch_ts_ls_search, 6},
+  {"_TreeSearch_ts_collapsed_flags_debug", (DL_FUNC) &_TreeSearch_ts_collapsed_flags_debug, 6},
   {NULL, NULL, 0}
 };
 

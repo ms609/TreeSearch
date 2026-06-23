@@ -260,6 +260,22 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_collapsed_flags_debug
+List ts_collapsed_flags_debug(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, bool aggressive);
+RcppExport SEXP _TreeSearch_ts_collapsed_flags_debug(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP aggressiveSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< bool >::type aggressive(aggressiveSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_collapsed_flags_debug(edge, contrast, tip_data, weight, levels, aggressive));
+    return rcpp_result_gen;
+END_RCPP
+}
 // ts_na_debug_char
 List ts_na_debug_char(IntegerMatrix edge, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, int target_pattern);
 RcppExport SEXP _TreeSearch_ts_na_debug_char(SEXP edgeSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP target_patternSEXP) {

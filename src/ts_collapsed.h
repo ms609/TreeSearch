@@ -19,6 +19,25 @@ void compute_collapsed_flags(
     const DataSet& ds,
     std::vector<uint8_t>& collapsed);
 
+/// Aggressive (TNT `collapse 3`) flags: collapsed[c] == 1 means the edge from c
+/// to parent[c] has MINIMUM POSSIBLE length 0 — there exists a most-parsimonious
+/// reconstruction with no state change along it (a weaker, more permissive
+/// criterion than compute_collapsed_flags, which requires provable score-identity
+/// for exact regraft merging).  Using these flags to skip clips/regrafts is a
+/// HEURISTIC neighbourhood reduction (Goloboff's asymmetric reachability): scoring
+/// stays exact, but some improving moves may be skipped.  For the standard
+/// (no-inapplicable) Fitch path the criterion is final_[p] & final_[c] != 0 for
+/// every character (validated bit-for-bit against a brute-force MPR oracle,
+/// dev/benchmarks/b2_minlength_oracle.R).  For datasets with inapplicable
+/// characters it falls back to the conservative compute_collapsed_flags (NA
+/// soft-collapse is not yet derived), so NA datasets are unaffected.
+///
+/// Requires valid state arrays — call after full_rescore / score_tree.
+void compute_collapsed_flags_aggressive(
+    const TreeState& tree,
+    const DataSet& ds,
+    std::vector<uint8_t>& collapsed);
+
 /// Collapsed-region information for regraft merging.
 ///
 /// After compute_collapsed_regions(), every node that lies on a collapsed

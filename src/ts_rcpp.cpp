@@ -22,6 +22,7 @@
 #include "ts_simplify.h"
 #include "ts_hsj.h"
 #include "ts_ls.h"
+#include "ts_collapsed.h"
 // ts_temper.h removed — parallel tempering lives on feature/parallel-temper
 #include "ts_strategy.h"
 
@@ -307,6 +308,43 @@ List ts_ls_search(
     Named("rss") = fit.rss,
     Named("n_moves") = total_moves,
     Named("n_iterations") = total_iters
+  );
+}
+
+// Diagnostic: per-node collapsed flags for a scored tree, for validating the
+// aggressive (min-length-0) collapse criterion against a brute-force MPR oracle
+// (dev/benchmarks/b2_minlength_oracle.R + b2_collapsed_kernel_validate.R).
+// Returns 0-based parent[] (root = n_tip, self-parent), n_tip, and the flag
+// vector.  Explicit down+up pass guarantees prelim/final_ are fresh.
+// [[Rcpp::export]]
+List ts_collapsed_flags_debug(
+    IntegerMatrix edge,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    bool aggressive)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::TreeState tree;
+  tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+  ts::fitch_downpass(tree, ds);
+  ts::fitch_uppass(tree, ds);              // populate final_ (MPR sets)
+
+  std::vector<uint8_t> collapsed;
+  if (aggressive) ts::compute_collapsed_flags_aggressive(tree, ds, collapsed);
+  else            ts::compute_collapsed_flags(tree, ds, collapsed);
+
+  IntegerVector parent(tree.n_node), flag(tree.n_node);
+  for (int i = 0; i < tree.n_node; ++i) {
+    parent[i] = tree.parent[i];            // 0-based; root (n_tip) is self-parent
+    flag[i] = collapsed[i];
+  }
+  return List::create(
+    Named("parent") = parent,
+    Named("collapsed") = flag,
+    Named("n_tip") = tree.n_tip,
+    Named("n_node") = tree.n_node
   );
 }
 
