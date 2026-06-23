@@ -83,11 +83,14 @@ void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
 // blocks only — NA block step counts require Pass 3, so call
 // fitch_na_pass3_score(tree, ds) on the updated state to obtain the
 // authoritative score.
+// start_c: optional third dirty seed (-1 = unused). The TBR-reroot dirty region
+// (exact_verify incremental rescore) needs three seeds: nz (sibling reconnect),
+// nx (regraft node), clip_node (covers the reversed subtree path + rootward).
 int fitch_na_dirty_downpass(TreeState& tree, const DataSet& ds,
-                             int start_a, int start_b);
+                             int start_a, int start_b, int start_c = -1);
 
 void fitch_na_dirty_uppass(TreeState& tree, const DataSet& ds,
-                            int start_a, int start_b);
+                            int start_a, int start_b, int start_c = -1);
 
 // Indirect tree length calculation: given the clipped subtree's basal
 // state set (prelim of clip_node) and a candidate destination edge (A, D),
@@ -226,8 +229,12 @@ void fitch_na_incremental_uppass(TreeState& tree, const DataSet& ds,
 // Full Pass 3 (second downpass) on a divided tree. Computes down2 for
 // all internal nodes, counts steps for both standard and NA blocks.
 // Requires Passes 1+2 to be current (from full or incremental scoring).
-// Returns the total EW score.
-int fitch_na_pass3_score(TreeState& tree, const DataSet& ds);
+// Returns the total EW score. If char_steps_out != nullptr, also fills it with
+// per-pattern (unweighted) step counts during the same walk (standard from
+// local_cost, NA from needs_step) -- byte-identical to extract_char_steps, so the
+// IW path can skip that redundant full walk.
+int fitch_na_pass3_score(TreeState& tree, const DataSet& ds,
+                         std::vector<int>* char_steps_out = nullptr);
 
 // NA-aware indirect length calculation. For standard blocks, identical to
 // fitch_indirect_length. For NA blocks, suppresses steps where either the
