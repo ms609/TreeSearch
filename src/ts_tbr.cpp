@@ -20,10 +20,6 @@
 
 namespace ts {
 
-// Exact directional (Regime-C) NA TBR scoring — header-only; nests as ts::nadir.
-// Used by exact_verify_sweep's per-candidate audit (TS_NA_DIR_AUDIT).
-#include "ts_fitch_na_directional.h"
-
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
 // Word-at-a-time multiply-xor hash (faster than byte-by-byte FNV-1a).
 
@@ -871,21 +867,6 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   std::vector<std::pair<int,int>> sub_edges;
   std::vector<char> in_sub;
   std::vector<int> dfs, marked;
-  // M2 audit (dev-only): assert the exact directional NA score == full_rescore on
-  // EVERY candidate, in BOTH EW (concavity non-finite) and IW/profile (the default,
-  // concavity=-1) regimes.  candidate_score/whole_score dispatch on ds.scoring_mode.
-  // Runs on first-time scans (cached-optimal topologies covered by their first scan).
-  const bool na_dir_audit = std::getenv("TS_NA_DIR_AUDIT") != nullptr;
-  const double na_dir_tol = std::isfinite(ds.concavity) ? 1e-6 : 0.5;
-  // M3: the exact directional combine CAN be the per-candidate scorer (audited
-  // byte-identical to full_rescore in EW + IW).  Default OFF (opt-in via
-  // TS_NA_DIRECTIONAL): the first full-table implementation was ~85x SLOWER than
-  // the block-bitwise SIMD full_rescore (per-char scalar + per-candidate Msg
-  // allocation); under optimisation (on-demand single-entry combine) before any
-  // default flip.  Audit mode keeps the legacy path + cross-check, so the
-  // directional scorer is non-audit only.
-  const bool na_dir_scorer = std::getenv("TS_NA_DIRECTIONAL") != nullptr && !na_dir_audit;
-  nadir::ClipFolds na_dir_cf;
 
   // TS_NA_INCR_AUDIT: validate the incremental dirty-rescore of each candidate
   // against full_rescore (the prospective fast path for exact_verify). Decisions
@@ -915,22 +896,6 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
 
   tree.build_postorder();
   best_score = full_rescore(tree, ds);   // sync to the current (converged) tree
-
-  if (na_dir_audit) {
-    // Whole-tree cross-check (in whatever regime the search uses, EW or IW).
-    // Per-candidate cross-checks happen in the scan loop below.  The directional
-    // weighting arithmetic (weight*(1+upweight) + inactive-char skip) was
-    // separately validated against full_rescore under an imposed perturbed regime
-    // (upweight_mask set + active_mask sparse); that one-shot scaffolding has been
-    // removed (finding recorded in dev/plans/2026-06-19-na-directional-cpp-port.md
-    // §M2 — exact_verify_sweep itself never runs under perturbed weights, since the
-    // ratchet's TBR passes a non-null collapse cd that disables do_reroot).
-    double s_whole = nadir::whole_score(tree, ds);
-    if (std::fabs(s_whole - best_score) > na_dir_tol) {
-      Rcpp::stop("TS_NA_DIR_AUDIT whole-tree mismatch: directional=%.4f full_rescore=%.4f",
-                 s_whole, best_score);
-    }
-  }
 
   // Topology cache: exact_verify is a pure function of (topology, dataset,
   // weighting regime).  A FALSE result for topology T means every unrooted-TBR
@@ -991,11 +956,6 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
     collect_subtree_edges(tree, clip_node, sub_edges);   // fragment rerootings
     const int n_reroot = 1 + static_cast<int>(sub_edges.size());
 
-    // Build directional folds for this clip on the CLEAN tree (folds depend only
-    // on clip_node).  Tree is clean here: clip-loop start, subtree marking does
-    // not change topology, and each candidate restores before the next.
-    if (na_dir_scorer || na_dir_audit) nadir::build_clip_folds(tree, ds, clip_node, na_dir_cf);
-
     bool found = false;
     for (int ri = 0; ri < n_reroot && !found; ++ri) {
       int rp = (ri == 0) ? -1 : sub_edges[ri - 1].first;   // -1 => SPR (no reroot)
@@ -1007,35 +967,6 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
         if (above < 0 || above == nx) continue;
         if (ri == 0 && below == ns) continue; // identity (no reroot, original spot)
 
-        // FAST PATH: score the candidate WITHOUT applying it (O(1)/char exact).
-        // Non-improvers (the vast majority) cost only the combine — no
-        // apply_tbr_move / build_postorder / full_rescore / restore.
-        if (na_dir_scorer) {
-          double s = nadir::candidate_score(ds, na_dir_cf, rp, rc, below);
-          if (s >= best_score - eps) continue;   // not an improver: tree untouched
-          // improver: materialize it (apply + exact full_rescore to sync state)
-          if (!apply_tbr_move(tree, clip_node, rp, rc, above, below)) {
-            restore_topology(tree, snap);
-            continue;
-          }
-          tree.build_postorder();
-          double s_act = full_rescore(tree, ds);
-          if (s_act < best_score - eps) {
-            if (cache_hit) {                     // TS_EV_AUDIT: cache lied
-              Rcpp::stop("TS_EV_AUDIT: exact_verify cache returned FALSE (optimum) "
-                         "for a topology with an improving neighbour (%.4f < %.4f) "
-                         "- weighting-regime contamination in the cache key.",
-                         s_act, best_score);
-            }
-            best_score = s_act;
-            found = true;
-            break;
-          }
-          restore_topology(tree, snap);          // directional flagged it but exact
-          continue;                              // disagreed at eps boundary: skip
-        }
-
-        // LEGACY / AUDIT PATH: apply, full_rescore, (optionally) cross-check.
         if (!apply_tbr_move(tree, clip_node, rp, rc, above, below)) {
           restore_topology(tree, snap);
           continue;
