@@ -83,11 +83,14 @@ void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
 // blocks only — NA block step counts require Pass 3, so call
 // fitch_na_pass3_score(tree, ds) on the updated state to obtain the
 // authoritative score.
+// start_c: optional third dirty seed (-1 = unused). The TBR-reroot dirty region
+// (exact_verify incremental rescore) needs three seeds: nz (sibling reconnect),
+// nx (regraft node), clip_node (covers the reversed subtree path + rootward).
 int fitch_na_dirty_downpass(TreeState& tree, const DataSet& ds,
-                             int start_a, int start_b);
+                             int start_a, int start_b, int start_c = -1);
 
 void fitch_na_dirty_uppass(TreeState& tree, const DataSet& ds,
-                            int start_a, int start_b);
+                            int start_a, int start_b, int start_c = -1);
 
 // Indirect tree length calculation: given the clipped subtree's basal
 // state set (prelim of clip_node) and a candidate destination edge (A, D),

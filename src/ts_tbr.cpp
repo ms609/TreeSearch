@@ -867,6 +867,29 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   std::vector<char> in_sub;
   std::vector<int> dfs, marked;
 
+  // TS_NA_INCR_AUDIT: validate the incremental dirty-rescore of each candidate
+  // against full_rescore (the prospective fast path for exact_verify). Decisions
+  // still use full_rescore — this only cross-checks the incremental score, so it
+  // is SAFE while developing. The incremental path uses the 3-seed dirty passes
+  // (nz, nx, clip_node) + Pass3 + (IW: extract+compute_iw | EW: +ew_offset),
+  // mirroring the SPR accept path but covering reroot via the clip_node seed.
+  const bool na_incr_audit = std::getenv("TS_NA_INCR_AUDIT") != nullptr;
+  // TS_NA_INCR: the FAST path — use the incremental dirty rescore for the actual
+  // decision (not just audit). Validated end-to-end by byte-identical search
+  // outcome vs the legacy full_rescore path (TS_NA_INCR on vs off).
+  const bool na_incr = std::getenv("TS_NA_INCR") != nullptr && !na_incr_audit;
+  // Mirror score_tree/fitch_score_ew's dispatch exactly (NOT isfinite(concavity)):
+  // weighted modes (IW/XPIWE/PROFILE) extract per-pattern steps + compute_weighted;
+  // EW adds ew_offset. HSJ/XFORM have extra DP/Sankoff scoring score_tree wraps
+  // around fitch_score_ew, so the incremental path can't reproduce them -> skip.
+  const bool ev_weighted = (ds.scoring_mode == ScoringMode::IW ||
+                            ds.scoring_mode == ScoringMode::XPIWE ||
+                            ds.scoring_mode == ScoringMode::PROFILE);
+  const bool ev_incr_ok = ev_weighted || ds.scoring_mode == ScoringMode::EW;
+  const double na_incr_tol = ev_weighted ? 1e-6 : 0.5;
+  std::vector<int> incr_char_steps;
+  long long na_incr_n = 0, na_incr_ok = 0;
+
   tree.build_postorder();
   best_score = full_rescore(tree, ds);   // sync to the current (converged) tree
 
@@ -945,7 +968,62 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
           continue;
         }
         tree.build_postorder();
-        double s = full_rescore(tree, ds);
+        double s;
+        if (na_incr_audit && ev_incr_ok) {
+          // INCREMENTAL AUDIT: recompute this candidate via the 3-seed dirty
+          // rescore from a clean BASE state, and compare to full_rescore.
+          // (The legacy loop maintains only base topology, not base state, so we
+          // reconstruct base state here.) full_rescore at the end overwrites the
+          // dirty modifications, so no save/restore-undo is needed in audit mode;
+          // we only clear the undo buffer to stop it growing across candidates.
+          restore_topology(tree, snap);
+          tree.build_postorder();
+          full_rescore(tree, ds);                                 // base state
+          apply_tbr_move(tree, clip_node, rp, rc, above, below);  // re-apply (known ok)
+          tree.build_postorder();
+          if (tree.prealloc_undo) tree.prealloc_undo->clear();
+          else tree.clip_undo_stack.clear();
+          int third = (clip_node >= tree.n_tip) ? clip_node : -1;
+          fitch_na_dirty_downpass(tree, ds, nz, nx, third);
+          fitch_na_dirty_uppass(tree, ds, nz, nx, third);
+          int ew_total = fitch_na_pass3_score(tree, ds);
+          double s_incr;
+          if (ev_weighted) {
+            incr_char_steps.resize(ds.n_patterns);
+            extract_char_steps(tree, ds, incr_char_steps);
+            s_incr = compute_weighted_score(ds, incr_char_steps);
+          } else {
+            s_incr = static_cast<double>(ew_total) + ds.ew_offset;
+          }
+          if (tree.prealloc_undo) tree.prealloc_undo->clear();
+          else tree.clip_undo_stack.clear();
+          ++na_incr_n;
+          s = full_rescore(tree, ds);                             // authoritative
+          if (std::fabs(s_incr - s) > na_incr_tol) {
+            Rcpp::stop("TS_NA_INCR_AUDIT mismatch clip=%d ri=%d below=%d rp=%d rc=%d "
+                       "incr=%.6f full=%.6f", clip_node, ri, below, rp, rc, s_incr, s);
+          }
+          ++na_incr_ok;
+        } else if (na_incr && ev_incr_ok) {
+          // FAST incremental path: 3-seed dirty rescore is the decision score.
+          // State stays valid on accept; on reject it is undone below (restore_
+          // prealloc_undo / restore_saved_states) before restore_topology.
+          if (tree.prealloc_undo) tree.prealloc_undo->clear();
+          else tree.clip_undo_stack.clear();
+          int third = (clip_node >= tree.n_tip) ? clip_node : -1;
+          fitch_na_dirty_downpass(tree, ds, nz, nx, third);
+          fitch_na_dirty_uppass(tree, ds, nz, nx, third);
+          int ew_total = fitch_na_pass3_score(tree, ds);
+          if (ev_weighted) {
+            incr_char_steps.resize(ds.n_patterns);
+            extract_char_steps(tree, ds, incr_char_steps);
+            s = compute_weighted_score(ds, incr_char_steps);
+          } else {
+            s = static_cast<double>(ew_total) + ds.ew_offset;
+          }
+        } else {
+          s = full_rescore(tree, ds);
+        }
         if (s < best_score - eps) {           // keep this improver applied
           if (cache_hit) {                    // TS_EV_AUDIT: cache lied
             Rcpp::stop("TS_EV_AUDIT: exact_verify cache returned FALSE (optimum) "
@@ -957,12 +1035,22 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
           found = true;
           break;
         }
+        // Reject: fast path must undo the dirty-rescore state before topology,
+        // so the base state stays valid for the next candidate's dirty rescore.
+        if (na_incr && ev_incr_ok) {
+          if (tree.prealloc_undo) tree.restore_prealloc_undo();
+          else tree.restore_saved_states();
+        }
         restore_topology(tree, snap);
       }
     }
     for (int nd : marked) in_sub[nd] = 0;
     if (found) return true;
   }
+
+  if (na_incr_audit && na_incr_n > 0)
+    REprintf("NA_INCR_AUDIT: %lld/%lld candidates byte-matched full_rescore\n",
+             na_incr_ok, na_incr_n);
 
   restore_topology(tree, snap);               // clip loop found no improver
   tree.build_postorder();
