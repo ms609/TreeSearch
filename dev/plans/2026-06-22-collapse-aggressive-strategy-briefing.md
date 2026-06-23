@@ -1,11 +1,15 @@
 # Briefing for #40: add AGGRESSIVE COLLAPSE (TNT `collapse 3`) as a candidate strategy
 
 **To:** the composition agent (#40), testing recipes against the full training corpus.
-**From:** the B2 / architecture-audit thread (2026-06-22).
-**Ask:** add "aggressive collapse-during-search" as a default-OFF strategy *variant* and
-score it against the corpus — **specifically its larger / molecular / more congruent
-datasets**, which is the regime where it is expected to pay off. It is byte-identical when
-off, so adding it cannot regress anything you already measure.
+**From:** the B2 / architecture-audit thread (2026-06-22; corpus-tested 2026-06-23).
+**TL;DR — TESTED, NOT RECOMMENDED.** Aggressive collapse-during-search is a validated,
+default-OFF, byte-identical-when-off prototype. It was hypothesised to speed up the corpus's
+char-poor regime (where collapse density is genuinely high). A paired wall-clock A/B on that
+exact regime (Hamilton job 17591484: 10 char-poor + 4 control datasets × 32 seeds) found **no
+reliable speed win — a high-variance wash that helps some datasets and clearly hurts others
+(project2144 ~1.6× slower), with no predictor of which.** Do **not** adopt it as a default or a
+recipe knob. Documented here as a closed thread; the flag stays available (TS_COLLAPSE_AGGRESSIVE)
+for the narrow case where someone has a specific char-poor dataset and measures a per-dataset win.
 
 ---
 
@@ -65,8 +69,20 @@ The mission roster (≤88-tip morphological) is **the wrong place to see a win**
   reduction does **not** bite on this class: it fires at random starts but the descent spends
   its evaluations near the optimum where density is ~5.6%. Importantly the per-pass
   `O(n·blocks·n_states)` flag recompute did **not** inflate wall-clock (not net-slower either).
-  **The speed premise is therefore genuinely UNTESTED for the target regime** — the roster has
-  no large NA-free dataset to exhibit it. #40 must supply the first real speed datum.
+  The roster has no large NA-free dataset to exhibit the effect — so the speed premise was
+  tested directly on the corpus (next bullet).
+- **Corpus speed A/B (DEFINITIVE, 2026-06-23): no reliable win, a high-variance wash.** The
+  mbank training corpus has a char-poor tail (14% < 1.5 chars/tip) where collapse density at
+  the optimum IS high (confirmed: a char-subset of Dikow to 15 chars → 58% density). Ran the
+  paired wall-clock-to-floor anytime A/B (ON vs OFF, 32 seeds, 90 s, `thorough`) on 10 char-poor
+  datasets + 4 char-rich controls (Hamilton job 17591484, 896 cells). Result: **faster on ≤50%
+  of cells, median speedup ≈ 0, quality tied** (dScore ≈ 0 both directions). Among the datasets
+  whose search is long enough to measure, it SPLITS — project954 (83t/75ch) 14→11 s (helps),
+  project3354 (78t/18ch) helps, but **project2144 (109t/124ch) 47→76 s (≈1.6× SLOWER + slightly
+  worse)**. char/tip ratio does **not** predict winners (954 wins at 0.9, 2144 loses at 1.14), so
+  there is no clean per-dataset selector. The asymmetric-reachability heuristic perturbs the
+  trajectory in both directions; the high collapse density does **not** convert to a dependable
+  wall-clock gain. Mechanistically grounded + corpus-tested ⇒ **not a reliable speed lever.**
 - **Safe but no win on the roster:** wall-clock-matched runs on Zanol2014 (1261) and Dikow2009
   (1606) reach the **same optimum** with both arms (quality delta 0), and the returned-tree
   score always equals a fresh full rescore (heuristic safety confirmed).
@@ -133,7 +149,8 @@ Then a large-dataset preset can carry `collapseAggressive = TRUE`.
 
 ## 5. One-line summary
 
-A validated, default-OFF, never-over-collapsing TNT-`collapse 3` neighbourhood reduction; null
-on the small morphological roster *by construction*, but plausibly a real **speed-to-optimum**
-win on the corpus's large, **NA-free** (molecular / gap-as-missing), congruent datasets — worth
-one slot, scored on the anytime curve with a mandatory quality-not-regressed gate.
+A validated, default-OFF, never-over-collapsing TNT-`collapse 3` neighbourhood reduction; inert
+on the char-rich roster *by construction*, and — when finally tested on the corpus's char-poor
+regime where its density IS high — **a high-variance wash, not a reliable speed win** (helps
+some datasets, ~1.6× slower on others, no selector). Quality always tied. **Closed: not a
+recommended lever.** Flag retained (TS_COLLAPSE_AGGRESSIVE) for narrow per-dataset use only.
