@@ -98,7 +98,7 @@ test_that("TBR symmetry-breaking works with implied weights", {
 })
 
 
-# --- Test 4: Dataset with many duplicate states (maximizes dedup) ---
+# --- Test 4: Dataset with many duplicate states (maximizes de-duplication) ---
 
 test_that("TBR handles dataset with many duplicate tip states", {
   # Create a dataset where many tips have identical state vectors.
@@ -179,7 +179,7 @@ test_that("TBR symmetry-breaking on Longrich2010 inapplicable dataset", {
 })
 
 
-# --- Test 7: Equal-score acceptance with dedup ---
+# --- Test 7: Equal-score acceptance with de-duplication ---
 
 test_that("TBR symmetry-breaking with accept_equal still works", {
   tree <- as.phylo(42, 8)
@@ -248,10 +248,10 @@ test_that("TBR symmetry-breaking with IW + inapplicable characters", {
 })
 
 
-# --- Test 10: n_evaluated should be reduced by dedup ---
+# --- Test 10: n_evaluated should be reduced by de-duplication ---
 
 test_that("Dedup reduces n_evaluated on dataset with repeated states", {
-  # Use a dataset with many identical tip states to maximize dedup hits.
+  # Use a dataset with many identical tip states to maximize de-duplication hits.
   tree <- as.phylo(42, 16)
   # Only 2 distinct patterns across 16 tips
   mat <- matrix(0L, nrow = 16, ncol = 4,

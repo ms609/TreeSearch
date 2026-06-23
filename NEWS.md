@@ -15,7 +15,8 @@
   subsequent replicates so the search adapts to a difficult dataset at runtime.
 
 - Faster driven search: per-clip allocation churn in the TBR kernel removed
-  (reusable scratch buffers and an open-addressed rerooting-dedup table), and
+  (reusable scratch buffers and an open-addressed rerooting de-duplication
+  table), and
   the debug-only topology validation no longer runs in release builds.
 
 - Further driven-search speedup: the exact directional insertion edge-set

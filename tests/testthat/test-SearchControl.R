@@ -9,7 +9,7 @@ test_that("SearchControl() returns correct class and structure", {
   ctrl <- SearchControl()
   expect_s3_class(ctrl, "SearchControl")
   expect_true(is.list(ctrl))
-  expect_equal(ctrl$ratchetCycles, 12L)
+  expect_equal(ctrl$ratchetCycles, 6L)
   expect_equal(ctrl$driftCycles, 0L)
   expect_equal(ctrl$poolSuboptimal, 0)
   expect_false(ctrl$sprFirst)
