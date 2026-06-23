@@ -306,8 +306,13 @@ void fitch_na_incremental_uppass(TreeState& tree, const DataSet& ds,
 //
 // Returns the total EW score of the tree.
 
-int fitch_na_pass3_score(TreeState& tree, const DataSet& ds) {
+int fitch_na_pass3_score(TreeState& tree, const DataSet& ds,
+                         std::vector<int>* char_steps_out) {
   int total_steps = 0;
+  // Optional fused per-pattern extraction: bucket the SAME bits Pass3 already
+  // computes (standard from local_cost, NA from needs_step) so the IW incremental
+  // path skips a redundant extract_char_steps full walk. Byte-identical.
+  if (char_steps_out) std::fill(char_steps_out->begin(), char_steps_out->end(), 0);
 
   // Standard block steps from local_cost (set during Pass 1)
   for (int node : tree.postorder) {
@@ -318,6 +323,10 @@ int fitch_na_pass3_score(TreeState& tree, const DataSet& ds) {
       int nu = popcount64(tree.local_cost[cost_idx]);
       if (blk.upweight_mask) nu += popcount64(tree.local_cost[cost_idx] & blk.upweight_mask);
       total_steps += blk.weight * nu;
+      if (char_steps_out) {
+        uint64_t m = tree.local_cost[cost_idx];
+        while (m) { int c = ctz64(m); (*char_steps_out)[blk.pattern_index[c]]++; m &= m - 1; }
+      }
     }
   }
 
@@ -361,6 +370,10 @@ int fitch_na_pass3_score(TreeState& tree, const DataSet& ds) {
       int ns_p3 = popcount64(needs_step);
       if (blk.upweight_mask) ns_p3 += popcount64(needs_step & blk.upweight_mask);
       total_steps += blk.weight * ns_p3;
+      if (char_steps_out) {
+        uint64_t m = needs_step;
+        while (m) { int c = ctz64(m); (*char_steps_out)[blk.pattern_index[c]]++; m &= m - 1; }
+      }
 
       // Compute down2
       uint64_t na_only_isect = any_isect & ~I_app;

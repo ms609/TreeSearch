@@ -986,14 +986,13 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
           int third = (clip_node >= tree.n_tip) ? clip_node : -1;
           fitch_na_dirty_downpass(tree, ds, nz, nx, third);
           fitch_na_dirty_uppass(tree, ds, nz, nx, third);
-          int ew_total = fitch_na_pass3_score(tree, ds);
           double s_incr;
           if (ev_weighted) {
             incr_char_steps.resize(ds.n_patterns);
-            extract_char_steps(tree, ds, incr_char_steps);
+            fitch_na_pass3_score(tree, ds, &incr_char_steps);   // fused (= fast path)
             s_incr = compute_weighted_score(ds, incr_char_steps);
           } else {
-            s_incr = static_cast<double>(ew_total) + ds.ew_offset;
+            s_incr = static_cast<double>(fitch_na_pass3_score(tree, ds)) + ds.ew_offset;
           }
           if (tree.prealloc_undo) tree.prealloc_undo->clear();
           else tree.clip_undo_stack.clear();
@@ -1013,13 +1012,13 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
           int third = (clip_node >= tree.n_tip) ? clip_node : -1;
           fitch_na_dirty_downpass(tree, ds, nz, nx, third);
           fitch_na_dirty_uppass(tree, ds, nz, nx, third);
-          int ew_total = fitch_na_pass3_score(tree, ds);
           if (ev_weighted) {
+            // Fused: Pass3 fills char_steps in its own walk; skip extract.
             incr_char_steps.resize(ds.n_patterns);
-            extract_char_steps(tree, ds, incr_char_steps);
+            fitch_na_pass3_score(tree, ds, &incr_char_steps);
             s = compute_weighted_score(ds, incr_char_steps);
           } else {
-            s = static_cast<double>(ew_total) + ds.ew_offset;
+            s = static_cast<double>(fitch_na_pass3_score(tree, ds)) + ds.ew_offset;
           }
         } else {
           s = full_rescore(tree, ds);
