@@ -22,7 +22,7 @@
 // =========================================================================
 
 int fitch_na_dirty_downpass(TreeState& tree, const DataSet& ds,
-                             int start_a, int start_b) {
+                             int start_a, int start_b, int start_c) {
   std::vector<char> dirty(tree.n_node, 0);
 
   auto mark_path = [&](int node) {
@@ -35,6 +35,7 @@ int fitch_na_dirty_downpass(TreeState& tree, const DataSet& ds,
   };
   mark_path(start_a);
   mark_path(start_b);
+  mark_path(start_c);   // third seed (-1 = no-op): TBR-reroot dirty region
 
   int length_delta = 0;
 
@@ -126,7 +127,7 @@ int fitch_na_dirty_downpass(TreeState& tree, const DataSet& ds,
 // =========================================================================
 
 void fitch_na_dirty_uppass(TreeState& tree, const DataSet& ds,
-                            int start_a, int start_b) {
+                            int start_a, int start_b, int start_c) {
   // Step 1: root final_ = root prelim.  Root is on every rootward path so
   // its prelim may have changed in the downpass.
   int root = tree.n_tip;
@@ -149,6 +150,7 @@ void fitch_na_dirty_uppass(TreeState& tree, const DataSet& ds,
   };
   mark_path(start_a);
   mark_path(start_b);
+  mark_path(start_c);   // third seed (-1 = no-op): TBR-reroot dirty region
 
   // Step 3: reverse postorder over internal nodes.  Visit any node whose
   // parent is dirty.  If that node's final_ changes, propagate the flag.
