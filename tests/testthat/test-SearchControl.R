@@ -169,6 +169,62 @@ test_that("stallEscalateFactor is validated and stored", {
                "stallEscalateFactor.*>= 1")
 })
 
+test_that("SearchControl() records which fields the caller set explicitly", {
+  # No arguments -> nothing explicit (so a strategy preset applies in full).
+  expect_null(attr(SearchControl(), "explicit"))
+  # A field set by name is recorded, even when set to its own default value
+  # (a value-comparison against SearchControl() could not detect this).
+  expect_setequal(attr(SearchControl(perturbStopFactor = 0L), "explicit"),
+                  "perturbStopFactor")
+  expect_setequal(
+    attr(SearchControl(ratchetCycles = 6L, driftCycles = 1L), "explicit"),
+    c("ratchetCycles", "driftCycles")
+  )
+  # The plain-list coercion path (control = list(...) -> do.call) must set the
+  # attribute too, so list-supplied fields merge with a preset like named ones.
+  expect_setequal(
+    attr(do.call(SearchControl, list(ratchetCycles = 10L)), "explicit"),
+    "ratchetCycles"
+  )
+})
+
+test_that(".ApplyStrategyPreset merges a partial control with a preset", {
+  presets <- TreeSearch:::.StrategyPresets()
+
+  # Regression (the documented contract): a partial control supplied as
+  # control = SearchControl(perturbStopFactor = 0L) must keep that one field
+  # and take EVERYTHING ELSE from the preset -- previously the merge saw every
+  # SearchControl() field as "explicit" and applied nothing from the preset,
+  # leaving ratchetCycles at the raw default (6) instead of thorough's 20.
+  thorough <- TreeSearch:::.ApplyStrategyPreset(
+    SearchControl(perturbStopFactor = 0L), presets[["thorough"]]
+  )
+  expect_equal(thorough$ratchetCycles, 20L)   # from preset, not raw default 6
+  expect_equal(thorough$tbrMaxHits, 3L)       # from preset
+  expect_equal(thorough$perturbStopFactor, 0L)  # user override preserved
+
+  # Forward direction from the @param control docstring: sprint defaults for
+  # everything except the one field the user pinned.
+  sprint <- TreeSearch:::.ApplyStrategyPreset(
+    SearchControl(ratchetCycles = 10L), presets[["sprint"]]
+  )
+  expect_equal(sprint$ratchetCycles, 10L)     # user override preserved
+  expect_equal(sprint$tabuSize, 0L)           # from preset (raw default is 100)
+
+  # A bare SearchControl() (nothing explicit) takes the preset wholesale.
+  full <- TreeSearch:::.ApplyStrategyPreset(SearchControl(), presets[["sprint"]])
+  expect_equal(full$ratchetCycles, 3L)
+  expect_equal(full$tabuSize, 0L)
+
+  # Fields named in explicitDots (i.e. passed via top-level `...`) are likewise
+  # preserved over the preset.
+  dots <- TreeSearch:::.ApplyStrategyPreset(
+    SearchControl(), presets[["thorough"]], explicitDots = "ratchetCycles"
+  )
+  expect_equal(dots$ratchetCycles, 6L)        # raw default kept, not preset 20
+  expect_equal(dots$tbrMaxHits, 3L)           # other preset fields still apply
+})
+
 test_that("stallEscalateFactor escalates on stall and still scores correctly", {
   skip_on_cran()
   # Enough replicates that the search stalls (no improvement for >= nTip/10

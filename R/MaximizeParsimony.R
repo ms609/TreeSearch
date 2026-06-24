@@ -28,6 +28,31 @@
   }, integer(1))
 }
 
+# Internal helper: recode inapplicable ("-") tokens as missing data ("?").
+# Backs `inapplicable = "missing"` (pure-Fitch mode).  Every token whose
+# contrast includes the gap state is promoted to the fully ambiguous "?"
+# token, so the C++ simplification phase sees no genuine inapplicable token
+# (`has_genuine_inapp` stays FALSE) and the character is scored with standard
+# Fitch parsimony.  Working on the contrast matrix -- rather than
+# round-tripping the data through a character matrix -- keeps the pattern
+# structure and weights intact, and recodes {state, -} ambiguity tokens
+# correctly: "0 or gap" = "0 or anything" = "?" (the round-trip left these as
+# genuine inapplicable, which the engine then strips to a pure gap).
+# @param dataset A phyDat object.
+# @return The phyDat with every gap-bearing token recoded as missing.  If the
+#   dataset has no "-" state it is returned unchanged.
+# @keywords internal
+.GapsAsMissing <- function(dataset) {
+  gapCol <- match("-", attr(dataset, "levels"))
+  if (is.na(gapCol)) {
+    return(dataset)
+  }
+  contrast <- attr(dataset, "contrast")
+  contrast[contrast[, gapCol] == 1, ] <- 1
+  attr(dataset, "contrast") <- contrast
+  dataset
+}
+
 # Internal helper: prepare constraint data for C++ engine.
 # Returns a named list of constraint arguments (empty list if no constraint).
 # @param constraint A phyDat, phylo, or NULL.
@@ -240,6 +265,33 @@
 #     median +14 steps, max +74 steps at 86 tips / 528 chars).
 #   - At 62 tips (Agnarsson2004, 242 patterns) thorough adds 0 steps; at 65
 #     tips (project3617, 361 patterns) it adds 14 steps.
+# Merge a strategy preset into a (possibly user-customised) `SearchControl`.
+# Fields the user set explicitly are preserved; every other field takes the
+# preset's value.  A field counts as explicit if it was either
+#   (a) passed as a top-level `...` argument (its name is in `explicitDots`), or
+#   (b) supplied inside `control = SearchControl(...)` (its name is recorded in
+#       the control's "explicit" attribute by SearchControl()).
+# Reading the attribute -- rather than `names(control)` -- is the fix for the
+# bug where `SearchControl()` always returns every field, which made the merge
+# treat every field as explicit and apply nothing from the preset.
+# @param control A SearchControl object (post-`...`-merge).
+# @param preset The strategy preset (itself a SearchControl object).
+# @param explicitDots Character vector of control-field names passed via `...`.
+# @return `control` with preset values applied to non-explicit fields.
+.ApplyStrategyPreset <- function(control, preset, explicitDots = character(0)) {
+  explicitControl <- attr(control, "explicit")
+  if (is.null(explicitControl)) {
+    explicitControl <- character(0)
+  }
+  explicit <- union(explicitDots, explicitControl)
+  for (nm in names(preset)) {
+    if (!(nm %in% explicit)) {
+      control[[nm]] <- preset[[nm]]
+    }
+  }
+  control
+}
+
 .AutoStrategy <- function(nTip, nChar) {
   if (nTip <= 30L) return("sprint")
   # Few characters -> flat landscape; thorough search is pointless
@@ -334,6 +386,14 @@
 #'     \item{`"bgs"` (default)}{Three-pass algorithm of
 #'       \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
 #'       regions from the `"-"` token.  No hierarchy required.}
+#'     \item{`"missing"`}{Pure Fitch parsimony
+#'       \insertCite{Fitch1971}{TreeSearch}: the inapplicable (`"-"`) state is
+#'       treated as missing data, so any token that includes a gap is recoded
+#'       as fully ambiguous (`"?"`) and contributes no steps -- including
+#'       polymorphisms such as `{0,-}`, which become `?`.  Reproduces standard
+#'       Fitch analyses (e.g. PAUP*, or TNT with gaps read as missing) that do
+#'       not use the Brazeau-Gardner-Smith inapplicable algorithm.  No
+#'       hierarchy required.}
 #'     \item{`"hsj"`}{Dissimilarity-metric scoring of
 #'       \insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
 #'       `hierarchy`; controlled by `hsj_alpha`.}
@@ -588,26 +648,7 @@ MaximizeParsimony <- function(
     }
     preset <- .StrategyPresets()[[strategy]]
     if (!is.null(preset)) {
-      # Determine which control fields the user explicitly set.
-      # Fields are "explicit" if:
-      #   (a) passed via ... (already merged into control above), OR
-      #   (b) control was explicitly supplied and differs from SearchControl()
-      defaults <- SearchControl()
-      explicit_via_dots <- names(controlDots)
-      explicit_via_control <- if ("control" %in% names(match.call())) {
-        # User passed control = SearchControl(...) — honour all fields in it
-        names(control)
-      } else {
-        character(0)
-      }
-      explicit <- union(explicit_via_dots, explicit_via_control)
-
-      # Apply preset values for any field the user didn't explicitly set
-      for (nm in names(preset)) {
-        if (!(nm %in% explicit)) {
-          control[[nm]] <- preset[[nm]]
-        }
-      }
+      control <- .ApplyStrategyPreset(control, preset, names(controlDots))
       if (verbosity >= 1L) {
         cli::cli_alert_info("Strategy: {.strong {strategy}}")
       }
@@ -699,7 +740,14 @@ MaximizeParsimony <- function(
   # --- Validate inapplicable-handling parameters ---
   inapplicable <- tolower(inapplicable)
   if (inapplicable == "brazeau") inapplicable <- "bgs"
-  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform", "missing"))
+  # "missing" = pure Fitch: recode every gap-bearing token as missing ("?") so
+  # gaps contribute no steps, then score with the standard engine (which on
+  # inapplicable-free data reduces to Fitch parsimony).
+  if (inapplicable == "missing") {
+    dataset <- .GapsAsMissing(dataset)
+    inapplicable <- "bgs"
+  }
   if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,

@@ -328,6 +328,14 @@ SearchControl <- function(
     adaptiveStart = FALSE,
     enumTimeFraction = 0.1
 ) {
+  # Record which fields the caller set explicitly (by name or position;
+  # `match.call()` normalises positional args to their names).  This lets
+  # `MaximizeParsimony()` distinguish a user-supplied `control` field from a
+  # default, so a partial `control = SearchControl(...)` merges correctly with
+  # a `strategy` preset instead of silently overriding every preset field.
+  # A field set explicitly to its default value is still recorded as explicit
+  # here, which a value-comparison against `SearchControl()` could not detect.
+  .explicit <- names(as.list(match.call())[-1L])
   # Guard the count parameters whose non-positive values crash the C++ kernel:
   # `xssPartitions`/`cssPartitions` divide the tip count in `xss_partition()`
   # (integer division by zero -> SIGFPE), and `poolMaxSize` sizes the tree pool
@@ -405,7 +413,8 @@ SearchControl <- function(
       adaptiveStart = as.logical(adaptiveStart),
       enumTimeFraction = as.double(enumTimeFraction)
     ),
-    class = "SearchControl"
+    class = "SearchControl",
+    explicit = .explicit
   )
 }
 
