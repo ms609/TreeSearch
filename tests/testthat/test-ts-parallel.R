@@ -85,9 +85,18 @@ test_that("Parallel search respects timeout", {
   )
   elapsed <- proc.time()["elapsed"] - t0
 
+  # `timed_out` is set only on the deadline path (never on natural completion),
+  # so this alone proves the timeout fired.
   expect_true(result$timed_out)
-  # Should finish within a reasonable time (timeout + overhead)
-  expect_true(elapsed < 15.0)
+  # And the search actually stopped rather than running the full budget.  This
+  # is a working-vs-broken discriminator, NOT a wall-clock precision assertion:
+  # a working timeout returns in seconds-to-low-tens (bounded by one in-flight
+  # sectorial pass per worker), whereas a broken one runs all 1000 replicates
+  # (>1000 s) — a ~100x gap, so 60 s absorbs CI/shared-VM jitter while still
+  # catching an unbounded run.  The old 15 s bound was too tight: the per-test
+  # wall time here is observed to vary from ~5 s to ~30 s on the same machine.
+  expect_lt(elapsed, 60)
+  expect_lt(result$replicates, 1000L)  # stopped before exhausting the budget
 })
 
 # --- 4. Edge cases ---
