@@ -50,6 +50,9 @@
   contrast <- attr(dataset, "contrast")
   contrast[contrast[, gapCol] == 1, ] <- 1
   attr(dataset, "contrast") <- contrast
+  # Drop the IW minimum-length cache: it is keyed on the (now altered) contrast,
+  # and TreeLength() reuses it rather than recomputing when present.
+  attr(dataset, "min.length") <- NULL
   dataset
 }
 

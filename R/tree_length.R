@@ -91,7 +91,15 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
   # --- Validate inapplicable-handling parameters ---
   inapplicable <- tolower(inapplicable)
   if (inapplicable == "brazeau") inapplicable <- "bgs"
-  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform", "missing"))
+  if (inapplicable == "missing") {
+    # Gaps as missing data: recode, then score with the standard Fitch engine.
+    # Placed after .Recompress() (whose round-trip would otherwise restore the
+    # "-" level); PrepareDataIW() preserves the recode and profile parsimony
+    # handles gaps itself.
+    dataset <- .GapsAsMissing(dataset)
+    inapplicable <- "bgs"
+  }
   useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
   if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
@@ -237,7 +245,11 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   # --- Validate inapplicable-handling parameters ---
   inapplicable <- tolower(inapplicable)
   if (inapplicable == "brazeau") inapplicable <- "bgs"
-  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform", "missing"))
+  # Gaps as missing data: the recode is deferred to after any .Recompress()
+  # round-trip below (which would otherwise restore the "-" level).
+  useMissing <- inapplicable == "missing"
+  if (useMissing) inapplicable <- "bgs"
   useHSJ <- !is.null(hierarchy) && identical(inapplicable, "hsj")
   if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
@@ -274,6 +286,9 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   nTip <- nTip[1]
   if (nTip < length(dataset)) {
     dataset <- .Recompress(dataset[TipLabels(tree[[1]])])
+  }
+  if (useMissing) {
+    dataset <- .GapsAsMissing(dataset)
   }
 
   tree[] <- RenumberTips(tree, dataset)

@@ -130,6 +130,14 @@ See \code{vignette("inapplicable", package = "TreeSearch")} for details.
 \item{\code{"bgs"} (default)}{Three-pass algorithm of
 \insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
 regions from the \code{"-"} token.  No hierarchy required.}
+\item{\code{"missing"}}{Pure Fitch parsimony
+\insertCite{Fitch1971}{TreeSearch}: the inapplicable (\code{"-"}) state is
+treated as missing data, so any token that includes a gap is recoded
+as fully ambiguous (\code{"?"}) and contributes no steps -- including
+polymorphisms such as \verb{\{0,-\}}, which become \verb{?}.  Reproduces standard
+Fitch analyses (e.g. PAUP*, or TNT with gaps read as missing) that do
+not use the Brazeau-Gardner-Smith inapplicable algorithm.  No
+hierarchy required.}
 \item{\code{"hsj"}}{Dissimilarity-metric scoring of
 \insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
 \code{hierarchy}; controlled by \code{hsj_alpha}.}
