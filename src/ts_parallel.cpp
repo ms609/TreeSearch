@@ -146,6 +146,10 @@ struct WorkerContext {
 
   // Per-thread score accumulator (index = thread_id)
   std::vector<double>* thread_scores;
+
+  // Wall-clock deadline for sector phases (only meaningful when use_timeout)
+  bool use_timeout;
+  std::chrono::steady_clock::time_point deadline;
 };
 
 void worker_thread(WorkerContext ctx) {
@@ -164,8 +168,18 @@ void worker_thread(WorkerContext ctx) {
   ts::thread_rng = &local_rng;
   ts::thread_stop_flag = ctx.stop_flag;
 
+  // Build a real wall-deadline timeout for sector phases.  Reading stop_flag
+  // here would be wrong: stop_flag is also set on target_hits, which would
+  // abort a replicate mid-flight when no timeout is configured and break
+  // byte-identity.  A clock check is inert when use_timeout is false.
   auto check_timeout_noop = []() -> bool { return false; };
-  // Timeout is handled by the main thread setting stop_flag
+  std::function<bool()> worker_check_timeout = check_timeout_noop;
+  if (ctx.use_timeout) {
+    auto deadline = ctx.deadline;
+    worker_check_timeout = [deadline]() -> bool {
+      return std::chrono::steady_clock::now() >= deadline;
+    };
+  }
 
   while (true) {
     int rep = ctx.replicates_claimed->fetch_add(1, std::memory_order_relaxed);
@@ -199,7 +213,7 @@ void worker_thread(WorkerContext ctx) {
     // pool=nullptr: intra-fuse disabled in parallel mode (between-replicate
     // fusing via ThreadSafePool::fuse_round() is already active)
     ReplicateResult rep_result = run_single_replicate(
-        ds_local, *ctx.params, cd_ptr, check_timeout_noop, 0, start_ptr,
+        ds_local, *ctx.params, cd_ptr, worker_check_timeout, 0, start_ptr,
         nullptr, rep_strat, nullptr);
 
     if (ctx.stop_flag->load(std::memory_order_relaxed)) break;
@@ -313,10 +327,16 @@ DrivenResult parallel_driven_search(
   // MPT enumeration.
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();
+
+  // Give workers a wall-clock deadline so sector phases self-terminate.
+  // use_timeout=false → noop callback → byte-identical to no-timeout runs.
+  ctx.use_timeout = use_timeout;
   const double enum_frac = std::max(0.0,
                                      std::min(params.enum_time_fraction, 0.5));
   const double main_deadline = params.max_seconds * (1.0 - enum_frac);
   const double full_deadline = params.max_seconds;
+  ctx.deadline = start_time + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+      std::chrono::duration<double>(main_deadline));
 
   // Cancel file: read path from environment variable (set by Shiny app).
   // If the file exists, the search should stop.

@@ -243,7 +243,7 @@ ReplicateResult run_single_replicate(
       // XSS: systematic partitioning
       sp.n_partitions = params.xss_partitions;
       sp.xss_rounds = params.xss_rounds;
-      xss_search(result.tree, ds, sp, cd);
+      xss_search(result.tree, ds, sp, cd, check_timeout);
 
       result.timings.xss_ms += ph_lap();
       if (verbosity >= 2) {
@@ -262,7 +262,7 @@ ReplicateResult run_single_replicate(
       if (params.rss_rounds > 0) {
         sp.split_freq = split_freq;
         for (int rr = 0; rr < params.rss_rounds; ++rr) {
-          rss_search(result.tree, ds, sp, cd);
+          rss_search(result.tree, ds, sp, cd, check_timeout);
 
           if (ts::check_interrupt() || check_timeout()) {
             result.interrupted = true;
@@ -285,7 +285,7 @@ ReplicateResult run_single_replicate(
         css_sp.xss_rounds = params.css_rounds;
         css_sp.internal_max_hits = 1;
         css_sp.clip_order = params.clip_order;
-        css_search(result.tree, ds, css_sp, cd);
+        css_search(result.tree, ds, css_sp, cd, check_timeout);
 
         result.timings.css_ms += ph_lap();
         if (verbosity >= 2) {
@@ -361,7 +361,7 @@ ReplicateResult run_single_replicate(
       if (params.xss_rounds > 0) {
         sp.n_partitions = params.xss_partitions;
         sp.xss_rounds = params.xss_rounds;
-        xss_search(result.tree, ds, sp, cd);
+        xss_search(result.tree, ds, sp, cd, check_timeout);
         result.timings.xss_ms += ph_lap();
       }
 
@@ -374,7 +374,7 @@ ReplicateResult run_single_replicate(
       if (params.rss_rounds > 0) {
         sp.split_freq = split_freq;
         for (int rr = 0; rr < params.rss_rounds; ++rr) {
-          rss_search(result.tree, ds, sp, cd);
+          rss_search(result.tree, ds, sp, cd, check_timeout);
           if (ts::check_interrupt() || check_timeout()) {
             result.interrupted = true;
             result.score = score_tree(result.tree, ds);
@@ -390,7 +390,7 @@ ReplicateResult run_single_replicate(
         css_sp.xss_rounds = params.css_rounds;
         css_sp.internal_max_hits = 1;
         css_sp.clip_order = params.clip_order;
-        css_search(result.tree, ds, css_sp, cd);
+        css_search(result.tree, ds, css_sp, cd, check_timeout);
         result.timings.css_ms += ph_lap();
 
         if (ts::check_interrupt() || check_timeout()) {

@@ -1226,7 +1226,8 @@ static std::vector<int> xss_partition(const TreeState& tree, int n_partitions) {
 
 SectorResult rss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params,
-                        ConstraintData* cd) {
+                        ConstraintData* cd,
+                        std::function<bool()> check_timeout) {
   // Hoist the per-accept debug-trace gate (µs-scale ucrt getenv) to a static
   // (T-S6c micro-bank).
   static const bool _sect_debug = std::getenv("TS_SECT_DEBUG") != nullptr;
@@ -1280,7 +1281,8 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     TBRParams tp;
     tp.max_hits = params.internal_max_hits;
     tp.clip_order = static_cast<ClipOrder>(params.clip_order);
-    TBRResult tr = tbr_search(tree, ds, tp);
+    TBRResult tr = tbr_search(tree, ds, tp, nullptr, nullptr, nullptr,
+                              check_timeout);
     result.best_score = tr.best_score;
     result.total_steps_saved =
         static_cast<int>(current_score - tr.best_score);
@@ -1431,7 +1433,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
       }
     }
 
-    if (ts::check_interrupt()) break;
+    if (ts::check_interrupt() || (check_timeout && check_timeout())) break;
   }
 
   // Global TBR after all sector picks
@@ -1439,7 +1441,8 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     TBRParams tp;
     tp.max_hits = params.internal_max_hits;
     tp.clip_order = static_cast<ClipOrder>(params.clip_order);
-    TBRResult tr = tbr_search(tree, ds, tp, cd);
+    TBRResult tr = tbr_search(tree, ds, tp, cd, nullptr, nullptr,
+                              check_timeout);
     if (tr.best_score < result.best_score) {
       result.total_steps_saved +=
           static_cast<int>(result.best_score - tr.best_score);
@@ -1454,7 +1457,8 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
 
 SectorResult xss_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params,
-                        ConstraintData* cd) {
+                        ConstraintData* cd,
+                        std::function<bool()> check_timeout) {
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -1563,7 +1567,7 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
         }
       }
 
-      if (ts::check_interrupt()) break;
+      if (ts::check_interrupt() || (check_timeout && check_timeout())) break;
     }
 
     // Global TBR after each round of sectors
@@ -1571,7 +1575,8 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
       tp.clip_order = static_cast<ClipOrder>(params.clip_order);
-      TBRResult tr = tbr_search(tree, ds, tp, cd);
+      TBRResult tr = tbr_search(tree, ds, tp, cd, nullptr, nullptr,
+                                check_timeout);
       if (tr.best_score < result.best_score) {
         result.total_steps_saved +=
             static_cast<int>(result.best_score - tr.best_score);
@@ -1581,7 +1586,7 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
 
     // Adaptive: skip remaining rounds if this one found no improvement
     if (result.best_score >= score_before_round) break;
-    if (ts::check_interrupt()) break;
+    if (ts::check_interrupt() || (check_timeout && check_timeout())) break;
   }
 
   return result;
@@ -1612,7 +1617,8 @@ static void build_sector_mask(const TreeState& tree, int sector_root,
 
 SectorResult css_search(TreeState& tree, DataSet& ds,
                         const SectorParams& params,
-                        ConstraintData* cd) {
+                        ConstraintData* cd,
+                        std::function<bool()> check_timeout) {
   // No HSJ/XFORM guard needed here (cf. T-303 guards in rss_search/xss_search).
   // css_search never calls build_reduced_dataset(); it runs tbr_search() with a
   // sector_mask against the FULL `ds`, so score_tree() dispatches hsj_score()/
@@ -1646,7 +1652,8 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
       tp.max_hits = params.internal_max_hits;
       tp.clip_order = static_cast<ClipOrder>(params.clip_order);
 
-      TBRResult tr = tbr_search(tree, ds, tp, cd, &sector_mask);
+      TBRResult tr = tbr_search(tree, ds, tp, cd, &sector_mask, nullptr,
+                                check_timeout);
       ++result.n_sectors_searched;
 
       if (tr.best_score < result.best_score) {
@@ -1656,7 +1663,7 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
         ++result.n_sectors_improved;
       }
 
-      if (ts::check_interrupt()) break;
+      if (ts::check_interrupt() || (check_timeout && check_timeout())) break;
     }
 
     // Global TBR after each round
@@ -1664,7 +1671,8 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
       tp.clip_order = static_cast<ClipOrder>(params.clip_order);
-      TBRResult tr = tbr_search(tree, ds, tp, cd);
+      TBRResult tr = tbr_search(tree, ds, tp, cd, nullptr, nullptr,
+                                check_timeout);
       if (tr.best_score < result.best_score) {
         result.total_steps_saved +=
             static_cast<int>(result.best_score - tr.best_score);
@@ -1674,7 +1682,7 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
 
     // Adaptive: skip remaining rounds if this one found no improvement
     if (result.best_score >= score_before_round) break;
-    if (ts::check_interrupt()) break;
+    if (ts::check_interrupt() || (check_timeout && check_timeout())) break;
   }
 
   return result;
