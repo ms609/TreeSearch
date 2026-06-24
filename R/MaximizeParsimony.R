@@ -331,6 +331,36 @@
 #' The search stops when the best score has been independently discovered
 #' `targetHits` times, or `maxReplicates` replicates have been completed.
 #'
+#' @section Completeness of the returned tree set:
+#' `MaximizeParsimony()` returns the distinct, fully-resolved optimal
+#' topologies held in its tree pool; it does **not** guarantee that every
+#' most-parsimonious tree (MPT) is recovered.  There is no fixed cap on the
+#' number of trees returned (a value such as 256 is not hard-coded anywhere);
+#' the size of the returned set is bounded by, in order:
+#' \enumerate{
+#'   \item **`poolMaxSize`** (default `100`) — a hard ceiling on the number of
+#'     trees retained.  Raise it (via [`SearchControl()`]) to keep more MPTs;
+#'     with the default you will never see more than 100.
+#'   \item **MPT-enumeration time.** After the main search, a TBR plateau walk
+#'     enumerates equal-score neighbours of each pool tree, within a time
+#'     reserve of `maxSeconds * enumTimeFraction`.  If this phase times out it
+#'     returns a *partial* set (the run reports `stop = "timeout"`); allow more
+#'     `maxSeconds`, or raise `enumTimeFraction`, for a more complete set.
+#'   \item **TBR-island coverage.** The plateau walk only explores islands of
+#'     equal-score trees that a main-loop replicate actually landed on.  MPTs
+#'     lying in unvisited islands are never enumerated, however large
+#'     `poolMaxSize` is.  Increase `maxReplicates` to seed more islands.  Two
+#'     independent runs (or runs at different `strategy` effort) can therefore
+#'     return the *same* count if they exhaust the same connected island — this
+#'     reflects island structure, not a cap.
+#' }
+#' Returned trees are fully resolved.  When a dataset contains genuine soft
+#' polytomies (unsupported, zero-length branches), the resolved-MPT count can
+#' be far larger than the count of distinct *collapsed* topologies that a
+#' program such as TNT reports under "collapse zero-length branches"; collapse
+#' the returned trees (e.g. by contracting branches of zero parsimony length)
+#' before comparing counts across programs.
+#'
 #' Implied weighting is supported natively: set `concavity` to a numeric
 #' value (e.g.\sspace{}10).
 #' Profile parsimony (`concavity = "profile"`) is supported natively:

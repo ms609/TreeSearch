@@ -263,6 +263,37 @@ the result to a pool of unique topologies.
 Periodically, tree fusing recombines the best trees in the pool.
 The search stops when the best score has been independently discovered
 \code{targetHits} times, or \code{maxReplicates} replicates have been completed.
+}
+\section{Completeness of the returned tree set}{
+
+\code{MaximizeParsimony()} returns the distinct, fully-resolved optimal
+topologies held in its tree pool; it does \strong{not} guarantee that every
+most-parsimonious tree (MPT) is recovered.  There is no fixed cap on the
+number of trees returned (a value such as 256 is not hard-coded anywhere);
+the size of the returned set is bounded by, in order:
+\enumerate{
+\item \strong{\code{poolMaxSize}} (default \code{100}) — a hard ceiling on the number of
+trees retained.  Raise it (via \code{\link[=SearchControl]{SearchControl()}}) to keep more MPTs;
+with the default you will never see more than 100.
+\item \strong{MPT-enumeration time.} After the main search, a TBR plateau walk
+enumerates equal-score neighbours of each pool tree, within a time
+reserve of \code{maxSeconds * enumTimeFraction}.  If this phase times out it
+returns a \emph{partial} set (the run reports \code{stop = "timeout"}); allow more
+\code{maxSeconds}, or raise \code{enumTimeFraction}, for a more complete set.
+\item \strong{TBR-island coverage.} The plateau walk only explores islands of
+equal-score trees that a main-loop replicate actually landed on.  MPTs
+lying in unvisited islands are never enumerated, however large
+\code{poolMaxSize} is.  Increase \code{maxReplicates} to seed more islands.  Two
+independent runs (or runs at different \code{strategy} effort) can therefore
+return the \emph{same} count if they exhaust the same connected island — this
+reflects island structure, not a cap.
+}
+Returned trees are fully resolved.  When a dataset contains genuine soft
+polytomies (unsupported, zero-length branches), the resolved-MPT count can
+be far larger than the count of distinct \emph{collapsed} topologies that a
+program such as TNT reports under "collapse zero-length branches"; collapse
+the returned trees (e.g. by contracting branches of zero parsimony length)
+before comparing counts across programs.
 
 Implied weighting is supported natively: set \code{concavity} to a numeric
 value (e.g.\sspace{}10).
@@ -272,6 +303,7 @@ inapplicable tokens are treated as ambiguous, and per-character
 information profiles are used for scoring
 \insertCite{Faith2001}{TreeSearch}.
 }
+
 \section{Deprecated}{
 
 \code{MaximizeParsimony2()} is a deprecated alias for \code{MaximizeParsimony()}.
