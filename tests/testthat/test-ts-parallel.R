@@ -85,9 +85,22 @@ test_that("Parallel search respects timeout", {
   )
   elapsed <- proc.time()["elapsed"] - t0
 
+  # `timed_out` is set ONLY on the deadline/cancel path (never on natural
+  # completion), so this alone proves the timeout fired.
   expect_true(result$timed_out)
-  # Should finish within a reasonable time (timeout + overhead)
-  expect_true(elapsed < 15.0)
+  # And it actually stopped, rather than the flag being set while a worker
+  # phase ignores it and the join hangs.  This bound is a working-vs-broken
+  # discriminator, NOT a wall-clock precision assertion: the overrun above
+  # `maxSeconds` is bounded by one in-flight sectorial (XSS) pass per worker
+  # (a few seconds), independent of replicate count, whereas a BROKEN timeout
+  # would run the full 1000-replicate budget (>1000 s).  The gap is ~100x, so
+  # 60 s tolerates any realistic CI / shared-VM scheduling jitter (hypervisor
+  # descheduling inflates proc.time() independently of the search logic) while
+  # still catching a genuinely unbounded run.  See the original 15 s ceiling,
+  # which was too tight: on contended runners a single XSS overrun spiked past
+  # it even though the timeout worked correctly.
+  expect_lt(elapsed, 60)
+  expect_lt(result$replicates, 1000L)  # stopped before exhausting the budget
 })
 
 # --- 4. Edge cases ---
