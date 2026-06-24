@@ -59,8 +59,9 @@ When \eqn{f_2 = 0} (no doubleton scores) the bias-corrected form
 }
 \examples{
 library("TreeTools", quietly = TRUE)
-data("Lobo", package = "TreeTools")
-result <- MaximizeParsimony(Lobo.phy, maxReplicates = 4L)
+data("inapplicable.phyData")
+vinther <- inapplicable.phyData[["Vinther2008"]]
+result <- MaximizeParsimony(vinther, maxReplicates = 3)
 sp <- ScoreSpectrum(result)
 print(sp)
 

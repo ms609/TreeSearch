@@ -179,7 +179,7 @@ sectorial search.}
 sizes for sectorial search.}
 
 \item{rasStarts}{Integer; random-addition sequence (\acronym{RAS}) + TBR
-restarts per sector in XSS/RSS. \code{1} (default) polishes the current sector
+restarts per sector in XSS/RSS.  \code{1} (default) polishes the current sector
 with a single TBR pass;
 \code{n > 1} rebuilds the sector from scratch \code{n} times and keeps the best,
 following \insertCite{Goloboff1999;textual}{TreeSearch} RSS (TNT uses 3).
