@@ -18,3 +18,6 @@
 *.R   text eol=lf
 *.cpp text eol=lf
 *.h   text eol=lf
+
+# Shell scripts must be LF for SLURM on Hamilton
+*.sh text eol=lf
