@@ -43,6 +43,24 @@ DATA_B  <- strsplit(trimws(Sys.getenv("DATASETS_B",
 SHARD   <- as.integer(Sys.getenv("SHARD", Sys.getenv("SLURM_ARRAY_TASK_ID", "0")))
 NSHARD  <- as.integer(Sys.getenv("NSHARD", Sys.getenv("SLURM_ARRAY_TASK_COUNT", "1")))
 
+# --- gaps-as-missing recode (self-contained copy of TreeSearch:::.GapsAsMissing) -
+# The vendored fixture's two-island pathology only manifests under gaps-as-missing
+# Fitch.  We recode at the DATA level (contrast-matrix: any gap-bearing token ->
+# fully missing) and score with the default engine, which is byte-identical to the
+# engine's own inapplicable = "missing" path (MaximizeParsimony.R: if "missing"
+# then .GapsAsMissing(dataset); inapplicable <- "bgs").  Doing it here keeps the
+# benchmark self-contained -- it does not depend on the built engine exposing the
+# "missing" option (which post-dates the grafted branch this sweep builds from).
+.GapsAsMissing <- function(dataset) {
+  gapCol <- match("-", attr(dataset, "levels"))
+  if (is.na(gapCol)) return(dataset)
+  contrast <- attr(dataset, "contrast")
+  contrast[contrast[, gapCol] == 1, ] <- 1
+  attr(dataset, "contrast") <- contrast
+  attr(dataset, "min.length") <- NULL
+  dataset
+}
+
 # --- VARIANTS: dots overrides applied on top of strategy = "thorough" ---------
 # base = current thorough; the rest probe the completeness/merge levers.
 VARIANTS <- list(
@@ -58,7 +76,7 @@ VARIANTS <- list(
 fixt_dir <- file.path(REPO, "dev/benchmarks/data")
 OG <- c("Galeaspida", "Osteostraci")
 key1 <- function(t) ape::write.tree(SortTree(RootTree(t, OG)))
-datA <- ReadAsPhyDat(file.path(fixt_dir, "zhu2013_2island.nex"))
+datA <- .GapsAsMissing(ReadAsPhyDat(file.path(fixt_dir, "zhu2013_2island.nex")))
 k_isl2 <- vapply(ape::read.tree(file.path(fixt_dir, "zhu2013_2island_island2.tre")),
                  key1, character(1))
 k_main <- vapply(ape::read.tree(file.path(fixt_dir, "zhu2013_2island_main.tre")),
@@ -84,7 +102,8 @@ run_cell <- function(r) {
   dots <- VARIANTS[[r$variant]]
   set.seed(r$seed)
   if (r$part == "A") {
-    call <- c(list(datA, concavity = Inf, inapplicable = "missing",
+    # datA already recoded gaps-as-missing above; default engine = Fitch here.
+    call <- c(list(datA, concavity = Inf,
                    strategy = "thorough", maxReplicates = 80L, targetHits = 9999L,
                    maxSeconds = r$budget, poolMaxSize = 2000L,
                    enumTimeFraction = 0.3, nThreads = 1L, verbosity = 0L), dots)
@@ -110,19 +129,30 @@ run_cell <- function(r) {
   }
 }
 
-rows <- list()
+# Accumulate results.  NB: pre-allocate and NEVER do `rows[[i]] <- NULL` -- in R
+# that DELETES the element and shrinks the list, so the next `rows[[i]]` read
+# runs off the end (subscript out of bounds) and kills the whole shard on the
+# first errored cell.  We assign only successes; do.call(rbind, .) drops the
+# untouched NULL slots.
+rows <- vector("list", nrow(mine))
 for (i in seq_len(nrow(mine))) {
   r <- mine[i, , drop = FALSE]
-  rows[[i]] <- tryCatch(run_cell(r), error = function(e) {
+  rr <- tryCatch(run_cell(r), error = function(e) {
     cat(sprintf("  ERROR %s/%s b=%d s=%d: %s\n", r$part, r$variant, r$budget,
                 r$seed, conditionMessage(e))); NULL })
-  rr <- rows[[i]]
-  if (!is.null(rr)) cat(sprintf("  %s %-11s %-14s b=%3d s=%2d -> score=%.0f%s reps=%s [%.0fs]\n",
-      rr$part, rr$variant, rr$dataset, rr$budget, rr$seed, rr$score,
-      if (rr$part == "A") sprintf(" isl2=%d/16 both=%s", rr$island2, rr$both)
-      else sprintf(" over=%+.0f", rr$over), rr$replicates, rr$elapsed))
+  if (!is.null(rr)) {
+    rows[[i]] <- rr
+    cat(sprintf("  %s %-11s %-14s b=%3d s=%2d -> score=%.0f%s reps=%s [%.0fs]\n",
+        rr$part, rr$variant, rr$dataset, rr$budget, rr$seed, rr$score,
+        if (rr$part == "A") sprintf(" isl2=%d/16 both=%s", rr$island2, rr$both)
+        else sprintf(" over=%+.0f", rr$over), rr$replicates, rr$elapsed))
+  }
 }
 df <- do.call(rbind, rows)
 out <- file.path(OUTDIR, sprintf("two_island_sweep_shard%03d.csv", SHARD))
-write.csv(df, out, row.names = FALSE)
-cat(sprintf("wrote %s (%d rows)\n", out, if (is.null(df)) 0L else nrow(df)))
+if (is.null(df)) {
+  cat(sprintf("shard %d: ALL %d cells failed; no CSV written\n", SHARD, nrow(mine)))
+} else {
+  write.csv(df, out, row.names = FALSE)
+  cat(sprintf("wrote %s (%d rows)\n", out, nrow(df)))
+}
