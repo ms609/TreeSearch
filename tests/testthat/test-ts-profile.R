@@ -85,9 +85,12 @@ test_that("MaximizeParsimony with profile returns valid trees", {
   dataset <- congreveLamsdellMatrices[[10]]
 
   set.seed(4488)
+  # collapse = FALSE: the score check below re-scores result[[1]] with the
+  # binary-only TreeLength(), so it needs a fully-resolved tree (the default
+  # collapse = TRUE returns polytomies).
   result <- MaximizeParsimony(dataset, concavity = "profile",
                                maxReplicates = 3L, targetHits = 2L,
-                               verbosity = 0L)
+                               verbosity = 0L, collapse = FALSE)
 
   expect_s3_class(result, "multiPhylo")
   expect_true(length(result) >= 1L)
@@ -215,9 +218,12 @@ test_that("MaximizeParsimony profile search works with multi-state data", {
   dataset <- inapplicable.phyData[["Longrich2010"]]
 
   set.seed(3692)
+  # collapse = FALSE: the score check below re-scores result[[1]] with the
+  # binary-only TreeLength(), so it needs a fully-resolved tree (Longrich2010 has
+  # zero-length branches, which the default collapse = TRUE would contract).
   result <- MaximizeParsimony(dataset, concavity = "profile",
                                maxReplicates = 3L, targetHits = 2L,
-                               verbosity = 0L)
+                               verbosity = 0L, collapse = FALSE)
 
   expect_s3_class(result, "multiPhylo")
   expect_true(length(result) >= 1L)

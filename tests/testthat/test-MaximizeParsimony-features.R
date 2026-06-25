@@ -377,3 +377,112 @@ test_that("intraFuse with dataset size change does not crash", {
                           verbosity = 0L, nThreads = 1L)
   expect_true(is.finite(attr(r2, "score")))
 })
+
+# --- collapse = TRUE (TNT-style zero-length-branch contraction) ---
+
+# A soft polytomy: (b1,b2) & (b3,b4) supported cherries plus a fan of identical
+# taxa that has no internal support.  Every resolution of the fan is an MPT, so
+# collapse = FALSE returns many fully-resolved trees while collapse = TRUE must
+# contract the fan to a single polytomy -> exactly one distinct collapsed tree.
+.SoftPolytomyData <- function(nFan = 5L) {
+  backbone <- c("b1", "b2", "b3", "b4")
+  fan <- paste0("f", seq_len(nFan))
+  taxa <- c(backbone, fan)
+  mat <- matrix("0", nrow = length(taxa), ncol = 0,
+                dimnames = list(taxa, NULL))
+  addChar <- function(m, ones) {
+    cbind(m, ifelse(rownames(m) %in% ones, "1", "0"))
+  }
+  for (i in 1:3) mat <- addChar(mat, fan)            # fan synapomorphy x3
+  for (i in 1:2) mat <- addChar(mat, c("b1", "b2"))  # backbone cherry x2
+  for (i in 1:2) mat <- addChar(mat, c("b3", "b4"))  # backbone cherry x2
+  phangorn::phyDat(mat, type = "USER", levels = c("0", "1"))
+}
+
+test_that("collapse = TRUE contracts a soft polytomy to one collapsed tree", {
+  phy <- .SoftPolytomyData(5L)
+  set.seed(1L)
+  resolved <- MaximizeParsimony(
+    phy, concavity = Inf, maxReplicates = 12L, strategy = "intensive",
+    control = SearchControl(poolMaxSize = 2000L, tbrMaxHits = 200L),
+    verbosity = 0L, collapse = FALSE)
+  set.seed(1L)
+  collapsed <- MaximizeParsimony(
+    phy, concavity = Inf, maxReplicates = 12L, strategy = "intensive",
+    control = SearchControl(poolMaxSize = 2000L, tbrMaxHits = 200L),
+    verbosity = 0L, collapse = TRUE)
+
+  # Many resolved variants of one collapsed topology.
+  expect_gt(length(resolved), 1L)
+  # All collapse to a single distinct topology.
+  expect_equal(length(collapsed), 1L)
+  expect_equal(attr(collapsed, "n_topologies"), 1L)
+  # The single tree is a genuine polytomy (fewer internal nodes than binary).
+  expect_lt(collapsed[[1]][["Nnode"]], NTip(phy) - 1L)
+  # The supported backbone cherries survive collapse (the fan, not the
+  # backbone, is contracted).  Root on a fan tip so neither cherry sits at the
+  # root, then each cherry is the exclusive descendant set of its MRCA.
+  rooted <- TreeTools::RootTree(collapsed[[1]], "f1")
+  isClade <- function(members) {
+    mrca <- ape::getMRCA(rooted, members)
+    !is.null(mrca) &&
+      setequal(rooted[["tip.label"]][phangorn::Descendants(rooted, mrca,
+                                                           "tips")[[1]]],
+               members)
+  }
+  expect_true(isClade(c("b1", "b2")))
+  expect_true(isClade(c("b3", "b4")))
+})
+
+test_that("collapse = TRUE is a no-op when no branch is unsupported", {
+  # Vinther2008 MPTs are fully resolved (no zero-length branches): collapse must
+  # leave every tree binary and topologically unchanged.
+  set.seed(3418)
+  resolved <- MaximizeParsimony(ds, strategy = "sprint",
+                                maxReplicates = 3L, targetHits = 1L,
+                                verbosity = 0L, collapse = FALSE)
+  set.seed(3418)
+  collapsed <- MaximizeParsimony(ds, strategy = "sprint",
+                                 maxReplicates = 3L, targetHits = 1L,
+                                 verbosity = 0L, collapse = TRUE)
+  nTip <- NTip(ds)
+  # No spurious collapse: every returned tree stays fully binary.
+  expect_true(all(vapply(collapsed, function(t) t[["Nnode"]] == nTip - 1L,
+                         logical(1))))
+  # Same set of topologies (each collapsed tree matches a resolved tree, RF 0).
+  expect_true(all(apply(
+    as.matrix(TreeDist::RobinsonFoulds(collapsed, resolved)), 1L, min) == 0))
+})
+
+test_that("collapse = TRUE shows an enforced clade and collapses the rest", {
+  # "Show the enforced clade": a constraint encodes external evidence for a
+  # grouping the matrix does not support, so it must stay visible even though it
+  # sits on a zero-length branch.  Forcing (f1, f2) inside the otherwise
+  # unsupported fan gives it a zero-length branch; collapse must keep it while
+  # still contracting the unconstrained fan resolutions (the philosophy that
+  # makes a constrained collapse meaningful, vs the old skip-under-constraint).
+  phy <- .SoftPolytomyData(5L)
+  constraint <- ape::read.tree(
+    text = "((f1, f2), (b1, b2, b3, b4, f3, f4, f5));")
+  set.seed(1L)
+  collapsed <- MaximizeParsimony(
+    phy, constraint = constraint, concavity = Inf, maxReplicates = 12L,
+    strategy = "intensive",
+    control = SearchControl(poolMaxSize = 2000L, tbrMaxHits = 200L),
+    verbosity = 0L, collapse = TRUE)
+
+  isClade <- function(tr, members) {
+    tr <- TreeTools::RootTree(tr, "b1")
+    mrca <- ape::getMRCA(tr, members)
+    !is.null(mrca) &&
+      setequal(tr[["tip.label"]][phangorn::Descendants(tr, mrca, "tips")[[1]]],
+               members)
+  }
+  # The enforced (f1, f2) clade is shown in every returned tree ...
+  expect_true(all(vapply(collapsed, isClade, logical(1),
+                         members = c("f1", "f2"))))
+  # ... yet the rest of the fan is still contracted (tree is a polytomy), so the
+  # collapse acted everywhere except on the protected constraint split.
+  expect_true(all(vapply(collapsed, function(t)
+    t[["Nnode"]] < NTip(phy) - 1L, logical(1))))
+})

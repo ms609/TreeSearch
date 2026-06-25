@@ -88,6 +88,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 // AND to topology, using the exact code the cache uses.
 uint64_t exact_verify_cache_key(const TreeState& tree, const DataSet& ds);
 
+// Re-root `tree` so tip `t` becomes a direct child of the root pseudo-node.
+// Parsimony length is root-invariant, so this only changes the representation
+// (which edges sit adjacent to the root).  Rebuilds postorder; does NOT refresh
+// the Fitch state arrays, so the caller must full_rescore() / score_tree()
+// before reading scores or state-dependent quantities (e.g. collapse flags).
+// Rooting on a TIP makes the root-adjacent edges trivial splits, which is what
+// makes a subsequent collapse rooting-invariant (the criterion otherwise skips
+// root-adjacent edges).
+void reroot_at_tip(TreeState& tree, int t);
+
 } // namespace ts
 
 #endif // TS_TBR_H

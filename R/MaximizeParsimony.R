@@ -354,12 +354,18 @@
 #'     return the *same* count if they exhaust the same connected island — this
 #'     reflects island structure, not a cap.
 #' }
-#' Returned trees are fully resolved.  When a dataset contains genuine soft
-#' polytomies (unsupported, zero-length branches), the resolved-MPT count can
-#' be far larger than the count of distinct *collapsed* topologies that a
-#' program such as TNT reports under "collapse zero-length branches"; collapse
-#' the returned trees (e.g. by contracting branches of zero parsimony length)
-#' before comparing counts across programs.
+#' By default (`collapse = TRUE`), zero-length (unsupported) branches are
+#' contracted into polytomies and the returned set is deduplicated on the
+#' resulting collapsed topologies, so `n_topologies` counts distinct *collapsed*
+#' topologies — the same convention TNT applies under "collapse zero-length
+#' branches", and the count comparable across programs.  This matters because a
+#' single soft polytomy (an unsupported clade of *k* taxa) has \eqn{(2k-3)!!}
+#' equally-parsimonious binary resolutions, so leaving branches resolved can
+#' inflate the apparent number of optimal trees by orders of magnitude without
+#' adding any biological information.  Set `collapse = FALSE` to return
+#' fully-resolved trees instead (one arbitrary resolution per distinct collapsed
+#' topology); the main search and the MPT enumeration then still deduplicate on
+#' the same criterion, so the returned set remains internally consistent.
 #'
 #' Implied weighting is supported natively: set `concavity` to a numeric
 #' value (e.g.\sspace{}10).
@@ -519,6 +525,26 @@
 #'   search parameters.  Most users can rely on the `strategy` presets and
 #'   ignore this argument; see [`SearchControl()`] for full documentation
 #'   of individual fields.
+#' @param collapse Logical: if `TRUE` (default), contract zero-length
+#'   (unsupported) branches in the returned trees into polytomies before
+#'   returning, and de-duplicate the result on the resulting collapsed
+#'   topologies, akin to TNT's "collapse zero-length branches".  A branch is
+#'   treated as zero-length when it has minimum possible length 0 (there exists
+#'   a most-parsimonious reconstruction with no change along it), evaluated
+#'   under the same scoring method used for the search.  `n_topologies` then
+#'   counts distinct collapsed topologies, which is comparable across programs.
+#'   This is the recommended behaviour: a fully-resolved tree containing a
+#'   zero-length branch asserts a grouping the data do not support, and a single
+#'   soft polytomy can otherwise inflate the apparent number of optimal trees by
+#'   orders of magnitude.  Set `FALSE` to return fully-resolved trees instead
+#'   (one arbitrary resolution per distinct collapsed topology), e.g. when a
+#'   downstream step requires binary trees.
+#'   Collapsing is applied to the best-score trees (the MPTs); any suboptimal
+#'   pool trees retained via `poolSuboptimal` are omitted from the collapsed set.
+#'   When a `constraint` is supplied, its enforced splits are protected from
+#'   collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
+#'   visible (a constraint encodes external evidence the matrix does not
+#'   capture); unsupported non-constraint branches still collapse.
 #' @param ... Backward compatibility: individual control parameters (e.g.
 #'   `ratchetCycles = 10L`) may still be passed as named arguments.
 #'   These override the corresponding `control` fields and the strategy
@@ -533,8 +559,11 @@
 #'     \item{`replicates`}{Number of replicates completed.}
 #'     \item{`hits_to_best`}{Number of independent discoveries of the best
 #'       score.}
-#'     \item{`n_topologies`}{Number of distinct topologies in the pool at the
-#'       best score.}
+#'     \item{`n_topologies`}{Number of distinct best-score topologies returned.
+#'       With `collapse = TRUE` (default) this counts distinct *collapsed*
+#'       topologies (equal to `length()` of the result); with `collapse = FALSE`
+#'       it is the number of distinct fully-resolved topologies in the pool at
+#'       the best score.}
 #'     \item{`last_improved_rep`}{1-based index of the replicate that last
 #'       improved the best score (0 if not tracked, e.g. parallel search).}
 #'     \item{`timed_out`}{Logical: `TRUE` if the search stopped because
@@ -598,6 +627,7 @@ MaximizeParsimony <- function(
     verbosity = 1L,
     progressCallback = NULL,
     control = SearchControl(),
+    collapse = TRUE,
     ...
 ) {
 
@@ -983,12 +1013,56 @@ MaximizeParsimony <- function(
   if (length(resultTrees) == 0L) {
     resultTrees <- list()
   }
-  outTrees <- lapply(resultTrees, function(edgeMat) {
-    tr <- treeTpl
-    tr[["edge"]] <- edgeMat
-    # C++ edge order may differ from template; renumber to valid preorder
-    Renumber(tr)
-  })
+  nTopologies <- result$n_topologies
+  if (isTRUE(collapse) && length(resultTrees) > 0L) {
+    # Contract zero-length (unsupported) branches into polytomies, à la TNT's
+    # "collapse zero-length branches" -- done entirely in C++ (ts_collapse_pool)
+    # to avoid a per-tree R surgery quagmire.  The kernel re-roots each tree on
+    # tip 0 (so root-adjacent edges are trivial -> rooting-invariant collapse),
+    # flags aggressive (min-length-0) internal edges in the *search's* scoring
+    # mode, contracts them, and deduplicates on the collapsed topology.
+    #
+    # Collapse the MPTs (best-score trees) only.  A collapsed topology has a
+    # unique min-resolution length, so a suboptimal pool tree (poolSuboptimal > 0)
+    # can never share a collapsed shape with a best-score tree; restricting to the
+    # best score keeps n_topologies's documented "at the best score" meaning (and
+    # matches the collapse = FALSE count when no branch is unsupported).
+    # result$scores aligns with result$trees; default poolSuboptimal = 0 keeps
+    # every tree.  Edge matrices come straight from the engine, so tip i already
+    # maps to tip_data row i -- no R rerooting (which would permute tips and
+    # mis-score against tip_data; see na-validation-alignment-gotcha).
+    nTip <- length(treeTpl[["tip.label"]])
+    bestTrees <- resultTrees[result$scores == result$best_score]
+    # Under a constraint, protect the enforced splits from collapse ("show the
+    # enforced clade"): a constraint is external evidence for a grouping the
+    # matrix doesn't capture, so it stays visible even at zero length, while the
+    # unsupported non-constraint branches still collapse.  consSplitMatrix rows
+    # are the enforced bipartitions in tip_data order (see .PrepareConstraint).
+    consSplits <- if (!is.null(constraintConfig)) {
+      constraintConfig[["consSplitMatrix"]]
+    }
+    collapsed <- ts_collapse_pool(
+      bestTrees, contrast, tip_data, weight, levels,
+      scoringConfig, hsjConfig, xformConfig, consSplits
+    )
+    outTrees <- lapply(collapsed$trees, function(edgeMat) {
+      tr <- list(
+        edge = edgeMat,
+        Nnode = max(edgeMat) - nTip,        # contiguous ids: max id = nTip + Nnode
+        tip.label = treeTpl[["tip.label"]]
+      )
+      class(tr) <- "phylo"
+      Renumber(tr)
+    })
+    nTopologies <- collapsed$n_topologies
+  } else {
+    outTrees <- lapply(resultTrees, function(edgeMat) {
+      tr <- treeTpl
+      tr[["edge"]] <- edgeMat
+      # C++ edge order may differ from template; renumber to valid preorder
+      Renumber(tr)
+    })
+  }
   if (length(outTrees) == 0L) {
     outTrees <- list(treeTpl)
   }
@@ -1005,7 +1079,7 @@ MaximizeParsimony <- function(
       "{result$replicates} replicate{?s} ",
       "(last improved: #{result$last_improved_rep}), ",
       "{result$hits_to_best} hit{?s} to best, ",
-      "{result$n_topologies} MPT{?s}, ",
+      "{nTopologies} MPT{?s}, ",
       "stop: {stop_reason}, {total_s}s"
     ))
   }
@@ -1015,7 +1089,7 @@ MaximizeParsimony <- function(
     score = result$best_score,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
-    n_topologies = result$n_topologies,
+    n_topologies = nTopologies,
     last_improved_rep = result$last_improved_rep,
     timed_out = isTRUE(result$timed_out),
     consensus_stable = isTRUE(result$consensus_stable),

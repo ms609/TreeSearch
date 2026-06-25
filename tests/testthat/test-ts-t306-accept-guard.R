@@ -75,9 +75,12 @@ test_that("MaximizeParsimony HSJ reaches the true HSJ optimum (T-306)", {
 
   for (s in c(1L, 7L, 42L, 256L)) {
     set.seed(s)
+    # collapse = FALSE: this test re-scores every returned tree with the
+    # binary-only TreeLength() to check for best_score desync, so it needs the
+    # fully-resolved trees (the default collapse = TRUE returns polytomies).
     res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "hsj",
                              hsj_alpha = 1.0, maxReplicates = 4L,
-                             targetHits = 1L, verbosity = 0L)
+                             targetHits = 1L, verbosity = 0L, collapse = FALSE)
     expect_s3_class(res[[1]], "phylo")
     expect_equal(length(res[[1]]$tip.label), 7L)
 
@@ -123,9 +126,12 @@ test_that("MaximizeParsimony XFORM reaches the true Sankoff optimum (T-306)", {
 
   for (s in c(1L, 7L, 42L, 256L)) {
     set.seed(s)
+    # collapse = FALSE: re-scores returned trees with binary-only TreeLength()
+    # (and TreeLength.multiPhylo requires equal edge counts), so it needs the
+    # fully-resolved trees rather than the default collapsed polytomies.
     res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "xform",
                              maxReplicates = 4L, targetHits = 1L,
-                             verbosity = 0L)
+                             verbosity = 0L, collapse = FALSE)
     expect_s3_class(res[[1]], "phylo")
     expect_equal(length(res[[1]]$tip.label), 7L)
 

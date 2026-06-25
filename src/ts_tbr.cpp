@@ -96,7 +96,8 @@ static double full_rescore(TreeState& tree, const DataSet& ds) {
 // reach moves the current rooting hides.  Rebuilds postorder; does NOT refresh
 // Fitch state arrays, so the caller must full_rescore() afterwards.
 // Generalises reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
-static void reroot_at_tip(TreeState& tree, int t) {
+// Declared in ts_tbr.h (used by the output-collapse kernel in ts_rcpp.cpp).
+void reroot_at_tip(TreeState& tree, int t) {
   const int n_tip = tree.n_tip;
   const int root = n_tip;
   if (tree.parent[t] == root) return;            // already a child of root
@@ -1384,6 +1385,24 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
     else               compute_collapsed_flags(tree, ds, collapsed);
   }
+  // Reusable scratch for MPT-enumeration pool dedup (collect_pool set).  The
+  // enumeration deduplicates on COLLAPSED topology to match the main-loop pool
+  // (add_collapsed in ts_driven.cpp / ts_parallel.cpp); a plain add() would
+  // over-collect zero-length-resolution variants of one collapsed topology,
+  // inflating n_topologies and the returned multiPhylo on soft-polytomy
+  // matrices (see memory mpt-enumeration-dedup-asymmetry).  Conservative flags
+  // (not the aggressive criterion) to match the main loop exactly; on data with
+  // no collapsible branches this is a byte-for-byte no-op (all-zero flags ->
+  // compute_collapsed_splits == compute_splits).
+  //
+  // TS_ENUM_RESOLVED (default OFF): kill-switch reverting enumeration to the
+  // pre-fix plain add() (resolved-topology dedup).  The `collect_pool &&`
+  // short-circuit keeps the getenv off the main-search hot path entirely
+  // (collect_pool is nullptr everywhere except MPT enumeration — verified at
+  // every tbr_search call site).
+  std::vector<uint8_t> collect_collapsed;
+  const bool enum_resolved =
+      collect_pool && std::getenv("TS_ENUM_RESOLVED") != nullptr;
   // Hoisted per-call-invariant flags. collapsed's empty-ness never changes
   // within a tbr_search call (the reroot-loop recompute is guarded on
   // non-empty and only refreshes contents); the diagnostic env vars are
@@ -2342,7 +2361,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           if (constrained) {
             compute_dfs_timestamps(tree, *cd);
           }
-          if (collect_pool) collect_pool->add(tree, actual);
+          if (collect_pool) {
+            // Dedup on collapsed topology (matches the main-loop pool).  States
+            // are valid here: the accepted move's incremental passes (or
+            // full_rescore) left prelim/final_ coherent for the whole tree —
+            // the same invariant the production compute_collapsed_flags call on
+            // the post-accept path (below, gated on !collapsed.empty()) relies
+            // on.  No-op vs plain add() when no edge is collapsible.
+            if (enum_resolved) {
+              collect_pool->add(tree, actual);
+            } else {
+              compute_collapsed_flags(tree, ds, collect_collapsed);
+              collect_pool->add_collapsed(tree, actual, collect_collapsed);
+            }
+          }
         } else if (std::fabs(actual - best_score) <= eps
                    && params.accept_equal
                    && hits <= params.max_hits) {
@@ -2374,7 +2406,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           if (constrained) {
             compute_dfs_timestamps(tree, *cd);
           }
-          if (collect_pool) collect_pool->add(tree, actual);
+          if (collect_pool) {
+            // Dedup on collapsed topology (matches the main-loop pool).  States
+            // are valid here: the accepted move's incremental passes (or
+            // full_rescore) left prelim/final_ coherent for the whole tree —
+            // the same invariant the production compute_collapsed_flags call on
+            // the post-accept path (below, gated on !collapsed.empty()) relies
+            // on.  No-op vs plain add() when no edge is collapsible.
+            if (enum_resolved) {
+              collect_pool->add(tree, actual);
+            } else {
+              compute_collapsed_flags(tree, ds, collect_collapsed);
+              collect_pool->add_collapsed(tree, actual, collect_collapsed);
+            }
+          }
         }
 
         if (!accepted) {

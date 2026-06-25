@@ -131,6 +131,53 @@ IntegerMatrix tree_to_edge(const ts::TreeState& tree) {
   return edge;
 }
 
+// Emit a (possibly multifurcating) R edge matrix (2-col, 1-based) from a binary
+// TreeState, contracting every internal edge flagged in `collapsed`.
+//
+// collapsed[c] == 1 (c internal) means the edge c -> parent[c] is zero-length:
+// c is removed and its children reattach to c's nearest retained ancestor,
+// producing a polytomy.  Tips and the root pseudo-node are always retained;
+// compute_collapsed_flags[_aggressive] never flags the root or its children, so
+// when the tree is rooted on a tip (the precondition for a rooting-invariant
+// collapse) no informative edge is root-adjacent and the basal split survives.
+IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
+                                     const std::vector<uint8_t>& collapsed) {
+  const int n_tip = tree.n_tip;
+  const int n_node = tree.n_node;
+  const int root = n_tip;
+
+  // Which nodes survive contraction.
+  std::vector<char> kept(n_node, 1);
+  for (int v = n_tip + 1; v < n_node; ++v) {
+    if (v < static_cast<int>(collapsed.size()) && collapsed[v]) kept[v] = 0;
+  }
+  // Tips (0..n_tip-1) and root are kept by construction.
+
+  // New 1-based ids: tips keep v+1; retained internals numbered after the tips,
+  // root first (ape convention: root id == n_tip + 1).
+  std::vector<int> new_id(n_node, 0);
+  for (int v = 0; v < n_tip; ++v) new_id[v] = v + 1;
+  int next = n_tip + 1;
+  new_id[root] = next++;
+  for (int v = n_tip + 1; v < n_node; ++v) {
+    if (kept[v]) new_id[v] = next++;
+  }
+  const int n_kept = next - 1;                 // total retained nodes (incl. tips)
+  const int n_edge = n_kept - 1;               // rooted tree: edges = nodes - 1
+
+  IntegerMatrix edge(n_edge, 2);
+  int row = 0;
+  for (int v = 0; v < n_node; ++v) {
+    if (v == root || !kept[v]) continue;
+    int p = tree.parent[v];                    // nearest retained ancestor
+    while (!kept[p]) p = tree.parent[p];        // root is retained -> terminates
+    edge(row, 0) = new_id[p];
+    edge(row, 1) = new_id[v];
+    ++row;
+  }
+  return edge;
+}
+
 // Build a topology-only TreeState (no character data) from a 1-based edge
 // matrix.  Used by the least-squares path, which reads only the tree shape.
 // Assumes the standard TreeSearch numbering: tips 1..n_tip, root = n_tip + 1,
@@ -1810,6 +1857,145 @@ List ts_driven_search(
     Named("strategy_diagnostics") = strategy_diag,
     Named("replicate_scores") = rep_scores,
     Named("candidates_evaluated") = (double) result.candidates_evaluated
+  );
+}
+
+// Collapse a pool of binary trees to TNT-style "zero-length-branch" polytopies
+// and deduplicate on the resulting collapsed topologies, entirely in C++.  Used
+// by MaximizeParsimony(collapse = TRUE) (the default) so the output path avoids
+// per-tree R surgery (RootTree/RenumberTips/CollapseNode/write.tree).
+//
+// Input `edges` are binary edge matrices straight from tree_to_edge(), so tip i
+// already corresponds to tip_data row i — no R rerooting (which would permute
+// tips and mis-score against tip_data).  Pass only the best-score trees: a
+// collapsed topology has a unique min-resolution length, so the returned set is
+// the distinct MPTs at the best score.
+//
+// Per tree: rebuild it, re-root on tip 0 IN C++ (preserves tip indices), so the
+// only root-adjacent edges are trivial splits the collapse criterion skips —
+// this is what makes the contraction rooting-invariant.  Then full_rescore,
+// flag aggressive (TNT `collapse 3`) min-length-0 internal edges in the search's
+// real scoring mode (falls back to the conservative criterion for inapplicable
+// data), and dedup on the collapsed split set (canonical bipartitions, so
+// rooting-invariant given the shared tip-0 rooting).
+//
+// Returns: list `trees` of collapsed (multifurcating) edge matrices for the
+// distinct topologies, and `n_topologies` (their count).
+// [[Rcpp::export]]
+List ts_collapse_pool(
+    List edges,
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    List scoringConfig,
+    Nullable<List> hsjConfig = R_NilValue,
+    Nullable<List> xformConfig = R_NilValue,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
+{
+  ts::DataSet ds = unpack_scoring(contrast, tip_data, weight, levels,
+                                  scoringConfig);
+  unpack_hsj(hsjConfig, ds);
+  unpack_xform(xformConfig, tip_data, ds);
+
+  // "Show the enforced clade": a topological constraint encodes external
+  // evidence for a grouping the matrix does not capture, so an enforced clade
+  // must stay visible even when its branch is zero-length (it would otherwise be
+  // contracted, leaving the result looking unconstrained).  We protect every
+  // constraint split from collapse — the unsupported NON-constraint branches
+  // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
+  // bitset: trees are re-rooted on tip 0 below, so every internal node's
+  // descendant set excludes tip 0 and is directly comparable to these.
+  const int n_tip = tip_data.nrow();
+  const int wps = (n_tip + 63) / 64;
+  std::vector<std::vector<uint64_t>> cons_canon;
+  if (consSplitMatrix.isNotNull()) {
+    IntegerMatrix cs(consSplitMatrix.get());
+    for (int r = 0; r < cs.nrow(); ++r) {
+      std::vector<uint64_t> b(wps, 0);
+      for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
+        if (cs(r, c)) b[c >> 6] |= (1ULL << (c & 63));
+      }
+      if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
+        for (int w = 0; w < wps; ++w) b[w] = ~b[w];
+        int rem = n_tip & 63;
+        if (rem) b[wps - 1] &= ((1ULL << rem) - 1);  // clear padding bits
+      }
+      cons_canon.push_back(std::move(b));
+    }
+  }
+
+  std::vector<IntegerMatrix> reps;          // representative collapsed edges
+  std::vector<uint64_t> rep_hash;           // collapsed-split hash per rep
+  std::vector<ts::SplitSet> rep_splits;     // for exact dedup on hash collision
+  std::vector<uint8_t> flags;
+
+  for (R_xlen_t t = 0; t < edges.size(); ++t) {
+    IntegerMatrix edge = edges[t];
+    ts::TreeState tree;
+    tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
+
+    // Root on tip 0 so root-adjacent edges are trivial (rooting-invariant
+    // collapse), then refresh state arrays for the flag computation.
+    ts::reroot_at_tip(tree, 0);
+    tree.reset_states(ds);
+    ts::score_tree(tree, ds);
+
+    ts::compute_collapsed_flags_aggressive(tree, ds, flags);
+
+    // Protect constraint splits: clear the collapse flag of any internal edge
+    // whose bipartition realises a constraint (keeps the enforced clade
+    // visible).  Per-node descendant tip sets via a postorder OR; rooted on
+    // tip 0, so every internal set excludes tip 0 == the canonical form above.
+    if (!cons_canon.empty()) {
+      std::vector<uint64_t> tb(static_cast<size_t>(tree.n_node) * wps, 0);
+      for (int tp = 0; tp < n_tip; ++tp) {
+        tb[static_cast<size_t>(tp) * wps + (tp >> 6)] = 1ULL << (tp & 63);
+      }
+      for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
+        int node = tree.postorder[pi];
+        if (node < n_tip) continue;
+        int ni = node - n_tip;
+        uint64_t* dst = &tb[static_cast<size_t>(node) * wps];
+        const uint64_t* L = &tb[static_cast<size_t>(tree.left[ni]) * wps];
+        const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
+        for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
+      }
+      for (int v = n_tip + 1; v < tree.n_node; ++v) {
+        if (v >= static_cast<int>(flags.size()) || !flags[v]) continue;
+        const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
+        for (const auto& cb : cons_canon) {
+          bool eq = true;
+          for (int w = 0; w < wps; ++w) {
+            if (nb[w] != cb[w]) { eq = false; break; }
+          }
+          if (eq) { flags[v] = 0; break; }
+        }
+      }
+    }
+
+    // Dedup on the collapsed split set (skips the flagged zero-length edges).
+    ts::SplitSet css = ts::compute_collapsed_splits(tree, flags);
+    uint64_t h = ts::hash_splits(css);
+    bool dup = false;
+    for (size_t i = 0; i < rep_hash.size(); ++i) {
+      if (rep_hash[i] == h && ts::splits_equal(rep_splits[i], css)) {
+        dup = true;
+        break;
+      }
+    }
+    if (dup) continue;
+
+    rep_hash.push_back(h);
+    rep_splits.push_back(std::move(css));
+    reps.push_back(tree_to_collapsed_edge(tree, flags));
+  }
+
+  List tree_list(reps.size());
+  for (size_t i = 0; i < reps.size(); ++i) tree_list[i] = reps[i];
+  return List::create(
+    Named("trees") = tree_list,
+    Named("n_topologies") = static_cast<int>(reps.size())
   );
 }
 

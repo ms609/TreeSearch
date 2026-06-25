@@ -1,5 +1,25 @@
 # To integrate into 2.0.0 notes
 
+- `MaximizeParsimony()` now contracts zero-length (unsupported) branches into
+  polytomies by default (`collapse = TRUE`), deduplicating the returned trees on
+  the resulting collapsed topologies, à la TNT's "collapse zero-length
+  branches".  `n_topologies` counts distinct collapsed topologies, comparable
+  across programs; this avoids reporting unsupported groupings and stops a single
+  soft polytomy from inflating the apparent number of optimal trees by orders of
+  magnitude.  Pass `collapse = FALSE` to recover fully-resolved trees (one
+  arbitrary resolution per distinct topology).  Collapsed trees are returned
+  rooted on the first leaf (a deterministic convention, as in TNT).  Under a
+  topological `constraint`, the enforced splits are protected from collapse, so
+  an enforced-but-unsupported clade stays visible while unsupported
+  non-constraint branches still collapse.
+
+- Fixed an internal inconsistency in the returned MPT set: the post-search MPT
+  enumeration now deduplicates on collapsed topology, matching the main search
+  loop, instead of keeping every resolved variant of one collapsed topology.
+  On datasets with no zero-length branches (e.g. fully-resolved matrices) the
+  returned set is unchanged; on datasets with soft polytomies it is smaller and
+  internally consistent.
+
 - New opt-in `MaximizeParsimony(strategy = "intensive")` preset: `"thorough"` plus
   extra Wagner starts for more starting-basin diversity.  On difficult datasets it
   finds shorter trees (a few steps) at neutral-to-lower search cost; never selected

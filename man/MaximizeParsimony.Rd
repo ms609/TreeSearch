@@ -25,6 +25,7 @@ MaximizeParsimony(
   verbosity = 1L,
   progressCallback = NULL,
   control = SearchControl(),
+  collapse = TRUE,
   ...
 )
 
@@ -199,6 +200,27 @@ search parameters.  Most users can rely on the \code{strategy} presets and
 ignore this argument; see \code{\link[=SearchControl]{SearchControl()}} for full documentation
 of individual fields.}
 
+\item{collapse}{Logical: if \code{TRUE} (default), contract zero-length
+(unsupported) branches in the returned trees into polytomies before
+returning, and de-duplicate the result on the resulting collapsed
+topologies, akin to TNT's "collapse zero-length branches".  A branch is
+treated as zero-length when it has minimum possible length 0 (there exists
+a most-parsimonious reconstruction with no change along it), evaluated
+under the same scoring method used for the search.  \code{n_topologies} then
+counts distinct collapsed topologies, which is comparable across programs.
+This is the recommended behaviour: a fully-resolved tree containing a
+zero-length branch asserts a grouping the data do not support, and a single
+soft polytomy can otherwise inflate the apparent number of optimal trees by
+orders of magnitude.  Set \code{FALSE} to return fully-resolved trees instead
+(one arbitrary resolution per distinct collapsed topology), e.g. when a
+downstream step requires binary trees.
+Collapsing is applied to the best-score trees (the MPTs); any suboptimal
+pool trees retained via \code{poolSuboptimal} are omitted from the collapsed set.
+When a \code{constraint} is supplied, its enforced splits are protected from
+collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
+visible (a constraint encodes external evidence the matrix does not
+capture); unsupported non-constraint branches still collapse.}
+
 \item{...}{Backward compatibility: individual control parameters (e.g.
 \code{ratchetCycles = 10L}) may still be passed as named arguments.
 These override the corresponding \code{control} fields and the strategy
@@ -214,8 +236,11 @@ attributes:
 \item{\code{replicates}}{Number of replicates completed.}
 \item{\code{hits_to_best}}{Number of independent discoveries of the best
 score.}
-\item{\code{n_topologies}}{Number of distinct topologies in the pool at the
-best score.}
+\item{\code{n_topologies}}{Number of distinct best-score topologies returned.
+With \code{collapse = TRUE} (default) this counts distinct \emph{collapsed}
+topologies (equal to \code{length()} of the result); with \code{collapse = FALSE}
+it is the number of distinct fully-resolved topologies in the pool at
+the best score.}
 \item{\code{last_improved_rep}}{1-based index of the replicate that last
 improved the best score (0 if not tracked, e.g. parallel search).}
 \item{\code{timed_out}}{Logical: \code{TRUE} if the search stopped because
@@ -288,12 +313,18 @@ independent runs (or runs at different \code{strategy} effort) can therefore
 return the \emph{same} count if they exhaust the same connected island — this
 reflects island structure, not a cap.
 }
-Returned trees are fully resolved.  When a dataset contains genuine soft
-polytomies (unsupported, zero-length branches), the resolved-MPT count can
-be far larger than the count of distinct \emph{collapsed} topologies that a
-program such as TNT reports under "collapse zero-length branches"; collapse
-the returned trees (e.g. by contracting branches of zero parsimony length)
-before comparing counts across programs.
+By default (\code{collapse = TRUE}), zero-length (unsupported) branches are
+contracted into polytomies and the returned set is deduplicated on the
+resulting collapsed topologies, so \code{n_topologies} counts distinct \emph{collapsed}
+topologies — the same convention TNT applies under "collapse zero-length
+branches", and the count comparable across programs.  This matters because a
+single soft polytomy (an unsupported clade of \emph{k} taxa) has \eqn{(2k-3)!!}
+equally-parsimonious binary resolutions, so leaving branches resolved can
+inflate the apparent number of optimal trees by orders of magnitude without
+adding any biological information.  Set \code{collapse = FALSE} to return
+fully-resolved trees instead (one arbitrary resolution per distinct collapsed
+topology); the main search and the MPT enumeration then still deduplicate on
+the same criterion, so the returned set remains internally consistent.
 
 Implied weighting is supported natively: set \code{concavity} to a numeric
 value (e.g.\sspace{}10).
