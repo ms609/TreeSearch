@@ -13,8 +13,9 @@
 #   bid=$(sbatch --parsable hamilton_two_island_build.sh)
 #   sbatch --dependency=afterok:$bid hamilton_two_island_sweep.sh
 #
-# PREREQUISITE: the vendored two-island fixture + the bench driver must be on
-# origin/cpp-search (commit e110db58 or later). Push cpp-search before submitting.
+# PREREQUISITE: builds origin/cpp-search-2island (= cpp-search + the two
+# benchmark commits 356fc8d0 + b9164a77, which carry the vendored fixture and
+# this driver). Override the ref with TS_BRANCH if you graft them elsewhere.
 
 module load r/4.5.1
 module load gcc/14.2
@@ -23,6 +24,9 @@ export OPENBLAS_NUM_THREADS=1
 
 REPO=/nobackup/$USER/TreeSearch-2island
 LIB=/nobackup/$USER/TreeSearch/lib2island
+# Branch carrying the vendored two-island fixture + sweep driver. Defaults to
+# cpp-search-2island (cpp-search + the two benchmark commits, grafted cleanly).
+BRANCH=${TS_BRANCH:-cpp-search-2island}
 mkdir -p "$LIB" /nobackup/$USER/TreeSearch/logs
 export R_LIBS="$LIB:${R_LIBS}"
 
@@ -41,8 +45,8 @@ if [ ! -d "$REPO/.git" ]; then
   git clone https://github.com/ms609/TreeSearch.git "$REPO"
 fi
 cd "$REPO" || exit 1
-git fetch origin cpp-search && git reset --hard origin/cpp-search
-echo "Git HEAD: $(git log --oneline -1)"
+git fetch origin "$BRANCH" && git reset --hard "origin/$BRANCH"
+echo "Git branch: $BRANCH | HEAD: $(git log --oneline -1)"
 
 # Confirm the vendored fixture made it (else the sweep's Part A cannot run).
 for f in dev/benchmarks/data/zhu2013_2island.nex \
