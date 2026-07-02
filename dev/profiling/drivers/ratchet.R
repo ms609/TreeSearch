@@ -7,18 +7,25 @@
 #   [save_perturb → perturb → tbr_search → restore_perturb → accept/reject]
 # for n_cycles iterations around an initial TBR pass.
 
-library(TreeSearch, lib.loc = ".vtune-lib")
+# Default lib.loc ".vtune-lib" preserves the local VTune convention; CI overrides
+# via TREESEARCH_VTUNE_LIB (same install path, kept uniform with the other drivers).
+LIBDIR <- Sys.getenv("TREESEARCH_VTUNE_LIB", unset = ".vtune-lib")
+library(TreeSearch, lib.loc = LIBDIR)
 
 set.seed(5813)
 
-dataset <- inapplicable.phyData[["Zhu2013"]]
+# TS_DATASET/TS_REPS default to Zhu2013/3 => byte-identical to the local VTune
+# driver; CI overrides to a small dataset so callgrind (~40x) completes under cap.
+ds_name <- Sys.getenv("TS_DATASET", unset = "Zhu2013")
+n_reps  <- as.integer(Sys.getenv("TS_REPS", unset = "3"))
+dataset <- inapplicable.phyData[[ds_name]]
 
 # Suppress replicate-count adequacy warning (1 rep is intentional)
 t0 <- proc.time()
 result <- suppressWarnings(
   MaximizeParsimony(
     dataset,
-    maxReplicates = 3L,
+    maxReplicates = n_reps,
     targetHits    = 1L,
     nThreads      = 1L,
     strategy      = "thorough",

@@ -29,7 +29,10 @@ library(TreeSearch, lib.loc = LIBDIR)
 
 set.seed(5813)
 
-dataset <- inapplicable.phyData[["Zhu2013"]]
+# TS_DATASET/TS_REPS default to Zhu2013/12 => byte-identical to the local VTune
+# driver; CI overrides to a small dataset so callgrind (~40x) completes under cap.
+ds_name <- Sys.getenv("TS_DATASET", unset = "Zhu2013")
+dataset <- inapplicable.phyData[[ds_name]]
 at       <- attributes(dataset)
 contrast <- at$contrast
 tip_data <- matrix(unlist(dataset, use.names = FALSE),
@@ -43,7 +46,7 @@ starting_edge <- ape::rtree(length(dataset), tip.label = names(dataset),
 starting_edge <- ape::root(starting_edge, 1L, resolve.root = TRUE)[["edge"]]
 stopifnot(starting_edge[1L, 1L] > length(dataset))  # internal node first
 
-N_REPS <- 12L
+N_REPS <- as.integer(Sys.getenv("TS_REPS", unset = "12"))
 t0 <- proc.time()
 for (rep in seq_len(N_REPS)) {
   set.seed(rep)
