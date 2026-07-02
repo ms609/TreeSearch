@@ -21,12 +21,16 @@
   internally consistent.
 
 - `MaximizeParsimony(strategy = "thorough")` now adds 2 drift cycles and 5 Wagner
-  starts.  A two-island regression exemplar (Zhu et al. 2013) has equal-score most
-  parsimonious trees split across TBR-disconnected islands; the drift cycles let
-  `"thorough"` recover both islands reliably (two-island recovery 0.73 -> 0.95 over
-  30 seeds; the extra Wagner starts alone, without drift, instead regress it to
-  0.70) with no increase in optimum score on the standard benchmarks
-  (Wortley2006/Zanol2014/Zhu2013/Giles2015) and ~4% median wall-clock cost.
+  starts, making `"thorough"` a higher-effort tier that trades wall-clock for more
+  exhaustive search.  The drift cycles recover equal-score most parsimonious trees
+  that sit on TBR-disconnected islands, which pure restarts rarely both seed: on a
+  two-island exemplar (Zhu et al. 2013) two-island recovery rises 0.73 -> 0.95 over
+  30 seeds.  A powered anytime study on 20 MorphoBank training matrices (65-120
+  tips) quantifies the cost: drift is per-replicate overhead, so at a fixed budget
+  `"thorough"` completes fewer replicates and reaches the optimum somewhat less
+  reliably than before on the general pool -- it therefore needs a correspondingly
+  larger replicate budget / more time to converge (see `maxReplicates`).  Choose
+  `"thorough"` when tree quality and set-completeness matter more than turnaround.
 - `strategy = "intensive"` is now a deprecated alias of `"thorough"`: the extra
   Wagner starts that once distinguished it are folded into `"thorough"`, so the two
   are identical.  Existing calls continue to work.

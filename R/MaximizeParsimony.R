@@ -165,11 +165,15 @@
     ratchetAdaptive = TRUE,
     nniPerturbCycles = 0L,  # T-274: 69% overhead, zero time-adjusted benefit
     # driftCycles 0->2 + wagnerStarts 3->5 (two-island sweep 2026-06-25, 30 seeds):
-    # drift is the lever that recovers equal-score trees on TBR-disconnected
-    # islands (uphill tunnelling across the barrier; Zhu2013 two-island recovery
-    # 0.73 -> 0.95 over 30 seeds; ws5 alone regresses it to 0.70), with no
-    # optimum-score regression on Wortley/Zanol/Zhu/Giles and +4% median wall.
-    # Folds in the former opt-in `intensive` (wagnerStarts = 5), now an alias.
+    # drift recovers equal-score trees on TBR-disconnected islands (uphill tunnelling
+    # across the barrier; Zhu2013 two-island recovery 0.73 -> 0.95; ws5 alone hurts
+    # it, 0.70).  COST (anytime study, 20 training matrices 65-120 tips, 2026-07-02):
+    # drift is per-replicate overhead -> at a fixed budget thorough completes fewer
+    # reps and reaches the optimum somewhat LESS reliably on the general pool; it is
+    # a deliberately higher-effort/slower tier that needs a larger replicate budget
+    # to converge.  Folds in the former opt-in `intensive` (wagnerStarts = 5) as an
+    # alias.  NB thorough is auto-selected for 65-119 tips, so this cost lands on the
+    # default path there.
     driftCycles = 2L,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
