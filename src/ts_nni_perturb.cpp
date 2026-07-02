@@ -106,7 +106,23 @@ NNIPerturbResult nni_perturb_search(
                                        nullptr, nullptr, check_timeout);
     total_moves += tbr_result.n_accepted;
 
-    if (tbr_result.best_score < best_score) {
+    // impose_constraint() (above) is a heuristic that can fail to
+    // converge on nested/complex constraints (it may cycle without
+    // fully repairing all splits). TBR cannot self-repair a violated
+    // constraint — regraft_violates_constraint() rejects all moves once
+    // a split is unmapped. So a still-violating tree can carry an
+    // improved score through TBR unchallenged. Verify before capturing,
+    // mirroring the fused-tree check in ts_driven.cpp (search
+    // "fused_ok").
+    bool accept = tbr_result.best_score < best_score;
+    if (accept && cd && cd->active) {
+      map_constraint_nodes(tree, *cd);
+      for (int _s = 0; _s < cd->n_splits; ++_s) {
+        if (cd->constraint_node[_s] < 0) { accept = false; break; }
+      }
+    }
+
+    if (accept) {
       best_score = tbr_result.best_score;
       best_tree = tree;
       ++n_escapes;
