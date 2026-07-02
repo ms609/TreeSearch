@@ -20,10 +20,16 @@
   returned set is unchanged; on datasets with soft polytomies it is smaller and
   internally consistent.
 
-- New opt-in `MaximizeParsimony(strategy = "intensive")` preset: `"thorough"` plus
-  extra Wagner starts for more starting-basin diversity.  On difficult datasets it
-  finds shorter trees (a few steps) at neutral-to-lower search cost; never selected
-  by `strategy = "auto"`, so choose it explicitly.
+- `MaximizeParsimony(strategy = "thorough")` now adds 2 drift cycles and 5 Wagner
+  starts.  A two-island regression exemplar (Zhu et al. 2013) has equal-score most
+  parsimonious trees split across TBR-disconnected islands; the drift cycles let
+  `"thorough"` recover both islands reliably (two-island recovery 0.73 -> 0.95 over
+  30 seeds; the extra Wagner starts alone, without drift, instead regress it to
+  0.70) with no increase in optimum score on the standard benchmarks
+  (Wortley2006/Zanol2014/Zhu2013/Giles2015) and ~4% median wall-clock cost.
+- `strategy = "intensive"` is now a deprecated alias of `"thorough"`: the extra
+  Wagner starts that once distinguished it are folded into `"thorough"`, so the two
+  are identical.  Existing calls continue to work.
 
 - `MaximizeParsimony()` results now carry a `candidates_evaluated` attribute:
   the number of TBR/SPR-class rearrangements examined during a single-threaded

@@ -130,19 +130,20 @@ character patterns; \code{"default"} otherwise.}
 sectorial. Good for small datasets or quick surveys.}
 \item{\code{"default"}}{Balanced: 12 ratchet + sectorial + fusing.}
 \item{\code{"thorough"}}{Intensive: 20 ratchet cycles, adaptive
-perturbation, extra sectorial rounds, NNI perturbation, outer cycle
-loop. Best for datasets with 65-119 tips and 100+ character patterns.}
+perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
+starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
+character patterns; the drift cycles also recover equal-score trees on
+TBR-disconnected islands that random restarts alone miss.}
 \item{\code{"large"}}{Large-tree search (>=120 tips): reduced cycle
 counts scaled for expensive per-replicate cost, no NNI
 perturbation, single biased Wagner start (Goloboff 2014), larger
 sector sizes, 1-cycle simulated annealing instead of drift
 (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 or exceeds \code{"thorough"} at 180 tips across all time budgets.}
-\item{\code{"intensive"}}{Opt-in (never auto-selected): \code{"thorough"} plus extra
-Wagner starts (5) for more starting-basin diversity.  Improves the
-hardest datasets by a few steps at neutral-to-lower candidate cost, with
-an occasional ~+1-step trade-off elsewhere; choose it explicitly when
-pushing for the shortest tree on a difficult matrix.}
+\item{\code{"intensive"}}{Deprecated alias of \code{"thorough"}, retained for
+backward compatibility.  The extra Wagner starts (5) that once
+distinguished it are now folded into \code{"thorough"}, so the two are
+identical.}
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
 Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement

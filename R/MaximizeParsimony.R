@@ -130,7 +130,8 @@
 
 # Strategy presets for adaptive search (Phase 6E).
 # Wrapped in a function to avoid load-order dependency on SearchControl().
-.StrategyPresets <- function() list(
+.StrategyPresets <- function() {
+  presets <- list(
   sprint = SearchControl(
     tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04,
     ratchetPerturbMode = 0L, ratchetAdaptive = FALSE,
@@ -163,36 +164,13 @@
     ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
     ratchetAdaptive = TRUE,
     nniPerturbCycles = 0L,  # T-274: 69% overhead, zero time-adjusted benefit
-    driftCycles = 0L,
-    xssRounds = 5L, xssPartitions = 6L,
-    rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
-    sectorMinSize = 6L, sectorMaxSize = 80L,
-    fuseInterval = 2L, fuseAcceptEqual = TRUE,
-    tabuSize = 200L, wagnerStarts = 3L,
-    nniFirst = TRUE, sprFirst = FALSE,
-    outerCycles = 2L,
-    maxOuterResets = 3L,
-    adaptiveStart = TRUE
-  ),
-  # Opt-in "intensive" preset: `thorough` plus extra Wagner starts for more
-  # starting-basin diversity.  Never auto-selected (.AutoStrategy returns only
-  # sprint/default/thorough/large); the user opts in with strategy = "intensive".
-  # Phase-2 sweep (2026-06-16, 5 seeds, EW Fitch): wagnerStarts 3->5 improved the
-  # hardest datasets (Wortley2006 -3, Zhu2013 -2 toward the TNT optimum) at
-  # neutral-to-lower candidate cost, with a ~+1-step trade-off on a couple of
-  # others (Zanol2014, Giles2015) -- hence opt-in rather than a default change.
-  # NB rasStarts=3 (TNT-faithful per-sector restarts) was evaluated 2026-06-18:
-  # it closes the rss-ONLY gap (+7/+8 -> +1, wins time-matched) but is REDUNDANT
-  # in the full thorough pipeline (Zanol/Zhu reach the optimum at rasStarts=1,
-  # 60s) -- so NOT adopted.  Revisit for larger datasets / shorter budgets where
-  # the full search can't reach the optimum (diag_thorough_rasstarts_tm.R +
-  # the Hamilton grid t29_thorough_rasstarts_hamilton.sh).
-  intensive = SearchControl(
-    tbrMaxHits = 3L, ratchetCycles = 20L, ratchetPerturbProb = 0.25,
-    ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
-    ratchetAdaptive = TRUE,
-    nniPerturbCycles = 0L,
-    driftCycles = 0L,
+    # driftCycles 0->2 + wagnerStarts 3->5 (two-island sweep 2026-06-25, 30 seeds):
+    # drift is the lever that recovers equal-score trees on TBR-disconnected
+    # islands (uphill tunnelling across the barrier; Zhu2013 two-island recovery
+    # 0.73 -> 0.95 over 30 seeds; ws5 alone regresses it to 0.70), with no
+    # optimum-score regression on Wortley/Zanol/Zhu/Giles and +4% median wall.
+    # Folds in the former opt-in `intensive` (wagnerStarts = 5), now an alias.
+    driftCycles = 2L,
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
@@ -252,7 +230,16 @@
     pruneReinsertCycles = 5L, pruneReinsertNni = TRUE,
     consensusStableReps = 0L
   )
-)
+  )
+
+  # `intensive` is retained as a backward-compatible alias of `thorough`.  The
+  # 2026-06-25 two-island sweep (30 seeds) folded wagnerStarts = 5 (intensive's
+  # sole distinguishing feature) into `thorough` together with driftCycles = 2;
+  # ws5 showed no score gain over thorough while costing wall-clock, so the two
+  # presets are merged.  Kept as an alias so `strategy = "intensive"` still works.
+  presets$intensive <- presets$thorough
+  presets
+}
 
 # Select strategy preset based on dataset size and character count.
 # @param nTip Integer number of taxa
@@ -463,19 +450,20 @@
 #'       sectorial. Good for small datasets or quick surveys.}
 #'     \item{`"default"`}{Balanced: 12 ratchet + sectorial + fusing.}
 #'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, adaptive
-#'       perturbation, extra sectorial rounds, NNI perturbation, outer cycle
-#'       loop. Best for datasets with 65-119 tips and 100+ character patterns.}
+#'       perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
+#'       starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
+#'       character patterns; the drift cycles also recover equal-score trees on
+#'       TBR-disconnected islands that random restarts alone miss.}
 #'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
 #'       counts scaled for expensive per-replicate cost, no NNI
 #'       perturbation, single biased Wagner start (Goloboff 2014), larger
 #'       sector sizes, 1-cycle simulated annealing instead of drift
 #'       (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 #'       or exceeds `"thorough"` at 180 tips across all time budgets.}
-#'     \item{`"intensive"`}{Opt-in (never auto-selected): `"thorough"` plus extra
-#'       Wagner starts (5) for more starting-basin diversity.  Improves the
-#'       hardest datasets by a few steps at neutral-to-lower candidate cost, with
-#'       an occasional ~+1-step trade-off elsewhere; choose it explicitly when
-#'       pushing for the shortest tree on a difficult matrix.}
+#'     \item{`"intensive"`}{Deprecated alias of `"thorough"`, retained for
+#'       backward compatibility.  The extra Wagner starts (5) that once
+#'       distinguished it are now folded into `"thorough"`, so the two are
+#'       identical.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement
