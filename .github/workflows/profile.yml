@@ -17,6 +17,11 @@
 # one OS against the other is a USER decision — escalate with both numbers, never
 # pick a winning OS silently. Wall-clock verification is Hamilton's job (dedicated
 # node + perf), never this.
+#
+# Triggers: a push to a **profile** branch runs a fast SMOKE only (bare run +
+# one tiny callgrind, ~5 min) — enough to prove the mechanism. The full/selected
+# driver sweep is OPT-IN via workflow_dispatch (driver='all' or a filename),
+# because callgrind over the real runner-sized drivers takes ~40x their wall.
 on:
   workflow_dispatch:
     inputs:
@@ -38,6 +43,9 @@ name: linux-profile
 jobs:
   callgrind:
     runs-on: ubuntu-latest
+    # Hard ceiling: callgrind (~40x) over runner-sized drivers can run for hours.
+    # Never let this grind toward GitHub's 6h default again.
+    timeout-minutes: 30
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
@@ -90,30 +98,78 @@ jobs:
             echo "::error::No .debug_info in $SO — CXX17FLAGS did not reach the C++17 TUs"; exit 1
           fi
 
-      - name: Run Callgrind over drivers
+      # ── Step A ── Bare smoke, NO valgrind. Proves lib.loc resolution works and
+      # measures the TRUE runner wall (the real callgrind multiplier), in ~1 min.
+      # fitch-tnt honours TS_DATASET/TS_REPS; Vinther2008 (23 tips x 50 chars) is
+      # the lightest dataset in the corpus.
+      - name: Smoke A — bare driver (no valgrind)
+        env:
+          TS_DATASET: Vinther2008
+          TS_REPS: '1'
         run: |
-          set -uo pipefail   # NOT -e: one flaky driver must not abort the sweep
+          set -uo pipefail
           mkdir -p callgrind-out
+          echo "Bare run of fitch-tnt on $TS_DATASET (reps=$TS_REPS):"
+          # Driver prints its own "Elapsed: Ns" via proc.time(); no GNU time dep.
+          SECONDS=0
+          Rscript dev/profiling/drivers/fitch-tnt.R || {
+            echo "::error::bare driver failed — lib.loc or driver problem, not a valgrind issue"; exit 1; }
+          echo "Wall (shell SECONDS): ${SECONDS}s — this x ~40 is the callgrind cost to expect"
+
+      # ── Step B ── Callgrind ONE tiny driver. Goal is not results — it is to
+      # OBSERVE the mechanism yield a non-empty annotation with TreeSearch symbols
+      # in a few minutes. --trace-children=yes is required: without it valgrind
+      # does not follow Rscript's execve into the real R binary, so the workload
+      # runs native and the .out is empty. %p -> one file per PID; annotate the
+      # largest (the real R process, not the wrapper). Capped at 10 min.
+      - name: Smoke B — callgrind one small driver
+        env:
+          TS_DATASET: Vinther2008
+          TS_REPS: '1'
+        run: |
+          set -uo pipefail
+          timeout 600 valgrind --tool=callgrind --cache-sim=yes --trace-children=yes \
+            --callgrind-out-file="callgrind-out/cg.smoke.%p.out" \
+            Rscript dev/profiling/drivers/fitch-tnt.R || {
+              rc=$?; echo "::error::callgrind smoke exited $rc (124 = 10-min timeout)"; exit 1; }
+          biggest=$(ls -S callgrind-out/cg.smoke.*.out 2>/dev/null | head -n1)
+          if [ -z "$biggest" ] || [ ! -s "$biggest" ]; then
+            echo "::error::empty callgrind output — trace-children/exec issue not solved"; exit 1
+          fi
+          echo "Largest callgrind file: $biggest ($(wc -c < "$biggest") bytes)"
+          callgrind_annotate --auto=no "$biggest" > callgrind-out/annotate.smoke.txt
+          # The whole point: compiled TreeSearch code must appear (ts_*.cpp / TreeSearch.so).
+          if ! grep -Eiq 'treesearch|ts_[a-z]+\.cpp' callgrind-out/annotate.smoke.txt; then
+            echo "::error::no TreeSearch symbols in annotation — symbols or path wrong"
+            head -40 callgrind-out/annotate.smoke.txt; exit 1
+          fi
+          echo "## linux-profile smoke ✓ (Callgrind, instructions + cache-sim)" >> "$GITHUB_STEP_SUMMARY"
+          echo "_$TS_DATASET, reps=$TS_REPS. Instruction-share, NOT wall-clock._" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -Ei 'Ir *file:function|treesearch|ts_[a-z]+\.cpp' callgrind-out/annotate.smoke.txt | head -n 20 >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # ── Step C ── Full/selected sweep. OPT-IN via workflow_dispatch only; push
+      # runs smoke A+B only. Each driver is capped at 20 min so one heavy driver
+      # can't exhaust the job. driver='all' -> every driver; driver=<name> -> one.
+      - name: Sweep — all/selected drivers (dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -uo pipefail
           sel='${{ github.event.inputs.driver }}'
           if [ -n "$sel" ] && [ "$sel" != "all" ]; then
             drivers="dev/profiling/drivers/$sel"
           else
-            # Skip the profvis wrapper — it profiles R, pointless under callgrind.
             drivers=$(ls dev/profiling/drivers/*.R | grep -v -- '-profvis' | grep -v 'profvis')
           fi
-          echo "## linux-profile (Callgrind, instructions + cache-sim)" >> "$GITHUB_STEP_SUMMARY"
-          echo "_Instruction-share, NOT wall-clock. Divergence vs VTune time-share is the signal; use LL-miss to tell memory-bound from CRT artifact._" >> "$GITHUB_STEP_SUMMARY"
+          echo "## linux-profile full sweep" >> "$GITHUB_STEP_SUMMARY"
           ok=0
           for d in $drivers; do
             name=$(basename "$d" .R)
             echo "=== $name ==="
-            # --trace-children=yes: Rscript hands off to the real R process; without
-            # it valgrind detaches and writes an EMPTY .out (the 55s run goes
-            # un-traced). %p gives one file per PID in the exec/fork chain; we then
-            # annotate the largest (the real R process, not the wrapper).
-            valgrind --tool=callgrind --cache-sim=yes --trace-children=yes \
+            timeout 1200 valgrind --tool=callgrind --cache-sim=yes --trace-children=yes \
                      --callgrind-out-file="callgrind-out/callgrind.$name.%p.out" \
-                     Rscript "$d" || echo "::warning::$name: driver/valgrind exited non-zero"
+                     Rscript "$d" || echo "::warning::$name: driver/valgrind exited non-zero (124 = 20-min cap)"
             biggest=$(ls -S callgrind-out/callgrind.$name.*.out 2>/dev/null | head -n1)
             if [ -z "$biggest" ] || [ ! -s "$biggest" ]; then
               echo "::warning::$name: no non-empty callgrind output"; continue
@@ -127,16 +183,13 @@ jobs:
             echo "<details><summary><b>$name</b> — top TreeSearch functions</summary>" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
-            # Event-column header + TreeSearch.so lines only; R runtime drowns the signal otherwise.
             grep -E '^\s*(Ir|-{3,}|[0-9,]+.*Ir)' "$annot" | head -n 3 >> "$GITHUB_STEP_SUMMARY" || true
-            grep -i 'TreeSearch' "$annot" | head -n 25 >> "$GITHUB_STEP_SUMMARY" || echo "(no TreeSearch symbols above threshold)" >> "$GITHUB_STEP_SUMMARY"
+            grep -Ei 'treesearch|ts_[a-z]+\.cpp' "$annot" | head -n 25 >> "$GITHUB_STEP_SUMMARY" || echo "(no TreeSearch symbols above threshold)" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             echo "</details>" >> "$GITHUB_STEP_SUMMARY"
           done
           echo "Annotated $ok driver(s)."
-          if [ "$ok" -eq 0 ]; then
-            echo "::error::No driver produced usable callgrind output"; exit 1
-          fi
+          [ "$ok" -gt 0 ] || { echo "::error::No driver produced usable callgrind output"; exit 1; }
 
       - uses: actions/upload-artifact@v4
         if: always()
