@@ -113,6 +113,7 @@ OpenMP
 Ornithischia
 Orthrozanclus
 Osteichthyan
+PAUP
 PCSA
 PLATNICK
 PLEIJEL
@@ -205,7 +206,10 @@ codecov
 colourblind
 config
 dataset's
+deduplicate
 deduplicated
+deduplicates
+deduplicating
 deduplication
 doi
 downpass
