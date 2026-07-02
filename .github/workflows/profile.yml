@@ -78,17 +78,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The drivers live under dev/profiling/ on cpp-search-based branches, NOT on
+      # the default branch (where this file exists only to register dispatch). If
+      # they are absent on the triggering ref, skip the whole profile — succeed
+      # with guidance instead of failing confusingly. Dispatch against a ref that
+      # contains the drivers to actually run it.
+      - name: Detect profiling drivers on this ref
+        id: drivers
+        run: |
+          if [ -f dev/profiling/drivers/fitch-tnt.R ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "## linux-profile skipped — no drivers on this ref" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`dev/profiling/drivers/\` is not present on \`${{ github.ref_name }}\`. This copy of the workflow only registers the dispatch trigger; run it against a driver-bearing ref: \`gh workflow run profile.yml --ref <cpp-search-based-branch>\`." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - uses: r-lib/actions/setup-r@v2
+        if: steps.drivers.outputs.present == 'true'
         with:
           use-public-rspm: true
 
       # Install TreeSearch's dependencies as RSPM binaries FIRST, so they are
       # not needlessly recompiled with the debug flags written below.
       - uses: r-lib/actions/setup-r-dependencies@v2
+        if: steps.drivers.outputs.present == 'true'
         with:
           dependencies: '"hard"'
 
       - name: Install valgrind
+        if: steps.drivers.outputs.present == 'true'
         run: sudo apt-get update && sudo apt-get install -y valgrind
 
       # Debug flags go in CXX17FLAGS: TreeSearch is C++17, and R applies
@@ -97,6 +116,7 @@ jobs:
       # callgrind_annotate needs for symbol mapping; keep -O2 to profile the
       # program that actually ships.
       - name: Write debug Makevars (after deps are built)
+        if: steps.drivers.outputs.present == 'true'
         run: |
           mkdir -p ~/.R
           cat > ~/.R/Makevars <<'EOF'
@@ -109,6 +129,7 @@ jobs:
       # Install into ./.vtune-lib so the existing drivers' hard-coded
       # `lib.loc = ".vtune-lib"` resolves with no edit.
       - name: Build TreeSearch with symbols
+        if: steps.drivers.outputs.present == 'true'
         run: |
           mkdir -p .vtune-lib
           R CMD INSTALL --library=.vtune-lib --no-multiarch --with-keep.source .
@@ -124,6 +145,7 @@ jobs:
       # fitch-tnt honours TS_DATASET/TS_REPS; Vinther2008 (23 tips x 50 chars) is
       # the lightest dataset in the corpus.
       - name: Smoke A — bare driver (no valgrind)
+        if: steps.drivers.outputs.present == 'true'
         env:
           # On push (no inputs) these fall back to the tiny default; on dispatch
           # they honour the dataset/reps inputs.
@@ -146,6 +168,7 @@ jobs:
       # runs native and the .out is empty. %p -> one file per PID; annotate the
       # largest (the real R process, not the wrapper). Capped at 10 min.
       - name: Smoke B — callgrind one small driver
+        if: steps.drivers.outputs.present == 'true'
         env:
           TS_DATASET: ${{ github.event.inputs.dataset || 'Vinther2008' }}
           TS_REPS: ${{ github.event.inputs.reps || '1' }}
@@ -178,7 +201,7 @@ jobs:
       # runs smoke A+B only. Each driver is capped at 20 min so one heavy driver
       # can't exhaust the job. driver='all' -> every driver; driver=<name> -> one.
       - name: Sweep — all/selected drivers (dispatch only)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && steps.drivers.outputs.present == 'true'
         env:
           # Size every driver (incl. ratchet.R / tbr-rescore.R, which otherwise
           # hardcode 75t Zhu2013 and would SIGTERM at the per-driver cap) so the
@@ -223,7 +246,7 @@ jobs:
           [ "$ok" -gt 0 ] || { echo "::error::No driver produced usable callgrind output"; exit 1; }
 
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && steps.drivers.outputs.present == 'true'
         with:
           name: linux-profile-callgrind
           path: callgrind-out/
