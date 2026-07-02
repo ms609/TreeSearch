@@ -18,10 +18,23 @@
 # pick a winning OS silently. Wall-clock verification is Hamilton's job (dedicated
 # node + perf), never this.
 #
+# SMALL-n BY DESIGN. callgrind runs ~40x the native wall, and a shared runner has
+# no quiet-machine wall guarantee, so mission-scale datasets (75t+) fit nothing
+# under the caps below — that is precisely why wall-faithful, mission-scale
+# profiling stays on Hamilton (dedicated node + perf). This workflow's job is a
+# small-n Linux/gcc *location* cross-check; it deliberately runs the lightest
+# dataset so every driver COMPLETES rather than getting SIGTERM'd mid-run (which
+# yields first-replicate-biased or empty callgrind — a trap). The `dataset`/`reps`
+# inputs let you dial it up when dispatching, but you are still bounded by the job
+# cap; past ~a couple minutes native, prefer Hamilton.
+#
 # Triggers: a push to a **profile** branch runs a fast SMOKE only (bare run +
 # one tiny callgrind, ~5 min) — enough to prove the mechanism. The full/selected
-# driver sweep is OPT-IN via workflow_dispatch (driver='all' or a filename),
-# because callgrind over the real runner-sized drivers takes ~40x their wall.
+# driver sweep is OPT-IN via workflow_dispatch (driver='all' or a filename).
+# Dispatch against a ref that CONTAINS the drivers (a cpp-search-based branch):
+#   gh workflow run profile.yml --ref <branch> -f driver=all
+# The copy of this file on the default branch exists only to register the
+# workflow_dispatch trigger; the run uses the selected ref's code + drivers.
 on:
   workflow_dispatch:
     inputs:
@@ -29,6 +42,14 @@ on:
         description: 'Driver filename under dev/profiling/drivers/ (e.g. ratchet.R), or "all"'
         required: false
         default: 'all'
+      dataset:
+        description: 'inapplicable.phyData dataset for the drivers (small = completes under the cap)'
+        required: false
+        default: 'Vinther2008'
+      reps:
+        description: 'Replicates/reps per driver (keep tiny; callgrind is ~40x)'
+        required: false
+        default: '1'
   push:
     branches:
       - '**profile**'
@@ -104,8 +125,10 @@ jobs:
       # the lightest dataset in the corpus.
       - name: Smoke A — bare driver (no valgrind)
         env:
-          TS_DATASET: Vinther2008
-          TS_REPS: '1'
+          # On push (no inputs) these fall back to the tiny default; on dispatch
+          # they honour the dataset/reps inputs.
+          TS_DATASET: ${{ github.event.inputs.dataset || 'Vinther2008' }}
+          TS_REPS: ${{ github.event.inputs.reps || '1' }}
         run: |
           set -uo pipefail
           mkdir -p callgrind-out
@@ -124,8 +147,8 @@ jobs:
       # largest (the real R process, not the wrapper). Capped at 10 min.
       - name: Smoke B — callgrind one small driver
         env:
-          TS_DATASET: Vinther2008
-          TS_REPS: '1'
+          TS_DATASET: ${{ github.event.inputs.dataset || 'Vinther2008' }}
+          TS_REPS: ${{ github.event.inputs.reps || '1' }}
         run: |
           set -uo pipefail
           timeout 600 valgrind --tool=callgrind --cache-sim=yes --trace-children=yes \
@@ -156,6 +179,12 @@ jobs:
       # can't exhaust the job. driver='all' -> every driver; driver=<name> -> one.
       - name: Sweep — all/selected drivers (dispatch only)
         if: github.event_name == 'workflow_dispatch'
+        env:
+          # Size every driver (incl. ratchet.R / tbr-rescore.R, which otherwise
+          # hardcode 75t Zhu2013 and would SIGTERM at the per-driver cap) so the
+          # sweep produces COMPLETE callgrind output, not truncated.
+          TS_DATASET: ${{ github.event.inputs.dataset || 'Vinther2008' }}
+          TS_REPS: ${{ github.event.inputs.reps || '1' }}
         run: |
           set -uo pipefail
           sel='${{ github.event.inputs.driver }}'
