@@ -1299,11 +1299,15 @@ double fitch_score_ew(TreeState& tree, const DataSet& ds) {
 
   // Reusable scratch: this weighted-path full rescore fires per accept /
   // convergence check / sector+Wagner rescore (IW/profile only — EW returns
-  // above). A fresh per-call heap alloc here is getenv/L1-class invisible;
-  // a thread_local keeps capacity across calls (one emutls fetch per call is
-  // negligible vs the O(n_node x n_block) extract). extract_char_steps zeroes
-  // it, so resize (not assign) suffices.
-  static thread_local std::vector<int> char_steps;
+  // above).  The buffer lives on DataSet (per-worker `ds_local`), deliberately
+  // NOT a `static thread_local`: on MinGW a thread_local std::vector is torn
+  // down via emutls when each std::thread worker exits, and that teardown
+  // corrupted the heap across the parallel search's repeated worker spawn/exit
+  // cycles — a Windows-only hang in test-ts-parallel.R (Linux native TLS was
+  // unaffected).  Mirrors the evs_false_cache fix; see ts_data.h.  It keeps the
+  // same cross-call capacity persistence the thread_local had.
+  // extract_char_steps zeroes it, so resize (not assign) suffices.
+  std::vector<int>& char_steps = ds.char_steps_scratch;
   char_steps.resize(ds.n_patterns);
   extract_char_steps(tree, ds, char_steps);
   return compute_weighted_score(ds, char_steps);

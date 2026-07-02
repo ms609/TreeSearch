@@ -203,6 +203,17 @@ struct DataSet {
   // is written solely in the post-join (single-threaded) MPT phase.
   mutable std::unordered_set<uint64_t> evs_false_cache;
   mutable uint64_t evs_last_fp = 0;
+
+  // Per-pattern step scratch for the weighted (IW/profile) full-rescore path
+  // (fitch_score_ew).  Lives on DataSet for the SAME reason as evs_false_cache
+  // above, NOT a function-local `static thread_local`: MinGW tears a
+  // thread_local std::vector down via emutls when each std::thread worker
+  // exits, and that teardown corrupted the heap across the parallel search's
+  // repeated worker spawn/exit cycles (Windows-only hang in test-ts-parallel.R;
+  // Linux native TLS is unaffected).  The per-worker `ds_local` copy gives the
+  // same per-thread, cross-call capacity persistence the thread_local had.
+  // `mutable` because the scorer takes `const DataSet&`; single-writer per copy.
+  mutable std::vector<int> char_steps_scratch;
 };
 
 // Build a DataSet from R-side data.
