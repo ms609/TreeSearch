@@ -679,29 +679,74 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
     // --- Execute topology moves ---
     // Uses topology_spr() which handles root-child moves correctly
     // (unlike spr_clip which can't detach root children).
-    // Rebuild postorder after each move so edge enumeration is valid.
-    for (int M : move_out_roots) {
+    //
+    // T-327: topology_spr can relocate the node id `best_node` — when a
+    // move root's parent IS best_node it detaches that internal node and
+    // reuses it at the far graft point, so the captured `best_node` then
+    // points at the wrong region. The stale node makes collect_edges_*()
+    // enumerate the wrong edges, and a graft target adjacent to (or inside)
+    // the moved subtree splices a node under its own descendant → a
+    // cyclic / double-parented tree. Any later DFS on that tree
+    // (collect_edges_*, compute_node_tips, build_postorder) then walks the
+    // cycle and allocates without bound → std::bad_alloc.
+    //
+    // Two defences make each move independently safe:
+    //  (a) re-anchor best_node against the split before every move (cheap;
+    //      not the hot path) so edge enumeration is relative to the current
+    //      topology; and
+    //  (b) snapshot the topology, apply the move, and validate that the
+    //      result is still an acyclic tree (postorder visits every internal
+    //      node exactly once). If not, revert the move and skip it. This is
+    //      complete without having to enumerate every topology_spr corner
+    //      case, and guarantees no corrupt tree ever reaches a DFS helper.
+    auto reanchor_best_node = [&]() -> int {
       tree.build_postorder();
-      std::vector<std::pair<int,int>> targets;
-      collect_edges_outside_subtree(tree, best_node, targets);
-      if (targets.empty()) continue;
-      auto [above, below] =
-          targets[std::uniform_int_distribution<int>(
-              0, static_cast<int>(targets.size()) - 1)(rng)];
-      topology_spr(tree, M, above, below);
-      ++total_moves;
-    }
+      auto nt = compute_node_tips(tree, n_words);
+      int bn = -1;
+      int bc = tree.n_tip + 1;
+      for (int node : tree.postorder) {
+        const uint64_t* nd = &nt[static_cast<size_t>(node) * n_words];
+        int cost = 0;
+        for (int w = 0; w < n_words; ++w) {
+          cost += popcount64(nd[w] ^ split[w]);
+        }
+        if (cost < bc) { bc = cost; bn = node; }
+      }
+      return bn;
+    };
 
-    for (int M : move_in_roots) {
-      tree.build_postorder();
+    // Apply one SPR, reverting if it corrupts the tree. Returns true if the
+    // move was applied (tree still valid), false if reverted.
+    auto try_move = [&](int M, bool outside) -> bool {
+      int bn = reanchor_best_node();  // rebuilds postorder on a valid tree
       std::vector<std::pair<int,int>> targets;
-      collect_edges_in_subtree(tree, best_node, targets);
-      if (targets.empty()) continue;
+      if (outside) collect_edges_outside_subtree(tree, bn, targets);
+      else         collect_edges_in_subtree(tree, bn, targets);
+      if (targets.empty()) return false;
       auto [above, below] =
           targets[std::uniform_int_distribution<int>(
               0, static_cast<int>(targets.size()) - 1)(rng)];
+      // Snapshot topology (topology_spr mutates only parent/left/right).
+      std::vector<int> save_parent = tree.parent;
+      std::vector<int> save_left = tree.left;
+      std::vector<int> save_right = tree.right;
       topology_spr(tree, M, above, below);
-      ++total_moves;
+      tree.build_postorder();  // size-capped; a cycle yields != n_internal
+      if (static_cast<int>(tree.postorder.size()) != tree.n_internal) {
+        tree.parent = std::move(save_parent);
+        tree.left = std::move(save_left);
+        tree.right = std::move(save_right);
+        tree.build_postorder();
+        return false;
+      }
+      return true;
+    };
+
+    for (int M : move_out_roots) {
+      if (try_move(M, /*outside=*/true)) ++total_moves;
+    }
+    for (int M : move_in_roots) {
+      if (try_move(M, /*outside=*/false)) ++total_moves;
     }
   }
 

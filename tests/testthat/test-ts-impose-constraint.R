@@ -213,3 +213,54 @@ test_that("impose_constraint repairs root-child violations (12 tips, nested)", {
   expect_equal(n_ok, n_total,
                info = paste(n_ok, "/", n_total, "satisfy constraint"))
 })
+
+# ----- T-327: stale best_node in impose_one_pass -> cyclic tree -----
+# impose_one_pass() captured `best_node` once and reused it across a batch of
+# topology_spr() moves. When a move relocated that node id (its parent WAS
+# best_node), the stale reference let a later graft target land adjacent to or
+# inside the moved subtree, producing a cyclic / double-parented tree; the next
+# DFS (collect_edges_*, build_postorder) then walked the cycle and allocated
+# without bound -> std::bad_alloc. Trigger: a topological constraint plus
+# nniPerturbCycles > 0 (opt-in) on a matrix with both misplaced-in and
+# misplaced-out tips relative to best_node. These configs crashed the process
+# before the snapshot-validate-revert guard; they must now complete and honour
+# the constraint.
+
+test_that("T-327: impose_one_pass survives stale best_node (no bad_alloc)", {
+  cons_a <- ape::read.tree(text = "((t1,t2),(t3,t4),(t5,t6,t7,t8,t9,t10,t11,t12));")
+  cons_b <- ape::read.tree(text = "((t1,t2,t3,t4,t5,t6),(t7,t8),(t9,t10,t11,t12));")
+
+  # nThreads = 1L is deliberate: serial mode makes set.seed() drive the C++
+  # search RNG deterministically (make_rng seeds from R's RNG only when serial),
+  # so these seed->crash mappings reproduce across machines/CI. Every (seed,
+  # cons) pair below crashed the process with std::bad_alloc on the pre-fix
+  # build (confirmed by scratchpad/repro_sweep_serial.R).
+  n_ok <- 0L
+  n_total <- 0L
+  for (seed in c(22L, 23L, 24L)) {
+    set.seed(seed)
+    m <- matrix(sample(c("0", "1"), 12 * 20, replace = TRUE),
+                nrow = 12, dimnames = list(paste0("t", 1:12), NULL))
+    pd <- phangorn::phyDat(m, type = "USER", levels = c("0", "1"))
+    for (cons in list(cons_a, cons_b)) {
+      set.seed(seed)
+      expect_no_error(
+        result <- MaximizeParsimony(
+          pd, constraint = cons,
+          maxReplicates = 5L, verbosity = 0L, nThreads = 1L,
+          control = SearchControl(nniPerturbCycles = 8L,
+                                  nniPerturbFraction = 0.7,
+                                  ratchetCycles = 0L)
+        )
+      )
+      for (i in seq_along(result)) {
+        n_total <- n_total + 1L
+        if (check_constraint(result[[i]], cons)) n_ok <- n_ok + 1L
+      }
+    }
+  }
+  # Every returned tree must honour its constraint (the verify-before-capture
+  # guard, T-213, discards any tree impose_one_pass could not fully repair).
+  expect_equal(n_ok, n_total,
+               info = paste(n_ok, "/", n_total, "satisfy constraint"))
+})

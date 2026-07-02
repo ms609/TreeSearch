@@ -94,6 +94,13 @@ void TreeState::build_postorder() {
     if (node < n_tip) continue;  // tip
 
     preorder.push_back(node);
+    // T-327 backstop: a valid rooted binary tree has exactly n_internal
+    // internal nodes, each visited once. If we exceed that, the topology
+    // is cyclic (a repair heuristic produced a node parented under its own
+    // descendant). Stop rather than allocate without bound → std::bad_alloc;
+    // the incomplete postorder makes the downstream constraint verify
+    // (map_constraint_nodes) discard the tree through its normal path.
+    if (static_cast<int>(preorder.size()) > n_internal) break;
     int ni = node - n_tip;
     // Push right first so left is processed first (standard preorder)
     stack.push_back(right[ni]);
