@@ -1,0 +1,129 @@
+# Linux/gcc hotspot cross-check for the /profile rotation.
+#
+# This is NOT a wall-clock benchmark. Shared GitHub runners are too noisy for
+# A/B timing, and `perf` is unreliable on hosted runners (kernel/linux-tools
+# mismatch, perf_event_paranoid). Instead we use Callgrind, which counts
+# instructions + simulates the cache deterministically — 100% reproducible and
+# immune to runner contention. Its job is to LOCATE hotspots on Linux/gcc (a
+# first-class production target alongside Windows/MinGW, not a subordinate one) so
+# they can be compared against the local Windows/VTune ranking. The prize is the
+# DIVERGENCE:
+#
+#   * big on VTune (time) + big on Linux Ir (instructions)            -> real kernel target
+#   * big on VTune (time) + small Ir + HIGH LL cache-misses           -> memory-bound (expected, NOT an artifact)
+#   * big on VTune (time) + small Ir + LOW  LL cache-misses           -> platform/CRT artifact (the getenv class)
+#
+# A Windows-only win is worth taking IF it doesn't cost Linux; a change that trades
+# one OS against the other is a USER decision — escalate with both numbers, never
+# pick a winning OS silently. Wall-clock verification is Hamilton's job (dedicated
+# node + perf), never this.
+on:
+  workflow_dispatch:
+    inputs:
+      driver:
+        description: 'Driver filename under dev/profiling/drivers/ (e.g. ratchet.R), or "all"'
+        required: false
+        default: 'all'
+  push:
+    branches:
+      - '**profile**'
+    paths:
+      - '.github/workflows/profile.yml'
+      - 'src/**'
+      - 'inst/include/**'
+      - 'dev/profiling/drivers/**'
+
+name: linux-profile
+
+jobs:
+  callgrind:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: yes
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      # Install TreeSearch's dependencies as RSPM binaries FIRST, so they are
+      # not needlessly recompiled with the debug flags written below.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+
+      - name: Install valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      # Debug flags go in CXX17FLAGS: TreeSearch is C++17, and R applies
+      # CXX17FLAGS (not CXXFLAGS) to C++17 TUs — setting only CXXFLAGS would
+      # silently leave the hottest translation units un-symboled. -g is what
+      # callgrind_annotate needs for symbol mapping; keep -O2 to profile the
+      # program that actually ships.
+      - name: Write debug Makevars (after deps are built)
+        run: |
+          mkdir -p ~/.R
+          cat > ~/.R/Makevars <<'EOF'
+          CXXFLAGS = -O2 -g -fno-omit-frame-pointer
+          CXX11FLAGS = -O2 -g -fno-omit-frame-pointer
+          CXX14FLAGS = -O2 -g -fno-omit-frame-pointer
+          CXX17FLAGS = -O2 -g -fno-omit-frame-pointer
+          EOF
+
+      # Install into ./.vtune-lib so the existing drivers' hard-coded
+      # `lib.loc = ".vtune-lib"` resolves with no edit.
+      - name: Build TreeSearch with symbols
+        run: |
+          mkdir -p .vtune-lib
+          R CMD INSTALL --library=.vtune-lib --no-multiarch --with-keep.source .
+          # Confirm debug symbols actually landed in the shared object.
+          SO=$(find .vtune-lib/TreeSearch/libs -name '*.so' | head -n1)
+          echo "Built: $SO"
+          if ! readelf -S "$SO" | grep -q '\.debug_info'; then
+            echo "::error::No .debug_info in $SO — CXX17FLAGS did not reach the C++17 TUs"; exit 1
+          fi
+
+      - name: Run Callgrind over drivers
+        run: |
+          set -euo pipefail
+          mkdir -p callgrind-out
+          sel='${{ github.event.inputs.driver }}'
+          if [ -n "$sel" ] && [ "$sel" != "all" ]; then
+            drivers="dev/profiling/drivers/$sel"
+          else
+            # Skip the profvis wrapper — it profiles R, pointless under callgrind.
+            drivers=$(ls dev/profiling/drivers/*.R | grep -v -- '-profvis' | grep -v 'profvis')
+          fi
+          echo "## linux-profile (Callgrind, instructions + cache-sim)" >> "$GITHUB_STEP_SUMMARY"
+          echo "_Instruction-share, NOT wall-clock. Divergence vs VTune time-share is the signal; use LL-miss to tell memory-bound from CRT artifact._" >> "$GITHUB_STEP_SUMMARY"
+          for d in $drivers; do
+            name=$(basename "$d" .R)
+            echo "=== $name ==="
+            out="callgrind-out/callgrind.$name.out"
+            valgrind --tool=callgrind --cache-sim=yes \
+                     --callgrind-out-file="$out" \
+                     --dump-instr=yes \
+                     Rscript "$d" || { echo "::warning::$name failed under callgrind"; continue; }
+            annot="callgrind-out/annotate.$name.txt"
+            callgrind_annotate --auto=no --threshold=98 "$out" > "$annot"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "<details><summary><b>$name</b> — top TreeSearch functions</summary>" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            # Header (event columns) + TreeSearch.so lines only; R runtime drowns the signal otherwise.
+            grep -E '^\s*(Ir|-{3,}|[0-9,]+.*Ir)' "$annot" | head -n 3 >> "$GITHUB_STEP_SUMMARY" || true
+            grep -i 'TreeSearch' "$annot" | head -n 25 >> "$GITHUB_STEP_SUMMARY" || echo "(no TreeSearch symbols above threshold)" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            echo "</details>" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-profile-callgrind
+          path: callgrind-out/
+          retention-days: 14
