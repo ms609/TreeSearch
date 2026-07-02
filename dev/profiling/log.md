@@ -155,4 +155,140 @@ path the TNT benchmark actually compares against.
 
 ---
 
+### Round 5 — 2026-06-18 — area #13 — FRAMING the gap (efficiency × throughput) on a FRESH post-fix build
+
+**Why:** user directive — before VTune, test "is TNT really running 10× more
+iter/sec, and is each iteration similar complexity?"  ALL prior rounds (1–4)
+are stale: they predate the Wagner directional cost fix (2b299e4b) AND the
+`unrooted=TRUE`-by-default flip (25e35be7).  Fresh `-O2` instrumented build
+`.agent-p0` at **HEAD 25e35be7**.
+
+- Drivers: `dev/profiling/drivers/framing.R` (TS converge vs local 32-bit TNT,
+  xmult hits10/replic50, 4 datasets × seeds 1–2) + `dev/profiling/drivers/perclip.R`
+  (per-clip economy via `ts_tbr_diagnostics`).  CSVs: `framing_latest.csv`,
+  `perclip_latest.csv`.
+
+**Unit-commensurability GATE (advisor) — PASSED.** `++n_evaluated` counts per
+(reroot,regraft) candidate; TNT "rearrangements examined" is the same
+granularity → cand_ratio is O(1) (buggy-era prior 1.2–1.9, headtohead_phase0.csv),
+not O(n).  The efficiency factor is meaningful.
+
+**Decomposition  wall_ratio(TS/TNT) = efficiency(ts_cand/tnt_rearr) × throughput(tnt_rate/ts_rate)**
+(local same-machine identity; 32-bit TNT → throughput is a LOWER bound on the
+true per-second gap; counts are bitness-free so efficiency is exact):
+
+| dataset | tips | gapB | efficiency | throughput(32-bit) | local wall ratio |
+|---------|------|------|-----------|--------------------|------------------|
+| Wortley2006 | 37 | **0** | 0.49 | 1.36 | **0.68** |
+| Zanol2014   | 74 | **0** | 0.95 | 2.30 | 2.17 |
+| Zhu2013     | 75 | **0** | 1.08 | 1.84 | 1.98 |
+| Giles2015   | 78 | **0** | 0.42 | 1.81 | **0.75** |
+
+**Findings.**
+1. **gapB = 0 on all four** — fresh build reaches TNT's exact optimum (quality
+   parity holds; matched stopping rule satisfied — both converge to same score).
+2. **Efficiency 0.42–1.08 — TS examines comparable-or-FEWER candidates than
+   TNT.**  Full reversal from buggy-era (1.4–1.9).  The cost-bug + unrooted-TBR
+   fixes made TS candidate-efficient.  Strategy is NOT the residual lever.
+3. **Throughput 1.36–2.30× (32-bit, same machine) — NOT 10×.**  TNT examines
+   rearrangements ~1.4–2.3× faster/sec; 64-bit TNT would widen this to perhaps
+   2–4× (uncertain — needs a 64-bit local TNT to measure cleanly).  The historic
+   "10–16×" gap was TNT-64bit-on-EPYC-wall vs TS-full-thorough-budget — NOT a
+   like-for-like throughput comparison.  Like-for-like (matched 50-start effort,
+   same machine) the gap is throughput-only and modest.
+4. On Wortley/Giles TS is **faster than local 32-bit TNT** (wall 0.68/0.75).
+
+**Per-clip economy (perclip.R, RandomTree start, TBR-to-convergence):**
+
+| dataset | cand/clip | ns/cand | µs/clip |
+|---------|-----------|---------|---------|
+| Wortley2006 | 198 | 102 | 20 |
+| Zhu2013 | 590 | 46 | 28 |
+| Giles2015 | 763 | 42 | 31 |
+
+cand/clip is LARGE (200–760) → per-clip overhead is amortized, BUT ns/cand
+(42–102) materially EXCEEDS the bare bounded scan (~18–23 ns, stale Round 3) →
+per-clip/per-reroot overhead is **roughly half** the per-candidate time on the
+75–78-tip sets.  This overhead = the per-clip state TNT maintains incrementally
+(Goloboff 1996) but TS RECOMPUTES every clip: `compute_insertion_edge_sets`
+(NEW, O(n·chars) + 3 heap allocs/clip), `compute_from_above` (O(n·chars)),
+`vroot_cache` rebuild, plus the unrooted reroot machinery (`fitch_join_states`
++ `fast_hash` + dedup per reroot).  **This IS the high-order "buffering/caching"
+the user asked about, now quantified — it's the entire ~1.8× throughput gap.**
+
+**Answer to the framing question:** NO, TNT is not running 10× more iter/sec
+(~1.4–2.3× same-machine); each iteration IS of similar complexity (within ~2×);
+the residual is throughput, and the high-order lever is per-clip state
+recomputation that TNT amortizes via incremental maintenance — NOT line-level
+scoring (the AVX2 scan is at the compiler limit per Round 3, re-confirmed by the
+~18–23 ns floor here).
+
+**VTune attribution (collected — `tbr-clip.R`, Zanol2014, 30 TBR-to-convergence;
+symboled lib `.vtune-lib-20260618212528`; names via `nm`; TreeSearch.dll = 63%
+of 6.5 s total CPU):**
+
+| % total CPU | function | note |
+|------------:|----------|------|
+| **31.1** | **`ts::compute_insertion_edge_sets`** | **#1 — the NEW Wagner-fix code; 2.5× the next; ~49% of TreeSearch self-time. Inner `combine` is SCALAR.** |
+| 12.4 | `simd::any_hit_reduce_avx2` | bounded scan — AT-LIMIT (Round 3) |
+| 11.4 | `ucrtbase func@0x180020b2c` | heap/zero-fill — consistent with the per-clip `up`/`edge_set` `vector(N,0)`+`.assign(0)`+free churn |
+| 5.9 | `fitch_indirect_length_cached` | scalar cached scorer |
+| 4.5 | `tbr_search` (self) | candidate-loop control |
+| 1.9 | `uppass_node` | AT-LIMIT |
+| 1.2 | `build_postorder_prealloc` | per clip |
+| 0.9 | `fitch_join_states` | per reroot (cheap) |
+| — | `malloc_base` 2.4 + `memcpy` 1.0 | per-clip alloc/copy |
+
+**The single dominant cost is the recently-added `compute_insertion_edge_sets`
+(31% CPU + ~11–14% allocation/zero-fill).**  Three behaviour-neutral levers
+(verify score-identical — this is the quality-fix function):
+1. **Vectorize the combine** — its inner combine is scalar; the IDENTICAL
+   intersect-else-union already exists as `simd::fitch_combine` (ts_simd.h:353,
+   AVX2).  Swap it in.  Attacks the 31%.
+2. **Hoist `up`/`pre` to caller-owned buffers** (emutls lesson T-S3d: plain
+   locals, NOT thread_local) — kills the per-clip malloc.
+3. **Skip the zero-fill** — every `up[D]`/`edge_set[D]` slot is written before
+   read in preorder; the `vector(N,0)`/`.assign(0)` memset is unnecessary.
+   Attacks the ucrtbase 11.4%.
+
+Next: A/B all three in an isolated worktree; gate on score-identical across
+datasets × {EW, IW} and wall delta on `framing.R`/`perclip.R`.
+
+---
+
 last_focus: 13
+
+---
+
+last_focus: 13
+
+---
+
+## Round 7 (2026-07-02, Opus) — Ratchet phase internals (T-P5c CLOSED)
+
+Focus: the still-open T-P5c (ratchet internals). Lead: the ratchet
+perturbed-weight search runs on the scalar scorer path (ts_tbr.cpp:2129) because
+MIXED-mode upweight_mask disables use_flat+x4 — the one hot path the whole
+flat/x4/edge-set/getenv program never optimised. thorough/intensive/large use
+ratchetPerturbMode=2 (MIXED); .AutoStrategy routes the >=65t,>=100char roster there.
+
+Method: env-gated std::chrono (TS_RATCHET_TIMING) around ratchet_search's 3
+tbr_search calls + reject rebuild. Worktree TS-ratchet-prof off HEAD 3273d10b.
+Driver dev/profiling/drivers/ratchet-internals.R. thorough, nThreads=1.
+
+Result (Zanol2014 reps3, score 1261 = best-known): ratchet 1.322s / 2.33s wall = 57%.
+Split: s1_init 4% / s2_perturb 10% / s3_restore 86% / reject ~0%. Zhu2013 same shape.
+
+Verdict: CLOSE T-P5c as at-limit-by-inheritance.
+- reject-branch per-cycle rebuild = 0.000s/120 cycles -> T-P5c's redundant-recompute
+  concern CLEARED by measurement.
+- s3 (86%) is full tbr_search-to-convergence on the FAST flat+x4 path = at-limit kernel.
+- Fable lead (perturbed scalar path) = 5-7% of wall; weighted-flat kernel caps <2% wall
+  and per-candidate delta argued-wash -> NOT built. This VINDICATES the prior
+  kernel-reading dismissal of batch-scalar-x4-for-ratchet. getenv (T-P5n) was the
+  exception: uncharacterised/profiler-hidden cost, not a characterised per-candidate delta.
+- Only remaining wall lever = RECIPE (cycle count x restore depth); ~49% of wall is
+  repeated full reconvergence after 5-move perturbations. Handed to recipe owners (#40).
+  Byte-identical localized reconvergence DEAD (L3b non-locality + lever-c).
+
+last_focus: ratchet-internals (T-P5c)
