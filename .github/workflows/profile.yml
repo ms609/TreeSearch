@@ -42,6 +42,9 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # Drivers use one of two lib.loc conventions: a literal ".vtune-lib", or
+      # LIBDIR <- Sys.getenv("TREESEARCH_VTUNE_LIB"). Point both at the install below.
+      TREESEARCH_VTUNE_LIB: .vtune-lib
 
     steps:
       - uses: actions/checkout@v4
@@ -89,7 +92,7 @@ jobs:
 
       - name: Run Callgrind over drivers
         run: |
-          set -euo pipefail
+          set -uo pipefail   # NOT -e: one flaky driver must not abort the sweep
           mkdir -p callgrind-out
           sel='${{ github.event.inputs.driver }}'
           if [ -n "$sel" ] && [ "$sel" != "all" ]; then
@@ -100,26 +103,40 @@ jobs:
           fi
           echo "## linux-profile (Callgrind, instructions + cache-sim)" >> "$GITHUB_STEP_SUMMARY"
           echo "_Instruction-share, NOT wall-clock. Divergence vs VTune time-share is the signal; use LL-miss to tell memory-bound from CRT artifact._" >> "$GITHUB_STEP_SUMMARY"
+          ok=0
           for d in $drivers; do
             name=$(basename "$d" .R)
             echo "=== $name ==="
-            out="callgrind-out/callgrind.$name.out"
-            valgrind --tool=callgrind --cache-sim=yes \
-                     --callgrind-out-file="$out" \
-                     --dump-instr=yes \
-                     Rscript "$d" || { echo "::warning::$name failed under callgrind"; continue; }
+            # --trace-children=yes: Rscript hands off to the real R process; without
+            # it valgrind detaches and writes an EMPTY .out (the 55s run goes
+            # un-traced). %p gives one file per PID in the exec/fork chain; we then
+            # annotate the largest (the real R process, not the wrapper).
+            valgrind --tool=callgrind --cache-sim=yes --trace-children=yes \
+                     --callgrind-out-file="callgrind-out/callgrind.$name.%p.out" \
+                     Rscript "$d" || echo "::warning::$name: driver/valgrind exited non-zero"
+            biggest=$(ls -S callgrind-out/callgrind.$name.*.out 2>/dev/null | head -n1)
+            if [ -z "$biggest" ] || [ ! -s "$biggest" ]; then
+              echo "::warning::$name: no non-empty callgrind output"; continue
+            fi
             annot="callgrind-out/annotate.$name.txt"
-            callgrind_annotate --auto=no --threshold=98 "$out" > "$annot"
+            if ! callgrind_annotate --auto=no --threshold=98 "$biggest" > "$annot" 2>callgrind-out/annotate.$name.err; then
+              echo "::warning::$name: callgrind_annotate failed"; cat callgrind-out/annotate.$name.err; continue
+            fi
+            ok=$((ok+1))
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "<details><summary><b>$name</b> — top TreeSearch functions</summary>" >> "$GITHUB_STEP_SUMMARY"
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
-            # Header (event columns) + TreeSearch.so lines only; R runtime drowns the signal otherwise.
+            # Event-column header + TreeSearch.so lines only; R runtime drowns the signal otherwise.
             grep -E '^\s*(Ir|-{3,}|[0-9,]+.*Ir)' "$annot" | head -n 3 >> "$GITHUB_STEP_SUMMARY" || true
             grep -i 'TreeSearch' "$annot" | head -n 25 >> "$GITHUB_STEP_SUMMARY" || echo "(no TreeSearch symbols above threshold)" >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
             echo "</details>" >> "$GITHUB_STEP_SUMMARY"
           done
+          echo "Annotated $ok driver(s)."
+          if [ "$ok" -eq 0 ]; then
+            echo "::error::No driver produced usable callgrind output"; exit 1
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()
