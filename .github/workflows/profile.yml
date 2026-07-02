@@ -146,7 +146,9 @@ jobs:
           echo "## linux-profile smoke ✓ (Callgrind, instructions + cache-sim)" >> "$GITHUB_STEP_SUMMARY"
           echo "_$TS_DATASET, reps=$TS_REPS. Instruction-share, NOT wall-clock._" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          grep -Ei 'Ir *file:function|treesearch|ts_[a-z]+\.cpp' callgrind-out/annotate.smoke.txt | head -n 20 >> "$GITHUB_STEP_SUMMARY"
+          # `| head` closes the pipe early -> grep SIGPIPEs -> pipefail fails the
+          # step. Guard with `|| true`; the assertion above already proved symbols.
+          grep -Ei 'Ir *file:function|treesearch|ts_[a-z]+\.cpp' callgrind-out/annotate.smoke.txt | head -n 20 >> "$GITHUB_STEP_SUMMARY" || true
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       # ── Step C ── Full/selected sweep. OPT-IN via workflow_dispatch only; push
