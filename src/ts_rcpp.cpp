@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cstdio>
 #include <random>
+#include <unordered_map>
 #include "ts_data.h"
 #include "ts_tree.h"
 #include "ts_fitch.h"
@@ -1932,6 +1933,30 @@ List ts_collapse_pool(
 
   for (R_xlen_t t = 0; t < edges.size(); ++t) {
     IntegerMatrix edge = edges[t];
+
+    // ts::reroot_at_tip / build_postorder assume every internal node has
+    // exactly two children (the engine's pool is always binary).  A caller
+    // that bypasses MaximizeParsimony()'s own RootTree/MakeTreeBinary
+    // normalization can hand this internal function a multifurcating edge
+    // matrix, which walks reroot_at_tip's `while (cur != root)` loop off the
+    // 2-children invariant and hangs forever instead of terminating (T-332).
+    // Guard the boundary explicitly rather than let it spin.
+    {
+      std::unordered_map<int, int> child_count;
+      child_count.reserve(static_cast<size_t>(edge.nrow()));
+      for (int r = 0; r < edge.nrow(); ++r) {
+        ++child_count[edge(r, 0)];
+      }
+      for (const auto& kv : child_count) {
+        if (kv.second != 2) {
+          Rcpp::stop("ts_collapse_pool: tree %d is not binary "
+                     "(node %d has %d children, expected 2); "
+                     "ts_collapse_pool requires fully-resolved binary trees",
+                     static_cast<int>(t) + 1, kv.first, kv.second);
+        }
+      }
+    }
+
     ts::TreeState tree;
     tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
 
