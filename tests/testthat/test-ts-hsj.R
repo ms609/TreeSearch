@@ -768,3 +768,41 @@ test_that("MaximizeParsimony HSJ + sectorial search stays score-consistent", {
   expect_equal(attr(result2, "score"), reported)
   expect_equal(length(result2), length(result))
 })
+
+
+# =========================================================================
+# Test: all-hierarchy data -> zero Fitch words (regression)
+# =========================================================================
+# HSJ, like xform, zero-weights every hierarchy character, so a dataset whose
+# characters are ALL hierarchical leaves the equal-weights dataset empty
+# (DataSet::total_words == 0, empty per-word state vectors).  wagner_tree()
+# indexed element 0 of those empty vectors (&ds.tip_states[0]) — undefined
+# behaviour that aborted under the hardened libstdc++ assertions in the
+# gcc-ASAN CI (run 28662381835).  The HSJ search must still build a valid tree
+# from the hierarchy DP term alone.
+
+test_that("HSJ search handles all-hierarchy data (zero Fitch words)", {
+  mat <- matrix(c(
+    "1", "0", "0", "-", "-",
+    "1", "1", "1", "0", "1",
+    "0", "-", "1", "1", "0",
+    "1", "0", "1", "0", "0",
+    "0", "-", "0", "-", "-",
+    "1", "1", "0", "-", "-"
+  ), nrow = 6, byrow = TRUE, dimnames = list(paste0("t", 1:6), NULL))
+  ds <- make_hsj_dat(mat)
+  # Two blocks span ALL five characters -> no non-hierarchy chars remain.
+  h <- CharacterHierarchy("1" = 2L, "3" = 4:5)
+  expect_length(setdiff(seq_len(5L), HierarchyChars(h)), 0L)
+
+  set.seed(42)
+  res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "hsj",
+                           hsj_alpha = 1.0, maxReplicates = 4L,
+                           targetHits = 3L, verbosity = 0L)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 6L)
+  for (tr in res) {
+    expect_s3_class(tr, "phylo")
+    expect_true(TreeIsRooted(tr))
+  }
+})
