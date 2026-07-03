@@ -38,6 +38,7 @@ SearchControl(
   sectorAcceptEqual = FALSE,
   sectorMaxHits = 1L,
   sectorCollapseTarget = 0L,
+  rssPicks = 0L,
   postRatchetSectorial = FALSE,
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
@@ -202,6 +203,12 @@ search rearranges major sub-clades as a coarse skeleton rather than shuffling
 tips within a contiguous clade -- the reduced-dataset construction of
 \insertCite{Goloboff1999;textual}{TreeSearch}.  \code{0} (default) keeps the full
 fully-resolved clade.}
+
+\item{rssPicks}{Integer; number of sector picks made \strong{between} successive
+rounds of global \acronym{TBR} in random sectorial search.  \code{0} (default)
+auto-sizes to \code{2 * nTip / meanSectorSize} (~5).  Higher values chain more
+sequential sector replacements before the next global cleanup, matching the
+~20-25 of \insertCite{Goloboff1999;textual}{TreeSearch} / \acronym{TNT}.}
 
 \item{postRatchetSectorial}{Logical; when \code{TRUE}, run XSS+RSS+CSS again
 after ratchet perturbation using the same round counts.  Approximates

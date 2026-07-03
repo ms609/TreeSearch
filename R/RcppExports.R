@@ -20,6 +20,35 @@ MaddisonSlatkin_clear_cache <- function() {
     invisible(.Call(`_TreeSearch_MaddisonSlatkin_clear_cache`))
 }
 
+#' Expected mutual information between two partitions
+#'
+#' Computes the mutual information expected purely by chance between two
+#' partitions of the same `N` items, under the hypergeometric null in which the
+#' block sizes (marginals) of each partition are fixed but the items are
+#' associated at random.  Subtracting this baseline from an observed mutual
+#' information yields a chance-corrected ("adjusted") mutual information, as
+#' applied by [`SiteConcordance`]`(normalize = TRUE)`; it is most material for
+#' small or unbalanced partitions, where raw mutual information is appreciably
+#' inflated by chance agreement.
+#'
+#' The value is computed analytically (Vinh, Epps & Bailey 2010), summing over
+#' the hypergeometric distribution of cell overlaps, and is returned in bits
+#' (logarithms to base two).
+#'
+#' @param ni Integer vector of length two giving the sizes of the two blocks of
+#'   the first (bi-)partition; these sum to the total item count `N`.
+#' @param nj Integer vector giving the block sizes of the second partition
+#'   (also summing to `N`).
+#' @return The expected mutual information, in bits.
+#' @references Vinh NX, Epps J, Bailey J (2010). "Information theoretic measures
+#'   for clusterings comparison: variants, properties, normalization and
+#'   correction for chance." _Journal of Machine Learning Research_, *11*,
+#'   2837--2854.
+#' @seealso [`SiteConcordance`]
+#' @examples
+#' # Expected MI between a 3|4 split and a 2|5 split of 7 items:
+#' expected_mi(c(3L, 4L), c(2L, 5L))
+#' @export
 expected_mi <- function(ni, nj) {
     .Call(`_TreeSearch_expected_mi`, ni, nj)
 }

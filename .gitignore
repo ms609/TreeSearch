@@ -62,6 +62,7 @@ dev/profiling/.vtune-lib-*/
 dev/profiling/.build-*
 dev/profiling/.Makevars.symboled
 /.claude
+!/.claude/CLAUDE.md
 
 # /profile skill — VTune results and profvis HTML are large and stale fast
 dev/profiling/result_*/
