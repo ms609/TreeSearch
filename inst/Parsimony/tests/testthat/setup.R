@@ -5,9 +5,18 @@ library(shinytest2)
 #
 #  * Disable expect_values() screenshots (expect_values_screenshot_args = FALSE)
 #    everywhere. The browser screenshot (.png) is flaky even run-to-run on one
-#    machine (anti-aliasing / render timing), so it is not a reliable signal;
-#    the value (json) + download-content snapshots carry the real coverage.
+#    machine (anti-aliasing / render timing), so it is not a reliable signal.
 #  * Generous load_timeout for the headless-Chrome boot under load.
+#
+# NB: these tests deliberately do NOT use app$expect_values(). Its value
+# snapshots embed the app's rendered plot output -- both a data-URI image hash
+# AND float plot geometry (usr coordinates, bounding boxes) -- which differ from
+# machine to machine even on the same OS (confirmed on GHA windows-latest vs the
+# dev box). The portable coverage is instead: the download-script snapshots
+# (expect_download, which encode the app state), the interaction path itself (a
+# crash / binding error / thrown reactive fails the test), and SearchLog's
+# deterministic log markers. wait_stable() replaces the implicit settle-wait
+# that expect_values() used to provide before each download capture.
 # ---------------------------------------------------------------------------
 new_app_driver <- function(name, ...) {
   AppDriver$new(
@@ -19,21 +28,6 @@ new_app_driver <- function(name, ...) {
     expect_values_screenshot_args = FALSE,
     ...
   )
-}
-
-# ---------------------------------------------------------------------------
-# expect_vals(): expect_values() wrapper.
-#
-# expect_values() records the app's rendered plot output as an OS-dependent
-# hashed data URI, so the value snapshots are only portable when the runner
-# matches the machine that generated the baselines. The shiny CI job therefore
-# runs on Windows (the development platform) -- see .github/workflows -- which
-# keeps the rendered output consistent with the committed baselines. Kept as a
-# thin wrapper so a normalising transform can be slotted in here if a residual
-# rendering difference ever surfaces.
-# ---------------------------------------------------------------------------
-expect_vals <- function(app) {
-  app$expect_values()
 }
 
 # ---------------------------------------------------------------------------

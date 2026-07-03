@@ -54,24 +54,15 @@ par(
   cex = 0.9            # Smaller font size
 )
 
-# Prepare reduced consensus tree
-exclude <- c("Dipoena", "Euryopis")
-consTrees <- lapply(trees, DropTip, exclude)
-labels <- setdiff(consTrees[[1]]$tip.label, exclude)
+# Calculate consensus tree
+cons <- Consensus(trees, p = 1)
 
-# Colour tip labels according to their original 'instability' (Smith 2022)
-tipCols <- Rogue::ColByStability(trees)
-tipCols <- tipCols[setdiff(labels, "Emertonella")]
+# Root tree
+cons <- RootTree(cons, "Argiope")
+cons$edge.length <- rep.int(1L, nrow(cons$edge))
+# Rotate nodes, to display clades in order of size
+cons <- SortTree(cons, order = names(dataset))
 
-# Plot the reduced consensus tree, showing position of Emertonella
-plotted <- RoguePlot(
-  trees = consTrees,
-  tip = "Emertonella",
-  p = 0.5,
-  edgeLength = 1,
-  outgroupTips = "Argiope",
-  tip.color = tipCols
-)
-
-# Store tree to plot concordance
-plottedTree <- plotted$cons
+# Plot consensus tree
+tipCols <- Rogue::ColByStability(trees)[cons$tip.label]
+plot(cons, tip.color = tipCols)

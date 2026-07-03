@@ -55,7 +55,7 @@ par(
 )
 
 # Calculate consensus tree
-cons <- Consensus(trees, p = 1)
+cons <- Consensus(trees, p = 0.5)
 
 # Root tree
 cons <- RootTree(cons, "Argiope")

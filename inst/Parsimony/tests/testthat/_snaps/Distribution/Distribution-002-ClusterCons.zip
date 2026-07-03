@@ -47,7 +47,6 @@ dataset <- ReadAsPhyDat(dataFile)
 # Load trees from file
 treeFile <- dataFile # Test mode
 trees <- read.nexus(treeFile)
-trees <- trees[unique(as.integer(seq.int(1, 125, length.out = 48)))]
 
 # Compute tree distances
 dists <- TreeDist::ClusteringInfoDistance(trees)
@@ -91,30 +90,77 @@ threshold <- 0.5
 bestMethodId <- which.max(c(threshold, pamSil, hSil, kSil))
 bestCluster <- c("none", "pam", "hmm", "kmn")[bestMethodId]
 
-# No significant clustering was found.
-clustering <- 1 # Assign all trees to single cluster
+# Best clustering was k-means:
+# Silhouette coefficient = 0.583801
 
-# No clustering structure: Plot consensus tree
-cons <- ConsensusWithout(
-  trees = trees,
-  tip = c("Ussunia", "Craniops", "Paterimitra", "Longtancunella_chengjiangensis", "Tomteluva_perturbata", "Yuganotheca_elegans", "Salanygolina", "Gasconsia"),
-  p = 1
-)
+# Store the cluster to which each tree is optimally assigned:
+clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster, kmn = kCluster, 1)
+nClusters <- length(unique(clustering))
+clusterCol <- c("#7a6c36", "#864885", "#427743") # Arbitrarily
+
+
+# Plot consensus of each tree cluster
+par(mfrow = c(1, 3)) # Plotting area layout
+tipCols <- Rogue::ColByStability(trees) # Colour tips by stability
+
+# Compute all cluster consensus trees:
+allCons <- lapply(seq_len(3), function(i) {
+  clusterTrees <- trees[clustering == i]
+  cons <- ConsensusWithout(
+    trees = clusterTrees,
+    tip = c("Paterimitra", "Eccentrotheca", "Dailyatia", "Halkieria_evangelista", "Cotyledion_tylodes"),
+    p = 1
+  )
 
 # Root tree
 cons <- RootTree(cons, "Namacalathus")
-# Set unit edge length
-cons$edge.length <- rep.int(1, nrow(cons$edge))
-# Rotate nodes, to display clades in order of size
-cons <- SortTree(cons, order = names(dataset))
-plottedTree <- cons # Store for future reference
-tipCols <- Rogue::ColByStability(trees)[cons$tip.label]
+  cons$edge.length <- rep.int(1, nrow(cons$edge))
+  TreeTools::SortTree(cons)
+})
 
-# Plot consensus tree
-plot(
-  cons,
-  edge.width = 2, # Widen lines
-  font = 3,       # Italicize labels
-  cex = 0.83,     # Shrink tip font size
-  tip.color = tipCols
-)
+# Compare splits across clusters to highlight unique edges
+allSplits <- lapply(allCons, TreeTools::as.Splits)
+
+# Plot each consensus tree in turn:
+for (i in seq_len(3)) {
+  cons <- allCons[[i]]
+  nTip <- ape::Ntip(cons)
+  mySplits <- allSplits[[i]]
+  otherIdx <- setdiff(seq_len(3), i)
+  shared <- integer(length(mySplits))
+  for (j in otherIdx) {
+    if (length(allSplits[[j]]) > 0)
+      shared <- shared + (mySplits %in% allSplits[[j]])
+  }
+  uniqueness <- 1 - shared / length(otherIdx)
+  greyRgb <- col2rgb("grey70")[, 1]
+  colRgb <- col2rgb(clusterCol[i])[, 1]
+  edgeCol <- rep(clusterCol[i], nrow(cons$edge))
+  splitNodes <- as.integer(names(mySplits))
+  for (e in seq_len(nrow(cons$edge))) {
+    child <- cons$edge[e, 2]
+    if (child > nTip) {
+      si <- match(child, splitNodes)
+      if (!is.na(si)) {
+        bl <- greyRgb + (colRgb - greyRgb) * uniqueness[si]
+        edgeCol[e] <- rgb(bl[1], bl[2], bl[3], maxColorValue = 255)
+      }
+    }
+  }
+  plot(
+    cons,
+    edge.width = 2,
+    font = 3,
+    cex = 0.83,
+    edge.color = edgeCol,
+    tip.color = tipCols[cons$tip.label]
+  )
+  legend(
+    "bottomright",
+    paste("Cluster", i),
+    pch = 15,
+    pt.cex = 1.5,
+    col = clusterCol[i],
+    bty = "n"
+  )
+}

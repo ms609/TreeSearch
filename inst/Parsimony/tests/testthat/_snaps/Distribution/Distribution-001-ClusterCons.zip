@@ -47,6 +47,7 @@ dataset <- ReadAsPhyDat(dataFile)
 # Load trees from file
 treeFile <- dataFile # Test mode
 trees <- read.nexus(treeFile)
+trees <- trees[unique(as.integer(seq.int(1, 125, length.out = 48)))]
 
 # Compute tree distances
 dists <- TreeDist::ClusteringInfoDistance(trees)
@@ -84,7 +85,7 @@ hCluster <- hClusters[[bestH]] # Best solution
 
 # Set threshold for recognizing meaningful clustering
 # no support < 0.25 < weak < 0.5 < good < 0.7 < strong
-threshold <- 1
+threshold <- 0.5
 
 # Compare silhouette coefficients of each method
 bestMethodId <- which.max(c(threshold, pamSil, hSil, kSil))
@@ -96,8 +97,8 @@ clustering <- 1 # Assign all trees to single cluster
 # No clustering structure: Plot consensus tree
 cons <- ConsensusWithout(
   trees = trees,
-  tip = c("Paterimitra", "Yuganotheca_elegans", "Salanygolina", "Eccentrotheca", "Dailyatia", "Halkieria_evangelista", "Cotyledion_tylodes"),
-  p = 0.5
+  tip = c("Ussunia", "Craniops", "Paterimitra", "Longtancunella_chengjiangensis", "Tomteluva_perturbata", "Yuganotheca_elegans", "Salanygolina", "Gasconsia"),
+  p = 1
 )
 
 # Root tree
@@ -116,16 +117,4 @@ plot(
   font = 3,       # Italicize labels
   cex = 0.83,     # Shrink tip font size
   tip.color = tipCols
-)
-
-# Calculate split concordance
-concordance <- QuartetConcordance(plottedTree, dataset)
-
-# Annotate splits by concordance
-LabelSplits(
-  tree = plottedTree,
-  labels = signif(concordance, 3),
-  col = SupportColor(concordance),
-  frame = "none",
-  pos = 3
 )
