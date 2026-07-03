@@ -142,8 +142,10 @@ test_that("tipLabels returns tree tips when trees present", {
                 callbacks = stub_callbacks, log_fns = stub_log_fns),
     {
       returned <- session$getReturned()
-      # No trees => tipLabels is NULL (NULL[[1]][["tip.label"]])
-      expect_null(returned$tipLabels())
+      # No trees => tipLabels is an empty character vector (mod_data.R guards
+      # `if (!length(r$trees)) return(character(0L))` -- safer than NULL for the
+      # downstream intersect()/choices= consumers).
+      expect_equal(returned$tipLabels(), character(0L))
 
       r$trees <- trees
       session$flushReact()

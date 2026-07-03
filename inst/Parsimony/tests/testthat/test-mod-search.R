@@ -1,4 +1,8 @@
 library(shiny)
+# TreeLength(), ScoreSpectrum() and friends are exported by TreeSearch and are
+# referenced (unqualified) by the sourced module + the SearchConfidenceText
+# stub below; attach the package so they resolve in this test scope.
+library(TreeSearch)
 
 # Source the module under test (relative to tests/testthat/)
 # local = TRUE so the module captures the test environment (for stub lookups)
@@ -19,9 +23,15 @@ FormatMissProb <- function(prob) {
   else if (pct >= 0.01) "<0.1%"
   else "<0.01%"
 }
+# Verbatim copy of SearchConfidenceText from inst/Parsimony/global.R -- this is
+# the function these tests exercise directly. KEEP IN SYNC with global.R: if the
+# signature or output strings there change, mirror them here (a prior drift left
+# stopReason/replicateScores off this copy and reddened the suite).
 SearchConfidenceText <- function(K, R, nSearches = 1L,
                                  nTopologies = NULL,
-                                 lastImprovedRep = NULL) {
+                                 lastImprovedRep = NULL,
+                                 stopReason = NULL,
+                                 replicateScores = NULL) {
   if (is.null(K) || is.null(R) || R <= 0L || K <= 0L) return(NULL)
   K <- min(K, R)
   prob_miss <- if (K < R) (1 - K / R) ^ R else exp(-K)
@@ -52,10 +62,35 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
   } else {
     ""
   }
+  stop_note <- if (identical(stopReason, "consensus")) {
+    " Search stopped: consensus tree unchanged across recent replicates."
+  } else if (identical(stopReason, "timeout")) {
+    " Search stopped: time limit reached."
+  } else {
+    ""
+  }
+  coverage_note <- if (!is.null(replicateScores) &&
+                       length(replicateScores) >= 5L) {
+    sp <- tryCatch(ScoreSpectrum(replicateScores), error = function(e) NULL)
+    if (!is.null(sp) && !is.na(sp$coverage)) {
+      pct <- round(100 * sp$coverage)
+      paste0(" Landscape coverage: ~", pct, "%",
+             if (sp$unseen_fraction > 0.05)
+               paste0(" (~", round(100 * sp$unseen_fraction),
+                      "% of score levels unseen)")
+             else
+               "")
+    } else {
+      ""
+    }
+  } else {
+    ""
+  }
   paste0(K, " of ", R, " ", runs_label, " hit best score. ",
          "Probability that a better score exists: ",
          FormatMissProb(prob_miss),
-         topo_note, trajectory_note, rugged_note, small_sample_note)
+         topo_note, trajectory_note, rugged_note, small_sample_note,
+         stop_note, coverage_note)
 }
 PutData <- PutTree <- function(...) invisible(NULL)
 logging <- FALSE
@@ -308,9 +343,9 @@ test_that("SearchConfidenceText uses binomial bound (T-163)", {
   txt_multi_search <- SearchConfidenceText(5, 10, nSearches = 3L)
   expect_match(txt_multi_search, "across 3 searches")
 
-  # Stop reason: consensus stable
+  # Stop reason: consensus tree stopped changing
   txt_cons <- SearchConfidenceText(4, 90, stopReason = "consensus")
-  expect_match(txt_cons, "consensus stable")
+  expect_match(txt_cons, "consensus tree unchanged")
 
   # Stop reason: timeout
   txt_time <- SearchConfidenceText(4, 90, stopReason = "timeout")
