@@ -35,25 +35,129 @@ on:
 
 name: R-CMD-check
 
-jobs:
-  R-CMD-check:
-    runs-on: ${{ matrix.config.os }}
+# NB: there is deliberately NO workflow-level `concurrency`. Workflow-level
+# cancel-in-progress would kill the whole run (sense-check included) on every
+# new push. Instead, each EXPENSIVE job carries its own per-leg concurrency
+# group so superseded Windows/macOS work is cancelled, while the cheap
+# `sense-check` job has no concurrency and therefore always runs to completion
+# -- giving a per-commit "did this build?" signal even under rapid iteration.
 
+# Waves:
+#   sense-check -> arm (cheapest), always runs, never cancelled. Fast signal.
+#   core        -> Windows (+codecov) / R 4.1 / R devel; only if sense-check passed.
+#   shiny       -> EasyTrees shinytest2 suite, Windows; only if the app changed
+#                  and sense-check passed. Non-blocking (continue-on-error) until
+#                  its stability on CI is established.
+#   full        -> macOS x2 backstop; only once core is green.
+jobs:
+  # ---------------------------------------------------------------------------
+  # Wave 1: cheapest leg as a fail-fast sense-check. No concurrency group, so a
+  # rapid follow-up push does NOT cancel it -- each commit gets its own signal.
+  # ---------------------------------------------------------------------------
+  sense-check:
+    runs-on: ubuntu-24.04-arm
+    name: sense-check (ubuntu-24.04-arm, release)
+
+    env:
+      _R_CHECK_CRAN_INCOMING_: ${{ github.event_name == 'pull_request' }}
+      _R_CHECK_FORCE_SUGGESTS_: false # CRAN settings
+      R_COMPILE_AND_INSTALL_PACKAGES: 'never'
+      _R_CHECK_THINGS_IN_CHECK_DIR_: false
+      R_REMOTES_STANDALONE: true
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      R_REALLY_FORCE_SYMBOLS: true # Until R4.3
+      _R_CHECK_CRAN_INCOMING_USE_ASPELL_: false
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/latest"
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Temporarily bump package version
+        run: |
+          old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
+          if [[ $(echo "$old_version" | tr -cd '.' | wc -c) -eq 2 ]]; then
+            new_version="${old_version}.9999"
+            sed -i "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+          fi
+        shell: bash
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - name: Install apt packages
+        run: |
+          sudo apt-get install texlive-latex-base texlive-fonts-recommended
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: |
+            check
+
+      - name: Check package
+        uses: r-lib/actions/check-r-package@v2
+
+      - name: Notify on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 186,
+              body: 'Scheduled workflow has failed: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            });
+
+  # ---------------------------------------------------------------------------
+  # Detect whether the EasyTrees app changed, to gate the (expensive) shiny job.
+  # Workflow-level `paths` cannot be combined with a job `needs:`, so filter here
+  # and expose the result as an output the shiny job reads in its `if:`.
+  # ---------------------------------------------------------------------------
+  changes:
+    runs-on: ubuntu-latest
+    name: detect app changes
+    outputs:
+      shiny: ${{ steps.filter.outputs.shiny }}
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shiny:
+              - 'inst/Parsimony/**'
+              - '.github/workflows/R-CMD-check.yml'
+
+  # ---------------------------------------------------------------------------
+  # Wave 2: Windows (+codecov), R 4.1, R devel. Runs only if the sense-check
+  # passed. Per-leg concurrency so a superseding push cancels in-flight legs.
+  # ---------------------------------------------------------------------------
+  core:
+    needs: sense-check
+    runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    concurrency:
+      group: ${{ github.workflow }}-core-${{ matrix.config.os }}-${{ matrix.config.r }}-${{ github.ref }}
+      cancel-in-progress: true
 
     strategy:
       fail-fast: false
       matrix:
         config:
           - {os: windows-latest, r: 'release'}
-          - {os: macOS-latest, r: 'release'}
-          - {os: macos-15-intel, r: 'release'} # Until Intel architecture retired 2027-11
-          - {os: ubuntu-24.04-arm, r: "release", rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
           - {os: ubuntu-24.04, r: '4.1', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"} # Until TreeDist can slough phangorn
           - {os: ubuntu-24.04-arm, r: 'devel', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
 
     env:
-      _R_CHECK_CRAN_INCOMING_: true # Seemingly not set by --as-cran
+      _R_CHECK_CRAN_INCOMING_: ${{ github.event_name == 'pull_request' }}
       _R_CHECK_FORCE_SUGGESTS_: false # CRAN settings
       R_REALLY_FORCE_SYMBOLS: true # Until R4.3
       R_COMPILE_AND_INSTALL_PACKAGES: 'never'
@@ -65,7 +169,7 @@ jobs:
     steps:
       - name: Checkout git repo
         uses: actions/checkout@v6
-        
+
       - name: Temporarily bump package version
         run: |
           old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
@@ -84,16 +188,19 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
-        
+
       - name: Install apt packages
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install texlive-latex-base texlive-fonts-recommended
-          
-      - name: Install brew packages
-        if: runner.os == 'macOS'
-        run: |
-          brew install libgit2 xquartz ghostscript
+
+      - name: Set up R dependencies (covr)
+        uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os == 'Windows'
+        with:
+          needs: |
+            check
+            coverage
 
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -110,14 +217,6 @@ jobs:
             phangorn=?ignore-before-r=4.1.0
             ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
 
-      - name: Set up R dependencies (covr)
-        uses: r-lib/actions/setup-r-dependencies@v2
-        if: runner.os == 'Windows'
-        with:
-          needs: |
-            check
-            coverage
-
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
 
@@ -126,7 +225,140 @@ jobs:
         run: |
           covr::codecov()
         shell: Rscript {0}
-        
+
+      - name: Notify on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 186,
+              body: 'Scheduled workflow has failed: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            });
+
+  # ---------------------------------------------------------------------------
+  # EasyTrees shinytest2 suite. Runs on WINDOWS (the development platform) so the
+  # rendered-plot value snapshots stay consistent with the committed baselines --
+  # they hash the plot output, which is OS-dependent. Gated on both the app
+  # having changed AND the sense-check passing. `continue-on-error: true` keeps
+  # it NON-BLOCKING until its stability on CI is established (the AppDriver boot
+  # can flake, and Distribution/SearchLog run real, minutes-long computations).
+  # ---------------------------------------------------------------------------
+  shiny:
+    needs: [sense-check, changes]
+    if: needs.changes.outputs.shiny == 'true'
+    runs-on: windows-latest
+    name: EasyTrees shinytest2 (windows-latest)
+    continue-on-error: true
+
+    concurrency:
+      group: ${{ github.workflow }}-shiny-${{ github.ref }}
+      cancel-in-progress: true
+
+    env:
+      NOT_CRAN: true
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: |
+            check
+          extra-packages: |
+            local::.
+
+      - name: Run EasyTrees shinytest2 suite
+        run: |
+          shinytest2::test_app("inst/Parsimony")
+        shell: Rscript {0}
+
+      - name: Upload snapshot diffs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shinytest2-snapshots
+          path: inst/Parsimony/tests/testthat/_snaps/**/*.new.*
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Wave 3 (backstop): the expensive macOS legs. Only runs once the core wave is
+  # green, which in practice is "about to merge". macOS is ~10x runner-minutes,
+  # so keeping it off every push is the big save.
+  # ---------------------------------------------------------------------------
+  full:
+    needs: core
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    concurrency:
+      group: ${{ github.workflow }}-full-${{ matrix.config.os }}-${{ matrix.config.r }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macOS-latest, r: 'release'}
+          - {os: macos-15-intel, r: 'release'} # Until Intel architecture retired 2027-11
+
+    env:
+      _R_CHECK_CRAN_INCOMING_: ${{ github.event_name == 'pull_request' }}
+      _R_CHECK_FORCE_SUGGESTS_: false # CRAN settings
+      R_REALLY_FORCE_SYMBOLS: true # Until R4.3
+      R_COMPILE_AND_INSTALL_PACKAGES: 'never'
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      RSPM: ${{ matrix.config.rspm }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Temporarily bump package version
+        run: |
+          old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
+          if [[ $(echo "$old_version" | tr -cd '.' | wc -c) -eq 2 ]]; then
+            new_version="${old_version}.9999"
+            if [[ "$RUNNER_OS" == "macOS" ]]; then
+              sed -i "" "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+            else
+              sed -i "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+            fi
+          fi
+          echo "Current package version is now: $(grep "Version:" DESCRIPTION | awk '{print $2}')"
+        shell: bash
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      - name: Install brew packages
+        run: |
+          brew install libgit2 xquartz ghostscript
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: |
+            check
+
+      - name: Check package
+        uses: r-lib/actions/check-r-package@v2
+
       - name: Notify on failure
         if: failure() && github.event_name == 'schedule'
         uses: actions/github-script@v7

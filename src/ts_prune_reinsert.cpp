@@ -409,11 +409,37 @@ void expand_and_reinsert(
   std::vector<int> stack;
   stack.reserve(tree.n_node);
 
+  // Exact directional insertion-cost scratch (mirrors ts_wagner.cpp); reused
+  // across placements (non-zeroing size-ensure).
+  std::vector<uint64_t> pr_edge_set, pr_up;
+  std::vector<int> pr_pre;
+
+#ifdef TS_SCOREAPPROX_PROBE
+  // Caller-owned scratch reused across placements (non-zeroing size-ensure).
+  std::vector<uint64_t> sa_edge_set, sa_up;
+  std::vector<int> sa_pre;
+  // Cumulative across all expand_and_reinsert() calls this session.  thread_local:
+  // expand_and_reinsert runs concurrently on parallel-search workers, so plain
+  // `static` would be an unsynchronised data race on these counters.  thread_local
+  // gives each worker its own tally (per-thread partials on multi-thread runs); the
+  // probe is a diagnostic normally run single-threaded, where this is exact.
+  thread_local static long long sa_placements = 0, sa_delta_pos = 0, sa_delta_sum = 0,
+                   sa_min_exact_sum = 0, sa_bounded_exact_sum = 0;
+  thread_local static int sa_delta_max = 0;
+#endif
+
   for (int tip : reinsert_order) {
     int new_internal = next_internal++;
 
     const uint64_t* tip_prelim =
         &ds.tip_states[static_cast<size_t>(tip) * tw];
+
+    // Exact insertion cost via directional edge sets: edge_set[D] =
+    // combine(prelim[D], up[D]).  Replaces the union-of-finals approximation
+    // (final_[node] | final_[child]) that undercut insertion cost (~+30% Wagner
+    // trees); mirrors the main Wagner builder.  prelim is current here
+    // (wagner_incremental_rescore maintains both prelim and final_).
+    compute_insertion_edge_sets(tree, ds, pr_edge_set, pr_up, pr_pre);
 
     // Find best insertion edge via DFS from root
     int best_above = -1, best_below = -1;
@@ -436,8 +462,8 @@ void expand_and_reinsert(
       if (lc < 0 || rc < 0) continue;
 
       // Evaluate edge (node, lc)
-      int extra = fitch_indirect_length_bounded(
-          tip_prelim, tree, ds, node, lc, best_extra);
+      int extra = fitch_indirect_length_cached(
+          tip_prelim, &pr_edge_set[static_cast<size_t>(lc) * tw], ds, best_extra);
       if (extra < best_extra) {
         best_extra = extra;
         best_above = node;
@@ -445,8 +471,8 @@ void expand_and_reinsert(
       }
 
       // Evaluate edge (node, rc)
-      extra = fitch_indirect_length_bounded(
-          tip_prelim, tree, ds, node, rc, best_extra);
+      extra = fitch_indirect_length_cached(
+          tip_prelim, &pr_edge_set[static_cast<size_t>(rc) * tw], ds, best_extra);
       if (extra < best_extra) {
         best_extra = extra;
         best_above = node;
@@ -463,6 +489,34 @@ void expand_and_reinsert(
       best_below = tree.left[0];
     }
 
+#ifdef TS_SCOREAPPROX_PROBE
+    // Observational scoring-approximation probe (non-perturbing; production
+    // still inserts at the _bounded choice).  prelim/final_ are both current
+    // here (wagner_incremental_rescore maintains them) and the in-tree portion
+    // is fully binary from root, so compute_insertion_edge_sets is exact and
+    // safe.  Tally Δ = exact_cost(E_bounded) − min_E exact_cost(E), per the
+    // advisor: exact-suboptimality of the bounded choice, not raw edge flips.
+    if (best_below >= 0 && best_below != n_tip) {
+      compute_insertion_edge_sets(tree, ds, sa_edge_set, sa_up, sa_pre);
+      int exact_chosen = fitch_indirect_length_cached(
+          tip_prelim, &sa_edge_set[static_cast<size_t>(best_below) * tw], ds, INT_MAX);
+      int exact_min = INT_MAX;
+      for (int D : sa_pre) {
+        if (D == n_tip) continue;  // root: no edge above it
+        int e = fitch_indirect_length_cached(
+            tip_prelim, &sa_edge_set[static_cast<size_t>(D) * tw], ds, INT_MAX);
+        if (e < exact_min) exact_min = e;
+      }
+      int delta = exact_chosen - exact_min;
+      ++sa_placements;
+      sa_delta_sum += delta;
+      sa_min_exact_sum += exact_min;
+      sa_bounded_exact_sum += exact_chosen;
+      if (delta > 0) ++sa_delta_pos;
+      if (delta > sa_delta_max) sa_delta_max = delta;
+    }
+#endif
+
     insert_tip_at_edge(tree, tip, new_internal, best_above, best_below);
     wagner_incremental_rescore(tree, ds, new_internal);
   }
@@ -470,6 +524,18 @@ void expand_and_reinsert(
   // Rebuild postorder once after all insertions — required by the subsequent
   // TBR polish in prune_reinsert_search (and by score_tree).
   tree.build_postorder();
+
+#ifdef TS_SCOREAPPROX_PROBE
+  REprintf("[SCOREAPPROX] placements=%lld delta_gt0=%lld (%.3f%%) "
+           "delta_sum=%lld mean_delta=%.5f max_delta=%d "
+           "min_exact_sum=%lld bounded_exact_sum=%lld excess=%.4f%%\n",
+           sa_placements, sa_delta_pos,
+           sa_placements ? 100.0 * (double)sa_delta_pos / (double)sa_placements : 0.0,
+           sa_delta_sum,
+           sa_placements ? (double)sa_delta_sum / (double)sa_placements : 0.0,
+           sa_delta_max, sa_min_exact_sum, sa_bounded_exact_sum,
+           sa_min_exact_sum ? 100.0 * (double)sa_delta_sum / (double)sa_min_exact_sum : 0.0);
+#endif
 }
 
 } // anonymous namespace

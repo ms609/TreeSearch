@@ -27,9 +27,35 @@ inline double l2factorial(int n) {
   }
 }
 
-// ni and nj are vectors listing the number of entitites in each cluster
+//' Expected mutual information between two partitions
+//'
+//' Computes the mutual information expected purely by chance between two
+//' partitions of the same `N` items, under the hypergeometric null in which the
+//' block sizes (marginals) of each partition are fixed but the items are
+//' associated at random.  Subtracting this baseline from an observed mutual
+//' information yields a chance-corrected ("adjusted") mutual information, as
+//' applied by [`SiteConcordance`]`(normalize = TRUE)`; it is most material for
+//' small or unbalanced partitions, where raw mutual information is appreciably
+//' inflated by chance agreement.
+//'
+//' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
+//' the hypergeometric distribution of cell overlaps, and is returned in bits
+//' (logarithms to base two).
+//'
+//' @param ni Integer vector of length two giving the sizes of the two blocks of
+//'   the first (bi-)partition; these sum to the total item count `N`.
+//' @param nj Integer vector giving the block sizes of the second partition
+//'   (also summing to `N`).
+//' @return The expected mutual information, in bits.
+//' @references \insertAllCited{}
+//' @seealso [`SiteConcordance`]
+//' @examples
+//' # Expected MI between a 3|4 split and a 2|5 split of 7 items:
+//' expected_mi(c(3L, 4L), c(2L, 5L))
+//' @export
 // [[Rcpp::export]]
 double expected_mi(const IntegerVector &ni, const IntegerVector &nj) {
+  // ni and nj are vectors listing the number of entitites in each cluster
   // ni = {a, N-a}; nj = counts of character states
   const int a = ni[0];
   const int N = ni[0] + ni[1];

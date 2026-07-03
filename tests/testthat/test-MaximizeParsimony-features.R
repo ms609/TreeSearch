@@ -486,3 +486,20 @@ test_that("collapse = TRUE shows an enforced clade and collapses the rest", {
   expect_true(all(vapply(collapsed, function(t)
     t[["Nnode"]] < NTip(phy) - 1L, logical(1))))
 })
+
+test_that("collapse = TRUE contracts a fully-uninformative dataset to a star (T-331)", {
+  # When every character is parsimony-uninformative (all-constant here), every
+  # binary resolution ties at the same (zero) score, so the collapsed answer is
+  # a single star: one polytomy, one topology -- never the inflated binary
+  # count that a total_words == 0 no-op would produce.
+  taxa <- paste0("t", 1:5)
+  mat <- matrix("0", nrow = length(taxa), ncol = 2,
+                dimnames = list(taxa, NULL))
+  phy <- phangorn::phyDat(mat, type = "USER", levels = c("0", "1"))
+
+  collapsed <- MaximizeParsimony(phy, verbosity = 0L, collapse = TRUE)
+
+  expect_equal(length(collapsed), 1L)
+  expect_equal(attr(collapsed, "n_topologies"), 1L)
+  expect_equal(collapsed[[1]][["Nnode"]], 1L)
+})

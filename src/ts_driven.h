@@ -101,6 +101,11 @@ struct DrivenParams {
                                      // sub-clades into ~this many composite
                                      // first-pass terminals (Goloboff 1999 coarse
                                      // sector). Plumbs SectorParams::collapse_target.
+  int rss_picks_per_round = 0;       // 0 = auto (2*n_tip/avg_size, ~5). >0 sets
+                                     // sector picks BETWEEN global-TBR rounds
+                                     // (Goloboff 1999 sequential replacements;
+                                     // TNT ~20-25). Plumbs
+                                     // SectorParams::rss_picks_per_round.
 
   // Post-ratchet sectorial search (T-257).
   // When true, run XSS+RSS+CSS again after ratchet perturbation using the
