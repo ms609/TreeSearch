@@ -1,11 +1,5 @@
 test_that("Search log workflow produces expected outputs", {
-  app <- AppDriver$new(
-    app_dir = "../../",
-    seed = 0,
-    load_timeout = 200000,
-    shiny_args = list(test.mode = TRUE),
-    name = "SearchLog"
-  )
+  app <- new_app_driver("SearchLog")
   on.exit(app$stop(), add = TRUE)
 
   # The legacy tests/shinytest/SearchLog.R snapshotted the saveZip download
@@ -38,7 +32,7 @@ test_that("Search log workflow produces expected outputs", {
   # --- EW search (implied weights off, sprint) ---
   app$set_inputs(`data-dataSource` = "Wills2012", timeout_ = 4000)
   app$click("search-searchConfig")
-  app$wait_for_idle(timeout = 5000)
+  wait_stable(app, 5000)
   app$set_inputs(`search-concavity` = 1.1)
   app$set_inputs(`search-epsilon` = 1)
   app$set_inputs(`search-implied.weights` = "off")
@@ -51,7 +45,7 @@ test_that("Search log workflow produces expected outputs", {
                      ignore = list(NULL, 0L),
                      timeout = 120000)
   app$click("search-searchConfig")
-  app$wait_for_idle(timeout = 5000)
+  wait_stable(app, 5000)
 
   expect_log_contains(c(
     'library("TreeSearch")',
