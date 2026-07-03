@@ -52,8 +52,13 @@ void TreeState::load_tip_states(const DataSet& ds) {
   // T-262: bulk memcpy replaces per-element loop.  Tip states occupy the
   // first n_tip * total_words entries of prelim/final_ (contiguous).
   size_t tip_bytes = static_cast<size_t>(n_tip) * total_words * sizeof(uint64_t);
-  std::memcpy(prelim.data(), ds.tip_states.data(), tip_bytes);
-  std::memcpy(final_.data(), ds.tip_states.data(), tip_bytes);
+  // All characters can be uninformative (e.g. every state a singleton),
+  // leaving zero blocks and a zero-length tip_states vector; its .data()
+  // is then permitted to be null, which memcpy's nonnull attribute forbids.
+  if (tip_bytes > 0) {
+    std::memcpy(prelim.data(), ds.tip_states.data(), tip_bytes);
+    std::memcpy(final_.data(), ds.tip_states.data(), tip_bytes);
+  }
 
   // Initialise tip subtree_actives: applicable states only (NA word = 0).
   // For {-,X} tips, applicable state bits are preserved here; the
