@@ -11,6 +11,19 @@ void compute_collapsed_flags(
 
   collapsed.assign(tree.n_node, 0);
 
+  // HSJ/XFORM store a clade's character support in ds.hierarchy_blocks (HSJ) or
+  // ds.sankoff_* (XFORM); the hierarchy characters are zero-weighted out of the
+  // standard ds.blocks[] (.NonHierarchyWeights) and dropped by simplify_patterns.
+  // This kernel decides min-length-0 edges by iterating ONLY ds.blocks[], so a
+  // clade supported solely by a hierarchy/Sankoff character looks unsupported
+  // and would be wrongly contracted.  Until the collapse test folds in the HSJ
+  // a(n)/p(n) DP or the Sankoff cost, disable collapse entirely for these modes
+  // (all-zero flags == nothing collapses — the safe conservative outcome).
+  // Falling back to the conservative flags is NOT sufficient: it is equally
+  // blind to hierarchy/Sankoff support.  See red-team T-330.
+  if (ds.scoring_mode == ScoringMode::HSJ ||
+      ds.scoring_mode == ScoringMode::XFORM) return;
+
   // If all characters were simplified away (total_words == 0), there's
   // nothing to evaluate — leave all edges uncollapsed.
   if (tree.total_words == 0) return;
@@ -109,6 +122,19 @@ void compute_collapsed_flags_aggressive(
     const TreeState& tree,
     const DataSet& ds,
     std::vector<uint8_t>& collapsed) {
+
+  // HSJ/XFORM: character support lives in ds.hierarchy_blocks / ds.sankoff_*,
+  // which the marginal-MPR machinery below never reads (it iterates only
+  // ds.blocks[]).  A clade supported solely by a hierarchy/Sankoff character
+  // would be treated as unsupported and contracted.  Disable collapse for these
+  // modes (all-zero flags).  Guarded independently of compute_collapsed_flags:
+  // the has_na delegation at the bottom of this block only reaches it on NA
+  // data, not the general HSJ/XFORM case.  See red-team T-330.
+  if (ds.scoring_mode == ScoringMode::HSJ ||
+      ds.scoring_mode == ScoringMode::XFORM) {
+    collapsed.assign(tree.n_node, 0);
+    return;
+  }
 
   // Inapplicable characters: soft min-length-0 for the De-Laet 3-pass is not
   // derived; fall back to the conservative (exact) flags so NA datasets are
