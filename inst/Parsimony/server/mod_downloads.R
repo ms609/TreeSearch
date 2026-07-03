@@ -99,13 +99,29 @@ downloads_server <- function(id, state, dataSource, plotSize,
           dir.create(tempDir)
           on.exit(unlink(tempDir))
           rFile <- paste0(tempDir, "/", saveDetails()$fileName, ".R")
-          writeLines(rCode(), con = rFile)
+          # stashTrees() above incremented treeFiles and wrote a fresh
+          # treeFile-NN, but the plot log baked `treeFile <- TreeFileName(
+          # r$treeFiles)` at plot time (one lower, cached in RCode whose key
+          # excludes treeFiles). Point the script at the tree file actually
+          # cherry-picked below, or the downloaded script reads a file absent
+          # from its own zip. Robust either way: rewrites to lastFile("tree")
+          # whether or not rCode() re-baked. Mirrors the testmode sub() above.
+          rScript <- sub("treeFile <- .*$",
+                         paste0('treeFile <- "', lastFile("tree"), '"'),
+                         rCode(), perl = TRUE)
+          writeLines(rScript, con = rFile)
 
+          # Guard each cached input as saveZip does: lastFile("excel") is
+          # "excelFile-00.xlsx" even when no Excel was uploaded (excelFiles == 0)
+          # — a path that was never created — and zip::zip(mode = "cherry-pick")
+          # aborts with "Some files do not exist". Without the guards the
+          # "R script" download fails for every session that didn't load data
+          # from an Excel file (the common case). rFile is always present.
           zip::zip(file, c(
             rFile,
-            paste0(tempdir(), "/", lastFile("data")),
-            paste0(tempdir(), "/", lastFile("excel")),
-            paste0(tempdir(), "/", lastFile("tree"))
+            if (state$dataFiles)  paste0(tempdir(), "/", lastFile("data")),
+            if (state$excelFiles) paste0(tempdir(), "/", lastFile("excel")),
+            if (state$treeFiles)  paste0(tempdir(), "/", lastFile("tree"))
           ), compression_level = 9, mode = "cherry-pick")
         }
       }
