@@ -31,6 +31,56 @@ using namespace Rcpp;
 
 namespace {
 
+// Validate tip_data VALUES at the Rcpp boundary: build_dataset()/
+// simplify_patterns() treat each entry as a 1-based index into
+// `token_states` (size n_tokens), with no further checking. A value outside
+// [1, n_tokens] is an out-of-bounds read (0 or negative -> before the array
+// start; > n_tokens -> past the end, likely a segfault). Public wrappers
+// always build `tip_data` from a validated phyDat, so this only guards a
+// direct internal call (`TreeSearch:::`) with a hand-crafted matrix.
+void validate_tip_data_values(const int* tip_data_r, int n_tips,
+                               int n_patterns, int n_tokens) {
+  const R_xlen_t n_entries =
+      static_cast<R_xlen_t>(n_tips) * static_cast<R_xlen_t>(n_patterns);
+  for (R_xlen_t i = 0; i < n_entries; ++i) {
+    int v = tip_data_r[i];
+    if (v < 1 || v > n_tokens) {
+      Rcpp::stop("`tip_data` values must be in [1, nrow(contrast)] (%d); "
+                 "found %d", n_tokens, v);
+    }
+  }
+}
+
+// Validate an `addition_order` VALUE vector at the Rcpp boundary:
+// wagner_tree() treats a non-empty `order` as a length-n_tips permutation of
+// 0..n_tips-1 and reads order[0..2] / order[i] for i in [3, n_tips) with no
+// further checking. A short vector reads past its end (segfault); an
+// out-of-range or duplicated entry indexes tree.parent[]/tip_states[] out of
+// bounds (heap write UB). Public wrappers never pass `addition_order`
+// directly from unchecked user input, so this only guards a direct internal
+// call (`TreeSearch:::`) with a hand-crafted vector.
+void validate_addition_order(const IntegerVector& addition_order,
+                              int n_tips) {
+  if (addition_order.size() == 0) return;
+  if (addition_order.size() != n_tips) {
+    Rcpp::stop("`addition_order` length (%d) must equal the number of tips "
+               "(%d)", static_cast<int>(addition_order.size()), n_tips);
+  }
+  std::vector<bool> seen(n_tips, false);
+  for (int i = 0; i < addition_order.size(); ++i) {
+    int v = addition_order[i];
+    if (v < 1 || v > n_tips) {
+      Rcpp::stop("`addition_order` values must be in [1, %d]; found %d",
+                 n_tips, v);
+    }
+    if (seen[v - 1]) {
+      Rcpp::stop("`addition_order` must not contain duplicate values "
+                 "(found %d more than once)", v);
+    }
+    seen[v - 1] = true;
+  }
+}
+
 // Sentinel: concavity = -1 means equal weights (Inf).
 // Rcpp can't auto-generate R_PosInf as an R default, so we use -1
 // and convert here at the single gateway into the C++ engine.
@@ -74,6 +124,7 @@ ts::DataSet make_dataset(
     Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
                "(%d)", static_cast<int>(obs_count.size()), n_patterns);
   }
+  validate_tip_data_values(INTEGER(tip_data), n_tips, n_patterns, n_tokens);
 
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
@@ -934,6 +985,7 @@ List ts_wagner_tree(
                                 min_steps, concavity, infoAmounts);
 
   int n_tips = tip_data.nrow();
+  validate_addition_order(addition_order, n_tips);
   ts::ConstraintData cd = build_constraint_from_r(
       n_tips, consSplitMatrix, consContrast, consTipData,
       consWeight, consLevels, consExpectedScore);
@@ -2081,6 +2133,7 @@ List ts_resample_search(
     Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
                "(%d)", static_cast<int>(obs_count.size()), n_patterns);
   }
+  validate_tip_data_values(INTEGER(tip_data), n_tips, n_patterns, n_tokens);
 
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
@@ -2209,6 +2262,7 @@ List ts_parallel_resample(
     Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
                "(%d)", static_cast<int>(obs_count.size()), n_patterns);
   }
+  validate_tip_data_values(INTEGER(tip_data), n_tips, n_patterns, n_tokens);
 
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
@@ -2348,6 +2402,7 @@ List ts_successive_approx(
     Rcpp::stop("`obs_count` length (%d) must equal the number of characters "
                "(%d)", static_cast<int>(obs_count.size()), n_patterns);
   }
+  validate_tip_data_values(INTEGER(tip_data), n_tips, n_patterns, n_tokens);
 
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
@@ -2776,6 +2831,16 @@ List ts_simplify_diag(
   int n_states = contrast.ncol();
   int n_tips = tip_data.nrow();
   int n_patterns = tip_data.ncol();
+
+  if (weight.size() != n_patterns) {
+    Rcpp::stop("`weight` length (%d) must equal the number of characters (%d)",
+               static_cast<int>(weight.size()), n_patterns);
+  }
+  if (levels.size() != n_states) {
+    Rcpp::stop("`levels` length (%d) must equal ncol(contrast) (%d)",
+               static_cast<int>(levels.size()), n_states);
+  }
+  validate_tip_data_values(INTEGER(tip_data), n_tips, n_patterns, n_tokens);
 
   // Identify inapp_state
   int inapp_state = -1;
