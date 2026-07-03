@@ -418,10 +418,14 @@ void expand_and_reinsert(
   // Caller-owned scratch reused across placements (non-zeroing size-ensure).
   std::vector<uint64_t> sa_edge_set, sa_up;
   std::vector<int> sa_pre;
-  // Cumulative across all expand_and_reinsert() calls this session.
-  static long long sa_placements = 0, sa_delta_pos = 0, sa_delta_sum = 0,
+  // Cumulative across all expand_and_reinsert() calls this session.  thread_local:
+  // expand_and_reinsert runs concurrently on parallel-search workers, so plain
+  // `static` would be an unsynchronised data race on these counters.  thread_local
+  // gives each worker its own tally (per-thread partials on multi-thread runs); the
+  // probe is a diagnostic normally run single-threaded, where this is exact.
+  thread_local static long long sa_placements = 0, sa_delta_pos = 0, sa_delta_sum = 0,
                    sa_min_exact_sum = 0, sa_bounded_exact_sum = 0;
-  static int sa_delta_max = 0;
+  thread_local static int sa_delta_max = 0;
 #endif
 
   for (int tip : reinsert_order) {
