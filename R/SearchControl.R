@@ -87,6 +87,11 @@
 #'   tips within a contiguous clade -- the reduced-dataset construction of
 #'   \insertCite{Goloboff1999;textual}{TreeSearch}.  `0` (default) keeps the full
 #'   fully-resolved clade.
+#' @param rssPicks Integer; number of sector picks made **between** successive
+#'   rounds of global \acronym{TBR} in random sectorial search.  `0` (default)
+#'   auto-sizes to `2 * nTip / meanSectorSize` (~5).  Higher values chain more
+#'   sequential sector replacements before the next global cleanup, matching the
+#'   ~20-25 of \insertCite{Goloboff1999;textual}{TreeSearch} / \acronym{TNT}.
 #' @param postRatchetSectorial Logical; when `TRUE`, run XSS+RSS+CSS again
 #'   after ratchet perturbation using the same round counts.  Approximates
 #'   TNT's interleaved sectorial pattern.  Default: `FALSE`.
@@ -296,6 +301,7 @@ SearchControl <- function(
     sectorAcceptEqual = FALSE,
     sectorMaxHits = 1L,
     sectorCollapseTarget = 0L,
+    rssPicks = 0L,
     postRatchetSectorial = FALSE,
     # Fuse / pool
     fuseInterval = 3L,
@@ -389,6 +395,7 @@ SearchControl <- function(
       sectorAcceptEqual = as.logical(sectorAcceptEqual),
       sectorMaxHits = as.integer(sectorMaxHits),
       sectorCollapseTarget = as.integer(sectorCollapseTarget),
+      rssPicks = as.integer(rssPicks),
       postRatchetSectorial = as.logical(postRatchetSectorial),
       fuseInterval = as.integer(fuseInterval),
       fuseAcceptEqual = as.logical(fuseAcceptEqual),
@@ -438,7 +445,7 @@ print.SearchControl <- function(x, ...) {
                      "cssRounds", "cssPartitions",
                      "sectorMinSize", "sectorMaxSize", "rasStarts",
                      "sectorAcceptEqual", "sectorMaxHits", "sectorCollapseTarget",
-                     "postRatchetSectorial"),
+                     "rssPicks", "postRatchetSectorial"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
