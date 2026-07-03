@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Work around ASAN shadow-memory clash (google/sanitizers#856)
-        run: sudo sysctl vm.mmap_rnd_bits=28
+        run: sudo sysctl vm.mmap_rnd_bits=8
 
       - name: Initialize ASan configuration
         run: |
@@ -84,4 +84,4 @@ jobs:
 
       - name: ASAN - memcheck ${{ matrix.config.test }}
         run: |
-          Rscript memcheck/${{ matrix.config.test }}.R
+          setarch "$(uname -m)" -R Rscript memcheck/${{ matrix.config.test }}.R
