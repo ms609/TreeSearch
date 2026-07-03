@@ -52,7 +52,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Work around ASAN shadow-memory clash (google/sanitizers#856)
-        run: sudo sysctl vm.mmap_rnd_bits=8
+        run: sudo sysctl vm.mmap_rnd_bits=28
 
       - name: Initialize ASan configuration
         run: |
