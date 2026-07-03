@@ -1488,6 +1488,8 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
     params.sector_max_hits = as<int>(ctrl["sectorMaxHits"]);
   if (ctrl.containsElementNamed("sectorCollapseTarget"))
     params.sector_collapse_target = as<int>(ctrl["sectorCollapseTarget"]);
+  if (ctrl.containsElementNamed("rssPicks"))
+    params.rss_picks_per_round = as<int>(ctrl["rssPicks"]);
 
   // Fuse / pool
   params.fuse_interval      = as<int>(ctrl["fuseInterval"]);

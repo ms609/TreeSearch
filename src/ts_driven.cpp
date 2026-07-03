@@ -239,6 +239,7 @@ ReplicateResult run_single_replicate(
       sp.ras_starts = params.ras_starts;  // Goloboff 1999 RSS re-solve (1 = polish)
       sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
       sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
+      sp.rss_picks_per_round = params.rss_picks_per_round;  // sequential picks/round (0=auto)
 
       // XSS: systematic partitioning
       sp.n_partitions = params.xss_partitions;
@@ -357,6 +358,7 @@ ReplicateResult run_single_replicate(
       sp.ras_starts = params.ras_starts;  // Goloboff 1999 RSS re-solve (1 = polish)
       sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
       sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
+      sp.rss_picks_per_round = params.rss_picks_per_round;  // sequential picks/round (0=auto)
 
       if (params.xss_rounds > 0) {
         sp.n_partitions = params.xss_partitions;
