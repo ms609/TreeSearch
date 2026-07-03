@@ -14,9 +14,29 @@ sectorial-escape only becomes a wall-clock win if it can escape cheaply enough t
 displace ratchet (66-83% of production wall). Config-first (existing knobs via the
 new `rssPicks` plumbing), ratchet/drift/xss/fuse OFF, from the identical TNT `mult` T0.
 
-## Result: NO — 0/4 datasets escape cheaper than ratchet
-`ratchet_ref` = default strategy, maxReplicates=1 (single ratchet start), same T0.
-Escape = score - start (more negative = better). Wall = median seconds.
+## First, the diagnostic result: the MECHANISM gap is CLOSED
+This thread was seeded by `tnt-outperformance-is-diagnostic`: from an identical T0,
+ours historically escaped **0** while TNT sectsch escaped +3..+11. That per-iteration
+gap is now GONE. Best-of-15 sectorial escape vs the TNT sectsch target:
+
+| dataset | TNT target | ours esc_best (was 0) | reaches target? |
+|---|---|---|---|
+| Zanol2014   | -13 | **-13** | yes |
+| Wortley2006 | -5  | **-15** | yes (overshoots) |
+| Zhu2013     | -8  | **-11** | yes (beats) |
+| Giles2015   | -4  | **-5**  | yes (beats) |
+
+So ours now escapes too — the wagner-fixed RAS sector rebuild (`93071cae`) + rasStarts>=3
+supply the barrier-crossing move the audit chased under the wrong mechanism (D1). The
+diagnostic clue is RESOLVED: not a missing capability. NB reachable (best-of-15), NOT
+reliable (Zanol median only -7) — closure is of the mechanism, not of variance.
+
+## Then, the wall-clock question: is it a LEVER? NO — 0/4 escape cheaper than ratchet
+This is NOT ROI-gating the TNT win (that win is resolved above); it asks whether the
+now-working sectorial escape can DISPLACE ratchet on wall-clock. Lead on Mcand
+(machine-portable, per `policy-in-replicates-not-seconds`); competitive-end walls are
+sub-second where R/setup overhead swamps ratios. `ratchet_ref` = default strategy,
+maxReplicates=1 (single ratchet start), same T0. Escape = score - start.
 
 | dataset | target | ratchet_ref (esc @ wall) | best sectorial at <=ratchet wall | best sectorial ANY wall |
 |---|---|---|---|---|
@@ -40,19 +60,29 @@ Escape = score - start (more negative = better). Wall = median seconds.
 - **Picks (rssPicks) and rounds buy escape only by buying budget** (monotone more
   candidates -> more escape, at proportional wall). This is the budget axis, not a
   distinct geometry lever — consistent with the freeze-big budget-confound finding.
-- **Nothing reaches the TNT sectsch target reliably at competitive wall** (Zanol target
-  -13; best sectorial median -7 at 6x wall; even best-of-15 only -13/-14 on lucky draws).
+- **Escape-per-candidate settles it (machine-portable).** Zanol (hard target): ratchet
+  esc_med -8 @ 6.0 Mcand = ~-1.33 steps/Mcand; best sectorial -7 @ 27.9 Mcand = ~-0.25
+  steps/Mcand. Ratchet is ~5x more candidate-efficient at escaping — the same ordering
+  the (noisier) sub-second wall ratios show, on the axis that doesn't drift with hardware.
 
-## Verdict
-The selectem sectorial escape is REAL but Pareto-dominated by ratchet on wall-clock: it
-cannot escape cheaper than the ratchet it would replace on any of the 4 datasets, so it
-is not a wall-clock lever and cannot displace ratchet. The residual observation — ras=3
-sectorial is more RELIABLE (lower variance) than a single ratchet start on Zhu/Giles — is
-a variance/reliability point on the BUDGET axis (multi-start vs single-start), which is
-goofy-cannon's territory, not a distinct algorithmic win. The true walk-up-selection src
-routine is NOT justified: the config-first proxy already captures large-band+collapse and
-still loses on wall by 2-6x; even a perfect walk-up would have to erase that deficit,
-which nothing here suggests. THREAD RETIRES to the budget axis.
+## Verdict: diagnostic clue RESOLVED; wall-lever RULED OUT; thread retires
+Two separate conclusions, both clean:
+1. **Mechanism (the diagnostic obligation): RESOLVED.** Ours now escapes to the TNT
+   sectsch targets (best-of-15, all 4 datasets) where it historically escaped 0. The
+   wagner-fix + rasStarts>=3 rebuild is the barrier-crosser. No missing capability remains.
+2. **Wall-clock lever: RULED OUT.** The now-working escape is Pareto-dominated by ratchet
+   (~5x less candidate-efficient on the hard Zanol target; loses on 3/4, needs 2x wall on
+   the 4th), so it cannot displace ratchet — not a time-to-optimum win.
+
+The walk-up-selection src routine is NOT justified: the config proxy already REACHES the
+escape targets, so the limiter is wall/candidate-efficiency, not sampling geometry —
+walk-up would only matter if far more candidate-efficient, and ratchet already crushes
+sectorial on escape-per-candidate. Leave it un-written.
+
+HANDOFF (one line, goofy-cannon's call): rasStarts>=3 sectorial is lower-variance than a
+SINGLE ratchet start on ratchet-unreliable datasets (Zhu median -6 vs ratchet -1) — a
+single-vs-multi-start BUDGET/recipe question, not a distinct geometry lever. Worth a
+thorough-recipe slot iff the recipe work wants it; not pursued here.
 
 Plumbing kept: `rssPicks` SearchControl knob (exposes existing SectorParams field,
 default 0 = byte-identical) — reusable for any future sequential-picks experiment.
