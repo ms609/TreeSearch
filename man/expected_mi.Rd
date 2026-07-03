@@ -27,7 +27,7 @@ small or unbalanced partitions, where raw mutual information is appreciably
 inflated by chance agreement.
 }
 \details{
-The value is computed analytically (Vinh, Epps & Bailey 2010), summing over
+The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
 the hypergeometric distribution of cell overlaps, and is returned in bits
 (logarithms to base two).
 }
@@ -36,10 +36,7 @@ the hypergeometric distribution of cell overlaps, and is returned in bits
 expected_mi(c(3L, 4L), c(2L, 5L))
 }
 \references{
-Vinh NX, Epps J, Bailey J (2010). "Information theoretic measures
-for clusterings comparison: variants, properties, normalization and
-correction for chance." \emph{Journal of Machine Learning Research}, \emph{11},
-2837--2854.
+\insertAllCited{}
 }
 \seealso{
 \code{\link{SiteConcordance}}

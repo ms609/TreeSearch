@@ -31,7 +31,7 @@ MaddisonSlatkin_clear_cache <- function() {
 #' small or unbalanced partitions, where raw mutual information is appreciably
 #' inflated by chance agreement.
 #'
-#' The value is computed analytically (Vinh, Epps & Bailey 2010), summing over
+#' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
 #' the hypergeometric distribution of cell overlaps, and is returned in bits
 #' (logarithms to base two).
 #'
@@ -40,10 +40,7 @@ MaddisonSlatkin_clear_cache <- function() {
 #' @param nj Integer vector giving the block sizes of the second partition
 #'   (also summing to `N`).
 #' @return The expected mutual information, in bits.
-#' @references Vinh NX, Epps J, Bailey J (2010). "Information theoretic measures
-#'   for clusterings comparison: variants, properties, normalization and
-#'   correction for chance." _Journal of Machine Learning Research_, *11*,
-#'   2837--2854.
+#' @references \insertAllCited{}
 #' @seealso [`SiteConcordance`]
 #' @examples
 #' # Expected MI between a 3|4 split and a 2|5 split of 7 items:
