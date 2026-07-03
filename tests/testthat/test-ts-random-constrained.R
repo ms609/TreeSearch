@@ -151,17 +151,20 @@ test_that("RANDOM_TREE with IW scoring + constraints", {
   }
 })
 
-## T-329: an impossible (non-laminar) constraint must error cleanly rather
-## than reach random_constrained_tree(), which cannot represent splits that
-## no tree can display simultaneously.
-test_that("impossible (non-laminar) constraint errors cleanly", {
+## T-329: a genuinely incompatible constraint must error cleanly rather than
+## reach random_constrained_tree(), which cannot represent splits that no tree
+## can display simultaneously.  Incompatibility is the four-gamete condition
+## (all four taxon groupings co-occur), NOT mere non-laminarity: non-laminar
+## splits whose "0" sides are disjoint (e.g. {t1,t2,t3} & {t3,t4,t5}, which
+## coexist on ((t1,t2),t3,(t4,t5))) ARE displayable and must be accepted.
+test_that("impossible (four-gamete-incompatible) constraint errors cleanly", {
   ds5 <- make_ds5()
 
-  # Split A = {t1,t2,t3}, split B = {t3,t4,t5}: overlap {t3} is neither
-  # empty nor equal to either split, so A and B cannot both appear on a
-  # tree.
+  # Split A = {t1,t2,t3}, split B = {t2,t3,t4}: every taxon grouping
+  # (A1&B1={t2,t3}, A1&B0={t1}, A0&B1={t4}, A0&B0={t5}) is non-empty, so the
+  # four-gamete test fails and no tree can display both splits at once.
   consMat <- matrix(c("1", "1", "1", "0", "0",
-                       "0", "0", "1", "1", "1"),
+                       "0", "1", "1", "1", "0"),
                      nrow = 5, dimnames = list(paste0("t", 1:5), NULL))
   cons <- phangorn::phyDat(consMat, type = "USER", levels = c("0", "1"))
 
@@ -174,6 +177,21 @@ test_that("impossible (non-laminar) constraint errors cleanly", {
                        maxReplicates = 1L, verbosity = 0L),
     "impossible"
   )
+})
+
+## T-329 (regression): a non-laminar constraint whose splits are nevertheless
+## four-gamete-COMPATIBLE (their "0" sides are disjoint) must be ACCEPTED.  The
+## original laminar-only check wrongly rejected {t1,t2,t3} & {t3,t4,t5}, which
+## coexist on the ordinary unrooted tree ((t1,t2),t3,(t4,t5)).
+test_that("non-laminar but compatible constraint is accepted", {
+  ds5 <- make_ds5()
+
+  consMat <- matrix(c("1", "1", "1", "0", "0",
+                       "0", "0", "1", "1", "1"),
+                     nrow = 5, dimnames = list(paste0("t", 1:5), NULL))
+  cons <- phangorn::phyDat(consMat, type = "USER", levels = c("0", "1"))
+
+  expect_silent(TreeSearch:::.PrepareConstraint(cons, ds5))
 })
 
 ## T-329 (defensive fix): random_constrained_tree() must never inject a
