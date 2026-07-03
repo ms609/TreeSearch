@@ -1068,7 +1068,7 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
 
     // Child splits whose parent is this split
     for (int j = 0; j < i; ++j) {
-      if (parent_split[j] == i) {
+      if (parent_split[j] == i && split_root[j] >= 0) {
         items.push_back(split_root[j]);
       }
     }

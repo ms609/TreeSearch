@@ -110,6 +110,25 @@
   consSplits <- consSplits[keep, , drop = FALSE]
   if (nrow(consSplits) == 0L) return(list())
 
+  # Constraint splits must be pairwise laminar (nested or disjoint) for any
+  # tree to be able to display all of them simultaneously: two splits A, B
+  # are compatible iff A and B are disjoint, or one is a subset of the other.
+  nSplits <- nrow(consSplits)
+  if (nSplits > 1L) {
+    for (i in seq_len(nSplits - 1L)) {
+      a <- consSplits[i, ] == 1L
+      aSize <- sum(a)
+      for (j in seq(i + 1L, nSplits)) {
+        b <- consSplits[j, ] == 1L
+        overlap <- sum(a & b)
+        if (overlap != 0L && overlap != aSize && overlap != sum(b)) {
+          stop("Constraint is impossible to satisfy: splits ", i, " and ", j,
+               " are incompatible (neither nested nor disjoint)")
+        }
+      }
+    }
+  }
+
   consWeight <- attr(constraint, "weight")
   consExpectedScore <- sum(
     MinimumLength(constraint, compress = TRUE) * consWeight
