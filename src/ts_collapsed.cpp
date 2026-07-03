@@ -11,9 +11,16 @@ void compute_collapsed_flags(
 
   collapsed.assign(tree.n_node, 0);
 
-  // If all characters were simplified away (total_words == 0), there's
-  // nothing to evaluate — leave all edges uncollapsed.
-  if (tree.total_words == 0) return;
+  // If all characters were simplified away (total_words == 0), every binary
+  // resolution ties at the same score: no internal branch carries support,
+  // so the correct collapsed answer is a star. Flag every internal,
+  // non-root node's edge as collapsible (terminal/pendant edges never
+  // collapse) — including root's children, since without them the tree
+  // would stay partially resolved instead of collapsing to the star.
+  if (tree.total_words == 0) {
+    for (int c = tree.n_tip + 1; c < tree.n_node; ++c) collapsed[c] = 1;
+    return;
+  }
 
   // Detect whether any block has inapplicable characters.
   bool has_na = false;
@@ -120,7 +127,10 @@ void compute_collapsed_flags_aggressive(
   if (has_na) { compute_collapsed_flags(tree, ds, collapsed); return; }
 
   collapsed.assign(tree.n_node, 0);
-  if (tree.total_words == 0) return;
+  if (tree.total_words == 0) {
+    for (int c = tree.n_tip + 1; c < tree.n_node; ++c) collapsed[c] = 1;
+    return;
+  }
 
   const int nb = ds.n_blocks;
   const int tw = tree.total_words;
