@@ -134,7 +134,10 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
     ############################################################################
 
     UpdateNTree <- function(n) {
-      if (is.null(n) || length(n) == 0) return(FALSE)
+      # Guard NA too: clearing the nTree numericInput yields NA, so the
+      # `n > length(r$allTrees)` test below would evaluate `if (NA)`
+      # ("missing value where TRUE/FALSE needed") inside observe(FetchNTree()).
+      if (is.null(n) || length(n) == 0 || is.na(n)) return(FALSE)
       if (n > length(r$allTrees)) {
         r$oldNTree <- n
         n <- length(r$allTrees)
