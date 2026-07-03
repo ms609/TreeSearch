@@ -1,0 +1,65 @@
+"dataset","arm","cfg","n","start","tnt_sect","esc_med","esc_best","wall_med","Mcand_med"
+"Giles2015","baseline","baseline r=1",15,675,671,0,-3,0.145,2.32
+"Wortley2006","baseline","baseline r=1",15,487,482,-7,-15,0.098,1.02
+"Zanol2014","baseline","baseline r=1",15,1275,1262,-2,-9,0.452,3.45
+"Zhu2013","baseline","baseline r=1",15,635,627,-1,-11,0.201,3.06
+"Giles2015","baseline","baseline r=16",15,675,671,0,-4,0.34,5.67
+"Wortley2006","baseline","baseline r=16",15,487,482,-6,-15,0.104,1.17
+"Zanol2014","baseline","baseline r=16",15,1275,1262,-4,-13,0.784,7.94
+"Zhu2013","baseline","baseline r=16",15,635,627,-1,-6,0.431,7.02
+"Giles2015","baseline","baseline r=4",15,675,671,-1,-5,0.196,3.22
+"Wortley2006","baseline","baseline r=4",15,487,482,-6,-14,0.082,0.82
+"Zanol2014","baseline","baseline r=4",15,1275,1262,-3,-11,0.424,3.66
+"Zhu2013","baseline","baseline r=4",15,635,627,0,-3,0.194,2.84
+"Giles2015","ratchet_ref","ratchet_ref",15,675,671,-3,-5,0.349,6.28
+"Wortley2006","ratchet_ref","ratchet_ref",15,487,482,-8,-15,0.093,1.03
+"Zanol2014","ratchet_ref","ratchet_ref",15,1275,1262,-8,-14,0.535,5.96
+"Zhu2013","ratchet_ref","ratchet_ref",15,635,627,-1,-10,0.317,5.4
+"Giles2015","selectem","selectem pk=20 ras=1 r=1",15,675,671,0,-4,0.187,2.71
+"Wortley2006","selectem","selectem pk=20 ras=1 r=1",15,487,482,-6,-15,0.075,0.71
+"Zanol2014","selectem","selectem pk=20 ras=1 r=1",15,1275,1262,-1,-11,0.391,3.68
+"Zhu2013","selectem","selectem pk=20 ras=1 r=1",15,635,627,0,-3,0.198,3.08
+"Giles2015","selectem","selectem pk=20 ras=1 r=16",15,675,671,-1,-5,0.953,14.29
+"Wortley2006","selectem","selectem pk=20 ras=1 r=16",15,487,482,-6,-14,0.141,1.21
+"Zanol2014","selectem","selectem pk=20 ras=1 r=16",15,1275,1262,-2,-11,1.554,14.57
+"Zhu2013","selectem","selectem pk=20 ras=1 r=16",15,635,627,-1,-7,0.929,13.78
+"Giles2015","selectem","selectem pk=20 ras=1 r=4",15,675,671,0,-3,0.321,4.24
+"Wortley2006","selectem","selectem pk=20 ras=1 r=4",15,487,482,-7,-15,0.103,1.18
+"Zanol2014","selectem","selectem pk=20 ras=1 r=4",15,1275,1262,-3,-9,0.652,5.68
+"Zhu2013","selectem","selectem pk=20 ras=1 r=4",15,635,627,-1,-5,0.322,4.54
+"Giles2015","selectem","selectem pk=20 ras=3 r=1",15,675,671,-3,-5,0.604,7.57
+"Wortley2006","selectem","selectem pk=20 ras=3 r=1",15,487,482,-7,-15,0.162,1.99
+"Zanol2014","selectem","selectem pk=20 ras=3 r=1",15,1275,1262,-4,-13,1.028,8.57
+"Zhu2013","selectem","selectem pk=20 ras=3 r=1",15,635,627,-6,-11,0.637,8.6
+"Giles2015","selectem","selectem pk=20 ras=3 r=16",15,675,671,-3,-5,7.981,99.96
+"Wortley2006","selectem","selectem pk=20 ras=3 r=16",15,487,482,-7,-15,0.892,7.16
+"Zanol2014","selectem","selectem pk=20 ras=3 r=16",15,1275,1262,-4,-13,10.385,84.72
+"Zhu2013","selectem","selectem pk=20 ras=3 r=16",15,635,627,-6,-11,7.47,95.94
+"Giles2015","selectem","selectem pk=20 ras=3 r=4",15,675,671,-3,-5,2.091,25.7
+"Wortley2006","selectem","selectem pk=20 ras=3 r=4",15,487,482,-7,-14,0.266,2.05
+"Zanol2014","selectem","selectem pk=20 ras=3 r=4",15,1275,1262,-5,-13,2.802,23.58
+"Zhu2013","selectem","selectem pk=20 ras=3 r=4",15,635,627,-6,-11,1.912,24.79
+"Giles2015","selectem","selectem pk=5 ras=1 r=1",15,675,671,0,-3,0.146,2.4
+"Wortley2006","selectem","selectem pk=5 ras=1 r=1",15,487,482,-6,-14,0.085,1.06
+"Zanol2014","selectem","selectem pk=5 ras=1 r=1",15,1275,1262,-2,-9,0.454,3.54
+"Zhu2013","selectem","selectem pk=5 ras=1 r=1",15,635,627,-1,-11,0.205,3.12
+"Giles2015","selectem","selectem pk=5 ras=1 r=16",15,675,671,0,-4,0.449,7.24
+"Wortley2006","selectem","selectem pk=5 ras=1 r=16",15,487,482,-6,-14,0.103,1.14
+"Zanol2014","selectem","selectem pk=5 ras=1 r=16",15,1275,1262,-4,-13,0.94,9.51
+"Zhu2013","selectem","selectem pk=5 ras=1 r=16",15,635,627,-1,-6,0.528,8.36
+"Giles2015","selectem","selectem pk=5 ras=1 r=4",15,675,671,-1,-5,0.229,3.62
+"Wortley2006","selectem","selectem pk=5 ras=1 r=4",15,487,482,-6,-14,0.129,1.55
+"Zanol2014","selectem","selectem pk=5 ras=1 r=4",15,1275,1262,-3,-11,0.466,4.06
+"Zhu2013","selectem","selectem pk=5 ras=1 r=4",15,635,627,0,-3,0.217,3.16
+"Giles2015","selectem","selectem pk=5 ras=3 r=1",15,675,671,-3,-5,0.265,3.47
+"Wortley2006","selectem","selectem pk=5 ras=3 r=1",15,487,482,-6,-15,0.082,0.8
+"Zanol2014","selectem","selectem pk=5 ras=3 r=1",15,1275,1262,-3,-11,0.49,4.36
+"Zhu2013","selectem","selectem pk=5 ras=3 r=1",15,635,627,-1,-10,0.282,3.87
+"Giles2015","selectem","selectem pk=5 ras=3 r=16",15,675,671,-4,-5,2.378,31.23
+"Wortley2006","selectem","selectem pk=5 ras=3 r=16",15,487,482,-7,-14,0.284,2.35
+"Zanol2014","selectem","selectem pk=5 ras=3 r=16",15,1275,1262,-7,-13,3.2,27.92
+"Zhu2013","selectem","selectem pk=5 ras=3 r=16",15,635,627,-6,-10,2.101,28.83
+"Giles2015","selectem","selectem pk=5 ras=3 r=4",15,675,671,-4,-5,0.643,8.75
+"Wortley2006","selectem","selectem pk=5 ras=3 r=4",15,487,482,-6,-14,0.107,0.93
+"Zanol2014","selectem","selectem pk=5 ras=3 r=4",15,1275,1262,-2,-13,0.992,8.84
+"Zhu2013","selectem","selectem pk=5 ras=3 r=4",15,635,627,-5,-11,0.942,13.26
