@@ -163,6 +163,41 @@ test_that("Prune-reinsert with outer cycles divides evenly", {
   validate_result(result, 20L)
 })
 
+# ---------- Regime coverage: NA (inapplicable) + IW (implied weights) ----------
+# The exact-directional insertion scorer in expand_and_reinsert runs on NA and IW
+# data too (prune_reinsert_search only early-returns for PROFILE/HSJ/XFORM). It is a
+# ranking-only construction heuristic mirroring the Wagner builder; the accepted tree
+# is gated by a regime-correct score_tree() (strict-improve + revert), so the REPORTED
+# best_score must equal an independent length recompute of the RETURNED tree in every
+# regime. Closes the coverage gap flagged in review of the exact-directional port:
+# no prior test drove this path on NA or IW data or asserted score self-consistency.
+
+data(inapplicable.phyData, package = "TreeSearch")
+na_dataset <- inapplicable.phyData[["Vinther2008"]]
+na_ds <- make_ts_data(na_dataset)
+na_ntip <- length(na_dataset)
+
+test_that("Prune-reinsert on NA (inapplicable) data: reported score == recomputed length", {
+  set.seed(4242)
+  result <- ts_driven_pri(na_ds, pruneReinsertCycles = 3L, pruneReinsertDrop = 0.15,
+                          maxReplicates = 3L, ratchetCycles = 2L)
+  validate_result(result, na_ntip)
+  expect_true(result$best_score > 0 && result$best_score < Inf)
+  # score_tree gate must make the reported score the true length of the returned tree
+  recomputed <- ts_score(list(edge = result$trees[[1]]), na_ds)
+  expect_equal(result$best_score, recomputed)
+})
+
+test_that("Prune-reinsert on IW (implied weights) data: reported score == recomputed length", {
+  set.seed(1337)
+  result <- ts_driven_pri(na_ds, pruneReinsertCycles = 3L, pruneReinsertDrop = 0.15,
+                          maxReplicates = 3L, ratchetCycles = 2L, concavity = 3.0)
+  validate_result(result, na_ntip)
+  expect_true(result$best_score > 0 && result$best_score < Inf)
+  recomputed <- ts_score(list(edge = result$trees[[1]]), na_ds, concavity = 3.0)
+  expect_equal(result$best_score, recomputed)
+})
+
 test_that("SearchControl accepts prune-reinsert parameters", {
   ctrl <- TreeSearch::SearchControl(
     pruneReinsertCycles = 3L,
