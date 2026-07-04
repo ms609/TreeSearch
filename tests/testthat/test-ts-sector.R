@@ -247,3 +247,84 @@ test_that("sector_diag with NA characters returns consistent scores", {
   expect_true(diag$clade_size >= 2)
   expect_true(diag$n_sector_tips == diag$clade_size + 1L)
 })
+
+# ===== All-uninformative EW data: zero Fitch words (regression) =============
+# When every equal-weights character is constant or an autapomorphy (no state
+# shared by >1 taxon), simplify_patterns removes every character, leaving
+# DataSet::total_words == 0 and empty per-word state vectors (tip_states,
+# tree.prelim, edge_set).  Several sectorial code paths took the address of
+# element 0 of these empty vectors -- undefined behaviour that aborts under
+# hardened libstdc++ assertions / ASan -- including build_ras_sector() (the
+# RAS-restart start-tree builder, only reached when rasStarts > 1) and
+# compute_from_above_for_sector()/build_reduced_dataset_collapsed() (reached
+# via ordinary rss_search/xss_search).  40 tips clears the sectorMinSize*2
+# gate (default sectorMinSize = 6) so a sector is always extracted.
+
+make_uninformative_ew <- function(n, n_char = 5L, seed) {
+  set.seed(seed)
+  mkchar <- function() {
+    states <- rep(1L, n)
+    # 6 tips get unique singleton states (2..7): no state is shared by more
+    # than one taxon, so every character is parsimony-uninformative.
+    states[sample(seq_len(n), 6L)] <- seq(2L, 7L)
+    states
+  }
+  mat <- vapply(seq_len(n_char), function(i) mkchar(), integer(n))
+  rownames(mat) <- paste0("t", seq_len(n))
+  MatrixToPhyDat(mat)
+}
+
+test_that("Sectorial search handles all-uninformative EW data (zero Fitch words)", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("build_ras_sector handles zero Fitch words (rasStarts > 1)", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(rasStarts = 3L)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("build_reduced_dataset_collapsed handles zero Fitch words", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(sectorCollapseTarget = 6L)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("expand_and_reinsert (prune-reinsert) handles zero Fitch words", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(pruneReinsertCycles = 1L)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("stochastic_tbr_phase (annealing) handles zero Fitch words", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(annealCycles = 1L, annealPhases = 2L,
+                         annealTStart = 5, annealTEnd = 0)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})

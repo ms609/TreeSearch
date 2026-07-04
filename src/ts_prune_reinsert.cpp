@@ -323,11 +323,16 @@ DataSet build_reduced_dataset(const DataSet& ds,
   // Subset tip_states
   int tw = ds.total_words;
   red.tip_states.resize(static_cast<size_t>(m) * tw);
-  for (int i = 0; i < m; ++i) {
-    int orig = tip_map[i];
-    std::memcpy(&red.tip_states[static_cast<size_t>(i) * tw],
-                &ds.tip_states[static_cast<size_t>(orig) * tw],
-                tw * sizeof(uint64_t));
+  // tw == 0 (zero Fitch blocks, e.g. every character constant/autapomorphic)
+  // leaves ds.tip_states empty; skip the memcpy rather than take the address
+  // of element 0 of an empty vector (undefined behaviour).
+  if (tw > 0) {
+    for (int i = 0; i < m; ++i) {
+      int orig = tip_map[i];
+      std::memcpy(&red.tip_states[static_cast<size_t>(i) * tw],
+                  &ds.tip_states[static_cast<size_t>(orig) * tw],
+                  tw * sizeof(uint64_t));
+    }
   }
 
   return red;
@@ -428,18 +433,27 @@ void expand_and_reinsert(
   thread_local static int sa_delta_max = 0;
 #endif
 
+  // No Fitch words (e.g. every character constant/autapomorphic under equal
+  // weights): every insertion cost is identically zero.  Skip the edge-set
+  // precompute and indirect length evaluation, which would otherwise take
+  // the address of element 0 of an empty vector (undefined behaviour;
+  // aborts under _GLIBCXX_ASSERTIONS) -- mirrors wagner_tree's guard.
+  const bool have_words = tw > 0;
   for (int tip : reinsert_order) {
     int new_internal = next_internal++;
 
-    const uint64_t* tip_prelim =
-        &ds.tip_states[static_cast<size_t>(tip) * tw];
+    const uint64_t* tip_prelim = have_words
+        ? &ds.tip_states[static_cast<size_t>(tip) * tw]
+        : nullptr;
 
     // Exact insertion cost via directional edge sets: edge_set[D] =
     // combine(prelim[D], up[D]).  Replaces the union-of-finals approximation
     // (final_[node] | final_[child]) that undercut insertion cost (~+30% Wagner
     // trees); mirrors the main Wagner builder.  prelim is current here
     // (wagner_incremental_rescore maintains both prelim and final_).
-    compute_insertion_edge_sets(tree, ds, pr_edge_set, pr_up, pr_pre);
+    if (have_words) {
+      compute_insertion_edge_sets(tree, ds, pr_edge_set, pr_up, pr_pre);
+    }
 
     // Find best insertion edge via DFS from root
     int best_above = -1, best_below = -1;
@@ -462,8 +476,11 @@ void expand_and_reinsert(
       if (lc < 0 || rc < 0) continue;
 
       // Evaluate edge (node, lc)
-      int extra = fitch_indirect_length_cached(
-          tip_prelim, &pr_edge_set[static_cast<size_t>(lc) * tw], ds, best_extra);
+      int extra = have_words
+          ? fitch_indirect_length_cached(
+                tip_prelim, &pr_edge_set[static_cast<size_t>(lc) * tw], ds,
+                best_extra)
+          : 0;
       if (extra < best_extra) {
         best_extra = extra;
         best_above = node;
@@ -471,8 +488,11 @@ void expand_and_reinsert(
       }
 
       // Evaluate edge (node, rc)
-      extra = fitch_indirect_length_cached(
-          tip_prelim, &pr_edge_set[static_cast<size_t>(rc) * tw], ds, best_extra);
+      extra = have_words
+          ? fitch_indirect_length_cached(
+                tip_prelim, &pr_edge_set[static_cast<size_t>(rc) * tw], ds,
+                best_extra)
+          : 0;
       if (extra < best_extra) {
         best_extra = extra;
         best_above = node;
@@ -496,7 +516,7 @@ void expand_and_reinsert(
     // is fully binary from root, so compute_insertion_edge_sets is exact and
     // safe.  Tally Δ = exact_cost(E_bounded) − min_E exact_cost(E), per the
     // advisor: exact-suboptimality of the bounded choice, not raw edge flips.
-    if (best_below >= 0 && best_below != n_tip) {
+    if (have_words && best_below >= 0 && best_below != n_tip) {
       compute_insertion_edge_sets(tree, ds, sa_edge_set, sa_up, sa_pre);
       int exact_chosen = fitch_indirect_length_cached(
           tip_prelim, &sa_edge_set[static_cast<size_t>(best_below) * tw], ds, INT_MAX);

@@ -139,6 +139,11 @@ TemperResult stochastic_tbr_phase(
 
   double score = temper_full_rescore(tree, ds);
   double best_score = score;
+  // No informative characters: all trees have the same score.  Skip the
+  // per-word clip/regraft scoring below, which would otherwise take the
+  // address of element 0 of the (empty, since total_words == 0) tree.prelim
+  // vector -- undefined behaviour (aborts under _GLIBCXX_ASSERTIONS).
+  if (ds.total_words == 0) return {best_score, score, 0, 0, 0};
   const bool use_iw = std::isfinite(ds.concavity);
   const double eps = use_iw ? 1e-10 : 0.0;
   const double temperature = params.temperature;
