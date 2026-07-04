@@ -893,7 +893,6 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   const bool ev_incr_ok = ev_weighted || ds.scoring_mode == ScoringMode::EW;
   const double na_incr_tol = ev_weighted ? 1e-6 : 0.5;
   std::vector<int> incr_char_steps;
-  long long na_incr_n = 0, na_incr_ok = 0;
 
   tree.build_postorder();
   best_score = full_rescore(tree, ds);   // sync to the current (converged) tree
@@ -1001,13 +1000,11 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
           }
           if (tree.prealloc_undo) tree.prealloc_undo->clear();
           else tree.clip_undo_stack.clear();
-          ++na_incr_n;
           s = full_rescore(tree, ds);                             // authoritative
           if (std::fabs(s_incr - s) > na_incr_tol) {
             Rcpp::stop("TS_NA_INCR_AUDIT mismatch clip=%d ri=%d below=%d rp=%d rc=%d "
                        "incr=%.6f full=%.6f", clip_node, ri, below, rp, rc, s_incr, s);
           }
-          ++na_incr_ok;
         } else if (na_incr && ev_incr_ok) {
           // FAST incremental path: 3-seed dirty rescore is the decision score.
           // State stays valid on accept; on reject it is undone below (restore_
@@ -1051,10 +1048,6 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
     for (int nd : marked) in_sub[nd] = 0;
     if (found) return true;
   }
-
-  if (na_incr_audit && na_incr_n > 0)
-    REprintf("NA_INCR_AUDIT: %lld/%lld candidates byte-matched full_rescore\n",
-             na_incr_ok, na_incr_n);
 
   restore_topology(tree, snap);               // clip loop found no improver
   tree.build_postorder();
