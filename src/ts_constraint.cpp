@@ -571,6 +571,76 @@ void find_maximal_subtrees(const TreeState& tree, int search_root,
   }
 }
 
+// Full structural validity of a rooted binary TreeState (tips 0..n_tip-1,
+// internal n_tip..2*n_tip-2, root == n_tip).  Returns true iff the tree is a
+// well-formed arborescence AND parent[] is consistent with left/right:
+//   (1) left/right slots in range, left != right;
+//   (2) in-degree via left/right is exactly 1 for every non-root node and 0
+//       for the root (no double-reference, no orphan);
+//   (3) a DFS from the root over left/right visits every node exactly once —
+//       acyclic AND fully connected (catches a disjoint in-degree-1 cycle,
+//       which the in-degree pass alone cannot);
+//   (4) parent[root] == root and parent[] is the exact inverse of left/right,
+//       so a parent-ASCENDING consumer (reroot_at_tip's
+//       `while (cur != root) cur = parent[cur]`, ts_tbr.cpp) can neither loop
+//       nor wander, and the next topology_spr's `parent[clip]` read is sound.
+// O(n).  This is the complete check the T-327 backstop only approximated:
+// build_postorder counts only reachable INTERNAL nodes, so a net-zero
+// corruption (one node double-referenced +1, one orphaned -1 — topology_spr's
+// root-child case) lands on exactly n_internal and slips a postorder.size()
+// test.  Exhaustively characterised in dev/red-team/heavy-tests/impose_validity/.
+bool structurally_valid(const TreeState& tree) {
+  const int nt = tree.n_tip, ni = tree.n_internal, nn = tree.n_node,
+            root = nt;
+  if (static_cast<int>(tree.left.size())   != ni) return false;
+  if (static_cast<int>(tree.right.size())  != ni) return false;
+  if (static_cast<int>(tree.parent.size()) != nn) return false;
+
+  // (1) child slots in range and distinct.
+  for (int i = 0; i < ni; ++i) {
+    const int l = tree.left[i], r = tree.right[i];
+    if (l < 0 || l >= nn || r < 0 || r >= nn) return false;
+    if (l == r) return false;
+  }
+
+  // (2) in-degree: exactly one parent per non-root node, none for the root.
+  std::vector<int> indeg(nn, 0);
+  for (int i = 0; i < ni; ++i) { ++indeg[tree.left[i]]; ++indeg[tree.right[i]]; }
+  if (indeg[root] != 0) return false;
+  for (int v = 0; v < nn; ++v) {
+    if (v != root && indeg[v] != 1) return false;
+  }
+
+  // (3) root DFS reaches every node exactly once (acyclic + connected).
+  std::vector<char> seen(nn, 0);
+  std::vector<int> stack;
+  stack.reserve(nn);
+  stack.push_back(root);
+  int visited = 0;
+  while (!stack.empty()) {
+    const int node = stack.back();
+    stack.pop_back();
+    if (seen[node]) return false;           // revisit => double-reference/cycle
+    seen[node] = 1;
+    ++visited;
+    if (node >= nt) {
+      const int i = node - nt;
+      stack.push_back(tree.left[i]);
+      stack.push_back(tree.right[i]);
+    }
+  }
+  if (visited != nn) return false;          // orphaned node(s)
+
+  // (4) parent[] is the exact inverse of left/right.
+  if (tree.parent[root] != root) return false;
+  for (int i = 0; i < ni; ++i) {
+    const int node = nt + i;
+    if (tree.parent[tree.left[i]]  != node) return false;
+    if (tree.parent[tree.right[i]] != node) return false;
+  }
+  return true;
+}
+
 } // anonymous namespace
 
 
@@ -731,14 +801,25 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
       std::vector<int> save_left = tree.left;
       std::vector<int> save_right = tree.right;
       topology_spr(tree, M, above, below);
-      tree.build_postorder();  // size-capped; a cycle yields != n_internal
-      if (static_cast<int>(tree.postorder.size()) != tree.n_internal) {
+      // T-333: validate full structure, not a node count.  topology_spr's
+      // root-child case can emit a net-zero corruption (one internal node
+      // double-referenced, one orphaned) that lands on exactly n_internal and
+      // would slip a postorder.size() != n_internal test — yet still feed a
+      // cyclic/dangling tree to the next reanchor DFS and to reroot_at_tip's
+      // parent walk.  structurally_valid() is O(n), the same complexity class
+      // as the build_postorder it replaces here, and executes ONLY on this
+      // constraint-repair path (never in unconstrained search); validating
+      // before the rebuild keeps build_postorder off corrupt trees entirely.
+      // (TreeState::build_postorder keeps its own > n_internal cap as the
+      // bad_alloc backstop for its ~96 other, hot-path call sites.)
+      if (!structurally_valid(tree)) {
         tree.parent = std::move(save_parent);
         tree.left = std::move(save_left);
         tree.right = std::move(save_right);
-        tree.build_postorder();
+        tree.build_postorder();  // restore postorder for the (valid) saved tree
         return false;
       }
+      tree.build_postorder();    // valid: refresh postorder for downstream use
       return true;
     };
 

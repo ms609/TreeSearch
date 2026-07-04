@@ -360,6 +360,10 @@ struct Witness {
 static std::vector<Witness> g_witnesses;
 static long long g_probes_A = 0, g_probes_C = 0;
 static long long g_parent_cycle = 0;   // accepted-invalid trees with a parent[] cycle (ALL passes)
+static long long g_guard_mismatch = 0; // T-333: probes where the REAL production guard
+                                       // (ts::structurally_valid) disagrees with the harness's
+                                       // independent full_validity() — MUST stay 0 (proves the
+                                       // shipped guard is a complete validator, not a size check).
 static long long g_max_movelist = 0;   // max (|move_out_roots|+|move_in_roots|) seen
 
 static void print_witness(const Witness& w) {
@@ -408,6 +412,12 @@ static void probe(TreeState& T, int clip, int above, int below,
   T.build_postorder();
   const bool accept = (static_cast<int>(T.postorder.size()) == T.n_internal);
   const bool valid  = full_validity(T);
+
+  // T-333 regression lock: the SHIPPED guard must agree with independent
+  // ground truth on every enumerated tree.  Before the fix the guard was
+  // `accept` (size only), which diverged on the net-zero witnesses below;
+  // after the fix it is ts::structurally_valid, which must equal full_validity.
+  if (ts::structurally_valid(T) != valid) ++g_guard_mismatch;
 
   if (accept && !valid) {
     Witness w;
@@ -906,6 +916,14 @@ int main(int argc, char** argv) {
               "  (all TYPE-2 => build_postorder DOES fully validate left/right structure;\n"
               "   the residual is a stale parent[] consumed by the next move)\n",
               t1, t2);
+  std::printf("\nT-333 FIX CHECK: shipped ts::structurally_valid() vs independent\n"
+              "  full_validity() over %lld probes (A+C): %lld disagreement(s)\n"
+              "  %s\n",
+              g_probes_A + g_probes_C, g_guard_mismatch,
+              g_guard_mismatch == 0
+                ? "=> the shipped guard is a COMPLETE validator: every net-zero witness the\n"
+                  "     old size-only backstop admitted (below) is now rejected."
+                : "=> MISMATCH: the shipped guard diverges from ground truth — T-333 REGRESSED.");
 
   auto dump = [](const char* title, std::vector<Witness>& v) {
     if (v.empty()) return;
@@ -929,6 +947,15 @@ int main(int argc, char** argv) {
     std::printf("\nRESULT: HARNESS ERROR — tree-count mismatch (see per-n lines).\n");
     return 2;
   }
+  // T-333 regression gate: the shipped guard MUST equal ground-truth validity
+  // on every enumerated tree.  This is the durable CI signal — it fails loudly
+  // if anyone reverts structurally_valid() back toward a size-only check.
+  if (g_guard_mismatch) {
+    std::printf("\nRESULT: FAIL — shipped ts::structurally_valid() disagrees with independent\n"
+                "full_validity() on %lld tree(s). The T-333 guard fix has regressed.\n",
+                g_guard_mismatch);
+    return 3;
+  }
   // The decisive signals are C1 (faithful first move) and D (faithful
   // sequential / stale-root).  C2 is a crude superset kept off by default.
   const long long decisive = wC1 + wD;
@@ -944,10 +971,13 @@ int main(int argc, char** argv) {
                 n_lo, n_hi, wA + wAp);
     return 0;
   }
-  std::printf("\nRESULT: guard admits reachable structural corruption "
-              "(C1 first-move=%lld, D within/across passes=%lld); all TYPE-%s.\n",
+  std::printf("\nRESULT: the OLD size-only backstop admitted reachable structural corruption "
+              "(C1 first-move=%lld, D within/across passes=%lld; all TYPE-%s) —\n"
+              "  and the shipped ts::structurally_valid() rejects EVERY one of them "
+              "(T-333 gate above: %lld disagreements). The guard is now self-sufficient.\n",
               wC1, wD, (t1 > 0 && t2 == 0) ? "1 (left/right corrupt)" :
-                       (t2 > 0 && t1 == 0) ? "2 (parent[] only)" : "1+2 (mixed)");
+                       (t2 > 0 && t1 == 0) ? "2 (parent[] only)" : "1+2 (mixed)",
+              g_guard_mismatch);
   const bool crash_safe = (cyc_total == 0 && g_parent_cycle == 0);
   std::printf("  CRASH verdict   : %s\n"
               "                    root-reachable left/right cycles=%lld (=> DFS helpers can't loop);\n"

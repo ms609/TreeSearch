@@ -60,5 +60,11 @@ echo
 extract '^std::vector<uint64_t> compute_node_tips('
 echo
 extract '^void find_maximal_subtrees('
+echo
+# The production validity check itself (T-333): the harness re-points its guard
+# model at this REAL function to prove structurally_valid() == full_validity()
+# over every enumerated tree (see probe() in driver.cpp).  Extracted verbatim so
+# a future edit to the shipped check is measured here, not silently diverged.
+extract '^bool structurally_valid('
 
 echo "} // namespace ts"

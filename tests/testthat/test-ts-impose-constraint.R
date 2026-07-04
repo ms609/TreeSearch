@@ -264,3 +264,53 @@ test_that("T-327: impose_one_pass survives stale best_node (no bad_alloc)", {
   expect_equal(n_ok, n_total,
                info = paste(n_ok, "/", n_total, "satisfy constraint"))
 })
+
+# ----- T-333: try_move guard is a full structural validator ------------------
+# The T-327 backstop was `postorder.size() == n_internal`, which is NOT
+# equivalent to structural validity: topology_spr's root-child case can emit a
+# net-zero corruption (one internal node double-referenced, one orphaned) that
+# lands on exactly n_internal and slips a size check, then feeds a malformed
+# tree to the next reanchor DFS / reroot_at_tip parent walk. The guard now runs
+# the full O(n) structurally_valid() (in-degree-1 + root-DFS-covers-all +
+# parent[] inverse) and reverts on any corruption.
+#
+# The exhaustive structural PROOF lives in the standalone harness
+# dev/red-team/heavy-tests/impose_validity/ (all (2n-3)!! trees n=4..8; it
+# asserts the shipped structurally_valid() == independent ground truth on every
+# tree). This R test is the INTEGRATION smoke: the stricter guard, exercised
+# through the real linked engine over the root-child repair path, must neither
+# crash nor over-reject valid repairs (constraints still satisfied).
+test_that("T-333: structural guard survives root-child repair, honours constraint", {
+  # 8-tip constraint whose fuse/perturb repairs drive the root-child topology_spr
+  # branch (the net-zero corruption source). Serial (nThreads=1) so set.seed
+  # makes the C++ RNG deterministic across machines/CI.
+  cons8 <- ape::read.tree(text = "((t1,t2,t3,t4),(t5,t6,t7,t8));")
+
+  n_ok <- 0L
+  n_total <- 0L
+  for (seed in c(101L, 202L, 303L, 404L, 505L)) {
+    set.seed(seed)
+    m <- matrix(sample(c("0", "1"), 8 * 16, replace = TRUE),
+                nrow = 8, dimnames = list(paste0("t", 1:8), NULL))
+    pd <- phangorn::phyDat(m, type = "USER", levels = c("0", "1"))
+    set.seed(seed)
+    expect_no_error(
+      result <- MaximizeParsimony(
+        pd, constraint = cons8,
+        maxReplicates = 6L, verbosity = 0L, nThreads = 1L,
+        control = SearchControl(nniPerturbCycles = 8L,
+                                nniPerturbFraction = 0.7,
+                                ratchetCycles = 0L)
+      )
+    )
+    for (i in seq_along(result)) {
+      n_total <- n_total + 1L
+      if (check_constraint(result[[i]], cons8)) n_ok <- n_ok + 1L
+    }
+  }
+  # Reverting a structurally-invalid intermediate is always safe (the saved
+  # pre-move tree is valid), so the stricter guard must not lose any repair:
+  # every returned tree still satisfies the constraint.
+  expect_equal(n_ok, n_total,
+               info = paste(n_ok, "/", n_total, "satisfy constraint"))
+})

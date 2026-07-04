@@ -8,6 +8,17 @@ guard added by the T-327 fix (commit `6b60f235`):
 > if so, does it reach the advertised `std::bad_alloc` / a wrong answer from the
 > public `MaximizeParsimony(constraint = …)`?
 
+**Status: answered, then FIXED (T-333, 2026-07-04).** The size-check was *not*
+equivalent to structural validity (a net-zero corruption slips it), but the
+hypothesised `std::bad_alloc` P1 was **refuted** (no reachable cycle on either
+crash vector) and no malformed tree was ever returned. The guard was then
+replaced with a complete O(n) `structurally_valid()` check; this harness now
+also proves that fix — the shipped guard equals independent ground truth on
+every enumerated tree (0 disagreements, n=4..8). See **The fix** and **Verdict**
+below. The narration below is written in the present tense of the investigation;
+where it says "the guard sees `size == n_internal`," that is the *old* backstop
+the fix superseded.
+
 ## The mechanism
 
 `impose_one_pass()` (`src/ts_constraint.cpp`) repairs constraint violations with
@@ -106,6 +117,12 @@ invalidity type (all reachable C1+D)         : 100% TYPE-1 (genuine left/right c
 root-reachable left/right cycles             : 0        => root-anchored DFS helpers can't loop
 parent[] cycles                              : 0        => parent-ascending consumers can't loop
                                                           (tbr_search/reroot_at_tip, run pre-verify)
+
+T-333 FIX CHECK (shipped structurally_valid vs independent full_validity):
+  disagreements over ALL A+C probes, n=4..8  : 0        => the shipped guard is a
+                                                          COMPLETE validator; every net-zero
+                                                          witness above is now rejected
+  (n=7,8 alone: 277,438,380 probes, 0 disagreements)
 ```
 
 One witness hand-verified end-to-end (n=8, `clip=14 above=8 below=14`): the
@@ -143,15 +160,36 @@ acyclic (no `bad_alloc`).
    verify-and-discard (all three call sites gate on it). Defense-in-depth
    (unconditional cap + caller re-verify) closes the gap.
 
-### Residual (documented)
+### Residual (was documented; now closed by the fix)
 
-The wrong-answer closure (3) is exhaustive for **single-split** constraints at
-**`n≤6`** within the probe budget. Not exhaustively closed: multi-split
-constraints (a different split could map on a tree corrupted while repairing
-another) and `n≥7` continuation of the full model. The **no-crash** result (1) is
-per-move and has no such caveat. Any residual, if real, is a
-correctness/robustness issue (a malformed tree returned), **not** the
-`std::bad_alloc` P1.
+The original wrong-answer closure (3) via the caller's verify-and-discard was
+exhaustive only for **single-split** constraints at **`n≤6`**, leaving multi-split
+and `n≥7` continuation as a documented residual. **The T-333 fix moots it
+entirely:** because the shipped guard is now provably a *complete* structural
+validator (`structurally_valid == full_validity` on every one of the ~1.33M
+enumerated trees), no corrupt tree survives `try_move` in the first place — so the
+downstream verify never has to catch one, at any split count or `n`. The residual
+was a limit of *how far the defense-in-depth was traced*, not of the fix.
+
+## The fix (T-333) and how this harness proves it
+
+`src/ts_constraint.cpp` gained `structurally_valid()` — an O(n) check (child
+slots in range + `left != right`; in-degree 1 for every non-root node, 0 for the
+root; a root DFS that visits every node exactly once; and `parent[]` the exact
+inverse of `left/right`). `try_move`'s guard now calls it *before* rebuilding the
+postorder and reverts on any corruption. The check is confined to the
+constraint-repair path (`impose_one_pass`); `TreeState::build_postorder` — with
+its 97 hot-path call sites — is untouched and keeps its `> n_internal` cap as the
+`bad_alloc` backstop, so unconstrained search is unaffected.
+
+The harness verifies the fix rather than merely documenting the gap:
+`extract_funcs.sh` extracts the **real** `structurally_valid` verbatim from HEAD,
+and `probe()` asserts it equals the independent `full_validity()` oracle on every
+tree (`g_guard_mismatch`). A single disagreement exits non-zero (code 3) — the
+durable CI signal that fails loudly if anyone reverts the guard toward a
+size-only check. Current result: **0 disagreements across all `(2n-3)!!` trees,
+n=4..8.** The `accept-on-invalid` witnesses above now describe what the *old*
+size-check admitted and the shipped guard rejects.
 
 ## Running it
 

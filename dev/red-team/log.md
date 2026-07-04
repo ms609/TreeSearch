@@ -64,6 +64,24 @@ witnesses, and C1 dropped 123→0 at n≤5 once cleared (validates the verify st
 **parent-ascension crash vector** (added `has_parent_cycle` → 0). Harness durable
 (`driver.cpp` + `extract_funcs.sh` + `build_and_run.sh` + `README.md`); `bash
 build_and_run.sh` reproduces (n≤7 local seconds-to-minutes; n=8 Pass-D gated off).
+**FIXED 2026-07-04 (same round).** Added `structurally_valid()` to
+`src/ts_constraint.cpp` (in-degree-1 non-root + root-DFS-covers-all + parent[]-inverse,
+O(n)); the `try_move` guard now validates-before-rebuild and reverts on any corruption.
+**Perf-scoped deliberately:** the check lives in `impose_one_pass`/`try_move`
+(constraint-repair, runs ONLY under `constraint=`), NOT in `TreeState::build_postorder`
+(97 hot-path call sites, left untouched) — so unconstrained search pays nothing; within a
+constrained run it's the same O(n) class as the `build_postorder` already there (advisor
+concurred: pushing it into `build_postorder` "to cover all callers" would be the one real
+regression, ruled out). Harness **re-pointed at the real guard**: `extract_funcs.sh` now
+also extracts `structurally_valid` verbatim, and `probe()` asserts it equals the
+independent `full_validity()` on every tree (new `g_guard_mismatch` gate, exit 3 if it
+ever diverges — the durable CI signal against a future revert-to-size-check). Re-run:
+**0 disagreements** over all `(2n-3)!!` trees n=4..6 (every one of the 13642 old-guard
+witnesses now rejected). Package builds clean (`-Wall -pedantic`); R integration test
+added (`test-ts-impose-constraint.R` "T-333: structural guard survives root-child repair",
+49 assertions green — confirms no over-rejection/crash regression through the linked
+engine). to-do.md T-333 → FIXED (pending CI); findings.md row removed. GHA CI (ASan + full
+check) pending on push.
 
 ---
 
