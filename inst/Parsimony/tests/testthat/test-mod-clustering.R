@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)  # mod_clustering's clThresh observer calls runjs()
 
 # Source the module under test (relative to tests/testthat/)
 source("../../server/mod_clustering.R")

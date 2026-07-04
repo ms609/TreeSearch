@@ -63,7 +63,7 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
     ""
   }
   stop_note <- if (identical(stopReason, "consensus")) {
-    " Search stopped: consensus tree unchanged across recent replicates."
+    " Search stopped: consensus stable across recent replicates."
   } else if (identical(stopReason, "timeout")) {
     " Search stopped: time limit reached."
   } else {
@@ -343,9 +343,9 @@ test_that("SearchConfidenceText uses binomial bound (T-163)", {
   txt_multi_search <- SearchConfidenceText(5, 10, nSearches = 3L)
   expect_match(txt_multi_search, "across 3 searches")
 
-  # Stop reason: consensus tree stopped changing
+  # Stop reason: consensus stable
   txt_cons <- SearchConfidenceText(4, 90, stopReason = "consensus")
-  expect_match(txt_cons, "consensus tree unchanged")
+  expect_match(txt_cons, "consensus stable")
 
   # Stop reason: timeout
   txt_time <- SearchConfidenceText(4, 90, stopReason = "timeout")

@@ -379,7 +379,7 @@ SearchConfidenceText <- function(K, R, nSearches = 1L,
   }
 
   stop_note <- if (identical(stopReason, "consensus")) {
-    " Search stopped: consensus tree unchanged across recent replicates."
+    " Search stopped: consensus stable across recent replicates."
   } else if (identical(stopReason, "timeout")) {
     " Search stopped: time limit reached."
   } else {
