@@ -153,6 +153,14 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
   // Process tips for uppass (they are NOT in postorder)
   for (int tip = 0; tip < tree.n_tip; ++tip) {
     int anc = tree.parent[tip];
+    // Skip tips not currently attached to the tree.  A partial tree can be
+    // scored while some tips are detached (parent == -1 sentinel from
+    // init_wagner_state), e.g. expand_and_reinsert() scores the backbone
+    // before the dropped tips are Wagner-reinserted.  The postorder-driven
+    // passes above already ignore detached nodes; the EW path (fitch_uppass)
+    // likewise only walks postorder, so this makes the NA uppass honour the
+    // same contract instead of indexing final_[(-1) * total_words] (OOB).
+    if (anc < 0) continue;
     size_t tb = static_cast<size_t>(tip) * tree.total_words;
     size_t ab = static_cast<size_t>(anc) * tree.total_words;
 
