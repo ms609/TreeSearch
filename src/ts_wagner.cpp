@@ -611,6 +611,10 @@ std::vector<double> wagner_goloboff_scores(const DataSet& ds) {
   int n_tip = ds.n_tips;
   int tw    = ds.total_words;
   std::vector<double> scores(n_tip, 0.0);
+  // No Fitch words (e.g. every character constant/autapomorphic): every tip
+  // is equally uninformative, so all scores are legitimately 0; skip the
+  // per-tip loop rather than take the address of an empty ds.tip_states.
+  if (tw == 0) return scores;
 
   for (int t = 0; t < n_tip; ++t) {
     double score = 0.0;
@@ -644,6 +648,10 @@ std::vector<double> wagner_entropy_scores(const DataSet& ds) {
   int n_tip = ds.n_tips;
   int tw    = ds.total_words;
   std::vector<double> scores(n_tip, 0.0);
+  // See wagner_goloboff_scores: no Fitch words means every score is
+  // legitimately 0; skip the loop rather than take the address of an empty
+  // ds.tip_states.
+  if (tw == 0) return scores;
 
   for (int t = 0; t < n_tip; ++t) {
     double score = 0.0;

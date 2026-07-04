@@ -515,3 +515,34 @@ test_that("addition_order length/range/duplicate errors cleanly (T-323)", {
     "addition_order"
   )
 })
+
+# ===== All-uninformative data: zero Fitch words (regression) ================
+# When every character is constant or an autapomorphy (no state shared by
+# more than one taxon), simplify_patterns removes every character, leaving
+# DataSet::total_words == 0 and empty per-word state vectors.
+# wagner_goloboff_scores()/wagner_entropy_scores() took the address of
+# element 0 of the (empty) ds.tip_states vector -- undefined behaviour that
+# aborts under hardened libstdc++ assertions / ASan.
+
+test_that("wagner_goloboff_scores/wagner_entropy_scores handle zero Fitch words", {
+  n <- 10L
+  set.seed(1)
+  # 3 characters, each a distinct permutation of 1..n: no state is shared by
+  # more than one taxon in any character, so every character is
+  # parsimony-uninformative (multi-character, avoiding the single-character
+  # vapply/t() degenerate case in prep_pd()).
+  mat <- vapply(seq_len(3L), function(i) as.character(sample(seq_len(n))),
+                character(n))
+  rownames(mat) <- paste0("t", seq_len(n))
+  pd <- MatrixToPhyDat(mat)
+  d <- prep_pd(pd)
+
+  result <- TreeSearch:::ts_wagner_bias_bench(
+    d$contrast, d$tip_data, d$weight, d$levels,
+    min_steps = integer(0), concavity = -1,
+    bias = 1L, temperature = 1, n_reps = 1L, run_tbr = FALSE
+  )
+
+  expect_true(all(result$goloboff_scores == 0))
+  expect_true(all(result$entropy_scores == 0))
+})

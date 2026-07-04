@@ -72,8 +72,15 @@ static void compute_from_above_for_sector(
 
     // from_above[next] = fitch_join(from_above[node], prelim[sib])
     // fitch_join: per-block, compute intersection; where empty, use union.
-    const uint64_t* sib_prelim =
-        &tree.prelim[static_cast<size_t>(sib) * tw];
+    // When tw == 0 (e.g. every character constant/autapomorphic under equal
+    // weights, leaving zero Fitch blocks), tree.prelim is empty and the
+    // block loop below never executes (ds.n_blocks == 0 too), so sib_prelim
+    // is never dereferenced -- but taking its address still needs guarding
+    // (address of element 0 of an empty vector is undefined behaviour;
+    // aborts under _GLIBCXX_ASSERTIONS).
+    const uint64_t* sib_prelim = (tw > 0)
+        ? &tree.prelim[static_cast<size_t>(sib) * tw]
+        : nullptr;
 
     for (int b = 0; b < ds.n_blocks; ++b) {
       int off = ds.block_word_offset[b];
@@ -92,8 +99,10 @@ static void compute_from_above_for_sector(
     std::swap(from_above_cur, new_from_above);
   }
 
-  std::memcpy(from_above_out.data(), from_above_cur.data(),
-              tw * sizeof(uint64_t));
+  if (tw > 0) {
+    std::memcpy(from_above_out.data(), from_above_cur.data(),
+                tw * sizeof(uint64_t));
+  }
 }
 
 // ---- Conflict-guided sector selection ----
@@ -805,7 +814,11 @@ static ReducedDataset build_reduced_dataset_collapsed(const TreeState& tree,
   for (int i = 0; i < n_front; ++i) {             // composite terminal states
     const int node = frontier[i];
     const size_t dst = static_cast<size_t>(i) * tw;
-    const uint64_t* src = (node < tree.n_tip)
+    // tw == 0 (zero Fitch blocks) leaves ds.tip_states/tree.prelim empty;
+    // guard the address-of (UB on an empty vector) -- the copy loop below
+    // is already a no-op (w < tw == 0), so src is never dereferenced.
+    const uint64_t* src = (tw == 0) ? nullptr
+        : (node < tree.n_tip)
         ? &ds.tip_states[static_cast<size_t>(node) * tw]   // real tip
         : &tree.prelim[static_cast<size_t>(node) * tw];    // collapsed sub-clade
     for (int w = 0; w < tw; ++w) rd.data.tip_states[dst + w] = src[w];
@@ -921,12 +934,25 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
   // up-message buffer and preorder list each step.
   std::vector<uint64_t> edge_set_up;
   std::vector<int> edge_set_pre;
+  // When there are no Fitch words -- e.g. every character is constant or an
+  // autapomorphy, leaving the equal-weights dataset with zero blocks (the
+  // same all-uninformative case wagner_tree guards) -- rd.data.tip_states
+  // and edge_set are empty and every insertion cost is identically zero.
+  // Skip the edge-set precompute and the indirect length evaluation, which
+  // would otherwise take the address of element 0 of an empty vector
+  // (undefined behaviour; aborts under _GLIBCXX_ASSERTIONS/ASan).  The DFS
+  // below still runs, so constraints are honoured and -- all costs being
+  // equal -- the first legal edge is chosen (mirrors wagner_tree's fix).
+  const bool have_words = rd.data.total_words > 0;
   for (int i = 2; i < n_real; ++i) {
     const int tip = order[i];
-    const uint64_t* tip_prelim =
-        &rd.data.tip_states[static_cast<size_t>(tip) * tw];
+    const uint64_t* tip_prelim = have_words
+        ? &rd.data.tip_states[static_cast<size_t>(tip) * tw]
+        : nullptr;
 
-    compute_insertion_edge_sets(t, rd.data, edge_set, edge_set_up, edge_set_pre);
+    if (have_words) {
+      compute_insertion_edge_sets(t, rd.data, edge_set, edge_set_up, edge_set_pre);
+    }
 
     int best_above = -1, best_below = -1, best_extra = INT_MAX;
     stack.clear();
@@ -939,14 +965,20 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
       int lc = t.left[ni];
       int rc = t.right[ni];
       if (lc >= 0) {
-        int extra = fitch_indirect_length_cached(
-            tip_prelim, &edge_set[static_cast<size_t>(lc) * tw], rd.data, best_extra);
+        int extra = have_words
+            ? fitch_indirect_length_cached(
+                  tip_prelim, &edge_set[static_cast<size_t>(lc) * tw],
+                  rd.data, best_extra)
+            : 0;
         if (extra < best_extra) { best_extra = extra; best_above = node; best_below = lc; }
         if (lc >= n_tip) stack.push_back(lc);
       }
       if (rc >= 0) {
-        int extra = fitch_indirect_length_cached(
-            tip_prelim, &edge_set[static_cast<size_t>(rc) * tw], rd.data, best_extra);
+        int extra = have_words
+            ? fitch_indirect_length_cached(
+                  tip_prelim, &edge_set[static_cast<size_t>(rc) * tw],
+                  rd.data, best_extra)
+            : 0;
         if (extra < best_extra) { best_extra = extra; best_above = node; best_below = rc; }
         if (rc >= n_tip) stack.push_back(rc);
       }

@@ -52,9 +52,10 @@ void TreeState::load_tip_states(const DataSet& ds) {
   // T-262: bulk memcpy replaces per-element loop.  Tip states occupy the
   // first n_tip * total_words entries of prelim/final_ (contiguous).
   size_t tip_bytes = static_cast<size_t>(n_tip) * total_words * sizeof(uint64_t);
-  // All characters can be uninformative (e.g. every state a singleton),
-  // leaving zero blocks and a zero-length tip_states vector; its .data()
-  // is then permitted to be null, which memcpy's nonnull attribute forbids.
+  // All characters can be uninformative (e.g. every state constant or a
+  // singleton), leaving zero blocks and a zero-length tip_states vector;
+  // its .data() is then permitted to be null, which memcpy's nonnull
+  // attribute forbids.
   if (tip_bytes > 0) {
     std::memcpy(prelim.data(), ds.tip_states.data(), tip_bytes);
     std::memcpy(final_.data(), ds.tip_states.data(), tip_bytes);
@@ -209,6 +210,14 @@ void TreeState::restore_prealloc_undo() {
 }
 
 void TreeState::save_node_state(int node) {
+  // No Fitch words (e.g. every character constant/autapomorphic under equal
+  // weights): there is no per-word state to save, so this is legitimately a
+  // no-op.  Guard it explicitly -- the prealloc fast path below sizes its
+  // flat buffers to capacity * total_words, so total_words == 0 leaves them
+  // empty, and unconditionally memcpy'ing to/from element 0 of an empty
+  // vector is undefined behaviour (aborts under _GLIBCXX_ASSERTIONS).
+  if (total_words == 0) return;
+
   // Fast path: use pre-allocated flat buffers (no heap allocation)
   if (prealloc_undo) {
     auto& u = *prealloc_undo;
