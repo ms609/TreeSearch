@@ -16,6 +16,57 @@ in `findings.md`.
 
 ---
 
+area: 13 (constraints — assigned deep-dive, NOT a rotation round; last_focus left at 11)
+reviewed_by: opus orchestrator (harness author) + advisor (2 rounds)
+date: 2026-07-04
+tier: opus
+yield: 1 (T-333 P3) — the hypothesised P1 (std::bad_alloc from `MaximizeParsimony(constraint=)`) **REFUTED**
+notes: Single assigned question: is the T-327 constraint-repair guard
+`build_postorder().size()==n_internal` (`impose_one_pass`, `ts_constraint.cpp:735`,
+commit 6b60f235) equivalent to structural validity, or can a **net-zero** corruption
+(a node double-referenced +1, a node orphaned −1) slip it and reach the advertised
+`std::bad_alloc`? **Answer: the guard is NOT a full validator (the slip is real and
+reachable) — but the P1 does not exist.** Built an exhaustive standalone C++ harness
+(`dev/red-team/heavy-tests/impose_validity/`, no R/Rcpp/Morphy/SIMD): enumerates ALL
+(2n-3)!! rooted binary trees for n_tip=4..8 (counts verified 15/105/945/10395/135135),
+runs the **verbatim** kernel fns (`topology_spr`, `collect_edges_in/outside_subtree`,
+`find_maximal_subtrees`, `compute_node_tips`) extracted from `git show
+HEAD:src/ts_constraint.cpp` at build time (cannot drift) + the **real**
+`build_postorder`/`init_from_edge`, and checks guard-accept ⇒ an independent
+full-validity oracle. Passes: **A** geometric superset (proves guard≠validator; ~1.33M
+accept-on-invalid, but on triples `collect_edges` can't emit); **C1** faithful FIRST-move
+emission (exact best_node/masks/move-roots + real targets); **D** faithful model of the
+WHOLE `impose_constraint` loop (≤ n_splits+1 passes, branch over RNG-reachable targets,
+continue past accepted-corrupt trees, model pass boundaries / moves==0 / bail).
+**Findings:** the slip is real and **TYPE-1** (genuine left/right corruption = double-ref
++ orphan; one hand-verified end-to-end — `topology_spr`'s root-child degenerate case
+grafts a clip onto its own parent edge, orphaning one node and doubling another),
+reachable on the FIRST repair move at n≥8 (1890) and within/across passes at n≤6 (13642).
+So the guard-comment "guarantees no corrupt tree ever reaches a DFS helper" is **factually
+wrong** — they do reach `compute_node_tips`/`map_constraint_nodes`. **But no P1:**
+(crash) **0** root-reachable left/right cycles AND **0** `parent[]` cycles across ALL
+~1.33M accepted-invalid trees — `build_postorder`'s cap unconditionally rejects any
+root-reachable cycle, and the parent-ascending consumers (`tbr_search`→`reroot_at_tip`
+`ts_tbr.cpp:106-107`, run on the post-impose tree BEFORE verify at
+`ts_nni_perturb.cpp:105` — the vector the advisor flagged) never hit a parent-cycle ⇒ no
+`std::bad_alloc`; (wrong-answer) **0** corrupt FINAL trees survive the callers'
+`map_constraint_nodes` verify-and-discard (all three sites `ts_driven.cpp:1056`,
+`ts_nni_perturb.cpp:119`, `ts_parallel.cpp:92`) for single-split n≤6 within probe budget ⇒
+nothing malformed is scored/returned. Correctness rests ENTIRELY on defense-in-depth
+(unconditional cap + caller re-verify). **Filed T-333 (P3 hardening):** replace the `:735`
+size-check with a full left/right arborescence check (in-degree-1 non-root + root DFS
+visits all n_internal; O(n), same cost class) → self-sufficient guard + definitively
+closes the two residuals not exhaustively covered here (multi-split constraints; n≥7
+continuation of the full model). Advisor caught two things mid-round: (1) a
+**witness-fabrication harness bug** — the verbatim `collect_edges` fns APPEND and never
+clear their output; a hoisted/reused buffer accumulated stale targets → 7709 phantom
+witnesses, and C1 dropped 123→0 at n≤5 once cleared (validates the verify step); (2) the
+**parent-ascension crash vector** (added `has_parent_cycle` → 0). Harness durable
+(`driver.cpp` + `extract_funcs.sh` + `build_and_run.sh` + `README.md`); `bash
+build_and_run.sh` reproduces (n≤7 local seconds-to-minutes; n=8 Pass-D gated off).
+
+---
+
 area: 11
 reviewed_by: opus finder (a5f8e723) + opus orchestrator (verification)
 date: 2026-07-02
