@@ -239,7 +239,7 @@ test_that("CharacterLength() fails gracefully", {
   CharacterLength(as.phylo(1, 43, tipLabels = names(dataset)), dataset)
   
   skip_if_not_installed("phangorn")
-  library("phangorn") # for phyDat subsetting
+  suppressPackageStartupMessages(library("phangorn")) # for phyDat subsetting
   expect_equal(c(53, 59, 6),
                as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]),
                                                 dataset[1:4], compress = TRUE))))

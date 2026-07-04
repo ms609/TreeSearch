@@ -13,6 +13,10 @@ skip_extended <- function() {
 
 library("TreeTools")
 
+suppressMessages(suppressPackageStartupMessages(
+  requireNamespace("phangorn", quietly = TRUE)
+))
+
 #' Convert phyDat object to the list format expected by ts_* C++ bridges
 make_ts_data <- function(dataset) {
   at <- attributes(dataset)

@@ -137,7 +137,7 @@ TaxonInfluence <- function(
   }
   
   if (is.null(tree)) {
-    tree <- MaximizeParsimony(dataset, ...)
+    tree <- MaximizeParsimony(dataset, verbosity = verbosity, ...)
   }
   if (calcWeighted) {
     refWeights <- if (inherits(tree, "phylo") || length(tree) == 1) {
