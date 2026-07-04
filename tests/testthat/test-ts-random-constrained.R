@@ -151,6 +151,111 @@ test_that("RANDOM_TREE with IW scoring + constraints", {
   }
 })
 
+## T-329: a genuinely incompatible constraint must error cleanly rather than
+## reach random_constrained_tree(), which cannot represent splits that no tree
+## can display simultaneously.  Incompatibility is the four-gamete condition
+## (all four taxon groupings co-occur), NOT mere non-laminarity: non-laminar
+## splits whose "0" sides are disjoint (e.g. {t1,t2,t3} & {t3,t4,t5}, which
+## coexist on ((t1,t2),t3,(t4,t5))) ARE displayable and must be accepted.
+test_that("impossible (four-gamete-incompatible) constraint errors cleanly", {
+  ds5 <- make_ds5()
+
+  # Split A = {t1,t2,t3}, split B = {t2,t3,t4}: every taxon grouping
+  # (A1&B1={t2,t3}, A1&B0={t1}, A0&B1={t4}, A0&B0={t5}) is non-empty, so the
+  # four-gamete test fails and no tree can display both splits at once.
+  consMat <- matrix(c("1", "1", "1", "0", "0",
+                       "0", "1", "1", "1", "0"),
+                     nrow = 5, dimnames = list(paste0("t", 1:5), NULL))
+  cons <- phangorn::phyDat(consMat, type = "USER", levels = c("0", "1"))
+
+  expect_error(
+    TreeSearch:::.PrepareConstraint(cons, ds5),
+    "impossible"
+  )
+  expect_error(
+    MaximizeParsimony(ds5, constraint = cons,
+                       maxReplicates = 1L, verbosity = 0L),
+    "impossible"
+  )
+})
+
+## T-329 (regression): a non-laminar constraint whose splits are nevertheless
+## four-gamete-COMPATIBLE (their "0" sides are disjoint) must be ACCEPTED.  The
+## original laminar-only check wrongly rejected {t1,t2,t3} & {t3,t4,t5}, which
+## coexist on the ordinary unrooted tree ((t1,t2),t3,(t4,t5)).
+test_that("non-laminar but compatible constraint is accepted", {
+  ds5 <- make_ds5()
+
+  consMat <- matrix(c("1", "1", "1", "0", "0",
+                       "0", "0", "1", "1", "1"),
+                     nrow = 5, dimnames = list(paste0("t", 1:5), NULL))
+  cons <- phangorn::phyDat(consMat, type = "USER", levels = c("0", "1"))
+
+  expect_silent(TreeSearch:::.PrepareConstraint(cons, ds5))
+})
+
+## T-329 (defensive fix): random_constrained_tree() must never inject a
+## collapsed split's phantom node (-1) into its parent's item list.
+##
+## A split "collapses" (split_root == -1) when every tip it owns is stolen
+## by tighter, non-laminar splits that are not its formal children.  If that
+## collapsed split still has a strict-superset parent, the parent's child
+## collection loop (src/ts_wagner.cpp, "Child splits whose parent is this
+## split") must skip it rather than push -1.
+##
+## This constructs that scenario directly via the internal flat
+## ts_driven_search() interface, bypassing .PrepareConstraint()'s R-level
+## laminarity check (T-329's primary fix) so the C++ guard itself is
+## exercised:
+##   D1 = {t1,t6}, D2 = {t2,t7}, D3 = {t3,t8}   (tight, non-laminar splits)
+##   C  = {t1,t2,t3}                            (loses every tip to D1-D3)
+##   S  = {t1,t2,t3,t6,t7,t8}                   (strict superset of C, D1-D3)
+## C collapses (split_root == -1) but is still S's formal child, so S's
+## build loop must skip it.  wagnerBias = 3L forces the RANDOM_TREE
+## strategy so random_constrained_tree() is actually invoked.
+test_that("collapsed constraint split with superset parent does not corrupt tree", {
+  tipNames <- c("t9", "t1", "t2", "t3", "t6", "t7", "t8")
+  ds <- phangorn::phyDat(
+    matrix(c("0", "1", "0", "1", "0", "1", "0",
+             "1", "0", "1", "0", "1", "0", "1"),
+           nrow = 7, dimnames = list(tipNames, NULL)),
+    type = "USER", levels = c("0", "1")
+  )
+  at <- attributes(ds)
+
+  consSplitMatrix <- matrix(c(
+    0, 1, 0, 0, 1, 0, 0,   # D1 = {t1, t6}
+    0, 0, 1, 0, 0, 1, 0,   # D2 = {t2, t7}
+    0, 0, 0, 1, 0, 0, 1,   # D3 = {t3, t8}
+    0, 1, 1, 1, 0, 0, 0,   # C  = {t1, t2, t3}  (collapses)
+    0, 1, 1, 1, 1, 1, 1    # S  = {t1, t2, t3, t6, t7, t8}
+  ), nrow = 5, byrow = TRUE)
+
+  for (s in c(1L, 2L, 3L)) {
+    set.seed(s)
+    res <- TreeSearch:::ts_driven_search(
+      contrast = at$contrast,
+      tip_data = matrix(unlist(ds, use.names = FALSE), nrow = 7,
+                         byrow = TRUE),
+      weight = at$weight,
+      levels = at$levels,
+      maxReplicates = 1L, targetHits = 1L, verbosity = 0L,
+      wagnerBias = 3L,
+      consSplitMatrix = consSplitMatrix
+    )
+    edge <- res$trees[[1]]
+    n_tip <- 7L
+    n_node <- 2L * n_tip - 1L
+
+    expect_equal(nrow(edge), 2L * n_tip - 2L, info = paste("seed", s))
+    expect_true(all(edge >= 1L & edge <= n_node), info = paste("seed", s))
+    # Every node 1..n_node bar the root appears as a child exactly once.
+    expect_equal(sort(unique(edge[, 2])), setdiff(seq_len(n_node),
+                                                    n_tip + 1L),
+                 info = paste("seed", s))
+  }
+})
+
 test_that("parallel RANDOM_TREE with multiple seeds (nThreads=2)", {
   ds5 <- make_ds5()
   cons <- ape::read.tree(text = "((t1,t2),(t3,(t4,t5)));")

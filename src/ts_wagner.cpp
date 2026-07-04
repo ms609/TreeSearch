@@ -478,13 +478,26 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
     int tip = order[i];
     int new_internal = n_tip + i - 1;
 
-    const uint64_t* tip_prelim =
-        &ds.tip_states[static_cast<size_t>(tip) * ds.total_words];
+    // When there are no Fitch words — e.g. every character is a hierarchy
+    // character recoded to a Sankoff character under inapplicable = "xform",
+    // leaving the equal-weights dataset with zero blocks — the per-word state
+    // vectors (ds.tip_states, edge_set) are empty and every Fitch insertion
+    // cost is identically zero.  Skip the edge-set precompute and the indirect
+    // length evaluation, which would otherwise take the address of element 0 of
+    // an empty vector (undefined behaviour; aborts under _GLIBCXX_ASSERTIONS).
+    // The DFS below still runs, so constraints are honoured and — all costs
+    // being equal — the first legal edge is chosen.
+    const bool have_words = ds.total_words > 0;
+    const uint64_t* tip_prelim = have_words
+        ? &ds.tip_states[static_cast<size_t>(tip) * ds.total_words]
+        : nullptr;
 
     // Exact insertion cost: edge_set[D] = combine(prelim[D], up[D]).  Replaces
     // the union-of-finals (final_[node] | final_[child]) approximation that
     // undercut insertion cost and produced ~+30% Wagner trees.
-    compute_insertion_edge_sets(tree, ds, edge_set, edge_set_up, edge_set_pre);
+    if (have_words) {
+      compute_insertion_edge_sets(tree, ds, edge_set, edge_set_up, edge_set_pre);
+    }
     const int tw = tree.total_words;
 
     // Find best insertion edge via DFS from root
@@ -508,9 +521,11 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       if (!constrained ||
           !wagner_edge_violates_constraint(tree, lc, tip, *cd,
                                             added_tips)) {
-        int extra = fitch_indirect_length_cached(
-            tip_prelim, &edge_set[static_cast<size_t>(lc) * tw],
-            ds, best_extra);
+        int extra = have_words
+            ? fitch_indirect_length_cached(
+                  tip_prelim, &edge_set[static_cast<size_t>(lc) * tw],
+                  ds, best_extra)
+            : 0;
         if (extra < best_extra) {
           best_extra = extra;
           best_above = node;
@@ -522,9 +537,11 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       if (!constrained ||
           !wagner_edge_violates_constraint(tree, rc, tip, *cd,
                                             added_tips)) {
-        int extra = fitch_indirect_length_cached(
-            tip_prelim, &edge_set[static_cast<size_t>(rc) * tw],
-            ds, best_extra);
+        int extra = have_words
+            ? fitch_indirect_length_cached(
+                  tip_prelim, &edge_set[static_cast<size_t>(rc) * tw],
+                  ds, best_extra)
+            : 0;
         if (extra < best_extra) {
           best_extra = extra;
           best_above = node;
@@ -1068,7 +1085,7 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
 
     // Child splits whose parent is this split
     for (int j = 0; j < i; ++j) {
-      if (parent_split[j] == i) {
+      if (parent_split[j] == i && split_root[j] >= 0) {
         items.push_back(split_root[j]);
       }
     }

@@ -92,13 +92,22 @@
 
   consMat <- matrix(unlist(constraint, use.names = FALSE),
                     nrow = length(constraint), byrow = TRUE)
+  # For each constraint character, record the tips unambiguously in the "1"
+  # group (derived state present, ancestral absent) and, separately, those in
+  # the "0" group (ancestral present, derived absent).  Tips ambiguous for the
+  # character ("?", or unconstrained taxa) belong to neither group and are free
+  # to plot on either side of the split.
   consSplits <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
+  consZero   <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
   for (ch in seq_len(ncol(consMat))) {
     for (tip in seq_len(length(constraint))) {
       token <- consMat[tip, ch]
       if (consContrast[token, nConsStates] == 1 &&
           consContrast[token, 1] == 0) {
         consSplits[ch, tip] <- 1L
+      } else if (consContrast[token, 1] == 1 &&
+                 consContrast[token, nConsStates] == 0) {
+        consZero[ch, tip] <- 1L
       }
     }
   }
@@ -108,7 +117,35 @@
     s >= 1 && s < length(constraint) - 1
   })
   consSplits <- consSplits[keep, , drop = FALSE]
+  consZero   <- consZero[keep, , drop = FALSE]
   if (nrow(consSplits) == 0L) return(list())
+
+  # Every returned tree must display all constraint splits simultaneously.
+  # Two splits are jointly displayable iff they are compatible in the
+  # four-gamete sense: treating each as a bipartition of the tips it
+  # constrains (its "1" group vs its "0" group, ambiguous tips excluded), the
+  # pair is compatible iff at least one of the four group intersections is
+  # empty.  A laminar (nested-or-disjoint) test alone is too strict: it rejects
+  # the case where the two "0" groups are disjoint -- i.e. the splits' "1"
+  # sides jointly cover the constrained tips -- which is perfectly displayable,
+  # e.g. ab | cef and abcd | ef coexist on ((a,b),(d,(c,(e,f)))).
+  nSplits <- nrow(consSplits)
+  if (nSplits > 1L) {
+    for (i in seq_len(nSplits - 1L)) {
+      aOne  <- consSplits[i, ] == 1L
+      aZero <- consZero[i, ] == 1L
+      for (j in seq(i + 1L, nSplits)) {
+        bOne  <- consSplits[j, ] == 1L
+        bZero <- consZero[j, ] == 1L
+        compatible <- !any(aOne & bOne) || !any(aOne & bZero) ||
+                      !any(aZero & bOne) || !any(aZero & bZero)
+        if (!compatible) {
+          stop("Constraint is impossible to satisfy: splits ", i, " and ", j,
+               " are incompatible (all four taxon groupings co-occur)")
+        }
+      }
+    }
+  }
 
   consWeight <- attr(constraint, "weight")
   consExpectedScore <- sum(
