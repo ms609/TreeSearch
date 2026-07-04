@@ -397,3 +397,121 @@ test_that("constrained sequential Wagner boundary edge: outside tip adjacent to 
   child_tips <- sort(result$edge[result$edge[, 2] <= n_tip, 2L])
   expect_equal(child_tips, seq_len(n_tip))
 })
+
+test_that("tip_data values outside [1, n_tokens] error cleanly (T-328)", {
+  # Rcpp-boundary guard: an out-of-range tip_data entry must not reach the
+  # unguarded 1-based index into token_states (src/ts_simplify.cpp) -- it
+  # should error, not silently misread or crash.
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd <- congreveLamsdellMatrices[[1]]
+  d <- prep_pd(pd)
+  n_tokens <- nrow(d$contrast)
+
+  bad_low <- d$tip_data
+  bad_low[1, 1] <- 0L
+  expect_error(
+    TreeSearch:::ts_wagner_tree(d$contrast, bad_low, d$weight, d$levels),
+    "tip_data"
+  )
+
+  bad_high <- d$tip_data
+  bad_high[1, 1] <- n_tokens + 1L
+  expect_error(
+    TreeSearch:::ts_wagner_tree(d$contrast, bad_high, d$weight, d$levels),
+    "tip_data"
+  )
+
+  bad_negative <- d$tip_data
+  bad_negative[1, 1] <- -1L
+  expect_error(
+    TreeSearch:::ts_wagner_tree(d$contrast, bad_negative, d$weight, d$levels),
+    "tip_data"
+  )
+})
+
+test_that("out-of-range tip_data errors via other Wagner entry points (T-328)", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd <- congreveLamsdellMatrices[[1]]
+  d <- prep_pd(pd)
+  n_tokens <- nrow(d$contrast)
+  bad <- d$tip_data
+  bad[1, 1] <- n_tokens + 1L
+
+  expect_error(
+    TreeSearch:::ts_random_wagner_tree(d$contrast, bad, d$weight, d$levels),
+    "tip_data"
+  )
+  expect_error(
+    TreeSearch:::ts_resample_search(d$contrast, bad, d$weight, d$levels),
+    "tip_data"
+  )
+  expect_error(
+    TreeSearch:::ts_parallel_resample(d$contrast, bad, d$weight, d$levels),
+    "tip_data"
+  )
+  expect_error(
+    TreeSearch:::ts_successive_approx(d$contrast, bad, d$weight, d$levels),
+    "tip_data"
+  )
+  expect_error(
+    TreeSearch:::ts_simplify_diag(d$contrast, bad, d$weight, d$levels),
+    "tip_data"
+  )
+})
+
+test_that("ts_simplify_diag validates weight/levels length (T-328 hardening)", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd <- congreveLamsdellMatrices[[1]]
+  d <- prep_pd(pd)
+
+  expect_error(
+    TreeSearch:::ts_simplify_diag(d$contrast, d$tip_data, d$weight[-1],
+                                   d$levels),
+    "weight"
+  )
+  expect_error(
+    TreeSearch:::ts_simplify_diag(d$contrast, d$tip_data, d$weight,
+                                   d$levels[-1]),
+    "levels"
+  )
+})
+
+test_that("addition_order length/range/duplicate errors cleanly (T-323)", {
+  # Rcpp-boundary guard: wagner_tree() reads addition_order as a length-n_tip
+  # permutation with no validation -- a short vector reads past its end
+  # (segfault), an out-of-range or duplicated value corrupts the tree.
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd <- congreveLamsdellMatrices[[1]]
+  d <- prep_pd(pd)
+  n_tip <- length(pd)
+
+  expect_error(
+    TreeSearch:::ts_wagner_tree(d$contrast, d$tip_data, d$weight, d$levels,
+                                 addition_order = 1L),
+    "addition_order"
+  )
+
+  bad_range <- seq_len(n_tip)
+  bad_range[1] <- n_tip + 1L
+  expect_error(
+    TreeSearch:::ts_wagner_tree(d$contrast, d$tip_data, d$weight, d$levels,
+                                 addition_order = bad_range),
+    "addition_order"
+  )
+
+  bad_zero <- seq_len(n_tip)
+  bad_zero[1] <- 0L
+  expect_error(
+    TreeSearch:::ts_wagner_tree(d$contrast, d$tip_data, d$weight, d$levels,
+                                 addition_order = bad_zero),
+    "addition_order"
+  )
+
+  dup <- seq_len(n_tip)
+  dup[2] <- dup[1]
+  expect_error(
+    TreeSearch:::ts_wagner_tree(d$contrast, d$tip_data, d$weight, d$levels,
+                                 addition_order = dup),
+    "addition_order"
+  )
+})
