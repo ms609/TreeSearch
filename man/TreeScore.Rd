@@ -49,8 +49,7 @@ takes a \code{phylo} tree.  Most users want the higher-level \code{\link[=TreeLe
 \item \code{EdgeListScore()}: Low-level scorer taking parent and child vectors; the
 default \code{TreeScorer} for \code{\link[=TreeSearch]{TreeSearch()}}, \code{\link[=Ratchet]{Ratchet()}} and
 \code{\link[=Jackknife]{Jackknife()}}.  Scores via the native \code{ts_fitch_score()} kernel, which
-handles the Brazeau-Guillerme-Smith inapplicable algorithm correctly
-(including the \verb{\{1-\}} case that MorphyLib mis-scored).
+handles the Brazeau-Guillerme-Smith inapplicable algorithm correctly.
 
 }}
 \seealso{

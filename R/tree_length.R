@@ -556,8 +556,7 @@ TreeScore <- function(tree, dataset) {
 #' @describeIn TreeScore Low-level scorer taking parent and child vectors; the
 #'   default `TreeScorer` for [`TreeSearch()`], [`Ratchet()`] and
 #'   [`Jackknife()`].  Scores via the native `ts_fitch_score()` kernel, which
-#'   handles the Brazeau-Guillerme-Smith inapplicable algorithm correctly
-#'   (including the `{1-}` case that MorphyLib mis-scored).
+#'   handles the Brazeau-Guillerme-Smith inapplicable algorithm correctly.
 #' @inheritParams RearrangeEdges
 #' @param inPostorder Logical: are the edges already in postorder?  If `FALSE`
 #'   (the default) they are reordered before scoring.

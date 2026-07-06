@@ -35,11 +35,11 @@
   Wagner starts that once distinguished it are folded into `"thorough"`, so the two
   are identical.  Existing calls continue to work.
 
-- **MorphyLib removed.** The vendored Morphy Phylogenetic Library (C/C++) has
+- **MorphyLib removed.** The Morphy Phylogenetic Library (C/C++) has
   been dropped; all parsimony scoring now runs through the native C++ kernel,
   which implements the Brazeau, Guillerme & Smith (2019) inapplicable-state
   algorithm correctly — including ambiguous-with-inapplicable tokens such as
-  `{1-}`, which MorphyLib mis-scored.
+  `{1-}`, which MorphyLib scored incorrectly.
 
 - **`concavity` argument for `PrepareData()`.**  Implied-weights and profile
   searches with the custom-search functions no longer need a hand-written
