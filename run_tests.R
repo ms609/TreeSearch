@@ -1,5 +1,0 @@
-library(devtools)
-options(testthat.output_file = "test_output.txt")
-result <- devtools::test(stop_on_failure = FALSE)
-cat("\n=== Test Summary ===\n")
-print(result)
