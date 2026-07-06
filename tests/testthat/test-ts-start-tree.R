@@ -52,21 +52,21 @@ test_that("Verbosity shows 'Starting tree' instead of 'Wagner'", {
   good <- MaximizeParsimony(
     dataset, maxReplicates = 1L, targetHits = 1L, verbosity = 0L
   )
-  # Capture verbose output
-  out <- capture.output({
-    warm <- MaximizeParsimony(
-      dataset, tree = good[[1L]],
-      maxReplicates = 1L, targetHits = 1L, verbosity = 2L
+  # MaximizeParsimony emits two streams at verbosity = 2: cli messages
+  # via message() ("Strategy: ...", "Search complete: ...") and C++
+  # Rprintf progress via stdout ("Starting tree score", "Converged: ...").
+  # Capture both (nested, single run) so neither leaks to console.
+  msg_lines <- character()
+  stdout_lines <- capture.output(
+    msg_lines <- capture.output(
+      warm <- MaximizeParsimony(
+        dataset, tree = good[[1L]],
+        maxReplicates = 1L, targetHits = 1L, verbosity = 2L
+      ),
+      type = "message"
     )
-  }, type = "message")
-  # Also capture stdout (Rprintf goes to stdout)
-  out2 <- capture.output({
-    warm2 <- MaximizeParsimony(
-      dataset, tree = good[[1L]],
-      maxReplicates = 1L, targetHits = 1L, verbosity = 2L
-    )
-  })
-  all_out <- paste(c(out, out2), collapse = "\n")
+  )
+  all_out <- paste(c(msg_lines, stdout_lines), collapse = "\n")
   expect_true(grepl("Starting tree score", all_out))
 })
 
