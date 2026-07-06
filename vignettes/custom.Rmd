@@ -113,7 +113,7 @@ PlotTree(result)
 Real searches may involve more sophisticated interaction with an underlying
 dataset. To demonstrate this workflow, we consider how we would implement
 implied weighting as a custom search.
-(This is not intended to match the efficiency of the native
+(This will not match the efficiency of the native
 `MaximizeParsimony(dataset, concavity = k)` implementation)
 
 Implied weights [@Goloboff1993] penalize additional homoplasy according to a
@@ -128,16 +128,17 @@ evaluation.
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
-# Calculate the minimum length once; IWScore() below closes over this value,
-# so it is looked up (cheaply) rather than recomputed on every call.
+# Calculate the minimum length once
 minLength <- MinimumLength(dataset, compress = TRUE)
 
-IWScore <- function (parent, child, dataset, concavity = 10) {
+IWScore <- function (parent, child, dataset) {
+  concavity <- 10
   tree <- structure(list(edge = cbind(parent, child),
-                        tip.label = names(dataset),
-                        Nnode = length(dataset) - 1L), class = "phylo")
+                         tip.label = names(dataset),
+                         Nnode = length(dataset) - 1L), class = "phylo")
   homoplasy <- CharacterLength(tree, dataset, compress = TRUE) - minLength
   fit <- homoplasy / (homoplasy + concavity)
+  
   # Return:
   sum(fit * attr(dataset, "weight"))
 }
@@ -147,11 +148,9 @@ iwTree <- TreeSearch(NJTree(dataset), dataset, TreeScorer = IWScore,
 ```
 
 The parsimony ratchet [@Nixon1999] can help to escape local optima.
-This needs a `Bootstrapper()` that resamples `dataset`'s characters: as
-`dataset` here is a plain `phyDat` object, its weights live in the `"weight"`
-attribute (contrast this with the native implementation's `BootstrapTree()`,
-which resamples the `weight` element of a `ParsimonyData` object -- the same
-idea, applied to a different data structure):
+This needs a `Bootstrapper()` that resamples the characters in `dataset`.
+With a `phyDat` object, we can resample by modifying the `"weight"` attribute
+of `dataset`:
 
 ```{r iw-bootstrap}
 IWBootstrap <- function (edgeList, dataset, EdgeSwapper = NNISwap,
@@ -159,7 +158,6 @@ IWBootstrap <- function (edgeList, dataset, EdgeSwapper = NNISwap,
   startWeights <- attr(dataset, "weight")
   resampling <- tabulate(sample(rep.int(seq_along(startWeights), startWeights),
                                 replace = TRUE), length(startWeights))
-  # R copy-on-modify: the caller's `dataset` is unchanged.
   attr(dataset, "weight") <- as.integer(resampling)
 
   res <- EdgeListSearch(edgeList[1:2], dataset, TreeScorer = IWScore,
@@ -185,7 +183,7 @@ Use much larger values of `ratchIter`, `ratchHits`, `searchIter` and
 Hopefully these examples give a template from which you are able to construct
 your own optimality criteria.  The maintainer is happy to answer questions via
 e-mail, or you can file queries by opening a
-[GitHub issue](https://github.com/ms609/TreeDist/issues/new/).
+[GitHub issue](https://github.com/ms609/TreeSearch/issues/new/).
 
 ## What next?
 
