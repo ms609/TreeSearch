@@ -64,17 +64,14 @@ TCIScore(tree$edge[, 1], tree$edge[, 2], NA)
 ```
 
 Now we can use our scorer for tree search.
-We need to initialize some parameters to `TreeSearch()` with null values:
-`dataset = EmptyPhyDat(tree)` sends a blank dataset (as our tree scorer doesn't
-require any data); we set `InitializeData = DoNothing` and
-`CleanUpData = DoNothing` because we don't need to do anything to `dataset`
-before it is sent to `TreeScorer()`.
+`dataset` is passed to `TreeScorer()` unchanged, so we can send it whatever our
+scorer needs -- here, `EmptyPhyDat(tree)`, a blank dataset, as `TCIScore()`
+doesn't use it at all.
 
 ```{r tci-search}
 result <- TreeSearch(tree, dataset = EmptyPhyDat(tree),
-                     InitializeData = DoNothing, CleanUpData = DoNothing,
                      TreeScorer = TCIScore,
-                     maxIter = 50L, maxHits = 10L, 
+                     maxIter = 50L, maxHits = 10L,
                      verbosity = 1L)
 
 PlotTree(result)
@@ -99,9 +96,8 @@ DistanceScore <- function(parent, child, dataset) {
 }
 
 result <- TreeSearch(RandomTree(8, root = TRUE), dataset = EmptyPhyDat(tree),
-                     InitializeData = DoNothing, CleanUpData = DoNothing,
                      TreeScorer = DistanceScore,
-                     maxIter = 50L, maxHits = 10L, 
+                     maxIter = 50L, maxHits = 10L,
                      verbosity = 1L)
 
 par(mfrow = c(1, 2))
@@ -118,28 +114,66 @@ PlotTree(result)
 > `MaximizeParsimony(dataset, concavity = k)`, which is faster and uses the
 > full driven-search pipeline (see the
 > [tree search vignette](tree-search.html#implied-weighting)).
-> The example below shows that the custom-search functions `TreeSearch()` and
-> `Ratchet()` support implied weights directly, through the `concavity`
-> parameter.
+> The example below instead shows how you would implement a scorer of
+> comparable complexity yourself, entirely in R, using the custom-search
+> framework -- useful as a template for optimality criteria that TreeSearch
+> doesn't provide natively.
 
 Implied weights [@Goloboff1993] penalize additional homoplasy according to a
-concavity constant _k_.
-`TreeSearch()`, `Ratchet()` and `Jackknife()` accept `concavity` directly --
-no custom scorer or data-initialization code is required:
+concavity constant _k_: the fit contributed by a character is
+`e / (e + k)`, where `e` is the number of steps in excess of the character's
+theoretical minimum.  We can compute both quantities from a plain `phyDat`
+object using existing `TreeSearch` functions -- no data-preparation hook is
+needed, as we simply compute the minimum lengths once, up front, and let our
+`TreeScorer` close over the result:
 
-```{r iw-search, message = FALSE}
+```{r iw-score, message = FALSE}
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
-iwTree <- TreeSearch(NJTree(dataset), dataset, concavity = 10,
+IWScore <- function (parent, child, dataset, concavity = 10,
+                     minLength = MinimumLength(dataset, compress = TRUE)) {
+  tree <- structure(list(edge = cbind(parent, child),
+                        tip.label = names(dataset),
+                        Nnode = length(dataset) - 1L), class = "phylo")
+  homoplasy <- CharacterLength(tree, dataset, compress = TRUE) - minLength
+  fit <- homoplasy / (homoplasy + concavity)
+  # Return:
+  sum(fit * attr(dataset, "weight"))
+}
+
+iwTree <- TreeSearch(NJTree(dataset), dataset, TreeScorer = IWScore,
                      maxIter = 50L, maxHits = 10L, verbosity = 1)
 ```
 
-The parsimony ratchet [@Nixon1999] can help to escape local optima;
-bootstrap resampling of characters is handled for you:
+The parsimony ratchet [@Nixon1999] can help to escape local optima.
+This needs a `Bootstrapper()` that resamples `dataset`'s characters: as
+`dataset` here is a plain `phyDat` object, its weights live in the `"weight"`
+attribute (contrast this with the native implementation's `BootstrapTree()`,
+which resamples the `weight` element of a `ParsimonyData` object -- the same
+idea, applied to a different data structure):
+
+```{r iw-bootstrap}
+IWBootstrap <- function (edgeList, dataset, EdgeSwapper = NNISwap,
+                         maxIter, maxHits, verbosity = 1L, ...) {
+  startWeights <- attr(dataset, "weight")
+  resampling <- tabulate(sample(rep.int(seq_along(startWeights), startWeights),
+                                replace = TRUE), length(startWeights))
+  # R copy-on-modify: the caller's `dataset` is unchanged.
+  attr(dataset, "weight") <- as.integer(resampling)
+
+  res <- EdgeListSearch(edgeList[1:2], dataset, TreeScorer = IWScore,
+                        EdgeSwapper = EdgeSwapper,
+                        maxIter = maxIter, maxHits = maxHits,
+                        verbosity = verbosity - 1L, ...)
+  # Return:
+  res[1:2]
+}
+```
 
 ```{r iw-ratchet, message = FALSE}
-ratchetTree <- Ratchet(iwTree, dataset, concavity = 10,
+ratchetTree <- Ratchet(iwTree, dataset, TreeScorer = IWScore,
+                       Bootstrapper = IWBootstrap,
                        ratchIter = 2, ratchHits = 2,
                        searchIter = 20, searchHits = 10,
                        verbosity = 2)
@@ -147,8 +181,6 @@ ratchetTree <- Ratchet(iwTree, dataset, concavity = 10,
 
 Use much larger values of `ratchIter`, `ratchHits`, `searchIter` and
 `searchHits` for a thorough search.
-Profile parsimony [@Faith2001] is available in the same way: set
-`concavity = "profile"`.
 
 Hopefully these examples give a template from which you are able to construct
 your own optimality criteria.  The maintainer is happy to answer questions via

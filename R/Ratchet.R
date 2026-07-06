@@ -9,12 +9,14 @@
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
 #'
 #' @inheritParams TreeTools::Renumber
-#' @param dataset a dataset in the format required by `TreeScorer()`.
+#' @param dataset a dataset in the format required by `TreeScorer()`; the
+#' default [`EdgeListScore()`] requires a [`ParsimonyData`][PrepareData]
+#' object.
 #' @inheritParams TreeSearch
 #' @inheritParams Bootstrap
 #' @param Bootstrapper Function to perform bootstrapped rearrangements of tree.
-#'  First arguments will be an `edgeList` and a dataset, initialized using 
-#'  `InitializeData()`. Should return a rearranged `edgeList`.
+#'  First arguments will be an `edgeList` and `dataset`.
+#'  Should return a rearranged `edgeList`.
 #' @param swappers A list of functions to use to conduct edge rearrangement
 #'  during tree search.
 #'  Provide functions like \code{\link{NNISwap}} to shuffle root position,
@@ -57,8 +59,9 @@
 #' @examples
 #' data("Lobo", package = "TreeTools")
 #' njtree <- TreeTools::NJTree(Lobo.phy)
+#' loboData <- PrepareData(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
-#' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
+#' quickResult <- Ratchet(njtree, loboData, ratchIter = 2, searchHits = 3)
 #' 
 #' # Plot result (legibly)
 #' oldPar <- par(mar = rep(0, 4), cex = 0.75)
@@ -73,36 +76,40 @@
 #' @family custom search functions
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
-Ratchet <- function(tree, dataset, concavity = Inf,
-                    InitializeData = PrepareData,
-                    CleanUpData    = ReleaseData,
+Ratchet <- function(tree, dataset,
+                    InitializeData = NULL,
+                    CleanUpData    = NULL,
                     TreeScorer     = EdgeListScore,
                     Bootstrapper   = BootstrapTree,
                     swappers = list(TBRSwap, SPRSwap, NNISwap),
                     BootstrapSwapper = if (is.list(swappers))
                      swappers[[length(swappers)]] else swappers,
                     returnAll = FALSE, stopAtScore = NULL,
-                    stopAtPeak = FALSE, stopAtPlateau = 0L, 
+                    stopAtPeak = FALSE, stopAtPlateau = 0L,
                     ratchIter = 100, ratchHits = 10,
                     searchIter = 4000, searchHits = 42,
                     bootstrapIter = searchIter, bootstrapHits = searchHits,
-                    verbosity = 1L, 
+                    verbosity = 1L,
                     suboptimal = sqrt(.Machine[["double.eps"]]), ...) {
   epsilon <- sqrt(.Machine[["double.eps"]])
   hits <- 0L
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
-  tree <- RenumberTips(tree, names(dataset))
+  tree <- RenumberTips(tree, .SearchTipLabels(dataset))
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
-  if (identical(InitializeData, PrepareData)) {
-    initializedData <- PrepareData(dataset, concavity = concavity)
+  if (!is.null(InitializeData) || !is.null(CleanUpData)) {
+    .DeprecatedSearchHooks("Ratchet")
+    initializedData <- if (is.null(InitializeData)) dataset else
+      InitializeData(dataset)
+    if (!is.null(CleanUpData)) {
+      on.exit(initializedData <- CleanUpData(initializedData))
+    }
   } else {
-    initializedData <- InitializeData(dataset)
+    initializedData <- dataset
   }
-  on.exit(initializedData <- CleanUpData(initializedData))
 
   bestScore <- TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
   

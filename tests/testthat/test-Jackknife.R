@@ -7,10 +7,11 @@ test_that("Jackknife supports are correct", {
     byTaxon = FALSE
   )
   names(dataset) <- c(LETTERS[1:6], "out")
+  preparedData <- PrepareData(dataset)
 
-  expect_error(Jackknife(unroot(true_tree), dataset))
-  expect_error(Jackknife(start_tree, dataset, resampleFreq = 0))
-  expect_error(Jackknife(start_tree, dataset, resampleFreq = 9 / 10))
+  expect_error(Jackknife(unroot(true_tree), preparedData))
+  expect_error(Jackknife(start_tree, preparedData, resampleFreq = 0))
+  expect_error(Jackknife(start_tree, preparedData, resampleFreq = 9 / 10))
 
   # Ensure reproducible RNG, restoring on exit
   old_rng <- RNGkind()
@@ -18,11 +19,11 @@ test_that("Jackknife supports are correct", {
   suppressWarnings(RNGversion("3.5.0"))
   set.seed(0)
 
-  strict <- TreeSearch(start_tree, dataset, verbosity = 0)
+  strict <- TreeSearch(start_tree, preparedData, verbosity = 0)
   expect_equal(1, length(unique(list(true_tree), list(start_tree)))) # Right tree found
   jackTrees <- Jackknife(
     strict,
-    dataset,
+    preparedData,
     resampleFreq = 4 / 7,
     searchIter = 24L,
     searchHits = 7L,

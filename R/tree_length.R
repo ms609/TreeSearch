@@ -566,6 +566,10 @@ TreeScore <- function(tree, dataset) {
 #' @importFrom TreeTools Preorder PostorderOrder
 #' @export
 EdgeListScore <- function(parent, child, dataset, inPostorder = FALSE, ...) {
+  if (!is.ParsimonyData(dataset)) {
+    stop("`dataset` must be a `ParsimonyData` object; prepare it first with ",
+         "`PrepareData()`, or supply your own `TreeScorer`.")
+  }
   if (!inPostorder) {
     edgeList <- Preorder(cbind(parent, child))
     edgeList <- edgeList[PostorderOrder(edgeList), , drop = FALSE]

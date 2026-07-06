@@ -19,10 +19,10 @@
 #' @family split support functions
 #' @family custom search functions
 #' @export
-Jackknife <- function(tree, dataset, concavity = Inf,
+Jackknife <- function(tree, dataset,
                       resampleFreq = 2 / 3,
-                      InitializeData = PrepareData,
-                      CleanUpData    = ReleaseData,
+                      InitializeData = NULL,
+                      CleanUpData    = NULL,
                       TreeScorer     = EdgeListScore,
                       EdgeSwapper    = TBRSwap,
                       jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
@@ -31,16 +31,20 @@ Jackknife <- function(tree, dataset, concavity = Inf,
     stop("tree must be bifurcating; try rooting with ape::root")
   }
 
-  tree <- RenumberTips(tree, names(dataset))
+  tree <- RenumberTips(tree, .SearchTipLabels(dataset))
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
-  if (identical(InitializeData, PrepareData)) {
-    initializedData <- PrepareData(dataset, concavity = concavity)
+  if (!is.null(InitializeData) || !is.null(CleanUpData)) {
+    .DeprecatedSearchHooks("Jackknife")
+    initializedData <- if (is.null(InitializeData)) dataset else
+      InitializeData(dataset)
+    if (!is.null(CleanUpData)) {
+      on.exit(initializedData <- CleanUpData(initializedData))
+    }
   } else {
-    initializedData <- InitializeData(dataset)
+    initializedData <- dataset
   }
-  on.exit(initializedData <- CleanUpData(initializedData))
 
   startWeights <- initializedData[["original_weight"]]
   eachChar <- seq_along(startWeights)

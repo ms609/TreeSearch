@@ -41,12 +41,13 @@
   algorithm correctly — including ambiguous-with-inapplicable tokens such as
   `{1-}`, which MorphyLib mis-scored.
 
-- **`concavity` argument for `TreeSearch()`, `Ratchet()` and `Jackknife()`.**
-  Implied-weights and profile searches with the custom-search functions no
-  longer need a hand-written scorer: pass `concavity = k` (a finite constant)
-  for implied weights, `concavity = "profile"` for profile parsimony, or the
-  default `Inf` for equal weights.  (Adapted from the parallel T-200 work,
-  PR #216.)
+- **`concavity` argument for `PrepareData()`.**  Implied-weights and profile
+  searches with the custom-search functions no longer need a hand-written
+  scorer: pass `concavity = k` (a finite constant) for implied weights,
+  `concavity = "profile"` for profile parsimony, or the default `Inf` for
+  equal weights, when preparing `dataset`; the default `TreeScorer`,
+  [`EdgeListScore()`], honours it automatically.  (Adapted from the parallel
+  T-200 work, PR #216.)
 
 - **Custom-search scoring layer renamed** to drop the now-meaningless "Morphy"
   branding.  `PhyDat2Morphy()` → `PrepareData()`; `UnloadMorphy()` →
@@ -58,6 +59,17 @@
   returns a lightweight, garbage-collected `ParsimonyData` object; only the
   default `"inapplicable"` gap treatment is supported (recode data for the
   missing/extra-state treatments).
+
+- **`TreeSearch()`, `Ratchet()` and `Jackknife()` no longer prepare `dataset`
+  for you.**  Prepare it yourself -- typically with `PrepareData()` -- before
+  calling these functions; a custom `TreeScorer` may take any `dataset` it
+  likes (e.g. a raw `phyDat` object).  The `InitializeData` and `CleanUpData`
+  arguments that formerly did this automatically are deprecated (a warning is
+  issued if supplied) and will be removed in a future release: with scoring
+  now handled by plain R data structures rather than external Morphy
+  pointers, there is nothing left to initialize or destroy on the framework's
+  behalf.  If your own `TreeScorer` holds an external resource that needs
+  releasing, use your own `on.exit()`.
 
 - `Jackknife()` and `BootstrapTree()` (formerly `MorphyBootstrap()`) now
   resample characters natively, scoring the resampled weights through the

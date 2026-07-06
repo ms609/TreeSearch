@@ -22,9 +22,8 @@ BootstrapTree(
 Ratchet(
   tree,
   dataset,
-  concavity = Inf,
-  InitializeData = PrepareData,
-  CleanUpData = ReleaseData,
+  InitializeData = NULL,
+  CleanUpData = NULL,
   TreeScorer = EdgeListScore,
   Bootstrapper = BootstrapTree,
   swappers = list(TBRSwap, SPRSwap, NNISwap),
@@ -79,7 +78,9 @@ RatchetConsensus(
 \item (optionally, if score provided) number of times this score has been hit
 }}
 
-\item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
+\item{dataset}{a dataset in the format required by \code{TreeScorer()}; the
+default \code{\link[=EdgeListScore]{EdgeListScore()}} requires a \code{\link[=PrepareData]{ParsimonyData}}
+object.}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
@@ -109,27 +110,23 @@ by \code{attr(FunctionName, "stopAtPlateau") <- TRUE}.}
 with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 
-\item{concavity}{Determines the optimality criterion when the default native
-scorer is used: \code{Inf} (the default) for equal weights; a finite, positive
-number for implied weighting with that concavity constant
-\insertCite{Goloboff1993}{TreeSearch}; or \code{"profile"} for profile parsimony.
-Ignored if a custom \code{InitializeData} is supplied (prepare the data yourself).}
-
-\item{InitializeData}{Function that sets up data object to prepare for tree
-search.  The default, \code{\link[=PrepareData]{PrepareData()}}, is called with \code{concavity};
-a custom function will be passed only the \code{dataset} parameter.
-Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
-
-\item{CleanUpData}{Function to release the data object on function exit.
-The function will be passed the value returned by \code{InitializeData()}.}
+\item{InitializeData, CleanUpData}{Deprecated and will be removed in a
+future release.  Prepare \code{dataset} yourself (e.g. with
+\code{\link[=PrepareData]{PrepareData()}}) before
+calling \code{TreeSearch()}, rather than supplying these hooks; and use
+your own \code{on.exit()} if your \code{TreeScorer} holds an external resource
+that needs releasing.}
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
-\code{parent} and \code{child} entries of a tree's edge list, and a dataset.}
+\code{parent} and \code{child} entries of a tree's edge list, and \code{dataset}.
+The default, \code{\link[=EdgeListScore]{EdgeListScore()}}, requires \code{dataset} to be a
+\code{\link[=PrepareData]{ParsimonyData}} object (equal weights, implied
+weights or profile parsimony, according to how it was prepared).}
 
 \item{Bootstrapper}{Function to perform bootstrapped rearrangements of tree.
-First arguments will be an \code{edgeList} and a dataset, initialized using
-\code{InitializeData()}. Should return a rearranged \code{edgeList}.}
+First arguments will be an \code{edgeList} and \code{dataset}.
+Should return a rearranged \code{edgeList}.}
 
 \item{swappers}{A list of functions to use to conduct edge rearrangement
 during tree search.
@@ -207,8 +204,9 @@ For usage pointers, see the
 \examples{
 data("Lobo", package = "TreeTools")
 njtree <- TreeTools::NJTree(Lobo.phy)
+loboData <- PrepareData(Lobo.phy)
 # Increase value of ratchIter and searchHits to do a proper search
-quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
+quickResult <- Ratchet(njtree, loboData, ratchIter = 2, searchHits = 3)
 
 # Plot result (legibly)
 oldPar <- par(mar = rep(0, 4), cex = 0.75)

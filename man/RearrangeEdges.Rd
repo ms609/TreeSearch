@@ -30,7 +30,10 @@ matrix of a tree of class \code{\link[ape]{phylo}}, i.e.
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
-\code{parent} and \code{child} entries of a tree's edge list, and a dataset.}
+\code{parent} and \code{child} entries of a tree's edge list, and \code{dataset}.
+The default, \code{\link[=EdgeListScore]{EdgeListScore()}}, requires \code{dataset} to be a
+\code{\link[=PrepareData]{ParsimonyData}} object (equal weights, implied
+weights or profile parsimony, according to how it was prepared).}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
@@ -44,7 +47,7 @@ and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRS
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
 
-\item{...}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
+\item{...}{further arguments to pass to \code{TreeScorer()}.}
 }
 \value{
 This function returns a list with two to four elements, corresponding to a binary tree:

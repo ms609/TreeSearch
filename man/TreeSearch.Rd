@@ -27,9 +27,8 @@ EdgeListSearch(
 TreeSearch(
   tree,
   dataset,
-  concavity = Inf,
-  InitializeData = PrepareData,
-  CleanUpData = ReleaseData,
+  InitializeData = NULL,
+  CleanUpData = NULL,
   TreeScorer = EdgeListScore,
   EdgeSwapper = RootedTBRSwap,
   maxIter = 100L,
@@ -55,11 +54,15 @@ DoNothing(x = NULL)
 \item (optionally, if score provided) number of times this score has been hit
 }}
 
-\item{dataset}{Data in format required by \code{InitializeData}.}
+\item{dataset}{Data in the format required by \code{TreeScorer}; the default
+\code{\link[=EdgeListScore]{EdgeListScore()}} requires a \code{\link[=PrepareData]{ParsimonyData}} object.}
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
-\code{parent} and \code{child} entries of a tree's edge list, and a dataset.}
+\code{parent} and \code{child} entries of a tree's edge list, and \code{dataset}.
+The default, \code{\link[=EdgeListScore]{EdgeListScore()}}, requires \code{dataset} to be a
+\code{\link[=PrepareData]{ParsimonyData}} object (equal weights, implied
+weights or profile parsimony, according to how it was prepared).}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
@@ -83,25 +86,18 @@ by \code{attr(FunctionName, "stopAtPlateau") <- TRUE}.}
 \item{verbosity}{Numeric specifying level of detail to display in console:
 larger numbers provide more verbose feedback to the user.}
 
-\item{\dots}{further arguments to pass to \code{TreeScorer()}, e.g. \verb{dataset = }.}
+\item{\dots}{further arguments to pass to \code{TreeScorer()}.}
 
 \item{tree}{A fully-resolved starting tree in \code{\link[ape]{phylo}} format,
 with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 
-\item{concavity}{Determines the optimality criterion when the default native
-scorer is used: \code{Inf} (the default) for equal weights; a finite, positive
-number for implied weighting with that concavity constant
-\insertCite{Goloboff1993}{TreeSearch}; or \code{"profile"} for profile parsimony.
-Ignored if a custom \code{InitializeData} is supplied (prepare the data yourself).}
-
-\item{InitializeData}{Function that sets up data object to prepare for tree
-search.  The default, \code{\link[=PrepareData]{PrepareData()}}, is called with \code{concavity};
-a custom function will be passed only the \code{dataset} parameter.
-Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
-
-\item{CleanUpData}{Function to release the data object on function exit.
-The function will be passed the value returned by \code{InitializeData()}.}
+\item{InitializeData, CleanUpData}{Deprecated and will be removed in a
+future release.  Prepare \code{dataset} yourself (e.g. with
+\code{\link[=PrepareData]{PrepareData()}}) before
+calling \code{TreeSearch()}, rather than supplying these hooks; and use
+your own \code{on.exit()} if your \code{TreeScorer} holds an external resource
+that needs releasing.}
 }
 \value{
 \code{TreeSearch()} returns a tree, with an attribute \code{pscore} conveying its
@@ -132,15 +128,16 @@ configuring tree search, see the
 \examples{
 data("Lobo", package="TreeTools")
 njtree <- TreeTools::NJTree(Lobo.phy)
+loboData <- PrepareData(Lobo.phy)
 
 ## Only run examples in interactive R sessions
 if (interactive()) {
-  TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
-  TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
-  TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
+  TreeSearch(njtree, loboData, maxIter = 20, EdgeSwapper = NNISwap)
+  TreeSearch(njtree, loboData, maxIter = 20, EdgeSwapper = RootedSPRSwap)
+  TreeSearch(njtree, loboData, maxIter = 20, EdgeSwapper = TBRSwap)
 
   # Implied weighting (concavity constant k = 10):
-  TreeSearch(njtree, Lobo.phy, concavity = 10, maxIter = 20)
+  TreeSearch(njtree, PrepareData(Lobo.phy, concavity = 10), maxIter = 20)
 }
 }
 \seealso{

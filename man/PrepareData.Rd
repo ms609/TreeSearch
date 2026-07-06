@@ -35,16 +35,17 @@ pre-extracted scoring matrices suitable for \code{\link[=EdgeListScore]{EdgeList
 }
 \description{
 \code{PrepareData()} extracts the matrices that the native C++ Fitch engine needs
-in order to score a tree repeatedly, for use with the custom-search
-functions \code{\link[=TreeSearch]{TreeSearch()}}, \code{\link[=Ratchet]{Ratchet()}} and \code{\link[=Jackknife]{Jackknife()}} (as their
-\code{InitializeData} argument).  Once finished, release it with \code{\link[=ReleaseData]{ReleaseData()}}
+in order to score a tree repeatedly.  Call it yourself before passing
+\code{dataset} to the custom-search functions \code{\link[=TreeSearch]{TreeSearch()}}, \code{\link[=Ratchet]{Ratchet()}} and
+\code{\link[=Jackknife]{Jackknife()}} (whose default \code{TreeScorer}, \code{\link[=EdgeListScore]{EdgeListScore()}}, requires a
+\code{ParsimonyData} object).  Once finished, release it with \code{\link[=ReleaseData]{ReleaseData()}}
 (a formality: the object holds no external resources).
 }
 \section{Functions}{
 \itemize{
-\item \code{ReleaseData()}: Release a prepared dataset.  A no-op retained for the
-custom-search \code{CleanUpData} hook (the object is managed by R's garbage
-collector).
+\item \code{ReleaseData()}: Release a prepared dataset.  A no-op: the object
+is managed by R's garbage collector and needs no explicit release.
+Retained for the deprecated custom-search \code{CleanUpData} hook.
 
 \item \code{is.ParsimonyData()}: Test whether an object is a \code{ParsimonyData} handle.
 

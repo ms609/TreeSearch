@@ -7,9 +7,10 @@
 #' Prepare a dataset for tree scoring
 #'
 #' `PrepareData()` extracts the matrices that the native C++ Fitch engine needs
-#' in order to score a tree repeatedly, for use with the custom-search
-#' functions [`TreeSearch()`], [`Ratchet()`] and [`Jackknife()`] (as their
-#' `InitializeData` argument).  Once finished, release it with [`ReleaseData()`]
+#' in order to score a tree repeatedly.  Call it yourself before passing
+#' `dataset` to the custom-search functions [`TreeSearch()`], [`Ratchet()`] and
+#' [`Jackknife()`] (whose default `TreeScorer`, [`EdgeListScore()`], requires a
+#' `ParsimonyData` object).  Once finished, release it with [`ReleaseData()`]
 #' (a formality: the object holds no external resources).
 #'
 #' @param dataset An object of \pkg{phangorn} class `phyDat`.
@@ -80,9 +81,9 @@ PrepareData <- function(dataset, concavity = Inf) {
     class = "ParsimonyData")
 }
 
-#' @describeIn PrepareData Release a prepared dataset.  A no-op retained for the
-#'  custom-search `CleanUpData` hook (the object is managed by R's garbage
-#'  collector).
+#' @describeIn PrepareData Release a prepared dataset.  A no-op: the object
+#'  is managed by R's garbage collector and needs no explicit release.
+#'  Retained for the deprecated custom-search `CleanUpData` hook.
 #' @param x A `ParsimonyData` object.
 #' @return `ReleaseData()` returns its argument invisibly.
 #' @export
