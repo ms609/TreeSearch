@@ -61,6 +61,7 @@
 # @param constraint A phyDat, phylo, or NULL.
 # @param dataset A phyDat whose names define the tip ordering.
 # @keywords internal
+#' @importFrom TreeTools AddUnconstrained
 .PrepareConstraint <- function(constraint, dataset) {
   if (is.null(constraint)) return(list())
 
