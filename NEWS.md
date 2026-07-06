@@ -71,6 +71,14 @@
   behalf.  If your own `TreeScorer` holds an external resource that needs
   releasing, use your own `on.exit()`.
 
+- **`Resample()`'s `finalIter`, `maxHits`, `tolerance` and `verbosity`
+  arguments are deprecated.**  These are inherited from the pre-2.0.0,
+  MorphyLib-based implementation and have had no effect since `Resample()`
+  was rewritten around the native search engine, which has no equivalent
+  controls (in particular, no progress-reporting hook).  Supplying a
+  non-`NULL` value now issues a deprecation warning; the arguments will be
+  removed in a future release.
+
 - `Jackknife()` and `BootstrapTree()` (formerly `MorphyBootstrap()`) now
   resample characters natively, scoring the resampled weights through the
   native kernel rather than by mutating a MorphyLib object — fixing a case

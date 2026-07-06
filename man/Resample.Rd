@@ -12,12 +12,12 @@ Resample(
   proportion = 2/3,
   ratchIter = 1L,
   tbrIter = 8L,
-  finalIter = 3L,
-  maxHits = 12L,
+  finalIter = NULL,
+  maxHits = NULL,
   concavity = Inf,
-  tolerance = sqrt(.Machine[["double.eps"]]),
+  tolerance = NULL,
   constraint,
-  verbosity = 2L,
+  verbosity = NULL,
   nReplicates = 1L,
   nThreads = 1L,
   hierarchy = NULL,
@@ -30,12 +30,46 @@ Resample(
 )
 }
 \arguments{
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying
+\code{tree}.}
+
+\item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}}.
+Consulted only as a fallback: if a replicate's search reports no
+best-score tree, \code{tree} (if supplied) is returned in its place.  Unlike
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}}'s \code{tree} argument, it is not used as a warm-start
+topology.}
+
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered
 to give more meaningful results.}
 
 \item{proportion}{Numeric between 0 and 1 specifying what proportion of
 characters to retain under jackknife resampling.}
+
+\item{ratchIter}{Numeric: governs search effort per replicate, mapped to
+\code{max(ratchIter, 5)} independent search replicates and \code{max(ratchIter, 3)}
+parsimony-ratchet cycles per replicate.}
+
+\item{tbrIter}{Numeric: maximum number of times the best score may be hit
+during a \acronym{TBR} rearrangement pass before it stops (mapped to the
+underlying search engine's \code{tbrMaxHits} control).}
+
+\item{finalIter, maxHits, tolerance, verbosity}{Deprecated and without
+effect.  These were parameters of the pre-2.0.0, \pkg{MorphyLib}-based
+implementation of \code{Resample()}; the native search engine that replaced it
+has no equivalent controls (in particular, no progress-reporting hook), so
+supplying a non-\code{NULL} value now only issues a deprecation warning.}
+
+\item{concavity}{Determines the degree to which extra steps beyond the
+first are penalized; see \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} for full details.
+Specify a finite value for implied weighting, \code{Inf} (default) for equal
+weights, or \code{"profile"} for profile parsimony.}
+
+\item{constraint}{Either an object of class \code{phyDat}, in which case
+returned trees will be perfectly compatible with each character in
+\code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
+in any output tree.}
 
 \item{nReplicates}{Integer specifying how many resample replicates to run.
 Default \code{1L} runs a single replicate (original behaviour).
@@ -71,6 +105,8 @@ Default \code{0.5}.  Only used when \code{extended_iw = TRUE}.}
 
 \item{xpiwe_max_f}{Numeric; maximum extrapolation factor.
 Default \code{5}.  Only used when \code{extended_iw = TRUE}.}
+
+\item{...}{Unused; retained for backward compatibility.}
 }
 \value{
 \code{Resample()} returns a \code{multiPhylo} object containing one best tree

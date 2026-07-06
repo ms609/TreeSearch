@@ -138,13 +138,40 @@
 
 #' Resampling under custom search criteria
 #'
+#' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
+#' \code{phyDat}, whose names correspond to the labels of any accompanying
+#' `tree`.
+#' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}}.
+#' Consulted only as a fallback: if a replicate's search reports no
+#' best-score tree, `tree` (if supplied) is returned in its place.  Unlike
+#' [`MaximizeParsimony()`]'s `tree` argument, it is not used as a warm-start
+#' topology.
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap`
 #' specifying how to resample characters.  Note that jackknife is considered
 #' to give more meaningful results.
-#' 
-#' @param proportion Numeric between 0 and 1 specifying what proportion of 
+#'
+#' @param proportion Numeric between 0 and 1 specifying what proportion of
 #' characters to retain under jackknife resampling.
-#' 
+#'
+#' @param ratchIter Numeric: governs search effort per replicate, mapped to
+#' `max(ratchIter, 5)` independent search replicates and `max(ratchIter, 3)`
+#' parsimony-ratchet cycles per replicate.
+#' @param tbrIter Numeric: maximum number of times the best score may be hit
+#' during a \acronym{TBR} rearrangement pass before it stops (mapped to the
+#' underlying search engine's `tbrMaxHits` control).
+#' @param finalIter,maxHits,tolerance,verbosity Deprecated and without
+#' effect.  These were parameters of the pre-2.0.0, \pkg{MorphyLib}-based
+#' implementation of `Resample()`; the native search engine that replaced it
+#' has no equivalent controls (in particular, no progress-reporting hook), so
+#' supplying a non-`NULL` value now only issues a deprecation warning.
+#' @param concavity Determines the degree to which extra steps beyond the
+#' first are penalized; see [`MaximizeParsimony()`] for full details.
+#' Specify a finite value for implied weighting, `Inf` (default) for equal
+#' weights, or `"profile"` for profile parsimony.
+#' @param constraint Either an object of class `phyDat`, in which case
+#' returned trees will be perfectly compatible with each character in
+#' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
+#' in any output tree.
 #' @section Resampling:
 #' Note that bootstrap support is a measure of the amount of data supporting
 #' a split, rather than the amount of confidence that should be afforded the
@@ -193,6 +220,7 @@
 #' Default `0.5`.  Only used when `extended_iw = TRUE`.
 #' @param xpiwe_max_f Numeric; maximum extrapolation factor.
 #' Default `5`.  Only used when `extended_iw = TRUE`.
+#' @param ... Unused; retained for backward compatibility.
 #'
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
 #' per resample replicate.
@@ -200,10 +228,10 @@
 #' @encoding UTF-8
 #' @export
 Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
-                     ratchIter = 1L, tbrIter = 8L, finalIter = 3L,
-                     maxHits = 12L, concavity = Inf,
-                     tolerance = sqrt(.Machine[["double.eps"]]),
-                     constraint, verbosity = 2L,
+                     ratchIter = 1L, tbrIter = 8L, finalIter = NULL,
+                     maxHits = NULL, concavity = Inf,
+                     tolerance = NULL,
+                     constraint, verbosity = NULL,
                      nReplicates = 1L, nThreads = 1L,
                      hierarchy = NULL, inapplicable = "bgs",
                      hsj_alpha = 1.0,
@@ -211,6 +239,16 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
                      xpiwe_r = 0.5,
                      xpiwe_max_f = 5,
                      ...) {
+
+  if (!is.null(finalIter) || !is.null(maxHits) || !is.null(tolerance) ||
+      !is.null(verbosity)) {
+    .Deprecated(msg = paste(
+      "In `Resample()`: `finalIter`, `maxHits`, `tolerance` and `verbosity`",
+      "have had no effect since `Resample()` was rewritten to use the",
+      "native search engine, and are deprecated.  They will be removed in",
+      "a future release."
+    ))
+  }
 
   if (!inherits(dataset, "phyDat")) {
     stop("`dataset` must be of class `phyDat`.")

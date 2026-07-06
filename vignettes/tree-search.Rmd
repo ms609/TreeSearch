@@ -155,8 +155,7 @@ parallel threads:
 
 ```{r Jackknife-annotations}
 nReplicates <- 10
-jackTrees <- Resample(vinther, bestTrees, nReplicates = nReplicates,
-                      verbosity = 0)
+jackTrees <- Resample(vinther, bestTrees, nReplicates = nReplicates)
 
 strict <- ape::consensus(bestTrees, p = 1)
 
