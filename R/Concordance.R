@@ -1028,7 +1028,8 @@ SharedPhylogeneticConcordance <- function(tree, dataset) {
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
 #' @template MRS
-#' @importFrom TreeTools Log2UnrootedMult Log2Unrooted MatchStrings
+#' @importFrom TreeTools CharacterInformation Log2UnrootedMult Log2Unrooted
+#' @importFrom TreeTools MatchStrings
 #' @export
 ConcordantInformation <- function(tree, dataset) {
   dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]
