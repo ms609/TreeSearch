@@ -13,25 +13,20 @@ vignette: >
 
 ## Using custom optimality criteria
 
-> **For standard parsimony searches** (equal weights, implied weights, or
-> profile parsimony), use `MaximizeParsimony()` — it is much faster and
-> easier. See the [tree search vignette](tree-search.html).
-> The functions below (`TreeSearch()`, `Ratchet()`) are for **custom
-> optimality criteria only**.
+`MaximizeParsimony()` implements rapid tree search under standard parsimony
+criteria. `TreeSearch()` provides a more flexible, if less efficient,
+interface for user-specified criteria [e.g. @Hopkins2021].
 
-"TreeSearch" can be used to search for trees that are optimal under 
-user-specified criteria [e.g. @Hopkins2021].
+Arbitrary optimality criteria may be specified by providing a function
+that returns a score for a given tree (and dataset).
 
-All that is needed is to provide a function that will return a score for a
-given tree (and dataset).
-
-First we'll load the necessary R libraries:
+First load the necessary R libraries:
 
 ```{r init, message = FALSE}
 library("TreeTools", quietly = TRUE, warn.conflict = FALSE)
 library("TreeSearch")
 
-# Plot trees nicely
+# Helper function to plot trees compactly
 PlotTree <- function(tree, ...) {
   oPar <- par(mar = rep(0, 4), cex = 0.9)
   plot(tree)
@@ -41,13 +36,14 @@ PlotTree <- function(tree, ...) {
 
 ## Maximizing tree balance
 
-We'll start with a very simple case: aiming to minimise the 
-total cophenetic index (TCI) [@Mir2013] of a tree. 
+We'll start with a very simple case: aiming to find a tree with a minimal 
+total cophenetic index (TCI) [@Mir2013].
 The TCI is a measure of tree balance; it does not depend on an input dataset.
 All we need to do is to write a `TreeScorer` function.  
 This function will be sent the `parent` and `child` nodes for each edge in a
-tree, and a (here, empty) `dataset` parameter.  The function should return
-a score to be minimized.  
+tree, and a `dataset` parameter (which is unused in this case), and must
+return a numeric score; tree search will seek the tree for which this score
+is lowest.
 Here, we can use a copy of our starting tree as a template, to be populated
 with the rearranged `parent` and `child` vectors:
 
@@ -80,9 +76,9 @@ PlotTree(result)
 ## Maximizing tree distance
 
 Let's make things slightly more complex, and try to find the tree that is 
-most different from a starting tree.  Notice that `TreeSearch` aims to 
-_minimize_ the output of `TreeScorer()`, so we negate the tree _distance_ 
-(which we aim to maximize) before returning it.
+most different from a starting tree.  As `TreeSearch` aims to _minimize_ the
+output of `TreeScorer()`, we negate the tree distance (which we aim to maximize)
+before returning it.
 
 ```{r cid}
 startTree <- BalancedTree(8)
@@ -91,6 +87,7 @@ DistanceScore <- function(parent, child, dataset) {
   tmpTree <- startTree
   tmpTree$edge <- cbind(parent, child)
   distance <- TreeDist::ClusteringInfoDistance(startTree, tmpTree)
+  
   # Return:
   -distance
 }
@@ -110,27 +107,27 @@ PlotTree(result)
 
 ## More sophisticated searches
 
-Real searches may involve more sophisticated interaction with an underlying
-dataset. To demonstrate this workflow, we consider how we would implement
-implied weighting as a custom search.
-(This will not match the efficiency of the native
-`MaximizeParsimony(dataset, concavity = k)` implementation)
+Real searches may involve complex interaction with an underlying dataset.
+As a demonstration, we will use the custom search framework to implement implied
+weighting (paralleling the efficient native implementation
+`MaximizeParsimony(dataset, concavity = k)`).
 
-Implied weights [@Goloboff1993] penalize additional homoplasy according to a
+Implied weights [@Goloboff1993] penalizes additional homoplasy according to a
 concavity constant _k_: the fit contributed by a character is
 `e / (e + k)`, where `e` is the number of steps in excess of the character's
-theoretical minimum.  This minimum can be computed once before starting the
-search, then cached; `e` depends on the tree, so is calculated once per
-evaluation.
+theoretical minimum.  We will compute this minimum once before starting the
+search; `e`, which depends on the tree, is calculated once per evaluation.
 
 
 ```{r iw-score, message = FALSE}
+# Select a dataset in phyDat format
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
 # Calculate the minimum length once
 minLength <- MinimumLength(dataset, compress = TRUE)
 
+# Define a scoring function
 IWScore <- function (parent, child, dataset) {
   concavity <- 10
   tree <- structure(list(edge = cbind(parent, child),
@@ -143,6 +140,7 @@ IWScore <- function (parent, child, dataset) {
   sum(fit * attr(dataset, "weight"))
 }
 
+# Run tree search
 iwTree <- TreeSearch(NJTree(dataset), dataset, TreeScorer = IWScore,
                      maxIter = 50L, maxHits = 10L, verbosity = 1)
 ```
@@ -170,6 +168,7 @@ IWBootstrap <- function (edgeList, dataset, EdgeSwapper = NNISwap,
 ```
 
 ```{r iw-ratchet, message = FALSE}
+# Conduct ratchet iterations
 ratchetTree <- Ratchet(iwTree, dataset, TreeScorer = IWScore,
                        Bootstrapper = IWBootstrap,
                        ratchIter = 2, ratchHits = 2,
