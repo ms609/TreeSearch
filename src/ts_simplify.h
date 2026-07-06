@@ -3,11 +3,19 @@
 
 // Character simplification: precompute topology-independent steps.
 //
-// Three transforms applied to each pattern (non-NA characters only):
-//   1. Remove parsimony-uninformative characters (constant steps on all trees)
-//   2. Remove singleton states (unique unambiguous states → wildcard + offset)
-//   3. Remove redundant ambiguity states (never unambiguous, always co-occur
-//      with another state in every token)
+// Every reduction MUST be topology-independent (score-preserving on ALL trees).
+// The optimal resolution of an ambiguous token is topology-DEPENDENT, so the
+// transforms may only touch a state that appears in <= 1 tip (a lone leaf
+// option cannot form a cost-free clade). Transforms applied to each pattern
+// (non-NA characters only):
+//   1. Remove parsimony-uninformative characters. Exact for fully-unambiguous
+//      characters (classical criterion); for characters with genuine ambiguity
+//      only the provable case is used — a state shared by every tip (score 0).
+//      (A prior caterpillar-sampling heuristic mis-classified ambiguous
+//      characters and over-/under-counted; it was removed.)
+//   2. Remove singleton states: a state unambiguous in exactly one tip AND
+//      absent from every other tip (a genuine autapomorphy) → wildcard + 1.
+//   3. Remove a redundant ambiguity state that occurs in exactly one tip.
 //
 // After simplification, each pattern has:
 //   - A possibly-reduced set of tip tokens (fewer states)

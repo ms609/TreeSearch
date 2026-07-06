@@ -1,69 +1,7 @@
 #include "ts_simplify.h"
 #include <algorithm>
-#include <numeric>
 
 namespace ts {
-
-// Run Fitch downpass on a caterpillar tree with given tip order.
-// Returns the parsimony score (number of state-change steps).
-static int fitch_caterpillar(const std::vector<uint32_t>& tips,
-                              const std::vector<int>& order,
-                              int inapp_state) {
-  uint32_t inapp_mask = (inapp_state >= 0) ? (1u << inapp_state) : 0;
-  int n = static_cast<int>(order.size());
-  if (n <= 1) return 0;
-  uint32_t prelim = tips[order[0]] & ~inapp_mask;
-  int cost = 0;
-  for (int i = 1; i < n; ++i) {
-    uint32_t tok = tips[order[i]] & ~inapp_mask;
-    uint32_t isect = prelim & tok;
-    if (isect) {
-      prelim = isect;
-    } else {
-      prelim = prelim | tok;
-      ++cost;
-    }
-  }
-  return cost;
-}
-
-// Check whether a character's parsimony score varies across trees by
-// trying multiple caterpillar orderings (forward, reverse, interleaved).
-// Returns true if the character is truly uninformative (same cost on all
-// orderings) along with the fixed cost. Returns false if any ordering
-// produces a different cost (character is informative).
-static bool verify_uninformative(const std::vector<uint32_t>& tips,
-                                  int n_tips, int inapp_state,
-                                  int& fixed_cost) {
-  // Forward order
-  std::vector<int> order(n_tips);
-  std::iota(order.begin(), order.end(), 0);
-  int cost_fwd = fitch_caterpillar(tips, order, inapp_state);
-
-  // Reverse order
-  std::reverse(order.begin(), order.end());
-  int cost_rev = fitch_caterpillar(tips, order, inapp_state);
-  if (cost_rev != cost_fwd) return false;
-
-  // Interleaved: even indices then odd indices
-  // This catches cases like {A,B},{A,B},{C,D},{C,D} where forward and
-  // reverse give the same score but interleaving separates the groups.
-  order.clear();
-  for (int i = 0; i < n_tips; i += 2) order.push_back(i);
-  for (int i = 1; i < n_tips; i += 2) order.push_back(i);
-  int cost_interleaved = fitch_caterpillar(tips, order, inapp_state);
-  if (cost_interleaved != cost_fwd) return false;
-
-  // Reverse interleaved: odd then even
-  order.clear();
-  for (int i = 1; i < n_tips; i += 2) order.push_back(i);
-  for (int i = 0; i < n_tips; i += 2) order.push_back(i);
-  int cost_rev_interleaved = fitch_caterpillar(tips, order, inapp_state);
-  if (cost_rev_interleaved != cost_fwd) return false;
-
-  fixed_cost = cost_fwd;
-  return true;
-}
 
 // Count how many tips have state s as their ONLY state (unambiguous).
 // Also count how many tips have state s in ANY token (including ambiguous).
@@ -78,6 +16,16 @@ static void count_state_occurrences(
   std::fill(any_count.begin(), any_count.end(), 0);
   std::fill(unambig_tip_idx.begin(), unambig_tip_idx.end(), -1);
 
+  // Dataset-wide count of applicable (non-inapplicable) states. A tip whose
+  // token contains EVERY applicable state is full-"?" missing data: in Fitch it
+  // intersects any sibling set, so it never forces a step and never constrains
+  // the reconstruction (provably inert). Such tips are ignored when counting
+  // GENUINE occurrences (any_count), so missing data does not defeat the
+  // singleton / redundant-state guards below (a state in one genuine tip plus
+  // any number of "?" tips is still a lone-tip option, soundly removable).
+  int n_applicable = 0;
+  for (int s = 0; s < n_states; ++s) if (s != inapp_state) ++n_applicable;
+
   for (int tip = 0; tip < n_tips; ++tip) {
     uint32_t tok = tips[tip];
     // Count applicable states in this token
@@ -88,12 +36,18 @@ static void count_state_occurrences(
       if (tok & (1u << s)) {
         ++n_set;
         single_state = s;
-        any_count[s]++;
       }
     }
     if (n_set == 1 && single_state >= 0) {
       unambig_count[single_state]++;
       unambig_tip_idx[single_state] = tip;
+    }
+    // Skip inert full-"?" tips for any_count (n_set >= 2 guards the single-state
+    // case when n_applicable == 1, which is unambiguous, not "?").
+    if (n_set >= 2 && n_set == n_applicable) continue;
+    for (int s = 0; s < n_states; ++s) {
+      if (s == inapp_state) continue;
+      if (tok & (1u << s)) any_count[s]++;
     }
   }
 }
@@ -111,16 +65,22 @@ static bool is_uninformative_classical(const std::vector<int>& unambig_count,
   return informative_states <= 1;
 }
 
-// Check if any tip has an ambiguous token (more than one applicable state).
+// Check if any tip has GENUINE ambiguity (more than one applicable state, but
+// not ALL of them). A full-"?" tip (every applicable state) is inert missing
+// data — it never affects the Fitch score — so it does not count as ambiguous;
+// this lets the unambiguous fast path and the classical criterion see through
+// missing data.
 static bool has_ambiguous_tips(const std::vector<uint32_t>& tips,
                                 int n_tips, int n_states, int inapp_state) {
+  int n_applicable = 0;
+  for (int s = 0; s < n_states; ++s) if (s != inapp_state) ++n_applicable;
   for (int tip = 0; tip < n_tips; ++tip) {
     int n_set = 0;
     for (int s = 0; s < n_states; ++s) {
       if (s == inapp_state) continue;
       if (tips[tip] & (1u << s)) ++n_set;
     }
-    if (n_set > 1) return true;
+    if (n_set > 1 && n_set < n_applicable) return true;
   }
   return false;
 }
@@ -224,6 +184,30 @@ SimplificationResult simplify_patterns(
       continue;
     }
 
+    // Fully-unambiguous fast path. With no ambiguous tokens the classical
+    // informativeness criterion is EXACT (there is no topology-dependent
+    // ambiguity to resolve), so classify uninformative characters directly and
+    // skip the transforms entirely. This also prevents Transform 2 from turning
+    // an all-autapomorphy character (e.g. states 0..7, each in one tip) into a
+    // wildcard-bearing token that the conservative ambiguous check can no
+    // longer recognise as uninformative — the score would stay correct, but the
+    // character would be needlessly rescored per tree. Informative unambiguous
+    // characters fall through so genuine singleton autapomorphies are still
+    // removed by Transform 2.
+    if (!has_ambiguous_tips(sp.tip_tokens, n_tips, n_states, inapp_state)) {
+      count_state_occurrences(sp.tip_tokens, n_tips, n_states, inapp_state,
+                              unambig_count, any_count, unambig_tip_idx);
+      if (is_uninformative_classical(unambig_count, n_states, inapp_state)) {
+        sp.precomputed_steps += compute_fixed_steps(unambig_count, n_states,
+                                                    inapp_state);
+        sp.informative = false;
+        sp.n_states_remaining = 0;
+        result.n_patterns_removed++;
+        result.total_offset_steps += sp.precomputed_steps;
+        continue;
+      }
+    }
+
     // --- Transforms 2 & 3: iterate until stable ---
     // Transform 2 (singleton removal) can create situations where
     // Transform 3 (ambiguity removal) applies, and vice versa.
@@ -245,6 +229,13 @@ SimplificationResult simplify_patterns(
           if (s == inapp_state) continue;
           if (any_count[s] == 0) continue;
           if (unambig_count[s] > 0) continue;
+          // Sound ONLY when state s occurs in exactly one tip. A state present
+          // in >=2 tips can form a cost-free clade on SOME tree (the optimal
+          // resolution of an ambiguous token is topology-dependent), so
+          // stripping it there changes the score. Simplification must be
+          // topology-independent, so we may only drop a state that appears in a
+          // single tip (a lone leaf option, provably free to remove).
+          if (any_count[s] != 1) continue;
 
           bool safe_to_remove = true;
           for (int tip = 0; tip < n_tips; ++tip) {
@@ -292,31 +283,17 @@ SimplificationResult simplify_patterns(
         for (int s = 0; s < n_states; ++s) {
           if (s == inapp_state) continue;
           if (unambig_count[s] != 1) continue;
-
-          // Check all ambiguity tokens containing s
-          bool safe = true;
-          for (int tip = 0; tip < n_tips; ++tip) {
-            uint32_t tok = sp.tip_tokens[tip];
-            if (!(tok & (1u << s))) continue;
-            // Count applicable states in this token
-            int n_set = 0;
-            for (int s2 = 0; s2 < n_states; ++s2) {
-              if (s2 != inapp_state && (tok & (1u << s2))) ++n_set;
-            }
-            if (n_set == 1) continue;  // unambiguous token — the singleton tip itself
-
-            // Ambiguity token: must contain another state with unambig >= 2
-            bool has_dominant = false;
-            for (int s2 = 0; s2 < n_states; ++s2) {
-              if (s2 == inapp_state || s2 == s) continue;
-              if ((tok & (1u << s2)) && unambig_count[s2] >= 2) {
-                has_dominant = true;
-                break;
-              }
-            }
-            if (!has_dominant) { safe = false; break; }
-          }
-          if (!safe) continue;
+          // Sound ONLY when state s occurs in exactly one tip total, i.e. it is
+          // a genuine autapomorphy (fixed +1 step on every tree). A singleton
+          // that ALSO appears in ambiguous tokens is NOT fixed: the optimal
+          // reconstruction may resolve an ambiguous neighbour TO s to form a
+          // cost-free clade (e.g. tip {s} beside {s,x} join at zero cost), so
+          // removing s and charging +1 over-counts. The previous `has_dominant`
+          // guard only proved another state EXISTED, not that the optimiser
+          // would avoid s — an unsound test that over-counted multistate
+          // ambiguity. Ambiguity resolution is topology-dependent;
+          // simplification must be topology-independent.
+          if (any_count[s] != 1) continue;
 
           int tip = unambig_tip_idx[s];
 
@@ -345,10 +322,25 @@ SimplificationResult simplify_patterns(
 
     if (is_uninformative_classical(unambig_count, n_states, inapp_state)) {
       if (has_ambiguous_tips(sp.tip_tokens, n_tips, n_states, inapp_state)) {
-        // Classical criterion is unreliable with ambiguous tokens.
-        // Verify by computing Fitch score on multiple caterpillar orderings.
-        uninformative = verify_uninformative(sp.tip_tokens, n_tips,
-                                              inapp_state, fixed_steps);
+        // The classical criterion is unreliable with ambiguous tokens, and a
+        // fixed cost > 0 CANNOT be proven cheaply: the optimal resolution of an
+        // ambiguous token is topology-dependent. (The old caterpillar-sampling
+        // heuristic was unsound — 4 orderings can agree on a cost while a
+        // balanced tree scores differently, over- OR under-counting.) The one
+        // provably topology-independent uninformative case is a state shared by
+        // EVERY tip: then all tips resolve to it for 0 steps on every tree.
+        // Otherwise keep the character; the per-tree downpass scores it exactly.
+        uint32_t common = ~0u;
+        for (int tip = 0; tip < n_tips; ++tip) {
+          uint32_t tok = sp.tip_tokens[tip];
+          if (inapp_state >= 0) tok &= ~(1u << inapp_state);
+          common &= tok;
+        }
+        if (common != 0) {
+          uninformative = true;
+          fixed_steps = 0;
+        }
+        // else: uninformative stays false -> scored per-tree (sound).
       } else {
         // All tips unambiguous — classical criterion is correct.
         uninformative = true;
