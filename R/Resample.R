@@ -136,7 +136,7 @@
 }
 
 
-#' @rdname Morphy
+#' Resampling under custom search criteria
 #'
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap`
 #' specifying how to resample characters.  Note that jackknife is considered
@@ -387,37 +387,4 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   attr(tr, "score") <- result$score
 
   structure(list(tr), class = "multiPhylo")
-}
-
-#' Launch tree search graphical user interface
-#'
-#' Opens a "shiny" app for interactive parsimony tree search and results
-#' exploration.
-#'
-#' @return Opens a Shiny application; does not return a value.
-#' @seealso [`MaximizeParsimony()`]
-#' @importFrom TreeDist ClusteringInfoDistance
-#' @export
-EasyTrees <- function () {#nocov start
-  needed <- c("cluster", "future", "PlotTools", "promises",
-              "protoclust", "Rogue", "shiny", "shinyjs")
-  missing <- needed[!vapply(needed, requireNamespace,
-                            logical(1L), quietly = TRUE)]
-  if (length(missing)) {
-    stop("EasyTrees() requires additional packages: ",
-         paste(missing, collapse = ", "), ".\n",
-         "Install with: install.packages(",
-         paste0("\"", missing, "\"", collapse = ", "), ")",
-         call. = FALSE)
-  }
-  shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
-}
-
-#' @rdname EasyTrees
-#' @export
-EasyTreesy <- EasyTrees
-#nocov end
-
-.UseProfile <- function (concavity) {
-  pmatch(tolower(concavity), "profile", -1L) == 1L
 }

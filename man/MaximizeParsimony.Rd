@@ -3,7 +3,6 @@
 \encoding{UTF-8}
 \name{MaximizeParsimony}
 \alias{MaximizeParsimony}
-\alias{MaximizeParsimony2}
 \title{Find most parsimonious trees}
 \usage{
 MaximizeParsimony(
@@ -28,8 +27,6 @@ MaximizeParsimony(
   collapse = TRUE,
   ...
 )
-
-MaximizeParsimony2(...)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
@@ -334,11 +331,6 @@ characters are simplified to binary (max 2 informative states),
 inapplicable tokens are treated as ambiguous, and per-character
 information profiles are used for scoring
 \insertCite{Faith2001}{TreeSearch}.
-}
-
-\section{Deprecated}{
-
-\code{MaximizeParsimony2()} is a deprecated alias for \code{MaximizeParsimony()}.
 }
 
 \examples{
