@@ -518,6 +518,16 @@
 #'   The default is a multiple of 48 (= LCM(12, 16)) so that replicates
 #'   divide evenly across common 12- or 16-core machines when running in
 #'   parallel.
+#'   When `strategy` resolves to `"large"` (automatically selected for
+#'   datasets of \eqn{\ge}{>=} 120 tips and \eqn{\ge}{>=} 100 characters) and
+#'   `maxReplicates` is left at its default, the
+#'   cap is raised to 500: a 120--180-tip sweep showed the fraction of runs
+#'   reaching the best-known score climbing from 0.68 at 96 replicates to 0.79
+#'   at 250 and still rising at 500, with no plateau.  Raising the cap only
+#'   appends later replicates, so it never delays an earlier improvement, and
+#'   easy datasets still stop early once `targetHits` is met; only genuinely
+#'   hard datasets run the extra replicates.  An explicit `maxReplicates`
+#'   is always respected.
 #'   For large or complex datasets a higher value improves the chance of
 #'   finding all MPTs.  A rough minimum is
 #'   `max(10, ceiling(NTip * NChar / 5000))`, where `NChar = sum(weight)`.
@@ -665,6 +675,12 @@ MaximizeParsimony <- function(
     stop("`dataset` cannot be NULL.")
   }
 
+  # Record whether the user explicitly supplied `maxReplicates` BEFORE any
+  # reassignment: assigning to the formal (e.g. the strategy-scaled default
+  # below) would immediately flip `missing()`, so this top-of-body capture is
+  # the only reliable read.
+  userSetReps <- !missing(maxReplicates)
+
   # --- Set targetHits default if not provided ---
   if (is.null(targetHits)) {
     targetHits <- max(10L, as.integer(NTip(dataset) / 5))
@@ -743,6 +759,21 @@ MaximizeParsimony <- function(
       control <- .ApplyStrategyPreset(control, preset, names(controlDots))
       if (verbosity >= 1L) {
         cli::cli_alert_info("Strategy: {.strong {strategy}}")
+      }
+      # Strategy-scaled replicate cap. The `large` band (>=120 tips) needs many
+      # more independent restarts than the 96 default to reliably reach the
+      # optimum: a 34-matrix 120-180t sweep found reach@96 = 0.68 climbing to
+      # reach@250 = 0.79, with the hard-matrix subset still climbing at 500 and
+      # no knee. Raising the cap anytime-dominates (a higher cap only appends
+      # later replicates; it never delays an earlier improvement), and easy
+      # matrices still stop early on `targetHits`, so the cost falls only on the
+      # genuinely hard tail (which runs to the cap). Only override when the user
+      # did not set `maxReplicates` themselves.
+      if (!userSetReps) {
+        stratReps <- switch(strategy, large = 500L, NA_integer_)
+        if (!is.na(stratReps)) {
+          maxReplicates <- stratReps
+        }
       }
     } else if (!identical(strategy, "auto")) {
       warning("Unknown strategy '", strategy, "'; using default parameters.")
@@ -928,7 +959,7 @@ MaximizeParsimony <- function(
   # Formula: max(10, ceiling(nTip * nChar / 5000)) where nChar = sum(weight).
   # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
   # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
-  if (!missing(maxReplicates) && nTip >= 30L && verbosity > 0L) {
+  if (userSetReps && nTip >= 30L && verbosity > 0L) {
     nChars <- sum(weight)
     minReps <- pmax(10L, ceiling(nTip * nChars / 5000L))
     if (maxReplicates < minReps) {
