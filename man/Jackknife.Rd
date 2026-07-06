@@ -84,21 +84,21 @@ engine.
 \item \code{\link[=JackLabels]{JackLabels()}}: Label nodes of a tree with jackknife supports.
 }
 
-Other split support functions: 
-\code{\link{ConcordanceTable}()},
-\code{\link{JackLabels}()},
-\code{\link{MostContradictedFreq}()},
-\code{\link{PaintCharacters}()},
-\code{\link{PresCont}()},
-\code{\link{Resample}()},
+Other split support functions:
+\code{\link[=ConcordanceTable]{ConcordanceTable()}},
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PaintCharacters]{PaintCharacters()}},
+\code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}}
 
-Other custom search functions: 
-\code{\link{BootstrapTree}()},
-\code{\link{EdgeListSearch}()},
-\code{\link{PrepareData}()},
-\code{\link{SingleCharData}()},
-\code{\link{SuccessiveApproximations}()}
+Other custom search functions:
+\code{\link[=BootstrapTree]{BootstrapTree()}},
+\code{\link[=EdgeListSearch]{EdgeListSearch()}},
+\code{\link[=PrepareData]{PrepareData()}},
+\code{\link[=SingleCharData]{SingleCharData()}},
+\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

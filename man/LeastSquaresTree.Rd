@@ -23,7 +23,7 @@ neighbour-joining tree of \code{dist}.  When several trees are supplied the sear
 is run from each and the best-fitting result is returned.}
 
 \item{method}{Either \code{"nnls"} (non-negative least squares; branch lengths are
-constrained to be \eqn{\ge 0}, matching \code{\link[phangorn:designTree]{phangorn::nnls.tree()}} and Lapointe
+constrained to be \eqn{\ge 0}, matching \code{\link[phangorn:nnls.tree]{phangorn::nnls.tree()}} and Lapointe
 & Cucumel) or \code{"ols"} (ordinary least squares; faster, closed form, but may
 return negative lengths).}
 
@@ -70,8 +70,8 @@ attr(found, "RSS")               # ~ 0
 \code{\link[=LeastSquaresFit]{LeastSquaresFit()}} for fixed-topology fitting;
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} for the parsimony analogue.
 
-Other least-squares functions: 
-\code{\link{LeastSquaresFit}()}
+Other least-squares functions:
+\code{\link[=LeastSquaresFit]{LeastSquaresFit()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -35,13 +35,13 @@ contradicted" score.
 \seealso{
 \code{PresCont()} calculates the "groups present / contradicted" score.
 
-Other split support functions: 
-\code{\link{ConcordanceTable}()},
-\code{\link{JackLabels}()},
-\code{\link{Jackknife}()},
-\code{\link{PaintCharacters}()},
-\code{\link{PresCont}()},
-\code{\link{Resample}()},
+Other split support functions:
+\code{\link[=ConcordanceTable]{ConcordanceTable()}},
+\code{\link[=JackLabels]{JackLabels()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=PaintCharacters]{PaintCharacters()}},
+\code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}}
 }
 \concept{split support functions}

@@ -14,7 +14,7 @@ lengths, if any, are ignored and refitted.}
 symmetric matrix with tip labels) over the tips of \code{tree}.}
 
 \item{method}{Either \code{"nnls"} (non-negative least squares; branch lengths are
-constrained to be \eqn{\ge 0}, matching \code{\link[phangorn:designTree]{phangorn::nnls.tree()}} and Lapointe
+constrained to be \eqn{\ge 0}, matching \code{\link[phangorn:nnls.tree]{phangorn::nnls.tree()}} and Lapointe
 & Cucumel) or \code{"ols"} (ordinary least squares; faster, closed form, but may
 return negative lengths).}
 
@@ -32,7 +32,7 @@ Fits branch lengths on a fixed tree topology that minimise the (optionally
 weighted) least-squares discrepancy between the tree's patristic distances
 and a target distance matrix, using the package's C++ kernel.  This is the
 fixed-topology counterpart of \code{\link[=LeastSquaresTree]{LeastSquaresTree()}}, and the direct analogue
-of \code{\link[phangorn:designTree]{phangorn::nnls.tree()}}.
+of \code{\link[phangorn:nnls.tree]{phangorn::nnls.tree()}}.
 }
 \examples{
 tree <- ape::rtree(8)
@@ -42,10 +42,10 @@ attr(fit, "RSS")  # ~ 0: D is additive on this topology
 
 }
 \seealso{
-\code{\link[=LeastSquaresTree]{LeastSquaresTree()}} to search topologies; \code{\link[phangorn:designTree]{phangorn::nnls.tree()}}.
+\code{\link[=LeastSquaresTree]{LeastSquaresTree()}} to search topologies; \code{\link[phangorn:nnls.tree]{phangorn::nnls.tree()}}.
 
-Other least-squares functions: 
-\code{\link{LeastSquaresTree}()}
+Other least-squares functions:
+\code{\link[=LeastSquaresTree]{LeastSquaresTree()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

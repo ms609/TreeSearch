@@ -50,8 +50,8 @@ Impose a constraint: \href{https://ms609.github.io/TreeTools/reference/ImposeCon
 Neighbour-joining trees: \href{https://ms609.github.io/TreeTools/reference/NJTree.html}{\code{TreeTools::NJTree()}};
 \href{https://ms609.github.io/TreeTools/reference/ConstrainedNJ}{\code{TreeTools::ConstrainedNJ()}}
 
-Other tree generation functions: 
-\code{\link{RandomPostorderTree}()}
+Other tree generation functions:
+\code{\link[=RandomPostorderTree]{RandomPostorderTree()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -56,12 +56,12 @@ collector).
 Custom searches that consume the object: \code{\link[=TreeSearch]{TreeSearch()}}, \code{\link[=Ratchet]{Ratchet()}},
 \code{\link[=Jackknife]{Jackknife()}}.
 
-Other custom search functions: 
-\code{\link{BootstrapTree}()},
-\code{\link{EdgeListSearch}()},
-\code{\link{Jackknife}()},
-\code{\link{SingleCharData}()},
-\code{\link{SuccessiveApproximations}()}
+Other custom search functions:
+\code{\link[=BootstrapTree]{BootstrapTree()}},
+\code{\link[=EdgeListSearch]{EdgeListSearch()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=SingleCharData]{SingleCharData()}},
+\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -36,10 +36,10 @@ attr(WhenFirstHit(trees), "firstHit")
 \item \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}
 }
 
-Other utility functions: 
-\code{\link{ClusterStrings}()},
-\code{\link{QACol}()},
-\code{\link{QuartetResolution}()}
+Other utility functions:
+\code{\link[=ClusterStrings]{ClusterStrings()}},
+\code{\link[=QACol]{QACol()}},
+\code{\link[=QuartetResolution]{QuartetResolution()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

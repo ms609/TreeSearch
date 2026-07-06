@@ -36,19 +36,19 @@ across the leaves.
 \insertAllCited{}
 }
 \seealso{
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MinimumLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{TreeScore}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

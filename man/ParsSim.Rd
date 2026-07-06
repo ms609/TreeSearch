@@ -114,18 +114,18 @@ dataset_taxon <- ParsSim(tree, nChar = c(20L), nExtraSteps = 10L,
 \insertAllCited{}
 }
 \seealso{
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MinimumLength}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{TreeScore}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \concept{tree scoring}

@@ -56,19 +56,19 @@ handles the Brazeau-Guillerme-Smith inapplicable algorithm correctly
 \seealso{
 \code{\link[=PrepareData]{PrepareData()}}; user-facing scoring with \code{\link[=TreeLength]{TreeLength()}}.
 
-Other tree scoring: 
-\code{\link{CharacterHierarchy}()},
-\code{\link{CharacterLength}()},
-\code{\link{ExpectedLength}()},
-\code{\link{IWScore}()},
-\code{\link{LengthAdded}()},
-\code{\link{MaximizeParsimony}()},
-\code{\link{MinimumLength}()},
-\code{\link{ParsSim}()},
-\code{\link{TaxonInfluence}()},
-\code{\link{WideSample}()},
-\code{\link{hierarchy_from_names}()},
-\code{\link{recode_hierarchy}()}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 Martin R. Smith

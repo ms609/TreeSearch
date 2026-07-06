@@ -151,12 +151,12 @@ if (interactive()) {
 optima.
 }
 
-Other custom search functions: 
-\code{\link{BootstrapTree}()},
-\code{\link{Jackknife}()},
-\code{\link{PrepareData}()},
-\code{\link{SingleCharData}()},
-\code{\link{SuccessiveApproximations}()}
+Other custom search functions:
+\code{\link[=BootstrapTree]{BootstrapTree()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=PrepareData]{PrepareData()}},
+\code{\link[=SingleCharData]{SingleCharData()}},
+\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

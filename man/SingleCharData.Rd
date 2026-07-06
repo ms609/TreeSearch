@@ -22,12 +22,12 @@ obj <- SingleCharData("-0-0")
 RandomTreeScore(obj)
 }
 \seealso{
-Other custom search functions: 
-\code{\link{BootstrapTree}()},
-\code{\link{EdgeListSearch}()},
-\code{\link{Jackknife}()},
-\code{\link{PrepareData}()},
-\code{\link{SuccessiveApproximations}()}
+Other custom search functions:
+\code{\link[=BootstrapTree]{BootstrapTree()}},
+\code{\link[=EdgeListSearch]{EdgeListSearch()}},
+\code{\link[=Jackknife]{Jackknife()}},
+\code{\link[=PrepareData]{PrepareData()}},
+\code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
