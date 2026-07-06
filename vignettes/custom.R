@@ -57,8 +57,11 @@ PlotTree(result)
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
-IWScore <- function (parent, child, dataset, concavity = 10,
-                     minLength = MinimumLength(dataset, compress = TRUE)) {
+# Calculate the minimum length once; IWScore() below closes over this value,
+# so it is looked up (cheaply) rather than recomputed on every call.
+minLength <- MinimumLength(dataset, compress = TRUE)
+
+IWScore <- function (parent, child, dataset, concavity = 10) {
   tree <- structure(list(edge = cbind(parent, child),
                         tip.label = names(dataset),
                         Nnode = length(dataset) - 1L), class = "phylo")

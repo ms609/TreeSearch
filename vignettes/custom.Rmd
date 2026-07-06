@@ -108,31 +108,31 @@ PlotTree(result)
 
 
 
-## Searching using implied weights
+## More sophisticated searches
 
-> **Note:** For a standard implied weights analysis, use
-> `MaximizeParsimony(dataset, concavity = k)`, which is faster and uses the
-> full driven-search pipeline (see the
-> [tree search vignette](tree-search.html#implied-weighting)).
-> The example below instead shows how you would implement a scorer of
-> comparable complexity yourself, entirely in R, using the custom-search
-> framework -- useful as a template for optimality criteria that TreeSearch
-> doesn't provide natively.
+Real searches may involve more sophisticated interaction with an underlying
+dataset. To demonstrate this workflow, we consider how we would implement
+implied weighting as a custom search.
+(This is not intended to match the efficiency of the native
+`MaximizeParsimony(dataset, concavity = k)` implementation)
 
 Implied weights [@Goloboff1993] penalize additional homoplasy according to a
 concavity constant _k_: the fit contributed by a character is
 `e / (e + k)`, where `e` is the number of steps in excess of the character's
-theoretical minimum.  We can compute both quantities from a plain `phyDat`
-object using existing `TreeSearch` functions -- no data-preparation hook is
-needed, as we simply compute the minimum lengths once, up front, and let our
-`TreeScorer` close over the result:
+theoretical minimum.  This minimum can be computed once before starting the
+search, then cached; `e` depends on the tree, so is calculated once per
+evaluation.
+
 
 ```{r iw-score, message = FALSE}
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
-IWScore <- function (parent, child, dataset, concavity = 10,
-                     minLength = MinimumLength(dataset, compress = TRUE)) {
+# Calculate the minimum length once; IWScore() below closes over this value,
+# so it is looked up (cheaply) rather than recomputed on every call.
+minLength <- MinimumLength(dataset, compress = TRUE)
+
+IWScore <- function (parent, child, dataset, concavity = 10) {
   tree <- structure(list(edge = cbind(parent, child),
                         tip.label = names(dataset),
                         Nnode = length(dataset) - 1L), class = "phylo")
