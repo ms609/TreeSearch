@@ -126,7 +126,6 @@ test_that("Profile scoring handles inapplicable datasets", {
 
   for (dsName in c("Vinther2008", "Sansom2010")) {
     dataset <- inapplicable.phyData[[dsName]]
-    # Multi-state characters (3-5 states) now handled via MaddisonSlatkin
     pds <- suppressMessages(PrepareDataProfile(dataset))
     at <- attributes(pds)
 
