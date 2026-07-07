@@ -364,22 +364,6 @@ app_env$Consensus(app_env$r$trees, p=1)   # Should render
 
 ## Integration with C++ Engine
 
-### Key Changes from Legacy Morphy
-
-**Old (MorphyLib):**
-```r
-# Had to delegate constraints/profile to Morphy()
-MaximizeParsimony(dataset, constraint = cons, concavity = "profile")
-→ fell back to R-loop Morphy() search
-```
-
-**New (C++ engine):**
-```r
-# C++ engine handles everything natively
-MaximizeParsimony(dataset, constraint = cons, concavity = "profile", 
-                  strategy = "auto", nThreads = 2, verbosity = 1)
-```
-
 ### Strategy Presets (line 1231)
 
 - **"auto"** — Auto-selects based on dataset size (sprint ≤30, default 31-60, thorough 61+)

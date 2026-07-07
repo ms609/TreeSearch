@@ -182,7 +182,7 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
                                     | (tree.prelim[tb + off + s] & no_isect);
         }
       } else {
-        // NA-aware tip update (matches morphy's mpl_fitch_NA_tip_update)
+        // NA-aware tip update
         const uint64_t* T = &tree.prelim[tb + off];
         const uint64_t* A = &tree.final_[ab + off];
         uint64_t* F = &tree.final_[tb + off];
@@ -219,7 +219,6 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
   }
 
   // ==== Pass 3: Second downpass (corrected scoring) ====
-  // Matches morphy's mpl_NA_fitch_second_downpass exactly.
   //
   // For each internal node, three step-counting conditions:
   //   (a) Applicable node, no D2 intersection at all, both children

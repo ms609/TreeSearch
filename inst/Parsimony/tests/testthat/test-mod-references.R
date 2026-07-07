@@ -10,7 +10,6 @@ stub_cites <- list(
   Goloboff1993   = "<p>Goloboff1993</p>",
   Goloboff1999   = "<p>Goloboff1999</p>",
   Goloboff2014   = "<p>Goloboff2014</p>",
-  Morphy         = "<p>Morphy</p>",
   Nixon1999      = "<p>Nixon1999</p>",
   SmithSearch    = "<p>SmithSearch</p>",
   Gower1966      = "<p>Gower1966</p>",

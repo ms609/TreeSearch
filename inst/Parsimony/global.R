@@ -224,10 +224,6 @@ Maechler2019 <- Reference(
   title = "cluster: cluster analysis basics and extensions", year = 2022,
   authors = c("Maechler, M.", "Rousseeuw, P.", "Struyf, A.", "Hubert, M.", "Hornik, K."),
   journal = "Comprehensive R Archive Network")
-Morphy <- Reference(
-  c("Brazeau, M.D.", "Smith, M.R.", "Guillerme, T."), 2017,
-  "MorphyLib: a library for phylogenetic analysis of categorical trait data with inapplicability",
-  doi = "10.5281/zenodo.815371")
 Murtagh1983 <- Reference(
   title = "A survey of recent advances in hierarchical clustering algorithms",
   authors = "Murtagh, F.", year = 1983, volume = 26, pages = c(354, 359),

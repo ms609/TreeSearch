@@ -575,12 +575,7 @@
 #'   collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 #'   visible (a constraint encodes external evidence the matrix does not
 #'   capture); unsupported non-constraint branches still collapse.
-#' @param ... Backward compatibility: individual control parameters (e.g.
-#'   `ratchetCycles = 10L`) may still be passed as named arguments.
-#'   These override the corresponding `control` fields and the strategy
-#'   preset.
-#'   Legacy `Morphy()`-style parameters (e.g. `ratchIter`, `tbrIter`) are
-#'   rejected with an error; use this function's own controls instead.
+#' @param ... Backward compatibility.
 #'
 #' @return A `multiPhylo` object containing the best tree(s) found, with
 #'   attributes:
@@ -682,24 +677,20 @@ MaximizeParsimony <- function(
       maxSeconds <- as.double(dots[["maxTime"]])
     }
     .Deprecated(msg = paste0(
-      "Use `maxSeconds` instead of `maxTime` in MaximizeParsimony().\n",
-      "  `maxTime` was a Morphy()-style parameter; `maxSeconds` is the ",
-      "equivalent for the new C++ search engine."
+      "Use `maxSeconds` instead of `maxTime` in MaximizeParsimony().",
     ))
     dots[["maxTime"]] <- NULL
   }
 
-  # --- Reject legacy Morphy()-style parameters ---
-  # Morphy() (an R-loop MorphyLib search, never released on CRAN) has been
-  # removed; its functionality is superseded by this C++ engine.
+  # --- Reject legacy parameters ---
   .morphyParams <- c("ratchIter", "tbrIter", "startIter", "finalIter",
                      "maxHits", "quickHits", "ratchEW", "tolerance")
   legacyHits <- intersect(names(dots), .morphyParams)
   if (length(legacyHits)) {
     stop("Parameter", if (length(legacyHits) > 1L) "s", " ",
          paste0(sQuote(legacyHits), collapse = ", "),
-         " belong", if (length(legacyHits) == 1L) "s",
-         " to the removed `Morphy()` search, not `MaximizeParsimony()`.\n",
+         if (length(legacyHits) == 1L) "are" else "were",
+         " discontinued in v2.0.0.\n",
          "  Use this function's own controls instead ",
          "(see `?SearchControl`, `maxReplicates`, `maxSeconds`).",
          call. = FALSE)

@@ -675,7 +675,6 @@ integration, and benchmarking. No PR yet.
 | 2026-03-16 | Inter-replicate parallelism via std::thread | Simplest; avoids R memory allocator conflicts |
 | 2026-03-16 | thread_local RNG, not parameter-passing | Avoids changing ~15 function signatures |
 | 2026-03-16 | Concavity sentinel -1.0 in Rcpp exports | Rcpp can't translate R_PosInf |
-| 2026-03-16 | MaximizeParsimony() → C++ engine; Morphy() → legacy | Clean migration path |
 | 2026-03-17 | Adaptive strategy: sprint ≤30, default/thorough by nTip×nChar | Benchmark data |
 | 2026-03-17 | T-025 fix: bounds-check PreallocUndo capacity | Root cause of P0 crash |
 | 2026-03-18 | Shiny modularization: modules return reactive lists | Reactives re-exported in server.R scope |

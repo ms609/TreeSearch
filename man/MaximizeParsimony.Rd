@@ -219,12 +219,7 @@ collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 visible (a constraint encodes external evidence the matrix does not
 capture); unsupported non-constraint branches still collapse.}
 
-\item{...}{Backward compatibility: individual control parameters (e.g.
-\code{ratchetCycles = 10L}) may still be passed as named arguments.
-These override the corresponding \code{control} fields and the strategy
-preset.
-Legacy \code{Morphy()}-style parameters (e.g. \code{ratchIter}, \code{tbrIter}) are
-rejected with an error; use this function's own controls instead.}
+\item{...}{Backward compatibility.}
 }
 \value{
 A \code{multiPhylo} object containing the best tree(s) found, with

@@ -56,7 +56,7 @@ any tree.
 }
 \details{
 Ambiguous inapplicable states (e.g. \verb{\{0, -\}}) are currently replaced with the
-plain inapplicable token \code{-}, reflecting the current behaviour of Morphy.
+plain inapplicable token \code{-}.
 }
 \examples{
 data("inapplicable.datasets")

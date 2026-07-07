@@ -12,8 +12,6 @@
 
 - **agent-a.md: TS-PruneRI directory orphaned** — After T-266 completion and branch deletion, local git metadata removed but directory remains (manual cleanup needed).
 
-- **agent-a.md: T-204 fix complexity** — GHA 23641482723 failed due to T-204's `.Deprecated()` addition to `PhyDat2Morphy`/`UnloadMorphy` causing warnings in examples (PhyDat2Morphy.Rd, MorphyWeights.Rd, GapHandler.Rd, SingleCharMorphy.Rd, Morphy.R constraint example). Fixed via WORDLIST updates and `\donttest{}`/`suppressWarnings()` wrappers.
-
 - **agent-a.md: S-RED focus 10 bug fixed** — precompute_profile_delta had old_cost=0 when s>info_max_steps. Fixed in commit 7cff7870 (15 tests pass).
 
 - **agent-a.md: PR #213 (cid-consensus) aborted** — GHA conflict: ts_tbr.cpp between CID and T-263 snapshot. Needs E/human review.
