@@ -83,6 +83,11 @@
   matching `MaximizeParsimony()`.  Previously it was silently clamped to `1`
   (serial), so requesting auto-detection had no effect.
 
+- **`Resample()` now supports `inapplicable = "missing"`**, matching
+  `MaximizeParsimony()`.  Previously only `"bgs"`, `"hsj"` and `"xform"` were
+  accepted, so the pure-Fitch (gaps-as-missing) mode already shown in
+  `Resample()`'s own examples would error.
+
 - `Jackknife()` and `BootstrapTree()` (formerly `MorphyBootstrap()`) now
   resample characters natively, scoring the resampled weights through the
   native kernel rather than by mutating a MorphyLib object — fixing a case

@@ -247,7 +247,14 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   # --- Validate inapplicable-handling parameters ---
   inapplicable <- tolower(inapplicable)
   if (inapplicable == "brazeau") inapplicable <- "bgs"
-  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform"))
+  inapplicable <- match.arg(inapplicable, c("bgs", "hsj", "xform", "missing"))
+  # "missing" = pure Fitch: recode every gap-bearing token as missing ("?") so
+  # gaps contribute no steps, then score with the standard engine (which on
+  # inapplicable-free data reduces to Fitch parsimony).
+  if (inapplicable == "missing") {
+    dataset <- .GapsAsMissing(dataset)
+    inapplicable <- "bgs"
+  }
   if (inapplicable != "bgs") {
     if (is.null(hierarchy)) {
       stop("A `hierarchy` is required when inapplicable = \"", inapplicable,
