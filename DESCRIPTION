@@ -149,4 +149,3 @@ Encoding: UTF-8
 Language: en-GB
 VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
