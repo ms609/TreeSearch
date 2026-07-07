@@ -8,7 +8,7 @@ SingleCharData(char)
 }
 \arguments{
 \item{char}{State of each tip in turn, in a format understood by
-\code{\link[TreeTools:MatrixToPhyDat]{TreeTools::MatrixToPhyDat()}} (e.g. the Morphy token string \code{"-0-0"}).}
+\code{\link[TreeTools:MatrixToPhyDat]{TreeTools::MatrixToPhyDat()}}.}
 }
 \value{
 \code{SingleCharData()} returns a \code{ParsimonyData} object.

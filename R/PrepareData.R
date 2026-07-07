@@ -104,7 +104,7 @@ is.ParsimonyData <- function(x) {
 #' [`RandomTreeScore()`] and testing.
 #'
 #' @param char State of each tip in turn, in a format understood by
-#'  [`TreeTools::MatrixToPhyDat()`] (e.g. the Morphy token string `"-0-0"`).
+#'  [`TreeTools::MatrixToPhyDat()`].
 #' @return `SingleCharData()` returns a `ParsimonyData` object.
 #' @examples
 #' obj <- SingleCharData("-0-0")

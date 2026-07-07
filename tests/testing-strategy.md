@@ -24,8 +24,8 @@ data-structure invariants, no `skip_on_cran()`.
 | `test-ts-start-tree.R` | Starting-tree API |
 
 **Files (R-level API):** All `test-*.R` files that do NOT carry a `ts-` prefix
-(e.g. `test-tree_length.R`, `test-AdditionTree.R`, `test-Morphy.R`, ...). These
-verify the public R interface against dependency changes.
+(e.g. `test-tree_length.R`, `test-AdditionTree.R`, ...).
+These verify the public R interface against dependency changes.
 
 ---
 
