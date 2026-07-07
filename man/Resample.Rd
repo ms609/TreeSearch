@@ -31,8 +31,7 @@ Resample(
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying
-\code{tree}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}}.
 Consulted only as a fallback: if a replicate's search reports no
@@ -61,50 +60,87 @@ implementation of \code{Resample()}; the native search engine that replaced it
 has no equivalent controls (in particular, no progress-reporting hook), so
 supplying a non-\code{NULL} value now only issues a deprecation warning.}
 
-\item{concavity}{Determines the degree to which extra steps beyond the
-first are penalized; see \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} for full details.
-Specify a finite value for implied weighting, \code{Inf} (default) for equal
-weights, or \code{"profile"} for profile parsimony.}
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
 
 \item{constraint}{Either an object of class \code{phyDat}, in which case
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
-in any output tree.}
+in any output tree.
+Constraint searches are supported natively: all tree rearrangements
+are filtered to respect the constraint topology.}
 
 \item{nReplicates}{Integer specifying how many resample replicates to run.
 Default \code{1L} runs a single replicate (original behaviour).
 When \verb{> 1}, all replicates are run in a single call, optionally in parallel.}
 
-\item{nThreads}{Integer specifying the number of threads for parallel
-resampling. Default \code{1L} runs serially.  Use \code{0L} for auto-detect.
-Only effective when \code{nReplicates > 1}.}
+\item{nThreads}{Integer: number of parallel threads for search replicates,
+as for \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.  Only takes effect for \code{inapplicable = "bgs"} (the default) with \code{nReplicates > 1}; resampling under \code{"hsj"} or
+\code{"xform"}, or a single replicate, always runs on a single thread.}
 
-\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which characters
-are controlled by which primary characters.  Required when
-\code{inapplicable} is \code{"hsj"} or \code{"xform"}.  When provided, resampling
-operates on "units" rather than individual characters: each non-hierarchy
-character is one unit, and each top-level hierarchy block (primary +
-all dependents) is one unit.  See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}}.}
+\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
+characters are controlling primaries and which are their dependent
+secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
+ignored when \code{inapplicable = "bgs"} (the default).
+See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}} for automated construction from
+TNT-style character names.}
 
-\item{inapplicable}{Character string specifying the inapplicable-character
-handling method: \code{"bgs"} (default), \code{"hsj"}, or \code{"xform"}.
-Case-insensitive; \code{"brazeau"} is accepted as an alias for \code{"bgs"}.
-See \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} and \code{vignette("inapplicable")} for details.}
+\item{inapplicable}{Character: method for handling inapplicable characters.
+Case-insensitive.
+See \code{vignette("inapplicable", package = "TreeSearch")} for details.
+\describe{
+\item{\code{"bgs"} (default)}{Three-pass algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
+regions from the \code{"-"} token.  No hierarchy required.}
+\item{\code{"missing"}}{Pure Fitch parsimony
+\insertCite{Fitch1971}{TreeSearch}: the inapplicable (\code{"-"}) state is
+treated as missing data, so any token that includes a gap is recoded
+as fully ambiguous (\code{"?"}) and contributes no steps -- including
+polymorphisms such as \verb{\{0,-\}}, which become \verb{?}.  Reproduces standard
+Fitch analyses (e.g. PAUP*, or TNT with gaps read as missing) that do
+not use the Brazeau-Gardner-Smith inapplicable algorithm.  No
+hierarchy required.}
+\item{\code{"hsj"}}{Dissimilarity-metric scoring of
+\insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}; controlled by \code{hsj_alpha}.}
+\item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
+via x-transformations
+\insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}.}
+}}
 
-\item{hsj_alpha}{Numeric in [0, 1] controlling the weight of secondary
-character variation in HSJ scoring.  Default \code{1.0}.  Only used when
-\code{inapplicable = "hsj"}.}
+\item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
+character contributions under the HSJ method.  0 = secondaries ignored;
+1 (default) = secondaries contribute up to 1 per branch per hierarchy
+block.  Only used when \code{inapplicable = "hsj"}.}
 
-\item{extended_iw}{Logical; if \code{TRUE} (default), use extended implied
-weighting (XPIWE; \insertCite{Goloboff2014;textual}{TreeSearch}),
-which adjusts per-character concavity for missing entries.
-Ignored when \code{concavity = Inf} or \code{"profile"}.}
+\item{extended_iw}{Logical: if \code{TRUE} (default) and \code{concavity} is finite,
+apply the missing-entries correction of
+\insertCite{Goloboff2014;textual}{TreeSearch}.
+Characters with missing data receive a reduced effective concavity
+\emph{k_c} = \emph{k} / \emph{f_c}, making their weights drop off faster.
+This compensates for the artificially low homoplasy of poorly sampled
+characters.  Set \code{FALSE} for legacy Goloboff (1993) behaviour.
+Ignored when \code{concavity = Inf} (equal weights) or \code{"profile"}.}
 
-\item{xpiwe_r}{Numeric; proportion of homoplasy assumed in missing entries.
-Default \code{0.5}.  Only used when \code{extended_iw = TRUE}.}
+\item{xpiwe_r}{Numeric in (0, 1]: proportion of observed homoplasy
+expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+Only used when \code{extended_iw = TRUE}.}
 
-\item{xpiwe_max_f}{Numeric; maximum extrapolation factor.
-Default \code{5}.  Only used when \code{extended_iw = TRUE}.}
+\item{xpiwe_max_f}{Numeric >= 1: maximum extrapolation factor.
+Characters with very few observed entries are clamped so that the
+extrapolation factor does not exceed this value.  Default 5 (following
+TNT).  Only used when \code{extended_iw = TRUE}.}
 
 \item{...}{Unused; retained for backward compatibility.}
 }

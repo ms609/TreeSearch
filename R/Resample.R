@@ -138,9 +138,7 @@
 
 #' Resampling under custom search criteria
 #'
-#' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
-#' \code{phyDat}, whose names correspond to the labels of any accompanying
-#' `tree`.
+#' @inheritParams MaximizeParsimony
 #' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}}.
 #' Consulted only as a fallback: if a replicate's search reports no
 #' best-score tree, `tree` (if supplied) is returned in its place.  Unlike
@@ -164,14 +162,10 @@
 #' implementation of `Resample()`; the native search engine that replaced it
 #' has no equivalent controls (in particular, no progress-reporting hook), so
 #' supplying a non-`NULL` value now only issues a deprecation warning.
-#' @param concavity Determines the degree to which extra steps beyond the
-#' first are penalized; see [`MaximizeParsimony()`] for full details.
-#' Specify a finite value for implied weighting, `Inf` (default) for equal
-#' weights, or `"profile"` for profile parsimony.
-#' @param constraint Either an object of class `phyDat`, in which case
-#' returned trees will be perfectly compatible with each character in
-#' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
-#' in any output tree.
+#' @param nThreads Integer: number of parallel threads for search replicates,
+#' as for [`MaximizeParsimony()`].  Only takes effect for `inapplicable =
+#' "bgs"` (the default) with `nReplicates > 1`; resampling under `"hsj"` or
+#' `"xform"`, or a single replicate, always runs on a single thread.
 #' @section Resampling:
 #' Note that bootstrap support is a measure of the amount of data supporting
 #' a split, rather than the amount of confidence that should be afforded the
@@ -196,30 +190,6 @@
 #' @param nReplicates Integer specifying how many resample replicates to run.
 #' Default `1L` runs a single replicate (original behaviour).
 #' When `> 1`, all replicates are run in a single call, optionally in parallel.
-#' @param nThreads Integer specifying the number of threads for parallel
-#' resampling. Default `1L` runs serially.  Use `0L` for auto-detect.
-#' Only effective when `nReplicates > 1`.
-#' @param hierarchy A [`CharacterHierarchy`] object specifying which characters
-#' are controlled by which primary characters.  Required when
-#' `inapplicable` is `"hsj"` or `"xform"`.  When provided, resampling
-#' operates on "units" rather than individual characters: each non-hierarchy
-#' character is one unit, and each top-level hierarchy block (primary +
-#' all dependents) is one unit.  See [`CharacterHierarchy()`].
-#' @param inapplicable Character string specifying the inapplicable-character
-#' handling method: `"bgs"` (default), `"hsj"`, or `"xform"`.
-#' Case-insensitive; `"brazeau"` is accepted as an alias for `"bgs"`.
-#' See [`MaximizeParsimony()`] and `vignette("inapplicable")` for details.
-#' @param hsj_alpha Numeric in \[0, 1\] controlling the weight of secondary
-#' character variation in HSJ scoring.  Default `1.0`.  Only used when
-#' `inapplicable = "hsj"`.
-#' @param extended_iw Logical; if `TRUE` (default), use extended implied
-#' weighting (XPIWE; \insertCite{Goloboff2014;textual}{TreeSearch}),
-#' which adjusts per-character concavity for missing entries.
-#' Ignored when `concavity = Inf` or `"profile"`.
-#' @param xpiwe_r Numeric; proportion of homoplasy assumed in missing entries.
-#' Default `0.5`.  Only used when `extended_iw = TRUE`.
-#' @param xpiwe_max_f Numeric; maximum extrapolation factor.
-#' Default `5`.  Only used when `extended_iw = TRUE`.
 #' @param ... Unused; retained for backward compatibility.
 #'
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
@@ -260,7 +230,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   }
 
   nReplicates <- as.integer(max(nReplicates, 1L))
-  nThreads <- as.integer(max(nThreads, 1L))
+  nThreads <- as.integer(nThreads)
 
   # Validate proportion for jackknife
   index <- attr(dataset, "index")

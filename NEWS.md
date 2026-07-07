@@ -79,6 +79,10 @@
   non-`NULL` value now issues a deprecation warning; the arguments will be
   removed in a future release.
 
+- **`Resample()`'s `nThreads = 0` now auto-detects the number of threads**,
+  matching `MaximizeParsimony()`.  Previously it was silently clamped to `1`
+  (serial), so requesting auto-detection had no effect.
+
 - `Jackknife()` and `BootstrapTree()` (formerly `MorphyBootstrap()`) now
   resample characters natively, scoring the resampled weights through the
   native kernel rather than by mutating a MorphyLib object — fixing a case
