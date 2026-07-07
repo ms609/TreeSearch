@@ -32,8 +32,10 @@
 #' dataset <- inapplicable.phyData[["Asher2005"]]
 #' trees <- MaximizeParsimony(dataset, inapp = "missing", verbosity = 0)
 #' oneTree <- TreeTools::MakeTreeBinary(trees[[1]])
-#' jackTrees <- Jackknife(oneTree, PrepareData(dataset))
-#'
+#' jackTrees <- Jackknife(oneTree, PrepareData(dataset),
+#'                        jackIter = 10, searchIter = 120,
+#'                        inapp = "missing", verbosity = 0)
+#' JackLabels(oneTree, jackTrees)
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @family split support functions
 #' @family custom search functions
