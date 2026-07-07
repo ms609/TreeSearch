@@ -174,6 +174,11 @@ are necessary to find an optimal tree on each iteration).
 For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{SiteConcordance()}}.
 }
 
+\examples{
+jackTrees <- Resample(dataset, result[[1]], nReplicates = 10, inapp = "miss")
+JackLabels(result[[1]], jackTrees)
+
+}
 \seealso{
 Other split support functions:
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},

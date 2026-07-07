@@ -1,21 +1,40 @@
 #' Jackknife resampling
-#' 
+#'
 #' Resample trees using Jackknife resampling, i.e. removing a subset of
 #' characters. For standard parsimony, [`Resample()`] is faster; use
 #' `Jackknife()` when you need a custom `TreeScorer` or `EdgeSwapper`.
-#' 
+#'
 #' @inheritParams Ratchet
-#' @param resampleFreq Double between 0 and 1 stating proportion of characters 
+#' @param resampleFreq Double between 0 and 1 stating proportion of characters
 #' to resample.
+#' @param Resampler Function that drops a random subset of characters from
+#' `dataset` and returns a rearranged `edgeList`; see §Details for specification.
+#' The default, [`JackknifeTree()`], requires `dataset` to be a
+#' [`ParsimonyData`][PrepareData] object.
 #' @param jackIter Integer specifying number of jackknife iterations to conduct.
 #' @return `Jackknife()` returns a list of trees recovered after jackknife
 #' iterations.
+#' @details
+#' Each argument from `Jackknife` is passed forward to `Resampler()`, except
+#' `tree`, which is replaced with a two-element list of integer vectors;
+#' the first entry lists the parent of each node in `tree`, i.e.
+#' `tree$edge[, 1]`; the second entry lists the corresponding child.
+#' `Resampler()` must return an equivalent list.
+#' 
 #' @template MRS
-#' @importFrom TreeTools RenumberEdges RenumberTips
-#' @seealso 
+#' @seealso
 #' - [`Resample()`]: Jackknife and bootstrap resampling using the C++ search
 #'   engine.
 #' - [`JackLabels()`]: Label nodes of a tree with jackknife supports.
+#' @examples
+#' set.seed(0)
+#' data("inapplicable.phyData", package = "TreeSearch")
+#' dataset <- inapplicable.phyData[["Asher2005"]]
+#' trees <- MaximizeParsimony(dataset, inapp = "missing", verbosity = 0)
+#' oneTree <- TreeTools::MakeTreeBinary(trees[[1]])
+#' jackTrees <- Jackknife(oneTree, PrepareData(dataset))
+#'
+#' @importFrom TreeTools RenumberEdges RenumberTips
 #' @family split support functions
 #' @family custom search functions
 #' @export
@@ -25,6 +44,7 @@ Jackknife <- function(tree, dataset,
                       CleanUpData    = NULL,
                       TreeScorer     = EdgeListScore,
                       EdgeSwapper    = TBRSwap,
+                      Resampler      = JackknifeTree,
                       jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
                       verbosity = 1L, ...) {
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
@@ -46,7 +66,42 @@ Jackknife <- function(tree, dataset,
     initializedData <- dataset
   }
 
-  startWeights <- initializedData[["original_weight"]]
+  if (verbosity > 10L) { #nocov start
+    message(" * Beginning search:")
+  } #nocov end
+
+  # Conduct jackIter replicates:
+  jackEdges <- vapply(seq_len(jackIter), function (x) {
+    if (verbosity > 0L) { #nocov start
+      message(" * Jackknife iteration ", x, "/", jackIter)
+    } #nocov end
+    res <- Resampler(edgeList[1:2], initializedData, resampleFreq = resampleFreq,
+                     TreeScorer = TreeScorer, EdgeSwapper = EdgeSwapper,
+                     maxIter = searchIter, maxHits = searchHits,
+                     verbosity = verbosity, ...)
+    res[1:2]
+  }, edgeList)
+
+  jackTrees <- structure(apply(jackEdges, 2, function(edgeList) {
+    ret <- tree
+    ret[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
+    ret
+  }), class = "multiPhylo")
+}
+
+#' @describeIn Jackknife Default `Resampler`: drops a random subset of
+#' characters from a [`ParsimonyData`][PrepareData] object and conducts a
+#' tree search on the reduced dataset.
+#' @inheritParams EdgeListSearch
+#' @param maxIter Numeric specifying maximum number of iterations to perform
+#' in tree search.
+#' @param maxHits Numeric specifying maximum number of hits to accomplish in
+#' tree search.
+#' @export
+JackknifeTree <- function (edgeList, dataset, resampleFreq = 2 / 3,
+                           TreeScorer = EdgeListScore, EdgeSwapper = NNISwap,
+                           maxIter, maxHits, verbosity = 1L, ...) {
+  startWeights <- dataset[["original_weight"]]
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
   charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
@@ -59,33 +114,18 @@ Jackknife <- function(tree, dataset,
          length(deindexedChars), " characters.")
   }
 
-  if (verbosity > 10L) { #nocov start
-    message(" * Beginning search:")
-  } #nocov end
+  resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
+                         nbins = length(startWeights))
+  # R copy-on-modify: the caller's `dataset` is unchanged.
+  dataset[["weight"]] <- as.integer(resampling)
 
-  # Conduct jackIter replicates:
-  jackEdges <- vapply(seq_len(jackIter), function (x) {
-    if (verbosity > 0L) { #nocov start
-      message(" * Jackknife iteration ", x, "/", jackIter)
-    } #nocov end
-    resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
-                           nbins = length(startWeights))
-    # R copy-on-modify: the prepared data is scored with resampled weights
-    # without mutating `initializedData`.
-    resampledData <- initializedData
-    resampledData[["weight"]] <- as.integer(resampling)
-    res <- EdgeListSearch(edgeList[1:2], resampledData,
-                          TreeScorer = TreeScorer, EdgeSwapper = EdgeSwapper,
-                          maxIter = searchIter, maxHits = searchHits,
-                          verbosity = verbosity - 1L, ...)
-    res[1:2]
-  }, edgeList)
-  
-  jackTrees <- structure(apply(jackEdges, 2, function(edgeList) {
-    ret <- tree
-    ret[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
-    ret
-  }), class = "multiPhylo")
+  res <- EdgeListSearch(edgeList[1:2], dataset,
+                        TreeScorer = TreeScorer, EdgeSwapper = EdgeSwapper,
+                        maxIter = maxIter, maxHits = maxHits,
+                        verbosity = verbosity - 1L, ...)
+
+  # Return:
+  res[1:2]
 }
 
 

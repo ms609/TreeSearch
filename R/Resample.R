@@ -194,6 +194,10 @@
 #'
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
 #' per resample replicate.
+#' @examples
+#' jackTrees <- Resample(dataset, result[[1]], nReplicates = 10, inapp = "miss")
+#' JackLabels(result[[1]], jackTrees)
+#' 
 #' @family split support functions
 #' @encoding UTF-8
 #' @export
