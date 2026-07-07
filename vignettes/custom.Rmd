@@ -203,13 +203,15 @@ IWJackknife <- function(edgeList, dataset, resampleFreq = 2 / 3,
 
 ```{r iw-jackknife}
 jackTrees <- Jackknife(ratchetTree, dataset, TreeScorer = IWScore,
-                       Resampler = IWJackknife)
+                       Resampler = IWJackknife, verbosity = 0,
+                       jackIter = 10, searchIter = 100)
+JackLabels(ratchetTree, jackTrees)
 ```
 
 Hopefully these examples give a template from which you are able to construct
-your own optimality criteria.  The maintainer is happy to answer questions via
-e-mail, or you can file queries by opening a
-[GitHub issue](https://github.com/ms609/TreeSearch/issues/new/).
+your own optimality criteria.  Further guidance is available from the maintainer
+via e-mail, or by filing a
+[GitHub question](https://github.com/ms609/TreeSearch/discussions/new?category=q-a).
 
 ## What next?
 

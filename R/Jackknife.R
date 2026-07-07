@@ -48,7 +48,7 @@ Jackknife <- function(tree, dataset,
                       jackIter = 5000L, searchIter = 4000L, searchHits = 42L,
                       verbosity = 1L, ...) {
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
-    stop("tree must be bifurcating; try rooting with ape::root")
+    stop("tree must be bifurcating; try RootTree() or MakeTreeBinary()")
   }
 
   tree <- RenumberTips(tree, .SearchTipLabels(dataset))
