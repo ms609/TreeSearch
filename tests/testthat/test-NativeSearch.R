@@ -7,7 +7,7 @@ test_that("TreeSearch()/Ratchet() honour concavity baked into `dataset` (EW / IW
   dataset <- TreeSearch::inapplicable.phyData[["Vinther2008"]]
   start <- TreeTools::NJTree(dataset)
   for (k in list(Inf, 10, "profile")) {
-    prepared <- PrepareData(dataset, concavity = k)
+    prepared <- suppressMessages(PrepareData(dataset, concavity = k))
     res <- TreeSearch(start, prepared, maxIter = 25L, maxHits = 4L, verbosity = 0)
     expect_s3_class(res, "phylo")
     # The reported score is internally consistent with re-scoring under the

@@ -42,8 +42,12 @@ test_that("TreeScore() equals TreeLength() (EW, IW, profile)", {
   expect_equal(TreeScore(tree, PrepareData(dataset, concavity = 10)),
                TreeLength(tree, dataset, concavity = 10, extended_iw = FALSE))
   # Profile parsimony
-  expect_equal(TreeScore(tree, PrepareData(dataset, concavity = "profile")),
-               TreeLength(tree, dataset, concavity = "profile"))
+  expect_message(
+    expect_message(
+      expect_equal(TreeScore(tree, PrepareData(dataset, concavity = "profile")),
+                   TreeLength(tree, dataset, concavity = "profile")),
+      "Inapplicable.*treated as ambiguous"),
+    "Inapplicable.*treated as ambiguous")
 })
 
 test_that("Resampling weights change the score", {
