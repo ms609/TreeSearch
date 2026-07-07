@@ -9,9 +9,12 @@ test_that("Jackknife supports are correct", {
   names(dataset) <- c(LETTERS[1:6], "out")
   preparedData <- PrepareData(dataset)
 
-  expect_error(Jackknife(unroot(true_tree), preparedData))
-  expect_error(Jackknife(start_tree, preparedData, resampleFreq = 0))
-  expect_error(Jackknife(start_tree, preparedData, resampleFreq = 9 / 10))
+  expect_error(Jackknife(unroot(true_tree), preparedData),
+               "tree must be bifurcating")
+  expect_error(Jackknife(start_tree, preparedData, resampleFreq = 0, verb = 0),
+               "resampleFreq of 0 is too low")
+  expect_error(Jackknife(start_tree, preparedData, resampleFreq = 0.9, verb = 0),
+               "resampleFreq of 0.9 is too high")
 
   # Ensure reproducible RNG, restoring on exit
   old_rng <- RNGkind()
