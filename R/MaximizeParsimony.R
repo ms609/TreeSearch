@@ -622,7 +622,12 @@
 #' @examples
 #' data("inapplicable.phyData", package = "TreeSearch")
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
-#' result <- MaximizeParsimony(dataset, maxReplicates = 3L, targetHits = 2L)
+#' result <- MaximizeParsimony(
+#'   dataset,
+#'   inapp = "missing",
+#'   maxReplicates = 12L,
+#'   targetHits = 4L
+#' )
 #' result
 #' attr(result, "score")
 #'

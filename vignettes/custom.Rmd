@@ -179,6 +179,33 @@ ratchetTree <- Ratchet(iwTree, dataset, TreeScorer = IWScore,
 Use much larger values of `ratchIter`, `ratchHits`, `searchIter` and
 `searchHits` for a thorough search.
 
+An analogous function allows us to determine jackknife support for a solution:
+
+```{r iw-jackknife-resampler}
+IWJackknife <- function(edgeList, dataset, resampleFreq = 2 / 3,
+                        TreeScorer = IWScore, EdgeSwapper = NNISwap,
+                        maxIter, maxHits, verbosity = 1L, ...) {
+  startWeights <- attr(dataset, "weight")
+  deindexedChars <- rep.int(seq_along(startWeights), startWeights)
+  charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
+  resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
+                        length(startWeights))
+  attr(dataset, "weight") <- as.integer(resampling)
+
+  res <- EdgeListSearch(edgeList[1:2], dataset, TreeScorer = TreeScorer,
+                        EdgeSwapper = EdgeSwapper,
+                        maxIter = maxIter, maxHits = maxHits,
+                        verbosity = verbosity - 1L, ...)
+  # Return:
+  res[1:2]
+}
+```
+
+```{r iw-jackknife}
+jackTrees <- Jackknife(ratchetTree, dataset, TreeScorer = IWScore,
+                       Resampler = IWJackknife)
+```
+
 Hopefully these examples give a template from which you are able to construct
 your own optimality criteria.  The maintainer is happy to answer questions via
 e-mail, or you can file queries by opening a

@@ -2,6 +2,7 @@
 % Please edit documentation in R/Jackknife.R
 \name{Jackknife}
 \alias{Jackknife}
+\alias{JackknifeTree}
 \title{Jackknife resampling}
 \usage{
 Jackknife(
@@ -12,9 +13,22 @@ Jackknife(
   CleanUpData = NULL,
   TreeScorer = EdgeListScore,
   EdgeSwapper = TBRSwap,
+  Resampler = JackknifeTree,
   jackIter = 5000L,
   searchIter = 4000L,
   searchHits = 42L,
+  verbosity = 1L,
+  ...
+)
+
+JackknifeTree(
+  edgeList,
+  dataset,
+  resampleFreq = 2/3,
+  TreeScorer = EdgeListScore,
+  EdgeSwapper = NNISwap,
+  maxIter,
+  maxHits,
   verbosity = 1L,
   ...
 )
@@ -48,6 +62,11 @@ weights or profile parsimony, according to how it was prepared).}
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
 
+\item{Resampler}{Function that drops a random subset of characters from
+\code{dataset} and returns a rearranged \code{edgeList}; see §Details for specification.
+The default, \code{\link[=JackknifeTree]{JackknifeTree()}}, requires \code{dataset} to be a
+\code{\link[=PrepareData]{ParsimonyData}} object.}
+
 \item{jackIter}{Integer specifying number of jackknife iterations to conduct.}
 
 \item{searchIter}{Integer specifying maximum rearrangements to perform on
@@ -64,6 +83,20 @@ To override this value for a single swapper function, set e.g.
 larger numbers provide more verbose feedback to the user.}
 
 \item{...}{further parameters to send to \code{TreeScorer()}}
+
+\item{edgeList}{a list containing the following:
+\itemize{
+\item vector of integers corresponding to the parent of each edge in turn
+\item vector of integers corresponding to the child of each edge in turn
+\item (optionally) score of the tree
+\item (optionally, if score provided) number of times this score has been hit
+}}
+
+\item{maxIter}{Numeric specifying maximum number of iterations to perform
+in tree search.}
+
+\item{maxHits}{Numeric specifying maximum number of hits to accomplish in
+tree search.}
 }
 \value{
 \code{Jackknife()} returns a list of trees recovered after jackknife
@@ -73,6 +106,29 @@ iterations.
 Resample trees using Jackknife resampling, i.e. removing a subset of
 characters. For standard parsimony, \code{\link[=Resample]{Resample()}} is faster; use
 \code{Jackknife()} when you need a custom \code{TreeScorer} or \code{EdgeSwapper}.
+}
+\details{
+Each argument from \code{Jackknife} is passed forward to \code{Resampler()}, except
+\code{tree}, which is replaced with a two-element list of integer vectors;
+the first entry lists the parent of each node in \code{tree}, i.e.
+\code{tree$edge[, 1]}; the second entry lists the corresponding child.
+\code{Resampler()} must return an equivalent list.
+}
+\section{Functions}{
+\itemize{
+\item \code{JackknifeTree()}: Default \code{Resampler}: drops a random subset of
+characters from a \code{\link[=PrepareData]{ParsimonyData}} object and conducts a
+tree search on the reduced dataset.
+
+}}
+\examples{
+set.seed(0)
+data("inapplicable.phyData", package = "TreeSearch")
+dataset <- inapplicable.phyData[["Asher2005"]]
+trees <- MaximizeParsimony(dataset, inapp = "missing", verbosity = 0)
+oneTree <- TreeTools::MakeTreeBinary(trees[[1]])
+jackTrees <- Jackknife(oneTree, PrepareData(dataset))
+
 }
 \seealso{
 \itemize{
