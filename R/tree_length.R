@@ -449,8 +449,7 @@ Fitch <- function(tree, dataset) {
     
     tree <- KeepTip(tree, dataNames)
   }
-  # Morphy requires that the tree is in postorder
-  tree <- RenumberTips(Postorder(tree), dataNames)
+  tree <- RenumberTips(tree, dataNames)
 }
 
 #' Character length
