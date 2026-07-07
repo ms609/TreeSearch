@@ -6,11 +6,6 @@
 # run only under TREESEARCH_EXTENDED_TESTS.  Routine correctness of
 # RandomTreeScore() is covered by test-RandomTreeScore.R.
 
-ScoreObj <- function (char) {
-  # `char` is a Morphy token string without a trailing ";"
-  SingleCharData(char)
-}
-
 test_that("four-tip trees are randomly distributed", {
   nTrees <- 36000
   stringency <- 1e-6
@@ -42,12 +37,12 @@ test_that("four-tip trees are randomly scored", {
   stringency <- 1e-6
   nTip <- 4
 
-  morphyObj <- ScoreObj("0011")
+  charac <- SingleCharData("0011")
 
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees,
                            NUnrooted(nTip - 1L) / NUnrooted(nTip))
   scores <- vapply(logical(nTrees),
-                   function (XX) RandomTreeScore(morphyObj), integer(1))
+                   function (XX) RandomTreeScore(charac), integer(1))
   expect_lt(expectedBounds[1], sum(scores==1))
   expect_gt(expectedBounds[2], sum(scores==1))
 })
@@ -59,11 +54,11 @@ test_that("five-tip trees are randomly scored", {
   nTrees <- 12000
   stringency <- 1e-6
   nTip <- 5
-  morphyObj <- ScoreObj("00011")
+  charac <- SingleCharData("00011")
   expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees,
                            NUnrooted(nTip - 1) / NUnrooted(nTip))
   scores <- vapply(logical(nTrees),
-                   function (XX) RandomTreeScore(morphyObj), integer(1))
+                   function (XX) RandomTreeScore(charac), integer(1))
   expect_equal(2L, max(scores))
   expect_lt(expectedBounds[1], sum(scores == 1))
   expect_gt(expectedBounds[2], sum(scores == 1))
@@ -79,32 +74,32 @@ test_that("six-tip trees are randomly scored", {
   stringency <- 1e-6
   nTip <- 6
 
-  morphyObj <- ScoreObj("000011")
-  expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees,
+  charac <- SingleCharData("000011")
+  expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees,
                            NUnrooted(5) / NUnrooted(6))
   scores <- vapply(logical(nTrees),
-                   function (XX) RandomTreeScore(morphyObj), integer(1))
+                   function (XX) RandomTreeScore(charac), integer(1))
 
   expect_true(max(scores) == 2)
   expect_lt(expectedBounds[1], sum(scores==1))
   expect_gt(expectedBounds[2], sum(scores==1))
 
-  morphyObj <- ScoreObj("001122")
+  charac <- SingleCharData("001122")
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees,
                            7 / NUnrooted(nTip))
   scores <- vapply(logical(nTrees),
-                   function (XX) RandomTreeScore(morphyObj),
+                   function (XX) RandomTreeScore(charac),
                    integer(1))
 
   expect_true(all(scores %in% 2:4))
   expect_lt(expectedBounds[1], sum(scores == 2))
   expect_gt(expectedBounds[2], sum(scores == 2))
 
-  morphyObj <- ScoreObj("000111")
+  charac <- SingleCharData("000111")
   expectedBounds <- qbinom(c(stringency, 1-stringency), nTrees,
                            3 * 3 / NUnrooted(nTip))
   scores <- vapply(logical(nTrees),
-                   function (XX) RandomTreeScore(morphyObj), integer(1))
+                   function (XX) RandomTreeScore(charac), integer(1))
 
   expect_true(max(scores) == 3)
   expect_lt(expectedBounds[1], sum(scores == 1))
@@ -119,13 +114,13 @@ test_that("twelve-tip trees are randomly scored", {
   nTrees <- 24000
   stringency <- 1e-6
   nTip <- 12
-  morphyObj <- ScoreObj("000000011111")
+  charac <- SingleCharData("000000011111")
   expectedBounds <- qbinom(c(stringency, 1 - stringency), nTrees,
                            NUnrooted(7) * (2 * 7 - 3) *
                            NUnrooted(5) * (2 * 5 - 3) / NUnrooted(nTip))
 
   scores <- vapply(logical(nTrees),
-                   function (XX) RandomTreeScore(morphyObj),
+                   function (XX) RandomTreeScore(charac),
                    integer(1L))
 
   expect_equal(5L, max(scores))
