@@ -71,23 +71,6 @@
   behalf.  If your own `TreeScorer` holds an external resource that needs
   releasing, use your own `on.exit()`.
 
-- **`Resample()`'s `finalIter`, `maxHits`, `tolerance` and `verbosity`
-  arguments are deprecated.**  These are inherited from the pre-2.0.0,
-  MorphyLib-based implementation and have had no effect since `Resample()`
-  was rewritten around the native search engine, which has no equivalent
-  controls (in particular, no progress-reporting hook).  Supplying a
-  non-`NULL` value now issues a deprecation warning; the arguments will be
-  removed in a future release.
-
-- **`Resample()`'s `nThreads = 0` now auto-detects the number of threads**,
-  matching `MaximizeParsimony()`.  Previously it was silently clamped to `1`
-  (serial), so requesting auto-detection had no effect.
-
-- **`Resample()` now supports `inapplicable = "missing"`**, matching
-  `MaximizeParsimony()`.  Previously only `"bgs"`, `"hsj"` and `"xform"` were
-  accepted, so the pure-Fitch (gaps-as-missing) mode already shown in
-  `Resample()`'s own examples would error.
-
 - `Jackknife()` and `BootstrapTree()` (formerly `MorphyBootstrap()`) now
   resample characters natively, scoring the resampled weights through the
   native kernel rather than by mutating a MorphyLib object — fixing a case
