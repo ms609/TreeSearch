@@ -209,8 +209,7 @@
     # drift is per-replicate overhead -> at a fixed budget thorough completes fewer
     # reps and reaches the optimum somewhat LESS reliably on the general pool; it is
     # a deliberately higher-effort/slower tier that needs a larger replicate budget
-    # to converge.  Folds in the former opt-in `intensive` (wagnerStarts = 5) as an
-    # alias.  NB thorough is auto-selected for 65-119 tips, so this cost lands on the
+    # to converge. NB thorough is auto-selected for 65-119 tips, so this cost lands on the
     # default path there.
     driftCycles = 2L,
     xssRounds = 5L, xssPartitions = 6L,
@@ -274,12 +273,6 @@
   )
   )
 
-  # `intensive` is retained as a backward-compatible alias of `thorough`.  The
-  # 2026-06-25 two-island sweep (30 seeds) folded wagnerStarts = 5 (intensive's
-  # sole distinguishing feature) into `thorough` together with driftCycles = 2;
-  # ws5 showed no score gain over thorough while costing wall-clock, so the two
-  # presets are merged.  Kept as an alias so `strategy = "intensive"` still works.
-  presets$intensive <- presets$thorough
   presets
 }
 
@@ -502,10 +495,6 @@
 #'       sector sizes, 1-cycle simulated annealing instead of drift
 #'       (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 #'       or exceeds `"thorough"` at 180 tips across all time budgets.}
-#'     \item{`"intensive"`}{Deprecated alias of `"thorough"`, retained for
-#'       backward compatibility.  The extra Wagner starts (5) that once
-#'       distinguished it are now folded into `"thorough"`, so the two are
-#'       identical.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement

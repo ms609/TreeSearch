@@ -136,14 +136,8 @@
 }
 
 
-#' Resampling under custom search criteria
+#' @rdname MaximizeParsimony
 #'
-#' @inheritParams MaximizeParsimony
-#' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}}.
-#' Consulted only as a fallback: if a replicate's search reports no
-#' best-score tree, `tree` (if supplied) is returned in its place.  Unlike
-#' [`MaximizeParsimony()`]'s `tree` argument, it is not used as a warm-start
-#' topology.
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap`
 #' specifying how to resample characters.  Note that jackknife is considered
 #' to give more meaningful results.
