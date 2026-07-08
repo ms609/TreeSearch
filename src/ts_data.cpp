@@ -208,12 +208,6 @@ DataSet build_dataset(
   ds.tip_states.assign(
     static_cast<size_t>(n_tips) * ds.total_words, 0ULL);
 
-  // Mask with all applicable-state bits set (for missing-data detection)
-  uint32_t all_applicable_mask = 0;
-  for (int s = 0; s < n_states; ++s) {
-    if (s != inapp_state) all_applicable_mask |= (1u << s);
-  }
-
   for (int b = 0; b < ds.n_blocks; ++b) {
     const CharBlock& blk = ds.blocks[b];
     int base = ds.block_word_offset[b];
@@ -231,31 +225,24 @@ DataSet build_dataset(
         size_t tip_base = static_cast<size_t>(tip) * ds.total_words;
 
         if (blk.has_inapplicable) {
-          bool has_inapp = inapp_state >= 0
-                        && (tstates & (1u << inapp_state));
-          uint32_t applicable_bits = tstates & all_applicable_mask;
-          bool is_missing = has_inapp
-                         && (applicable_bits == all_applicable_mask);
-          if (has_inapp && !is_missing && applicable_bits != 0) {
-            // Partial {-,X} ambiguity: strip applicable bits, treat as
-            // pure inapplicable (MorphyLib convention). The three-pass
-            // NA algorithm cannot correctly resolve partial {-,X}
-            // ambiguity in tree context.
+          // Encode {-,X} partial ambiguity faithfully: set the NA (word 0)
+          // bit AND the applicable-state bit(s).  Under BGS the applicability
+          // character (binary Fitch, 0=inapplicable/1=applicable) is
+          // reconstructed parsimoniously — resolving each {-,X} tip in tree
+          // context, applicable-preferred on ties (De Laet: maximise homology,
+          // not minimise homoplasy) — and the three passes then count state
+          // steps.
+          //   pure inapplicable -> {NA};      {-,X} -> {NA, X};
+          //   missing {-,all}   -> {NA, all applicable} (full wildcard);
+          //   pure applicable   -> applicable bits only.
+          if (inapp_state >= 0 && (tstates & (1u << inapp_state))) {
             ds.tip_states[tip_base + base] |= bit;
-          } else if (has_inapp && applicable_bits == 0) {
-            // Pure inapplicable: just set inapp bit
-            ds.tip_states[tip_base + base] |= bit;
-          } else {
-            // Pure applicable OR full missing data: encode all bits
-            if (has_inapp) {
-              ds.tip_states[tip_base + base] |= bit;
-            }
-            for (int s = 0; s < n_states; ++s) {
-              if (s == inapp_state) continue;
-              if (tstates & (1u << s)) {
-                int w = state_remap[s] + 1;
-                ds.tip_states[tip_base + base + w] |= bit;
-              }
+          }
+          for (int s = 0; s < n_states; ++s) {
+            if (s == inapp_state) continue;
+            if (tstates & (1u << s)) {
+              int w = state_remap[s] + 1;
+              ds.tip_states[tip_base + base + w] |= bit;
             }
           }
         } else {
