@@ -1,7 +1,23 @@
-# Tests for SIMD vectorization correctness (Phase 3E).
+# Regression tests for EW/NA scoring correctness.
 #
-# Verifies that SIMD-accelerated scoring produces bit-identical results
-# to the pre-SIMD implementation. Focuses on edge cases around:
+# `TreeSearch::Fitch()` is deprecated, and in any case is not an
+# independent check: it resolves to the same native `ts::score_tree()`
+# engine that `ts_score()` calls, just via a different R entry point
+# (TreeLength -> CharacterLength -> FastCharacterLength -> ts_char_steps).
+# Comparing the two is circular self-consistency, not validation.
+#
+# phangorn is a genuine independent oracle for ordinary (non-inapplicable)
+# characters, but has no concept of inapplicable-token ("-") semantics, so
+# it cannot check the NA-aware three-pass scoring used on these datasets.
+#
+# Until an independent inapplicable-aware reference exists again (Morphy
+# was fully removed from this package), these tests instead lock in
+# scores computed with the current engine, which is independently
+# validated elsewhere (Wagner/Fitch fuzz testing, exact-insertion
+# oracles; see dev/red-team notes). They exist to catch *regressions* in
+# scoring — SIMD or otherwise — not to prove initial correctness.
+#
+# Focuses on edge cases around:
 # - Odd vs even state counts (SIMD processes 2 words at a time)
 # - Single-state characters (k=1, no SIMD loop iterations)
 # - Large state counts (many SIMD iterations)
@@ -10,34 +26,48 @@
 
 # Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
 
-morphy_ew_ref <- function(tree, dataset) {
-  suppressWarnings(TreeSearch::Fitch(tree, dataset))
-}
-
 # =====================================================================
-# EW scoring: morphy cross-validation on all inapplicable datasets
+# EW scoring: golden-value regression on all inapplicable datasets
 # =====================================================================
 
-test_that("SIMD EW scores match morphy on inapplicable datasets (pectinate)", {
+test_that("SIMD EW scores match known-good values on inapplicable datasets (pectinate)", {
+  golden <- c(
+    Agnarsson2004 = 1081, Aguado2009 = 1160, Aria2015 = 184,
+    Asher2005 = 553, Capa2011 = 620, Conrad2008 = 3605,
+    DeAssis2011 = 104, Dikow2009 = 3409, Eklund2004 = 655,
+    Geisler2001 = 2386, Giles2015 = 2094, Griswold1999 = 817,
+    Liljeblad2008 = 4187, Loconte1991 = 1081, Longrich2010 = 150,
+    OLeary1999 = 569, OMeara2014 = 1578, Rougier2012 = 1430,
+    Rousset2004 = 687, Sano2011 = 340, Sansom2010 = 220,
+    Schulze2007 = 280, Shultz2007 = 615, Vinther2008 = 139,
+    Wetterer2000 = 889, Wills2012 = 499, Wilson2003 = 1492,
+    Wortley2006 = 657, Zanol2014 = 1931, Zhu2013 = 2150
+  )
   for (ds_name in names(inapplicable.phyData)) {
     dataset <- inapplicable.phyData[[ds_name]]
     tree <- Preorder(PectinateTree(dataset))
     ds <- make_ts_data(dataset)
     ew <- ts_score(tree, ds)
-    ref <- morphy_ew_ref(tree, dataset)
-    expect_equal(ew, ref, label = paste(ds_name, "pectinate EW"))
+    expect_equal(ew, unname(golden[[ds_name]]),
+                 label = paste(ds_name, "pectinate EW"))
   }
 })
 
-test_that("SIMD EW scores match morphy on inapplicable datasets (random)", {
+test_that("SIMD EW scores match known-good values on inapplicable datasets (random)", {
+  golden <- c(
+    Agnarsson2004 = 1958, Aguado2009 = 1228, Aria2015 = 299,
+    Asher2005 = 556, Capa2011 = 1524, Conrad2008 = 3533,
+    DeAssis2011 = 272, Dikow2009 = 3552, Eklund2004 = 1068,
+    Geisler2001 = 2372
+  )
   set.seed(7142)
   for (ds_name in names(inapplicable.phyData)[1:10]) {
     dataset <- inapplicable.phyData[[ds_name]]
     tree <- Preorder(RandomTree(dataset, root = TRUE))
     ds <- make_ts_data(dataset)
     ew <- ts_score(tree, ds)
-    ref <- morphy_ew_ref(tree, dataset)
-    expect_equal(ew, ref, label = paste(ds_name, "random EW"))
+    expect_equal(ew, unname(golden[[ds_name]]),
+                 label = paste(ds_name, "random EW"))
   }
 })
 
@@ -148,21 +178,23 @@ test_that("Driven search produces valid results with SIMD", {
 })
 
 # =====================================================================
-# NA datasets: three-pass scoring verification
+# NA datasets: three-pass scoring regression
 # =====================================================================
 
-test_that("NA three-pass scoring with SIMD matches morphy across datasets", {
-  # Use 5 datasets that heavily exercise NA scoring
-  na_datasets <- c("Vinther2008", "Agnarsson2004", "Wills2012",
-                    "Aria2015", "Zhu2013")
+test_that("NA three-pass scoring with SIMD matches known-good values across datasets", {
+  # 5 datasets that heavily exercise NA scoring
+  golden <- c(
+    Vinther2008 = 188, Agnarsson2004 = 1964, Wills2012 = 712,
+    Aria2015 = 292, Zhu2013 = 2256
+  )
   set.seed(5063)
-  for (ds_name in na_datasets) {
+  for (ds_name in names(golden)) {
     dataset <- inapplicable.phyData[[ds_name]]
     tree <- Preorder(RandomTree(dataset, root = TRUE))
     ds <- make_ts_data(dataset)
     ew <- ts_score(tree, ds)
-    ref <- morphy_ew_ref(tree, dataset)
-    expect_equal(ew, ref, label = paste(ds_name, "NA random EW"))
+    expect_equal(ew, unname(golden[[ds_name]]),
+                 label = paste(ds_name, "NA random EW"))
   }
 })
 
@@ -176,8 +208,7 @@ test_that("SIMD handles very small datasets correctly", {
   tree <- Preorder(PectinateTree(dataset))
   ds <- make_ts_data(dataset)
   ew <- ts_score(tree, ds)
-  ref <- morphy_ew_ref(tree, dataset)
-  expect_equal(ew, ref, label = "Loconte1991 EW")
+  expect_equal(ew, 1081, label = "Loconte1991 EW")
 })
 
 # =====================================================================
