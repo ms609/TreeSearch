@@ -13,6 +13,7 @@
 #include <cstring>
 #include <climits>
 #include <cstdlib>
+#include <cmath>
 #include <R.h>
 
 namespace ts {
@@ -1284,7 +1285,75 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     return result;
   }
 
-  int avg_size = (params.min_sector_size + params.max_sector_size) / 2;
+  const int n_tip = tree.n_tip;
+
+  // ---- Sector-size scaling knobs (TNT `sectsch`; default-OFF, additive) ----
+  // Two opt-in levers (see SectorParams).  Env vars are read once per
+  // rss_search CALL, not per candidate: this is a per-round entry point (not a
+  // hot per-clip path), so the ~microsecond getenv cost is negligible, and a
+  // per-call read keeps the knobs unit-testable -- a process-lifetime static
+  // would freeze the first env value seen.  CRUCIAL INVARIANT: when every knob
+  // is at its default (frac 0, growth off) and no env override is set, `eff_max`
+  // == params.max_sector_size and `size_upper` is pinned to it, `loop_cap` ==
+  // n_picks, and the growth block below never runs -- so the executed
+  // statements and the RNG draw sequence are byte-identical to the
+  // pre-feature path.  Keep it that way.
+  auto env_dbl = [](const char* k, double fallback) -> double {
+    const char* v = std::getenv(k);
+    return v ? std::atof(v) : fallback;
+  };
+  auto env_int = [](const char* k, int fallback) -> int {
+    const char* v = std::getenv(k);
+    return v ? std::atoi(v) : fallback;
+  };
+
+  // (a) Effective absolute cap.  TS_SECT_MAXSIZE raises the ceiling so the
+  // fraction term can bind on large trees (with a 50/80 ceiling min() would
+  // otherwise only ever shrink or be inert).
+  int cap_base = env_int("TS_SECT_MAXSIZE", params.max_sector_size);
+  double max_frac = env_dbl("TS_SECT_MAXFRAC", params.max_sector_size_frac);
+  int size_threshold = env_int("TS_SECT_THRESHOLD", params.sector_size_threshold);
+  int eff_max = cap_base;
+  if (max_frac > 0.0 && n_tip >= size_threshold) {
+    int frac_cap = static_cast<int>(std::ceil(max_frac * n_tip));
+    if (frac_cap < params.min_sector_size) frac_cap = params.min_sector_size;
+    eff_max = std::min(cap_base, frac_cap);
+  }
+  if (eff_max < params.min_sector_size) eff_max = params.min_sector_size;
+
+  // (b) Adaptive-growth config.  Growth is on when increase>0 in params, unless
+  // TS_SECT_GROW overrides ("0" forces off; any other value forces on).
+  bool grow_enabled = params.sector_grow_increase > 0;
+  {
+    const char* ge = std::getenv("TS_SECT_GROW");
+    if (ge) grow_enabled = !(ge[0] == '0' && ge[1] == '\0');
+  }
+  int grow_inc     = env_int("TS_SECT_GROW_INC",     params.sector_grow_increase);
+  int grow_selfact = env_int("TS_SECT_GROW_SELFACT", params.sector_grow_selfact);
+  int grow_moveon  = env_int("TS_SECT_GROW_MOVEON",  params.sector_grow_moveon);
+  int grow_start   = env_int("TS_SECT_GROW_START",   params.sector_grow_start);
+  if (grow_enabled && grow_inc <= 0) grow_inc = 50;  // sane default if env-enabled
+  if (grow_start <= 0) grow_start = params.min_sector_size;
+  grow_start = std::max(params.min_sector_size, std::min(grow_start, eff_max));
+
+  // Per-band selection budget M.  TNT selfact: M = (T*100)/(selfact*S); when
+  // selfact is unset we mirror the existing auto n_picks heuristic per band.
+  auto band_budget = [&](int S) -> int {
+    int s = std::max(1, S);
+    if (grow_selfact > 0)
+      return std::max(1, (n_tip * 100) / (grow_selfact * s));
+    return std::max(1, 2 * n_tip / s);
+  };
+
+  // `size_upper` is the current upper bound of the sector-size window.  With
+  // growth off it is pinned to `eff_max` (== params.max_sector_size when (a)
+  // is also off), so every eligibility filter and the loop bound below reduce
+  // to the pre-feature behaviour exactly.
+  int size_upper = grow_enabled ? grow_start : eff_max;
+  int grow_band_used = 0;
+  int grow_consec_fail = 0;
+
+  int avg_size = (params.min_sector_size + eff_max) / 2;
   int n_picks = params.rss_picks_per_round;
   if (n_picks <= 0) {
     n_picks = std::max(1, 2 * tree.n_tip / std::max(1, avg_size));
@@ -1299,12 +1368,44 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
                        + subtree_size[tree.right[ni]];
   }
 
-  // Collect eligible internal nodes (not root)
+  // Collect eligible internal nodes (not root).  `size_upper` == eff_max ==
+  // params.max_sector_size on the default path.
   std::vector<int> eligible;
   for (int node = tree.n_tip + 1; node < tree.n_node; ++node) {
     int sz = subtree_size[node];
-    if (sz >= params.min_sector_size && sz <= params.max_sector_size) {
+    if (sz >= params.min_sector_size && sz <= size_upper) {
       eligible.push_back(node);
+    }
+  }
+
+  // Adaptive growth may start with a size window too small to hold any node;
+  // widen it (rebuilding the list) until non-empty or the ceiling is reached,
+  // before falling back to global TBR.  Guarded, so the default path reaches
+  // the original empty-check unchanged.
+  while (grow_enabled && eligible.empty() && size_upper < eff_max) {
+    int ns = size_upper + static_cast<int>(std::ceil(size_upper * (grow_inc / 100.0)));
+    if (ns <= size_upper) ns = size_upper + 1;
+    size_upper = std::min(ns, eff_max);
+    for (int node = tree.n_tip + 1; node < tree.n_node; ++node) {
+      int sz = subtree_size[node];
+      if (sz >= params.min_sector_size && sz <= size_upper) eligible.push_back(node);
+    }
+  }
+
+  // Total pick budget.  Growth off => exactly n_picks (unchanged).  Growth on
+  // => the summed per-band budget over the size ramp (a finite upper bound;
+  // `moveon` / timeout may stop the loop sooner).  Computed AFTER the
+  // pre-widening loop so the ramp starts from the actual initial `size_upper`
+  // (otherwise the skipped small-band budgets would be spent at the ceiling).
+  long long loop_cap = n_picks;
+  if (grow_enabled) {
+    loop_cap = 0;
+    for (int s = size_upper; ; ) {
+      loop_cap += band_budget(s);
+      if (s >= eff_max) break;
+      int ns = s + static_cast<int>(std::ceil(s * (grow_inc / 100.0)));
+      if (ns <= s) ns = s + 1;
+      s = std::min(ns, eff_max);
     }
   }
 
@@ -1341,7 +1442,14 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     use_weighted = (max_w > 1.5);
   }
 
-  for (int pick = 0; pick < n_picks; ++pick) {
+  // Adaptive growth rebuilds `eligible` as the size window grows; conflict
+  // weighting is orthogonal to this probe and would desync with those
+  // rebuilds, so growth uses uniform selection.  Guarded => default path
+  // unaffected.
+  if (grow_enabled) use_weighted = false;
+
+  for (long long pick = 0; pick < loop_cap; ++pick) {
+    const double best_before = result.best_score;  // (b) per-pick improvement probe
     int idx;
     if (use_weighted) {
       std::discrete_distribution<int> dist(pick_weights.begin(),
@@ -1438,7 +1546,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         for (int node = tree.n_tip + 1; node < tree.n_node; ++node) {
           int sz = subtree_size[node];
           if (sz >= params.min_sector_size &&
-              sz <= params.max_sector_size) {
+              sz <= size_upper) {
             eligible.push_back(node);
           }
         }
@@ -1462,6 +1570,41 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
           map_constraint_nodes(tree, *cd);
           compute_dfs_timestamps(tree, *cd);
         }
+      }
+    }
+
+    // ---- (b) adaptive-growth control (guarded; no-op when growth is off) ----
+    // TNT selfact/increase/moveon: count selections at the current size, grow
+    // the window's upper bound once the per-band budget is spent, and move on
+    // early after `moveon` consecutive selections fail to improve the score.
+    if (grow_enabled) {
+      const bool pick_improved = result.best_score < best_before;
+      if (pick_improved) grow_consec_fail = 0; else ++grow_consec_fail;
+      // `moveon` ends the phase only once growth has escalated to the ceiling
+      // (size_upper >= eff_max).  Gating on that is essential: a small moveon
+      // would otherwise trip inside the first band and leave the growth lever
+      // INERT -- the A/B would then measure "no growth", the exact failure mode
+      // this probe exists to avoid.  grow_consec_fail resets on each growth
+      // (below), so at the ceiling it counts consecutive non-improving picks AT
+      // the max size, which is what "move on" should mean here.
+      if (grow_moveon > 0 && size_upper >= eff_max &&
+          grow_consec_fail >= grow_moveon) break;  // move on
+      if (++grow_band_used >= band_budget(size_upper) && size_upper < eff_max) {
+        int ns = size_upper +
+                 static_cast<int>(std::ceil(size_upper * (grow_inc / 100.0)));
+        if (ns <= size_upper) ns = size_upper + 1;
+        size_upper = std::min(ns, eff_max);
+        grow_band_used = 0;
+        grow_consec_fail = 0;  // per-band reset (see moveon note above)
+        // Widen the candidate list to the enlarged size window.  `subtree_size`
+        // is current (rebuilt on the last accept; unchanged otherwise).
+        eligible.clear();
+        for (int node = tree.n_tip + 1; node < tree.n_node; ++node) {
+          int sz = subtree_size[node];
+          if (sz >= params.min_sector_size && sz <= size_upper)
+            eligible.push_back(node);
+        }
+        if (eligible.empty()) break;
       }
     }
 
