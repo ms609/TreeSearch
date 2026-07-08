@@ -34,6 +34,30 @@ struct SectorParams {
                                  // into ~this many composite first-pass terminals
                                  // (Goloboff 1999 coarse-grained sector). 0 = off.
 
+  // TNT-style in-sector drifting / combined analysis for LARGE sectors.
+  // Small sectors are cheap to solve with RAS+TBR; big sectors have more reach
+  // but need drift/combined to escape their own local optima (TNT `sectsch`
+  // godrift/gocomb/drift/gocomb/combstarts). Thresholds are measured against the
+  // sector's real-tip count (n_real_tips), matching how max_sector_size is
+  // measured (count_clade_tips). Both default 0 = off (RAS+TBR only).
+  int sector_go_drift = 0;       // solve sectors with >= this many real tips by
+                                 // drift_search instead of plain RAS+TBR (TNT
+                                 // `godrift N`). 0 = off.
+  int sector_go_comb = 0;        // solve sectors with >= this many real tips by
+                                 // COMBINED analysis (TNT `gocomb N`): here,
+                                 // sector_comb_starts RAS+drift starts, keep best.
+                                 // (TNT also fuses the starts; that fuse sub-step
+                                 // is deferred — see ts_sector.cpp header note.)
+                                 // Takes precedence over go_drift. 0 = off.
+  int sector_drift_cycles = 5;   // drift cycles for drifted/combined sectors
+                                 // (TNT `drift N`).
+  int sector_drift_afd = 3;      // AFD limit for in-sector drift (steps).
+  double sector_drift_rfd = 0.1; // RFD limit for in-sector drift.
+  int sector_comb_starts = 3;    // RAS+drift starts per combined sector, keep
+                                 // best (TNT `combstarts N`).
+  int sector_fuse_rounds = 3;    // reserved for the deferred combined-analysis
+                                 // fuse sub-step (TNT `fuse F`); currently unused.
+
   // Conflict-guided sector selection.
   // When non-null, RSS uses weighted random selection that biases toward
   // sectors containing splits absent from the pool consensus.

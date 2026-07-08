@@ -240,6 +240,13 @@ ReplicateResult run_single_replicate(
       sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
       sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
       sp.rss_picks_per_round = params.rss_picks_per_round;  // sequential picks/round (0=auto)
+      sp.sector_go_drift = params.sector_go_drift;      // TNT godrift: drift large sectors
+      sp.sector_go_comb = params.sector_go_comb;        // TNT gocomb: RAS+drift+fuse large sectors
+      sp.sector_drift_cycles = params.sector_drift_cycles;
+      sp.sector_drift_afd = params.sector_drift_afd;
+      sp.sector_drift_rfd = params.sector_drift_rfd;
+      sp.sector_comb_starts = params.sector_comb_starts;
+      sp.sector_fuse_rounds = params.sector_fuse_rounds;
 
       // XSS: systematic partitioning
       sp.n_partitions = params.xss_partitions;
@@ -359,6 +366,13 @@ ReplicateResult run_single_replicate(
       sp.accept_equal = params.sector_accept_equal;  // Goloboff 2014 plateau lever
       sp.collapse_target = params.sector_collapse_target;  // Goloboff 1999 coarse sector
       sp.rss_picks_per_round = params.rss_picks_per_round;  // sequential picks/round (0=auto)
+      sp.sector_go_drift = params.sector_go_drift;      // TNT godrift: drift large sectors
+      sp.sector_go_comb = params.sector_go_comb;        // TNT gocomb: RAS+drift+fuse large sectors
+      sp.sector_drift_cycles = params.sector_drift_cycles;
+      sp.sector_drift_afd = params.sector_drift_afd;
+      sp.sector_drift_rfd = params.sector_drift_rfd;
+      sp.sector_comb_starts = params.sector_comb_starts;
+      sp.sector_fuse_rounds = params.sector_fuse_rounds;
 
       if (params.xss_rounds > 0) {
         sp.n_partitions = params.xss_partitions;

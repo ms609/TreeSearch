@@ -1543,6 +1543,21 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
     params.sector_collapse_target = as<int>(ctrl["sectorCollapseTarget"]);
   if (ctrl.containsElementNamed("rssPicks"))
     params.rss_picks_per_round = as<int>(ctrl["rssPicks"]);
+  // TNT-style in-sector drift / combined analysis for large sectors.
+  if (ctrl.containsElementNamed("sectorGoDrift"))
+    params.sector_go_drift = as<int>(ctrl["sectorGoDrift"]);
+  if (ctrl.containsElementNamed("sectorGoComb"))
+    params.sector_go_comb = as<int>(ctrl["sectorGoComb"]);
+  if (ctrl.containsElementNamed("sectorDriftCycles"))
+    params.sector_drift_cycles = as<int>(ctrl["sectorDriftCycles"]);
+  if (ctrl.containsElementNamed("sectorDriftAfd"))
+    params.sector_drift_afd = as<int>(ctrl["sectorDriftAfd"]);
+  if (ctrl.containsElementNamed("sectorDriftRfd"))
+    params.sector_drift_rfd = as<double>(ctrl["sectorDriftRfd"]);
+  if (ctrl.containsElementNamed("sectorCombStarts"))
+    params.sector_comb_starts = as<int>(ctrl["sectorCombStarts"]);
+  if (ctrl.containsElementNamed("sectorFuseRounds"))
+    params.sector_fuse_rounds = as<int>(ctrl["sectorFuseRounds"]);
 
   // Fuse / pool
   params.fuse_interval      = as<int>(ctrl["fuseInterval"]);

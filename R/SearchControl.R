@@ -92,6 +92,28 @@
 #'   auto-sizes to `2 * nTip / meanSectorSize` (~5).  Higher values chain more
 #'   sequential sector replacements before the next global cleanup, matching the
 #'   ~20-25 of \insertCite{Goloboff1999;textual}{TreeSearch} / \acronym{TNT}.
+#' @param sectorGoDrift,sectorGoComb Integer; size thresholds (in real sector
+#'   tips) above which a sector is solved by tree-drifting (`sectorGoDrift`) or by
+#'   combined analysis (`sectorGoComb`) instead of plain
+#'   \acronym{RAS}+\acronym{TBR}, following \acronym{TNT}'s `sectsch`
+#'   `godrift`/`gocomb`.  Small sectors are cheap to optimise exhaustively; large
+#'   sectors have more reach but need drift to escape their own local optima.
+#'   `sectorGoComb` solves the sector with `sectorCombStarts` \acronym{RAS}+drift
+#'   starts and then *fuses* them (recombines shared clades across the starts over
+#'   `sectorFuseRounds` rounds), keeping the fused tree only if it beats the best
+#'   start.  `sectorGoComb` takes precedence when both trigger.  `0` (default)
+#'   disables each, leaving all sectors on \acronym{RAS}+\acronym{TBR}.  To
+#'   exercise these, also raise `sectorMaxSize` so large sectors are selected.
+#' @param sectorDriftCycles Integer; drift cycles used when a sector is solved by
+#'   drift or combined analysis (\acronym{TNT} `drift`).
+#' @param sectorDriftAfd Integer; absolute-fit-difference limit (steps) for
+#'   in-sector drift.
+#' @param sectorDriftRfd Numeric; relative-fit-difference limit for in-sector
+#'   drift.
+#' @param sectorCombStarts Integer; \acronym{RAS}+drift starts per combined
+#'   sector (\acronym{TNT} `combstarts`).
+#' @param sectorFuseRounds Integer; max fuse rounds for the combined-analysis
+#'   recombination sub-step (\acronym{TNT} `fuse`).
 #' @param postRatchetSectorial Logical; when `TRUE`, run XSS+RSS+CSS again
 #'   after ratchet perturbation using the same round counts.  Approximates
 #'   TNT's interleaved sectorial pattern.  Default: `FALSE`.
@@ -302,6 +324,13 @@ SearchControl <- function(
     sectorMaxHits = 1L,
     sectorCollapseTarget = 0L,
     rssPicks = 0L,
+    sectorGoDrift = 0L,
+    sectorGoComb = 0L,
+    sectorDriftCycles = 5L,
+    sectorDriftAfd = 3L,
+    sectorDriftRfd = 0.1,
+    sectorCombStarts = 3L,
+    sectorFuseRounds = 3L,
     postRatchetSectorial = FALSE,
     # Fuse / pool
     fuseInterval = 3L,
@@ -396,6 +425,13 @@ SearchControl <- function(
       sectorMaxHits = as.integer(sectorMaxHits),
       sectorCollapseTarget = as.integer(sectorCollapseTarget),
       rssPicks = as.integer(rssPicks),
+      sectorGoDrift = as.integer(sectorGoDrift),
+      sectorGoComb = as.integer(sectorGoComb),
+      sectorDriftCycles = as.integer(sectorDriftCycles),
+      sectorDriftAfd = as.integer(sectorDriftAfd),
+      sectorDriftRfd = as.double(sectorDriftRfd),
+      sectorCombStarts = as.integer(sectorCombStarts),
+      sectorFuseRounds = as.integer(sectorFuseRounds),
       postRatchetSectorial = as.logical(postRatchetSectorial),
       fuseInterval = as.integer(fuseInterval),
       fuseAcceptEqual = as.logical(fuseAcceptEqual),
@@ -445,7 +481,10 @@ print.SearchControl <- function(x, ...) {
                      "cssRounds", "cssPartitions",
                      "sectorMinSize", "sectorMaxSize", "rasStarts",
                      "sectorAcceptEqual", "sectorMaxHits", "sectorCollapseTarget",
-                     "rssPicks", "postRatchetSectorial"),
+                     "rssPicks", "sectorGoDrift", "sectorGoComb",
+                     "sectorDriftCycles", "sectorDriftAfd", "sectorDriftRfd",
+                     "sectorCombStarts", "sectorFuseRounds",
+                     "postRatchetSectorial"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
