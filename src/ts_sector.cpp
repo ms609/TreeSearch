@@ -7,6 +7,7 @@
 #include "ts_splits.h"
 #include "ts_pool.h"
 #include "ts_drift.h"
+#include "ts_fuse.h"
 
 #include <algorithm>
 #include <random>
@@ -1013,14 +1014,15 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
 // force-disables regardless of params (baseline arm).
 //
 // godrift: solve the sector with a single drift_search per RAS start.
-// gocomb : run `combstarts` HTU-anchored RAS+drift starts and keep the best
-//          (TNT's combined analysis is RAS+drift+FUSE; the fuse recombination
-//          sub-step is DEFERRED — tree_fuse re-roots the reduced tree at tip 0
-//          every round, which drops it out of the (HTU, sr_mapped) synthetic-root
-//          layout that reinsert_sector requires, so a fused result is not
-//          reinsertable without a root-agnostic reinsertion path. Validate
-//          godrift first, then add the fuse step behind that work). Every
-//          candidate kept here stays HTU-anchored, so reinsert_sector is unchanged.
+// gocomb : run `combstarts` HTU-anchored RAS+drift starts, then FUSE them (TNT's
+//          combined analysis = RAS+drift+fuse). tree_fuse re-roots the reduced
+//          tree at tip 0, dropping the (HTU, sr_mapped) synthetic-root layout
+//          reinsert_sector needs; reanchor_fused_at_htu re-roots the fused tree
+//          at the HTU (rooting-invariance) so it is reinsertable whenever fuse
+//          left the HTU on the sector boundary. The fused tree is accepted only
+//          if it beats the best
+//          start, through the same root_ok gate + reinsert path as the drift
+//          starts. Env TS_SECT_FUSE=0 disables the fuse step (drift-only comb).
 //
 // The env gates are read via FUNCTION-LOCAL statics inside search_sector (like
 // _free_htu_probe), NOT namespace-scope statics: a namespace-scope dynamic
@@ -1055,6 +1057,37 @@ static double drift_solve_reduced(ReducedDataset& rd, const SectorParams& params
   return dr.best_score;
 }
 
+// gocomb-fuse engagement counters (env TS_SECT_DRIFT_STATS): fused sectors
+// tried / fused sectors that improved on the best RAS+drift start.
+static long long g_sect_fuse_tries = 0;
+static long long g_sect_fuse_wins  = 0;
+
+// Re-anchor a FUSED reduced sector tree so reinsert_sector can use it.
+//
+// tree_fuse combines the RAS+drift starts over the full reduced tip set
+// (including the HTU pseudo-tip) and re-roots at tip 0, so the result is NOT in
+// the (HTU, sr_mapped) synthetic-root layout reinsert_sector requires. Parsimony
+// is rooting-invariant, so we simply re-root the fused tree at the HTU pseudo-tip:
+// the HTU represents the rest of the tree at the sector boundary, so it stays
+// structurally adjacent to the content root -- re-rooting at it makes its sibling
+// the whole non-HTU clade (the sector arrangement as seen "hanging from the rest-
+// of-tree direction"), exactly the clade reinsert_sector grafts back.
+//
+// Whenever fuse leaves the HTU on the sector boundary -- the common case, since
+// fuse never exchanges the trivial {HTU} split and its interior TBR does not
+// regraft a lone boundary pseudo-tip -- the content clade stays rooted at node id
+// sr_mapped, so the root's children are {HTU, sr_mapped} and the caller's root_ok
+// check accepts the tree. In the rare case fuse floats the HTU into the interior
+// (the same move the drift path deliberately reverts), the content root would
+// carry a different id, root_ok fails, and the caller keeps the best RAS+drift
+// start. So a fused tree is reinserted only when its id mapping is already valid
+// -- never via a speculative relabel (empirically the float case never occurs; a
+// permutation-remap to force it was implemented, found unreachable, and removed).
+static void reanchor_fused_at_htu(TreeState& t, int htu_idx) {
+  reroot_at_tip(t, htu_idx);   // root's children now {htu_idx, content root}
+  t.build_postorder();
+}
+
 // Search the reduced dataset and return the best score found.
 // Modifies rd.subtree in place, leaving the best sector topology ready for
 // reinsertion.
@@ -1084,6 +1117,13 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
   }();
   static const bool kSectDriftStats =
       std::getenv("TS_SECT_DRIFT_STATS") != nullptr;
+  // TS_SECT_FUSE=0 disables ONLY the gocomb fuse recombination sub-step, leaving
+  // the RAS+drift keep-best comb behaviour intact -- isolates fuse's contribution
+  // in the A/B (gocomb-with-fuse vs gocomb-drift-only).
+  static const bool kSectFuseOff = []{
+    const char* e = std::getenv("TS_SECT_FUSE");
+    return e != nullptr && e[0] == '0';
+  }();
 
   // Solve-mode escalation by sector size (real tips, as count_clade_tips
   // measures max_sector_size). Both godrift and gocomb solve the sector with
@@ -1111,6 +1151,12 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
   double best_score = 0.0;
   bool have_best = false;
   std::vector<int> best_left, best_right, best_parent;
+
+  // gocomb fuse: collect the valid (HTU-anchored) per-start topologies so they
+  // can be recombined after the loop (TNT combined analysis = RAS+drift+FUSE).
+  // Only populated in comb_mode with fuse enabled; the pool dedups by split hash.
+  const bool do_fuse = comb_mode && !kSectFuseOff;
+  TreePool fuse_pool(ras_starts + 1);
 
   // search_sector runs once per sector pick (1000s of times/search). std::getenv
   // is µs-scale on Windows/ucrt (linear env scan), so the per-pick D1-probe gate
@@ -1249,6 +1295,12 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
         have_best = true;
       }
     }
+
+    // Stash this start's (valid, HTU-anchored) topology as a fuse donor. Whatever
+    // rd.subtree holds now is reinsertable -- either the solved tree (root_ok) or
+    // the reverted pre-solve one -- so every donor is a legitimate recombination
+    // input. The pool dedups identical starts by split hash.
+    if (do_fuse) fuse_pool.add(rd.subtree, this_score);
   }
 
   // Restore the best topology found across starts, ready for reinsertion.
@@ -1258,6 +1310,58 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
     rd.subtree.right = best_right;
     rd.subtree.parent = best_parent;
     rd.subtree.build_postorder();
+  }
+
+  // gocomb FUSE (TNT combined analysis): recombine the RAS+drift starts. With the
+  // best start as recipient, tree_fuse exchanges shared clades from the other
+  // starts (and runs a cleanup TBR) -- reaching arrangements no single start held,
+  // INCLUDING ones that float the HTU (its interior TBR is unmasked). We re-anchor
+  // the fused tree at the HTU (reanchor_fused_at_htu) so it is reinsertable when
+  // fuse kept the HTU on the boundary, then accept it only if it beats the best
+  // start -- and only via the SAME reduced
+  // score + root_ok gate + reinsert path as the drift starts (no reduced-score
+  // shortcut: the reduced length is an HTU APPROXIMATION, so a lower reduced score
+  // is necessary but the full-tree gain is realised through reinsertion exactly as
+  // for godrift). Requires >= 2 distinct donors; on converged starts fuse is a
+  // no-op and best-of-starts stands.
+  if (do_fuse && fuse_pool.size() >= 2) {
+    if (kSectDriftStats) {
+      ++g_sect_fuse_tries;
+      if (g_sect_fuse_tries == 1 || (g_sect_fuse_tries % 20) == 0)
+        REprintf("SECT_FUSE tries=%lld wins=%lld (pool=%d)\n",
+                 g_sect_fuse_tries, g_sect_fuse_wins, fuse_pool.size());
+    }
+    // Recipient = best-of-starts (rd.subtree holds it). tree_fuse mutates in place,
+    // so work on a copy and only commit if it wins.
+    TreeState fused = rd.subtree;
+    FuseParams fp;
+    fp.max_rounds = params.sector_fuse_rounds > 0 ? params.sector_fuse_rounds : 1;
+    fp.accept_equal = accept_equal;
+    tree_fuse(fused, rd.data, fuse_pool, fp);
+    reanchor_fused_at_htu(fused, htu_idx);
+
+    // Same root_ok post-condition as the drift path: HTU and sr_mapped must be the
+    // synthetic root's two children (canonicalize guarantees this; guard anyway --
+    // a failure means keep best-of-starts, never reinsert a mis-anchored tree).
+    const int flc = fused.left[root_i], frc = fused.right[root_i];
+    const bool fused_ok = (flc == htu_idx && frc == sr_mapped) ||
+                          (flc == sr_mapped && frc == htu_idx);
+    if (fused_ok) {
+      const double fused_score = score_tree(fused, rd.data);
+      if (fused_score < best_score) {
+        rd.subtree.left = fused.left;
+        rd.subtree.right = fused.right;
+        rd.subtree.parent = fused.parent;
+        rd.subtree.build_postorder();
+        best_score = fused_score;
+        if (kSectDriftStats) {
+          ++g_sect_fuse_wins;
+          if (g_sect_fuse_wins == 1 || (g_sect_fuse_wins % 20) == 0)
+            REprintf("SECT_FUSE tries=%lld wins=%lld\n",
+                     g_sect_fuse_tries, g_sect_fuse_wins);
+        }
+      }
+    }
   }
 
   // D1 SCORING-ONLY CONFIRM (env TS_FREE_HTU_PROBE), NO reinsertion: does an
