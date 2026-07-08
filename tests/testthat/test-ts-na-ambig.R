@@ -65,7 +65,7 @@ test_that("{-,S} resolves as inapplicable when that is more parsimonious", {
 })
 
 
-test_that("{-,S} is stripped to pure inapplicable (MorphyLib convention)", {
+test_that("{-,S} is stripped to pure inapplicable", {
   library(TreeTools)
 
   # With the strip approach, {-,X} tokens collapse to pure inapplicable.
