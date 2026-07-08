@@ -203,10 +203,19 @@ void worker_thread(WorkerContext ctx) {
       start_ptr = &start_tree;
     }
 
-    // Strategy for this replicate (round-robin when adaptive, else default)
+    // Strategy for this replicate (round-robin when adaptive, else the
+    // legacy fixed `wagnerBias` mode -- mirrors the serial-path precedence
+    // in ts_driven.cpp's driven_search loop). Previously this branch only
+    // handled the adaptive round-robin case, so a fixed `wagnerBias` (and
+    // now CLOSEST/FURTHEST/INFORMATIVE) silently had no effect whenever
+    // nThreads > 1, the common case for real workloads.
     StartStrategy rep_strat = StartStrategy::WAGNER_RANDOM;
-    if (ctx.strategies && rep < static_cast<int>(ctx.strategies->size())) {
+    if (start_ptr) {
+      // User-supplied starting tree for rep 0 — strategy is moot
+    } else if (ctx.strategies && rep < static_cast<int>(ctx.strategies->size())) {
       rep_strat = (*ctx.strategies)[rep];
+    } else if (effective_wagner_bias(ctx.params->wagner_bias) != 0) {
+      rep_strat = StartStrategy::WAGNER_BIASED;
     }
 
     // Run the replicate pipeline (verbosity=0 for parallel)

@@ -3146,6 +3146,62 @@ List ts_wagner_bias_bench(
   );
 }
 
+// Test-only bridge exposing greedy_addseq_order()'s raw permutation (1-based)
+// for the CLOSEST/FURTHEST/INFORMATIVE WagnerBias modes, so R-side tests can
+// verify permutation validity and cross-check the greedy criterion against
+// an independent brute-force reference without threading the order through
+// a full Wagner tree build.
+// bias: 3 = CLOSEST, 4 = FURTHEST, 5 = INFORMATIVE (see WagnerBias in
+// ts_wagner.h; passing 0-2 falls through to greedy_addseq_order's own
+// GOLOBOFF/ENTROPY handling, which does not apply -- callers should only
+// pass 3-5 here).
+// [[Rcpp::export]]
+IntegerVector ts_addseq_order_debug(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps,
+    double concavity,
+    int    bias,
+    double temperature)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+
+  std::vector<int> order = ts::greedy_addseq_order(
+      ds, static_cast<ts::WagnerBias>(bias), temperature);
+
+  IntegerVector out(order.size());
+  for (size_t i = 0; i < order.size(); ++i) out[i] = order[i] + 1;  // 1-based
+  return out;
+}
+
+// Test-only bridge exposing wagner_pairwise_distances()'s raw n x n matrix,
+// for isolating whether a discrepancy lies in the distance metric itself or
+// in greedy_addseq_order()'s selection loop built on top of it.
+// [[Rcpp::export]]
+NumericMatrix ts_pairwise_distances_debug(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    IntegerVector min_steps,
+    double concavity)
+{
+  if (concavity < 0) concavity = HUGE_VAL;
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels,
+                                min_steps, concavity);
+  std::vector<double> dist = ts::wagner_pairwise_distances(ds);
+  int n = ds.n_tips;
+  NumericMatrix out(n, n);
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < n; ++j)
+      out(i, j) = dist[static_cast<size_t>(i) * n + j];
+  return out;
+}
+
 
 // Parallel tempering functions (ts_stochastic_tbr, ts_parallel_temper)
 // removed — live on feature/parallel-temper branch.

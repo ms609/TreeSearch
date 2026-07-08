@@ -187,8 +187,16 @@
 #' @param wagnerBias Integer; criterion for biasing taxon addition order
 #'   during Wagner tree construction.  0 = random (default),
 #'   1 = Goloboff (2014) non-ambiguous-character priority,
-#'   2 = entropy-based state-specificity priority.  Biased orders use
-#'   softmax-weighted sampling for diversity across replicates.
+#'   2 = entropy-based state-specificity priority,
+#'   3 = closest-addition sequence (TNT `cas`; greedy nearest-neighbour by
+#'   pairwise character distance),
+#'   4 = furthest-addition sequence (TNT `fas`; the mirror image of 3),
+#'   5 = informative-addition sequence (TNT `ias`; greedily prefers the taxon
+#'   that renders the most characters parsimony-informative given those
+#'   already placed -- aimed at missing-data-heavy / non-overlapping-block
+#'   matrices).  Biased orders use softmax-weighted sampling for diversity
+#'   across replicates (options 3--5 recompute their criterion at every
+#'   addition step, since it depends on the taxa already placed).
 #' @param wagnerBiasTemp Numeric; softmax temperature controlling
 #'   selectivity of biased Wagner addition (default 0.3).  Lower values
 #'   concentrate sampling on the highest-scoring taxa; higher values
@@ -258,8 +266,9 @@ SearchControl <- function(
     sprFirst = FALSE,
     tabuSize = 100L,
     wagnerStarts = 1L,
-    # Wagner biased addition (Goloboff 2014 §3.3)
-    # 0L = random (default), 1L = Goloboff non-ambiguous score, 2L = entropy
+    # Wagner biased addition (Goloboff 2014 §3.3; TNT-style addseq variety)
+    # 0L = random (default), 1L = Goloboff non-ambiguous score, 2L = entropy,
+    # 3L = closest (cas), 4L = furthest (fas), 5L = informative (ias)
     wagnerBias = 0L,
     wagnerBiasTemp = 0.3,
     # Outer search cycle count (Goloboff 1999 §2.3)

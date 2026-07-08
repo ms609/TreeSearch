@@ -250,6 +250,14 @@ ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, 
     .Call(`_TreeSearch_ts_wagner_bias_bench`, contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr)
 }
 
+ts_addseq_order_debug <- function(contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature) {
+    .Call(`_TreeSearch_ts_addseq_order_debug`, contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature)
+}
+
+ts_pairwise_distances_debug <- function(contrast, tip_data, weight, levels, min_steps, concavity) {
+    .Call(`_TreeSearch_ts_pairwise_distances_debug`, contrast, tip_data, weight, levels, min_steps, concavity)
+}
+
 ts_test_strategy_tracker <- function(seed, n_draws) {
     .Call(`_TreeSearch_ts_test_strategy_tracker`, seed, n_draws)
 }

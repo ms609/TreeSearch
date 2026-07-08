@@ -15,6 +15,7 @@
 #include "ts_pool.h"
 #include "ts_constraint.h"
 #include "ts_strategy.h"
+#include <cstdlib>
 #include <functional>
 
 namespace ts {
@@ -164,10 +165,12 @@ struct DrivenParams {
   // Number of random Wagner trees per replicate (keep best-scoring)
   int wagner_starts = 1;
 
-  // Biased taxon-addition order for Wagner tree construction.
-  // 0 = RANDOM (default), 1 = GOLOBOFF (non-ambiguous chars), 2 = ENTROPY.
-  // Applied only to the first Wagner start; remaining starts use random order
-  // to preserve basin diversity.  Goloboff 2014 §3.3.
+  // Biased taxon-addition order for Wagner tree construction (maps directly
+  // onto WagnerBias in ts_wagner.h): 0 = RANDOM (default), 1 = GOLOBOFF
+  // (non-ambiguous chars), 2 = ENTROPY, 3 = CLOSEST (TNT `cas`), 4 = FURTHEST
+  // (TNT `fas`), 5 = INFORMATIVE (TNT `ias`; targets missing-data-heavy
+  // matrices).  Applied only to the first Wagner start; remaining starts use
+  // random order to preserve basin diversity.  Goloboff 2014 §3.3.
   int wagner_bias = 0;
   double wagner_bias_temp = 0.3;   // softmax temperature; 0 = greedy argmax
 
@@ -266,6 +269,19 @@ struct DrivenParams {
   // Only affects the serial path; parallel uses round-robin.
   bool adaptive_start = false;
 };
+
+// Resolve the WagnerBias mode actually in effect for the fixed (non-adaptive)
+// legacy path, letting the TS_ADDSEQ environment variable override
+// `configured_wagner_bias` for A/B testing without threading a new
+// SearchControl field through every benchmark harness (values match
+// WagnerBias in ts_wagner.h: 0=random,1=goloboff,2=entropy,3=closest,
+// 4=furthest,5=informative). Unset (the default) leaves the R-level
+// `wagnerBias` control untouched.
+inline int effective_wagner_bias(int configured_wagner_bias) {
+  const char* e = std::getenv("TS_ADDSEQ");
+  if (!e || !*e) return configured_wagner_bias;
+  return std::atoi(e);
+}
 
 // Cumulative per-phase wall-clock timing (milliseconds).
 struct PhaseTimings {

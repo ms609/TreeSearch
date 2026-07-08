@@ -33,18 +33,47 @@ WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds,
 
 // Criterion for biasing taxon addition order.
 //
-// RANDOM   — uniform random (existing behaviour)
-// GOLOBOFF — prioritise taxa with more non-ambiguous parsimony-informative
-//            characters (Goloboff 2014 "informative" addition sequence)
-// ENTROPY  — prioritise taxa with more specific (lower-entropy) state codings;
-//            score(t) = Σ_c (n_states_c - |state_set of t at c|)
+// RANDOM      — uniform random (existing behaviour)
+// GOLOBOFF    — prioritise taxa with more non-ambiguous parsimony-informative
+//               characters (Goloboff 2014 "informative" addition sequence)
+// ENTROPY     — prioritise taxa with more specific (lower-entropy) state
+//               codings; score(t) = Σ_c (n_states_c - |state_set of t at c|)
+// CLOSEST     — TNT-style "cas": greedy nearest-neighbour addition. At each
+//               step, taxa close (in pairwise Fitch character distance) to
+//               the already-placed set are preferred.
+// FURTHEST    — TNT-style "fas": greedy furthest-neighbour addition (the
+//               mirror image of CLOSEST).
+// INFORMATIVE — TNT-style "ias": at each step, prefer the not-yet-placed
+//               taxon that renders the largest number of characters
+//               parsimony-informative given the taxa already placed.
+//               Targets missing-data-heavy / non-overlapping-block matrices
+//               (Goloboff's stated use case for `ias`).
 //
-// Both scored criteria use softmax-weighted sampling WITHOUT replacement so
-// that multiple starts are diverse while biasing toward better basins.
-// temperature controls selectivity: 0 → greedy argmax; large → near-uniform.
-// Temperature is applied to scores normalised to [0, 1] so that behaviour
-// is consistent across datasets regardless of character count.
-enum class WagnerBias { RANDOM = 0, GOLOBOFF = 1, ENTROPY = 2 };
+// NOTE: TNT also has `sas` ("largest best/worst insertion-cost difference"),
+// which requires evaluating exact insertion cost against the *actual*
+// growing tree at each step (not just a prefix-set property) — a materially
+// different construction than the other four. It is deliberately NOT
+// implemented here; see dev notes for T-addseq before adding it, so it is
+// not silently approximated by a distance-based proxy and mislabelled.
+//
+// GOLOBOFF/ENTROPY use softmax-weighted sampling WITHOUT replacement over a
+// single static per-tip score vector (computed once, independent of
+// placement order). CLOSEST/FURTHEST/INFORMATIVE are inherently sequential
+// (their criterion depends on which taxa are already placed), so they are
+// built step-by-step instead, softmax-sampling one taxon at a time from a
+// freshly recomputed score over the remaining candidates (see
+// greedy_addseq_order()). All modes share the same `temperature` knob:
+// 0 → greedy argmax; large → near-uniform. Temperature is applied to scores
+// normalised to [0, 1] so that behaviour is consistent across datasets
+// regardless of character count.
+enum class WagnerBias {
+  RANDOM      = 0,
+  GOLOBOFF    = 1,
+  ENTROPY     = 2,
+  CLOSEST     = 3,
+  FURTHEST    = 4,
+  INFORMATIVE = 5
+};
 
 struct BiasedWagnerParams {
   WagnerBias bias        = WagnerBias::RANDOM;
@@ -64,6 +93,27 @@ std::vector<double> wagner_goloboff_scores(const DataSet& ds);
 // Compute per-tip entropy scores (exported for diagnostics).
 // score[t] = Σ_c (n_states_c - |state_set of t at c|)
 std::vector<double> wagner_entropy_scores(const DataSet& ds);
+
+// Pairwise inter-taxon character distance matrix (n_tips × n_tips, symmetric,
+// zero diagonal), flattened row-major. distance(i, j) = the two-taxon Fitch
+// parsimony score if i and j were forced to be sisters in isolation (i.e. the
+// number of characters where i and j share no state, weighted like normal
+// scoring). Used by CLOSEST/FURTHEST addition-sequence ordering.
+// Returns all-zero when ds.total_words == 0 (no informative characters).
+std::vector<double> wagner_pairwise_distances(const DataSet& ds);
+
+// Build a full addition order (permutation of 0..n_tips-1) for the
+// CLOSEST / FURTHEST / INFORMATIVE criteria via sequential greedy
+// construction: the first taxon is chosen uniformly at random (no prefix
+// yet to compare against); each subsequent taxon is softmax-sampled from a
+// criterion recomputed against the current prefix (nearest/furthest
+// neighbour distance, or parsimony-informativeness gain). `temperature`
+// has the same meaning as in BiasedWagnerParams (0 = greedy argmax).
+// Falls back to a uniform random permutation when ds.total_words == 0.
+// Uses R's RNG (respects set.seed) via ts::thread_safe_unif, exactly like
+// softmax_sample_order().
+std::vector<int> greedy_addseq_order(const DataSet& ds, WagnerBias bias,
+                                      double temperature);
 
 // Build a purely random tree topology (no character data used).
 // Inserts tips in random order at random edges. The resulting tree has

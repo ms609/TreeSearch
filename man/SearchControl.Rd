@@ -90,8 +90,16 @@ this significantly accelerates the initial descent from the Wagner tree.}
 \item{wagnerBias}{Integer; criterion for biasing taxon addition order
 during Wagner tree construction.  0 = random (default),
 1 = Goloboff (2014) non-ambiguous-character priority,
-2 = entropy-based state-specificity priority.  Biased orders use
-softmax-weighted sampling for diversity across replicates.}
+2 = entropy-based state-specificity priority,
+3 = closest-addition sequence (TNT \code{cas}; greedy nearest-neighbour by
+pairwise character distance),
+4 = furthest-addition sequence (TNT \code{fas}; the mirror image of 3),
+5 = informative-addition sequence (TNT \code{ias}; greedily prefers the taxon
+that renders the most characters parsimony-informative given those
+already placed -- aimed at missing-data-heavy / non-overlapping-block
+matrices).  Biased orders use softmax-weighted sampling for diversity
+across replicates (options 3--5 recompute their criterion at every
+addition step, since it depends on the taxa already placed).}
 
 \item{wagnerBiasTemp}{Numeric; softmax temperature controlling
 selectivity of biased Wagner addition (default 0.3).  Lower values

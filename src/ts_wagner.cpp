@@ -6,6 +6,8 @@
 #include <cmath>
 #include <numeric>
 #include <climits>
+#include <limits>
+#include <utility>
 #include <vector>
 #include <R.h>
 
@@ -674,6 +676,268 @@ std::vector<double> wagner_entropy_scores(const DataSet& ds) {
   return scores;
 }
 
+// ---------------------------------------------------------------------------
+// Pairwise inter-taxon distance + sequential (CLOSEST/FURTHEST/INFORMATIVE)
+// addition-sequence ordering (TNT-style cas/fas/ias; see ts_wagner.h).
+// ---------------------------------------------------------------------------
+
+// Two-taxon Fitch distance: the number of characters where tip i and tip j
+// share no state (weighted like normal scoring), i.e. the extra steps
+// incurred if i and j were forced to be sister taxa in isolation.  Uses the
+// same intersect/union bit trick as the Wagner downpass
+// (wagner_incremental_rescore), applied to a 2-leaf "tree".
+std::vector<double> wagner_pairwise_distances(const DataSet& ds) {
+  int n = ds.n_tips;
+  int tw = ds.total_words;
+  std::vector<double> dist(static_cast<size_t>(n) * n, 0.0);
+  // No Fitch words: every distance is legitimately 0 (see
+  // wagner_goloboff_scores for the same tw==0 rationale). Skip the loop
+  // rather than take the address of an empty ds.tip_states.
+  if (tw == 0) return dist;
+
+  for (int i = 0; i < n; ++i) {
+    const uint64_t* ti = &ds.tip_states[static_cast<size_t>(i) * tw];
+    for (int j = i + 1; j < n; ++j) {
+      const uint64_t* tj = &ds.tip_states[static_cast<size_t>(j) * tw];
+      double d = 0.0;
+
+      for (int b = 0; b < ds.n_blocks; ++b) {
+        const CharBlock& blk = ds.blocks[b];
+        int offset = ds.block_word_offset[b];
+
+        uint64_t any_intersect = 0;
+        for (int s = 0; s < blk.n_states; ++s) {
+          any_intersect |= (ti[offset + s] & tj[offset + s]);
+        }
+        uint64_t differs = ~any_intersect & blk.active_mask;
+
+        int nd = popcount64(differs);
+        if (blk.upweight_mask) nd += popcount64(differs & blk.upweight_mask);
+        d += blk.weight * nd;
+      }
+
+      dist[static_cast<size_t>(i) * n + j] = d;
+      dist[static_cast<size_t>(j) * n + i] = d;
+    }
+  }
+  return dist;
+}
+
+std::vector<int> greedy_addseq_order(const DataSet& ds, WagnerBias bias,
+                                      double temperature) {
+  int n = ds.n_tips;
+  int tw = ds.total_words;
+  std::vector<int> order;
+  order.reserve(n);
+
+  ts::rng_state_begin();
+
+  // No Fitch words: nothing to discriminate on, so every criterion is
+  // uninformative. Fall back to a uniform random permutation rather than
+  // dereferencing an empty ds.tip_states (see wagner_goloboff_scores).
+  if (tw == 0) {
+    order.resize(n);
+    std::iota(order.begin(), order.end(), 0);
+    for (int i = n - 1; i > 0; --i) {
+      int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
+      if (j > i) j = i;
+      std::swap(order[i], order[j]);
+    }
+    ts::rng_state_end();
+    return order;
+  }
+
+  const bool distance_mode =
+      (bias == WagnerBias::CLOSEST || bias == WagnerBias::FURTHEST);
+
+  // Per-tip "non-ambiguous" mask per block (bit c set = tip has a specific,
+  // non-missing coding at character c in that block). Missing/inapplicable
+  // data is coded with every state bit set (see wagner_goloboff_scores).
+  std::vector<uint64_t> nonambig(static_cast<size_t>(n) * ds.n_blocks, 0ULL);
+  for (int t = 0; t < n; ++t) {
+    const uint64_t* tb = &ds.tip_states[static_cast<size_t>(t) * tw];
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      int offset = ds.block_word_offset[b];
+      uint64_t tip_ambiguous = blk.active_mask;
+      for (int s = 0; s < blk.n_states; ++s) {
+        tip_ambiguous &= tb[offset + s];
+      }
+      nonambig[static_cast<size_t>(t) * ds.n_blocks + b] =
+          ~tip_ambiguous & blk.active_mask;
+    }
+  }
+
+  // --- CLOSEST/FURTHEST state ---
+  std::vector<double> dist;
+  std::vector<double> min_dist_to_prefix;
+
+  // --- INFORMATIVE state ---
+  // "Flat" character indexing (0..n_chars_flat-1) concatenates blocks in
+  // order. state_count[flat_char][state] (capped at 2) tracks how many
+  // prefix taxa carry each state at each character (non-ambiguous codings
+  // only); a character is parsimony-informative once 2 distinct states
+  // each reach a count of 2. ge2_count_per_char tracks how many distinct
+  // states have reached that threshold so far (also capped at 2, since we
+  // only ever need to distinguish 0/1/"2 or more").
+  std::vector<int> char_flat_offset(ds.n_blocks);
+  std::vector<int> char_state_offset;
+  std::vector<int8_t> state_count;
+  std::vector<int8_t> ge2_count_per_char;
+  std::vector<std::vector<std::pair<int,int>>> tip_codings;  // (flat_char, state)
+
+  if (distance_mode) {
+    dist = wagner_pairwise_distances(ds);
+    min_dist_to_prefix.assign(n, std::numeric_limits<double>::infinity());
+  } else {
+    int running_char = 0;
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      char_flat_offset[b] = running_char;
+      running_char += ds.blocks[b].n_chars;
+    }
+    int n_chars_flat = running_char;
+
+    char_state_offset.assign(n_chars_flat, 0);
+    int running_state = 0;
+    for (int b = 0; b < ds.n_blocks; ++b) {
+      const CharBlock& blk = ds.blocks[b];
+      for (int c = 0; c < blk.n_chars; ++c) {
+        char_state_offset[char_flat_offset[b] + c] = running_state;
+        running_state += blk.n_states;
+      }
+    }
+    state_count.assign(running_state, 0);
+    ge2_count_per_char.assign(n_chars_flat, 0);
+
+    tip_codings.assign(n, {});
+    for (int t = 0; t < n; ++t) {
+      const uint64_t* tb = &ds.tip_states[static_cast<size_t>(t) * tw];
+      for (int b = 0; b < ds.n_blocks; ++b) {
+        const CharBlock& blk = ds.blocks[b];
+        int offset = ds.block_word_offset[b];
+        uint64_t na = nonambig[static_cast<size_t>(t) * ds.n_blocks + b];
+        for (int s = 0; s < blk.n_states; ++s) {
+          uint64_t bits = tb[offset + s] & na;
+          while (bits) {
+            int c = ctz64(bits);
+            bits &= bits - 1;  // clear lowest set bit
+            tip_codings[t].emplace_back(char_flat_offset[b] + c, s);
+          }
+        }
+      }
+    }
+  }
+
+  // Fold tip `t` into the running prefix state (distance relaxation or
+  // per-character state tally, matching the active mode).
+  std::vector<bool> placed(n, false);
+  auto add_to_prefix = [&](int t) {
+    if (distance_mode) {
+      const size_t base = static_cast<size_t>(t) * n;
+      for (int u = 0; u < n; ++u) {
+        if (placed[u]) continue;
+        double d = dist[base + u];
+        if (d < min_dist_to_prefix[u]) min_dist_to_prefix[u] = d;
+      }
+    } else {
+      for (const auto& cs : tip_codings[t]) {
+        int idx = char_state_offset[cs.first] + cs.second;
+        if (state_count[idx] < 2) {
+          state_count[idx]++;
+          if (state_count[idx] == 2) ge2_count_per_char[cs.first]++;
+        }
+      }
+    }
+  };
+
+  // Seed: the first taxon has no prefix to compare against, so it is chosen
+  // uniformly at random (mirrors how order[0] has no scoring role for the
+  // static GOLOBOFF/ENTROPY criteria either).
+  int first = static_cast<int>(ts::thread_safe_unif() * n);
+  if (first >= n) first = n - 1;
+  order.push_back(first);
+  placed[first] = true;
+  add_to_prefix(first);
+
+  std::vector<int> remaining;
+  remaining.reserve(n - 1);
+  for (int t = 0; t < n; ++t) if (t != first) remaining.push_back(t);
+
+  std::vector<double> cscore;
+  for (int step = 1; step < n; ++step) {
+    int n_remaining = static_cast<int>(remaining.size());
+    cscore.resize(n_remaining);
+
+    for (int k = 0; k < n_remaining; ++k) {
+      int u = remaining[k];
+      if (distance_mode) {
+        double md = min_dist_to_prefix[u];
+        cscore[k] = (bias == WagnerBias::CLOSEST) ? -md : md;
+      } else {
+        // Informativeness gain: number of characters that would newly
+        // become parsimony-informative (2 distinct states each carried by
+        // >= 2 prefix taxa) if u were added next.
+        double gain = 0.0;
+        for (const auto& cs : tip_codings[u]) {
+          int flat_char = cs.first;
+          int idx = char_state_offset[flat_char] + cs.second;
+          if (state_count[idx] == 1 && ge2_count_per_char[flat_char] == 1) {
+            gain += 1.0;
+          }
+        }
+        cscore[k] = gain;
+      }
+    }
+
+    // Softmax-sample one candidate: same normalise-to-[0,1]-then-softmax
+    // scheme as softmax_sample_order(), recomputed fresh at every step
+    // (unlike that function, which samples a whole order from one static
+    // score vector). temperature <= 0 picks the argmax (first on ties).
+    int chosen_k;
+    if (temperature <= 0.0) {
+      chosen_k = 0;
+      double best = cscore[0];
+      for (int k = 1; k < n_remaining; ++k) {
+        if (cscore[k] > best) { best = cscore[k]; chosen_k = k; }
+      }
+    } else {
+      double mn = *std::min_element(cscore.begin(), cscore.end());
+      double mx = *std::max_element(cscore.begin(), cscore.end());
+      double rng = mx - mn;
+      std::vector<double> w(n_remaining);
+      if (rng < 1e-12) {
+        std::fill(w.begin(), w.end(), 1.0);
+      } else {
+        for (int k = 0; k < n_remaining; ++k) {
+          double norm = (cscore[k] - mn) / rng;
+          w[k] = std::exp((norm - 1.0) / temperature);
+        }
+      }
+      double total = 0.0;
+      for (int k = 0; k < n_remaining; ++k) total += w[k];
+      double r = ts::thread_safe_unif() * total;
+      double cum = 0.0;
+      chosen_k = -1;
+      for (int k = 0; k < n_remaining; ++k) {
+        cum += w[k];
+        if (r <= cum) { chosen_k = k; break; }
+      }
+      if (chosen_k < 0) chosen_k = n_remaining - 1;
+    }
+
+    int chosen = remaining[chosen_k];
+    order.push_back(chosen);
+    placed[chosen] = true;
+    add_to_prefix(chosen);
+
+    remaining[chosen_k] = remaining.back();
+    remaining.pop_back();
+  }
+
+  ts::rng_state_end();
+  return order;
+}
+
 // Softmax-weighted sampling without replacement.
 // Scores are normalised to [0, 1] before applying temperature so that
 // the parameter is dataset-independent.  temperature == 0 → greedy argmax.
@@ -757,14 +1021,39 @@ WagnerResult biased_wagner_tree(TreeState& tree, const DataSet& ds,
     return random_wagner_tree(tree, ds, cd);
   }
 
-  const std::vector<double> scores =
-    (params.bias == WagnerBias::GOLOBOFF)
-      ? wagner_goloboff_scores(ds)
-      : wagner_entropy_scores(ds);
+  // GOLOBOFF/ENTROPY use a static per-tip score, computed once and reused
+  // across constraint retries below (the score doesn't depend on placement
+  // order). CLOSEST/FURTHEST/INFORMATIVE are inherently sequential and are
+  // rebuilt from scratch by greedy_addseq_order() on every call, including
+  // retries -- acceptable since the constraint-violation retry path is rare
+  // (see wagner_edge_violates_constraint's edge filter).
+  const bool is_static =
+      (params.bias == WagnerBias::GOLOBOFF || params.bias == WagnerBias::ENTROPY);
+  const bool is_sequential =
+      (params.bias == WagnerBias::CLOSEST || params.bias == WagnerBias::FURTHEST ||
+       params.bias == WagnerBias::INFORMATIVE);
 
-  const std::vector<int> order =
-    softmax_sample_order(scores, params.temperature);
+  if (!is_static && !is_sequential) {
+    // Unknown/out-of-range bias (e.g. a stray TS_ADDSEQ env override value):
+    // fail safe to plain random rather than silently reinterpreting it as
+    // some other criterion.
+    return random_wagner_tree(tree, ds, cd);
+  }
 
+  std::vector<double> static_scores;
+  if (is_static) {
+    static_scores = (params.bias == WagnerBias::GOLOBOFF)
+        ? wagner_goloboff_scores(ds)
+        : wagner_entropy_scores(ds);
+  }
+
+  auto build_order = [&]() {
+    return is_static
+        ? softmax_sample_order(static_scores, params.temperature)
+        : greedy_addseq_order(ds, params.bias, params.temperature);
+  };
+
+  const std::vector<int> order = build_order();
   WagnerResult result = wagner_tree(tree, ds, order, cd);
 
   // Constraint post-hoc check + retry (mirrors random_wagner_tree)
@@ -772,8 +1061,7 @@ WagnerResult biased_wagner_tree(TreeState& tree, const DataSet& ds,
   if (constrained) {
     for (int attempt = 1; attempt < 100; ++attempt) {
       if (!violates_constraint_posthoc(tree, *cd)) break;
-      const std::vector<int> retry_order =
-        softmax_sample_order(scores, params.temperature);
+      const std::vector<int> retry_order = build_order();
       result = wagner_tree(tree, ds, retry_order, cd);
     }
   }

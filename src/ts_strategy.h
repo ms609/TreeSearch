@@ -37,7 +37,18 @@ enum class StartStrategy : int {
   WAGNER_GOLOBOFF   = 1,
   WAGNER_ENTROPY    = 2,
   RANDOM_TREE       = 3,
-  N_STRATEGIES      = 4
+  N_STRATEGIES      = 4,
+
+  // Sentinel for the legacy fixed `wagnerBias` knob (DrivenParams::
+  // wagner_bias / TS_ADDSEQ env override), used when adaptive_start is
+  // false. run_single_replicate() reads the actual WagnerBias value
+  // directly from params/env in this case rather than reconstructing it
+  // from the strategy enum, so this sentinel can represent any bias mode
+  // (including ones, like CLOSEST/FURTHEST/INFORMATIVE, with no
+  // corresponding bandit arm). Deliberately >= N_STRATEGIES so it can never
+  // index StrategyTracker's fixed-size per-arm arrays; only reachable when
+  // adaptive_start is false, so it never reaches the bandit at all.
+  WAGNER_BIASED     = 100
 };
 
 inline const char* strategy_name(StartStrategy s) {
@@ -46,6 +57,7 @@ inline const char* strategy_name(StartStrategy s) {
     case StartStrategy::WAGNER_GOLOBOFF:  return "wag_golob";
     case StartStrategy::WAGNER_ENTROPY:   return "wag_entropy";
     case StartStrategy::RANDOM_TREE:      return "rand_tree";
+    case StartStrategy::WAGNER_BIASED:    return "wag_biased";
     default:                              return "unknown";
   }
 }

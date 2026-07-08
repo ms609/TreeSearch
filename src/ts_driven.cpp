@@ -118,6 +118,19 @@ ReplicateResult run_single_replicate(
           random_topology_tree(result.tree, ds);
         }
         break;
+      case StartStrategy::WAGNER_BIASED: {
+        // Legacy fixed `wagnerBias` path (non-adaptive): the actual
+        // WagnerBias value (which may exceed StartStrategy's own range --
+        // e.g. CLOSEST/FURTHEST/INFORMATIVE) is read directly from params
+        // (plus the TS_ADDSEQ env override) here, rather than being
+        // reconstructed from this enum.
+        ts::BiasedWagnerParams bwp;
+        bwp.bias = static_cast<ts::WagnerBias>(
+            ts::effective_wagner_bias(params.wagner_bias));
+        bwp.temperature = params.wagner_bias_temp;
+        biased_wagner_tree(result.tree, ds, bwp, cd);
+        break;
+      }
       default:  // WAGNER_RANDOM (and pool-based fallback)
         random_wagner_tree(result.tree, ds, cd);
         break;
@@ -896,9 +909,13 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       // User-supplied starting tree for rep 0 — strategy is moot
     } else if (params.adaptive_start) {
       rep_strategy = strategy_tracker.select(bandit_rng);
-    } else if (params.wagner_bias != 0) {
-      // Legacy fixed-bias mode
-      rep_strategy = static_cast<StartStrategy>(params.wagner_bias);
+    } else if (effective_wagner_bias(params.wagner_bias) != 0) {
+      // Legacy fixed-bias mode: dispatch through the WAGNER_BIASED sentinel
+      // rather than casting the int directly to StartStrategy (T-addseq) --
+      // that cast collided with StartStrategy::RANDOM_TREE (=3) the moment
+      // WagnerBias grew a 4th value (CLOSEST=3). The actual bias mode is
+      // read from params/env again inside run_single_replicate's switch.
+      rep_strategy = StartStrategy::WAGNER_BIASED;
     }
 
     if (params.verbosity >= 2 && params.adaptive_start && !has_callback) {
