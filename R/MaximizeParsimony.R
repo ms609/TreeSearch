@@ -215,6 +215,20 @@
     xssRounds = 5L, xssPartitions = 6L,
     rssRounds = 3L, cssRounds = 2L, cssPartitions = 6L,
     sectorMinSize = 6L, sectorMaxSize = 80L,
+    # In-sector drifting for large sectors (TNT `godrift`).  Preset-level matched-
+    # wall A/Bs (2026-07-08, arrays 17836031 then 17836637; sector-resolve + general-
+    # pool 68-88t + large training 131-205t x 5 seeds): rasStarts = 3 + sectorGoDrift
+    # = 25 + sectorDriftCycles = 3 beats stock `thorough` on every class at matched
+    # wall with no regression (mid-size sector -1.5, general -0.4; large -2.7, with
+    # the rep-starved 205t project3763 -8, hard-floor project4138 reaching optimum).
+    # sectorGoDrift = 25 is calibrated to this preset's sector geometry: xss/css
+    # sectors are ~12-15 tips (xss/cssPartitions = 6), so drift engages via the RSS
+    # large-clade picks; 40 is near-inert here.  rasStarts >= 2 is REQUIRED for the
+    # drift retention channel and is coupled -- rasStarts = 3 ALONE (no drift)
+    # regresses (triples every sector-solve for fewer reps), but the drift redeems
+    # the cost; rasStarts = 2 + drift ties 3 + drift, so 3 (marginally best) is kept.
+    rasStarts = 3L,
+    sectorGoDrift = 25L, sectorDriftCycles = 3L,
     fuseInterval = 2L, fuseAcceptEqual = TRUE,
     tabuSize = 200L, wagnerStarts = 5L,
     nniFirst = TRUE, sprFirst = FALSE,
