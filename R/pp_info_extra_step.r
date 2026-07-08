@@ -435,52 +435,6 @@ LogCarter1 <- function (m, a, b) {
   ) - LogDoubleFactorial(twoN - twoM - 1L)
 }
 
-# TODO: Replace the below with an advanced version of Maddison & Slakey 1991, 
-# or use the results of Carter et al. 1990; Steel 1993 to estimate +0 & +1 steps,
-# and approximate the rest.
-
-## @importFrom TreeTools Log2UnrootedMult
-# Old_IC_Approx <- function() {
-#   
-#   nIter <- min(maxIter, round(iter))
-#   if (nIter == maxIter) {
-#     warning ("Will truncate number of iterations at maxIter = ", maxIter)
-#   }
-#   n01ExtraSteps <- nOneExtraStep + nNoExtraSteps
-#   analyticIC <- Log2Unrooted(sum(split)) -  setNames(c(
-#     Log2UnrootedMult(split), log2(n01ExtraSteps)),
-#     minSteps + 0:1)
-#   analyticP <- 2 ^ -analyticIC[2]
-#   
-#   if (warn) {
-#     message("  Token count ", split, " = ",
-#             signif(analyticIc0, ceiling(log10(maxIter))),
-#             " bits @ 0 extra steps. \n  Simulating ", nIter, 
-#             " trees to estimate cost of further steps.")
-#     # message(c(round(analyticIc0, 3), "bits @ 0 extra steps;", round(analyticIc1, 3),
-#     #    "@ 1; attempting", nIter, "iterations.\n"))
-#   }
-#   
-#   morphyObj <- SingleCharMorphy(rep(seq_along(split) - 1L, split))
-#   on.exit(morphyObj <- UnloadMorphy(morphyObj))
-#   steps <- vapply(rep(nInformative, nIter), RandomTreeScore,
-#                   integer(1), morphyObj) + nSingletons
-#   
-#   tabSteps <- table(steps[steps > (minSteps - nSingletons + 1)]) # Quicker than table(steps)[-1]
-#   
-#   approxP <- tabSteps / sum(tabSteps) * (1 - analyticP)
-#   approxSE <- sqrt(approxP * (1 - approxP) / nIter)
-#   cumP <- cumsum(c(analyticP, approxP))[-1]
-# 
-#   approxIC <- -log2(cumP)
-#   icLB <- -log2(cumP - approxSE)
-#   icError <- icLB - approxIC
-#   if (warn || max(icError) > tolerance) {
-#     message("  Approx. std. error < ", signif(max(icError) * 1.01, 2))
-#   }
-# }
-
-
 #' Number of trees with one extra step
 #' @param \dots Vector or series of integers specifying the number of leaves
 #' bearing each distinct non-ambiguous token.
