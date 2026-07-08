@@ -361,23 +361,26 @@ test_that("T-013: ambiguous 4-tip informative character preserved", {
   expect_equal(diag$n_patterns_removed, 0L)
 })
 
-test_that("T-014: all-ambiguous truly uninformative gets correct fixed cost", {
-  # Tips: {0,1},{1,2},{0,2} — 3 tips, score is 1 on every tree
+test_that("T-014: all-ambiguous, no shared state -> kept & scored correctly", {
+  # Tips: {0,1},{1,2},{0,2} — 3 tips, score is 1 on every tree.
+  # No single state is shared by ALL tips, so the (topology-independent)
+  # simplifier cannot prove a fixed cost > 0 and correctly KEEPS the
+  # character; the per-tree downpass scores it exactly. (The old
+  # caterpillar-sampling heuristic invented a fixed cost here — unsound in
+  # general; see the regression block below.)
   contrast <- matrix(c(1,1,0, 0,1,1, 1,0,1), nrow = 3, byrow = TRUE)
   ds <- make_custom_data(contrast, c(1L,2L,3L))
   ds$levels <- c("0","1","2")
 
   diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
                                          ds$weight, ds$levels)
-  # Should be uninformative with precomputed_steps = 1
-  expect_false(diag$informative)
-  expect_equal(diag$precomputed_steps, 1L)
-  expect_equal(diag$ew_offset, 1L)
+  expect_true(diag$informative)
+  expect_equal(diag$precomputed_steps, 0L)
+  expect_equal(diag$ew_offset, 0L)
 
-  # Verify the score is correct on any tree
+  # Score must still be correct (1) on the single 3-taxon topology
   tree <- ape::read.tree(text = "((t1,t2),t3);")
-  tip_names <- paste0("t", 1:3)
-  s <- score_custom(tree, ds, tip_names)
+  s <- score_custom(tree, ds, paste0("t", 1:3))
   expect_equal(s, 1)
 })
 
@@ -394,11 +397,12 @@ test_that("T-014: all-ambiguous invariant character gives 0 fixed cost", {
   expect_equal(diag$ew_offset, 0L)
 })
 
-test_that("Transform 3: ambiguity state removal", {
+test_that("Transform 3: state in >=2 tips is NOT removed (topology-dependent)", {
   # 6 tips: 0, 0, 1, 1, {0,2}, {1,2}
-  # State 2 only appears in ambiguity tokens alongside 0 or 1.
-  # State 2 is redundant and should be removed.
-  # After removal: 0, 0, 1, 1, {0}, {1} — informative binary.
+  # State 2 appears (ambiguously) in TWO tips. Removing it is unsound: on a
+  # tree where the two ambiguous tips are sisters they resolve to {2} for a
+  # cost-free clade, so the removed-state score can differ. The simplifier
+  # must keep state 2 and let the downpass score the character.
   contrast <- matrix(c(
     1, 0, 0,   # token 1: state 0
     0, 1, 0,   # token 2: state 1
@@ -410,12 +414,22 @@ test_that("Transform 3: ambiguity state removal", {
 
   diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
                                          ds$weight, ds$levels)
-  # State 2 should be removed (n_states_reduced >= 1)
-  expect_gte(diag$n_states_reduced, 1L)
-  # Character should remain informative (0 and 1 each appear in 2+ tips)
   expect_true(diag$informative)
-  # Fewer remaining states than the original 3
-  expect_lte(diag$n_states_remaining, 2L)
+  # State 2 is retained: all three states remain.
+  expect_equal(diag$n_states_remaining, 3L)
+
+  # Scores must match phangorn on several random trees.
+  tip_names <- paste0("t", 1:6)
+  pd <- MatrixToPhyDat(matrix(
+    c("0", "0", "1", "1", "{02}", "{12}"), ncol = 1,
+    dimnames = list(tip_names, NULL)))
+  set.seed(411)
+  for (i in seq_len(5)) {
+    tree <- RandomTree(tip_names, root = TRUE)
+    s <- score_custom(tree, ds, tip_names)
+    expect_equal(s, as.numeric(phangorn::fitch(tree, pd)),
+                 info = paste("Tree", i))
+  }
 })
 
 test_that("Mixed ambiguous + unambiguous: singleton removal still works", {
@@ -444,35 +458,158 @@ test_that("Mixed ambiguous + unambiguous: singleton removal still works", {
   expect_equal(s, 1)
 })
 
-test_that("Ambiguous character with 2 ambig + 2 unambig tips", {
-  # 4 tips: 0, 1, {0,1}, {0,1}
-  # 0: unambig 1 tip. 1: unambig 1 tip. Both ambig tokens have both.
-  # Classical criterion: 0 states with count >= 2 -> uninformative
-  # But IS it? On any 4-tip tree, with Fitch:
-  # A tip with {0,1} can resolve to either 0 or 1. So the character
-  # should always cost 1 step (the single 0-vs-1 change).
-  # Verify with caterpillar: fwd (0,1,{01},{01}): 0∩1={} cost 1, {01}∩{01}={01},
-  # union {01}∩{01}={01} cost 0. Total=1. Rev: same. So truly uninformative.
+test_that("Binary 0,1,{0,1},{0,1}: {0,1} is full-? -> uninformative", {
+  # 4 tips: 0, 1, {0,1}, {0,1}. In a 2-state character {0,1} is EVERY
+  # applicable state, i.e. full "?" missing data, which is inert in Fitch. So
+  # the character is really 0, 1, ?, ? -> a single 0-vs-1 change on every tree
+  # (constant length 1) -> uninformative with a precomputed step of 1.
   contrast <- matrix(c(
     1, 0,   # token 1: state 0
     0, 1,   # token 2: state 1
-    1, 1    # token 3: {0,1}
+    1, 1    # token 3: {0,1} == "?" for a binary character
   ), nrow = 3, byrow = TRUE)
   ds <- make_custom_data(contrast, c(1L,2L,3L,3L))
   ds$levels <- c("0","1")
 
   diag <- TreeSearch:::ts_simplify_diag(ds$contrast, ds$tip_data,
                                          ds$weight, ds$levels)
-  # Should be uninformative (score is 1 on all trees)
   expect_false(diag$informative)
   expect_equal(diag$precomputed_steps, 1L)
   expect_equal(diag$ew_offset, 1L)
 
-  # Verify score
-  tree <- ape::read.tree(text = "((t1,t2),(t3,t4));")
+  # Score must be 1 on every 4-taxon topology
   tip_names <- paste0("t", 1:4)
-  s <- score_custom(tree, ds, tip_names)
-  expect_equal(s, 1)
+  for (nwk in c("((t1,t2),(t3,t4));", "((t1,t3),(t2,t4));",
+                "((t1,t4),(t2,t3));")) {
+    s <- score_custom(ape::read.tree(text = nwk), ds, tip_names)
+    expect_equal(s, 1, info = nwk)
+  }
+})
+
+
+# ===== Regression: multistate-ambiguity over-count (topology-dependence) =====
+#
+# simplify_patterns must be topology-independent, but the optimal resolution of
+# an ambiguous token is topology-dependent. Three historic bugs "simplified" a
+# state whose resolution is topology-dependent and over-/under-counted on
+# multistate ambiguity: Transform 2 (singleton state that also appears in
+# ambiguous tokens), Transform 3 (ambiguous-only state present in >=2 tips), and
+# the caterpillar-sampling uninformative heuristic. Each state below appears in
+# >=2 tips (or the character has no shared state), so no reduction is sound;
+# scores must match phangorn::fitch on every tree.
+
+test_that("Regression: singleton state also in ambiguous tokens (Transform 2)", {
+  # State 2 is unambiguous in exactly one tip (t15) but ALSO an option in two
+  # ambiguous tips; the optimal tree resolves t31 to 2 for a free join, so
+  # charging a fixed +1 autapomorphy step over-counts (was 4, truth 3).
+  labs <- c("t15", "t31", "t33", "t35", "t37", "t38", "t40")
+  toks <- c(t15 = "2", t31 = "{12}", t33 = "1", t35 = "1",
+            t37 = "{02}", t38 = "0", t40 = "0")
+  pd <- MatrixToPhyDat(matrix(toks[labs], ncol = 1,
+                              dimnames = list(labs, NULL)))
+  tree <- Preorder(ape::read.tree(
+    text = "((t15,t31),((((t33,t38),t37),t35),t40));"))
+  ts <- sum(CharacterLength(tree, pd, compress = FALSE))
+  expect_equal(ts, as.numeric(phangorn::fitch(tree, pd)))
+  expect_equal(ts, 3)
+})
+
+test_that("Regression: ambiguous-only state in >=2 tips (Transform 3)", {
+  # State 2 is never unambiguous but is an option in FOUR tips; on this tree
+  # A,B and C,D each resolve to {2} for a free 4-tip clade. Stripping state 2
+  # forces extra steps (was 3, truth 2).
+  labs <- c("A", "B", "C", "D", "E1", "E2", "F1", "F2")
+  toks <- c(A = "{02}", B = "{12}", C = "{02}", D = "{12}",
+            E1 = "0", E2 = "0", F1 = "1", F2 = "1")
+  pd <- MatrixToPhyDat(matrix(toks[labs], ncol = 1,
+                              dimnames = list(labs, NULL)))
+  tree <- Preorder(ape::read.tree(
+    text = "(((A,B),(C,D)),((E1,E2),(F1,F2)));"))
+  ts <- sum(CharacterLength(tree, pd, compress = FALSE))
+  expect_equal(ts, as.numeric(phangorn::fitch(tree, pd)))
+  expect_equal(ts, 2)
+})
+
+test_that("Regression: classical-uninformative + ambiguity vs varied trees", {
+  # Only state 2 is unambiguously doubled, so the classical criterion flags
+  # this as uninformative; but with ambiguity the score is NOT constant
+  # (caterpillars give 3, a balanced tree gives 2). Must match phangorn on
+  # every topology, not a sampled fixed cost.
+  labs <- paste0("t", 1:8)
+  toks <- c("2", "{01}", "0", "{02}", "{12}", "1", "{012}", "2")
+  pd <- MatrixToPhyDat(matrix(toks, ncol = 1, dimnames = list(labs, NULL)))
+  set.seed(20260706)
+  for (i in seq_len(20)) {
+    tree <- RandomTree(labs, root = TRUE)
+    expect_equal(sum(CharacterLength(tree, pd, compress = FALSE)),
+                 as.numeric(phangorn::fitch(tree, pd)),
+                 info = paste("tree", i))
+  }
+})
+
+test_that("Regression: random ambiguous characters match phangorn", {
+  set.seed(4242)
+  for (trial in seq_len(300)) {
+    n_tip <- sample(6:10, 1)
+    S <- sample(3:4, 1)
+    toks <- vapply(seq_len(n_tip), function(i) {
+      if (runif(1) < 0.5) {
+        as.character(sample.int(S, 1) - 1L)
+      } else {
+        k <- sample(2:min(3, S), 1)
+        paste0("{", paste0(sort(sample.int(S, k) - 1L), collapse = ""), "}")
+      }
+    }, character(1))
+    labs <- paste0("t", seq_len(n_tip))
+    pd <- tryCatch(
+      MatrixToPhyDat(matrix(toks, ncol = 1, dimnames = list(labs, NULL))),
+      error = function(e) NULL)
+    if (is.null(pd) || is.null(attr(pd, "levels"))) next
+    tree <- RandomTree(labs, root = TRUE)
+    expect_equal(sum(CharacterLength(tree, pd, compress = FALSE)),
+                 as.numeric(phangorn::fitch(tree, pd)),
+                 info = paste(toks, collapse = ","))
+  }
+})
+
+test_that("Regression: simplify never over-removes (min==max oracle)", {
+  # SAFETY GUARANTEE: a pattern may be dropped as uninformative ONLY if it is
+  # genuinely topology-invariant, i.e. MinimumLength() == MaximumLength() (the
+  # length is the same on every tree). This is the principled oracle; it guards
+  # against a future change re-introducing the over-/under-count class of bug by
+  # simplifying a character whose optimal resolution is topology-dependent.
+  # (Measured 2026-07-06: 0 over-removals across 5856 fuzz+corpus patterns;
+  # completeness misses 0/3356 on the real inapplicable corpus.)
+  set.seed(1234)
+  for (trial in seq_len(300)) {
+    n_tip <- sample(6:9, 1)
+    S <- sample(2:4, 1)
+    toks <- vapply(seq_len(n_tip), function(i) {
+      r <- runif(1)
+      if (r < 0.45) {
+        as.character(sample.int(S, 1) - 1L)
+      } else if (r < 0.8) {
+        paste0("{", paste0(sort(sample.int(S, min(2, S)) - 1L),
+                           collapse = ""), "}")
+      } else {
+        "?"
+      }
+    }, character(1))
+    labs <- paste0("t", seq_len(n_tip))
+    pd <- tryCatch(
+      MatrixToPhyDat(matrix(toks, ncol = 1, dimnames = list(labs, NULL))),
+      error = function(e) NULL)
+    if (is.null(pd) || is.null(attr(pd, "levels"))) next
+    at <- attributes(pd)
+    td <- matrix(unlist(pd, use.names = FALSE), nrow = length(pd), byrow = TRUE)
+    diag <- TreeSearch:::ts_simplify_diag(at$contrast, td, at$weight, at$levels)
+    removed <- which(!diag$informative)
+    if (!length(removed)) next
+    mn <- MinimumLength(pd, compress = TRUE)
+    mx <- MaximumLength(pd, compress = TRUE)
+    expect_true(all(mn[removed] == mx[removed]),
+                info = paste("over-removal:", paste(toks, collapse = ",")))
+  }
 })
 
 

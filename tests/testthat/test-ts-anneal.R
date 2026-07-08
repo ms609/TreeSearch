@@ -99,13 +99,19 @@ test_that("SearchControl defaults disable annealing", {
   expect_equal(ctrl$annealPhases, 5L)
 })
 
-test_that("Large preset enables annealing and disables drift", {
+# `large` was rebased on `thorough` (2026-07-07): the former annealing-based
+# large preset was systematically under-provisioned (outerCycles=1, no drift,
+# no adaptiveStart), and two matched-wall sweeps showed thorough's provisioning
+# dominates on MPT-reach at large-tree scale.  So `large` now inherits
+# thorough (drift ON, annealing OFF), while remaining the auto pick for >=120t.
+test_that("Large preset is auto-selected for big trees and inherits thorough", {
   presets <- TreeSearch:::.AutoStrategy(200L, 200L)
   expect_equal(presets, "large")
-  large_ctrl <- TreeSearch:::.StrategyPresets()[["large"]]
-  expect_equal(large_ctrl$annealCycles, 1L)
-  expect_gt(large_ctrl$annealPhases, 0L)
-  expect_equal(large_ctrl$driftCycles, 0L)
+  p <- TreeSearch:::.StrategyPresets()
+  expect_identical(p[["large"]], p[["thorough"]])
+  expect_equal(p[["large"]]$annealCycles, 0L)
+  expect_equal(p[["large"]]$driftCycles, 2L)
+  expect_equal(p[["large"]]$outerCycles, 2L)
 })
 
 test_that("Annealing with T=0 acts as strict hill-climbing", {

@@ -72,7 +72,10 @@ iw_ref <- list(
 
 # Hard-coded per-pattern step counts (pectinate tree)
 steps_ref <- list(
-  # Recomputed 2026-03-25 (T-218) after genuine-inapp classification fix
+  # Recomputed 2026-03-25 (T-218) after genuine-inapp classification fix.
+  # These are downpass-only per-pattern steps (removed uninformative patterns
+  # contribute their steps via the precomputed offset, not here); the FULL
+  # per-pattern score is CharacterLength(), validated == phangorn corpus-wide.
   Vinther2008 = as.integer(c(0, 2, 1, 2, 1, 1, 1, 2, 1, 2, 3, 2, 3, 2, 2,
                   4, 4, 3, 3, 5, 2, 2, 2, 0, 3, 3, 3, 5, 3, 2, 2, 4, 2,
                   4, 3, 2, 2, 4, 3, 0, 0, 3, 0, 6, 2, 2, 2, 4, 3, 2)),

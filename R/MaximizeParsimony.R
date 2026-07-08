@@ -221,57 +221,39 @@
     outerCycles = 2L,
     maxOuterResets = 3L,
     adaptiveStart = TRUE
-  ),
-  # Large-tree preset (>=120 tips): at 180 tips each TBR convergence takes
-  # ~5-7s, so phase costs scale sharply. Key design decisions (T-179):
-  # - Fewer perturbation cycles: ratchet 12, drift 4 (vs thorough 20/12)
-  # - No NNI-perturbation: at ~5.5s/cycle, it dominates the budget; ratchet
-  #   provides more diverse escapes per unit time at large-tree scale
-  # - Annealing (1 cycle) replaces drift: linear cooling T=20→0 over 5
-  #   phases uses stochastic TBR with Boltzmann acceptance — cheaper
-  #   per-cycle than drift. 1 cycle (400ms) captures 40% hit rate at
-  #   180 tips; 3 cycles (1370ms) showed no significant score gain (T-248)
-  # - No outer-cycle interleaving: outerCycles=1 avoids re-running expensive
-  #   XSS/RSS/CSS after ratchet (saves ~10s per repeated sectorial pass)
-  # - Single biased-Wagner start: saves ~2.6s vs 3 random starts; biased
-  #   addition (Goloboff 2014) gives near-optimal Wagner at 180 tips
-  # - tbrMaxHits=1: faster TBR passes (fewer equal-score trees explored)
-  # - No adaptiveStart: with ~1 replicate per 60s budget, the bandit has
-  #   no learning opportunity; adaptiveStart empirically regresses here
-  # - Larger sector sizes for proportional tree coverage
-  # - Prune-reinsert with NNI polish (T-289f Stage 5, 2026-03-29): 5 cycles,
-  #   NNI full-tree polish (pruneReinsertNni=TRUE). TBR polish (Stage 4) was
-  #   catastrophic at 206t/60s (0 reps). NNI polish (Stage 5, 5 datasets
-  #   131-206t, 10 seeds, 60s+120s) fixes the 0-rep failure and improves
-  #   median scores at 131-180t (project3701 146t: -178 steps at 60s;
-  #   project804 173t: -9 steps; mbank_X30754 180t: -4 steps at 60s/-7 at
-  #   120s). syab07205 (206t) shows +17.5 steps at 60s but neutral at 120s
-  #   — acceptable given the gains at smaller sizes in range. See G-006 for
-  #   a known limitation (NNI polish ignores ConstraintData; irrelevant here
-  #   since the large preset does not use topological constraints).
-  # Validated on mbank_X30754 (180t, 418p), 5 seeds at 30/60/120s budgets:
-  #   60s:  large median=1255 vs thorough 1259 (+4 steps better)
-  #   120s: large median=1250 vs thorough 1250 (tied, 2 reps vs 0-1)
-  #   30s:  large median=1276 vs thorough 1283 (+7 steps better)
-  large = SearchControl(
-    tbrMaxHits = 1L, ratchetCycles = 12L, ratchetPerturbProb = 0.25,
-    ratchetPerturbMode = 2L, ratchetPerturbMaxMoves = 5L,
-    ratchetAdaptive = TRUE,
-    nniPerturbCycles = 0L,
-    driftCycles = 0L,
-    annealCycles = 1L, annealPhases = 5L, annealTStart = 20, annealTEnd = 0,
-    xssRounds = 3L, xssPartitions = 6L,
-    rssRounds = 2L, cssRounds = 1L, cssPartitions = 6L,
-    sectorMinSize = 8L, sectorMaxSize = 100L,
-    fuseInterval = 3L, fuseAcceptEqual = TRUE,
-    tabuSize = 100L, wagnerStarts = 1L,
-    wagnerBias = 1L, wagnerBiasTemp = 0.3,
-    nniFirst = TRUE, sprFirst = FALSE,
-    outerCycles = 1L,
-    pruneReinsertCycles = 5L, pruneReinsertNni = TRUE,
-    consensusStableReps = 0L
   )
   )
+
+  # `intensive` is retained as a backward-compatible alias of `thorough`.  The
+  # 2026-06-25 two-island sweep (30 seeds) folded wagnerStarts = 5 (intensive's
+  # sole distinguishing feature) into `thorough` together with driftCycles = 2;
+  # ws5 showed no score gain over thorough while costing wall-clock, so the two
+  # presets are merged.  Kept as an alias so `strategy = "intensive"` still works.
+  presets$intensive <- presets$thorough
+
+  # Large-tree preset (>=120 tips).  REBASED on `thorough` (2026-07-07).
+  # The former bespoke `large` (T-179) was a cost-cut that predated the
+  # thorough/auto overhaul: outerCycles=1 (never re-ran sectorial after
+  # ratchet), wagnerStarts=1, driftCycles=0, adaptiveStart=FALSE, xss/rss/css
+  # 3/2/1.  Two sweeps (fixed engine, MPT-reach metric, project175 held out):
+  #   - Long matched wall (1200s, 6 matrices 125-482t): thorough reach 0.61 vs
+  #     large 0.28; `outerCycles=2` is the load-bearing knob (ablation).
+  #   - Short-budget gate (30/60/120s, 5 matrices 125-199t x 5 seeds): thorough
+  #     dominates on reach at >=60s and ties `large+oc2` at 30s; the apparent
+  #     30s dip was one seed on one already-solved matrix (noise, tied gap).
+  # thorough ran unstarved at 482t/1200s (rate run 17819704, ~187 reps/seed),
+  # confirming its heavier provisioning does not rep-starve at large scale now
+  # that maxReplicates=500 is the `large` default (raised this session).
+  # DROPPED vs old large (all superseded by thorough's machinery in-sweep):
+  #   annealCycles (drift replaces it), biased-Wagner start, prune-reinsert NNI
+  #   polish (T-289f), tbrMaxHits=1.  ADOPTED: ratchet 20, drift 2, xss/rss/css
+  #   5/3/2, sectorMax 80, wagnerStarts 5, outerCycles 2, adaptiveStart TRUE.
+  # RESIDUAL untested corner: >199t at a *tight* (<60s) user budget — the
+  # min-replicate / budget-aware fallback (auto-routing arm) is the follow-up,
+  # not a reason to withhold the rebase.  The per-replicate reach deficit that
+  # survives (project5432/4138: 0 hits over 1870 reps) is an ENGINE limit
+  # (cross-set sectorial re-solve), which no preset provisioning can close.
+  presets$large <- presets$thorough
 
   presets
 }
@@ -321,8 +303,8 @@
   if (nTip <= 30L) return("sprint")
   # Few characters -> flat landscape; thorough search is pointless
   if (nChar < 100L) return("default")
-  # Large trees (>=120 tips): per-replicate cost is high; use scaled preset
-  # with NNI warmup and biased Wagner (empirically validated on 180-tip data).
+  # Large trees (>=120 tips): `large` is now thorough's provisioning with a
+  # raised replicate default (2026-07-07 rebase; see .StrategyPresets).
   if (nTip >= 120L) return("large")
   # Enough characters to have a structured landscape;
   # moderate-to-large datasets benefit from intensive search
@@ -508,6 +490,16 @@
 #'   The default is a multiple of 48 (= LCM(12, 16)) so that replicates
 #'   divide evenly across common 12- or 16-core machines when running in
 #'   parallel.
+#'   When `strategy` resolves to `"large"` (automatically selected for
+#'   datasets of \eqn{\ge}{>=} 120 tips and \eqn{\ge}{>=} 100 characters) and
+#'   `maxReplicates` is left at its default, the
+#'   cap is raised to 500: a 120--180-tip sweep showed the fraction of runs
+#'   reaching the best-known score climbing from 0.68 at 96 replicates to 0.79
+#'   at 250 and still rising at 500, with no plateau.  Raising the cap only
+#'   appends later replicates, so it never delays an earlier improvement, and
+#'   easy datasets still stop early once `targetHits` is met; only genuinely
+#'   hard datasets run the extra replicates.  An explicit `maxReplicates`
+#'   is always respected.
 #'   For large or complex datasets a higher value improves the chance of
 #'   finding all MPTs.  A rough minimum is
 #'   `max(10, ceiling(NTip * NChar / 5000))`, where `NChar = sum(weight)`.
@@ -654,6 +646,12 @@ MaximizeParsimony <- function(
     stop("`dataset` cannot be NULL.")
   }
 
+  # Record whether the user explicitly supplied `maxReplicates` BEFORE any
+  # reassignment: assigning to the formal (e.g. the strategy-scaled default
+  # below) would immediately flip `missing()`, so this top-of-body capture is
+  # the only reliable read.
+  userSetReps <- !missing(maxReplicates)
+
   # --- Set targetHits default if not provided ---
   if (is.null(targetHits)) {
     targetHits <- max(10L, as.integer(NTip(dataset) / 5))
@@ -716,6 +714,21 @@ MaximizeParsimony <- function(
       control <- .ApplyStrategyPreset(control, preset, names(controlDots))
       if (verbosity >= 1L) {
         cli::cli_alert_info("Strategy: {.strong {strategy}}")
+      }
+      # Strategy-scaled replicate cap. The `large` band (>=120 tips) needs many
+      # more independent restarts than the 96 default to reliably reach the
+      # optimum: a 34-matrix 120-180t sweep found reach@96 = 0.68 climbing to
+      # reach@250 = 0.79, with the hard-matrix subset still climbing at 500 and
+      # no knee. Raising the cap anytime-dominates (a higher cap only appends
+      # later replicates; it never delays an earlier improvement), and easy
+      # matrices still stop early on `targetHits`, so the cost falls only on the
+      # genuinely hard tail (which runs to the cap). Only override when the user
+      # did not set `maxReplicates` themselves.
+      if (!userSetReps) {
+        stratReps <- switch(strategy, large = 500L, NA_integer_)
+        if (!is.na(stratReps)) {
+          maxReplicates <- stratReps
+        }
       }
     } else if (!identical(strategy, "auto")) {
       warning("Unknown strategy '", strategy, "'; using default parameters.")
@@ -901,7 +914,7 @@ MaximizeParsimony <- function(
   # Formula: max(10, ceiling(nTip * nChar / 5000)) where nChar = sum(weight).
   # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
   # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
-  if (!missing(maxReplicates) && nTip >= 30L && verbosity > 0L) {
+  if (userSetReps && nTip >= 30L && verbosity > 0L) {
     nChars <- sum(weight)
     minReps <- pmax(10L, ceiling(nTip * nChars / 5000L))
     if (maxReplicates < minReps) {

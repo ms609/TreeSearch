@@ -527,11 +527,16 @@ test_that("addition_order length/range/duplicate errors cleanly (T-323)", {
 test_that("wagner_goloboff_scores/wagner_entropy_scores handle zero Fitch words", {
   n <- 10L
   set.seed(1)
-  # 3 characters, each a distinct permutation of 1..n: no state is shared by
-  # more than one taxon in any character, so every character is
-  # parsimony-uninformative (multi-character, avoiding the single-character
-  # vapply/t() degenerate case in prep_pd()).
-  mat <- vapply(seq_len(3L), function(i) as.character(sample(seq_len(n))),
+  # 3 characters, each a distinct permutation of the single-character states
+  # 0..(n-1): no state is shared by more than one taxon in any character, and
+  # every token is unambiguous, so every character is parsimony-uninformative
+  # and simplify_patterns removes all of them. (States 0..9 are used, NOT
+  # 1..10 -- the token "10" would be parsed as the AMBIGUITY {0,1}, which makes
+  # the character genuinely ambiguous rather than all-distinct-singletons.)
+  # Multi-character avoids the single-character vapply/t() degenerate case in
+  # prep_pd().
+  mat <- vapply(seq_len(3L),
+                function(i) as.character(sample(seq_len(n)) - 1L),
                 character(n))
   rownames(mat) <- paste0("t", seq_len(n))
   pd <- MatrixToPhyDat(mat)
