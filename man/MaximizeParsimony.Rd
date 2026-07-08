@@ -57,9 +57,14 @@ Resample(
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
-\item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}}.
-Consulted only as a fallback: if a replicate's search reports no
-best-score tree, \code{tree} (if supplied) is returned in its place.}
+\item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
+or a \code{multiPhylo} (first tree used).
+When supplied, the first replicate uses this topology as its starting
+point (warm-start), skipping the random Wagner tree construction.
+Subsequent replicates still begin from random Wagner trees.
+This is useful for continuing a search from a previously found optimum.
+If unspecified, all replicates start from random Wagner trees.
+Edge lengths are not supported and will be deleted.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
@@ -157,10 +162,6 @@ perturbation, single biased Wagner start (Goloboff 2014), larger
 sector sizes, 1-cycle simulated annealing instead of drift
 (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 or exceeds \code{"thorough"} at 180 tips across all time budgets.}
-\item{\code{"intensive"}}{Deprecated alias of \code{"thorough"}, retained for
-backward compatibility.  The extra Wagner starts (5) that once
-distinguished it are now folded into \code{"thorough"}, so the two are
-identical.}
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
 Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
@@ -248,11 +249,7 @@ parsimony-ratchet cycles per replicate.}
 during a \acronym{TBR} rearrangement pass before it stops (mapped to the
 underlying search engine's \code{tbrMaxHits} control).}
 
-\item{finalIter, maxHits, tolerance, verbosity}{Deprecated and without
-effect.  These were parameters of the pre-2.0.0, \pkg{MorphyLib}-based
-implementation of \code{Resample()}; the native search engine that replaced it
-has no equivalent controls (in particular, no progress-reporting hook), so
-supplying a non-\code{NULL} value now only issues a deprecation warning.}
+\item{finalIter, maxHits, tolerance}{Deprecated and without effect.}
 
 \item{nReplicates}{Integer specifying how many resample replicates to run.
 Default \code{1L} runs a single replicate (original behaviour).

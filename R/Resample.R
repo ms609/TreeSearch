@@ -151,11 +151,7 @@
 #' @param tbrIter Numeric: maximum number of times the best score may be hit
 #' during a \acronym{TBR} rearrangement pass before it stops (mapped to the
 #' underlying search engine's `tbrMaxHits` control).
-#' @param finalIter,maxHits,tolerance,verbosity Deprecated and without
-#' effect.  These were parameters of the pre-2.0.0, \pkg{MorphyLib}-based
-#' implementation of `Resample()`; the native search engine that replaced it
-#' has no equivalent controls (in particular, no progress-reporting hook), so
-#' supplying a non-`NULL` value now only issues a deprecation warning.
+#' @param finalIter,maxHits,tolerance Deprecated and without effect.
 #' @param nThreads Integer: number of parallel threads for search replicates,
 #' as for [`MaximizeParsimony()`].  Only takes effect for `inapplicable =
 #' "bgs"` (the default) with `nReplicates > 1`; resampling under `"hsj"` or
