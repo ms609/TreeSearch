@@ -206,7 +206,7 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
         uint64_t* D2 = &tree.down2[tb + off];
         for (int s = 0; s < k; ++s) D2[s] = F[s];
 
-        // Update tip subtree_actives (morphy's tip update logic):
+        // Update tip subtree_actives:
         // intersection exists → applicable part of intersection
         // no intersection → tip's applicable states
         uint64_t* sa = &tree.subtree_actives[tb + off];
@@ -269,7 +269,7 @@ int fitch_na_score(TreeState& tree, const DataSet& ds) {
       if (blk.upweight_mask) ns_p3 += popcount64(needs_step & blk.upweight_mask);
       total_steps += blk.weight * ns_p3;
 
-      // Compute down2 for this node (matches morphy exactly):
+      // Compute down2 for this node:
       // Applicable node with any intersection:
       //   - applicable isect → D2 = applicable part of intersection
       //   - NA-only isect → D2 = {NA} (node "loses" applicable status)

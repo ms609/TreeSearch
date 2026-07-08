@@ -25,11 +25,12 @@ test_that("native TreeScore() equals native TreeLength()", {
   }
 })
 
-test_that("native scorer fixes the MorphyLib {1-} bug (Lobo pattern 93)", {
+test_that("native scorer handles {1-} correctly", {
+  # Lobo pattern 93 contains a single {1-}
   data("Lobo", package = "TreeTools")
   tr <- TreeTools::PectinateTree(names(Lobo.phy))
   obj <- PrepareData(Lobo.phy)
-  # Correct BGS length is 273; the legacy MorphyLib path returned 274.
+  # Correct BGS length is 273; the MorphyLib returns 274.
   expect_equal(TreeScore(tr, obj), 273)
 })
 
