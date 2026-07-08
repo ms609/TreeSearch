@@ -126,9 +126,7 @@ SingleCharData <- function(char) {
   PrepareData(MatrixToPhyDat(m))
 }
 
-# Canonicalize a gap treatment.  Only "inapplicable" is supported natively;
-# used by the deprecated `PhyDat2Morphy()`/`SingleCharMorphy()` shims to reject
-# the MorphyLib-era missing/extra-state treatments.
+# Canonicalize a gap treatment.  Only "inapplicable" is supported natively.
 .GapHandler <- function(gap) {
   handler <- pmatch(tolower(gap),
                     c("inapplicable", "missing", "ambiguous", "extra state"))

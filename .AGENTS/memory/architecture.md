@@ -15,7 +15,7 @@ the R-level API, or reviewing design decisions.
 | `TreeLength()` | C++ `ts_fitch_score` | Score one or more trees |
 | `FastCharacterLength()` | C++ `ts_char_steps` | Per-character step counts |
 | `AdditionTree()` | C++ `ts_wagner_tree` | Wagner tree construction |
-| `RandomTreeScore()` | C++ (phyDat) or MorphyLib (morphyPtr) | Score a random tree |
+| `RandomTreeScore()` | C++ | Score a random tree |
 | `TaxonInfluence()` | C++ via `MaximizeParsimony()` | Per-taxon search |
 | `SearchControl()` | — | Expert parameter constructor for `MaximizeParsimony()` |
 | `ParsSim()` | Pure R | Simulate datasets under parsimony (EW/IW/profile) |
