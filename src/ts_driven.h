@@ -107,6 +107,18 @@ struct DrivenParams {
                                      // TNT ~20-25). Plumbs
                                      // SectorParams::rss_picks_per_round.
 
+  // TNT-style in-sector drift / combined analysis for LARGE sectors.
+  // Solve big sectors (>= threshold real tips) by drift or RAS+drift+fuse,
+  // reaching sector topologies plain RAS+TBR cannot escape (TNT `sectsch`
+  // godrift/gocomb/drift/combstarts/fuse). 0 thresholds = off (default).
+  int sector_go_drift = 0;           // Plumbs SectorParams::sector_go_drift.
+  int sector_go_comb = 0;            // Plumbs SectorParams::sector_go_comb.
+  int sector_drift_cycles = 5;       // Plumbs SectorParams::sector_drift_cycles.
+  int sector_drift_afd = 3;          // Plumbs SectorParams::sector_drift_afd.
+  double sector_drift_rfd = 0.1;     // Plumbs SectorParams::sector_drift_rfd.
+  int sector_comb_starts = 3;        // Plumbs SectorParams::sector_comb_starts.
+  int sector_fuse_rounds = 3;        // Plumbs SectorParams::sector_fuse_rounds.
+
   // Post-ratchet sectorial search (T-257).
   // When true, run XSS+RSS+CSS again after ratchet perturbation using the
   // same round counts and sector parameters.  TNT interleaves sectorial

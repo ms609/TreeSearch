@@ -12,6 +12,7 @@
 #include "ts_tree.h"
 #include "ts_constraint.h"
 #include <functional>
+#include <vector>
 
 namespace ts {
 
@@ -32,10 +33,18 @@ struct DriftResult {
 
 // Run drift search on `tree` with dataset `ds`.
 // Modifies `tree` in place to the best tree found across all cycles.
+//
+// `sector_mask` (optional): when non-null, restricts every internal TBR clip and
+// regraft to nodes flagged true, exactly as tbr_search's sector_mask does. Used
+// by the sectorial search to PIN an HTU pseudo-tip: masking a sector's content
+// clade keeps drift's suboptimal + search phases from re-rooting the reduced tree
+// against the rest-of-tree summary, so the result stays reinsertable. nullptr
+// (default) = drift the whole tree, prior behaviour.
 DriftResult drift_search(TreeState& tree, const DataSet& ds,
                          const DriftParams& params,
                          ConstraintData* cd = nullptr,
-                         std::function<bool()> check_timeout = nullptr);
+                         std::function<bool()> check_timeout = nullptr,
+                         const std::vector<bool>* sector_mask = nullptr);
 
 } // namespace ts
 
