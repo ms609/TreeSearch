@@ -99,11 +99,11 @@
 #'   `godrift`/`gocomb`.  Small sectors are cheap to optimise exhaustively; large
 #'   sectors have more reach but need drift to escape their own local optima.
 #'   `sectorGoComb` solves the sector with `sectorCombStarts` \acronym{RAS}+drift
-#'   starts, keeping the best (\acronym{TNT}'s combined analysis also *fuses* the
-#'   starts; that recombination sub-step is not yet implemented).  `sectorGoComb`
-#'   takes precedence when both trigger.  `0` (default) disables each, leaving all
-#'   sectors on \acronym{RAS}+\acronym{TBR}.  To exercise these, also raise
-#'   `sectorMaxSize` so large sectors are selected.
+#'   starts and then *fuses* them (recombines shared clades across the starts over
+#'   `sectorFuseRounds` rounds), keeping the fused tree only if it beats the best
+#'   start.  `sectorGoComb` takes precedence when both trigger.  `0` (default)
+#'   disables each, leaving all sectors on \acronym{RAS}+\acronym{TBR}.  To
+#'   exercise these, also raise `sectorMaxSize` so large sectors are selected.
 #' @param sectorDriftCycles Integer; drift cycles used when a sector is solved by
 #'   drift or combined analysis (\acronym{TNT} `drift`).
 #' @param sectorDriftAfd Integer; absolute-fit-difference limit (steps) for
@@ -112,8 +112,8 @@
 #'   drift.
 #' @param sectorCombStarts Integer; \acronym{RAS}+drift starts per combined
 #'   sector (\acronym{TNT} `combstarts`).
-#' @param sectorFuseRounds Integer; reserved for the deferred combined-analysis
-#'   fuse sub-step (\acronym{TNT} `fuse`); currently unused.
+#' @param sectorFuseRounds Integer; max fuse rounds for the combined-analysis
+#'   recombination sub-step (\acronym{TNT} `fuse`).
 #' @param postRatchetSectorial Logical; when `TRUE`, run XSS+RSS+CSS again
 #'   after ratchet perturbation using the same round counts.  Approximates
 #'   TNT's interleaved sectorial pattern.  Default: `FALSE`.
