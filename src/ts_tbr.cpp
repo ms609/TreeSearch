@@ -2322,7 +2322,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // clip phase (the rerooting changes which constraint tips
         // end up on which side of the attachment edge).  Reject
         // any move that introduces a constraint violation.
-        if (constrained) {
+        // `cd->n_splits > 0`: a negative-only constraint (Bremer converse
+        // search) has `active == true` but zero positive splits, so this whole
+        // block is a no-op -- skip it to avoid a redundant compute_node_tips
+        // sweep on top of the displays_forbidden_clade sweep just below.
+        if (constrained && cd->n_splits > 0) {
           map_constraint_nodes(tree, *cd);
           bool violation = false;
           for (int _s = 0; _s < cd->n_splits; ++_s) {
@@ -2349,7 +2353,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           restore_topology(tree, snap);
           state_snap.restore(tree);
           score_fresh = true;
-          if (constrained) {
+          if (constrained && cd->n_splits > 0) {
             map_constraint_nodes(tree, *cd);
             compute_dfs_timestamps(tree, *cd);
           }
@@ -2517,9 +2521,27 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // fast additive for EW / apply+rescore for IW).  NA: the indirect scan is
     // only approximate, so an EXACT full-neighbourhood sweep is required to
     // certify a true unrooted-TBR optimum (see exact_verify_sweep).
+    // Negative (converse) constraint: unlike the inner clip loop, this
+    // root-edge / full-neighbourhood sweep is NOT constraint-guarded, so its
+    // best move can introduce a forbidden clade (a root-edge TBR move changes
+    // the unrooted topology).  Snapshot the clade-free tree first; if the
+    // improved tree displays the clade, keep the snapshot and stop.  We are
+    // then at a local optimum within the space of trees lacking the clade --
+    // conservative (an improving root-edge move that stays clade-free is
+    // forgone, costing reach) but never unsound (the pool backstop already
+    // guarantees soundness; this keeps best_score consistent with a ¬C tree).
+    TopoSnapshot neg_pre_snap;
+    if (neg_constrained) save_topology(tree, neg_pre_snap);
     bool improved = has_na
         ? exact_verify_sweep(tree, ds, best_score)
         : try_root_edge_moves(tree, ds, best_score, ew_directional);
+    if (neg_constrained && improved && displays_forbidden_clade(tree, *cd)) {
+      restore_topology(tree, neg_pre_snap);
+      tree.build_postorder();
+      best_score = full_rescore(tree, ds);  // pre-sweep score; refreshes states
+      score_fresh = true;
+      break;
+    }
     if (!improved) break;
     score_fresh = true;
     if (!collapsed.empty()) {

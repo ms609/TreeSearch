@@ -66,8 +66,29 @@ SuboptimalTrees <- function(dataset, tree = NULL,
     stop("`maxPool` must be a single positive integer.")
   }
 
+  # SuboptimalTrees() manages `control` (to size the pool) and `collapse` (which
+  # must stay FALSE to retain the full suboptimal sample).  A whole `control=`
+  # or `collapse=` argument arriving through `...` would otherwise collide with
+  # these explicit arguments ("matched by multiple actual arguments").  Strip
+  # them; individual SearchControl() fields (e.g. `ratchetCycles = `) still pass
+  # through `...` and are merged by MaximizeParsimony().
+  dots <- list(...)
+  if ("control" %in% names(dots)) {
+    warning("`control` is managed by SuboptimalTrees(); pass individual ",
+            "SearchControl() fields (e.g. `ratchetCycles = `) via `...` instead.")
+    dots[["control"]] <- NULL
+  }
+  if ("collapse" %in% names(dots)) {
+    if (!identical(dots[["collapse"]], FALSE)) {
+      warning("`collapse` is forced to FALSE by SuboptimalTrees() so the full ",
+              "suboptimal pool is returned.")
+    }
+    dots[["collapse"]] <- NULL
+  }
+
   control <- SearchControl(poolSuboptimal = maxSuboptimal, poolMaxSize = maxPool)
 
-  MaximizeParsimony(dataset, tree = tree, control = control,
-                    collapse = FALSE, ...)
+  do.call(MaximizeParsimony,
+          c(list(dataset = dataset, tree = tree, control = control,
+                 collapse = FALSE), dots))
 }

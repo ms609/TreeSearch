@@ -1094,13 +1094,19 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
           }
         }
       }
+      bool fused_added = false;
       if (fused_ok) {
         std::vector<uint8_t> fused_collapsed;
         compute_collapsed_flags(fused, ds, fused_collapsed);
-        pool.add_collapsed(fused, fused_score, fused_collapsed);
+        // The pool can reject the fused tree even when it scores better -- e.g.
+        // a converse-constraint (Bremer) search's backstop rejects any tree
+        // that displays the forbidden clade.  Only treat it as an improvement
+        // (resetting the perturb-stop / target-hits counters) if it actually
+        // entered the pool; otherwise the stopping rules act on a phantom best.
+        fused_added = pool.add_collapsed(fused, fused_score, fused_collapsed);
       }
 
-      if (fused_ok && fused_score < best_before) {
+      if (fused_added && fused_score < best_before) {
         pool.set_hits_to_best(0);
         result.last_improved_rep = rep1;
         unsuccessful_reps = 0;  // fuse found a better score; reset perturb-stop counter

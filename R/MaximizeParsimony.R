@@ -1015,6 +1015,15 @@ MaximizeParsimony <- function(
   # Negative (converse) constraints: forbidden clades.  Internal argument used
   # by Bremer() -- the returned trees must NOT display any supplied split.
   if (!is.null(.negativeConstraint)) {
+    # The negative-constraint soundness backstop (TreePool::set_forbidden) is
+    # wired only into the serial search path; the parallel pool has no such
+    # guard, so a forbidden clade could slip into the result under nThreads > 1.
+    # Force serial (Bremer() already does; this protects any other caller).
+    if (!identical(as.integer(nThreads), 1L)) {
+      warning("Negative (converse) constraints are supported only in serial ",
+              "search; forcing `nThreads = 1`.")
+      nThreads <- 1L
+    }
     negMatrix <- .PrepareNegativeConstraint(.negativeConstraint, dataset)
     if (!is.null(negMatrix)) {
       consArgs[["consNegSplitMatrix"]] <- negMatrix

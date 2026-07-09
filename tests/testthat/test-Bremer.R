@@ -37,6 +37,27 @@ oracleBremer <- function(reference, dataset, concavity = Inf) {
   setNames(out, names(refFreq))
 }
 
+# Enumeration oracle scoring under the inapplicable "bgs" kernel (the DEFAULT
+# scoring mode).  Validates the converse-constraint engine on data with
+# inapplicable (`-`) tokens -- the path that runs exact_verify_sweep.
+oracleBremerNA <- function(reference, dataset) {
+  tips <- names(dataset)
+  trees <- structure(lapply(allBinaryTrees(tips), RootTree, tips[1]),
+                     class = "multiPhylo")
+  lengths <- TreeLength(trees, dataset, inapplicable = "bgs")
+  Lstar <- min(lengths)
+  refFreq <- SplitFrequency(reference, trees)
+  nSplits <- length(refFreq)
+  disp <- vapply(seq_along(trees), function(j) {
+    SplitFrequency(reference, trees[j])
+  }, double(nSplits))
+  dim(disp) <- c(nSplits, length(trees))
+  setNames(vapply(seq_len(nSplits), function(i) {
+    lacking <- disp[i, ] < 0.5
+    if (any(lacking)) min(lengths[lacking]) - Lstar else Inf
+  }, double(1)), names(refFreq))
+}
+
 # --- method = "pool" (approximate engine) ---
 # A multiPhylo of several MPTs is summarised by its strict consensus; support
 # is calculated for the consensus's resolved clades only.
@@ -178,36 +199,96 @@ test_that("constraint Bremer matches enumeration under implied weights", {
   expect_false(all(con == round(con)))
 })
 
-test_that("constraint is the default and dominates the pool estimate", {
+test_that("constraint is the default and never looser than an uncensored pool", {
+  # The matrix leaves parts of the tree unresolved, so a fully-resolved reference
+  # has decay-0 clades that OTHER equally-optimal trees lack.  A best-score pool
+  # therefore breaks them, making the cross-engine comparison NON-vacuous (guards
+  # the earlier bug where a consensus reference left every shared clade censored
+  # and the key assertion compared empty vectors).
+  dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
   set.seed(42)
-  mpts <- MaximizeParsimony(ds, maxReplicates = 8L, verbosity = 0L)
-  con <- Bremer(mpts, ds, maxReplicates = 12L, verbosity = 0L)  # default method
+  mptsFull <- MaximizeParsimony(dat, collapse = FALSE, maxReplicates = 12L,
+                                verbosity = 0L)
+  ref <- mptsFull[[1]]                       # a fully-resolved (binary) MPT
+  Lstar <- attr(mptsFull, "score")
+
+  con <- Bremer(ref, dat, optimalScore = Lstar, maxReplicates = 20L,
+                verbosity = 0L)              # default method (constraint)
   expect_type(con, "double")
   expect_true(all(con >= 0))
   expect_true(all(is.finite(con)))
 
-  pool <- Bremer(mpts, ds, method = "pool", maxBremer = 8,
-                 maxReplicates = 8L, verbosity = 0L)
-  # Both are upper bounds on the true decay; the directed constraint search is
-  # never looser than the incidental pool where the pool is uncensored.
+  pool <- Bremer(ref, dat, method = "pool", optimalScore = Lstar, maxBremer = 10,
+                 maxReplicates = 50L, verbosity = 0L)
   shared <- intersect(names(con), names(pool))
   uncensored <- shared[is.finite(pool[shared])]
+  expect_gt(length(uncensored), 0L)   # the pool broke at least one clade
+  # Both are upper bounds on the true decay; the directed constraint search is
+  # never looser than the incidental pool where the pool is uncensored.
   expect_true(all(con[uncensored] <= pool[uncensored] + 1e-6))
 })
 
-test_that("Bremer warns and stays non-negative when optimalScore is too high", {
+test_that("Bremer errors when optimalScore exceeds the reference tree length", {
   dat <- StringToPhyDat("1100000 1110000 1111000 1111100 1001000",
                         1:7, byTaxon = FALSE)
   names(dat) <- c(LETTERS[1:6], "out")
   set.seed(1)
   mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
   ref <- mpts[[1]]
-  # Claim an optimum 5 steps worse than reality; converse searches find shorter
-  # trees, so the guard must warn and clamp rather than report negative decay.
+  # A claimed optimum longer than the reference tree's own length is impossible
+  # under these scoring arguments; the scoring guard catches it before searching
+  # (a stale or mis-scaled L*) rather than reporting a bogus decay.
+  expect_error(
+    Bremer(ref, dat, method = "constraint",
+           optimalScore = attr(mpts, "score") + 5,
+           maxReplicates = 20L, verbosity = 0L),
+    "exceeds the reference tree")
+})
+
+test_that("constraint Bremer matches enumeration on inapplicable (bgs) data", {
+  # The default scoring mode (inapplicable = "bgs") previously had no ground-
+  # truth oracle.  Validate the negative-constraint machinery + exact_verify_sweep
+  # against exact enumeration on a 6-taxon matrix with inapplicable (`-`) tokens.
+  dat <- StringToPhyDat("111000 111000 111000 110000 000110 -00-11 -00-11",
+                        1:6, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:5], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 10L, verbosity = 0L)
+  ref <- mpts[[1]]
+  con <- Bremer(ref, dat, method = "constraint",
+                optimalScore = attr(mpts, "score"),
+                maxReplicates = 30L, verbosity = 0L)
+  orc <- oracleBremerNA(ref, dat)
+  expect_equal(as.numeric(con[names(orc)]), as.numeric(orc), tolerance = 1e-6)
+})
+
+test_that("Bremer errors on a scoring-units mismatch (IW trees vs EW default)", {
+  dat <- StringToPhyDat(
+    "1110000 1110000 1110000 1100000 0001100 0001100 0000110 1111111",
+    1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, concavity = 3, maxReplicates = 8L, verbosity = 0L)
+  # Trees found under implied weights; the default equal-weights Bremer would
+  # subtract an IW optimum from EW lengths -- caught before searching (BR-1).
+  expect_error(Bremer(mpts, dat, maxReplicates = 8L, verbosity = 0L),
+               "does not equal their stored optimal score")
+  # Passing the matching concavity is accepted.
+  ok <- Bremer(mpts, dat, concavity = 3, maxReplicates = 12L, verbosity = 0L)
+  expect_type(ok, "double")
+})
+
+test_that("Bremer ignores (with a warning) drift/anneal args in a converse search", {
+  dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
+  # driftCycles is a documented forwarded arg but unsound in a converse search;
+  # it must be ignored (with a warning), not silently empty the pool (BR-2).
   expect_warning(
-    con <- Bremer(ref, dat, method = "constraint",
-                  optimalScore = attr(mpts, "score") + 5,
-                  maxReplicates = 20L, verbosity = 0L),
-    "shorter than the optimal score")
-  expect_true(all(con >= 0))
+    con <- Bremer(mpts, dat, driftCycles = 5L, annealCycles = 3L,
+                  maxReplicates = 12L, verbosity = 0L),
+    "always disabled")
+  expect_true(all(is.finite(con)))
 })
