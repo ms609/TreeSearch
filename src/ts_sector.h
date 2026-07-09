@@ -34,6 +34,30 @@ struct SectorParams {
                                  // into ~this many composite first-pass terminals
                                  // (Goloboff 1999 coarse-grained sector). 0 = off.
 
+  // TNT-style in-sector drifting / combined analysis for LARGE sectors.
+  // Small sectors are cheap to solve with RAS+TBR; big sectors have more reach
+  // but need drift/combined to escape their own local optima (TNT `sectsch`
+  // godrift/gocomb/drift/gocomb/combstarts). Thresholds are measured against the
+  // sector's real-tip count (n_real_tips), matching how max_sector_size is
+  // measured (count_clade_tips). Both default 0 = off (RAS+TBR only).
+  int sector_go_drift = 0;       // solve sectors with >= this many real tips by
+                                 // drift_search instead of plain RAS+TBR (TNT
+                                 // `godrift N`). 0 = off.
+  int sector_go_comb = 0;        // solve sectors with >= this many real tips by
+                                 // COMBINED analysis (TNT `gocomb N`): here,
+                                 // sector_comb_starts RAS+drift starts, keep best.
+                                 // (TNT also fuses the starts; that fuse sub-step
+                                 // is deferred — see ts_sector.cpp header note.)
+                                 // Takes precedence over go_drift. 0 = off.
+  int sector_drift_cycles = 5;   // drift cycles for drifted/combined sectors
+                                 // (TNT `drift N`).
+  int sector_drift_afd = 3;      // AFD limit for in-sector drift (steps).
+  double sector_drift_rfd = 0.1; // RFD limit for in-sector drift.
+  int sector_comb_starts = 3;    // RAS+drift starts per combined sector, keep
+                                 // best (TNT `combstarts N`).
+  int sector_fuse_rounds = 3;    // reserved for the deferred combined-analysis
+                                 // fuse sub-step (TNT `fuse F`); currently unused.
+
   // Conflict-guided sector selection.
   // When non-null, RSS uses weighted random selection that biases toward
   // sectors containing splits absent from the pool consensus.
@@ -41,6 +65,34 @@ struct SectorParams {
   const SplitFrequencyTable* split_freq = nullptr;
 
   int clip_order = 0;  // ClipOrder cast to int (RANDOM = 0)
+
+  // ---- Sector-size scaling (TNT `sectsch`; default-OFF, opt-in). ----
+  // Two additive levers used by rss_search(); both are no-ops at their default
+  // values, and both may also be driven from the environment (env wins) so a
+  // matched-wall A/B can be run from a single isolated-lib build.
+  //
+  // (a) nTip-scaled cap.  The effective maximum sector size becomes
+  //     min(max_sector_size, ceil(max_sector_size_frac * n_tip)) once
+  //     n_tip >= sector_size_threshold; `max_sector_size` is the absolute
+  //     ceiling.  A small preset ceiling (50/80) would leave the fraction
+  //     inert or shrinking on large trees, so env TS_SECT_MAXSIZE raises the
+  //     ceiling and lets the fraction bind.  Env: TS_SECT_MAXFRAC (double),
+  //     TS_SECT_THRESHOLD (int), TS_SECT_MAXSIZE (int).  frac 0 = disabled.
+  double max_sector_size_frac = 0.0;
+  int    sector_size_threshold = 88;  // only consulted when frac > 0
+
+  // (b) adaptive growth (TNT increase/selfact/moveon).  Ramp the sector-size
+  //     window's upper bound from sector_grow_start up to the effective cap,
+  //     doing `selfact`-derived selections at each size, growing the bound by
+  //     `increase` percent per band, and stopping early after `moveon`
+  //     consecutive non-improving selections.  Env kill-switch TS_SECT_GROW
+  //     ("0" forces off, any other value forces on); TS_SECT_GROW_INC /
+  //     _SELFACT / _MOVEON / _START override the individual knobs.
+  //     sector_grow_increase 0 = disabled (fixed-size selection).
+  int sector_grow_increase = 0;  // TNT `increase` (percent per band)
+  int sector_grow_selfact  = 0;  // TNT `selfact` (0 = auto per-band budget)
+  int sector_grow_moveon   = 0;  // TNT `moveon`  (0 = no early stop)
+  int sector_grow_start    = 0;  // initial window upper bound (0 = min size)
 };
 
 struct SectorResult {

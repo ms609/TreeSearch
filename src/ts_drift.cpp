@@ -319,7 +319,8 @@ static bool drift_apply_tbr_move(
 static int drift_phase(TreeState& tree, const DataSet& ds,
                        int afd_limit, double rfd_limit,
                        int max_changes, std::mt19937& rng,
-                       ConstraintData* cd = nullptr) {
+                       ConstraintData* cd = nullptr,
+                       const std::vector<bool>* sector_mask = nullptr) {
   bool constrained = cd && cd->active;
   if (constrained) update_constraint(tree, *cd);
   double score = drift_full_rescore(tree, ds);
@@ -347,6 +348,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     if (node == tree.n_tip) continue;
     // Skip clips where subtree > n/2 (same optimization as tbr_search)
     if (subtree_sizes[node] > half_n) continue;
+    // Sector-mask: only clip inside the masked clade (pins out-of-mask nodes,
+    // e.g. a sector's HTU pseudo-tip and the synthetic root edge).
+    if (sector_mask && !(*sector_mask)[node]) continue;
     clip_candidates.push_back(node);
   }
 
@@ -473,6 +477,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     for (auto& [above, below] : main_edges) {
       if (above == nz && below == ns) continue;
       if (constrained && regraft_violates_constraint(below, *cd)) continue;
+      // Sector-mask: only regraft onto edges inside the masked clade.
+      if (sector_mask && !(*sector_mask)[below]) continue;
       // Collapsed-region regraft merging: skip interior collapsed edges.
       if (!collapsed.empty() && collapsed[below])
         continue;
@@ -525,6 +531,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
           if (above == nz && below == ns) continue;
           if (constrained && regraft_violates_constraint(below, *cd))
             continue;
+          // Sector-mask: only regraft onto edges inside the masked clade.
+          if (sector_mask && !(*sector_mask)[below]) continue;
           // Collapsed-region regraft merging (same as SPR loop).
           if (!collapsed.empty() && collapsed[below])
             continue;
@@ -721,7 +729,8 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
 DriftResult drift_search(TreeState& tree, const DataSet& ds,
                          const DriftParams& params,
                          ConstraintData* cd,
-                         std::function<bool()> check_timeout) {
+                         std::function<bool()> check_timeout,
+                         const std::vector<bool>* sector_mask) {
   double best_score = drift_full_rescore(tree, ds);
 
   // No informative characters: all trees have the same score.
@@ -747,7 +756,7 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       // Suboptimal drift phase
       int drift_moves = drift_phase(tree, ds,
                                      params.afd_limit, params.rfd_limit,
-                                     max_drift_changes, rng, cd);
+                                     max_drift_changes, rng, cd, sector_mask);
       total_drift_moves += drift_moves;
     } else {
       // Equal-score drift phase
@@ -758,7 +767,7 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       eq_params.tabu_size = params.tabu_size;
 
       TBRResult eq_result = tbr_search(tree, ds, eq_params, cd,
-                                        nullptr, nullptr, check_timeout);
+                                        sector_mask, nullptr, check_timeout);
       total_drift_moves += eq_result.n_accepted;
     }
 
@@ -770,7 +779,7 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
     search_params.tabu_size = params.tabu_size;
 
     TBRResult search_result = tbr_search(tree, ds, search_params, cd,
-                                          nullptr, nullptr, check_timeout);
+                                          sector_mask, nullptr, check_timeout);
     total_tbr_moves += search_result.n_accepted;
 
     // Update best if improved
