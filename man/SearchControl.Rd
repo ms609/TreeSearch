@@ -39,6 +39,13 @@ SearchControl(
   sectorMaxHits = 1L,
   sectorCollapseTarget = 0L,
   rssPicks = 0L,
+  sectorGoDrift = 0L,
+  sectorGoComb = 0L,
+  sectorDriftCycles = 5L,
+  sectorDriftAfd = 3L,
+  sectorDriftRfd = 0.1,
+  sectorCombStarts = 3L,
+  sectorFuseRounds = 3L,
   postRatchetSectorial = FALSE,
   fuseInterval = 3L,
   fuseAcceptEqual = FALSE,
@@ -209,6 +216,34 @@ rounds of global \acronym{TBR} in random sectorial search.  \code{0} (default)
 auto-sizes to \code{2 * nTip / meanSectorSize} (~5).  Higher values chain more
 sequential sector replacements before the next global cleanup, matching the
 ~20-25 of \insertCite{Goloboff1999;textual}{TreeSearch} / \acronym{TNT}.}
+
+\item{sectorGoDrift, sectorGoComb}{Integer; size thresholds (in real sector
+tips) above which a sector is solved by tree-drifting (\code{sectorGoDrift}) or by
+combined analysis (\code{sectorGoComb}) instead of plain
+\acronym{RAS}+\acronym{TBR}, following \acronym{TNT}'s \code{sectsch}
+\code{godrift}/\code{gocomb}.  Small sectors are cheap to optimise exhaustively; large
+sectors have more reach but need drift to escape their own local optima.
+\code{sectorGoComb} solves the sector with \code{sectorCombStarts} \acronym{RAS}+drift
+starts and then \emph{fuses} them (recombines shared clades across the starts over
+\code{sectorFuseRounds} rounds), keeping the fused tree only if it beats the best
+start.  \code{sectorGoComb} takes precedence when both trigger.  \code{0} (default)
+disables each, leaving all sectors on \acronym{RAS}+\acronym{TBR}.  To
+exercise these, also raise \code{sectorMaxSize} so large sectors are selected.}
+
+\item{sectorDriftCycles}{Integer; drift cycles used when a sector is solved by
+drift or combined analysis (\acronym{TNT} \code{drift}).}
+
+\item{sectorDriftAfd}{Integer; absolute-fit-difference limit (steps) for
+in-sector drift.}
+
+\item{sectorDriftRfd}{Numeric; relative-fit-difference limit for in-sector
+drift.}
+
+\item{sectorCombStarts}{Integer; \acronym{RAS}+drift starts per combined
+sector (\acronym{TNT} \code{combstarts}).}
+
+\item{sectorFuseRounds}{Integer; max fuse rounds for the combined-analysis
+recombination sub-step (\acronym{TNT} \code{fuse}).}
 
 \item{postRatchetSectorial}{Logical; when \code{TRUE}, run XSS+RSS+CSS again
 after ratchet perturbation using the same round counts.  Approximates

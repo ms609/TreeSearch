@@ -77,13 +77,15 @@ engine.
 }
 
 Other split support functions:
+\code{\link[=Bremer]{Bremer()}},
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
-\code{\link{SiteConcordance}}
+\code{\link{SiteConcordance}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 
 Other custom search functions:
 \code{\link[=EdgeListSearch]{EdgeListSearch()}},

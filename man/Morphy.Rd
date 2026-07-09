@@ -396,13 +396,15 @@ Morphy(characters, constraint = constraint, verbosity = 0)
 Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
 
 Other split support functions:
+\code{\link[=Bremer]{Bremer()}},
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
-\code{\link{SiteConcordance}}
+\code{\link{SiteConcordance}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

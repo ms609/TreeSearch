@@ -58,6 +58,16 @@ struct ConstraintData {
   int expected_score = 0;
   bool has_posthoc = false;
 
+  // --- Negative (converse) constraints: forbidden clades ---
+  // A tree is REJECTED if it displays ANY of these bipartitions.  Used for
+  // Bremer support (the shortest tree that does NOT contain a given clade).
+  // Stored as canonicalized tip bitmasks (tip 0 outside), exactly like
+  // split_tips.  Independent of the positive splits above: a ConstraintData
+  // may carry positive splits, negative splits, or (for Bremer) only negative.
+  bool neg_active = false;
+  int n_neg_splits = 0;
+  std::vector<uint64_t> neg_split_tips;  // n_neg_splits * n_words
+
   // Per-clip workspace (reused across clips, sized at init)
   std::vector<ClipZone> clip_zones;          // [n_splits]
   std::vector<uint64_t> clip_tip_mask;       // [n_words]
@@ -131,6 +141,23 @@ bool violates_constraint_posthoc(const TreeState& tree,
 // Returns array of size n_node * n_words.
 // For tips: bit[t] = 1. For internal nodes: OR of children.
 std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words);
+
+// --- Negative (converse) constraints ---
+
+// Add negative (converse) constraints from an R-side split matrix
+// (n_neg rows x n_tips cols, column-major, 0/1 membership).  A tree that
+// displays any of these bipartitions is rejected.  Initializes `cd` (active,
+// n_words, DFS arrays, clip workspace) if it is not already built, so a
+// negative-only ConstraintData is safe to pass through the positive-constraint
+// machinery (which then runs as a no-op over zero positive splits).
+void add_negative_constraint(
+    ConstraintData& cd, const int* neg_matrix, int n_neg, int n_tips);
+
+// Returns true if the tree currently displays any forbidden clade.  The tree
+// is rooted on tip 0, so a canonical (tip-0-outside) bipartition is displayed
+// iff some internal node's subtree tip mask equals it -- the same test
+// map_constraint_nodes() uses to locate a positive split.
+bool displays_forbidden_clade(const TreeState& tree, const ConstraintData& cd);
 
 // Repair constraint violations by minimal SPR moves.
 // After return, all constraint splits are displayed and

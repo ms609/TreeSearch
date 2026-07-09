@@ -85,13 +85,15 @@ Generate trees by jackknife resampling using \code{\link[=Resample]{Resample()}}
 parsimony searches, or \code{\link[=Jackknife]{Jackknife()}} for custom search criteria.
 
 Other split support functions:
+\code{\link[=Bremer]{Bremer()}},
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
-\code{\link{SiteConcordance}}
+\code{\link{SiteConcordance}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

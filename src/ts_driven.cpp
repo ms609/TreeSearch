@@ -143,6 +143,19 @@ ReplicateResult run_single_replicate(
     }
   }
 
+  // Converse-constraint (Bremer) search: guarantee a start tree that does NOT
+  // display any forbidden clade.  A Wagner tree often builds the very clade we
+  // must avoid, and the guarded TBR below cannot climb out of it downhill, so
+  // the pool would stay empty.  Random topologies almost never display an
+  // arbitrary clade, so fall back to them until one is clean.
+  if (cd && cd->neg_active && displays_forbidden_clade(result.tree, *cd)) {
+    int tries = 0;
+    do {
+      random_topology_tree(result.tree, ds);
+    } while (displays_forbidden_clade(result.tree, *cd) && ++tries < 100);
+    best_wag = score_tree(result.tree, ds);
+  }
+
   result.timings.wagner_ms = ph_lap();
   if (verbosity >= 2) {
     if (starting_tree) {
@@ -660,6 +673,14 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
   // Reset the candidate-evaluation counter for this search (serial path).
   ds.n_candidates_evaluated = 0;
+
+  // Converse-constraint (Bremer) search: make the pool reject any tree that
+  // displays a forbidden clade, so the returned best tree/score can never
+  // contain it regardless of which phase produced the candidate.  The TBR
+  // hill-climber (above) additionally steers the search into that space.
+  if (cd && cd->neg_active) {
+    pool.set_forbidden(cd);
+  }
 
   bool use_timeout = params.max_seconds > 0.0;
   auto start_time = std::chrono::steady_clock::now();

@@ -1291,6 +1291,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
   // Initialize constraint mapping if active
   bool constrained = cd && cd->active;
+  // Negative (converse) constraint: reject any accepted move whose result
+  // displays a forbidden clade, directing the hill-climb into the space of
+  // trees that lack it (used for Bremer support).
+  bool neg_constrained = cd && cd->neg_active;
   if (constrained) {
     update_constraint(tree, *cd);
   }
@@ -2335,6 +2339,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             compute_dfs_timestamps(tree, *cd);
             continue;
           }
+        }
+
+        // Negative-constraint guard: reject any move whose resulting tree
+        // displays a forbidden clade.  Mirrors the positive post-hoc block
+        // above (revert the applied move and skip), keeping every accepted
+        // tree -- and hence best_score and the pool -- free of the clade.
+        if (neg_constrained && displays_forbidden_clade(tree, *cd)) {
+          restore_topology(tree, snap);
+          state_snap.restore(tree);
+          score_fresh = true;
+          if (constrained) {
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+          }
+          continue;
         }
 
         // Compute topology hash for tabu checking

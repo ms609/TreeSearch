@@ -65,12 +65,14 @@ plot(tree, edge.color = paint$edgeCol, edge.width = 2)
 \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}}, \code{\link[=ConcordanceTable]{ConcordanceTable()}}
 
 Other split support functions:
+\code{\link[=Bremer]{Bremer()}},
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PresCont]{PresCont()}},
-\code{\link{SiteConcordance}}
+\code{\link{SiteConcordance}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }
 \concept{split support functions}

@@ -57,6 +57,38 @@
 }
 
 # Internal helper: prepare constraint data for C++ engine.
+# Build the forbidden-clade (negative / converse constraint) matrix for the
+# C++ engine.  A tree that displays any of these bipartitions will be rejected.
+# @param negConstraint A `Splits` object, or anything `as.Splits()` accepts
+#   (e.g. a `phylo`), giving the clade(s) to forbid.
+# @param dataset A phyDat whose names define the tip ordering.
+# @return An integer n_neg x n_tips membership matrix (columns in dataset tip
+#   order), or NULL if there is nothing to forbid.
+# @keywords internal
+#' @importFrom TreeTools as.Splits
+.PrepareNegativeConstraint <- function(negConstraint, dataset) {
+  if (is.null(negConstraint)) return(NULL)
+  tipLabels <- names(dataset)
+  if (!inherits(negConstraint, "Splits")) {
+    negConstraint <- as.Splits(negConstraint, tipLabels = tipLabels)
+  }
+  if (length(negConstraint) == 0L) return(NULL)
+
+  # as.logical(<Splits>) yields an n_splits x n_tips logical membership matrix.
+  membership <- as.logical(negConstraint)
+  if (is.null(dim(membership))) {
+    membership <- matrix(membership, nrow = 1L)
+  }
+  splitLabels <- attr(negConstraint, "tip.label")
+  colOrder <- match(tipLabels, splitLabels)
+  if (anyNA(colOrder)) {
+    stop("Forbidden-clade taxa do not match the dataset taxa.")
+  }
+  membership <- membership[, colOrder, drop = FALSE]
+  storage.mode(membership) <- "integer"
+  membership
+}
+
 # Returns a named list of constraint arguments (empty list if no constraint).
 # @param constraint A phyDat, phylo, or NULL.
 # @param dataset A phyDat whose names define the tip ordering.
@@ -585,6 +617,12 @@
 #'   attributes:
 #'   \describe{
 #'     \item{`score`}{Best parsimony score.}
+#'     \item{`scores`}{Present only when `collapse = FALSE`: a numeric vector of
+#'       the parsimony score of each returned tree, aligned with the returned
+#'       `multiPhylo` (the same values are attached as a `score` attribute on
+#'       each individual tree).  With `poolSuboptimal > 0` this exposes the
+#'       retained suboptimal pool for landscape analysis (see
+#'       [`SuboptimalTrees()`], [`Suboptimality()`]).}
 #'     \item{`replicates`}{Number of replicates completed.}
 #'     \item{`hits_to_best`}{Number of independent discoveries of the best
 #'       score.}
@@ -648,6 +686,7 @@ MaximizeParsimony <- function(
     inapplicable = "bgs",
     hsj_alpha = 1.0,
     constraint,
+    .negativeConstraint = NULL,
     strategy = "auto",
     maxReplicates = 96L,
     targetHits = NULL,
@@ -973,6 +1012,18 @@ MaximizeParsimony <- function(
     cli_alert_info("Constraint: {nrow(consArgs$consSplitMatrix)} split{?s}")
   }
 
+  # Negative (converse) constraints: forbidden clades.  Internal argument used
+  # by Bremer() -- the returned trees must NOT display any supplied split.
+  if (!is.null(.negativeConstraint)) {
+    negMatrix <- .PrepareNegativeConstraint(.negativeConstraint, dataset)
+    if (!is.null(negMatrix)) {
+      consArgs[["consNegSplitMatrix"]] <- negMatrix
+      if (verbosity > 0L) {
+        cli_alert_info("Forbidding {nrow(negMatrix)} clade{?s}")
+      }
+    }
+  }
+
   # --- Profile parsimony: extract info_amounts ---
   profileArgs <- list()
   if (useProfile) {
@@ -1064,6 +1115,11 @@ MaximizeParsimony <- function(
     resultTrees <- list()
   }
   nTopologies <- result$n_topologies
+  # Per-tree scores aligned with result$trees; surfaced only in the collapse =
+  # FALSE path (the collapse = TRUE path keeps only best-score trees, so their
+  # scores are all result$best_score and the collapsed/deduped list no longer
+  # aligns with result$scores).  NULL here -> no "scores" attribute is attached.
+  perTreeScores <- NULL
   if (isTRUE(collapse) && length(resultTrees) > 0L) {
     # Contract zero-length (unsupported) branches into polytomies, à la TNT's
     # "collapse zero-length branches" -- done entirely in C++ (ts_collapse_pool)
@@ -1112,9 +1168,26 @@ MaximizeParsimony <- function(
       # C++ edge order may differ from template; renumber to valid preorder
       Renumber(tr)
     })
+    # Surface the per-tree parsimony scores the engine returns aligned with
+    # result$trees.  Attaching a "score" attribute to each tree lets
+    # Suboptimality(), SuboptimalTrees() and Bremer(method = "pool") read the
+    # suboptimal pool's landscape directly without re-scoring.
+    perTreeScores <- result$scores
+    if (length(perTreeScores) == length(outTrees)) {
+      outTrees <- Map(function(tr, sc) {
+        attr(tr, "score") <- sc
+        tr
+      }, outTrees, perTreeScores)
+    } else {
+      perTreeScores <- NULL
+    }
   }
   if (length(outTrees) == 0L) {
     outTrees <- list(treeTpl)
+    if (!isTRUE(collapse)) {
+      attr(outTrees[[1]], "score") <- result$best_score
+      perTreeScores <- result$best_score
+    }
   }
 
   # --- Output ---
@@ -1137,6 +1210,7 @@ MaximizeParsimony <- function(
   structure(
     outTrees,
     score = result$best_score,
+    scores = perTreeScores,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
     n_topologies = nTopologies,
