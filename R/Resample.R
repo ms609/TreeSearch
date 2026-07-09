@@ -189,6 +189,14 @@
 #' @return `Resample()` returns a `multiPhylo` object containing one best tree
 #' per resample replicate.
 #' @examples
+#' data("inapplicable.phyData", package = "TreeSearch")
+#' dataset <- inapplicable.phyData[["Vinther2008"]]
+#' result <- MaximizeParsimony(
+#'   dataset,
+#'   inapp = "missing",
+#'   maxReplicates = 12L,
+#'   targetHits = 4L
+#' )
 #' jackTrees <- Resample(dataset, result[[1]], nReplicates = 10, inapp = "miss")
 #' JackLabels(result[[1]], jackTrees)
 #' 
