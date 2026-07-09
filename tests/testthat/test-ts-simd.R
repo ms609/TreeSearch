@@ -55,19 +55,18 @@ test_that("EW scores match known-good values on inapplicable datasets (pectinate
 
 test_that("EW scores match known-good values on inapplicable datasets (random)", {
   golden <- c(
-    Agnarsson2004 = 1958, Aguado2009 = 1228, Aria2015 = 299,
-    Asher2005 = 556, Capa2011 = 1524, Conrad2008 = 3533,
-    DeAssis2011 = 272, Dikow2009 = 3552, Eklund2004 = 1068,
-    Geisler2001 = 2372
+    Agnarsson2004 = 1948, Aguado2009 = 1238, Aria2015 = 296,
+    Asher2005 = 604, Capa2011 = 1531, Conrad2008 = 3515,
+    DeAssis2011 = 302, Dikow2009 = 3536, Eklund2004 = 1052,
+    Geisler2001 = 2394
   )
-  set.seed(7142)
   for (ds_name in names(inapplicable.phyData)[1:10]) {
     dataset <- inapplicable.phyData[[ds_name]]
-    tree <- Preorder(RandomTree(dataset, root = TRUE))
+    tree <- FixedTree(dataset, 7142)
     ds <- make_ts_data(dataset)
     ew <- ts_score(tree, ds)
     expect_equal(ew, unname(golden[[ds_name]]),
-                 label = paste(ds_name, "random EW"))
+                 label = paste(ds_name, "non-pectinate EW"))
   }
 })
 
@@ -184,17 +183,16 @@ test_that("Driven search produces valid results", {
 test_that("NA three-pass scoring matches known-good values across datasets", {
   # 5 datasets that heavily exercise NA scoring
   golden <- c(
-    Vinther2008 = 188, Agnarsson2004 = 1964, Wills2012 = 712,
-    Aria2015 = 292, Zhu2013 = 2256
+    Vinther2008 = 215, Agnarsson2004 = 2011, Wills2012 = 737,
+    Aria2015 = 308, Zhu2013 = 2201
   )
-  set.seed(5063)
   for (ds_name in names(golden)) {
     dataset <- inapplicable.phyData[[ds_name]]
-    tree <- Preorder(RandomTree(dataset, root = TRUE))
+    tree <- FixedTree(dataset, 5063)
     ds <- make_ts_data(dataset)
     ew <- ts_score(tree, ds)
     expect_equal(ew, unname(golden[[ds_name]]),
-                 label = paste(ds_name, "NA random EW"))
+                 label = paste(ds_name, "NA fixed-tree EW"))
   }
 })
 

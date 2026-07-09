@@ -17,6 +17,47 @@ suppressMessages(suppressPackageStartupMessages(
   requireNamespace("phangorn", quietly = TRUE)
 ))
 
+#' Deterministic LCG (Numerical Recipes constants). Double arithmetic keeps
+#' every intermediate exact (well within 2^53) and sidesteps the 32-bit
+#' integer overflow a literal integer LCG would hit.
+.lcg_next <- function(state) (1664525 * state + 1013904223) %% 2147483647
+
+#' A fixed, non-pectinate tree for a dataset, built deterministically by
+#' successive random-edge tip insertion (the same construction RandomTree()
+#' uses), but driven by a self-contained LCG rather than R's set.seed() +
+#' sample(). This keeps the topology stable across R versions and
+#' platforms, since it never touches R's RNG stream — unlike
+#' set.seed()+RandomTree(), whose output would silently change if R's
+#' sampling algorithm ever changes.
+#'
+#' Attempting to reuse TreeTools::as.phylo.numeric() (TreeNumber) for this
+#' was tried and rejected: small index values map to a near-pectinate
+#' topology for these tip counts (Colless index ~1.0, i.e. no more mixed
+#' than PectinateTree()), because the mixed-radix place values are
+#' dominated by the first few leaves for any index much smaller than
+#' NUnrooted(nTip). This LCG builder instead reliably lands at Colless
+#' index ~0.2-0.4 (vs. 1.0 for pectinate, ~0 for a fully balanced tree)
+#' across the datasets these tests use.
+FixedTree <- function(dataset, index) {
+  tipLabels <- names(dataset)
+  n <- length(tipLabels)
+  edge <- matrix(c(n + 1L, 1L, n + 1L, 2L), ncol = 2, byrow = TRUE)
+  next_node <- n + 2L
+  state <- index %% 2147483647
+  for (k in seq_len(n - 2L) + 2L) {
+    state <- .lcg_next(state)
+    pick <- (state %% nrow(edge)) + 1L
+    parent <- edge[pick, 1]
+    child <- edge[pick, 2]
+    edge[pick, ] <- c(parent, next_node)
+    edge <- rbind(edge, c(next_node, child), c(next_node, k))
+    next_node <- next_node + 1L
+  }
+  tree <- list(edge = edge, tip.label = tipLabels, Nnode = n - 1L)
+  class(tree) <- "phylo"
+  TreeTools::Preorder(tree)
+}
+
 #' Convert phyDat object to the list format expected by ts_* C++ bridges
 make_ts_data <- function(dataset) {
   at <- attributes(dataset)
