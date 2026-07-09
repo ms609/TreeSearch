@@ -51,6 +51,12 @@
 #' @param format Character specifying return format, as in [`JackLabels()`]:
 #' `"numeric"` (default) returns named numeric values for further analysis;
 #' `"character"` returns a vector shaped for `phylo$node.label`.
+#' @param cl Optional \pkg{parallel} cluster (e.g. from
+#' [`parallel::makeCluster()`]) over which to distribute the per-clade converse
+#' searches of `method = "constraint"`.  Each clade is an independent search, so
+#' this gives a near-linear speed-up for trees with many clades; workers must
+#' have \pkg{TreeSearch} loaded.  `NULL` (default) runs serially.  Ignored by
+#' `method = "pool"`.
 #' @inheritParams MaximizeParsimony
 #' @param \dots Further arguments passed to [`MaximizeParsimony()`] /
 #' [`SuboptimalTrees()`], e.g. `maxReplicates`, `maxSeconds`, `strategy`,
@@ -89,7 +95,7 @@ Bremer <- function(tree, dataset,
                    hsj_alpha = 1.0,
                    method = c("constraint", "pool"),
                    maxBremer = Inf, optimalScore = NULL,
-                   format = "numeric", ...) {
+                   format = "numeric", cl = NULL, ...) {
   method <- match.arg(method)
 
   scoringArgs <- list(concavity = concavity, extended_iw = extended_iw,
@@ -112,8 +118,14 @@ Bremer <- function(tree, dataset,
   # criteria (e.g. an equal-weights length minus an implied-weights optimum).
   .BremerCheckScoring(tree, dataset, scoringArgs, optimalScore)
 
-  engine <- if (method == "pool") .BremerPool else .BremerConstraint
-  res <- engine(ref, dataset, scoringArgs, maxBremer, list(...))
+  res <- if (method == "pool") {
+    if (!is.null(cl)) {
+      warning("`cl` is ignored for method = \"pool\" (a single pooled search).")
+    }
+    .BremerPool(ref, dataset, scoringArgs, maxBremer, list(...))
+  } else {
+    .BremerConstraint(ref, dataset, scoringArgs, maxBremer, list(...), cl = cl)
+  }
 
   .BremerFormat(res$bremer, res$censored, ref$reference, format)
 }
@@ -292,7 +304,8 @@ Bremer <- function(tree, dataset,
 # path (drift, in-sector drift, simulated annealing) are disabled -- they would
 # otherwise wander onto the clade and, being worse-accepting, report it as
 # unsupported.  Runs serially: the pool guard is on the serial search path.
-.BremerConstraint <- function(ref, dataset, scoringArgs, maxBremer, dots) {
+.BremerConstraint <- function(ref, dataset, scoringArgs, maxBremer, dots,
+                              cl = NULL) {
   disabled <- list(
     driftCycles = 0L, sectorGoDrift = 0L, sectorDriftCycles = 0L,
     annealCycles = 0L
@@ -372,7 +385,13 @@ Bremer <- function(tree, dataset,
     s
   }
 
-  scores <- vapply(seq_along(splitNames), processConverse, double(1))
+  # Per-clade searches are independent; fan them out over `cl` when supplied.
+  # The default (cl = NULL) keeps the original serial vapply, bit-for-bit.
+  scores <- if (is.null(cl)) {
+    vapply(seq_along(splitNames), processConverse, double(1))
+  } else {
+    .BremerConverseScores(length(splitNames), processConverse, cl = cl)
+  }
 
   if (anyNA(scores)) {
     warning(sum(is.na(scores)), " converse-constraint search(es) found no tree ",

@@ -18,6 +18,7 @@ Bremer(
   maxBremer = Inf,
   optimalScore = NULL,
   format = "numeric",
+  cl = NULL,
   ...
 )
 }
@@ -112,6 +113,13 @@ redundant search.}
 \item{format}{Character specifying return format, as in \code{\link[=JackLabels]{JackLabels()}}:
 \code{"numeric"} (default) returns named numeric values for further analysis;
 \code{"character"} returns a vector shaped for \code{phylo$node.label}.}
+
+\item{cl}{Optional \pkg{parallel} cluster (e.g. from
+\code{\link[parallel:makeCluster]{parallel::makeCluster()}}) over which to distribute the per-clade converse
+searches of \code{method = "constraint"}.  Each clade is an independent search, so
+this gives a near-linear speed-up for trees with many clades; workers must
+have \pkg{TreeSearch} loaded.  \code{NULL} (default) runs serially.  Ignored by
+\code{method = "pool"}.}
 
 \item{\dots}{Further arguments passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} /
 \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, e.g. \code{maxReplicates}, \code{maxSeconds}, \code{strategy},
