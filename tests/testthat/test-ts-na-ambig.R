@@ -123,6 +123,14 @@ test_that("same-state {-,X} tips join the applicable region for free", {
   dat_distinct <- make_ambig_phyDat(c("{-1}", "{-2}", "{-3}", "2", "2", "3", "3"),
                                     tree$tip.label, lvls, ambig)
   expect_equal(TreeLength(tree, dat_distinct), 3L)
+
+  # Distinctness alone is not what costs: the ARRANGEMENT does.  Interleaving so
+  # each resolved state abuts its neighbours ({-1}{-2}22{-3}33 -> 1 2 2 2 3 3 3)
+  # gives a clean 1->2->3 gradient on the caterpillar -> length 2, one fewer
+  # than the isolated-state layout above.
+  dat_gradient <- make_ambig_phyDat(c("{-1}", "{-2}", "2", "2", "{-3}", "3", "3"),
+                                    tree$tip.label, lvls, ambig)
+  expect_equal(TreeLength(tree, dat_gradient), 2L)
 })
 
 
