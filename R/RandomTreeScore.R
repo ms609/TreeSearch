@@ -1,13 +1,13 @@
 #' Parsimony score of random tree
-#' 
+#'
 #' Generates a random tree topology and returns its parsimony score under
 #' equal weights.
-#' 
-#' @param dataset A `phyDat` object (recommended) or a Morphy object created
-#'   with [`PhyDat2Morphy()`] (legacy; deprecated).
+#'
+#' @param dataset A `phyDat` object (recommended), or a `ParsimonyData` object
+#'   created with [`PrepareData()`].
 #'
 #' @return `RandomTreeScore()` returns a numeric parsimony score.
-#' @examples 
+#' @examples
 #' tokens <- matrix(c(
 #'   0, "-", "-", 1, 1, 2,
 #'   0, 1, 0, 1, 2, 2,
@@ -18,14 +18,16 @@
 #' @importFrom TreeTools RandomTree
 #' @export
 RandomTreeScore <- function(dataset) {
-  if (inherits(dataset, "morphyPtr")) {
-    nTip <- mpl_get_numtaxa(dataset)
-    if (nTip < 2) {
-      return(0L)
+  if (is.ParsimonyData(dataset)) {
+    labels <- dataset[["tip.label"]]
+    if (length(labels) < 2L) {
+      return(0)
     }
-    return(.Call(`RANDOM_TREE_SCORE`, as.integer(nTip), dataset))
+    tree <- RandomTree(labels, root = TRUE)
+    # Return:
+    return(TreeScore(tree, dataset))
   }
-  
+
   nTip <- length(dataset)
   if (nTip < 2) {
     return(0)
@@ -35,22 +37,22 @@ RandomTreeScore <- function(dataset) {
 }
 
 #' Random postorder tree
-#' 
+#'
 #' @param nTip Integer specifying the number of tips to include in the tree
 #' (minimum 2).
 #'
-#' @return A list with three elements, each a vector of integers, respectively 
+#' @return A list with three elements, each a vector of integers, respectively
 #' containing:
-#' 
+#'
 #'  - The parent of each tip and node, in order
-#'         
+#'
 #'  - The left child of each node
-#'         
+#'
 #'  - The right child of each node.
 #'
 #' @family tree generation functions
 #' @export
-RandomMorphyTree <- function (nTip) {  
+RandomPostorderTree <- function (nTip) {
   if (nTip < 2) {
     stop("nTip < 2 not implemented: a tip is not a tree.")
   }

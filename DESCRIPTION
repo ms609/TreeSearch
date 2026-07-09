@@ -10,14 +10,18 @@ Authors@R: c(
     ),
     person(
       given = "Martin", family = "Brazeau",
-      role = c("cph"),
-      comment = c(ORCID = "0000-0002-0650-1282", "Morphy library")
+      role = c("ctb"),
+      comment = c(ORCID = "0000-0002-0650-1282",
+                  "Brazeau-Guillerme-Smith inapplicable-data algorithm")
+    ),
+    person(
+      given = "Thomas", family = "Guillerme",
+      role = c("ctb"),
+      comment = c(ORCID = "0000-0003-4325-1275",
+                  "Brazeau-Guillerme-Smith inapplicable-data algorithm")
     )
   )
 License: GPL (>= 3)
-Copyright: Incorporates C/C++ code from
-   Morphy Phylogenetic Library by Martin Brazeau 
-   <https://github.com/mbrazeau/MorphyLib> (GPL3)
 Description: Reconstruct phylogenetic trees from discrete data using a
   high-performance C++ search engine with multi-replicate driven search.
   Supports equal weights, implied weights (Goloboff, 1993)
@@ -102,7 +106,6 @@ Collate:
   'LeastSquares.R'
   'SearchControl.R'
   'MaximizeParsimony.R'
-  'Morphy.R'
   'NNI.R'
   'PaintCharacters.R'
   'ParsSim.R'
@@ -113,12 +116,12 @@ Collate:
   'RandomTreeScore.R'
   'Ratchet.R'
   'RcppExports.R'
+  'Resample.R'
   'ts-driven-compat.R'
   'ReleaseQuestions.R'
   'recode_hierarchy.R'
   'SPR.R'
   'ScoreSpectrum.R'
-  'Sectorial.R'
   'SuccessiveApproximations.R'
   'TBR.R'
   'TaxonInfluence.R'
@@ -129,8 +132,8 @@ Collate:
   'data_manipulation.R'
   'fractional-weights.R'
   'length_range.R'
-  'mpl_morphy_objects.R'
-  'mpl_morphyex.R'
+  'PrepareData.R'
+  'morphy-deprecated.R'
   'pp_info_extra_step.r'
   'tree_length.R'
   'tree_rearrangement.R'

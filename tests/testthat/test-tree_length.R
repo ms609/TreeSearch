@@ -28,12 +28,11 @@ test_that("Deprecations throw warning", {
 })
 
 test_that("Simple EW scoring is correct", {
-  # From test-RMorphy.R: verified against MorphyLib preorder_morphy()
   tree <- Preorder(RootTree(BalancedTree(6), 1))
   dat <- MatrixToPhyDat(matrix(c(0, 1, 0, 1, 0, 1,
-                                  0, 0, 0, 1, 1, 1), byrow = FALSE, 6,
+                                 0, 0, 0, 1, 1, 1), byrow = FALSE, 6,
                                 dimnames = list(TipLabels(6), NULL)))
-  expect_equal(4, TreeLength(tree, dat))
+  expect_equal(TreeLength(tree, dat), 4)
 })
 
 test_that("Inapplicable characters scored correctly", {
@@ -82,7 +81,7 @@ test_that("Inapplicable characters scored correctly", {
                   "320--??3--21", # 37, expect score = 5
                   "000011110000"  # 38, expect score = 2
                   ) 
-  ## Expected per-character results (verified against MorphyLib and C++ engine)
+  ## Expected per-character results
   expected_results <- c(5, 2, 3, 2, 1, 5, 5, 2, 5, 2, 2, 4, 3, 2, 5, 0, 5, 2,
                         4, 5, 2, 4, 3, 3, 2, 5, 1, 4, 4, 0, 5, 5, 4, 5, 2, 1, 
                         3, 5, 2)
@@ -206,8 +205,7 @@ test_that("Profile scoring is reported correctly", {
   
   expect_equal(TreeLength(tree, dataset, "profile"),
                TreeLength(tree, prepDataset, "profile"))
-  # Reference value verified against MorphyLib morphy_profile()
-  expect_equal(653.4463, TreeLength(tree, prepDataset, "profile"),
+  expect_equal(TreeLength(tree, prepDataset, "profile"), 653.4463,
                tolerance = 1e-3)
 })
 

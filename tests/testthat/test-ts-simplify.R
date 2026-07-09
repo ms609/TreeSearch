@@ -193,20 +193,6 @@ test_that("Driven search finds correct best score with singletons", {
 })
 
 
-# ===== Regression: inapplicable datasets not affected =====
-
-test_that("Inapplicable dataset scores match morphy (simplification skipped)", {
-  skip_if_not_installed("TreeSearch")
-  dataset <- TreeSearch::inapplicable.phyData$Vinther2008
-  ds <- make_ts_data(dataset)
-  tree <- TreeTools::PectinateTree(dataset)
-
-  score <- ts_score(tree, ds)
-  morphy_score <- suppressWarnings(TreeSearch::Fitch(tree, dataset))
-  expect_equal(score, morphy_score)
-})
-
-
 # ===== Reproducibility =====
 
 test_that("Driven search is reproducible with simplification", {

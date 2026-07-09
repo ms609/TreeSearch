@@ -4,7 +4,7 @@
 #' any tree.
 #' 
 #' Ambiguous inapplicable states (e.g. `{0, -}`) are currently replaced with the
-#' plain inapplicable token `-`, reflecting the current behaviour of Morphy.
+#' plain inapplicable token `-`.
 #' 
 #' @param x An object of class `phyDat`;
 #' or a string to be coerced to a `phyDat` object via 

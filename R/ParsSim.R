@@ -90,6 +90,7 @@
 #' \insertAllCited{}
 #' @importFrom TreeTools MakeTreeBinary MatrixToPhyDat Postorder RootNode
 #' @importFrom TreeTools RootTree
+#' @importFrom stats runif
 #' @family tree scoring
 #' @export
 ParsSim <- function(tree,

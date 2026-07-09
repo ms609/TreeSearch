@@ -9,8 +9,6 @@
 #
 # Scope: tests the cpp-search kernel (ts_tbr_diagnostics -> tbr_search), which is
 # what MaximizeParsimony / driven / ratchet / sector / fuse all route through.
-# The old CustomSearch/TreeSearch path (RootedTBRSwap + Morphy) is separate.
-#
 # Usage: Rscript dev/benchmarks/tbr_oracle.R [nTrees=200] [nTip=12] [unrooted=0]
 suppressMessages({
   library(TreeSearch, lib.loc = normalizePath(Sys.getenv("TS_LIB", ".agent-tbr"),

@@ -118,14 +118,19 @@ if (requireNamespace("MaxMin", quietly = TRUE)) {
 sub10 <- WideSample(trees, 10, effort = 1)
 length(sub10)  # 10
 
-\donttest{
-# Automatic tier selection (exact at this size when 'highs' is installed,
-# otherwise the DropAdd heuristic)
-auto10 <- WideSample(trees, 10)
-
+# The remaining tiers (DropAdd, Grasp, exact) all dispatch to 'MaxMin'/
+# 'highs' solvers whose runtime is environment-dependent (e.g. a
+# from-source 'highs' build can be far slower than the CRAN binary) and
+# whose calling convention tracks 'MaxMin' development. Demonstrate them
+# interactively only.
+if (interactive()) {
 # Pre-computed distances
 dists <- TreeDist::ClusteringInfoDistance(trees)
 sub5 <- WideSample(trees, 5, dist = dists)
+
+# Automatic tier selection (exact at this size when 'highs' is installed,
+# otherwise the DropAdd heuristic)
+auto10 <- WideSample(trees, 10)
 
 # Highest-quality heuristic (Grasp); set a seed for a reproducible selection
 set.seed(1)
@@ -159,10 +164,10 @@ Other tree scoring:
 \code{\link[=LengthAdded]{LengthAdded()}},
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
 \code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
-\code{\link[=TaxonInfluence]{TaxonInfluence()}}
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

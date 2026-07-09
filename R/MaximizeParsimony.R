@@ -61,6 +61,7 @@
 # @param constraint A phyDat, phylo, or NULL.
 # @param dataset A phyDat whose names define the tip ordering.
 # @keywords internal
+#' @importFrom TreeTools AddUnconstrained
 .PrepareConstraint <- function(constraint, dataset) {
   if (is.null(constraint)) return(list())
 
@@ -208,8 +209,7 @@
     # drift is per-replicate overhead -> at a fixed budget thorough completes fewer
     # reps and reaches the optimum somewhat LESS reliably on the general pool; it is
     # a deliberately higher-effort/slower tier that needs a larger replicate budget
-    # to converge.  Folds in the former opt-in `intensive` (wagnerStarts = 5) as an
-    # alias.  NB thorough is auto-selected for 65-119 tips, so this cost lands on the
+    # to converge. NB thorough is auto-selected for 65-119 tips, so this cost lands on the
     # default path there.
     driftCycles = 2L,
     xssRounds = 5L, xssPartitions = 6L,
@@ -328,14 +328,15 @@
 
 #' Find most parsimonious trees
 #'
-#' Performs a multi-replicate driven search for most-parsimonious trees,
-#' combining random addition sequence (Wagner) starting trees, TBR
-#' rearrangement, exclusive sectorial search (XSS), ratchet perturbation,
-#' drift, and tree fusing -- all in compiled C++.
+#' `MaximizeParsimony()` performs a multi-replicate driven search for
+#' most-parsimonious trees, combining random addition sequence (Wagner)
+#' starting trees, tree bisection and reconnection  (\acronym{TBR})
+#' rearrangement, exclusive sectorial search (\acronym{XSS}),
+#' ratchet perturbation, drift, and tree fusing.
 #'
 #' The search pipeline follows the "new technology search" approach of
-#' \insertCite{Goloboff1999;textual}{TreeSearch}, as implemented in TNT
-#' \insertCite{Goloboff2016}{TreeSearch}.
+#' \insertCite{Goloboff1999;textual}{TreeSearch}, and resembles the
+#' implementation in TNT \insertCite{Goloboff2016}{TreeSearch}.
 #' Parsimony scoring uses the Fitch
 #' \insertCite{Fitch1971}{TreeSearch} algorithm; inapplicable characters
 #' are handled with the algorithm of
@@ -351,10 +352,9 @@
 #'
 #' @section Completeness of the returned tree set:
 #' `MaximizeParsimony()` returns the distinct, fully-resolved optimal
-#' topologies held in its tree pool; it does **not** guarantee that every
-#' most-parsimonious tree (MPT) is recovered.  There is no fixed cap on the
-#' number of trees returned (a value such as 256 is not hard-coded anywhere);
-#' the size of the returned set is bounded by, in order:
+#' topologies held in its tree pool; it does not guarantee that every
+#' most-parsimonious tree (\acronym{MPT}) is recovered.
+#' The size of the returned set is bounded by, in order:
 #' \enumerate{
 #'   \item **`poolMaxSize`** (default `100`) — a hard ceiling on the number of
 #'     trees retained.  Raise it (via [`SearchControl()`]) to keep more MPTs;
@@ -376,14 +376,14 @@
 #' contracted into polytomies and the returned set is deduplicated on the
 #' resulting collapsed topologies, so `n_topologies` counts distinct *collapsed*
 #' topologies — the same convention TNT applies under "collapse zero-length
-#' branches", and the count comparable across programs.  This matters because a
-#' single soft polytomy (an unsupported clade of *k* taxa) has \eqn{(2k-3)!!}
+#' branches".
+#' This matters because a single soft polytomy (an unsupported clade of 
+#' \eqn{k} taxa) has \eqn{(2k-3)!!}
 #' equally-parsimonious binary resolutions, so leaving branches resolved can
 #' inflate the apparent number of optimal trees by orders of magnitude without
 #' adding any biological information.  Set `collapse = FALSE` to return
 #' fully-resolved trees instead (one arbitrary resolution per distinct collapsed
-#' topology); the main search and the MPT enumeration then still deduplicate on
-#' the same criterion, so the returned set remains internally consistent.
+#' topology).
 #'
 #' Implied weighting is supported natively: set `concavity` to a numeric
 #' value (e.g.\sspace{}10).
@@ -491,10 +491,6 @@
 #'       sector sizes, 1-cycle simulated annealing instead of drift
 #'       (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
 #'       or exceeds `"thorough"` at 180 tips across all time budgets.}
-#'     \item{`"intensive"`}{Deprecated alias of `"thorough"`, retained for
-#'       backward compatibility.  The extra Wagner starts (5) that once
-#'       distinguished it are now folded into `"thorough"`, so the two are
-#'       identical.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement
@@ -574,12 +570,7 @@
 #'   collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 #'   visible (a constraint encodes external evidence the matrix does not
 #'   capture); unsupported non-constraint branches still collapse.
-#' @param ... Backward compatibility: individual control parameters (e.g.
-#'   `ratchetCycles = 10L`) may still be passed as named arguments.
-#'   These override the corresponding `control` fields and the strategy
-#'   preset.
-#'   Legacy `Morphy()`-style parameters (e.g. `ratchIter`, `tbrIter`) are
-#'   detected and forwarded to [`Morphy()`] with a deprecation warning.
+#' @param ... Backward compatibility.
 #'
 #' @return A `multiPhylo` object containing the best tree(s) found, with
 #'   attributes:
@@ -621,14 +612,18 @@
 #' @examples
 #' data("inapplicable.phyData", package = "TreeSearch")
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
-#' result <- MaximizeParsimony(dataset, maxReplicates = 3L, targetHits = 2L)
+#' result <- MaximizeParsimony(
+#'   dataset,
+#'   inapp = "missing",
+#'   maxReplicates = 12L,
+#'   targetHits = 4L
+#' )
 #' result
 #' attr(result, "score")
 #'
 #' @template MRS
 #' @family tree scoring
-#' @seealso [`Morphy()`] for fine-grained control over the R-level search loop.
-#' [`Resample()`] for jackknife and bootstrap resampling.
+#' @seealso [`Resample()`] for jackknife and bootstrap resampling.
 #' [`SearchControl()`] for expert-level tuning of the search heuristics.
 #' @references
 #' \insertAllCited{}
@@ -683,39 +678,23 @@ MaximizeParsimony <- function(
       maxSeconds <- as.double(dots[["maxTime"]])
     }
     .Deprecated(msg = paste0(
-      "Use `maxSeconds` instead of `maxTime` in MaximizeParsimony().\n",
-      "  `maxTime` was a Morphy()-style parameter; `maxSeconds` is the ",
-      "equivalent for the new C++ search engine."
+      "Use `maxSeconds` instead of `maxTime` in MaximizeParsimony().",
     ))
     dots[["maxTime"]] <- NULL
   }
 
-  # --- Backward compatibility: detect Morphy()-style parameters ---
+  # --- Reject legacy parameters ---
   .morphyParams <- c("ratchIter", "tbrIter", "startIter", "finalIter",
-                      "maxHits", "quickHits", "ratchEW",
-                      "tolerance")
+                     "maxHits", "quickHits", "ratchEW", "tolerance")
   legacyHits <- intersect(names(dots), .morphyParams)
   if (length(legacyHits)) {
-    .Deprecated(
-      "Morphy",
-      msg = paste0(
-        "Parameter", if (length(legacyHits) > 1L) "s", " ",
-        paste0(sQuote(legacyHits), collapse = ", "),
-        " belong", if (length(legacyHits) == 1L) "s", " to `Morphy()`,",
-        " not the new `MaximizeParsimony()`.\n",
-        "  Delegating to `Morphy()`. ",
-        "Please update your code to call `Morphy()` directly ",
-        "or use the new MaximizeParsimony() parameters.\n",
-        "  See ?Morphy and ?MaximizeParsimony for details."
-      )
-    )
-    morphyArgs <- dots
-    morphyArgs$dataset <- dataset
-    if (!missing(tree) && !is.null(tree)) morphyArgs$tree <- tree
-    if (!missing(concavity)) morphyArgs$concavity <- concavity
-    if (!missing(constraint)) morphyArgs$constraint <- constraint
-    if (!missing(verbosity)) morphyArgs$verbosity <- verbosity
-    return(do.call(Morphy, morphyArgs))
+    stop("Parameter", if (length(legacyHits) > 1L) "s", " ",
+         paste0(sQuote(legacyHits), collapse = ", "),
+         if (length(legacyHits) == 1L) "are" else "were",
+         " discontinued in v2.0.0.\n",
+         "  Use this function's own controls instead ",
+         "(see `?SearchControl`, `maxReplicates`, `maxSeconds`).",
+         call. = FALSE)
   }
 
   # --- Resolve control: merge control + ... overrides ---
@@ -1152,13 +1131,35 @@ MaximizeParsimony <- function(
   )
 }
 
-
-#' @rdname MaximizeParsimony
-#' @usage MaximizeParsimony2(...)
-#' @section Deprecated:
-#' `MaximizeParsimony2()` is a deprecated alias for `MaximizeParsimony()`.
+#' Launch tree search graphical user interface
+#'
+#' Opens a "shiny" app for interactive parsimony tree search and results
+#' exploration.
+#'
+#' @return Opens a Shiny application; does not return a value.
+#' @seealso [`MaximizeParsimony()`]
+#' @importFrom TreeDist ClusteringInfoDistance
 #' @export
-MaximizeParsimony2 <- function(...) {
-  .Deprecated("MaximizeParsimony")
-  MaximizeParsimony(...)
+EasyTrees <- function () {#nocov start
+  needed <- c("cluster", "future", "PlotTools", "promises",
+              "protoclust", "Rogue", "shiny", "shinyjs")
+  missing <- needed[!vapply(needed, requireNamespace,
+                            logical(1L), quietly = TRUE)]
+  if (length(missing)) {
+    stop("EasyTrees() requires additional packages: ",
+         paste(missing, collapse = ", "), ".\n",
+         "Install with: install.packages(",
+         paste0("\"", missing, "\"", collapse = ", "), ")",
+         call. = FALSE)
+  }
+  shiny::runApp(system.file("Parsimony", package = "TreeSearch"))
+}
+
+#' @rdname EasyTrees
+#' @export
+EasyTreesy <- EasyTrees
+#nocov end
+
+.UseProfile <- function (concavity) {
+  pmatch(tolower(concavity), "profile", -1L) == 1L
 }

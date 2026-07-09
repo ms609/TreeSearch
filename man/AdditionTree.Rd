@@ -51,7 +51,7 @@ Neighbour-joining trees: \href{https://ms609.github.io/TreeTools/reference/NJTre
 \href{https://ms609.github.io/TreeTools/reference/ConstrainedNJ}{\code{TreeTools::ConstrainedNJ()}}
 
 Other tree generation functions:
-\code{\link[=RandomMorphyTree]{RandomMorphyTree()}}
+\code{\link[=RandomPostorderTree]{RandomPostorderTree()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

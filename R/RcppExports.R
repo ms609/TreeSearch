@@ -31,7 +31,8 @@ MaddisonSlatkin_clear_cache <- function() {
 #' small or unbalanced partitions, where raw mutual information is appreciably
 #' inflated by chance agreement.
 #'
-#' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
+#' The value is computed analytically \insertCite{Vinh2010}{TreeDist},
+#' summing over
 #' the hypergeometric distribution of cell overlaps, and is returned in bits
 #' (logarithms to base two).
 #'
@@ -52,22 +53,6 @@ expected_mi <- function(ni, nj) {
 
 mi_key <- function(ni, nj) {
     .Call(`_TreeSearch_mi_key`, ni, nj)
-}
-
-preorder_morphy <- function(edge, MorphyHandl) {
-    .Call(`_TreeSearch_preorder_morphy`, edge, MorphyHandl)
-}
-
-preorder_morphy_by_char <- function(edge, MorphyHandls) {
-    .Call(`_TreeSearch_preorder_morphy_by_char`, edge, MorphyHandls)
-}
-
-morphy_iw <- function(edge, MorphyHandls, weight, minScore, sequence, concavity, target) {
-    .Call(`_TreeSearch_morphy_iw`, edge, MorphyHandls, weight, minScore, sequence, concavity, target)
-}
-
-morphy_profile <- function(edge, MorphyHandls, weight, sequence, profiles, target) {
-    .Call(`_TreeSearch_morphy_profile`, edge, MorphyHandls, weight, sequence, profiles, target)
 }
 
 quartet_concordance <- function(splits, characters) {

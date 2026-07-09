@@ -10,21 +10,15 @@ the R-level API, or reviewing design decisions.
 | Function | Engine | Purpose |
 |----------|--------|---------|
 | `MaximizeParsimony()` | C++ driven search | Primary search (EW, IW, profile, constraints) |
-| `Morphy()` | R-loop + MorphyLib | Legacy search (custom stopping, per-iteration callbacks) |
-| `MaximizeParsimony2()` | — | Deprecated alias for `MaximizeParsimony()` |
 | `Resample()` | C++ | Jackknife/bootstrap resampling |
 | `SuccessiveApproximations()` | C++ | Successive approximations weighting |
 | `TreeLength()` | C++ `ts_fitch_score` | Score one or more trees |
 | `FastCharacterLength()` | C++ `ts_char_steps` | Per-character step counts |
 | `AdditionTree()` | C++ `ts_wagner_tree` | Wagner tree construction |
-| `RandomTreeScore()` | C++ (phyDat) or MorphyLib (morphyPtr) | Score a random tree |
+| `RandomTreeScore()` | C++ | Score a random tree |
 | `TaxonInfluence()` | C++ via `MaximizeParsimony()` | Per-taxon search |
 | `SearchControl()` | — | Expert parameter constructor for `MaximizeParsimony()` |
 | `ParsSim()` | Pure R | Simulate datasets under parsimony (EW/IW/profile) |
-
-`MaximizeParsimony()` has a backward-compatibility shim: passing old
-Morphy-style parameters (`ratchIter`, `tbrIter`, etc.) triggers a deprecation
-warning and delegates to `Morphy()`. Scheduled for removal in 2028.
 
 ---
 

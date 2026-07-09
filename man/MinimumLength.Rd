@@ -56,7 +56,7 @@ any tree.
 }
 \details{
 Ambiguous inapplicable states (e.g. \verb{\{0, -\}}) are currently replaced with the
-plain inapplicable token \code{-}, reflecting the current behaviour of Morphy.
+plain inapplicable token \code{-}.
 }
 \examples{
 data("inapplicable.datasets")
@@ -88,10 +88,10 @@ Other tree scoring:
 \code{\link[=IWScore]{IWScore()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
 \code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
 \code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
 \code{\link[=WideSample]{WideSample()}}
 }
 \author{

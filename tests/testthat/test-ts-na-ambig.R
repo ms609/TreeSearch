@@ -110,7 +110,9 @@ test_that("same-state {-,X} tips join the applicable region for free", {
   tree <- PectinateTree(7)
   tree$tip.label <- paste0("t", 1:7)
   lvls <- c("-", "1", "2", "3")
-  ambig <- list("{-1}" = c("-", "1"), "{-2}" = c("-", "2"), "{-3}" = c("-", "3"))
+  ambig <- list("{-1}" = c("-", "1"),
+                "{-2}" = c("-", "2"),
+                "{-3}" = c("-", "3"))
 
   # Three {-,2} tips beside 2 2: all resolve applicable AS state 2, homologous
   # with the observed 2s -> no extra step (length 1, = - - - 2 2 3 3).

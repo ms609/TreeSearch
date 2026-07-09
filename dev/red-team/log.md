@@ -27,7 +27,7 @@ commit 6b60f235) equivalent to structural validity, or can a **net-zero** corrup
 (a node double-referenced +1, a node orphaned −1) slip it and reach the advertised
 `std::bad_alloc`? **Answer: the guard is NOT a full validator (the slip is real and
 reachable) — but the P1 does not exist.** Built an exhaustive standalone C++ harness
-(`dev/red-team/heavy-tests/impose_validity/`, no R/Rcpp/Morphy/SIMD): enumerates ALL
+(`dev/red-team/heavy-tests/impose_validity/`): enumerates ALL
 (2n-3)!! rooted binary trees for n_tip=4..8 (counts verified 15/105/945/10395/135135),
 runs the **verbatim** kernel fns (`topology_spr`, `collect_edges_in/outside_subtree`,
 `find_maximal_subtrees`, `compute_node_tips`) extracted from `git show
@@ -253,8 +253,8 @@ date: 2026-06-15
 tier: mixed (sonnet/opus finders)
 yield: ~13 confirmed (T-309…T-321 old numbering, DAT/CRAN/WGN/RSP clusters)
 notes: One-off deep sweep of the CRAN 2.0.0 release candidate (branch
-`feature/hsj-absent-state`), **not** a normal single-area rotation round. Morphy access
-points were deliberately out of scope (another agent owned Phase-1). The session token
+`feature/hsj-absent-state`), **not** a normal single-area rotation round.
+The session token
 limit truncated 6 of 10 finders (IW/profile, topology-invariants, data-pipeline,
 ratchet/resample, Wagner/AdditionTree, CRAN-gates returned no findings — **NOT cleared**).
 **Confirmed P1s:** RNG-on-worker in parallel `Resample()` (`ts_driven.cpp:690-692` →
@@ -267,7 +267,7 @@ shapes, `1u<<32` UBSAN (DAT-001), XPIWE `obs==0` division (DAT-002), and a CRAN
 doc/mechanical cluster. **Disposition: landed in PR #252** (RNG, pruneReinsertNni, LS
 validation, Remotes+WideSample guard, Ratchet multiPhylo, T-316 stale-constraint-after-tabu,
 DAT-001, CRAN-001/002/006, WGN-01); OPEN follow-ups carried as T-317…T-321 at the time
-(resample-interrupt = Morphy territory, XPIWE division, IW clipped-subtree screening, CRAN
+(resample-interrupt = XPIWE division, IW clipped-subtree screening, CRAN
 doc polish, minor cluster). **Full ledger text recoverable** from `git stash@{0}`
 (`dev/red-team/2026-06-15-cran-redteam-findings.md`) or worktree
 `fix/cran-redteam-2026-06-15` — kept out of the tracked tree as a one-off artifact.
