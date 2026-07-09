@@ -133,7 +133,7 @@
 - `attr(dataset, "weight")` now accepts non-integer character weights.  The
   C++ scoring engine still stores `int` weights internally; fractional
   inputs are rescaled to integer with a configurable precision (default
-  0.001, controlled by `getOption("TreeSearch.fractional.scale", 1000L)`).
+  ~0.001, controlled by `getOption("TreeSearch.fractional.scale", 1260L)`).
   Previously, fractional weights were silently truncated at the Rcpp
   boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
   the respective characters' contributions).  Integer weights pass
@@ -174,9 +174,6 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 
 ### New features
 
-- `PaintCharacters()` colours each character in a morphological dataset by its
-  most concordant tree edges.
-
 - `ScoreSpectrum()`: Chao1-style landscape coverage estimator.  Treats
   distinct parsimony scores found across replicates as "species" and estimates
   how thoroughly the parsimony landscape has been sampled (Good-Turing sample
@@ -206,8 +203,6 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - **MPT enumeration**: after the main search converges, a TBR plateau walk
   from each pool tree discovers additional most-parsimonious topologies on the
   same and neighbouring score plateaus, up to `poolMaxSize`.
-  This addresses a common complaint that the previous implementation returned
-  only one tree when multiple MPTs exist.
 - `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
   fit branch lengths to, the tree that best matches a target distance matrix
   under a least-squares criterion, reusing the optimised C++ rearrangement
@@ -224,7 +219,7 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - `attr(dataset, "weight")` now accepts non-integer character weights.  The
   C++ scoring engine still stores `int` weights internally; fractional
   inputs are rescaled to integer with a configurable precision (default
-  0.001, controlled by `getOption("TreeSearch.fractional.scale", 1000L)`).
+  ~0.001, controlled by `getOption("TreeSearch.fractional.scale", 1260L)`).
   Previously, fractional weights were silently truncated at the Rcpp
   boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
   the respective characters' contributions).  Integer weights pass
@@ -400,8 +395,6 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
 - Clarified "Stop after best score found N times" slider label with help text.
 - Dataset-adaptive timeout default (1–15 minutes based on dataset size).
 - Internal modularization of the Shiny app into proper Shiny modules.
-
-## Other improvements
 
 # TreeSearch 1.8.0.9001 (2026-04-23)
 

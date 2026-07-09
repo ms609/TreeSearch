@@ -295,8 +295,7 @@ SearchControl <- function(
     # Ratchet
     # Default 12->6 (T-P5d, 2026-06-19): the ratchet was over-provisioned;
     # halving cycles saved 20-38% wall at zero quality loss on the mid-size EW
-    # benchmarks.  The `large` preset keeps 12 (deliberate large-tree tradeoff,
-    # T-179) and is unaffected by this formal-default change.
+    # benchmarks.  The `thorough` preset (which `large` now rebases on) sets 20.
     ratchetCycles = 6L,
     ratchetPerturbProb = 0.25,
     ratchetPerturbMode = 0L,

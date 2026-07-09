@@ -260,12 +260,14 @@ The `strategy` parameter selects a named preset that configures the search
 pipeline.
 The default, `"auto"`, selects a preset based on dataset size:
 
-- `"sprint"` (≤ 30 taxa): fast search with minimal ratchet, no drift.
+- `"sprint"` (≤ 30 taxa): fast search with minimal ratchet.
   Good for small or simple datasets.
-- `"default"` (31--60 taxa): balanced search with ratchet, drift, and
-  sectorial search.
-- `"thorough"` (> 60 taxa): intensive search with more ratchet and drift
-  cycles, adaptive ratchet perturbation, and more sectorial search rounds.
+- `"default"` (31--64 taxa, or any dataset with < 100 character patterns):
+  balanced ratchet and sectorial search.
+- `"thorough"` (≥ 65 taxa with ≥ 100 patterns): intensive search adding
+  drift cycles, adaptive ratchet perturbation, more sectorial rounds, and an
+  outer cycle loop.
+- `"large"` (≥ 120 taxa): the `"thorough"` settings with more replicates.
 
 You can override the auto-selection:
 

@@ -366,11 +366,8 @@
 #'     `maxSeconds`, or raise `enumTimeFraction`, for a more complete set.
 #'   \item **TBR-island coverage.** The plateau walk only explores islands of
 #'     equal-score trees that a main-loop replicate actually landed on.  MPTs
-#'     lying in unvisited islands are never enumerated, however large
-#'     `poolMaxSize` is.  Increase `maxReplicates` to seed more islands.  Two
-#'     independent runs (or runs at different `strategy` effort) can therefore
-#'     return the *same* count if they exhaust the same connected island — this
-#'     reflects island structure, not a cap.
+#'     in unvisited islands are never enumerated, however large `poolMaxSize`
+#'     is; increase `maxReplicates` to seed more islands.
 #' }
 #' By default (`collapse = TRUE`), zero-length (unsupported) branches are
 #' contracted into polytomies and the returned set is deduplicated on the
@@ -387,11 +384,10 @@
 #'
 #' Implied weighting is supported natively: set `concavity` to a numeric
 #' value (e.g.\sspace{}10).
-#' Profile parsimony (`concavity = "profile"`) is supported natively:
-#' characters are simplified to binary (max 2 informative states),
-#' inapplicable tokens are treated as ambiguous, and per-character
-#' information profiles are used for scoring
-#' \insertCite{Faith2001}{TreeSearch}.
+#' Profile parsimony (`concavity = "profile"`) is supported natively.
+#' Inapplicable tokens are treated as ambiguous, and each character is scored
+#' by its information profile \insertCite{Faith2001}{TreeSearch}; see
+#' [`PrepareDataProfile()`] for how multi-state profiles are computed.
 #'
 #' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
 #' \code{phyDat}, whose names correspond to the labels of any accompanying tree.
@@ -406,7 +402,7 @@
 #' @param concavity Determines the degree to which extra steps beyond the first
 #' are penalized.  Specify a numeric value to use implied weighting
 #' \insertCite{Goloboff1993}{TreeSearch}; `concavity` specifies _k_ in
-#'  _k_ / _e_ + _k_. A value of 10 is recommended;
+#'  _k_ / (_e_ + _k_). A value of 10 is recommended;
 #' TNT sets a default of 3, but this is too low in some circumstances
 #' \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 #' Better still explore the sensitivity of results under a range of
@@ -479,18 +475,20 @@
 #'       character patterns; `"default"` otherwise.}
 #'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
 #'       sectorial. Good for small datasets or quick surveys.}
-#'     \item{`"default"`}{Balanced: 12 ratchet + sectorial + fusing.}
+#'     \item{`"default"`}{Balanced: 6 ratchet cycles, sectorial search and
+#'       fusing.}
 #'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, adaptive
 #'       perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
 #'       starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
 #'       character patterns; the drift cycles also recover equal-score trees on
 #'       TBR-disconnected islands that random restarts alone miss.}
-#'     \item{`"large"`}{Large-tree search (>=120 tips): reduced cycle
-#'       counts scaled for expensive per-replicate cost, no NNI
-#'       perturbation, single biased Wagner start (Goloboff 2014), larger
-#'       sector sizes, 1-cycle simulated annealing instead of drift
-#'       (linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
-#'       or exceeds `"thorough"` at 180 tips across all time budgets.}
+#'     \item{`"large"`}{Large-tree search (>=120 tips): the `"thorough"`
+#'       settings with `maxReplicates` raised to 500 to suit the higher
+#'       per-replicate cost.}
+#'     \item{`"intensive"`}{Deprecated alias of `"thorough"`, retained for
+#'       backward compatibility.  The extra Wagner starts (5) that once
+#'       distinguished it are now folded into `"thorough"`, so the two are
+#'       identical.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
 #'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement

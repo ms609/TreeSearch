@@ -43,7 +43,7 @@ Default \code{60}.}
 }
 \value{
 A \code{multiPhylo} object of length \code{min(n, length(trees))} containing
-a uniform sample of \code{trees}.
+a topologically diverse (Max-Min) subset of \code{trees}.
 If \code{n == 1}, the single most central tree (the medoid) is returned.
 Attributes of the input (e.g. \code{score}, \code{hits_to_best}) are preserved.
 }
