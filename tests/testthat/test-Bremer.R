@@ -243,7 +243,7 @@ test_that("Bremer errors when optimalScore exceeds the reference tree length", {
     Bremer(ref, dat, method = "constraint",
            optimalScore = attr(mpts, "score") + 5,
            maxReplicates = 20L, verbosity = 0L),
-    "exceeds the reference tree")
+    "exceeds an achievable length")
 })
 
 test_that("constraint Bremer matches enumeration on inapplicable (bgs) data", {
@@ -263,7 +263,7 @@ test_that("constraint Bremer matches enumeration on inapplicable (bgs) data", {
   expect_equal(as.numeric(con[names(orc)]), as.numeric(orc), tolerance = 1e-6)
 })
 
-test_that("Bremer errors on a scoring-units mismatch (IW trees vs EW default)", {
+test_that("Bremer warns on a likely scoring-units mismatch (IW trees vs EW default)", {
   dat <- StringToPhyDat(
     "1110000 1110000 1110000 1100000 0001100 0001100 0000110 1111111",
     1:7, byTaxon = FALSE)
@@ -271,11 +271,15 @@ test_that("Bremer errors on a scoring-units mismatch (IW trees vs EW default)", 
   set.seed(1)
   mpts <- MaximizeParsimony(dat, concavity = 3, maxReplicates = 8L, verbosity = 0L)
   # Trees found under implied weights; the default equal-weights Bremer would
-  # subtract an IW optimum from EW lengths -- caught before searching (BR-1).
-  expect_error(Bremer(mpts, dat, maxReplicates = 8L, verbosity = 0L),
-               "does not equal their stored optimal score")
-  # Passing the matching concavity is accepted.
-  ok <- Bremer(mpts, dat, concavity = 3, maxReplicates = 12L, verbosity = 0L)
+  # subtract an IW optimum from EW lengths.  Exact detection is infeasible (an
+  # arbitrary resolution only upper-bounds L*, and computing L* is NP-hard), so
+  # the guard WARNS on the large gap rather than erroring or silently mis-scoring
+  # (BR-1).
+  expect_warning(Bremer(mpts, dat, maxReplicates = 8L, verbosity = 0L),
+                 "differs substantially")
+  # Passing the matching concavity is accepted without the mismatch warning.
+  ok <- suppressWarnings(
+    Bremer(mpts, dat, concavity = 3, maxReplicates = 12L, verbosity = 0L))
   expect_type(ok, "double")
 })
 

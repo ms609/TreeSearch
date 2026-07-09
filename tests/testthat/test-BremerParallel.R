@@ -153,3 +153,40 @@ test_that(".BremerConverseScores (PSOCK cluster) matches serial and the oracle",
   orc <- oracleBremer(fx$ref, fx$dat)
   expect_equal(as.numeric(bremer[names(orc)]), as.numeric(orc), tolerance = 1e-6)
 })
+
+test_that("public Bremer(cl=) matches the serial path on saturating data", {
+  # Exercises the WHOLE public dispatch (Bremer -> .BremerConstraint -> fan-out),
+  # which the .BremerConverseScores tests above do not.  On 7 tips the converse
+  # searches saturate, so the serial and parallel paths -- despite their
+  # different per-clade RNG streams -- reach the same optima and must agree.
+  skip_on_cran()
+  skip_on_ci()  # PSOCK worker startup + load_all is slow/flaky in CI
+  if (!requireNamespace("parallel", quietly = TRUE) ||
+      !requireNamespace("pkgload", quietly = TRUE)) {
+    skip("parallel / pkgload unavailable")
+  }
+  pkgPath <- tryCatch(pkgload::pkg_path(), error = function(e) NULL)
+  if (is.null(pkgPath)) skip("cannot locate package source for worker load_all")
+  cl <- tryCatch(parallel::makePSOCKcluster(2L), error = function(e) NULL)
+  if (is.null(cl)) skip("cannot create PSOCK cluster")
+  on.exit(parallel::stopCluster(cl), add = TRUE)
+  loaded <- tryCatch(
+    parallel::clusterCall(cl, function(p) {
+      suppressMessages(pkgload::load_all(p, quiet = TRUE, helpers = FALSE,
+                                         attach_testthat = FALSE))
+      TRUE
+    }, pkgPath), error = function(e) NULL)
+  if (is.null(loaded) || !all(vapply(loaded, isTRUE, logical(1)))) {
+    skip("cannot load TreeSearch on cluster workers")
+  }
+
+  fx <- bremerFixture()
+  set.seed(1)
+  mpts <- MaximizeParsimony(fx$dat, maxReplicates = 8L, verbosity = 0L)
+  set.seed(5)
+  ser <- Bremer(mpts, fx$dat, maxReplicates = 20L, verbosity = 0L)
+  set.seed(5)
+  par <- Bremer(mpts, fx$dat, cl = cl, maxReplicates = 20L, verbosity = 0L)
+  expect_equal(unname(par), unname(ser), tolerance = 1e-6)
+  expect_identical(names(par), names(ser))
+})

@@ -56,7 +56,12 @@
 #' searches of `method = "constraint"`.  Each clade is an independent search, so
 #' this gives a near-linear speed-up for trees with many clades; workers must
 #' have \pkg{TreeSearch} loaded.  `NULL` (default) runs serially.  Ignored by
-#' `method = "pool"`.
+#' `method = "pool"`.  Parallel runs are reproducible under `set.seed()` (each
+#' clade is seeded independently); because that seeding differs from the serial
+#' run's stream, a parallel result may differ from a serial one wherever a
+#' converse search does not reach its true optimum -- exactly as re-running
+#' serially with a different seed would -- with both remaining valid upper bounds
+#' on the decay.
 #' @inheritParams MaximizeParsimony
 #' @param \dots Further arguments passed to [`MaximizeParsimony()`] /
 #' [`SuboptimalTrees()`], e.g. `maxReplicates`, `maxSeconds`, `strategy`,
@@ -158,46 +163,63 @@ Bremer <- function(tree, dataset,
 # arguments than those now in effect -- a silent-units-mismatch guard.  A decay
 # of "extra steps" is only meaningful when L* and L(not C) use the same ruler.
 .BremerCheckScoring <- function(tree, dataset, scoringArgs, optimalScore) {
-  refLen <- function() {
-    # Collapse-derived MPTs may be multifurcating, but TreeLength needs binary
-    # trees.  Resolving the zero-length polytomies preserves the parsimony length
-    # (every resolution of an equally-optimal collapsed polytomy is itself
-    # optimal), and taking the minimum guards against an unlucky resolution.
-    resolved <- if (inherits(tree, "multiPhylo")) {
-      structure(lapply(tree, ape::multi2di, random = FALSE), class = "multiPhylo")
-    } else {
-      ape::multi2di(tree, random = FALSE)
-    }
-    min(suppressWarnings(
-      do.call(TreeLength, c(list(tree = resolved, dataset = dataset), scoringArgs))))
+  suppliedLstar <- if (!is.null(optimalScore)) {
+    optimalScore
+  } else if (inherits(tree, "multiPhylo")) {
+    s <- attr(tree, "score")
+    if (!is.null(s) && is.finite(s)) s else NULL
+  } else {
+    NULL
+  }
+  if (is.null(suppliedLstar)) {
+    return(invisible(NULL))
+  }
+
+  # Reference length under the CURRENT scoring arguments.  TreeLength requires
+  # binary trees and MaximizeParsimony(collapse = TRUE) can return multifurcating
+  # trees, so resolve the zero-length polytomies first.  An arbitrary resolution
+  # can be SUBOPTIMAL, so `refLen` is only an UPPER bound on L* under scoringArgs
+  # (refLen >= L*); the checks below are chosen to stay correct under that.
+  resolve <- function(t) ape::multi2di(t, random = FALSE)
+  resolved <- if (inherits(tree, "multiPhylo")) {
+    structure(lapply(tree, resolve), class = "multiPhylo")
+  } else {
+    resolve(tree)
+  }
+  refLen <- min(suppressWarnings(
+    do.call(TreeLength, c(list(tree = resolved, dataset = dataset), scoringArgs))))
+  if (!is.finite(refLen)) {
+    return(invisible(NULL))
   }
   tol <- 1e-6
-  if (!is.null(optimalScore)) {
-    # A user-asserted optimum cannot exceed the reference's own length under
-    # these arguments; if it does, the score or the arguments are wrong.
-    Lmin <- refLen()
-    if (is.finite(Lmin) && optimalScore > Lmin + tol) {
-      stop("The supplied `optimalScore` (", signif(optimalScore, 7),
-           ") exceeds the reference tree's length under the supplied scoring ",
-           "arguments (", signif(Lmin, 7), "). Check that `optimalScore` and ",
-           "the scoring arguments (`concavity`, `inapplicable`, ...) match ",
-           "those used to find the trees.", call. = FALSE)
-    }
-  } else if (inherits(tree, "multiPhylo")) {
-    # L* will come from the trees' stored optimal score.  Because the supplied
-    # trees are optimal, their minimum length UNDER scoringArgs equals L* under
-    # scoringArgs; a disagreement means the scoring arguments differ from those
-    # used to find them -- fatal, as the decay would be meaningless.
-    attrScore <- attr(tree, "score")
-    if (!is.null(attrScore) && is.finite(attrScore)) {
-      Lmin <- refLen()
-      if (is.finite(Lmin) && abs(attrScore - Lmin) > tol) {
-        stop("The reference trees' length under the supplied scoring arguments ",
-             "(", signif(Lmin, 7), ") does not equal their stored optimal score ",
-             "(", signif(attrScore, 7), "). Pass the same `concavity`, ",
-             "`inapplicable` and other scoring arguments used to find the trees.",
-             call. = FALSE)
-      }
+
+  # SOUND error: refLen is an achievable length under scoringArgs, hence an upper
+  # bound on the optimum.  A supplied optimum that EXCEEDS it cannot be the
+  # optimum under these arguments -- the scoring arguments differ from those used
+  # to find the trees, or the score is stale.  (An unlucky multi2di resolution
+  # only inflates refLen, so it can never trigger this -- unlike an exact-equality
+  # check, which spuriously errored on a collapsed reference.)
+  if (suppliedLstar > refLen + tol) {
+    stop("The reference's optimal score (", signif(suppliedLstar, 7),
+         ") exceeds an achievable length under the supplied scoring arguments (",
+         signif(refLen, 7), "). Pass the same scoring arguments (`concavity`, ",
+         "`inapplicable`, ...) used to find the trees.", call. = FALSE)
+  }
+
+  # Heuristic warning for the opposite direction (supplied optimum well BELOW the
+  # reference length -- e.g. an implied-weights optimum scored under equal
+  # weights).  Exact detection is infeasible (computing L* is NP-hard and refLen
+  # is only an upper bound), so WARN rather than error, and only for a multiPhylo
+  # (whose members are optimal, so a large gap signals a scoring-MODE mismatch,
+  # not a merely-suboptimal single reference tree).
+  if (inherits(tree, "multiPhylo")) {
+    gap <- refLen - suppliedLstar
+    if (gap > tol && gap > 0.05 * max(abs(refLen), abs(suppliedLstar), 1)) {
+      warning("The reference trees' optimal score (", signif(suppliedLstar, 7),
+              ") differs substantially from their length under the supplied ",
+              "scoring arguments (~", signif(refLen, 7), "). If you did not pass ",
+              "the same scoring arguments (`concavity`, `inapplicable`, ...) used ",
+              "to find the trees, the decay values will be meaningless.")
     }
   }
   invisible(NULL)
@@ -394,8 +416,14 @@ Bremer <- function(tree, dataset,
   }
 
   if (anyNA(scores)) {
-    warning(sum(is.na(scores)), " converse-constraint search(es) found no tree ",
-            "lacking the clade; reported as NA. Increase `maxReplicates`.")
+    # Two causes map to NA: no clade-free tree was found (a budget shortfall), or
+    # a returned tree unexpectedly displayed the clade (an engine regression the
+    # BR-6 check caught).  The per-clade warning that distinguishes them is lost
+    # on cluster workers, so keep the aggregate message honest about both.
+    warning(sum(is.na(scores)), " converse-constraint search(es) returned NA: ",
+            "either no tree lacking the clade was found (increase `maxReplicates`)",
+            ", or a returned tree still displayed the clade (an engine bug worth ",
+            "reporting).")
   }
 
   trueBest <- suppressWarnings(min(c(Lstar, scores), na.rm = TRUE))

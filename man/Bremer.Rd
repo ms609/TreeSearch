@@ -119,7 +119,12 @@ redundant search.}
 searches of \code{method = "constraint"}.  Each clade is an independent search, so
 this gives a near-linear speed-up for trees with many clades; workers must
 have \pkg{TreeSearch} loaded.  \code{NULL} (default) runs serially.  Ignored by
-\code{method = "pool"}.}
+\code{method = "pool"}.  Parallel runs are reproducible under \code{set.seed()} (each
+clade is seeded independently); because that seeding differs from the serial
+run's stream, a parallel result may differ from a serial one wherever a
+converse search does not reach its true optimum -- exactly as re-running
+serially with a different seed would -- with both remaining valid upper bounds
+on the decay.}
 
 \item{\dots}{Further arguments passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} /
 \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, e.g. \code{maxReplicates}, \code{maxSeconds}, \code{strategy},
