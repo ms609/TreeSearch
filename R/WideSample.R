@@ -85,7 +85,7 @@
 #'   Default `60`.
 #'
 #' @return A `multiPhylo` object of length `min(n, length(trees))` containing
-#' a uniform sample of `trees`.
+#' a topologically diverse (Max-Min) subset of `trees`.
 #' If `n == 1`, the single most central tree (the medoid) is returned.
 #' Attributes of the input (e.g. `score`, `hits_to_best`) are preserved.
 #'

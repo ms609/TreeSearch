@@ -37,11 +37,12 @@
 #' Maddison & Slatkin (1991), falling back to a Monte Carlo approximation for
 #' large or complex characters.
 #' 
-#' Characters are simplified where necessary, with a warning:
-#' - inapplicable tokens will be replaced with the ambiguous token
-#'    (i.e. `-` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`);
-#' - Ambiguous tokens will be treated as fully ambiguous
-#'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`)
+#' Characters are simplified where necessary:
+#' - inapplicable tokens are replaced with the ambiguous token
+#'    (i.e. `-` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`),
+#'    reported with a message;
+#' - ambiguous tokens are treated as fully ambiguous
+#'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`).
 #' 
 #' @param dataset dataset of class \code{phyDat}
 #' @param approx Character string controlling how profile information amounts
@@ -63,9 +64,9 @@
 #'   - `informative`: logical specifying which characters contain any
 #'     phylogenetic information.
 #'   
-#'   - `bootstrap`: The character vector 
-#'     \code{c("info.amounts", "split.sizes")}, indicating attributes to sample
-#'      when bootstrapping the dataset (e.g. in Ratchet searches).
+#'   - `bootstrap`: A character vector naming the attributes to resample when
+#'     bootstrapping the dataset (e.g. in Ratchet searches); `PrepareDataProfile`
+#'     adds `"info.amounts"`.
 #'
 #' `PrepareDataIW` adds the attribute:
 #' 
