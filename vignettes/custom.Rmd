@@ -105,7 +105,7 @@ PlotTree(result)
 
 
 
-## More sophisticated searches
+## More sophisticated search
 
 Real searches may involve complex interaction with an underlying dataset.
 As a demonstration, we will use the custom search framework to implement implied
@@ -205,6 +205,7 @@ IWJackknife <- function(edgeList, dataset, resampleFreq = 2 / 3,
 jackTrees <- Jackknife(ratchetTree, dataset, TreeScorer = IWScore,
                        Resampler = IWJackknife, verbosity = 0,
                        jackIter = 10, searchIter = 100)
+par(mar = rep(0, 4), cex = 0.8)
 JackLabels(ratchetTree, jackTrees)
 ```
 
