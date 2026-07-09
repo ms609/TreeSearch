@@ -176,6 +176,16 @@ replicates (default: 96).
 The default is a multiple of 48 (= LCM(12, 16)) so that replicates
 divide evenly across common 12- or 16-core machines when running in
 parallel.
+When \code{strategy} resolves to \code{"large"} (automatically selected for
+datasets of \eqn{\ge}{>=} 120 tips and \eqn{\ge}{>=} 100 characters) and
+\code{maxReplicates} is left at its default, the
+cap is raised to 500: a 120--180-tip sweep showed the fraction of runs
+reaching the best-known score climbing from 0.68 at 96 replicates to 0.79
+at 250 and still rising at 500, with no plateau.  Raising the cap only
+appends later replicates, so it never delays an earlier improvement, and
+easy datasets still stop early once \code{targetHits} is met; only genuinely
+hard datasets run the extra replicates.  An explicit \code{maxReplicates}
+is always respected.
 For large or complex datasets a higher value improves the chance of
 finding all MPTs.  A rough minimum is
 \code{max(10, ceiling(NTip * NChar / 5000))}, where \code{NChar = sum(weight)}.
