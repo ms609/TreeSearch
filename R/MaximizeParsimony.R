@@ -328,14 +328,15 @@
 
 #' Find most parsimonious trees
 #'
-#' Performs a multi-replicate driven search for most-parsimonious trees,
-#' combining random addition sequence (Wagner) starting trees, TBR
-#' rearrangement, exclusive sectorial search (XSS), ratchet perturbation,
-#' drift, and tree fusing -- all in compiled C++.
+#' `MaximizeParsimony()` performs a multi-replicate driven search for
+#' most-parsimonious trees, combining random addition sequence (Wagner)
+#' starting trees, tree bisection and reconnection  (\acronym{TBR})
+#' rearrangement, exclusive sectorial search (\acronym{XSS}),
+#' ratchet perturbation, drift, and tree fusing.
 #'
 #' The search pipeline follows the "new technology search" approach of
-#' \insertCite{Goloboff1999;textual}{TreeSearch}, as implemented in TNT
-#' \insertCite{Goloboff2016}{TreeSearch}.
+#' \insertCite{Goloboff1999;textual}{TreeSearch}, and resembles the
+#' implementation in TNT \insertCite{Goloboff2016}{TreeSearch}.
 #' Parsimony scoring uses the Fitch
 #' \insertCite{Fitch1971}{TreeSearch} algorithm; inapplicable characters
 #' are handled with the algorithm of
@@ -351,10 +352,9 @@
 #'
 #' @section Completeness of the returned tree set:
 #' `MaximizeParsimony()` returns the distinct, fully-resolved optimal
-#' topologies held in its tree pool; it does **not** guarantee that every
-#' most-parsimonious tree (MPT) is recovered.  There is no fixed cap on the
-#' number of trees returned (a value such as 256 is not hard-coded anywhere);
-#' the size of the returned set is bounded by, in order:
+#' topologies held in its tree pool; it does not guarantee that every
+#' most-parsimonious tree (\acronym{MPT}) is recovered.
+#' The size of the returned set is bounded by, in order:
 #' \enumerate{
 #'   \item **`poolMaxSize`** (default `100`) — a hard ceiling on the number of
 #'     trees retained.  Raise it (via [`SearchControl()`]) to keep more MPTs;
@@ -376,14 +376,14 @@
 #' contracted into polytomies and the returned set is deduplicated on the
 #' resulting collapsed topologies, so `n_topologies` counts distinct *collapsed*
 #' topologies — the same convention TNT applies under "collapse zero-length
-#' branches", and the count comparable across programs.  This matters because a
-#' single soft polytomy (an unsupported clade of *k* taxa) has \eqn{(2k-3)!!}
+#' branches".
+#' This matters because a single soft polytomy (an unsupported clade of 
+#' \eqn{k} taxa) has \eqn{(2k-3)!!}
 #' equally-parsimonious binary resolutions, so leaving branches resolved can
 #' inflate the apparent number of optimal trees by orders of magnitude without
 #' adding any biological information.  Set `collapse = FALSE` to return
 #' fully-resolved trees instead (one arbitrary resolution per distinct collapsed
-#' topology); the main search and the MPT enumeration then still deduplicate on
-#' the same criterion, so the returned set remains internally consistent.
+#' topology).
 #'
 #' Implied weighting is supported natively: set `concavity` to a numeric
 #' value (e.g.\sspace{}10).

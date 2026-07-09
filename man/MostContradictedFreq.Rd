@@ -39,9 +39,9 @@ Other split support functions:
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}}
 }
 \concept{split support functions}

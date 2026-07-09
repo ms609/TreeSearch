@@ -142,10 +142,10 @@ engine.
 Other split support functions:
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}}
 
 Other custom search functions:

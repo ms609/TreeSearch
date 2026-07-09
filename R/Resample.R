@@ -136,7 +136,12 @@
 }
 
 
-#' @rdname MaximizeParsimony
+#' Resampling support under parsimony
+#' 
+#' `Resample()` calculates the resampling support for edges in a tree under
+#' bootstrap or jackknife resampling.
+#' 
+#' @inheritParams MaximizeParsimony
 #'
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap`
 #' specifying how to resample characters.  Note that jackknife is considered
@@ -169,11 +174,10 @@
 #' 
 #' For a discussion of suitable search parameters in resampling estimates, see
 #' \insertCite{Muller2005;textual}{TreeSearch}.
-#' The user should decide whether to start each resampling
-#' from the optimal tree (which may be quicker, but result in overestimated 
-#' support values as searches get stuck in local optima close to the 
-#' optimal tree) or a random tree (which may take longer as more rearrangements
-#' are necessary to find an optimal tree on each iteration).
+#' Each resampling may begin from the optimal tree
+#' (potentially quicker, but may overestimate support values as searches get
+#' stuck in local optima close to the optimal tree)
+#' or a random tree (whence finding an optimal tree may take longer).
 #' 
 #' For other ways to estimate clade concordance, see [`SiteConcordance()`].
 #' 
@@ -208,9 +212,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
       !is.null(verbosity)) {
     .Deprecated(msg = paste(
       "In `Resample()`: `finalIter`, `maxHits`, `tolerance` and `verbosity`",
-      "have had no effect since `Resample()` was rewritten to use the",
-      "native search engine, and are deprecated.  They will be removed in",
-      "a future release."
+      "are deprecated and  will be removed in a future release."
     ))
   }
 
