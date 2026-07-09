@@ -31,19 +31,8 @@ test_that("Step counts are correctly calculated", {
   dudTwo <- TreeTools::StringToPhyDat("{-1}{-2}{-3}2233", letters[1:7])
   expect_equal("{-1}{-2}{-3}2233", TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
   
-  # Inapplicable character scoring with {-X} ambiguity tokens.
-  # Optimal resolution: treat {-X} tips as inapplicable → score 1.
-  # Known bug: C++ NA engine commits to applicable state when the
-  # inapplicable bit is set alongside an applicable bit. See issues.md.
-  tips7 <- paste0("t", 1:7)
-  pect7 <- TreeTools::PectinateTree(tips7)
-
-  char1Dat <- TreeTools::StringToPhyDat("{-1}{-2}{-3}2233", tips7)
-  expect_equal(1, TreeLength(pect7, char1Dat))
-
-  char2Dat <- TreeTools::StringToPhyDat("{-1}{-2}22{-3}33", tips7)
-  expect_equal(1, TreeLength(pect7, char2Dat))
-
+  # {-,X} ambiguity-token TreeLength scoring is engine-internal correctness;
+  # it lives in test-ts-na-ambig.R (Tier 2), not this Tier-1 API file.
   owch3 <- "-1-222-333"
   tr3 <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
   owch3Dat <- TreeTools::StringToPhyDat(owch3, TipLabels(tr3))
