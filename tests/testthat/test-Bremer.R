@@ -439,6 +439,18 @@ test_that("Bremer rejects a non-finite or non-scalar optimalScore (B-8)", {
     "single finite number")
 })
 
+test_that("Bremer on a fully-unresolved reference warns and returns nothing (TA-9)", {
+  dat <- StringToPhyDat("111000 110000 001100", 1:6, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:5], "out")
+  star <- ape::stree(length(dat), type = "star", tip.label = names(dat))
+  # No resolved internal clades -> nothing to calculate; early return, no search.
+  expect_warning(
+    res <- Bremer(star, dat, verbosity = 0L),
+    "no resolved internal clades")
+  expect_type(res, "double")
+  expect_length(res, 0L)
+})
+
 test_that("Bremer(format='character') always carries a censored attribute (B-9)", {
   dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
   names(dat) <- c(LETTERS[1:6], "out")

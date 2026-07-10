@@ -64,6 +64,19 @@ test_that("SuboptimalTrees() validates its arguments", {
                "must be a single positive integer")
 })
 
+test_that("SuboptimalTrees() keeps scores aligned under pool eviction (TA-5)", {
+  # A tiny maxPool forces the diversity-eviction path; the scores attribute -- and
+  # each tree's own score attribute -- must stay aligned with the evicted-down set.
+  set.seed(3418)
+  trees <- SuboptimalTrees(ds, maxSuboptimal = 8, maxPool = 5L,
+                           maxReplicates = 4L, targetHits = 1L, verbosity = 0L)
+  expect_true(length(trees) <= 5L)
+  scores <- attr(trees, "scores")
+  expect_length(scores, length(trees))
+  expect_equal(vapply(trees, attr, double(1), "score"), scores)   # alignment held
+  expect_equal(scores, TreeLength(trees, ds), tolerance = 1e-8)    # independent re-score
+})
+
 test_that("SuboptimalTrees() warns and ignores raw poolSuboptimal/poolMaxSize (B-10)", {
   # These raw SearchControl fields would silently override the values set from
   # maxSuboptimal/maxPool via MaximizeParsimony()'s dots-override-control merge.
