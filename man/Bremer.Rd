@@ -178,12 +178,14 @@ will be meaningless; they default to equal-weights Fitch parsimony.
 data("inapplicable.phyData", package = "TreeSearch")
 dataset <- inapplicable.phyData[["Vinther2008"]]
 \donttest{
-# `set.seed()` makes the heuristic search reproducible
+# `set.seed()` with `nThreads = 1` makes the heuristic search reproducible
 set.seed(0)
-trees <- MaximizeParsimony(dataset, maxReplicates = 8, verbosity = 0)
+trees <- MaximizeParsimony(dataset, maxReplicates = 8, nThreads = 1,
+                           verbosity = 0)
 
 # A fast, approximate decay index read from the suboptimal-tree pool
-decay <- Bremer(trees, dataset, method = "pool", verbosity = 0)
+decay <- Bremer(trees, dataset, method = "pool", nThreads = 1,
+                verbosity = 0)
 decay
 
 # Annotate the reference tree (the strict consensus of the optimal trees,
