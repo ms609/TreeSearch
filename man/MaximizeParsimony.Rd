@@ -116,6 +116,10 @@ in any output tree.
 Constraint searches are supported natively: all tree rearrangements
 are filtered to respect the constraint topology.}
 
+\item{.negativeConstraint}{Internal.  A splits object (or \code{NULL}) naming
+clades that returned trees must \emph{not} display; used by \code{\link[=Bremer]{Bremer()}} to run
+converse-constraint searches.  Not intended for direct use.}
+
 \item{strategy}{Character: named strategy preset controlling the search
 heuristic parameters. Presets:
 \describe{

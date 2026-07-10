@@ -61,6 +61,7 @@ Suggests:
   knitr,
   MaxMin,
   phangorn (>= 2.2.1),
+  pkgload,
   PlotTools,
   promises,
   protoclust,

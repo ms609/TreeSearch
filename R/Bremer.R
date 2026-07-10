@@ -83,8 +83,11 @@
 #' decay <- Bremer(trees, dataset, maxReplicates = 8, verbosity = 0)
 #' decay
 #'
-#' # Annotate a tree
-#' TreeTools::LabelSplits(trees[[1]], decay)
+#' # Annotate the reference tree (the strict consensus of the optimal trees,
+#' # whose node numbers key `decay`)
+#' reference <- ape::consensus(trees, p = 1)
+#' plot(reference)
+#' TreeTools::LabelSplits(reference, decay)
 #' }
 #' @references \insertAllCited{}
 #' @template MRS

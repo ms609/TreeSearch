@@ -600,6 +600,9 @@
 #'   collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 #'   visible (a constraint encodes external evidence the matrix does not
 #'   capture); unsupported non-constraint branches still collapse.
+#' @param .negativeConstraint Internal.  A splits object (or `NULL`) naming
+#'   clades that returned trees must *not* display; used by [`Bremer()`] to run
+#'   converse-constraint searches.  Not intended for direct use.
 #' @param ... Backward compatibility.
 #'
 #' @return A `multiPhylo` object containing the best tree(s) found, with
