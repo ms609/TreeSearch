@@ -206,6 +206,22 @@
 #'   uncertain regions.  Constraints are cleared whenever a new best score
 #'   is found.  Only active when no user-supplied `constraint` is
 #'   present.  Default `FALSE`.
+#' @param transientAutoconst Logical; use TNT-style *transient*
+#'   autoconstraint?  Distinct from the rigid `consensusConstrain`: each
+#'   replicate builds a per-replicate constraint from the strict consensus
+#'   of the previous replicates' pool trees intersected with this
+#'   replicate's own Wagner start, enforces it only over the early pipeline
+#'   stages (initial TBR through the first sectorial pass), then *releases*
+#'   it before the ratchet, drift, later sectorial and final TBR stages.
+#'   The first replicate of each hit (replicate 0, or any replicate that
+#'   immediately follows a new best score) is left unconstrained.  Because
+#'   the constraint refreshes every replicate and is never permanently
+#'   locked, it can guide early search without entrenching a basin.  Only
+#'   active when neither a user `constraint` nor `consensusConstrain` is in
+#'   effect.  Default `FALSE`.
+#' @param transientAutoconstMinReps Integer; number of completed replicates
+#'   (with at least two best-score pool trees) required before
+#'   `transientAutoconst` engages.  Default `2`.
 #' @param wagnerBias Integer; criterion for biasing taxon addition order
 #'   during Wagner tree construction.  0 = random (default),
 #'   1 = Goloboff (2014) non-ambiguous-character priority,
@@ -342,6 +358,8 @@ SearchControl <- function(
     perturbStopFactor = 2L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
+    transientAutoconst = FALSE,
+    transientAutoconstMinReps = 2L,
     # Taxon pruning-reinsertion (T-266)
     pruneReinsertCycles = 0L,
     pruneReinsertDrop = 0.10,
@@ -441,6 +459,8 @@ SearchControl <- function(
       perturbStopFactor = as.integer(perturbStopFactor),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
+      transientAutoconst = as.logical(transientAutoconst),
+      transientAutoconstMinReps = as.integer(transientAutoconstMinReps),
       pruneReinsertCycles = as.integer(pruneReinsertCycles),
       pruneReinsertDrop = as.double(pruneReinsertDrop),
       pruneReinsertSelection = as.integer(pruneReinsertSelection),
@@ -488,7 +508,8 @@ print.SearchControl <- function(x, ...) {
                      "poolMaxSize", "poolSuboptimal"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor",
                     "adaptiveLevel",
-                    "consensusConstrain", "adaptiveStart",
+                    "consensusConstrain", "transientAutoconst",
+                    "transientAutoconstMinReps", "adaptiveStart",
                     "enumTimeFraction")
   )
   cat("SearchControl object\n")

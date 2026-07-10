@@ -1571,6 +1571,9 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.perturb_stop_factor   = as<int>(ctrl["perturbStopFactor"]);
   params.adaptive_level        = as<bool>(ctrl["adaptiveLevel"]);
   params.consensus_constrain   = as<bool>(ctrl["consensusConstrain"]);
+  params.transient_autoconst   = as<bool>(ctrl["transientAutoconst"]);
+  params.transient_autoconst_min_reps =
+      as<int>(ctrl["transientAutoconstMinReps"]);
   params.adaptive_start        = as<bool>(ctrl["adaptiveStart"]);
   params.enum_time_fraction    = as<double>(ctrl["enumTimeFraction"]);
 

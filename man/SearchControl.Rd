@@ -56,6 +56,8 @@ SearchControl(
   perturbStopFactor = 2L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
+  transientAutoconst = FALSE,
+  transientAutoconstMinReps = 2L,
   pruneReinsertCycles = 0L,
   pruneReinsertDrop = 0.1,
   pruneReinsertSelection = 0L,
@@ -298,6 +300,24 @@ best-score pool trees are enforced as constraints, focusing search on
 uncertain regions.  Constraints are cleared whenever a new best score
 is found.  Only active when no user-supplied \code{constraint} is
 present.  Default \code{FALSE}.}
+
+\item{transientAutoconst}{Logical; use TNT-style \emph{transient}
+autoconstraint?  Distinct from the rigid \code{consensusConstrain}: each
+replicate builds a per-replicate constraint from the strict consensus
+of the previous replicates' pool trees intersected with this
+replicate's own Wagner start, enforces it only over the early pipeline
+stages (initial TBR through the first sectorial pass), then \emph{releases}
+it before the ratchet, drift, later sectorial and final TBR stages.
+The first replicate of each hit (replicate 0, or any replicate that
+immediately follows a new best score) is left unconstrained.  Because
+the constraint refreshes every replicate and is never permanently
+locked, it can guide early search without entrenching a basin.  Only
+active when neither a user \code{constraint} nor \code{consensusConstrain} is in
+effect.  Default \code{FALSE}.}
+
+\item{transientAutoconstMinReps}{Integer; number of completed replicates
+(with at least two best-score pool trees) required before
+\code{transientAutoconst} engages.  Default \code{2}.}
 
 \item{pruneReinsertCycles}{Integer; number of taxon pruning-reinsertion
 perturbation cycles per replicate.  Each cycle drops a fraction of leaves,
