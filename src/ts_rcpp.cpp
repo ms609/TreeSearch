@@ -1477,7 +1477,15 @@ static ts::ConstraintData build_constraint_from_r(
   if (consNegSplitMatrix.isNotNull()) {
     IntegerMatrix nsm(consNegSplitMatrix.get());
     int n_neg = nsm.nrow();
-    if (n_neg > 0 && nsm.ncol() == n_tips) {
+    if (n_neg > 0) {
+      // A column-count mismatch would otherwise silently drop the negative
+      // constraint, running an UNCONSTRAINED converse search and reporting a
+      // clade's Bremer support as 0 -- a silent wrong answer.  Fail loudly.
+      if (nsm.ncol() != n_tips) {
+        Rcpp::stop("consNegSplitMatrix has %d column(s) but the dataset has %d "
+                   "tip(s); a negative-constraint matrix needs one column per "
+                   "tip.", nsm.ncol(), n_tips);
+      }
       ts::add_negative_constraint(cd, INTEGER(nsm), n_neg, n_tips);
     }
   }

@@ -296,3 +296,78 @@ test_that("Bremer ignores (with a warning) drift/anneal args in a converse searc
     "always disabled")
   expect_true(all(is.finite(con)))
 })
+
+# --- method = "constraint" on >= 12 tips: exercises the SECTORIAL search path ---
+# rss_search / xss_search engage once a tree has >= 12 tips.  Their reduced-
+# dataset sector solve is constraint-blind, so a reinsertion could rebuild a
+# forbidden clade; the fix rejects such a reinsertion post-hoc (a reach guard --
+# the pool backstop already guaranteed soundness).  This whole path is
+# structurally invisible to the <= 7-tip enumeration oracle above (sectors need
+# >= 12 tips), so it needs its own coverage.
+
+# A graded pectinate matrix on `nIn` ingroup taxa + one outgroup: nested clades
+# {t1..tk} (k = 2..nIn-1), each duplicated for graded support.
+sectorFixture <- function(nIn = 13) {
+  tips <- c(paste0("t", seq_len(nIn)), "out")
+  nTip <- length(tips)
+  mkChar <- function(k) paste0(c(rep("1", k), rep("0", nTip - k)), collapse = "")
+  chars <- unlist(lapply(rep(2:(nIn - 1L), each = 2L), mkChar))
+  dat <- StringToPhyDat(paste(chars, collapse = " "), seq_len(nTip),
+                        byTaxon = FALSE)
+  names(dat) <- tips
+  dat
+}
+
+test_that("converse search on >= 12 tips (sectors engaged) returns clade-free trees", {
+  skip_on_cran()
+  dat <- sectorFixture(13)            # 14 tips -> sectorial search engages
+  expect_gte(length(dat), 12L)
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 6L, verbosity = 0L)
+  ref <- mpts[[1]]
+  splits <- as.Splits(ref, tipLabels = names(dat))
+  splitNames <- rownames(as.matrix(splits))
+  expect_gt(length(splitNames), 0L)
+
+  # Directly drive the negative-constraint sector path for a spread of clades and
+  # confirm each returned tree genuinely LACKS its forbidden clade.  The pool
+  # backstop guarantees this regardless of the sector fix, so it is a robust
+  # soundness assertion; the fix's REACH benefit (fewer stranded replicates) is a
+  # Hamilton-scale measurement, not asserted here.
+  probe <- unique(round(seq(1, length(splitNames),
+                            length.out = min(4L, length(splitNames)))))
+  for (i in probe) {
+    set.seed(100L + i)
+    res <- MaximizeParsimony(dat, collapse = TRUE, nThreads = 1L,
+                             .negativeConstraint = splits[[i]],
+                             driftCycles = 0L, sectorGoDrift = 0L,
+                             sectorDriftCycles = 0L, annealCycles = 0L,
+                             maxReplicates = 12L, verbosity = 0L)
+    tr <- if (inherits(res, "phylo")) res else res[[1L]]
+    disp <- SplitFrequency(ref, structure(list(tr), class = "multiPhylo"))
+    expect_lt(unname(disp[splitNames[i]]), 0.5)   # returned tree lacks the clade
+  }
+})
+
+test_that("constraint Bremer on >= 12 tips is non-negative and <= pool", {
+  skip_on_cran()
+  dat <- sectorFixture(13)
+  set.seed(2)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 6L, verbosity = 0L)
+  ref <- mpts[[1]]
+  Lstar <- attr(mpts, "score")
+
+  con <- Bremer(ref, dat, method = "constraint", optimalScore = Lstar,
+                maxReplicates = 10L, verbosity = 0L)
+  expect_type(con, "double")
+  expect_true(any(is.finite(con)))               # the sector path did not strand
+  expect_true(all(con[is.finite(con)] >= 0))     # correct L* (no negative decay)
+
+  pool <- Bremer(ref, dat, method = "pool", optimalScore = Lstar, maxBremer = 12,
+                 maxReplicates = 30L, verbosity = 0L)
+  shared <- intersect(names(con), names(pool))
+  uncensored <- shared[is.finite(pool[shared]) & is.finite(con[shared])]
+  # Both are upper bounds on the true decay; the directed constraint search is
+  # never looser than the incidental pool where both are finite.
+  expect_true(all(con[uncensored] <= pool[uncensored] + 1e-6))
+})

@@ -153,10 +153,14 @@ std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words);
 void add_negative_constraint(
     ConstraintData& cd, const int* neg_matrix, int n_neg, int n_tips);
 
-// Returns true if the tree currently displays any forbidden clade.  The tree
-// is rooted on tip 0, so a canonical (tip-0-outside) bipartition is displayed
-// iff some internal node's subtree tip mask equals it -- the same test
-// map_constraint_nodes() uses to locate a positive split.
+// Returns true if the tree currently displays any forbidden clade.  A
+// bipartition is displayed iff some internal node's subtree tip mask equals it
+// on EITHER side, so each node mask is canonicalized to tip-0-outside form
+// (flipped when tip 0 is inside) before comparison.  This bilateral
+// canonicalization is REQUIRED because the internal search tree is not
+// guaranteed to be rooted on tip 0 -- unlike map_constraint_nodes(), which does
+// a one-sided (already-tip-0-outside) compare for a positive split and so must
+// not be assumed bilateral-safe.
 bool displays_forbidden_clade(const TreeState& tree, const ConstraintData& cd);
 
 // Repair constraint violations by minimal SPR moves.
