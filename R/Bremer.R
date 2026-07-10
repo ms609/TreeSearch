@@ -103,6 +103,16 @@ Bremer <- function(tree, dataset,
                    format = "numeric", cl = NULL, ...) {
   method <- match.arg(method)
 
+  # `optimalScore = NULL` is the documented "not supplied" sentinel.  A non-NULL
+  # value must be a single finite number: NA_real_ in particular would otherwise
+  # slip past the is.null() checks and crash the one-sided scoring guard with
+  # "missing value where TRUE/FALSE needed".
+  if (!is.null(optimalScore) &&
+      (length(optimalScore) != 1L || !is.numeric(optimalScore) ||
+       !is.finite(optimalScore))) {
+    stop("`optimalScore` must be a single finite number, or NULL.")
+  }
+
   scoringArgs <- list(concavity = concavity, extended_iw = extended_iw,
                       xpiwe_r = xpiwe_r, xpiwe_max_f = xpiwe_max_f,
                       hierarchy = hierarchy, inapplicable = inapplicable,
@@ -243,8 +253,12 @@ Bremer <- function(tree, dataset,
         ret[idx] <- as.character(values)
         # Inf renders as the literal "Inf"; preserve the censoring flag as an
         # attribute so pool-method callers can still distinguish "> maxBremer"
-        # (censored) from a genuine value (the numeric format carries it too).
-        if (length(censored) && any(censored)) {
+        # (censored) from a genuine value.  Attach it whenever there ARE entries
+        # (not only when something is censored), so the character format carries
+        # the same fixed-length `censored` attribute the numeric format does --
+        # otherwise downstream code assuming its presence breaks on the character
+        # path whenever no clade happens to be censored.
+        if (length(censored)) {
           censVec <- logical(reference[["Nnode"]])
           censVec[idx] <- as.logical(censored)
           attr(ret, "censored") <- censVec

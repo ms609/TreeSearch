@@ -85,6 +85,19 @@ SuboptimalTrees <- function(dataset, tree = NULL,
     }
     dots[["collapse"]] <- NULL
   }
+  # `poolSuboptimal`/`poolMaxSize` are the raw SearchControl() fields that
+  # `maxSuboptimal`/`maxPool` set below.  Passed via `...` they would flow into
+  # MaximizeParsimony()'s dots-override-control merge and SILENTLY win over the
+  # constructed control (last-writer-wins), defeating `maxSuboptimal`/`maxPool`.
+  # Strip them with a warning, directing the caller to the blessed arguments.
+  managed <- intersect(c("poolSuboptimal", "poolMaxSize"), names(dots))
+  if (length(managed)) {
+    warning("Set the suboptimal-pool size via `maxSuboptimal` / `maxPool`, not ",
+            "`", paste(managed, collapse = "` / `"),
+            "`; the latter would silently override the former and ",
+            if (length(managed) > 1L) "are" else "is", " ignored.")
+    dots[managed] <- NULL
+  }
 
   control <- SearchControl(poolSuboptimal = maxSuboptimal, poolMaxSize = maxPool)
 

@@ -63,3 +63,17 @@ test_that("SuboptimalTrees() validates its arguments", {
   expect_error(SuboptimalTrees(ds, maxPool = 0L),
                "must be a single positive integer")
 })
+
+test_that("SuboptimalTrees() warns and ignores raw poolSuboptimal/poolMaxSize (B-10)", {
+  # These raw SearchControl fields would silently override the values set from
+  # maxSuboptimal/maxPool via MaximizeParsimony()'s dots-override-control merge.
+  set.seed(3418)
+  expect_warning(
+    SuboptimalTrees(ds, maxSuboptimal = 2, poolSuboptimal = 9,
+                    maxReplicates = 2L, targetHits = 1L, verbosity = 0L),
+    "maxSuboptimal")
+  expect_warning(
+    SuboptimalTrees(ds, maxPool = 100L, poolMaxSize = 5L,
+                    maxReplicates = 2L, targetHits = 1L, verbosity = 0L),
+    "maxPool")
+})

@@ -371,3 +371,46 @@ test_that("constraint Bremer on >= 12 tips is non-negative and <= pool", {
   # never looser than the incidental pool where both are finite.
   expect_true(all(con[uncensored] <= pool[uncensored] + 1e-6))
 })
+
+# --- input validation / format consistency (red-team round 2) ---
+
+test_that("Bremer rejects a non-finite or non-scalar optimalScore (B-8)", {
+  dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
+  # NA_real_ slips past is.null() and previously crashed the one-sided scoring
+  # guard with "missing value where TRUE/FALSE needed"; now a clear error.
+  expect_error(
+    Bremer(mpts, dat, optimalScore = NA_real_, maxReplicates = 6L,
+           verbosity = 0L),
+    "single finite number")
+  expect_error(
+    Bremer(mpts, dat, optimalScore = c(1, 2), maxReplicates = 6L,
+           verbosity = 0L),
+    "single finite number")
+})
+
+test_that("Bremer(format='character') always carries a censored attribute (B-9)", {
+  dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, collapse = FALSE, maxReplicates = 8L,
+                            verbosity = 0L)
+  ref <- mpts[[1]]
+  Lstar <- attr(mpts, "score")
+  # method = "constraint" never censors, so this is the "nothing censored" path
+  # where the character format previously dropped the attribute entirely while
+  # the numeric format kept an all-FALSE vector.
+  lab <- Bremer(ref, dat, optimalScore = Lstar, format = "character",
+                maxReplicates = 12L, verbosity = 0L)
+  cens <- attr(lab, "censored")
+  expect_false(is.null(cens))                 # attribute is present...
+  expect_type(cens, "logical")
+  expect_length(cens, ref[["Nnode"]])         # ...node.label-shaped...
+  expect_false(any(cens))                     # ...and correctly all-FALSE.
+  # The numeric format for the same call also carries a censored attribute.
+  num <- Bremer(ref, dat, optimalScore = Lstar,
+                maxReplicates = 12L, verbosity = 0L)
+  expect_false(is.null(attr(num, "censored")))
+})
