@@ -13,7 +13,13 @@ ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
 
 MutualClusteringConcordance(tree, dataset)
 
-QuartetConcordance(tree, dataset = NULL, weight = TRUE, return = "edge")
+QuartetConcordance(
+  tree,
+  dataset = NULL,
+  weight = TRUE,
+  return = "edge",
+  unit = c("quartet", "trit")
+)
 
 PhylogeneticConcordance(tree, dataset)
 
@@ -51,6 +57,26 @@ In all cases, 1 corresponds to the maximal attainable MI for the pair
 
 \item{weight}{Logical specifying whether to weight sites according to the
 number of quartets they are decisive for.}
+
+\item{unit}{Character specifying the currency in which quartets are counted:
+\itemize{
+\item \code{"quartet"} (default): each resolved quartet counts once, so a character
+is credited with the full combinatorial volume of quartets it resolves;
+\item \code{"trit"}: quartets are counted as the \emph{independent} information they carry
+\insertCite{Nelson1992}{TreeSearch}.  Because the quartets resolved by a
+split of sizes \eqn{(k, t - k)} are logically redundant --
+\eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)} -- only
+\eqn{(k - 1)(t - k - 1)} of the \eqn{\binom{k}{2}\binom{t - k}{2}}
+resolved quartets are independent.  Concordance is then measured against
+this reduced (redundancy-corrected) content, so that only a character
+whose split is \emph{identical} to the tree split scores full marks; nested
+(compatible) characters receive genuine partial support, and crossing
+(incompatible) characters score lower still.  A multistate character is
+scored in the same currency: trits are counted independently within each
+pair of states (sizes \eqn{n_i}, \eqn{n_j} give a per-state-pair weight of
+\eqn{4 / (n_i n_j)}) and summed across pairs, so multistate and binary
+characters remain directly comparable.
+}}
 }
 \value{
 \code{ClusteringConcordance(return = "all")} returns a 3D array where each
@@ -98,6 +124,11 @@ each corresponding split in \code{tree}.
 
 \code{QuartetConcordance(return = "char")} returns a numeric vector giving the
 concordance index calculated at each site, averaged across all splits.
+
+With \code{unit = "trit"} (see below) the same vectors are returned, but scored in
+redundancy-corrected currency: values are typically lower, and reach 1 only
+where a split is \emph{displayed} by the character rather than merely concordant
+with many of its quartets.
 
 \code{PhylogeneticConcordance()} returns a numeric vector giving the
 phylogenetic information of each split in \code{tree}, named according to the
@@ -236,6 +267,8 @@ myMatrix <- congreveLamsdellMatrices[[10]]
 ClusteringConcordance(TreeTools::NJTree(myMatrix), myMatrix)
 }
 \references{
+\insertAllCited{}
+
 \insertAllCited{}
 }
 \seealso{

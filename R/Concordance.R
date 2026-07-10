@@ -765,8 +765,31 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' `QuartetConcordance(return = "char")` returns a numeric vector giving the
 #' concordance index calculated at each site, averaged across all splits.
 #'
+#' With `unit = "trit"` (see below) the same vectors are returned, but scored in
+#' redundancy-corrected currency: values are typically lower, and reach 1 only
+#' where a split is *displayed* by the character rather than merely concordant
+#' with many of its quartets.
+#'
 #' @param weight Logical specifying whether to weight sites according to the
 #' number of quartets they are decisive for.
+#' @param unit Character specifying the currency in which quartets are counted:
+#'   - `"quartet"` (default): each resolved quartet counts once, so a character
+#'     is credited with the full combinatorial volume of quartets it resolves;
+#'   - `"trit"`: quartets are counted as the *independent* information they carry
+#'     \insertCite{Nelson1992}{TreeSearch}.  Because the quartets resolved by a
+#'     split of sizes \eqn{(k, t - k)} are logically redundant --
+#'     \eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)} -- only
+#'     \eqn{(k - 1)(t - k - 1)} of the \eqn{\binom{k}{2}\binom{t - k}{2}}
+#'     resolved quartets are independent.  Concordance is then measured against
+#'     this reduced (redundancy-corrected) content, so that only a character
+#'     whose split is *identical* to the tree split scores full marks; nested
+#'     (compatible) characters receive genuine partial support, and crossing
+#'     (incompatible) characters score lower still.  A multistate character is
+#'     scored in the same currency: trits are counted independently within each
+#'     pair of states (sizes \eqn{n_i}, \eqn{n_j} give a per-state-pair weight of
+#'     \eqn{4 / (n_i n_j)}) and summed across pairs, so multistate and binary
+#'     characters remain directly comparable.
+#' @references \insertAllCited{}
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
 #' @importFrom utils combn
@@ -776,7 +799,8 @@ QuartetConcordance <- function(
   tree,
   dataset = NULL,
   weight = TRUE,
-  return = "edge"
+  return = "edge",
+  unit = c("quartet", "trit")
 ) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -785,6 +809,7 @@ QuartetConcordance <- function(
   if (!inherits(dataset, "phyDat")) {
     stop("`dataset` must be a phyDat object.")
   }
+  unit <- match.arg(unit)
   tipLabels <- intersect(TipLabels(tree), names(dataset))
   if (!length(tipLabels)) {
     warning("No overlap between tree labels and dataset.")
@@ -816,14 +841,19 @@ QuartetConcordance <- function(
     dimnames = dimnames(characters)
   )
   
+  options <- c("character", "site", "default")
+  return <- options[[pmatch(tolower(trimws(return)), options,
+                            nomatch = length(options))]]
+
+  if (unit == "trit") {
+    # Return:
+    return(.TritConcordance(logiSplits, charInt, weight, return, splits))
+  }
+
   raw_counts <- quartet_concordance(logiSplits, charInt)
 
   num <- raw_counts$concordant
   den <- raw_counts$decisive
-  options <- c("character", "site", "default")
-  return <- options[[pmatch(tolower(trimws(return)), options,
-                            nomatch = length(options))]]
-  
 
   if (return == "default") {
     if (isTRUE(weight)) {
@@ -865,6 +895,113 @@ QuartetConcordance <- function(
         },
         double(1)
       )
+    }
+  }
+}
+
+# Nelson-Ladiges fractional ("trit") currency for QuartetConcordance().
+#
+# The quartets a bipartition of sizes (k, t - k) resolves are the 4-cycles of
+# the complete bipartite graph K_{k, t-k}; the Nelson-Ladiges entailment
+# (ab,cd) + (ab,ce) -> (ab,de) is GF(2) cycle addition, so only the cyclomatic
+# number (k - 1)(t - k - 1) of them are independent ("trits").
+#
+# A multistate character is the disjoint union of its state-pairs: a quartet is
+# decisive only when two taxa share one state and two share another, so every
+# decisive quartet lives in the K_{n_i, n_j} block between two states.  Those
+# blocks are edge-disjoint and the entailment never crosses them (it forces the
+# shared "c, d, e" taxa into a single state), so trits add over state pairs:
+#   W_char = sum_{i<j} (n_i - 1)(n_j - 1),   A = sum_{i<j} A_ij
+# with a per state-pair weight of 4 / (n_i n_j).  (Verified by GF(2) rank of the
+# decisive / concordant quartet sets.)  Each state-pair is therefore an
+# independent binary sub-problem; a binary character is the single-pair case.
+#
+# Scoring uses coverage ("option b"): per pair, concordant trits over the
+# *reported* unit's own content (Wk for edges, Wc for characters), so that
+# A_ij <= min(Wc, Wk) keeps each ratio in [0, 1] and only an identical
+# character-split scores 1.  Pairs are pooled by the shared information
+# M = min(Wc, Wk) (the hBest analogue), which is symmetric between character and
+# split so both `return`s pool by the same amount.  Ambiguous / inapplicable /
+# absent tokens drop out per character (treated as "?", as in the quartet path),
+# giving each character its own effective taxon count.
+.TritConcordance <- function(logiSplits, charInt, weight, return, splits) {
+  nSplit <- ncol(logiSplits)
+  nChar <- ncol(charInt)
+  pos <- function(z) {
+    z[z < 0] <- 0
+    z
+  }
+
+  # Contributions to the pools, summed over each character's state-pairs.
+  numEdge <- numChar <- denM <- matrix(0, nSplit, nChar)
+  wcTot <- numeric(nChar)                    # character trit content (split-free)
+
+  for (ci in seq_len(nChar)) {
+    col <- charInt[, ci]
+    scored <- !is.na(col)
+    states <- sort(unique(col[scored]))
+    if (length(states) < 2L) {
+      next                                   # constant / autapomorphic / empty
+    }
+    for (a in seq_len(length(states) - 1L)) {
+      for (b in seq(a + 1L, length(states))) {
+        inI <- scored & col == states[a]
+        inJ <- scored & col == states[b]
+        aI <- colSums(logiSplits & inI)      # state i, side A
+        bI <- colSums(!logiSplits & inI)     # state i, side B
+        aJ <- colSums(logiSplits & inJ)      # state j, side A
+        bJ <- colSums(!logiSplits & inJ)     # state j, side B
+        nI <- aI + bI                        # n_i (constant across splits)
+        nJ <- aJ + bJ                        # n_j
+        mA <- aI + aJ                        # taxa of this pair on side A
+        tP <- nI + nJ                        # taxa scored in this pair
+        # Concordant trits; the (x - 1)_+ floors stop self-agreement exceeding 1.
+        aij <- pos(aI - 1) * pos(bJ - 1) + pos(bI - 1) * pos(aJ - 1)
+        wc <- pos(nI - 1) * pos(nJ - 1)      # pair's character content
+        wk <- pos(mA - 1) * pos(tP - mA - 1) # pair's split content
+        m <- pmin(wc, wk)                    # shared information
+        denM[, ci] <- denM[, ci] + m
+        numEdge[, ci] <- numEdge[, ci] + ifelse(wk > 0, m * aij / wk, 0)
+        numChar[, ci] <- numChar[, ci] + ifelse(wc > 0, m * aij / wc, 0)
+        wcTot[ci] <- wcTot[ci] + wc[1]       # wc is constant across splits
+      }
+    }
+  }
+
+  informative <- wcTot > 0
+
+  if (return == "default") {
+    # edge: one value per split
+    if (isTRUE(weight)) {
+      denom <- rowSums(denM)
+      ret <- ifelse(denom == 0, NA_real_, rowSums(numEdge) / denom)
+    } else {
+      # Mean per-site quality over informative characters; uninformative
+      # characters carry no trits and are dropped, as in the quartet path.
+      sEdge <- ifelse(denM > 0, numEdge / denM, NA_real_)
+      ret <- if (any(informative)) {
+        rowMeans(sEdge[, informative, drop = FALSE], na.rm = TRUE)
+      } else {
+        rep(NA_real_, nSplit)
+      }
+      ret[is.nan(ret)] <- NA_real_
+    }
+    setNames(ret, names(splits))
+  } else {
+    # char: one value per character
+    if (isTRUE(weight)) {
+      denom <- colSums(denM)
+      ifelse(denom == 0, NA_real_, colSums(numChar) / denom)
+    } else {
+      sChar <- ifelse(denM > 0, numChar / denM, NA_real_)
+      vapply(seq_len(nChar), function(ci) {
+        if (informative[ci]) {
+          m <- mean(sChar[, ci], na.rm = TRUE)
+          if (is.nan(m)) NA_real_ else m
+        } else {
+          NA_real_
+        }
+      }, double(1))
     }
   }
 }

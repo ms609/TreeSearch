@@ -133,6 +133,106 @@ test_that("QuartetConcordance() handles non-integer data", {
                QuartetConcordance(tree, MatrixToPhyDat(intSet)))
 })
 
+test_that("QuartetConcordance() unit = 'trit' locks the contract", {
+  tree <- BalancedTree(8)
+
+  # Character identical to the {t1..t4 | t5..t8} split: that split scores 1,
+  # and it is the *only* split scoring 1 (nested/crossing get partial credit).
+  identChar <- MatrixToPhyDat(matrix(
+    c(0, 0, 0, 0, 1, 1, 1, 1), 8, dimnames = list(paste0("t", 1:8), NULL)))
+  qt <- QuartetConcordance(tree, identChar, unit = "trit")
+  expect_equal(max(qt, na.rm = TRUE), 1)
+  expect_equal(sum(abs(qt - 1) < 1e-9, na.rm = TRUE), 1L)
+  expect_true(all(qt >= 0 & qt <= 1, na.rm = TRUE))
+
+  # unit = "quartet" is the default and is byte-identical to omitting `unit`.
+  expect_identical(QuartetConcordance(tree, identChar),
+                   QuartetConcordance(tree, identChar, unit = "quartet"))
+  # Coverage normalisation makes trit no laxer than quartet.
+  expect_true(mean(qt, na.rm = TRUE) <=
+                mean(QuartetConcordance(tree, identChar, unit = "quartet"),
+                     na.rm = TRUE))
+
+  # Uninformative characters (constant / autapomorphy) carry no trits -> NA.
+  autap <- MatrixToPhyDat(matrix(
+    c(0, 0, 0, 0, 0, 0, 0, 1), 8, dimnames = list(paste0("t", 1:8), NULL)))
+  expect_equal(unname(QuartetConcordance(tree, autap, unit = "trit")),
+               rep(NA_real_, 5))
+
+  # `unit` is validated.
+  expect_error(QuartetConcordance(tree, identChar, unit = "trits"),
+               "should be one of")
+
+  # `return` aliases mirror the quartet path.
+  expect_equal(QuartetConcordance(tree, identChar, return = "edge", unit = "trit"),
+               QuartetConcordance(tree, identChar, return = "default", unit = "trit"))
+  cA <- QuartetConcordance(tree, identChar, return = "char", unit = "trit")
+  expect_equal(cA,
+               QuartetConcordance(tree, identChar, return = "character", unit = "trit"))
+  expect_equal(cA,
+               QuartetConcordance(tree, identChar, return = "site", unit = "trit"))
+})
+
+test_that("QuartetConcordance() unit = 'trit' gives nested partial credit", {
+  # {t1..t5 | t6,t7,t8} split; state {t1,t2,t4} nested within side A but not a
+  # clade, giving cells (p,q,r,s) = (3,0,2,3) -> A/Wk = 4/8 = 0.5 exactly.
+  tree <- ape::read.tree(text = "(((((t1,t2),t3),t4),t5),(t6,(t7,t8)));")
+  char <- MatrixToPhyDat(matrix(
+    c(0, 0, 1, 0, 1, 1, 1, 1), 8, dimnames = list(paste0("t", 1:8), NULL)))
+  qt <- QuartetConcordance(tree, char, unit = "trit")
+
+  # The split isolating {t6,t7,t8} scores exactly the nested value 0.5.
+  sp <- as.Splits(tree)
+  tips <- TipLabels(sp)
+  member <- vapply(seq_along(sp), function(i) {
+    side <- tips[as.logical(sp[[i]])]
+    setequal(side, c("t6", "t7", "t8")) ||
+      setequal(setdiff(tips, side), c("t6", "t7", "t8"))
+  }, logical(1))
+  expect_equal(unname(qt[member]), 0.5)
+})
+
+test_that("QuartetConcordance() unit = 'trit' supports multistate", {
+  # Multistate no longer errors: trits sum over state-pairs (same currency).
+  tree <- BalancedTree(8)
+  ms <- MatrixToPhyDat(matrix(
+    c(0, 0, 1, 1, 2, 2, 2, 0,      # 3 states
+      0, 0, 0, 1, 1, 2, 3, 3), 8,  # 4 states
+    dimnames = list(paste0("t", 1:8), NULL)))
+  qt <- QuartetConcordance(tree, ms, unit = "trit")
+  expect_length(qt, 5L)
+  expect_true(all(qt >= 0 & qt <= 1, na.rm = TRUE))
+  expect_false(anyNA(qt))  # both characters are informative on this tree
+})
+
+test_that("QuartetConcordance() unit = 'trit' scores 1 iff split displayed", {
+  # A multistate character need not be *identical* to a split to score 1: it
+  # scores full marks for every split its own tree displays (each state block
+  # wholly on one side; the split-orthogonal state-pair drops via M = 0).  This
+  # generalises "only identical scores 1" from binary to multistate -- a cleanly
+  # refining reproductive character fully supports the clade it refines.
+  tree <- ape::read.tree(text = "((((t1,t2),t3),((t4,t5),t6)),((t7,t8),t9));")
+  char <- MatrixToPhyDat(matrix(
+    c(0, 0, 0, 1, 1, 1, 2, 2, 2), 9,
+    dimnames = list(paste0("t", 1:9), NULL)))
+  qt <- QuartetConcordance(tree, char, unit = "trit")
+  sp <- as.Splits(tree)
+  tips <- TipLabels(sp)
+  atSplit <- function(members) {
+    i <- which(vapply(seq_along(sp), function(j) {
+      side <- tips[as.logical(sp[[j]])]
+      setequal(side, members) || setequal(setdiff(tips, side), members)
+    }, logical(1)))
+    unname(qt[i])
+  }
+  # Splits the character displays -> exactly 1
+  expect_equal(atSplit(c("t1", "t2", "t3")), 1)
+  expect_equal(atSplit(c("t4", "t5", "t6")), 1)
+  expect_equal(atSplit(c("t1", "t2", "t3", "t4", "t5", "t6")), 1)
+  # A split cutting through a state block is only partially supported
+  expect_true(atSplit(c("t1", "t2")) < 1)
+})
+
 test_that(".Rezero() works", {
   expect_equal(TreeSearch:::.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
 })
