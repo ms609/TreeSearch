@@ -169,9 +169,15 @@ Bremer <- function(tree, dataset,
        Lstar = Lstar)
 }
 
-# Error if the reference's optimal score L* was measured under different scoring
-# arguments than those now in effect -- a silent-units-mismatch guard.  A decay
-# of "extra steps" is only meaningful when L* and L(not C) use the same ruler.
+# Sanity-check a SUPPLIED optimal score L* against the reference's length under
+# the scoring arguments now in effect.  A decay of "extra steps" is only
+# meaningful when L* and L(not C) are measured with the same ruler, so a
+# difference usually means the reference's L* was computed under different
+# scoring arguments (e.g. `Bremer()` left at the default equal weights for trees
+# found under implied weights).  We trust the user to keep the scoring mode
+# consistent, so this only WARNS (never errors) and Bremer proceeds with the
+# supplied score -- the warning is a safety net for a forgotten scoring argument,
+# not a veto on a deliberately different analysis.
 .BremerCheckScoring <- function(tree, dataset, scoringArgs, optimalScore) {
   suppliedLstar <- if (!is.null(optimalScore)) {
     optimalScore
@@ -185,11 +191,13 @@ Bremer <- function(tree, dataset,
     return(invisible(NULL))
   }
 
-  # Reference length under the CURRENT scoring arguments.  TreeLength requires
-  # binary trees and MaximizeParsimony(collapse = TRUE) can return multifurcating
-  # trees, so resolve the zero-length polytomies first.  An arbitrary resolution
-  # can be SUBOPTIMAL, so `refLen` is only an UPPER bound on L* under scoringArgs
-  # (refLen >= L*); the checks below are chosen to stay correct under that.
+  # Length of the reference under the CURRENT scoring arguments -- cheap (scoring,
+  # not searching).  TreeLength requires binary trees and collapse = TRUE can
+  # return multifurcating ones, so resolve the zero-length polytomies first; an
+  # arbitrary resolution only ever LENGTHENS a tree, and we take the minimum over
+  # the supplied trees, so refLen is a tight estimate of the reference's
+  # achievable length (== L* whenever the reference is optimal under these
+  # arguments -- as an MPT set is, when the scoring modes match).
   resolve <- function(t) ape::multi2di(t, random = FALSE)
   resolved <- if (inherits(tree, "multiPhylo")) {
     structure(lapply(tree, resolve), class = "multiPhylo")
@@ -201,36 +209,22 @@ Bremer <- function(tree, dataset,
   if (!is.finite(refLen)) {
     return(invisible(NULL))
   }
-  tol <- 1e-6
 
-  # SOUND error: refLen is an achievable length under scoringArgs, hence an upper
-  # bound on the optimum.  A supplied optimum that EXCEEDS it cannot be the
-  # optimum under these arguments -- the scoring arguments differ from those used
-  # to find the trees, or the score is stale.  (An unlucky multi2di resolution
-  # only inflates refLen, so it can never trigger this -- unlike an exact-equality
-  # check, which spuriously errored on a collapsed reference.)
-  if (suppliedLstar > refLen + tol) {
-    stop("The reference's optimal score (", signif(suppliedLstar, 7),
-         ") exceeds an achievable length under the supplied scoring arguments (",
-         signif(refLen, 7), "). Pass the same scoring arguments (`concavity`, ",
-         "`inapplicable`, ...) used to find the trees.", call. = FALSE)
-  }
-
-  # Heuristic warning for the opposite direction (supplied optimum well BELOW the
-  # reference length -- e.g. an implied-weights optimum scored under equal
-  # weights).  Exact detection is infeasible (computing L* is NP-hard and refLen
-  # is only an upper bound), so WARN rather than error, and only for a multiPhylo
-  # (whose members are optimal, so a large gap signals a scoring-MODE mismatch,
-  # not a merely-suboptimal single reference tree).
-  if (inherits(tree, "multiPhylo")) {
-    gap <- refLen - suppliedLstar
-    if (gap > tol && gap > 0.05 * max(abs(refLen), abs(suppliedLstar), 1)) {
-      warning("The reference trees' optimal score (", signif(suppliedLstar, 7),
-              ") differs substantially from their length under the supplied ",
-              "scoring arguments (~", signif(refLen, 7), "). If you did not pass ",
-              "the same scoring arguments (`concavity`, `inapplicable`, ...) used ",
-              "to find the trees, the decay values will be meaningless.")
-    }
+  # A material difference in EITHER direction signals a probable scoring-mode
+  # mismatch: a supplied L* ABOVE an achievable length cannot be the optimum
+  # here, and one well BELOW it means the reference is far from optimal under
+  # these arguments (e.g. an implied-weights optimum scored under equal weights).
+  # Unlike the previous one-sided 5%-of-length heuristic, a tight tolerance also
+  # catches a small but genuine mismatch that two criteria happen to place close
+  # together.  Accept and proceed regardless (trusting the user's choice).
+  tol <- 1e-6 * max(1, abs(refLen), abs(suppliedLstar))
+  if (abs(suppliedLstar - refLen) > tol) {
+    warning("The supplied optimal score (", signif(suppliedLstar, 7),
+            ") differs from the reference tree length under the supplied scoring ",
+            "arguments (", signif(refLen, 7), "). If you did not pass the same ",
+            "scoring arguments (`concavity`, `inapplicable`, ...) used to find ",
+            "the trees, the decay values mix two optimality criteria and are ",
+            "meaningless. Proceeding with the supplied score.")
   }
   invisible(NULL)
 }

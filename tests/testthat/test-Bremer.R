@@ -229,21 +229,24 @@ test_that("constraint is the default and never looser than an uncensored pool", 
   expect_true(all(con[uncensored] <= pool[uncensored] + 1e-6))
 })
 
-test_that("Bremer errors when optimalScore exceeds the reference tree length", {
+test_that("Bremer warns (does not error) on an inconsistent optimalScore, then proceeds", {
   dat <- StringToPhyDat("1100000 1110000 1111000 1111100 1001000",
                         1:7, byTaxon = FALSE)
   names(dat) <- c(LETTERS[1:6], "out")
   set.seed(1)
   mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
   ref <- mpts[[1]]
-  # A claimed optimum longer than the reference tree's own length is impossible
-  # under these scoring arguments; the scoring guard catches it before searching
-  # (a stale or mis-scaled L*) rather than reporting a bogus decay.
-  expect_error(
-    Bremer(ref, dat, method = "constraint",
-           optimalScore = attr(mpts, "score") + 5,
-           maxReplicates = 20L, verbosity = 0L),
-    "exceeds an achievable length")
+  # A supplied L* inconsistent with the reference length under these scoring
+  # arguments is WARNED, not errored: Bremer trusts the user's scoring choice and
+  # proceeds (they may deliberately want a different analysis).  A value BELOW the
+  # reference length exercises the warning without triggering the adopt-shorter-L*
+  # path (which would add a second, unrelated warning).
+  expect_warning(
+    con <- Bremer(ref, dat, method = "constraint",
+                  optimalScore = attr(mpts, "score") - 3,
+                  maxReplicates = 20L, verbosity = 0L),
+    "differs from the reference")
+  expect_type(con, "double")
 })
 
 test_that("constraint Bremer matches enumeration on inapplicable (bgs) data", {
@@ -271,16 +274,35 @@ test_that("Bremer warns on a likely scoring-units mismatch (IW trees vs EW defau
   set.seed(1)
   mpts <- MaximizeParsimony(dat, concavity = 3, maxReplicates = 8L, verbosity = 0L)
   # Trees found under implied weights; the default equal-weights Bremer would
-  # subtract an IW optimum from EW lengths.  Exact detection is infeasible (an
-  # arbitrary resolution only upper-bounds L*, and computing L* is NP-hard), so
-  # the guard WARNS on the large gap rather than erroring or silently mis-scoring
-  # (BR-1).
+  # subtract an IW optimum from EW lengths.  The scoring guard checks the supplied
+  # L* against the reference's length under the current arguments and WARNS on the
+  # difference (accepting and proceeding), rather than erroring or silently
+  # mis-scoring (BR-1/B-7).
   expect_warning(Bremer(mpts, dat, maxReplicates = 8L, verbosity = 0L),
-                 "differs substantially")
+                 "differs from the reference")
   # Passing the matching concavity is accepted without the mismatch warning.
   ok <- suppressWarnings(
     Bremer(mpts, dat, concavity = 3, maxReplicates = 12L, verbosity = 0L))
   expect_type(ok, "double")
+})
+
+test_that("the scoring-mismatch warning catches a small gap the 5% band missed (B-7)", {
+  dat <- StringToPhyDat(
+    "1110000 1110000 1110000 1100000 0001100 0001100 0000110 1111111",
+    1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
+  ref <- mpts[[1]]
+  Lstar <- attr(mpts, "score")
+  # A gap of 0.3 is < 5% of the reference length, so the old one-sided
+  # 5%-of-length heuristic would NOT have warned (the P1 blind spot two criteria
+  # placing L* close together); the tight two-sided tolerance now does.  Below
+  # the reference length, so the adopt-shorter-L* path does not add a 2nd warning.
+  expect_warning(
+    Bremer(ref, dat, method = "constraint", optimalScore = Lstar - 0.3,
+           maxReplicates = 15L, verbosity = 0L),
+    "differs from the reference")
 })
 
 test_that("Bremer ignores (with a warning) drift/anneal args in a converse search", {
