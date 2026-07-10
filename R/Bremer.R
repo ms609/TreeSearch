@@ -345,6 +345,32 @@ Bremer <- function(tree, dataset,
   list(bremer = bremer, censored = censored)
 }
 
+# Convert one converse-search result `out` = list(score, tree) to a decay-
+# eligible score, or NA.  Two ways to NA: a non-finite/negative score is the
+# engine's "no tree lacking the clade found" sentinel (empty pool -> budget
+# shortfall); a returned tree that STILL displays the clade is an engine
+# regression the C++ guard + pool backstop should preclude -- surface it as NA +
+# a warning rather than a silently deflated decay (the worst outcome for a
+# published statistic).
+#' @importFrom TreeTools SplitFrequency
+.BremerProcessResult <- function(out, refReference, splitName) {
+  s <- out$score
+  if (!is.finite(s) || s < 0) {
+    return(NA_real_)
+  }
+  if (!is.null(out$tree)) {
+    disp <- SplitFrequency(refReference,
+                           structure(list(out$tree), class = "multiPhylo"))
+    # Index by the reference node number (robust to split ordering).
+    if (isTRUE(unname(disp[splitName]) >= 0.5)) {
+      warning("The converse search for clade ", splitName,
+              " returned a tree that still displays it; reported as NA.")
+      return(NA_real_)
+    }
+  }
+  s
+}
+
 # Rigorous Bremer by converse-constraint search: for each clade, the shortest
 # tree forced to LACK it.  Uses the negative-constraint engine wired into
 # MaximizeParsimony() via the internal `.negativeConstraint` argument.
@@ -358,7 +384,7 @@ Bremer <- function(tree, dataset,
 # otherwise wander onto the clade and, being worse-accepting, report it as
 # unsupported.  Runs serially: the pool guard is on the serial search path.
 .BremerConstraint <- function(ref, dataset, scoringArgs, maxBremer, dots,
-                              cl = NULL) {
+                              cl = NULL, .runConverse = NULL) {
   disabled <- list(
     driftCycles = 0L, sectorGoDrift = 0L, sectorDriftCycles = 0L,
     annealCycles = 0L
@@ -409,33 +435,19 @@ Bremer <- function(tree, dataset,
     }
     list(score = attr(res, "score"), tree = tree)
   }
+  # Test seam: an injected search function (same `(negSplit) -> list(score, tree)`
+  # contract) bypasses the real engine, so the NA / displays-clade handling and
+  # the aggregate NA warning can be exercised deterministically.
+  if (!is.null(.runConverse)) {
+    runConverse <- .runConverse
+  }
 
   splitNames <- ref$splitNames
 
   # Per-clade work unit (also the unit of parallelism for the cluster fan-out).
   processConverse <- function(i) {
-    out <- runConverse(ref$splits[[i]])
-    s <- out$score
-    # A negative score is the engine's "no tree found" sentinel (empty pool):
-    # the converse search failed to locate any tree lacking the clade.
-    if (!is.finite(s) || s < 0) {
-      return(NA_real_)
-    }
-    # Verify the returned tree really lacks the clade.  The C++ guard + pool
-    # backstop already guarantee this; checking here means a future engine
-    # regression surfaces as a visible NA rather than a silently deflated decay
-    # for a well-supported clade (the worst outcome for a published statistic).
-    if (!is.null(out$tree)) {
-      disp <- SplitFrequency(ref$reference,
-                             structure(list(out$tree), class = "multiPhylo"))
-      # Index by the reference node number (robust to split ordering).
-      if (isTRUE(unname(disp[splitNames[i]]) >= 0.5)) {
-        warning("The converse search for clade ", splitNames[i],
-                " returned a tree that still displays it; reported as NA.")
-        return(NA_real_)
-      }
-    }
-    s
+    .BremerProcessResult(runConverse(ref$splits[[i]]), ref$reference,
+                         splitNames[i])
   }
 
   # Per-clade searches are independent; fan them out over `cl` when supplied.

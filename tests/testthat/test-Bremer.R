@@ -474,3 +474,62 @@ test_that("Bremer(format='character') always carries a censored attribute (B-9)"
                 maxReplicates = 12L, verbosity = 0L)
   expect_false(is.null(attr(num, "censored")))
 })
+
+# --- engine-failure handling, via a test seam (no real search needed) ---
+# These deterministically drive the NA / clade-displaying paths that the real
+# engine (C++ guard + pool backstop) is designed never to reach, so they cannot
+# be provoked by an ordinary search.
+
+test_that(".BremerProcessResult maps engine sentinels to NA (BR-6/TA-4)", {
+  dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, collapse = FALSE, maxReplicates = 8L,
+                            verbosity = 0L)
+  ref <- mpts[[1]]
+  sn <- rownames(as.matrix(as.Splits(ref, tipLabels = names(dat))))[[1]]
+
+  # "No tree lacking the clade found" sentinel (negative / non-finite) -> NA.
+  expect_identical(
+    TreeSearch:::.BremerProcessResult(list(score = -1, tree = NULL), ref, sn),
+    NA_real_)
+  expect_identical(
+    TreeSearch:::.BremerProcessResult(list(score = NA_real_, tree = NULL), ref, sn),
+    NA_real_)
+
+  # A returned tree that STILL displays the clade (the reference does) -> the
+  # BR-6 defence-in-depth check warns and returns NA rather than a deflated decay.
+  expect_warning(
+    r <- TreeSearch:::.BremerProcessResult(list(score = 5, tree = ref), ref, sn),
+    "still displays it")
+  expect_identical(r, NA_real_)
+
+  # A genuinely clade-free tree (a star displays no clade) -> score passes through.
+  star <- ape::stree(length(dat), type = "star", tip.label = names(dat))
+  expect_identical(
+    TreeSearch:::.BremerProcessResult(list(score = 5, tree = star), ref, sn), 5)
+})
+
+test_that(".BremerConstraint emits the aggregate NA warning (VF-4/TA-3)", {
+  dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, collapse = FALSE, maxReplicates = 8L,
+                            verbosity = 0L)
+  ref <- TreeSearch:::.BremerReference(mpts, dat,
+                                       optimalScore = attr(mpts, "score"))
+  expect_gte(length(ref$splitNames), 2L)
+  sa <- list(concavity = Inf, extended_iw = TRUE, xpiwe_r = 0.5, xpiwe_max_f = 5,
+             hierarchy = NULL, inapplicable = "bgs", hsj_alpha = 1.0)
+
+  # Inject an engine stub returning the "no tree found" sentinel for every clade,
+  # so every converse search NAs and the aggregate warning fires.  Lstar is
+  # supplied via the reference, so no real search runs.
+  stubNA <- function(negSplit) list(score = -1, tree = NULL)
+  expect_warning(
+    res <- TreeSearch:::.BremerConstraint(ref, dat, sa, Inf, list(),
+                                          cl = NULL, .runConverse = stubNA),
+    "returned NA")
+  expect_length(res$bremer, length(ref$splitNames))
+  expect_true(all(is.na(res$bremer)))
+})
