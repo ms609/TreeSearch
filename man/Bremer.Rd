@@ -178,8 +178,12 @@ will be meaningless; they default to equal-weights Fitch parsimony.
 data("inapplicable.phyData", package = "TreeSearch")
 dataset <- inapplicable.phyData[["Vinther2008"]]
 \donttest{
+# `set.seed()` makes the heuristic search reproducible
+set.seed(0)
 trees <- MaximizeParsimony(dataset, maxReplicates = 8, verbosity = 0)
-decay <- Bremer(trees, dataset, maxReplicates = 8, verbosity = 0)
+
+# A fast, approximate decay index read from the suboptimal-tree pool
+decay <- Bremer(trees, dataset, method = "pool", verbosity = 0)
 decay
 
 # Annotate the reference tree (the strict consensus of the optimal trees,
@@ -187,6 +191,13 @@ decay
 reference <- ape::consensus(trees, p = 1)
 plot(reference)
 TreeTools::LabelSplits(reference, decay)
+}
+
+\dontrun{
+# The default `method = "constraint"` is rigorous but much slower: it runs
+# one converse-constraint search per clade.  Bound each search with
+# `maxSeconds`, and/or distribute the searches over a cluster with `cl`.
+Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 10, verbosity = 0)
 }
 }
 \references{
