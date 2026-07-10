@@ -20,6 +20,14 @@ MaddisonSlatkin_clear_cache <- function() {
     invisible(.Call(`_TreeSearch_MaddisonSlatkin_clear_cache`))
 }
 
+quartet_expect <- function(splits, characters) {
+    .Call(`_TreeSearch_quartet_expect`, splits, characters)
+}
+
+trit_expect <- function(splits, characters) {
+    .Call(`_TreeSearch_trit_expect`, splits, characters)
+}
+
 #' Expected mutual information between two partitions
 #'
 #' Computes the mutual information expected purely by chance between two

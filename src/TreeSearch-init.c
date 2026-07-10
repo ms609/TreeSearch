@@ -21,6 +21,8 @@ extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 
 // extern SEXP _TreeSearch_astar_search_r(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_quartet_concordance(SEXP, SEXP);
+extern SEXP _TreeSearch_quartet_expect(SEXP, SEXP);
+extern SEXP _TreeSearch_trit_expect(SEXP, SEXP);
 extern SEXP _TreeSearch_ts_fitch_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_na_char_steps(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_char_steps(SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -75,6 +77,8 @@ static const R_CallMethodDef callMethods[] = {
 
   // {"_TreeSearch_astar_search_r",    (DL_FUNC) &_TreeSearch_astar_search_r, 3},
   {"_TreeSearch_quartet_concordance",(DL_FUNC) &_TreeSearch_quartet_concordance, 2},
+  {"_TreeSearch_quartet_expect",    (DL_FUNC) &_TreeSearch_quartet_expect, 2},
+  {"_TreeSearch_trit_expect",       (DL_FUNC) &_TreeSearch_trit_expect, 2},
   {"_TreeSearch_ts_fitch_score",    (DL_FUNC) &_TreeSearch_ts_fitch_score, 12},
   {"_TreeSearch_ts_na_char_steps", (DL_FUNC) &_TreeSearch_ts_na_char_steps, 5},
   {"_TreeSearch_ts_char_steps", (DL_FUNC) &_TreeSearch_ts_char_steps, 5},

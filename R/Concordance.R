@@ -980,73 +980,15 @@ QuartetConcordance <- function(
   }
 }
 
-# Exact / Monte-Carlo expected raw concordant + decisive quartet counts under
-# the fixed-marginal null (the raw-currency analogue of `.CharTritExpect` /
-# `.CharTritMC`).  Per state-pair, conc = C(p,2)C(s,2) + C(q,2)C(r,2) and
-# dec = conc + p*q*r*s are polynomials in the cells (no floors), so their exact
-# expectation is a clean sum over the same trivariate-hypergeometric pmf.
-.ExpectedQuartetCache <- new.env(hash = TRUE, parent = emptyenv())
-
-.ExpectedQuartet <- function(nI, nJ, M, t) {
-  key <- paste(nI, nJ, M, t, sep = ",")
-  cached <- .ExpectedQuartetCache[[key]]
-  if (!is.null(cached)) {
-    return(cached)
-  }
-  choose2 <- function(z) if (z < 2) 0 else z * (z - 1) / 2
-  nOther <- t - nI - nJ
-  logDen <- lchoose(t, M)
-  eConc <- 0
-  eDec <- 0
-  for (p in 0:min(nI, M)) {
-    for (r in 0:min(nJ, M - p)) {
-      oA <- M - p - r
-      if (oA < 0 || oA > nOther) {
-        next
-      }
-      prob <- exp(lchoose(nI, p) + lchoose(nJ, r) + lchoose(nOther, oA) - logDen)
-      if (prob <= 0) {
-        next
-      }
-      q <- nI - p
-      s <- nJ - r
-      conc <- choose2(p) * choose2(s) + choose2(q) * choose2(r)
-      eConc <- eConc + prob * conc
-      eDec <- eDec + prob * (conc + p * q * r * s)
-    }
-  }
-  res <- c(eConc, eDec)
-  .ExpectedQuartetCache[[key]] <- res
-  res
-}
-
+# Expected raw concordant + decisive quartet counts under the fixed-marginal
+# null.  The exact expectation (per state-pair, an exact sum over the
+# trivariate-hypergeometric pmf) is computed in C++ (`quartet_expect` in
+# src/concordance_expect.cpp) for speed; `.QuartetExpect` is a thin R wrapper.
+# The `.QuartetMC` Monte-Carlo baseline reshuffles tokens and re-scores through
+# the C++ `quartet_concordance` kernel.  (The C++ path is validated bit-for-bit
+# against the earlier R implementation; see dev/benchmarks/frac-quart.)
 .QuartetExpect <- function(charInt, logiSplits) {
-  nSplit <- ncol(logiSplits)
-  nChar <- ncol(charInt)
-  eConc <- eDec <- matrix(0, nSplit, nChar)
-  for (ci in seq_len(nChar)) {
-    col <- charInt[, ci]
-    scored <- !is.na(col)
-    states <- sort(unique(col[scored]))
-    nStates <- length(states)
-    if (nStates < 2L) {
-      next
-    }
-    tc <- sum(scored)
-    mSideA <- colSums(logiSplits & scored)
-    uM <- unique(mSideA)
-    idx <- match(mSideA, uM)
-    cnt <- tabulate(match(col[scored], states), nStates)
-    for (a in seq_len(nStates - 1L)) {
-      for (b in seq(a + 1L, nStates)) {
-        e <- vapply(uM, function(M) .ExpectedQuartet(cnt[a], cnt[b], M, tc),
-                    double(2))
-        eConc[, ci] <- eConc[, ci] + e[1, idx]
-        eDec[, ci] <- eDec[, ci] + e[2, idx]
-      }
-    }
-  }
-  list(concordant = eConc, decisive = eDec)
+  quartet_expect(logiSplits, charInt)
 }
 
 .QuartetMC <- function(charInt, logiSplits, nRelabel) {
@@ -1109,6 +1051,15 @@ QuartetConcordance <- function(
   doNorm <- !isFALSE(normalize)
   if (doNorm) {
     baseNumEdge <- baseNumChar <- baseDenM <- matrix(0, nSplit, nChar)
+    if (isTRUE(normalize)) {
+      # Exact hypergeometric expectation for all characters at once (C++;
+      # `trit_expect` in src/concordance_expect.cpp).  Uninformative characters
+      # yield zero pools, matching the observed loop's `wcTot > 0` guard.
+      be <- trit_expect(logiSplits, charInt)
+      baseNumEdge <- be[["numEdge"]]
+      baseNumChar <- be[["numChar"]]
+      baseDenM <- be[["denM"]]
+    }
   }
 
   for (ci in seq_len(nChar)) {
@@ -1118,12 +1069,8 @@ QuartetConcordance <- function(
     numChar[, ci] <- obs[["numChar"]]
     denM[, ci] <- obs[["denM"]]
     wcTot[ci] <- obs[["wcTot"]]
-    if (doNorm && obs[["wcTot"]] > 0) {
-      base <- if (isTRUE(normalize)) {
-        .CharTritExpect(col, logiSplits, pos)     # exact hypergeometric
-      } else {
-        .CharTritMC(col, logiSplits, pos, normalize)  # Monte-Carlo tip-shuffle
-      }
+    if (doNorm && !isTRUE(normalize) && obs[["wcTot"]] > 0) {
+      base <- .CharTritMC(col, logiSplits, pos, normalize)  # Monte-Carlo shuffle
       baseNumEdge[, ci] <- base[["numEdge"]]
       baseNumChar[, ci] <- base[["numChar"]]
       baseDenM[, ci] <- base[["denM"]]
@@ -1229,78 +1176,10 @@ QuartetConcordance <- function(
   list(numEdge = numEdge, numChar = numChar, denM = denM, wcTot = wcTot)
 }
 
-# Exact expected trit contributions under the fixed-marginal (hypergeometric)
-# null: each split's scored side-A size `M` and each pair's state counts
-# `n_i, n_j` are held fixed while the character's tokens are reassigned at
-# random across the `t` scored leaves.  Only `A`, and (for multistate pairs)
-# `wk` and `m`, vary; so we accumulate E[m], E[m * A / wk] and E[m * A / wc]
-# from the exact pmf, matching `.CharTritContrib`'s pool definitions.
-.CharTritExpect <- function(col, logiSplits, pos) {
-  nSplit <- ncol(logiSplits)
-  numEdge <- numChar <- denM <- numeric(nSplit)
-  scored <- !is.na(col)
-  tc <- sum(scored)
-  mSideA <- colSums(logiSplits & scored)     # M per split
-  uM <- unique(mSideA)
-  idx <- match(mSideA, uM)
-  states <- sort(unique(col[scored]))
-  nStates <- length(states)
-  if (nStates >= 2L) {
-    cnt <- tabulate(match(col[scored], states), nStates)  # state counts
-    for (a in seq_len(nStates - 1L)) {
-      for (b in seq(a + 1L, nStates)) {
-        et <- vapply(uM, function(M) .ExpectedTrit(cnt[a], cnt[b], M, tc),
-                     double(3))
-        denM <- denM + et[1, idx]
-        numEdge <- numEdge + et[2, idx]
-        numChar <- numChar + et[3, idx]
-      }
-    }
-  }
-  list(numEdge = numEdge, numChar = numChar, denM = denM)
-}
-
-.ExpectedTritCache <- new.env(hash = TRUE, parent = emptyenv())
-
-# Exact E[m], E[m * A / wk], E[m * A / wc] for one state-pair, over the
-# trivariate hypergeometric placement of `nI` state-i and `nJ` state-j leaves
-# (and `t - nI - nJ` other leaves) among the `M` leaves on side A of a split.
-.ExpectedTrit <- function(nI, nJ, M, t) {
-  key <- paste(nI, nJ, M, t, sep = ",")
-  cached <- .ExpectedTritCache[[key]]
-  if (!is.null(cached)) {
-    return(cached)
-  }
-  pos1 <- function(z) if (z < 0) 0 else z
-  nOther <- t - nI - nJ
-  tP <- nI + nJ                              # taxa in this pair
-  wc <- pos1(nI - 1) * pos1(nJ - 1)          # pair's character content (fixed)
-  logDen <- lchoose(t, M)
-  acc <- c(0, 0, 0)                          # E[m], E[m*A/wk], E[m*A/wc]
-  for (p in 0:min(nI, M)) {
-    for (r in 0:min(nJ, M - p)) {
-      oA <- M - p - r                        # other-state leaves on side A
-      if (oA < 0 || oA > nOther) {
-        next
-      }
-      prob <- exp(lchoose(nI, p) + lchoose(nJ, r) + lchoose(nOther, oA) - logDen)
-      if (prob <= 0) {
-        next
-      }
-      q <- nI - p
-      s <- nJ - r
-      mA <- p + r                            # this pair's taxa on side A (random)
-      A <- pos1(p - 1) * pos1(s - 1) + pos1(q - 1) * pos1(r - 1)
-      wk <- pos1(mA - 1) * pos1(tP - mA - 1) # pair's split content (random)
-      m <- min(wc, wk)
-      acc[1] <- acc[1] + prob * m
-      if (wk > 0) acc[2] <- acc[2] + prob * m * A / wk
-      if (wc > 0) acc[3] <- acc[3] + prob * m * A / wc
-    }
-  }
-  .ExpectedTritCache[[key]] <- acc
-  acc
-}
+# The exact trit expectation E[m], E[m*A/wk], E[m*A/wc] is computed in C++
+# (`trit_expect` in src/concordance_expect.cpp) for all characters at once, and
+# consumed directly by `.TritConcordance`; there is no per-character R exact
+# helper.  The Monte-Carlo baseline below is the opt-in `normalize = <int>` path.
 
 # Monte-Carlo baseline: average `.CharTritContrib` over `nRelabel` random
 # reassignments of the character's tokens across its scored leaves (the split,
