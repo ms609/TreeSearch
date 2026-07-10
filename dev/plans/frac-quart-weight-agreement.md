@@ -212,9 +212,54 @@ char FQ(c) = Σ_k  M(k,c)·Q(k,c)  /  Σ_k  M(k,c)
   toy with `?`/`-`/ambiguous tokens (`validate_trit.R`), but the validation
   corpus (congreveLamsdell) has no missing data, so the semantics are proven
   self-consistent (`Q∈[0,1]`, pkg==independent ref) rather than benchmarked.
-- **Random-expectation baseline**: a `.Rezero`/`miRand` analogue (crossing floor
-  ≈ 0.22 in §4 is not zero) — decide whether trit concordance needs chance
-  correction. Deferred.
+- **Random-expectation baseline**: ~~deferred~~ **DONE** (`unit = "trit"`).
+  New arg `normalize = FALSE / TRUE / <int>` on `QuartetConcordance()`, mirroring
+  `ClusteringConcordance()`. The crossing floor (≈ 0.22 in §4) is not zero, so
+  without correction a maximally conflicting character still scores positive and
+  the floor is split-size dependent; `normalize` re-zeros against the
+  concordance *expected by chance*, exactly as `ClusteringConcordance()` re-zeros
+  MI against `miRand`.
+  - **Null model (chosen): fixed-marginal randomization** — reassign each
+    character's tokens across the leaves at random, holding its state counts and
+    the split sizes fixed (the multivariate-hypergeometric confusion table; the
+    same null as `ClusteringConcordance`'s `miRand` and `Consistency`'s
+    `ExpectedLength` tip-shuffle). This is the *only* coherent null for the trit
+    currency: it re-zeros each `(split, char, state-pair)` against its own
+    combinatorial floor and extends unchanged to multistate and missing data.
+  - **Rejected alternative: the flat Minh-style `1/3`** (three quartet
+    resolutions ⇒ expected concordance `1/3`). It is a *raw-quartet* heuristic
+    that ignores marginals and does **not** extend to floored trit counts (the
+    trit floor is `0.22`, not `1/3`), so it cannot re-zero the trit measure
+    coherently. Its only remaining use would be re-baselining the *raw* `quartet`
+    unit — see the raw-unit note below.
+  - **Two estimators** (mirroring `ClusteringConcordance`): `normalize = TRUE`
+    computes the **exact** expected pools from the hypergeometric pmf (a small
+    double sum, cached on `(n_i, n_j, M, t)`); `normalize = <int>` estimates them
+    by **Monte-Carlo** tip-shuffle. Validated to agree within MC error
+    (`dev/benchmarks/frac-quart/chance_baseline.R` at the cell level;
+    `test-Concordance.R` end-to-end).
+  - **What varies under the null.** Only `A` (and, for *multistate* pairs where a
+    pair's side-A count `mA` is itself random, `wk` and `M = min(w_c, w_k)`) vary;
+    for *binary* characters `mA = M`, `tP = t` so `wk` is fixed and only `A`
+    varies (the clean `ClusteringConcordance` case). The exact estimator therefore
+    accumulates `E[m]`, `E[m·A/w_k]`, `E[m·A/w_c]` and re-zeros the *pooled*
+    edge/char ratio against the pooled expectation, with the **same** `weight`
+    aggregation as the observed score.
+  - **Guarantees / guards.** `.Rezero(1, z) = 1`, so a **displayed** split still
+    scores exactly `1` (the ceiling invariant of §4 survives chance correction —
+    only the floor is lifted); conflicting characters go **negative** ("below
+    random", as in `ClusteringConcordance`). Values are returned **unclamped**
+    (may fall below `−1`); clamp to `[−1, 1]` only at plot time (`QCol`/`QACol`),
+    never inside the measure. The `z → 1` blow-up is guarded (→ `NA`).
+    `normalize` defaults to `FALSE`, so the published measure is unchanged unless
+    the user opts in.
+  - **Raw `quartet` unit: deferred.** `normalize` currently errors for
+    `unit = "quartet"`. Re-baselining the raw currency needs the per-state-pair
+    cells (computed inside the C++ kernel but not exposed) and a decision on its
+    null (fixed-marginal vs the flat `1/3`); both are folded into the C++ port
+    (task 2) and the manuscript-figure review (task 3), which will compare
+    trit-with vs trit-without correction and decide whether the raw unit needs it
+    too.
 - **`M = min(W_c,W_k)`** (settled): the pooling amount is the *shared*
   information, so it must be symmetric between character and split (both
   `return`s pool by the same `M`); `M = W_k` would make the char return weight a

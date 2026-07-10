@@ -87,15 +87,30 @@ NULL
 #' 
 #'   Matching is case‑insensitive and partial.
 #'
-#' @param normalize Controls how the *expected* mutual information (the zero
-#' point of the scale) is determined.  
-#'   - `FALSE`: no chance correction; MI is scaled only by its maximum.  
-#'   - `TRUE`: subtract the analytical expected MI for random association.  
-#'   - `<integer>`: subtract an empirical expected MI estimated from that
-#'     number of random trees.
-#' 
-#'   In all cases, 1 corresponds to the maximal attainable MI for the pair
-#'   (`hBest`), and 0 corresponds to the chosen expectation.
+#' @param normalize Controls the zero point of the concordance scale by
+#' subtracting the value expected under a chance (fixed-marginal) null, in which
+#' each character's tokens are reassigned at random across the leaves while its
+#' state frequencies and the split sizes are held fixed.
+#'   - `FALSE`: no chance correction; the measure is scaled only by its maximum,
+#'     so 1 marks a perfect match and 0 the measure's own (typically positive)
+#'     floor.
+#'   - `TRUE`: subtract the expected value under the null, so that 0 marks random
+#'     expectation and negative values fall below it. `ClusteringConcordance()`
+#'     uses an analytical approximation to the expected mutual information (fast
+#'     and generally accurate for large trees, ~200+ taxa, but neglecting
+#'     correlation between splits); `QuartetConcordance(unit = "trit")` uses the
+#'     exact hypergeometric expectation.
+#'   - a positive integer `n`: estimate that expectation by Monte Carlo.
+#'     `ClusteringConcordance()` fits each character to `n` random trees (and
+#'     returns Monte-Carlo standard errors, more accurate for small trees where
+#'     the analytical approximation is biased); `QuartetConcordance(unit =
+#'     "trit")` averages over `n` random reassignments of each character's
+#'     tokens.
+#'
+#'   In all cases 1 corresponds to the maximum attainable value.  For
+#'   `QuartetConcordance()`, chance correction is implemented for `unit = "trit"`
+#'   only, and the returned values are unclamped (they may fall below \eqn{-1});
+#'   clamp to \eqn{[-1, 1]} before plotting with [QCol()] / [QACol()].
 #' 
 #' @returns
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
@@ -800,7 +815,8 @@ QuartetConcordance <- function(
   dataset = NULL,
   weight = TRUE,
   return = "edge",
-  unit = c("quartet", "trit")
+  unit = c("quartet", "trit"),
+  normalize = FALSE
 ) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -810,6 +826,21 @@ QuartetConcordance <- function(
     stop("`dataset` must be a phyDat object.")
   }
   unit <- match.arg(unit)
+  if (!isFALSE(normalize)) {
+    if (!isTRUE(normalize)) {
+      if (!is.numeric(normalize) || length(normalize) != 1L ||
+          is.na(normalize) || normalize < 1) {
+        stop("`normalize` must be FALSE, TRUE, or a positive integer.")
+      }
+    }
+    if (unit != "trit") {
+      # The chance baseline needs the per-state-pair cell counts, which the raw
+      # quartet path computes in the C++ kernel but does not expose; re-baselining
+      # the raw currency (and choosing its null; see the 1/3 note in the design
+      # spec) is deferred to the manuscript-figure review gate.
+      stop("`normalize` chance-correction is implemented for `unit = \"trit\"` only.")
+    }
+  }
   tipLabels <- intersect(TipLabels(tree), names(dataset))
   if (!length(tipLabels)) {
     warning("No overlap between tree labels and dataset.")
@@ -847,7 +878,8 @@ QuartetConcordance <- function(
 
   if (unit == "trit") {
     # Return:
-    return(.TritConcordance(logiSplits, charInt, weight, return, splits))
+    return(.TritConcordance(logiSplits, charInt, weight, return, splits,
+                            normalize))
   }
 
   raw_counts <- quartet_concordance(logiSplits, charInt)
@@ -924,7 +956,8 @@ QuartetConcordance <- function(
 # split so both `return`s pool by the same amount.  Ambiguous / inapplicable /
 # absent tokens drop out per character (treated as "?", as in the quartet path),
 # giving each character its own effective taxon count.
-.TritConcordance <- function(logiSplits, charInt, weight, return, splits) {
+.TritConcordance <- function(logiSplits, charInt, weight, return, splits,
+                             normalize = FALSE) {
   nSplit <- ncol(logiSplits)
   nChar <- ncol(charInt)
   pos <- function(z) {
@@ -932,19 +965,96 @@ QuartetConcordance <- function(
     z
   }
 
-  # Contributions to the pools, summed over each character's state-pairs.
+  # Observed contributions to the pools, summed over each character's
+  # state-pairs; the chance baseline (if requested) uses the same accumulators
+  # for the expected pools, so the re-zero divides like against like.
   numEdge <- numChar <- denM <- matrix(0, nSplit, nChar)
   wcTot <- numeric(nChar)                    # character trit content (split-free)
+  doNorm <- !isFALSE(normalize)
+  if (doNorm) {
+    baseNumEdge <- baseNumChar <- baseDenM <- matrix(0, nSplit, nChar)
+  }
 
   for (ci in seq_len(nChar)) {
     col <- charInt[, ci]
-    scored <- !is.na(col)
-    states <- sort(unique(col[scored]))
-    if (length(states) < 2L) {
-      next                                   # constant / autapomorphic / empty
+    obs <- .CharTritContrib(col, logiSplits, pos)
+    numEdge[, ci] <- obs[["numEdge"]]
+    numChar[, ci] <- obs[["numChar"]]
+    denM[, ci] <- obs[["denM"]]
+    wcTot[ci] <- obs[["wcTot"]]
+    if (doNorm && obs[["wcTot"]] > 0) {
+      base <- if (isTRUE(normalize)) {
+        .CharTritExpect(col, logiSplits, pos)     # exact hypergeometric
+      } else {
+        .CharTritMC(col, logiSplits, pos, normalize)  # Monte-Carlo tip-shuffle
+      }
+      baseNumEdge[, ci] <- base[["numEdge"]]
+      baseNumChar[, ci] <- base[["numChar"]]
+      baseDenM[, ci] <- base[["denM"]]
     }
-    for (a in seq_len(length(states) - 1L)) {
-      for (b in seq(a + 1L, length(states))) {
+  }
+
+  informative <- wcTot > 0
+
+  if (return == "default") {
+    # edge: one value per split
+    if (isTRUE(weight)) {
+      denom <- rowSums(denM)
+      ret <- ifelse(denom == 0, NA_real_, rowSums(numEdge) / denom)
+      if (doNorm) {
+        bDen <- rowSums(baseDenM)
+        base <- ifelse(bDen == 0, NA_real_, rowSums(baseNumEdge) / bDen)
+        ret <- .RezeroGuarded(ret, base)
+      }
+    } else {
+      # Mean per-site quality over informative characters; uninformative
+      # characters carry no trits and are dropped, as in the quartet path.
+      sEdge <- ifelse(denM > 0, numEdge / denM, NA_real_)
+      ret <- .RowMeanInformative(sEdge, informative, nSplit)
+      if (doNorm) {
+        sBase <- ifelse(baseDenM > 0, baseNumEdge / baseDenM, NA_real_)
+        base <- .RowMeanInformative(sBase, informative, nSplit)
+        ret <- .RezeroGuarded(ret, base)
+      }
+    }
+    setNames(ret, names(splits))
+  } else {
+    # char: one value per character
+    if (isTRUE(weight)) {
+      denom <- colSums(denM)
+      ret <- ifelse(denom == 0, NA_real_, colSums(numChar) / denom)
+      if (doNorm) {
+        bDen <- colSums(baseDenM)
+        base <- ifelse(bDen == 0, NA_real_, colSums(baseNumChar) / bDen)
+        ret <- .RezeroGuarded(ret, base)
+      }
+      ret
+    } else {
+      sChar <- ifelse(denM > 0, numChar / denM, NA_real_)
+      ret <- .ColMeanInformative(sChar, informative, nChar)
+      if (doNorm) {
+        sBase <- ifelse(baseDenM > 0, baseNumChar / baseDenM, NA_real_)
+        base <- .ColMeanInformative(sBase, informative, nChar)
+        ret <- .RezeroGuarded(ret, base)
+      }
+      ret
+    }
+  }
+}
+
+# Observed per-character trit contributions, summed over the character's
+# state-pairs, returned as per-split vectors.  Shared by the observed pass and
+# the Monte-Carlo baseline so the two use byte-identical arithmetic.
+.CharTritContrib <- function(col, logiSplits, pos) {
+  nSplit <- ncol(logiSplits)
+  numEdge <- numChar <- denM <- numeric(nSplit)
+  wcTot <- 0
+  scored <- !is.na(col)
+  states <- sort(unique(col[scored]))
+  nStates <- length(states)
+  if (nStates >= 2L) {
+    for (a in seq_len(nStates - 1L)) {
+      for (b in seq(a + 1L, nStates)) {
         inI <- scored & col == states[a]
         inJ <- scored & col == states[b]
         aI <- colSums(logiSplits & inI)      # state i, side A
@@ -960,50 +1070,141 @@ QuartetConcordance <- function(
         wc <- pos(nI - 1) * pos(nJ - 1)      # pair's character content
         wk <- pos(mA - 1) * pos(tP - mA - 1) # pair's split content
         m <- pmin(wc, wk)                    # shared information
-        denM[, ci] <- denM[, ci] + m
-        numEdge[, ci] <- numEdge[, ci] + ifelse(wk > 0, m * aij / wk, 0)
-        numChar[, ci] <- numChar[, ci] + ifelse(wc > 0, m * aij / wc, 0)
-        wcTot[ci] <- wcTot[ci] + wc[1]       # wc is constant across splits
+        denM <- denM + m
+        numEdge <- numEdge + ifelse(wk > 0, m * aij / wk, 0)
+        numChar <- numChar + ifelse(wc > 0, m * aij / wc, 0)
+        wcTot <- wcTot + wc[1]               # wc is constant across splits
       }
     }
   }
+  list(numEdge = numEdge, numChar = numChar, denM = denM, wcTot = wcTot)
+}
 
-  informative <- wcTot > 0
-
-  if (return == "default") {
-    # edge: one value per split
-    if (isTRUE(weight)) {
-      denom <- rowSums(denM)
-      ret <- ifelse(denom == 0, NA_real_, rowSums(numEdge) / denom)
-    } else {
-      # Mean per-site quality over informative characters; uninformative
-      # characters carry no trits and are dropped, as in the quartet path.
-      sEdge <- ifelse(denM > 0, numEdge / denM, NA_real_)
-      ret <- if (any(informative)) {
-        rowMeans(sEdge[, informative, drop = FALSE], na.rm = TRUE)
-      } else {
-        rep(NA_real_, nSplit)
+# Exact expected trit contributions under the fixed-marginal (hypergeometric)
+# null: each split's scored side-A size `M` and each pair's state counts
+# `n_i, n_j` are held fixed while the character's tokens are reassigned at
+# random across the `t` scored leaves.  Only `A`, and (for multistate pairs)
+# `wk` and `m`, vary; so we accumulate E[m], E[m * A / wk] and E[m * A / wc]
+# from the exact pmf, matching `.CharTritContrib`'s pool definitions.
+.CharTritExpect <- function(col, logiSplits, pos) {
+  nSplit <- ncol(logiSplits)
+  numEdge <- numChar <- denM <- numeric(nSplit)
+  scored <- !is.na(col)
+  tc <- sum(scored)
+  mSideA <- colSums(logiSplits & scored)     # M per split
+  uM <- unique(mSideA)
+  idx <- match(mSideA, uM)
+  states <- sort(unique(col[scored]))
+  nStates <- length(states)
+  if (nStates >= 2L) {
+    cnt <- tabulate(match(col[scored], states), nStates)  # state counts
+    for (a in seq_len(nStates - 1L)) {
+      for (b in seq(a + 1L, nStates)) {
+        et <- vapply(uM, function(M) .ExpectedTrit(cnt[a], cnt[b], M, tc),
+                     double(3))
+        denM <- denM + et[1, idx]
+        numEdge <- numEdge + et[2, idx]
+        numChar <- numChar + et[3, idx]
       }
-      ret[is.nan(ret)] <- NA_real_
     }
-    setNames(ret, names(splits))
+  }
+  list(numEdge = numEdge, numChar = numChar, denM = denM)
+}
+
+.ExpectedTritCache <- new.env(hash = TRUE, parent = emptyenv())
+
+# Exact E[m], E[m * A / wk], E[m * A / wc] for one state-pair, over the
+# trivariate hypergeometric placement of `nI` state-i and `nJ` state-j leaves
+# (and `t - nI - nJ` other leaves) among the `M` leaves on side A of a split.
+.ExpectedTrit <- function(nI, nJ, M, t) {
+  key <- paste(nI, nJ, M, t, sep = ",")
+  cached <- .ExpectedTritCache[[key]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+  pos1 <- function(z) if (z < 0) 0 else z
+  nOther <- t - nI - nJ
+  tP <- nI + nJ                              # taxa in this pair
+  wc <- pos1(nI - 1) * pos1(nJ - 1)          # pair's character content (fixed)
+  logDen <- lchoose(t, M)
+  acc <- c(0, 0, 0)                          # E[m], E[m*A/wk], E[m*A/wc]
+  for (p in 0:min(nI, M)) {
+    for (r in 0:min(nJ, M - p)) {
+      oA <- M - p - r                        # other-state leaves on side A
+      if (oA < 0 || oA > nOther) {
+        next
+      }
+      prob <- exp(lchoose(nI, p) + lchoose(nJ, r) + lchoose(nOther, oA) - logDen)
+      if (prob <= 0) {
+        next
+      }
+      q <- nI - p
+      s <- nJ - r
+      mA <- p + r                            # this pair's taxa on side A (random)
+      A <- pos1(p - 1) * pos1(s - 1) + pos1(q - 1) * pos1(r - 1)
+      wk <- pos1(mA - 1) * pos1(tP - mA - 1) # pair's split content (random)
+      m <- min(wc, wk)
+      acc[1] <- acc[1] + prob * m
+      if (wk > 0) acc[2] <- acc[2] + prob * m * A / wk
+      if (wc > 0) acc[3] <- acc[3] + prob * m * A / wc
+    }
+  }
+  .ExpectedTritCache[[key]] <- acc
+  acc
+}
+
+# Monte-Carlo baseline: average `.CharTritContrib` over `nRelabel` random
+# reassignments of the character's tokens across its scored leaves (the split,
+# the scored set and the state counts are held fixed).  Averaging the pools
+# (rather than per-split ratios) mirrors the exact ratio-of-expectations path.
+.CharTritMC <- function(col, logiSplits, pos, nRelabel) {
+  nSplit <- ncol(logiSplits)
+  scored <- !is.na(col)
+  tokens <- col[scored]
+  accEdge <- accChar <- accDen <- numeric(nSplit)
+  for (i in seq_len(nRelabel)) {
+    shuffled <- col
+    shuffled[scored] <- sample(tokens)
+    cc <- .CharTritContrib(shuffled, logiSplits, pos)
+    accEdge <- accEdge + cc[["numEdge"]]
+    accChar <- accChar + cc[["numChar"]]
+    accDen <- accDen + cc[["denM"]]
+  }
+  list(numEdge = accEdge / nRelabel,
+       numChar = accChar / nRelabel,
+       denM = accDen / nRelabel)
+}
+
+# Mean of per-split quality across informative characters, matching the
+# quartet path's treatment of uninformative characters (dropped).
+.RowMeanInformative <- function(mat, informative, nSplit) {
+  ret <- if (any(informative)) {
+    rowMeans(mat[, informative, drop = FALSE], na.rm = TRUE)
   } else {
-    # char: one value per character
-    if (isTRUE(weight)) {
-      denom <- colSums(denM)
-      ifelse(denom == 0, NA_real_, colSums(numChar) / denom)
-    } else {
-      sChar <- ifelse(denM > 0, numChar / denM, NA_real_)
-      vapply(seq_len(nChar), function(ci) {
-        if (informative[ci]) {
-          m <- mean(sChar[, ci], na.rm = TRUE)
-          if (is.nan(m)) NA_real_ else m
-        } else {
-          NA_real_
-        }
-      }, double(1))
-    }
+    rep(NA_real_, nSplit)
   }
+  ret[is.nan(ret)] <- NA_real_
+  ret
+}
+
+.ColMeanInformative <- function(mat, informative, nChar) {
+  vapply(seq_len(nChar), function(ci) {
+    if (informative[ci]) {
+      m <- mean(mat[, ci], na.rm = TRUE)
+      if (is.nan(m)) NA_real_ else m
+    } else {
+      NA_real_
+    }
+  }, double(1))
+}
+
+# Re-zero to a chance baseline, guarding the degenerate `zero -> 1` case
+# (returns NA rather than dividing by ~0).  Values are returned UNCLAMPED, as
+# in `ClusteringConcordance`; clamping to [-1, 1] is deferred to plotting.
+.RezeroGuarded <- function(value, zero) {
+  denom <- 1 - zero
+  ifelse(is.na(value) | is.na(zero) | denom < sqrt(.Machine[["double.eps"]]),
+         NA_real_, (value - zero) / denom)
 }
 
 .ExpectedMICache <- new.env(hash = TRUE, parent = emptyenv())

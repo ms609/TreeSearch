@@ -233,6 +233,88 @@ test_that("QuartetConcordance() unit = 'trit' scores 1 iff split displayed", {
   expect_true(atSplit(c("t1", "t2")) < 1)
 })
 
+test_that("QuartetConcordance() unit = 'trit' normalize contract", {
+  tree <- ape::read.tree(text = "((((t1,t2),t3),(t4,(t5,t6))),(t7,(t8,t9)));")
+  ident <- MatrixToPhyDat(matrix(
+    c(0, 0, 0, 0, 0, 0, 1, 1, 1), 9,
+    dimnames = list(paste0("t", 1:9), NULL)))
+
+  # normalize = FALSE is the default and leaves the measure untouched.
+  expect_identical(
+    QuartetConcordance(tree, ident, unit = "trit", normalize = FALSE),
+    QuartetConcordance(tree, ident, unit = "trit"))
+
+  # Invalid normalize is rejected.
+  expect_error(QuartetConcordance(tree, ident, unit = "trit", normalize = 0),
+               "positive integer")
+  expect_error(QuartetConcordance(tree, ident, unit = "trit", normalize = -3),
+               "positive integer")
+  expect_error(QuartetConcordance(tree, ident, unit = "trit", normalize = "x"),
+               "positive integer")
+
+  # Chance correction is implemented for the trit currency only, for now.
+  expect_error(
+    QuartetConcordance(tree, ident, unit = "quartet", normalize = TRUE),
+    "trit")
+
+  # An identical (displayed) split still scores exactly 1 after re-zeroing:
+  # .Rezero(1, z) == 1, so chance correction lifts the floor without moving the
+  # ceiling.
+  sp <- as.Splits(tree)
+  tips <- TipLabels(sp)
+  col789 <- which(vapply(seq_along(sp), function(j) {
+    side <- tips[as.logical(sp[[j]])]
+    setequal(side, c("t7", "t8", "t9")) ||
+      setequal(setdiff(tips, side), c("t7", "t8", "t9"))
+  }, logical(1)))
+  corrected <- QuartetConcordance(tree, ident, unit = "trit", normalize = TRUE)
+  expect_equal(unname(corrected[col789]), 1)
+})
+
+test_that("QuartetConcordance() unit = 'trit' exact baseline matches MC", {
+  tree <- ape::read.tree(text = "((((t1,t2),t3),(t4,(t5,t6))),(t7,(t8,t9)));")
+  dat <- MatrixToPhyDat(matrix(
+    c(0, 0, 0, 0, 0, 0, 1, 1, 1,      # displays {t7,t8,t9}
+      0, 0, 0, 0, 0, 0, 0, 1, 1,      # nested: {t8,t9}
+      0, 0, 1, 1, 0, 0, 1, 1, 0), 9,  # crossing
+    dimnames = list(paste0("t", 1:9), NULL)))
+
+  # The exact hypergeometric baseline and the Monte-Carlo tip-shuffle baseline
+  # target the same null, so they agree to within MC error (edge and char).
+  exact <- QuartetConcordance(tree, dat, unit = "trit", normalize = TRUE)
+  set.seed(1)
+  mc <- QuartetConcordance(tree, dat, unit = "trit", normalize = 6000)
+  expect_lt(max(abs(exact - mc), na.rm = TRUE), 0.03)
+
+  exactC <- QuartetConcordance(tree, dat, unit = "trit", return = "char",
+                               normalize = TRUE)
+  set.seed(2)
+  mcC <- QuartetConcordance(tree, dat, unit = "trit", return = "char",
+                            normalize = 6000)
+  expect_lt(max(abs(exactC - mcC), na.rm = TRUE), 0.03)
+})
+
+test_that("QuartetConcordance() unit = 'trit' correction: conflict below random", {
+  tree <- ape::read.tree(text = "((((t1,t2),t3),(t4,(t5,t6))),(t7,(t8,t9)));")
+  support <- MatrixToPhyDat(matrix(   # agrees with the tree: displays {t7,t8,t9}
+    c(0, 0, 0, 0, 0, 0, 1, 1, 1), 9,
+    dimnames = list(paste0("t", 1:9), NULL)))
+  conflict <- MatrixToPhyDat(matrix(  # crosses the two halves of the tree
+    c(0, 0, 1, 1, 0, 0, 1, 1, 0), 9,
+    dimnames = list(paste0("t", 1:9), NULL)))
+
+  sChar <- QuartetConcordance(tree, support, return = "char", unit = "trit",
+                              normalize = TRUE)
+  cNone <- QuartetConcordance(tree, conflict, return = "char", unit = "trit")
+  cChar <- QuartetConcordance(tree, conflict, return = "char", unit = "trit",
+                              normalize = TRUE)
+  # A character that agrees with the tree scores above random expectation;
+  # a crossing character is pulled below it, and below its uncorrected score.
+  expect_gt(sChar, 0)
+  expect_lt(cChar, cNone)
+  expect_lt(cChar, 0)
+})
+
 test_that(".Rezero() works", {
   expect_equal(TreeSearch:::.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
 })

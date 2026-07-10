@@ -36,17 +36,31 @@ at edges whose descendants are both contain more than \code{largeClade} leaves.}
 
 \item{ylab}{Character giving a label for the y axis.}
 
-\item{normalize}{Controls how the \emph{expected} mutual information (the zero
-point of the scale) is determined.
+\item{normalize}{Controls the zero point of the concordance scale by
+subtracting the value expected under a chance (fixed-marginal) null, in which
+each character's tokens are reassigned at random across the leaves while its
+state frequencies and the split sizes are held fixed.
 \itemize{
-\item \code{FALSE}: no chance correction; MI is scaled only by its maximum.
-\item \code{TRUE}: subtract the analytical expected MI for random association.
-\item \verb{<integer>}: subtract an empirical expected MI estimated from that
-number of random trees.
+\item \code{FALSE}: no chance correction; the measure is scaled only by its maximum,
+so 1 marks a perfect match and 0 the measure's own (typically positive)
+floor.
+\item \code{TRUE}: subtract the expected value under the null, so that 0 marks random
+expectation and negative values fall below it. \code{ClusteringConcordance()}
+uses an analytical approximation to the expected mutual information (fast
+and generally accurate for large trees, ~200+ taxa, but neglecting
+correlation between splits); \code{QuartetConcordance(unit = "trit")} uses the
+exact hypergeometric expectation.
+\item a positive integer \code{n}: estimate that expectation by Monte Carlo.
+\code{ClusteringConcordance()} fits each character to \code{n} random trees (and
+returns Monte-Carlo standard errors, more accurate for small trees where
+the analytical approximation is biased); \code{QuartetConcordance(unit = "trit")} averages over \code{n} random reassignments of each character's
+tokens.
 }
 
-In all cases, 1 corresponds to the maximal attainable MI for the pair
-(\code{hBest}), and 0 corresponds to the chosen expectation.}
+In all cases 1 corresponds to the maximum attainable value.  For
+\code{QuartetConcordance()}, chance correction is implemented for \code{unit = "trit"}
+only, and the returned values are unclamped (they may fall below \eqn{-1});
+clamp to \eqn{[-1, 1]} before plotting with \code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
 
 \item{plot}{Logical specifying whether to draw the plot.}
 
