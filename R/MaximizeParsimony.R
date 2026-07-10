@@ -617,6 +617,10 @@
 #'   attributes:
 #'   \describe{
 #'     \item{`score`}{Best parsimony score.}
+#'     \item{`scoring`}{A list recording the scoring conditions the score is
+#'       optimal under (`concavity`, `inapplicable`, ...), so a saved score
+#'       remains interpretable.  [`Bremer()`][Bremer] checks it against its own
+#'       scoring arguments and warns on a mismatch.}
 #'     \item{`scores`}{Present only when `collapse = FALSE`: a numeric vector of
 #'       the parsimony score of each returned tree, aligned with the returned
 #'       `multiPhylo` (the same values are attached as a `score` attribute on
@@ -709,6 +713,16 @@ MaximizeParsimony <- function(
   # below) would immediately flip `missing()`, so this top-of-body capture is
   # the only reliable read.
   userSetReps <- !missing(maxReplicates)
+
+  # Capture the scoring conditions the result is optimal under, BEFORE any
+  # normalization (e.g. inapplicable aliasing, profile -> Inf).  Attached to the
+  # returned trees so a saved optimal score is interpretable -- a bare score is
+  # meaningless without knowing the criterion it was found under, and Bremer()
+  # checks this signature against its own scoring arguments.
+  scoringSignature <- .ScoringSignature(
+    concavity = concavity, extended_iw = extended_iw, xpiwe_r = xpiwe_r,
+    xpiwe_max_f = xpiwe_max_f, hierarchy = hierarchy,
+    inapplicable = inapplicable, hsj_alpha = hsj_alpha)
 
   # --- Set targetHits default if not provided ---
   if (is.null(targetHits)) {
@@ -1219,6 +1233,7 @@ MaximizeParsimony <- function(
   structure(
     outTrees,
     score = result$best_score,
+    scoring = scoringSignature,
     scores = perTreeScores,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
@@ -1233,6 +1248,56 @@ MaximizeParsimony <- function(
     candidates_evaluated = result$candidates_evaluated,
     class = "multiPhylo"
   )
+}
+
+# Canonical scoring identity: the arguments that define the optimality criterion,
+# normalized so aliases compare equal.  Recorded on a MaximizeParsimony() result
+# (attr "scoring") and checked by Bremer() -- a saved optimal score is only
+# meaningful alongside the conditions it was optimal under.
+.ScoringSignature <- function(concavity = Inf, extended_iw = TRUE, xpiwe_r = 0.5,
+                              xpiwe_max_f = 5, hierarchy = NULL,
+                              inapplicable = "bgs", hsj_alpha = 1.0) {
+  inap <- tolower(as.character(inapplicable)[[1]])
+  if (inap == "brazeau") inap <- "bgs"   # documented alias for the bgs kernel
+  list(
+    concavity = if (is.numeric(concavity)) concavity else
+      tolower(as.character(concavity)[[1]]),
+    extended_iw = isTRUE(extended_iw),
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    # Presence only: comparing full hierarchy objects is heavy and brittle, and a
+    # present-vs-absent difference is the practically important mismatch.
+    hierarchy = !is.null(hierarchy),
+    inapplicable = inap,
+    hsj_alpha = as.double(hsj_alpha)
+  )
+}
+
+# TRUE if two scoring signatures denote the same optimality criterion.
+.ScoringSignatureMatch <- function(a, b, tol = 1e-8) {
+  numMatch <- function(x, y) {
+    if (is.numeric(x) && is.numeric(y)) {
+      (is.infinite(x) && is.infinite(y) && sign(x) == sign(y)) ||
+        (is.finite(x) && is.finite(y) && abs(x - y) <= tol)
+    } else {
+      identical(as.character(x), as.character(y))
+    }
+  }
+  numMatch(a[["concavity"]], b[["concavity"]]) &&
+    identical(a[["extended_iw"]], b[["extended_iw"]]) &&
+    isTRUE(abs(a[["xpiwe_r"]] - b[["xpiwe_r"]]) <= tol) &&
+    isTRUE(abs(a[["xpiwe_max_f"]] - b[["xpiwe_max_f"]]) <= tol) &&
+    identical(a[["hierarchy"]], b[["hierarchy"]]) &&
+    identical(a[["inapplicable"]], b[["inapplicable"]]) &&
+    isTRUE(abs(a[["hsj_alpha"]] - b[["hsj_alpha"]]) <= tol)
+}
+
+# Compact human-readable rendering of a scoring signature for diagnostics.
+.DescribeScoring <- function(sig) {
+  cn <- sig[["concavity"]]
+  weight <- if (is.numeric(cn) && is.infinite(cn)) "equal weights" else
+    paste0("concavity = ", if (is.numeric(cn)) signif(cn, 4) else cn)
+  paste0(weight, ", inapplicable = \"", sig[["inapplicable"]], "\"")
 }
 
 

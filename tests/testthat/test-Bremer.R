@@ -274,16 +274,42 @@ test_that("Bremer warns on a likely scoring-units mismatch (IW trees vs EW defau
   set.seed(1)
   mpts <- MaximizeParsimony(dat, concavity = 3, maxReplicates = 8L, verbosity = 0L)
   # Trees found under implied weights; the default equal-weights Bremer would
-  # subtract an IW optimum from EW lengths.  The scoring guard checks the supplied
-  # L* against the reference's length under the current arguments and WARNS on the
-  # difference (accepting and proceeding), rather than erroring or silently
-  # mis-scoring (BR-1/B-7).
+  # subtract an IW optimum from EW lengths.  The recorded scoring signature makes
+  # this an EXACT criterion mismatch (concavity 3 vs Inf), so it WARNS (accepting
+  # and proceeding) rather than erroring or silently mis-scoring (BR-1/B-7).
   expect_warning(Bremer(mpts, dat, maxReplicates = 8L, verbosity = 0L),
-                 "differs from the reference")
+                 "found under")
   # Passing the matching concavity is accepted without the mismatch warning.
   ok <- suppressWarnings(
     Bremer(mpts, dat, concavity = 3, maxReplicates = 12L, verbosity = 0L))
   expect_type(ok, "double")
+})
+
+test_that("MaximizeParsimony records a scoring signature Bremer trusts (B-7 provenance)", {
+  dat <- StringToPhyDat(
+    "1110000 1110000 1110000 1100000 0001100 0001100 0000110 1111111",
+    1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)  # EW default
+  sig <- attr(mpts, "scoring")
+  expect_false(is.null(sig))
+  expect_true(is.infinite(sig[["concavity"]]))       # equal weights
+  expect_identical(sig[["inapplicable"]], "bgs")     # default kernel
+
+  # Matching scoring arguments -> the exact provenance check passes -> no warning
+  # (and, being all defaults here, this is the canonical Bremer() call).
+  expect_warning(
+    con <- Bremer(mpts, dat, maxReplicates = 12L, verbosity = 0L), NA)
+  expect_true(all(is.finite(con)))
+
+  # An IW analysis under matching concavity also matches its own signature.
+  set.seed(1)
+  mptsIW <- MaximizeParsimony(dat, concavity = 5, maxReplicates = 8L,
+                              verbosity = 0L)
+  expect_equal(attr(mptsIW, "scoring")[["concavity"]], 5)
+  expect_warning(
+    Bremer(mptsIW, dat, concavity = 5, maxReplicates = 8L, verbosity = 0L), NA)
 })
 
 test_that("the scoring-mismatch warning catches a small gap the 5% band missed (B-7)", {

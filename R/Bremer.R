@@ -179,6 +179,29 @@ Bremer <- function(tree, dataset,
 # supplied score -- the warning is a safety net for a forgotten scoring argument,
 # not a veto on a deliberately different analysis.
 .BremerCheckScoring <- function(tree, dataset, scoringArgs, optimalScore) {
+  # Exact check: a MaximizeParsimony() result records the scoring conditions it
+  # is optimal under (attr "scoring").  When present, compare that signature
+  # DIRECTLY to the arguments now in effect -- the meaningful test, since a saved
+  # optimal score is only interpretable alongside the conditions it was found
+  # under.  It needs no re-scoring, so it has neither the resolution-slop nor the
+  # near-equal-length blind spot of the length fallback below.
+  recorded <- attr(tree, "scoring", exact = TRUE)
+  if (!is.null(recorded)) {
+    current <- do.call(.ScoringSignature, scoringArgs)
+    if (!.ScoringSignatureMatch(recorded, current)) {
+      warning("The reference trees were found under ", .DescribeScoring(recorded),
+              " but Bremer() is scoring with ", .DescribeScoring(current),
+              ". The decay values mix two optimality criteria and are ",
+              "meaningless unless you pass the same scoring arguments ",
+              "(`concavity`, `inapplicable`, ...) used to find the trees. ",
+              "Proceeding with the supplied score.")
+    }
+    return(invisible(NULL))
+  }
+
+  # Fallback (no recorded signature: a bare optimalScore, a single-tree reference,
+  # or a tree built outside MaximizeParsimony).  Compare the supplied optimal
+  # score to the reference's length under the current scoring arguments.
   suppliedLstar <- if (!is.null(optimalScore)) {
     optimalScore
   } else if (inherits(tree, "multiPhylo")) {
