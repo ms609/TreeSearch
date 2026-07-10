@@ -1010,11 +1010,19 @@ QuartetConcordance <- function(
       # Mean per-site quality over informative characters; uninformative
       # characters carry no trits and are dropped, as in the quartet path.
       sEdge <- ifelse(denM > 0, numEdge / denM, NA_real_)
-      ret <- .RowMeanInformative(sEdge, informative, nSplit)
       if (doNorm) {
         sBase <- ifelse(baseDenM > 0, baseNumEdge / baseDenM, NA_real_)
-        base <- .RowMeanInformative(sBase, informative, nSplit)
-        ret <- .RezeroGuarded(ret, base)
+        # Average observed and baseline over the SAME (split, char) cells: a
+        # degenerate multistate pair can be dropped from one but not the other
+        # (observed wk = 0 yet E[m] > 0), which would otherwise re-zero mismatched
+        # populations.
+        naMask <- is.na(sEdge) | is.na(sBase)
+        sEdge[naMask] <- NA_real_
+        sBase[naMask] <- NA_real_
+        ret <- .RezeroGuarded(.RowMeanInformative(sEdge, informative, nSplit),
+                              .RowMeanInformative(sBase, informative, nSplit))
+      } else {
+        ret <- .RowMeanInformative(sEdge, informative, nSplit)
       }
     }
     setNames(ret, names(splits))
@@ -1031,11 +1039,16 @@ QuartetConcordance <- function(
       ret
     } else {
       sChar <- ifelse(denM > 0, numChar / denM, NA_real_)
-      ret <- .ColMeanInformative(sChar, informative, nChar)
       if (doNorm) {
         sBase <- ifelse(baseDenM > 0, baseNumChar / baseDenM, NA_real_)
-        base <- .ColMeanInformative(sBase, informative, nChar)
-        ret <- .RezeroGuarded(ret, base)
+        # Match cells, as in the edge return above.
+        naMask <- is.na(sChar) | is.na(sBase)
+        sChar[naMask] <- NA_real_
+        sBase[naMask] <- NA_real_
+        ret <- .RezeroGuarded(.ColMeanInformative(sChar, informative, nChar),
+                              .ColMeanInformative(sBase, informative, nChar))
+      } else {
+        ret <- .ColMeanInformative(sChar, informative, nChar)
       }
       ret
     }

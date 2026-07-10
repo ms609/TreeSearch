@@ -276,22 +276,27 @@ test_that("QuartetConcordance() unit = 'trit' exact baseline matches MC", {
   dat <- MatrixToPhyDat(matrix(
     c(0, 0, 0, 0, 0, 0, 1, 1, 1,      # displays {t7,t8,t9}
       0, 0, 0, 0, 0, 0, 0, 1, 1,      # nested: {t8,t9}
-      0, 0, 1, 1, 0, 0, 1, 1, 0), 9,  # crossing
+      0, 0, 1, 1, 0, 0, 1, 1, 0,      # crossing (binary)
+      0, 0, 0, 1, 1, 1, 2, 2, 2), 9,  # 3-state: exercises the random-wk path
     dimnames = list(paste0("t", 1:9), NULL)))
 
   # The exact hypergeometric baseline and the Monte-Carlo tip-shuffle baseline
-  # target the same null, so they agree to within MC error (edge and char).
-  exact <- QuartetConcordance(tree, dat, unit = "trit", normalize = TRUE)
-  set.seed(1)
-  mc <- QuartetConcordance(tree, dat, unit = "trit", normalize = 6000)
-  expect_lt(max(abs(exact - mc), na.rm = TRUE), 0.03)
-
-  exactC <- QuartetConcordance(tree, dat, unit = "trit", return = "char",
-                               normalize = TRUE)
-  set.seed(2)
-  mcC <- QuartetConcordance(tree, dat, unit = "trit", return = "char",
-                            normalize = 6000)
-  expect_lt(max(abs(exactC - mcC), na.rm = TRUE), 0.03)
+  # target the same null, so they agree to within MC error -- for edge and char,
+  # under both weightings, and crucially through the MULTISTATE pair path where a
+  # pair's wk and M = min(w_c, w_k) are themselves random under the null.
+  for (ret in c("edge", "char")) {
+    for (w in c(TRUE, FALSE)) {
+      exact <- QuartetConcordance(tree, dat, unit = "trit", return = ret,
+                                  weight = w, normalize = TRUE)
+      set.seed(1)
+      mc <- QuartetConcordance(tree, dat, unit = "trit", return = ret,
+                               weight = w, normalize = 8000)
+      # Same cells resolve to NA under exact and MC (guards the cell-matching in
+      # the weight = FALSE path), and the finite values agree within MC error.
+      expect_identical(is.na(exact), is.na(mc))
+      expect_lt(max(abs(exact - mc), na.rm = TRUE), 0.04)
+    }
+  }
 })
 
 test_that("QuartetConcordance() unit = 'trit' correction: conflict below random", {
