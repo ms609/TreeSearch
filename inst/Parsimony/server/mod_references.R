@@ -24,7 +24,6 @@ references_server <- function(id, weighting = NULL, cites = NULL) {
       Goloboff1993   = get_cite("Goloboff1993"),
       Goloboff1999   = get_cite("Goloboff1999"),
       Goloboff2014   = get_cite("Goloboff2014"),
-      Morphy         = get_cite("Morphy"),
       Nixon1999      = get_cite("Nixon1999"),
       SmithSearch    = get_cite("SmithSearch"),
       Gower1966      = get_cite("Gower1966"),
@@ -57,8 +56,7 @@ references_server <- function(id, weighting = NULL, cites = NULL) {
         cites$SmithSearch,
         cites$Goloboff1999,
         cites$Nixon1999,
-        cites$Brazeau2019,
-        cites$Morphy
+        cites$Brazeau2019
       )
       # IW / XPIWE: add Goloboff 1993
       if (wt %in% c("on", "xpiwe")) {

@@ -449,8 +449,7 @@ Fitch <- function(tree, dataset) {
     
     tree <- KeepTip(tree, dataNames)
   }
-  # Morphy requires that the tree is in postorder
-  tree <- RenumberTips(Postorder(tree), dataNames)
+  tree <- RenumberTips(tree, dataNames)
 }
 
 #' Character length
@@ -515,108 +514,72 @@ FastCharacterLength <- function(tree, dataset) {
                 .ScaleWeight(at$weight), at$levels)
 }
 
-#' Calculate parsimony score from Morphy object
-#' 
-#' This function must be passed a valid Morphy object, or R may crash.
-#' For most users, the function [`TreeLength()`] will be more appropriate.
-#' 
+#' Score a tree from prepared data
+#'
+#' `TreeScore()` and `EdgeListScore()` compute the parsimony score of a tree
+#' with the native C++ Fitch engine, using a dataset prepared by
+#' [`PrepareData()`].
+#' `EdgeListScore()` is the low-level scorer used as the default `TreeScorer`
+#' by the custom-search functions; `TreeScore()` is a convenience wrapper that
+#' takes a `phylo` tree.  Most users want the higher-level [`TreeLength()`].
+#'
 #' @template labelledTreeParam
-#' @param morphyObj Object of class `morphy`, perhaps created with 
-#' [`PhyDat2Morphy()`].
+#' @param dataset A `ParsimonyData` object from [`PrepareData()`].
 #'
-#' @return `MorphyTreeLength()` returns the length of the tree,
-#' after applying weighting.
+#' @return `TreeScore()` returns the parsimony score of `tree` under the
+#' optimality criterion baked into `dataset` (equal weights, implied weights or
+#' profile parsimony).
 #'
-#' @seealso PhyDat2Morphy
+#' @seealso [`PrepareData()`]; user-facing scoring with [`TreeLength()`].
 #'
 #' @family tree scoring
 #' @author Martin R. Smith
 #' @keywords internal
+#' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
-MorphyTreeLength <- function(tree, morphyObj) {
-  if (!is.morphyPtr(morphyObj)) {
-    stop("`morphyObj` must be a valid Morphy pointer")
+TreeScore <- function(tree, dataset) {
+  if (!is.ParsimonyData(dataset)) {
+    stop("`dataset` must be a ParsimonyData object; see ?PrepareData.")
   }
-  nTaxa <- mpl_get_numtaxa(morphyObj)
+  nTaxa <- dataset[["nTip"]]
   if (nTaxa != length(tree[["tip.label"]])) {
-    stop ("Number of taxa in Morphy object (", nTaxa,
-          ") not equal to number of tips in tree")
+    stop("Number of taxa in dataset (", nTaxa,
+         ") not equal to number of tips in tree")
   }
-  treeOrder <- attr(tree, "order")
-  inPostorder <- (!is.null(treeOrder) && treeOrder == "postorder")
-  treeEdge <- tree[["edge"]]
-
+  tree <- RenumberTips(tree, dataset[["tip.label"]])
+  el <- RenumberEdges(tree[["edge"]][, 1], tree[["edge"]][, 2])
   # Return:
-  MorphyLength(treeEdge[, 1], treeEdge[, 2], morphyObj, inPostorder, nTaxa)
+  EdgeListScore(el[[1]], el[[2]], dataset)
 }
 
-#' @describeIn MorphyTreeLength Faster function that requires internal tree
-#'   parameters. Node numbering must increase monotonically away from root.
+#' @describeIn TreeScore Low-level scorer taking parent and child vectors; the
+#'   default `TreeScorer` for [`TreeSearch()`], [`Ratchet()`] and
+#'   [`Jackknife()`].  Scores via the native `ts_fitch_score()` kernel, which
+#'   handles the Brazeau-Guillerme-Smith inapplicable algorithm correctly.
 #' @inheritParams RearrangeEdges
-#' @author Martin R. Smith
-#' @keywords internal
-#' @importFrom TreeTools PostorderOrder Preorder
-#' @importFrom fastmatch fmatch
+#' @param inPostorder Logical: are the edges already in postorder?  If `FALSE`
+#'   (the default) they are reordered before scoring.
+#' @param \dots Unused; for interface compatibility with custom `TreeScorer`s.
+#' @return `EdgeListScore()` returns the parsimony score (a numeric).
+#' @importFrom TreeTools Preorder PostorderOrder
 #' @export
-MorphyLength <- function(parent, child, morphyObj, inPostorder = FALSE,
-                         nTaxa = mpl_get_numtaxa(morphyObj)) {
+EdgeListScore <- function(parent, child, dataset, inPostorder = FALSE, ...) {
+  if (!is.ParsimonyData(dataset)) {
+    stop("`dataset` must be a `ParsimonyData` object; prepare it first with ",
+         "`PrepareData()`, or supply your own `TreeScorer`.")
+  }
   if (!inPostorder) {
     edgeList <- Preorder(cbind(parent, child))
-    edgeList <- edgeList[PostorderOrder(edgeList), ]
+    edgeList <- edgeList[PostorderOrder(edgeList), , drop = FALSE]
     parent <- edgeList[, 1]
     child <- edgeList[, 2]
   }
-  if (!inherits(morphyObj, "morphyPtr")) {
-    stop("`morphyObj` must be a Morphy pointer. See ?LoadMorphy().")
-  }
-  if (nTaxa < 1L) {
-    # Run this test after we're sure that morphyObj is a morphyPtr, or lazy
-    # evaluation of nTaxa will cause a crash.
-    stop("Error: ", mpl_translate_error(nTaxa))
-  }
-  
-  maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
-  rootNode <- nTaxa + 1L
-  allNodes <- rootNode:maxNode
-  
-  parentOf <- parent[fmatch(seq_len(maxNode), child)]
-  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
-  leftChild <- child[length(parent) + 1L - fmatch(allNodes, rev(parent))]
-  rightChild <- child[fmatch(allNodes, parent)]
-  
   # Return:
-  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
-               as.integer(rightChild - 1L), morphyObj)
+  ts_fitch_score(cbind(parent, child),
+                 dataset[["contrast"]], dataset[["tip_data"]],
+                 dataset[["weight"]], dataset[["levels"]],
+                 min_steps = dataset[["min_steps"]],
+                 concavity = dataset[["concavity"]],
+                 infoAmounts = dataset[["info_amounts"]])
 }
 
-#' @describeIn MorphyTreeLength Fastest function that requires internal tree parameters
-#' @param parentOf Integer vector containing, for each tip and each node in 
-#' sequential order, the integer index its parent node.  
-#' The root node should be its own parent.
-#' @param leftChild integer vector containing, for each node, starting at the 
-#' root and proceeding in sequential order, the integer corresponding to its
-#' left child.  Tip numbering begins at 0; the root node is numbered `nTip`.
-#' @param rightChild integer vector containing, for each node, the index
-#'                  of its right child.
-#' @family tree scoring
-#' @author Martin R. Smith
-#' @keywords internal
-#' @export
-GetMorphyLength <- function(parentOf, leftChild, rightChild, morphyObj) {
-  # Return:
-  .Call(`MORPHYLENGTH`, as.integer(parentOf), as.integer(leftChild), 
-               as.integer(rightChild), morphyObj)
-}
-
-#' @describeIn MorphyTreeLength Direct call to C function. Use with caution.
-#' @param parentOf For each node, numbered in postorder, the number of its parent node.
-#' @param leftChild  For each internal node, numbered in postorder, the number of its left 
-#'                   child node or tip.
-#' @param rightChild For each internal node, numbered in postorder, the number of its right
-#'                   child node or tip.
-#' @keywords internal
-#' @export
-C_MorphyLength <- function(parentOf, leftChild, rightChild, morphyObj) {
-  .Call(`MORPHYLENGTH`, as.integer(parentOf - 1L), as.integer(leftChild - 1L), 
-               as.integer(rightChild - 1L), morphyObj)
-}

@@ -33,7 +33,7 @@ optimal score \eqn{L^*}{L*} via its \code{score} attribute.}
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
 \insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
@@ -197,10 +197,10 @@ Other split support functions:
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}},
 \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }

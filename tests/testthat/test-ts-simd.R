@@ -30,7 +30,7 @@
 # EW scoring: golden-value regression on all inapplicable datasets
 # =====================================================================
 
-test_that("SIMD EW scores match known-good values on inapplicable datasets (pectinate)", {
+test_that("EW scores match known-good values on inapplicable datasets (pectinate)", {
   golden <- c(
     Agnarsson2004 = 1081, Aguado2009 = 1160, Aria2015 = 184,
     Asher2005 = 553, Capa2011 = 620, Conrad2008 = 3605,
@@ -53,21 +53,20 @@ test_that("SIMD EW scores match known-good values on inapplicable datasets (pect
   }
 })
 
-test_that("SIMD EW scores match known-good values on inapplicable datasets (random)", {
+test_that("EW scores match known-good values on inapplicable datasets (random)", {
   golden <- c(
-    Agnarsson2004 = 1958, Aguado2009 = 1228, Aria2015 = 299,
-    Asher2005 = 556, Capa2011 = 1524, Conrad2008 = 3533,
-    DeAssis2011 = 272, Dikow2009 = 3552, Eklund2004 = 1068,
-    Geisler2001 = 2372
+    Agnarsson2004 = 1948, Aguado2009 = 1238, Aria2015 = 296,
+    Asher2005 = 604, Capa2011 = 1531, Conrad2008 = 3515,
+    DeAssis2011 = 302, Dikow2009 = 3536, Eklund2004 = 1052,
+    Geisler2001 = 2394
   )
-  set.seed(7142)
   for (ds_name in names(inapplicable.phyData)[1:10]) {
     dataset <- inapplicable.phyData[[ds_name]]
-    tree <- Preorder(RandomTree(dataset, root = TRUE))
+    tree <- FixedTree(dataset, 7142)
     ds <- make_ts_data(dataset)
     ew <- ts_score(tree, ds)
     expect_equal(ew, unname(golden[[ds_name]]),
-                 label = paste(ds_name, "random EW"))
+                 label = paste(ds_name, "non-pectinate EW"))
   }
 })
 
@@ -75,7 +74,7 @@ test_that("SIMD EW scores match known-good values on inapplicable datasets (rand
 # DNA data: exactly 4 applicable states → even n_states (good SIMD case)
 # =====================================================================
 
-test_that("SIMD EW scores correct on DNA data (4 states, even)", {
+test_that("EW scores correct on DNA data (4 states, even)", {
   suppressWarnings(data("Laurasiatherian", package = "phangorn"))
   dna <- Laurasiatherian
   set.seed(3827)
@@ -94,7 +93,7 @@ test_that("SIMD EW scores correct on DNA data (4 states, even)", {
 # IW scoring with different concavity values
 # =====================================================================
 
-test_that("SIMD IW scores are self-consistent", {
+test_that("IW scores are self-consistent", {
   dataset <- inapplicable.phyData[["Vinther2008"]]
   set.seed(4519)
   tree <- Preorder(RandomTree(dataset, root = TRUE))
@@ -119,7 +118,7 @@ test_that("SIMD IW scores are self-consistent", {
 # TBR search: verify SIMD doesn't break move evaluation
 # =====================================================================
 
-test_that("TBR search with SIMD finds optimal or near-optimal scores", {
+test_that("TBR search finds optimal or near-optimal scores", {
   dataset <- inapplicable.phyData[["Vinther2008"]]
   set.seed(6184)
   tree <- Preorder(RandomTree(dataset, root = TRUE))
@@ -133,7 +132,7 @@ test_that("TBR search with SIMD finds optimal or near-optimal scores", {
   expect_lte(result$score, initial)
 })
 
-test_that("TBR search reproducible with set.seed (SIMD determinism)", {
+test_that("TBR search reproducible with set.seed", {
   dataset <- inapplicable.phyData[["Vinther2008"]]
   ds <- make_ts_data(dataset)
 
@@ -155,7 +154,7 @@ test_that("TBR search reproducible with set.seed (SIMD determinism)", {
 # Driven search end-to-end (exercises all SIMD codepaths)
 # =====================================================================
 
-test_that("Driven search produces valid results with SIMD", {
+test_that("Driven search produces valid results", {
   dataset <- inapplicable.phyData[["Vinther2008"]]
   ds <- make_ts_data(dataset)
 
@@ -181,20 +180,19 @@ test_that("Driven search produces valid results with SIMD", {
 # NA datasets: three-pass scoring regression
 # =====================================================================
 
-test_that("NA three-pass scoring with SIMD matches known-good values across datasets", {
+test_that("NA three-pass scoring matches known-good values across datasets", {
   # 5 datasets that heavily exercise NA scoring
   golden <- c(
-    Vinther2008 = 188, Agnarsson2004 = 1964, Wills2012 = 712,
-    Aria2015 = 292, Zhu2013 = 2256
+    Vinther2008 = 215, Agnarsson2004 = 2011, Wills2012 = 737,
+    Aria2015 = 308, Zhu2013 = 2201
   )
-  set.seed(5063)
   for (ds_name in names(golden)) {
     dataset <- inapplicable.phyData[[ds_name]]
-    tree <- Preorder(RandomTree(dataset, root = TRUE))
+    tree <- FixedTree(dataset, 5063)
     ds <- make_ts_data(dataset)
     ew <- ts_score(tree, ds)
     expect_equal(ew, unname(golden[[ds_name]]),
-                 label = paste(ds_name, "NA random EW"))
+                 label = paste(ds_name, "NA fixed-tree EW"))
   }
 })
 
@@ -202,30 +200,11 @@ test_that("NA three-pass scoring with SIMD matches known-good values across data
 # Edge case: very small dataset (n_states likely 1 or 2)
 # =====================================================================
 
-test_that("SIMD handles very small datasets correctly", {
+test_that("Very small datasets", {
   # 4 tips, minimal characters
   dataset <- inapplicable.phyData[["Loconte1991"]]
   tree <- Preorder(PectinateTree(dataset))
   ds <- make_ts_data(dataset)
   ew <- ts_score(tree, ds)
   expect_equal(ew, 1081, label = "Loconte1991 EW")
-})
-
-# =====================================================================
-# Consistency across multiple trees on same dataset
-# =====================================================================
-
-test_that("SIMD scores consistent across 20 random trees", {
-  dataset <- inapplicable.phyData[["Agnarsson2004"]]
-  ds <- make_ts_data(dataset)
-  set.seed(9256)
-  scores <- vapply(seq_len(20), function(i) {
-    tree <- Preorder(RandomTree(dataset, root = TRUE))
-    ts_score(tree, ds)
-  }, numeric(1))
-
-  # All should be finite positive integers
-  expect_true(all(is.finite(scores)))
-  expect_true(all(scores > 0))
-  expect_true(all(scores == floor(scores)))
 })

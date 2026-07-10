@@ -3,6 +3,9 @@ skip_on_cran()
 
 # Internal C++ scoring function (not exported)
 ts_fitch_score <- TreeSearch:::ts_fitch_score
+QuietlyPrepare <- function(dataset) {
+  suppressMessages(PrepareDataProfile(dataset))
+}
 
 test_that("C++ profile score matches R-level TreeLength", {
   data("congreveLamsdellMatrices", package = "TreeSearch")
@@ -10,7 +13,7 @@ test_that("C++ profile score matches R-level TreeLength", {
   # Test across multiple datasets
   for (ds_idx in c(1, 5, 10, 20, 42)) {
     dataset <- congreveLamsdellMatrices[[ds_idx]]
-    pds <- PrepareDataProfile(dataset)
+    pds <- QuietlyPrepare(dataset)
     at <- attributes(pds)
     tip_data <- matrix(unlist(pds, use.names = FALSE),
                        nrow = length(pds), byrow = TRUE)
@@ -97,7 +100,7 @@ test_that("MaximizeParsimony with profile returns valid trees", {
   expect_true(is.finite(attr(result, "score")))
 
   # Verify reported score matches TreeLength
-  pds <- PrepareDataProfile(dataset)
+  pds <- QuietlyPrepare(dataset)
   reported <- attr(result, "score")
   actual <- TreeLength(result[[1]], pds, concavity = "profile")
   expect_equal(reported, actual, tolerance = 1e-6)
@@ -106,7 +109,7 @@ test_that("MaximizeParsimony with profile returns valid trees", {
 test_that("Profile search improves or equals starting score", {
   data("congreveLamsdellMatrices", package = "TreeSearch")
   dataset <- congreveLamsdellMatrices[[10]]
-  pds <- PrepareDataProfile(dataset)
+  pds <- QuietlyPrepare(dataset)
 
   set.seed(2977)
   startTree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
@@ -126,8 +129,7 @@ test_that("Profile scoring handles inapplicable datasets", {
 
   for (dsName in c("Vinther2008", "Sansom2010")) {
     dataset <- inapplicable.phyData[[dsName]]
-    # Multi-state characters (3-5 states) now handled via MaddisonSlatkin
-    pds <- PrepareDataProfile(dataset)
+    pds <- QuietlyPrepare(dataset)
     at <- attributes(pds)
 
     if (length(at$weight) == 0L || attr(pds, "nr") == 0L) next
@@ -173,7 +175,7 @@ test_that("Profile driven search is reproducible with set.seed", {
 test_that("TreeLength with profile scoring on multi-state data", {
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Longrich2010"]]
-  pds <- PrepareDataProfile(dataset)
+  pds <- QuietlyPrepare(dataset)
 
   set.seed(8347)
   tree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
@@ -188,7 +190,7 @@ test_that("C++ and R-level profile scores agree on multi-state data", {
 
   for (dsName in c("Longrich2010", "Vinther2008")) {
     dataset <- inapplicable.phyData[[dsName]]
-    pds <- PrepareDataProfile(dataset)
+    pds <- QuietlyPrepare(dataset)
     at <- attributes(pds)
 
     if (length(at$weight) == 0L || attr(pds, "nr") == 0L) next
@@ -229,7 +231,7 @@ test_that("MaximizeParsimony profile search works with multi-state data", {
   expect_true(length(result) >= 1L)
   expect_true(is.finite(attr(result, "score")))
 
-  pds <- PrepareDataProfile(dataset)
+  pds <- QuietlyPrepare(dataset)
   reported <- attr(result, "score")
   actual <- TreeLength(result[[1]], pds, concavity = "profile")
   expect_equal(reported, actual, tolerance = 1e-6)
@@ -238,7 +240,7 @@ test_that("MaximizeParsimony profile search works with multi-state data", {
 test_that("Profile search improves score on multi-state data", {
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
-  pds <- PrepareDataProfile(dataset)
+  pds <- QuietlyPrepare(dataset)
 
   set.seed(7204)
   startTree <- TreeTools::RootTree(TreeTools::RandomTree(pds), 1L)
@@ -260,7 +262,7 @@ test_that("Infeasible multi-state chars reduced to binary in PrepareDataProfile"
   sun <- suppressWarnings(ReadAsPhyDat(sun_file))
 
   # Should complete in reasonable time (< 10 s) with warning suppressed
-  pds <- suppressWarnings(PrepareDataProfile(sun))
+  pds <- QuietlyPrepare(sun)
 
   expect_true(!is.null(attr(pds, "info.amounts")))
   expect_true(ncol(attr(pds, "info.amounts")) > 0)
@@ -284,7 +286,7 @@ test_that("Infeasible multi-state chars reduced to binary in PrepareDataProfile"
 test_that("Binary-only dataset: profile scores unchanged by multi-state code", {
   data("congreveLamsdellMatrices", package = "TreeSearch")
   dataset <- congreveLamsdellMatrices[[10]]
-  pds <- PrepareDataProfile(dataset)
+  pds <- QuietlyPrepare(dataset)
   at <- attributes(pds)
 
   tip_data <- matrix(unlist(pds, use.names = FALSE),

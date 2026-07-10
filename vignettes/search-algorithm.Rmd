@@ -194,9 +194,7 @@ replicates, ensuring diversity without lock overhead.
 
 Enabling `adaptiveStart` is most valuable for medium-to-large datasets
 where many replicates complete and the bandit has time to learn.
-For very large datasets ($\geq$ 120 tips) where only a few replicates
-complete within the time budget, the bandit has insufficient data and
-`adaptiveStart` is disabled in the `large` preset.
+The `thorough` and `large` presets enable it.
 
 Per-strategy attempt and success counts are returned in the
 `strategy_diagnostics` attribute of the search result for post-hoc
@@ -328,9 +326,8 @@ extensively (it is an artefact), so perturbed-phase TBR should be brief,
 but the perturbation itself must be aggressive enough to displace the
 tree from its current basin.
 
-When `ratchetTaper = TRUE` (enabled by default in the `thorough` and `large`
-presets), the perturbation probability is tapered across replicates as the
-tree pool stabilizes.
+When `ratchetTaper = TRUE` (off by default), the perturbation probability is
+tapered across replicates as the tree pool stabilizes.
 Early replicates use the full perturbation probability; later replicates,
 when most replicates converge to the same score, use a reduced probability
 for finer local exploration of the current basin.
@@ -387,8 +384,7 @@ This best-tree restart strategy distinguishes PCSA from a simple
 annealing schedule: the SA phase is used purely as a perturbation
 mechanism (analogous to the ratchet), not as a global optimizer.
 The number of SA + TBR cycles per replicate is controlled by
-`annealCycles` (default 0 = disabled; the `large` strategy preset
-sets 3).
+`annealCycles` (default 0 = disabled; not enabled by any preset).
 
 ## Sectorial search
 
@@ -506,9 +502,10 @@ replicates.
 After each replicate, the strict consensus of the pool's best-score trees
 is hashed (XOR of per-split FNV-1a hashes).
 If the consensus hash is unchanged for `consensusStableReps` consecutive
-replicates (default 3 in all presets), the search terminates.
+replicates, the search terminates.
 This provides a data-adaptive stopping criterion: easy datasets converge
 quickly, while hard datasets continue searching.
+It is disabled (`0`) by default; see below.
 
 ### Adaptive search level
 
@@ -545,8 +542,8 @@ dataset size:
 |-------------|---------------------------------------------|-----------------------------------|
 | `sprint`    | $\leq$ 30 tips                              | Minimal ratchet, no drift         |
 | `default`   | 31--64 tips, or $\geq$ 65 with < 100 patterns | Balanced; adaptive search level   |
-| `thorough`  | $\geq$ 65 tips with $\geq$ 100 patterns    | High-intensity; NNI perturbation, outer cycles |
-| `large`     | $\geq$ 120 tips with $\geq$ 200 patterns   | Biased Wagner, large sectors      |
+| `thorough`  | $\geq$ 65 tips with $\geq$ 100 patterns    | High-intensity; drift, outer cycles |
+| `large`     | $\geq$ 120 tips with $\geq$ 100 patterns   | As `thorough`, with more replicates |
 
 The signal-density gate (character pattern count) prevents the `thorough`
 preset from being selected for datasets with flat parsimony landscapes where

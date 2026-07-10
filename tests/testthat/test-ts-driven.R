@@ -330,13 +330,3 @@ test_that("perturbStopFactor=0 disables the rule", {
                       ratchetCycles = 1L, perturbStopFactor = 0L)
   expect_true(result$pool_size >= 1)
 })
-
-test_that("MaximizeParsimony2() is deprecated alias", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  dataset <- inapplicable.phyData[["Vinther2008"]]
-  expect_warning(
-    MaximizeParsimony2(dataset, maxReplicates = 2L, targetHits = 1L,
-                       verbosity = 0L),
-    "deprecated"
-  )
-})

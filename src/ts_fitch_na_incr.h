@@ -263,7 +263,7 @@ void fitch_na_incremental_uppass(TreeState& tree, const DataSet& ds,
                                     | (tree.prelim[tb + off + s] & no_isect);
         }
       } else {
-        // NA-aware tip update (matches morphy's mpl_fitch_NA_tip_update)
+        // NA-aware tip update
         const uint64_t* T = &tree.prelim[tb + off];
         const uint64_t* A = &tree.final_[ab + off];
         uint64_t* F = &tree.final_[tb + off];

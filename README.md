@@ -74,10 +74,9 @@ type `choco install ffmpeg`; then restart your computer.
 Launch a graphical user interface by typing `TreeSearch::EasyTrees()` in the R console.
 
 For more control over search settings, see [`?MaximizeParsimony()`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
-`MaximizeParsimony()` supports equal weights, implied weights, profile parsimony, and topological constraints natively in C++.
-For fine-grained control over the R-level search loop, see [`?Morphy()`](https://ms609.github.io/TreeSearch/reference/Morphy.html).
+`MaximizeParsimony()` supports equal weights, implied weights, profile parsimony, inapplicable characters, and topological constraints natively in C++.
 
-![Flow charts listing common actions facilitated by TreeSearch](man/figures/Flow.svg)
+![Flow charts showing common actions facilitated by TreeSearch](man/figures/Flow.svg)
 
 # Documentation
 

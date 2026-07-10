@@ -44,8 +44,8 @@ DFS helper." This harness tests that completeness claim exhaustively.
 
 ## Method (`driver.cpp`)
 
-Standalone C++ (no R / Rcpp / Morphy / SIMD). It compiles the **real**
-`src/ts_tree.cpp` (`build_postorder`, `init_from_edge`) and `#include`s the
+Standalone C++. It compiles the **real** `src/ts_tree.cpp`
+(`build_postorder`, `init_from_edge`) and `#include`s the
 functions-under-test **extracted verbatim** from `git show
 HEAD:src/ts_constraint.cpp` at build time (`extract_funcs.sh` →
 `extracted_spr.gen.inc`): `topology_spr`, `collect_edges_in_subtree`,

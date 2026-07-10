@@ -126,10 +126,10 @@ Other split support functions:
 \code{\link[=Bremer]{Bremer()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}},
 \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }

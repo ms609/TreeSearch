@@ -99,10 +99,6 @@ comparisons MUST use `fitch_mode()` to convert inapplicable to missing**
 for apples-to-apples scoring. `fitch_mode()` is defined in
 `bench_intra_fuse.R` and `bench_t265_regression.R`.
 
-**`maxTime` confound (2026-03-23):** `maxTime` (legacy Morphy parameter)
-silently delegates to the R-loop `Morphy()` engine. Use `maxSeconds` for
-the C++ driven search, which is ~10× faster at 180 tips.
-
 **Early vs late search:** Early replicates are dominated by initial descent
 quality (Wagner → local optimum); late replicates test ratchet/drift escape.
 At ≤88 tips, 20s gives 10–40 replicates spanning both regimes. At 180 tips,

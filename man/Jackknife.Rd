@@ -2,19 +2,33 @@
 % Please edit documentation in R/Jackknife.R
 \name{Jackknife}
 \alias{Jackknife}
+\alias{JackknifeTree}
 \title{Jackknife resampling}
 \usage{
 Jackknife(
   tree,
   dataset,
   resampleFreq = 2/3,
-  InitializeData = PhyDat2Morphy,
-  CleanUpData = UnloadMorphy,
-  TreeScorer = MorphyLength,
+  InitializeData = NULL,
+  CleanUpData = NULL,
+  TreeScorer = EdgeListScore,
   EdgeSwapper = TBRSwap,
+  Resampler = JackknifeTree,
   jackIter = 5000L,
   searchIter = 4000L,
   searchHits = 42L,
+  verbosity = 1L,
+  ...
+)
+
+JackknifeTree(
+  edgeList,
+  dataset,
+  resampleFreq = 2/3,
+  TreeScorer = EdgeListScore,
+  EdgeSwapper = NNISwap,
+  maxIter,
+  maxHits,
   verbosity = 1L,
   ...
 )
@@ -24,24 +38,34 @@ Jackknife(
 with the desired outgroup.
 Edge lengths are not supported and will be removed.}
 
-\item{dataset}{a dataset in the format required by \code{TreeScorer()}.}
+\item{dataset}{a dataset in the format required by \code{TreeScorer()}; the
+default \code{\link[=EdgeListScore]{EdgeListScore()}} requires a \code{\link[=PrepareData]{ParsimonyData}}
+object.}
 
 \item{resampleFreq}{Double between 0 and 1 stating proportion of characters
 to resample.}
 
-\item{InitializeData}{Function that sets up data object to prepare for tree search.
-The function will be passed the \code{dataset} parameter.
-Its return value will be passed to \code{TreeScorer()} and \code{CleanUpData()}.}
-
-\item{CleanUpData}{Function to destroy data object on function exit.
-The function will be passed the value returned by \code{InitializeData()}.}
+\item{InitializeData, CleanUpData}{Deprecated and will be removed in a
+future release.  Prepare \code{dataset} yourself (e.g. with
+\code{\link[=PrepareData]{PrepareData()}}) before
+calling \code{TreeSearch()}, rather than supplying these hooks; and use
+your own \code{on.exit()} if your \code{TreeScorer} holds an external resource
+that needs releasing.}
 
 \item{TreeScorer}{function to score a given tree.
 The function will be passed three parameters, corresponding to the
-\code{parent} and \code{child} entries of a tree's edge list, and a dataset.}
+\code{parent} and \code{child} entries of a tree's edge list, and \code{dataset}.
+The default, \code{\link[=EdgeListScore]{EdgeListScore()}}, requires \code{dataset} to be a
+\code{\link[=PrepareData]{ParsimonyData}} object (equal weights, implied
+weights or profile parsimony, according to how it was prepared).}
 
 \item{EdgeSwapper}{a function that rearranges a parent and child vector,
 and returns a list with modified vectors; for example \code{\link[=SPRSwap]{SPRSwap()}}.}
+
+\item{Resampler}{Function that drops a random subset of characters from
+\code{dataset} and returns a rearranged \code{edgeList}; see §Details for specification.
+The default, \code{\link[=JackknifeTree]{JackknifeTree()}}, requires \code{dataset} to be a
+\code{\link[=PrepareData]{ParsimonyData}} object.}
 
 \item{jackIter}{Integer specifying number of jackknife iterations to conduct.}
 
@@ -59,6 +83,20 @@ To override this value for a single swapper function, set e.g.
 larger numbers provide more verbose feedback to the user.}
 
 \item{...}{further parameters to send to \code{TreeScorer()}}
+
+\item{edgeList}{a list containing the following:
+\itemize{
+\item vector of integers corresponding to the parent of each edge in turn
+\item vector of integers corresponding to the child of each edge in turn
+\item (optionally) score of the tree
+\item (optionally, if score provided) number of times this score has been hit
+}}
+
+\item{maxIter}{Numeric specifying maximum number of iterations to perform
+in tree search.}
+
+\item{maxHits}{Numeric specifying maximum number of hits to accomplish in
+tree search.}
 }
 \value{
 \code{Jackknife()} returns a list of trees recovered after jackknife
@@ -68,6 +106,31 @@ iterations.
 Resample trees using Jackknife resampling, i.e. removing a subset of
 characters. For standard parsimony, \code{\link[=Resample]{Resample()}} is faster; use
 \code{Jackknife()} when you need a custom \code{TreeScorer} or \code{EdgeSwapper}.
+}
+\details{
+Each argument from \code{Jackknife} is passed forward to \code{Resampler()}, except
+\code{tree}, which is replaced with a two-element list of integer vectors;
+the first entry lists the parent of each node in \code{tree}, i.e.
+\code{tree$edge[, 1]}; the second entry lists the corresponding child.
+\code{Resampler()} must return an equivalent list.
+}
+\section{Functions}{
+\itemize{
+\item \code{JackknifeTree()}: Default \code{Resampler}: drops a random subset of
+characters from a \code{\link[=PrepareData]{ParsimonyData}} object and conducts a
+tree search on the reduced dataset.
+
+}}
+\examples{
+set.seed(0)
+data("inapplicable.phyData", package = "TreeSearch")
+dataset <- inapplicable.phyData[["Asher2005"]]
+trees <- MaximizeParsimony(dataset, inapp = "missing", verbosity = 0)
+oneTree <- TreeTools::MakeTreeBinary(trees[[1]])
+jackTrees <- Jackknife(oneTree, PrepareData(dataset),
+                       jackIter = 10, searchIter = 120,
+                       inapp = "missing", verbosity = 0)
+JackLabels(oneTree, jackTrees)
 }
 \seealso{
 \itemize{
@@ -80,16 +143,18 @@ Other split support functions:
 \code{\link[=Bremer]{Bremer()}},
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
-\code{\link[=Morphy]{Morphy()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}},
 \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 
 Other custom search functions:
+\code{\link[=BootstrapTree]{BootstrapTree()}},
 \code{\link[=EdgeListSearch]{EdgeListSearch()}},
-\code{\link[=MorphyBootstrap]{MorphyBootstrap()}},
+\code{\link[=PrepareData]{PrepareData()}},
+\code{\link[=SingleCharData]{SingleCharData()}},
 \code{\link[=SuccessiveApproximations]{SuccessiveApproximations()}}
 }
 \author{

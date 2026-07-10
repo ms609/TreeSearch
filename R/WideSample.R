@@ -85,7 +85,7 @@
 #'   Default `60`.
 #'
 #' @return A `multiPhylo` object of length `min(n, length(trees))` containing
-#' a uniform sample of `trees`.
+#' a topologically diverse (Max-Min) subset of `trees`.
 #' If `n == 1`, the single most central tree (the medoid) is returned.
 #' Attributes of the input (e.g. `score`, `hits_to_best`) are preserved.
 #'
@@ -100,14 +100,19 @@
 #' sub10 <- WideSample(trees, 10, effort = 1)
 #' length(sub10)  # 10
 #'
-#' \donttest{
-#' # Automatic tier selection (exact at this size when 'highs' is installed,
-#' # otherwise the DropAdd heuristic)
-#' auto10 <- WideSample(trees, 10)
-#'
+#' # The remaining tiers (DropAdd, Grasp, exact) all dispatch to 'MaxMin'/
+#' # 'highs' solvers whose runtime is environment-dependent (e.g. a
+#' # from-source 'highs' build can be far slower than the CRAN binary) and
+#' # whose calling convention tracks 'MaxMin' development. Demonstrate them
+#' # interactively only.
+#' if (interactive()) {
 #' # Pre-computed distances
 #' dists <- TreeDist::ClusteringInfoDistance(trees)
 #' sub5 <- WideSample(trees, 5, dist = dists)
+#'
+#' # Automatic tier selection (exact at this size when 'highs' is installed,
+#' # otherwise the DropAdd heuristic)
+#' auto10 <- WideSample(trees, 10)
 #'
 #' # Highest-quality heuristic (Grasp); set a seed for a reproducible selection
 #' set.seed(1)

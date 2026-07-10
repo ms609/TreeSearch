@@ -34,7 +34,7 @@ treat them changes the score, and the regimes are **not** interchangeable:
   TNT.** Inapplicables become missing data, so the search runs *standard Fitch*.
   This is the most permissive coding ⇒ the **lowest** achievable score. It is the
   only regime in which TS and TNT scores are directly comparable.
-- **Gap-as-extra-state / native-inapplicable (Morphy/de-Laet–Brazeau).**
+- **Gap-as-extra-state / native-inapplicable (de-Laet–Brazeau).**
   Inapplicables are scored as structure, forcing extra steps ⇒ a **higher**
   score than the `"?"` regime for the same tree. `ts_raw` in the CSV is an
   example of a stricter column (e.g. Zanol `ts_raw`=1315 vs `ts_fitch`=1265).

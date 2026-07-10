@@ -1,11 +1,11 @@
-test_that("RandomMorphyTree() errors are handled", {
-  expect_error(RandomMorphyTree(-1))
-  expect_error(RandomMorphyTree(0))
-  expect_error(RandomMorphyTree(1))
+test_that("RandomPostorderTree() errors are handled", {
+  expect_error(RandomPostorderTree(-1))
+  expect_error(RandomPostorderTree(0))
+  expect_error(RandomPostorderTree(1))
 })
 
 test_that("Two tip 'random' tree", {
-  expect_equal(RandomMorphyTree(2), list(c(2, 2, 2), 0, 1))
+  expect_equal(RandomPostorderTree(2), list(c(2, 2, 2), 0, 1))
 })
 
 test_that("RandomTreeScore() with phyDat dataset", {
@@ -47,23 +47,21 @@ test_that("RandomTreeScore() with larger dataset", {
   expect_gt(expected, 0)
 })
 
-test_that("RandomTreeScore() backward compat with morphyObj", {
+test_that("RandomTreeScore() with a ParsimonyData object", {
   tokens <- matrix(c(
     0, "-", "-", 1, 1, 2,
     0, "-", "-", 1, 1, 2,
     0, "-", "-", 0, 0, 0), byrow = TRUE, nrow = 3L,
     dimnames = list(letters[1:3], NULL))
-  
+
   # One leaf
   pd <- TreeTools::MatrixToPhyDat(tokens[1, , drop = FALSE])
-  morphyObj <- PhyDat2Morphy(pd)
-  expect_equal(mpl_get_numtaxa(morphyObj), 1L)
-  expect_equal(RandomTreeScore(morphyObj), 0)
-  morphyObj <- UnloadMorphy(morphyObj)
-  
+  obj <- PrepareData(pd)
+  expect_equal(obj[["nTip"]], 1L)
+  expect_equal(RandomTreeScore(obj), 0)
+
   # Three leaves
   pd <- TreeTools::MatrixToPhyDat(tokens)
-  morphyObj <- PhyDat2Morphy(pd)
-  expect_equal(RandomTreeScore(morphyObj), 3L)
-  morphyObj <- UnloadMorphy(morphyObj)
+  obj <- PrepareData(pd)
+  expect_equal(RandomTreeScore(obj), 3L)
 })

@@ -111,13 +111,10 @@ ratchet/drift escape, a fresh XSS pass exploits the new topology.
 The 180-taxon `mbank_X30754` dataset (425 chars, 374 informative patterns,
 40% missing, 20% inapplicable) exposed:
 
-1. ~~**`maxTime` triggers Morphy delegation.**~~ **Fixed (T-184)**:
-   `maxTime` is now intercepted before the Morphy shim check and mapped
-   to `maxSeconds` with a deprecation warning.
-2. **C++ TBR convergence at 180 tips takes ~13s** (Wagner ~2560 → local
+1. **C++ TBR convergence at 180 tips takes ~13s** (Wagner ~2560 → local
    optimum ~1420). NNI warmup (~1.5s) followed by TBR reduces this to
    ~7s while finding better scores. T-178 filed.
-3. **Strategy presets assume replicate time O(seconds).** At 180 tips,
+2. **Strategy presets assume replicate time O(seconds).** At 180 tips,
    a single replicate takes ~60-100s. Cycle counts need recalibration.
 
 **180-taxon baseline (C++ driven search, EW, single replicate):**

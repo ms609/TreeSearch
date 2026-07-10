@@ -3,7 +3,6 @@
 \encoding{UTF-8}
 \name{MaximizeParsimony}
 \alias{MaximizeParsimony}
-\alias{MaximizeParsimony2}
 \title{Find most parsimonious trees}
 \usage{
 MaximizeParsimony(
@@ -29,8 +28,6 @@ MaximizeParsimony(
   collapse = TRUE,
   ...
 )
-
-MaximizeParsimony2(...)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
@@ -48,7 +45,7 @@ Edge lengths are not supported and will be deleted.}
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
 \insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
@@ -129,18 +126,16 @@ character patterns; \code{"thorough"} for 65-119 taxa with >=100
 character patterns; \code{"default"} otherwise.}
 \item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
 sectorial. Good for small datasets or quick surveys.}
-\item{\code{"default"}}{Balanced: 12 ratchet + sectorial + fusing.}
+\item{\code{"default"}}{Balanced: 6 ratchet cycles, sectorial search and
+fusing.}
 \item{\code{"thorough"}}{Intensive: 20 ratchet cycles, adaptive
 perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
 starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
 character patterns; the drift cycles also recover equal-score trees on
 TBR-disconnected islands that random restarts alone miss.}
-\item{\code{"large"}}{Large-tree search (>=120 tips): reduced cycle
-counts scaled for expensive per-replicate cost, no NNI
-perturbation, single biased Wagner start (Goloboff 2014), larger
-sector sizes, 1-cycle simulated annealing instead of drift
-(linear cooling from T=20 to T=0 over 5 phases).  Empirically matches
-or exceeds \code{"thorough"} at 180 tips across all time budgets.}
+\item{\code{"large"}}{Large-tree search (>=120 tips): the \code{"thorough"}
+settings with \code{maxReplicates} raised to 500 to suit the higher
+per-replicate cost.}
 \item{\code{"intensive"}}{Deprecated alias of \code{"thorough"}, retained for
 backward compatibility.  The extra Wagner starts (5) that once
 distinguished it are now folded into \code{"thorough"}, so the two are
@@ -233,18 +228,17 @@ collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 visible (a constraint encodes external evidence the matrix does not
 capture); unsupported non-constraint branches still collapse.}
 
-\item{...}{Backward compatibility: individual control parameters (e.g.
-\code{ratchetCycles = 10L}) may still be passed as named arguments.
-These override the corresponding \code{control} fields and the strategy
-preset.
-Legacy \code{Morphy()}-style parameters (e.g. \code{ratchIter}, \code{tbrIter}) are
-detected and forwarded to \code{\link[=Morphy]{Morphy()}} with a deprecation warning.}
+\item{...}{Backward compatibility.}
 }
 \value{
 A \code{multiPhylo} object containing the best tree(s) found, with
 attributes:
 \describe{
 \item{\code{score}}{Best parsimony score.}
+\item{\code{scoring}}{A list recording the scoring conditions the score is
+optimal under (\code{concavity}, \code{inapplicable}, ...), so a saved score
+remains interpretable.  \code{\link[=Bremer]{Bremer()}} checks it against its own
+scoring arguments and warns on a mismatch.}
 \item{\code{scores}}{Present only when \code{collapse = FALSE}: a numeric vector of
 the parsimony score of each returned tree, aligned with the returned
 \code{multiPhylo} (the same values are attached as a \code{score} attribute on
@@ -285,15 +279,16 @@ NNI-warmup and simulated-annealing candidates.}
 }
 }
 \description{
-Performs a multi-replicate driven search for most-parsimonious trees,
-combining random addition sequence (Wagner) starting trees, TBR
-rearrangement, exclusive sectorial search (XSS), ratchet perturbation,
-drift, and tree fusing -- all in compiled C++.
+\code{MaximizeParsimony()} performs a multi-replicate driven search for
+most-parsimonious trees, combining random addition sequence (Wagner)
+starting trees, tree bisection and reconnection  (\acronym{TBR})
+rearrangement, exclusive sectorial search (\acronym{XSS}),
+ratchet perturbation, drift, and tree fusing.
 }
 \details{
 The search pipeline follows the "new technology search" approach of
-\insertCite{Goloboff1999;textual}{TreeSearch}, as implemented in TNT
-\insertCite{Goloboff2016}{TreeSearch}.
+\insertCite{Goloboff1999;textual}{TreeSearch}, and resembles the
+implementation in TNT \insertCite{Goloboff2016}{TreeSearch}.
 Parsimony scoring uses the Fitch
 \insertCite{Fitch1971}{TreeSearch} algorithm; inapplicable characters
 are handled with the algorithm of
@@ -310,10 +305,9 @@ The search stops when the best score has been independently discovered
 \section{Completeness of the returned tree set}{
 
 \code{MaximizeParsimony()} returns the distinct, fully-resolved optimal
-topologies held in its tree pool; it does \strong{not} guarantee that every
-most-parsimonious tree (MPT) is recovered.  There is no fixed cap on the
-number of trees returned (a value such as 256 is not hard-coded anywhere);
-the size of the returned set is bounded by, in order:
+topologies held in its tree pool; it does not guarantee that every
+most-parsimonious tree (\acronym{MPT}) is recovered.
+The size of the returned set is bounded by, in order:
 \enumerate{
 \item \strong{\code{poolMaxSize}} (default \code{100}) — a hard ceiling on the number of
 trees retained.  Raise it (via \code{\link[=SearchControl]{SearchControl()}}) to keep more MPTs;
@@ -325,43 +319,39 @@ returns a \emph{partial} set (the run reports \code{stop = "timeout"}); allow mo
 \code{maxSeconds}, or raise \code{enumTimeFraction}, for a more complete set.
 \item \strong{TBR-island coverage.} The plateau walk only explores islands of
 equal-score trees that a main-loop replicate actually landed on.  MPTs
-lying in unvisited islands are never enumerated, however large
-\code{poolMaxSize} is.  Increase \code{maxReplicates} to seed more islands.  Two
-independent runs (or runs at different \code{strategy} effort) can therefore
-return the \emph{same} count if they exhaust the same connected island — this
-reflects island structure, not a cap.
+in unvisited islands are never enumerated, however large \code{poolMaxSize}
+is; increase \code{maxReplicates} to seed more islands.
 }
 By default (\code{collapse = TRUE}), zero-length (unsupported) branches are
 contracted into polytomies and the returned set is deduplicated on the
 resulting collapsed topologies, so \code{n_topologies} counts distinct \emph{collapsed}
 topologies — the same convention TNT applies under "collapse zero-length
-branches", and the count comparable across programs.  This matters because a
-single soft polytomy (an unsupported clade of \emph{k} taxa) has \eqn{(2k-3)!!}
+branches".
+This matters because a single soft polytomy (an unsupported clade of
+\eqn{k} taxa) has \eqn{(2k-3)!!}
 equally-parsimonious binary resolutions, so leaving branches resolved can
 inflate the apparent number of optimal trees by orders of magnitude without
 adding any biological information.  Set \code{collapse = FALSE} to return
 fully-resolved trees instead (one arbitrary resolution per distinct collapsed
-topology); the main search and the MPT enumeration then still deduplicate on
-the same criterion, so the returned set remains internally consistent.
+topology).
 
 Implied weighting is supported natively: set \code{concavity} to a numeric
 value (e.g.\sspace{}10).
-Profile parsimony (\code{concavity = "profile"}) is supported natively:
-characters are simplified to binary (max 2 informative states),
-inapplicable tokens are treated as ambiguous, and per-character
-information profiles are used for scoring
-\insertCite{Faith2001}{TreeSearch}.
-}
-
-\section{Deprecated}{
-
-\code{MaximizeParsimony2()} is a deprecated alias for \code{MaximizeParsimony()}.
+Profile parsimony (\code{concavity = "profile"}) is supported natively.
+Inapplicable tokens are treated as ambiguous, and each character is scored
+by its information profile \insertCite{Faith2001}{TreeSearch}; see
+\code{\link[=PrepareDataProfile]{PrepareDataProfile()}} for how multi-state profiles are computed.
 }
 
 \examples{
 data("inapplicable.phyData", package = "TreeSearch")
 dataset <- inapplicable.phyData[["Vinther2008"]]
-result <- MaximizeParsimony(dataset, maxReplicates = 3L, targetHits = 2L)
+result <- MaximizeParsimony(
+  dataset,
+  inapp = "missing",
+  maxReplicates = 12L,
+  targetHits = 4L
+)
 result
 attr(result, "score")
 
@@ -370,7 +360,6 @@ attr(result, "score")
 \insertAllCited{}
 }
 \seealso{
-\code{\link[=Morphy]{Morphy()}} for fine-grained control over the R-level search loop.
 \code{\link[=Resample]{Resample()}} for jackknife and bootstrap resampling.
 \code{\link[=SearchControl]{SearchControl()}} for expert-level tuning of the search heuristics.
 
@@ -382,10 +371,11 @@ Other tree scoring:
 \code{\link[=IWScore]{IWScore()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
 \code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}},
 \code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
 \code{\link[=WideSample]{WideSample()}}
 }
 \author{

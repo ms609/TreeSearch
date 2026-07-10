@@ -32,9 +32,9 @@ An object of class \code{phyDat}, with additional attributes.
 character when subject to N additional steps.
 \item \code{informative}: logical specifying which characters contain any
 phylogenetic information.
-\item \code{bootstrap}: The character vector
-\code{c("info.amounts", "split.sizes")}, indicating attributes to sample
-when bootstrapping the dataset (e.g. in Ratchet searches).
+\item \code{bootstrap}: A character vector naming the attributes to resample when
+bootstrapping the dataset (e.g. in Ratchet searches); \code{PrepareDataProfile}
+adds \code{"info.amounts"}.
 }
 
 \code{PrepareDataIW} adds the attribute:
@@ -52,12 +52,13 @@ Maddison & Slatkin (1991), falling back to a Monte Carlo approximation for
 large or complex characters.
 }
 \details{
-Characters are simplified where necessary, with a warning:
+Characters are simplified where necessary:
 \itemize{
-\item inapplicable tokens will be replaced with the ambiguous token
-(i.e. \code{-} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?});
-\item Ambiguous tokens will be treated as fully ambiguous
-(i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?})
+\item inapplicable tokens are replaced with the ambiguous token
+(i.e. \code{-} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?}),
+reported with a message;
+\item ambiguous tokens are treated as fully ambiguous
+(i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?}).
 }
 }
 \section{Functions}{

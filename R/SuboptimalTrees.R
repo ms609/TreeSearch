@@ -54,6 +54,7 @@
 #' [`Suboptimality()`] summarises the excess length of each tree.
 #' @template MRS
 #' @family split support functions
+#' @family tree scoring
 #' @export
 SuboptimalTrees <- function(dataset, tree = NULL,
                             maxSuboptimal = 5, maxPool = 1000L, ...) {

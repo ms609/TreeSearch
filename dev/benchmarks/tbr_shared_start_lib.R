@@ -93,8 +93,13 @@ TntTbr <- function(d, startTree, seed, mulpars, hold, randclip = TRUE) {
   WriteTntCharacters(d$phy, file.path(wd, "data.tnt"))
   writeLines(script, file.path(wd, "swapper.run"))
   old <- setwd(wd); on.exit(setwd(old), add = TRUE)
+  # Wall = TNT process time only (data.tnt already written; ReadTntTree excluded).
+  # Includes TNT startup/proc/tread, which INFLATES TNT wall ⇒ tnt rate is a
+  # conservative LOWER bound (works in TNT's disfavour for the throughput read).
+  .t0 <- Sys.time()
   out <- suppressWarnings(system2(TNT_EXE, args = "swapper.run;",
                                   stdout = TRUE, stderr = TRUE))
+  .wall <- as.double(difftime(Sys.time(), .t0, units = "secs"))
   out <- iconv(out, from = "", to = "UTF-8", sub = "")
 
   startScore  <- GrepNum(out, ".*Start swapping from .* \\(score ([0-9]+)\\).*")
@@ -115,7 +120,7 @@ TntTbr <- function(d, startTree, seed, mulpars, hold, randclip = TRUE) {
              start_len = TreeLength(startTree, d$phy),
              start_len_tnt = startScore, final_len = finalR,
              final_len_tnt = bestStdout, n_trees = nTrees,
-             rearrangements = rearr, stringsAsFactors = FALSE)
+             rearrangements = rearr, wall = .wall, stringsAsFactors = FALSE)
   attr(row, "tree") <- bestTree
   row
 }
@@ -137,9 +142,11 @@ PhyloToKernelEdge <- function(tree, d) {
 TsTbr <- function(d, startTree, seed, acceptEqual, maxHits = 1L, maxChanges = 0L) {
   edge <- PhyloToKernelEdge(startTree, d)
   set.seed(seed)
+  .t0 <- Sys.time()
   res <- TreeSearch:::ts_tbr_diagnostics(
     edge, d$contrast, d$tip_data, d$weight, d$levels,
     maxHits = maxHits, acceptEqual = acceptEqual, maxChanges = maxChanges)
+  .wall <- as.double(difftime(Sys.time(), .t0, units = "secs"))
   resTree <- structure(list(edge = res$edge, Nnode = d$nTip - 1L,
                             tip.label = names(d$phy)), class = "phylo")
   finalR <- TreeLength(resTree, d$phy)
@@ -147,7 +154,8 @@ TsTbr <- function(d, startTree, seed, acceptEqual, maxHits = 1L, maxChanges = 0L
                      start_len = TreeLength(startTree, d$phy),
                      start_len_tnt = NA_real_, final_len = finalR,
                      final_len_tnt = res$score, n_trees = 1L,
-                     rearrangements = res$n_evaluated, stringsAsFactors = FALSE)
+                     rearrangements = res$n_evaluated, wall = .wall,
+                     stringsAsFactors = FALSE)
   attr(row, "tree") <- resTree
   list(row = row, tree = resTree,
        passes = res$passes, n_accepted = res$n_accepted, converged = res$converged)

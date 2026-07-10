@@ -475,17 +475,6 @@ datasets (20–88 tips) led to committed improvements:
 5. **Biased Wagner** (T-188): Softmax-sampled taxon addition order.
 6. **Outer cycle loop** (T-189): Interleave XSS/ratchet/drift.
 
-### XPIWE feature (2026-03-23)
-
-All 7 tasks (T-156–T-162) completed on feature/xpiwe branch by Agent G.
-Extended implied weighting corrects for missing-entries bias in IW scoring.
-Now the default in Shiny. Ready for merge.
-
-### Benchmark expansion (2026-03-23)
-
-- T-181: 180-taxon dataset (mbank_X30754) added as large-tree tier
-- T-180: Warm-start benchmark infrastructure for isolating escape quality
-
 ### Large-tree scaling (ongoing)
 
 The 180-taxon dataset exposed that `maxSeconds` doesn't fire mid-TBR (T-177,
@@ -493,27 +482,6 @@ P1, ASSIGNED Human+AI). NNI warmup (T-178) and strategy presets (T-179) are
 planned but T-179 is blocked on T-177.
 
 ## Current Strategic Objectives
-
-### Objective 1–4: COMPLETE
-- Phase 6 adaptive strategy, code quality, documentation, CRAN readiness
-- Version 2.0.0 (major bump for new API)
-
-### Objective 5: MorphyLib Migration — PARTIAL (not blocking CRAN)
-- Tier 1+2 done (TreeLength, CharacterLength, RandomTreeScore, deprecation)
-- Tier 3/4 (remove MorphyLib source): Far future
-
-### Objective 6: Shiny App Modularization — COMPLETE
-
-### Objective 7: Benchmark Expansion — COMPLETE
-
-### Objective 8: Shiny Bug Fixes — COMPLETE
-
-### Objective 9: NEWS.md — COMPLETE
-
-### Objective 10: Multi-state Profile Parsimony — COMPLETE
-All tasks T-101 through T-107 done. MaddisonSlatkin for 3–5 state characters,
-feasibility guard for exponential cases (binary fallback with warning), Shiny
-app verified. Sun2018 (54 tips, multistate) completes in 2.4s.
 
 ### Objective 11: Alternative Inapplicable-Handling Algorithms — SUBSTANTIALLY COMPLETE
 Three scoring methods now functional end-to-end in `MaximizeParsimony()`:
@@ -529,19 +497,6 @@ R-level API: `CharacterHierarchy()` class, `hierarchy_from_names()` auto-detect,
 
 **Remaining Phase 3 task:**
 - T-126 (ASSIGNED D): Shiny app hierarchy UI + method selector
-
-### Objective 12: Shiny Search UX — COMPLETE
-- T-127–T-130, T-137–T-141, T-143: All Shiny UX tasks done
-- T-163: Search confidence with binomial bound + diagnostics
-- T-164: Pool stats wired to Shiny (topology count, trajectory)
-
-### Objective 13: Subsample MPTs — COMPLETE
-- T-135 DONE: `WideSample()` maximin tree subsampling
-- T-136 DONE: Wire WideSample into Shiny tree thinning
-
-### Objective 14: ParsSim — COMPLETE
-`ParsSim()` simulates datasets under parsimony (EW/IW/profile). Supports
-per-taxon/per-character missing rates, rootState vectors. 128 tests passing.
 
 ## Agent Status
 
@@ -675,7 +630,6 @@ integration, and benchmarking. No PR yet.
 | 2026-03-16 | Inter-replicate parallelism via std::thread | Simplest; avoids R memory allocator conflicts |
 | 2026-03-16 | thread_local RNG, not parameter-passing | Avoids changing ~15 function signatures |
 | 2026-03-16 | Concavity sentinel -1.0 in Rcpp exports | Rcpp can't translate R_PosInf |
-| 2026-03-16 | MaximizeParsimony() → C++ engine; Morphy() → legacy | Clean migration path |
 | 2026-03-17 | Adaptive strategy: sprint ≤30, default/thorough by nTip×nChar | Benchmark data |
 | 2026-03-17 | T-025 fix: bounds-check PreallocUndo capacity | Root cause of P0 crash |
 | 2026-03-18 | Shiny modularization: modules return reactive lists | Reactives re-exported in server.R scope |

@@ -13,25 +13,20 @@ vignette: >
 
 ## Using custom optimality criteria
 
-> **For standard parsimony searches** (equal weights, implied weights, or
-> profile parsimony), use `MaximizeParsimony()` — it is much faster and
-> easier. See the [tree search vignette](tree-search.html).
-> The functions below (`TreeSearch()`, `Ratchet()`) are for **custom
-> optimality criteria only**.
+`MaximizeParsimony()` implements rapid tree search under standard parsimony
+criteria. `TreeSearch()` provides a more flexible, if less efficient,
+interface for user-specified criteria [e.g. @Hopkins2021].
 
-"TreeSearch" can be used to search for trees that are optimal under 
-user-specified criteria [e.g. @Hopkins2021].
+Arbitrary optimality criteria may be specified by providing a function
+that returns a score for a given tree (and dataset).
 
-All that is needed is to provide a function that will return a score for a
-given tree (and dataset).
-
-First we'll load the necessary R libraries:
+First load the necessary R libraries:
 
 ```{r init, message = FALSE}
 library("TreeTools", quietly = TRUE, warn.conflict = FALSE)
 library("TreeSearch")
 
-# Plot trees nicely
+# Helper function to plot trees compactly
 PlotTree <- function(tree, ...) {
   oPar <- par(mar = rep(0, 4), cex = 0.9)
   plot(tree)
@@ -41,13 +36,14 @@ PlotTree <- function(tree, ...) {
 
 ## Maximizing tree balance
 
-We'll start with a very simple case: aiming to minimise the 
-total cophenetic index (TCI) [@Mir2013] of a tree. 
+We'll start with a very simple case: aiming to find a tree with a minimal 
+total cophenetic index (TCI) [@Mir2013].
 The TCI is a measure of tree balance; it does not depend on an input dataset.
 All we need to do is to write a `TreeScorer` function.  
 This function will be sent the `parent` and `child` nodes for each edge in a
-tree, and a (here, empty) `dataset` parameter.  The function should return
-a score to be minimized.  
+tree, and a `dataset` parameter (which is unused in this case), and must
+return a numeric score; tree search will seek the tree for which this score
+is lowest.
 Here, we can use a copy of our starting tree as a template, to be populated
 with the rearranged `parent` and `child` vectors:
 
@@ -64,17 +60,14 @@ TCIScore(tree$edge[, 1], tree$edge[, 2], NA)
 ```
 
 Now we can use our scorer for tree search.
-We need to initialize some parameters to `TreeSearch()` with null values:
-`dataset = EmptyPhyDat(tree)` sends a blank dataset (as our tree scorer doesn't
-require any data); we set `InitializeData = DoNothing` and
-`CleanUpData = DoNothing` because we don't need to do anything to `dataset`
-before it is sent to `TreeScorer()`.
+`dataset` is passed to `TreeScorer()` unchanged, so we can send it whatever our
+scorer needs -- here, `EmptyPhyDat(tree)`, a blank dataset, as `TCIScore()`
+doesn't use it at all.
 
 ```{r tci-search}
 result <- TreeSearch(tree, dataset = EmptyPhyDat(tree),
-                     InitializeData = DoNothing, CleanUpData = DoNothing,
                      TreeScorer = TCIScore,
-                     maxIter = 50L, maxHits = 10L, 
+                     maxIter = 50L, maxHits = 10L,
                      verbosity = 1L)
 
 PlotTree(result)
@@ -83,9 +76,9 @@ PlotTree(result)
 ## Maximizing tree distance
 
 Let's make things slightly more complex, and try to find the tree that is 
-most different from a starting tree.  Notice that `TreeSearch` aims to 
-_minimize_ the output of `TreeScorer()`, so we negate the tree _distance_ 
-(which we aim to maximize) before returning it.
+most different from a starting tree.  As `TreeSearch` aims to _minimize_ the
+output of `TreeScorer()`, we negate the tree distance (which we aim to maximize)
+before returning it.
 
 ```{r cid}
 startTree <- BalancedTree(8)
@@ -94,14 +87,14 @@ DistanceScore <- function(parent, child, dataset) {
   tmpTree <- startTree
   tmpTree$edge <- cbind(parent, child)
   distance <- TreeDist::ClusteringInfoDistance(startTree, tmpTree)
+  
   # Return:
   -distance
 }
 
 result <- TreeSearch(RandomTree(8, root = TRUE), dataset = EmptyPhyDat(tree),
-                     InitializeData = DoNothing, CleanUpData = DoNothing,
                      TreeScorer = DistanceScore,
-                     maxIter = 50L, maxHits = 10L, 
+                     maxIter = 50L, maxHits = 10L,
                      verbosity = 1L)
 
 par(mfrow = c(1, 2))
@@ -112,154 +105,114 @@ PlotTree(result)
 
 
 
-## Searching using implied weights
+## More sophisticated search
 
-> **Note:** If you simply want to run an implied weights search, use
-> `MaximizeParsimony(dataset, concavity = k)`, which is much faster and
-> easier.  The example below demonstrates the _custom optimality criteria
-> framework_ using implied weights as a familiar worked example.
+Real searches may involve complex interaction with an underlying dataset.
+As a demonstration, we will use the custom search framework to implement implied
+weighting (paralleling the efficient native implementation
+`MaximizeParsimony(dataset, concavity = k)`).
 
-Now we consider a more complex case in which a scorer
-must undergo a time-consuming initialization before tree search can begin,
-and must be safely destroyed once tree search has completed.
+Implied weights [@Goloboff1993] penalizes additional homoplasy according to a
+concavity constant _k_: the fit contributed by a character is
+`e / (e + k)`, where `e` is the number of steps in excess of the character's
+theoretical minimum.  We will compute this minimum once before starting the
+search; `e`, which depends on the tree, is calculated once per evaluation.
 
-We start by defining an initialization function, which will create a new
-Morphy object [@Brazeau2017] for each character in a phylogenetic dataset:
 
-```{r iw-setup}
-IWInitMorphy <- function (dataset) {
-  attr(dataset, "morphyObjs") <- 
-    lapply(PhyToString(dataset, byTaxon = FALSE, useIndex = FALSE, 
-                       concatenate = FALSE), 
-           SingleCharMorphy)
-  
-  # Return:
-  dataset
-}
-```
-
-To release memory back to the operating system, we must destroy each Morphy
-object once we're finished with it:
-
-```{r iw-destroy}
-IWDestroyMorphy <- function (dataset) {
-  vapply(attr(dataset, "morphyObjs"), UnloadMorphy, integer(1))
-}
-```
-
-Now we can write our tree scoring function, which will return the 'fit'
-under implied weights [@Goloboff1993].
-
-Note that we need to specify some extra parameters: `concavity` is the _k_ 
-value required by the implied weights formula (fit = _e / e + k_),
-and `minLength` is the minimum number of steps required by each character --
-which we need in order to convert the total number of steps (returned by
-`MorphyLength()` to a number of excess steps (_e_ in the implied weights formula)
-
-```{r iw-score}
-IWScoreMorphy <- function (parent, child, dataset, concavity = 10L, 
-                           minLength = attr(dataset, "min.length"), ...) {
-  steps <- vapply(attr(dataset, "morphyObjs"), MorphyLength,
-                  parent = parent, child = child, integer(1))
-  homoplasies <- steps - minLength
-  fit <- homoplasies / (homoplasies + concavity)
-  # Return:
-  sum(fit * attr(dataset, "weight"))
-}
-```
-
-Now we are ready to search:
-
-```{r iw-search, message = FALSE}
+```{r iw-score, message = FALSE}
+# Select a dataset in phyDat format
 data("inapplicable.datasets")
 dataset <- congreveLamsdellMatrices[[42]]
 
-# Populate `min.length` attribute
-dataset <- PrepareDataIW(dataset)
-iwTree <- TreeSearch(NJTree(dataset), dataset,
-                     InitializeData = IWInitMorphy,
-                     CleanUpData = IWDestroyMorphy,
-                     TreeScorer = IWScoreMorphy,
-                     concavity = 10, # Will be sent to TreeScorer
-                     verbosity = 1)
+# Calculate the minimum length once
+minLength <- MinimumLength(dataset, compress = TRUE)
 
-```
-
-This quick search probably hasn't found the globally optimal tree.
-Besides increasing the number of hits and rearrangements,
-the parsimony ratchet [@Nixon1999] can help to escape local optima.
-This introduces an additional complication: we need to bootstrap the characters
-within `dataset`, and their accompanying Morphy objects.
-
-A `Bootstraper` function expects an `edgeList` (a list of the parent and child
-of each edge in a tree, in turn) and a `dataset` argument, and conducts
-a tree search, starting at `edgeList`, on a bootstrapped version of the dataset.
-It is also sent the arguments `maxIter = bootstrapIter` and 
-`maxHits = bootstrapHits`, allowing ratchet search intensity to be controlled
-from parameters sent to the `Ratchet()` function.
-
-```{r iw-bootstrap}
-IWBootstrap <- function (edgeList, dataset, concavity = 10L, EdgeSwapper = NNISwap, 
-                         maxIter, maxHits, verbosity = 1L, ...) {
-  att <- attributes(dataset)
-  startWeights <- att[["weight"]]
+# Define a scoring function
+IWScore <- function (parent, child, dataset) {
+  concavity <- 10
+  tree <- structure(list(edge = cbind(parent, child),
+                         tip.label = names(dataset),
+                         Nnode = length(dataset) - 1L), class = "phylo")
+  homoplasy <- CharacterLength(tree, dataset, compress = TRUE) - minLength
+  fit <- homoplasy / (homoplasy + concavity)
   
-  # Decompress phyDat object so each character is listed once
-  eachChar <- seq_along(startWeights)
-  deindexedChars <- rep.int(eachChar, startWeights)
-  
-  # Resample characters
-  resampling <- tabulate(sample(deindexedChars, replace = TRUE), length(startWeights))
-  sampled <- resampling != 0
-  sampledData <- lapply(dataset, function (x) x[sampled])
-  sampledAtt <- att
-  sampledAtt[["index"]] <- rep.int(seq_len(sum(sampled)), resampling[sampled])
-  sampledAtt[["weight"]] <- resampling[sampled]
-  sampledAtt[["nr"]] <- length(sampledAtt[["weight"]])
-  sampledAtt[["min.length"]] <- minLength <- att[["min.length"]][sampled]
-  sampledAtt[["morphyObjs"]] <- att[["morphyObjs"]][sampled]
-  attributes(sampledData) <- sampledAtt
-  
-  # Search using resampled dataset
-  res <- EdgeListSearch(edgeList[1:2], sampledData, TreeScorer = IWScoreMorphy,
-                        concavity = concavity, minLength = minLength,
-                        EdgeSwapper = EdgeSwapper, 
-                        maxIter = maxIter, maxHits = maxHits,
-                        verbosity = verbosity - 1L)
-  
-  res[1:2]
+  # Return:
+  sum(fit * attr(dataset, "weight"))
 }
 
+# Run tree search
+iwTree <- TreeSearch(NJTree(dataset), dataset, TreeScorer = IWScore,
+                     maxIter = 50L, maxHits = 10L, verbosity = 1)
 ```
 
-Having defined the `Bootstrapper()` function we can now complete a Ratchet 
-search with:
+The parsimony ratchet [@Nixon1999] can help to escape local optima.
+This needs a `Bootstrapper()` that resamples the characters in `dataset`.
+With a `phyDat` object, we can resample by modifying the `"weight"` attribute
+of `dataset`:
+
+```{r iw-bootstrap}
+IWBootstrap <- function (edgeList, dataset, EdgeSwapper = NNISwap,
+                         maxIter, maxHits, verbosity = 1L, ...) {
+  startWeights <- attr(dataset, "weight")
+  resampling <- tabulate(sample(rep.int(seq_along(startWeights), startWeights),
+                                replace = TRUE), length(startWeights))
+  attr(dataset, "weight") <- as.integer(resampling)
+
+  res <- EdgeListSearch(edgeList[1:2], dataset, TreeScorer = IWScore,
+                        EdgeSwapper = EdgeSwapper,
+                        maxIter = maxIter, maxHits = maxHits,
+                        verbosity = verbosity - 1L, ...)
+  # Return:
+  res[1:2]
+}
+```
 
 ```{r iw-ratchet, message = FALSE}
-ratchetTree <- Ratchet(tree = iwTree, dataset = dataset,
-                       concavity = 10,
-                       InitializeData = IWInitMorphy, 
-                       CleanUpData = IWDestroyMorphy,
-                       TreeScorer = IWScoreMorphy,
+# Conduct ratchet iterations
+ratchetTree <- Ratchet(iwTree, dataset, TreeScorer = IWScore,
                        Bootstrapper = IWBootstrap,
                        ratchIter = 2, ratchHits = 2,
                        searchIter = 20, searchHits = 10,
                        verbosity = 2)
-
 ```
 
+Use much larger values of `ratchIter`, `ratchHits`, `searchIter` and
+`searchHits` for a thorough search.
 
-It would be sensible to use much larger values of `ratchIter`, `ratchHits`,
-`searchIter` and `searchHits` to be confident of locating an optimal tree.
-Remember that for real implied weights analyses,
-`MaximizeParsimony(dataset, concavity = k)` is faster, easier, and uses the
-full driven search pipeline (see the
-[tree search vignette](tree-search.html#implied-weighting)).
+An analogous function allows us to determine jackknife support for a solution:
+
+```{r iw-jackknife-resampler}
+IWJackknife <- function(edgeList, dataset, resampleFreq = 2 / 3,
+                        TreeScorer = IWScore, EdgeSwapper = NNISwap,
+                        maxIter, maxHits, verbosity = 1L, ...) {
+  startWeights <- attr(dataset, "weight")
+  deindexedChars <- rep.int(seq_along(startWeights), startWeights)
+  charsToKeep <- ceiling(resampleFreq * length(deindexedChars))
+  resampling <- tabulate(sample(deindexedChars, charsToKeep, replace = FALSE),
+                        length(startWeights))
+  attr(dataset, "weight") <- as.integer(resampling)
+
+  res <- EdgeListSearch(edgeList[1:2], dataset, TreeScorer = TreeScorer,
+                        EdgeSwapper = EdgeSwapper,
+                        maxIter = maxIter, maxHits = maxHits,
+                        verbosity = verbosity - 1L, ...)
+  # Return:
+  res[1:2]
+}
+```
+
+```{r iw-jackknife}
+jackTrees <- Jackknife(ratchetTree, dataset, TreeScorer = IWScore,
+                       Resampler = IWJackknife, verbosity = 0,
+                       jackIter = 10, searchIter = 100)
+par(mar = rep(0, 4), cex = 0.8)
+JackLabels(ratchetTree, jackTrees)
+```
 
 Hopefully these examples give a template from which you are able to construct
-your own optimality criteria.  The maintainer is happy to answer questions via
-e-mail, or you can file queries by opening a
-[GitHub issue](https://github.com/ms609/TreeDist/issues/new/).
+your own optimality criteria.  Further guidance is available from the maintainer
+via e-mail, or by filing a
+[GitHub question](https://github.com/ms609/TreeSearch/discussions/new?category=q-a).
 
 ## What next?
 
