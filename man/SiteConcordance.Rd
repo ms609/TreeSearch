@@ -56,19 +56,19 @@ floor.
 expectation and negative values fall below it. \code{ClusteringConcordance()}
 uses an analytical approximation to the expected mutual information (fast
 and generally accurate for large trees, ~200+ taxa, but neglecting
-correlation between splits); \code{QuartetConcordance(unit = "trit")} uses the
-exact hypergeometric expectation.
+correlation between splits); \code{QuartetConcordance()} uses the exact
+hypergeometric expectation (for either \code{unit}).
 \item a positive integer \code{n}: estimate that expectation by Monte Carlo.
 \code{ClusteringConcordance()} fits each character to \code{n} random trees (and
 returns Monte-Carlo standard errors, more accurate for small trees where
-the analytical approximation is biased); \code{QuartetConcordance(unit = "trit")} averages over \code{n} random reassignments of each character's
-tokens.
+the analytical approximation is biased); \code{QuartetConcordance()} averages
+over \code{n} random reassignments of each character's tokens.
 }
 
 In all cases 1 corresponds to the maximum attainable value.  For
-\code{QuartetConcordance()}, chance correction is implemented for \code{unit = "trit"}
-only, and the returned values are unclamped (they may fall below \eqn{-1});
-clamp to \eqn{[-1, 1]} before plotting with \code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
+\code{QuartetConcordance()} (either \code{unit}), chance-corrected values are returned
+unclamped (they may fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before
+plotting with \code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
 
 \item{weight}{Logical specifying whether to weight sites according to the
 number of quartets they are decisive for.}

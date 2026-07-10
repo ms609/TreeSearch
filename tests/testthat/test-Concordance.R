@@ -252,10 +252,10 @@ test_that("QuartetConcordance() unit = 'trit' normalize contract", {
   expect_error(QuartetConcordance(tree, ident, unit = "trit", normalize = "x"),
                "positive integer")
 
-  # Chance correction is implemented for the trit currency only, for now.
-  expect_error(
-    QuartetConcordance(tree, ident, unit = "quartet", normalize = TRUE),
-    "trit")
+  # Chance correction also works for the raw quartet currency.
+  qc <- QuartetConcordance(tree, ident, unit = "quartet", normalize = TRUE)
+  expect_type(qc, "double")
+  expect_false(anyNA(qc))
 
   # An identical (displayed) split still scores exactly 1 after re-zeroing:
   # .Rezero(1, z) == 1, so chance correction lifts the floor without moving the
@@ -296,6 +296,39 @@ test_that("QuartetConcordance() unit = 'trit' exact baseline matches MC", {
       expect_identical(is.na(exact), is.na(mc))
       expect_lt(max(abs(exact - mc), na.rm = TRUE), 0.04)
     }
+  }
+})
+
+test_that("QuartetConcordance() unit = 'quartet' exact baseline matches MC", {
+  tree <- ape::read.tree(text = "((((t1,t2),t3),(t4,(t5,t6))),(t7,(t8,t9)));")
+  dat <- MatrixToPhyDat(matrix(
+    c(0, 0, 0, 0, 0, 0, 1, 1, 1,      # displays {t7,t8,t9}
+      0, 0, 0, 0, 0, 0, 0, 1, 1,      # nested
+      0, 0, 1, 1, 0, 0, 1, 1, 0,      # crossing (binary)
+      0, 0, 0, 1, 1, 1, 2, 2, 2), 9,  # 3-state: multistate decisive path
+    dimnames = list(paste0("t", 1:9), NULL)))
+
+  # The raw-currency chance baseline (exact E[conc]/E[dec] from the
+  # hypergeometric pmf) matches the Monte-Carlo tip-shuffle baseline within MC
+  # error, across edge/char and both weightings, incl. the multistate path.
+  for (ret in c("edge", "char")) {
+    for (w in c(TRUE, FALSE)) {
+      exact <- QuartetConcordance(tree, dat, unit = "quartet", return = ret,
+                                  weight = w, normalize = TRUE)
+      set.seed(1)
+      mc <- QuartetConcordance(tree, dat, unit = "quartet", return = ret,
+                               weight = w, normalize = 8000)
+      expect_identical(is.na(exact), is.na(mc))
+      expect_lt(max(abs(exact - mc), na.rm = TRUE), 0.04)
+    }
+  }
+
+  # normalize = FALSE leaves the published raw measure untouched.
+  for (ret in c("edge", "char")) for (w in c(TRUE, FALSE)) {
+    expect_identical(
+      QuartetConcordance(tree, dat, unit = "quartet", return = ret, weight = w),
+      QuartetConcordance(tree, dat, unit = "quartet", return = ret, weight = w,
+                         normalize = FALSE))
   }
 })
 

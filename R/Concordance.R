@@ -98,19 +98,18 @@ NULL
 #'     expectation and negative values fall below it. `ClusteringConcordance()`
 #'     uses an analytical approximation to the expected mutual information (fast
 #'     and generally accurate for large trees, ~200+ taxa, but neglecting
-#'     correlation between splits); `QuartetConcordance(unit = "trit")` uses the
-#'     exact hypergeometric expectation.
+#'     correlation between splits); `QuartetConcordance()` uses the exact
+#'     hypergeometric expectation (for either `unit`).
 #'   - a positive integer `n`: estimate that expectation by Monte Carlo.
 #'     `ClusteringConcordance()` fits each character to `n` random trees (and
 #'     returns Monte-Carlo standard errors, more accurate for small trees where
-#'     the analytical approximation is biased); `QuartetConcordance(unit =
-#'     "trit")` averages over `n` random reassignments of each character's
-#'     tokens.
+#'     the analytical approximation is biased); `QuartetConcordance()` averages
+#'     over `n` random reassignments of each character's tokens.
 #'
 #'   In all cases 1 corresponds to the maximum attainable value.  For
-#'   `QuartetConcordance()`, chance correction is implemented for `unit = "trit"`
-#'   only, and the returned values are unclamped (they may fall below \eqn{-1});
-#'   clamp to \eqn{[-1, 1]} before plotting with [QCol()] / [QACol()].
+#'   `QuartetConcordance()` (either `unit`), chance-corrected values are returned
+#'   unclamped (they may fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before
+#'   plotting with [QCol()] / [QACol()].
 #' 
 #' @returns
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
@@ -833,13 +832,6 @@ QuartetConcordance <- function(
         stop("`normalize` must be FALSE, TRUE, or a positive integer.")
       }
     }
-    if (unit != "trit") {
-      # The chance baseline needs the per-state-pair cell counts, which the raw
-      # quartet path computes in the C++ kernel but does not expose; re-baselining
-      # the raw currency (and choosing its null; see the 1/3 note in the design
-      # spec) is deferred to the manuscript-figure review gate.
-      stop("`normalize` chance-correction is implemented for `unit = \"trit\"` only.")
-    }
   }
   tipLabels <- intersect(TipLabels(tree), names(dataset))
   if (!length(tipLabels)) {
@@ -887,6 +879,23 @@ QuartetConcordance <- function(
   num <- raw_counts$concordant
   den <- raw_counts$decisive
 
+  # Chance correction (option): re-zero the observed concordant/decisive ratio
+  # against the ratio expected under the same fixed-marginal null used for the
+  # trit currency.  Only `conc` and `dec` vary under the null (the split sizes
+  # and state counts are fixed), so we need E[conc] and E[dec] per (split, char),
+  # computed exactly from the hypergeometric pmf (no floors here, unlike trits)
+  # or by Monte-Carlo tip-shuffle, then re-zero the pooled ratio.
+  doNorm <- !isFALSE(normalize)
+  if (doNorm) {
+    base <- if (isTRUE(normalize)) {
+      .QuartetExpect(charInt, logiSplits)
+    } else {
+      .QuartetMC(charInt, logiSplits, normalize)
+    }
+    eNum <- base[["concordant"]]
+    eDen <- base[["decisive"]]
+  }
+
   if (return == "default") {
     if (isTRUE(weight)) {
       # Sum numerator and denominator across sites (columns), then divide
@@ -898,37 +907,164 @@ QuartetConcordance <- function(
         NA_real_,
         split_sums_num / split_sums_den
       )
+      if (doNorm) {
+        bDen <- rowSums(eDen)
+        base <- ifelse(bDen == 0, NA_real_, rowSums(eNum) / bDen)
+        ret <- .RezeroGuarded(ret, base)
+      }
     } else {
       # Mean of ratios per site
       # Avoid division by zero (0/0 -> NaN -> NA handled by na.rm)
       ratios <- num / den
       # Replace NaN/Inf with NA for rowMeans calculation
       ratios[!is.finite(ratios)] <- NA
-      ret <- rowMeans(ratios, na.rm = TRUE)
+      if (doNorm) {
+        bRatios <- eNum / eDen
+        bRatios[!is.finite(bRatios)] <- NA
+        # Average observed and baseline over the same (split, char) cells.
+        naMask <- is.na(ratios) | is.na(bRatios)
+        ratios[naMask] <- NA
+        bRatios[naMask] <- NA
+        ret <- .RezeroGuarded(rowMeans(ratios, na.rm = TRUE),
+                              rowMeans(bRatios, na.rm = TRUE))
+      } else {
+        ret <- rowMeans(ratios, na.rm = TRUE)
+      }
     }
 
     setNames(ret, names(splits))
   } else {
     # return = "char"
-    p <- num / den
     if (isTRUE(weight)) {
-      vapply(
-        seq_len(dim(num)[[2]]),
-        function(i) {
-          weighted.mean(num[, i] / den[, i], den[, i])
-        },
-        double(1)
-      )
+      if (doNorm) {
+        obs <- vapply(seq_len(ncol(num)), function(i) {
+          d <- sum(den[, i]); if (d == 0) NA_real_ else sum(num[, i]) / d
+        }, double(1))
+        b <- vapply(seq_len(ncol(eNum)), function(i) {
+          d <- sum(eDen[, i]); if (d == 0) NA_real_ else sum(eNum[, i]) / d
+        }, double(1))
+        .RezeroGuarded(obs, b)
+      } else {
+        vapply(
+          seq_len(dim(num)[[2]]),
+          function(i) {
+            weighted.mean(num[, i] / den[, i], den[, i])
+          },
+          double(1)
+        )
+      }
     } else {
-      vapply(
-        seq_len(dim(num)[[2]]),
-        function(i) {
-          mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
-        },
-        double(1)
-      )
+      if (doNorm) {
+        sObs <- ifelse(den > 0, num / den, NA_real_)
+        sBase <- ifelse(eDen > 0, eNum / eDen, NA_real_)
+        naMask <- is.na(sObs) | is.na(sBase)
+        sObs[naMask] <- NA_real_
+        sBase[naMask] <- NA_real_
+        obs <- vapply(seq_len(ncol(sObs)), function(i) {
+          m <- mean(sObs[, i], na.rm = TRUE); if (is.nan(m)) NA_real_ else m
+        }, double(1))
+        b <- vapply(seq_len(ncol(sBase)), function(i) {
+          m <- mean(sBase[, i], na.rm = TRUE); if (is.nan(m)) NA_real_ else m
+        }, double(1))
+        .RezeroGuarded(obs, b)
+      } else {
+        vapply(
+          seq_len(dim(num)[[2]]),
+          function(i) {
+            mean(num[den[, i] > 0, i] / den[den[, i] > 0, i])
+          },
+          double(1)
+        )
+      }
     }
   }
+}
+
+# Exact / Monte-Carlo expected raw concordant + decisive quartet counts under
+# the fixed-marginal null (the raw-currency analogue of `.CharTritExpect` /
+# `.CharTritMC`).  Per state-pair, conc = C(p,2)C(s,2) + C(q,2)C(r,2) and
+# dec = conc + p*q*r*s are polynomials in the cells (no floors), so their exact
+# expectation is a clean sum over the same trivariate-hypergeometric pmf.
+.ExpectedQuartetCache <- new.env(hash = TRUE, parent = emptyenv())
+
+.ExpectedQuartet <- function(nI, nJ, M, t) {
+  key <- paste(nI, nJ, M, t, sep = ",")
+  cached <- .ExpectedQuartetCache[[key]]
+  if (!is.null(cached)) {
+    return(cached)
+  }
+  choose2 <- function(z) if (z < 2) 0 else z * (z - 1) / 2
+  nOther <- t - nI - nJ
+  logDen <- lchoose(t, M)
+  eConc <- 0
+  eDec <- 0
+  for (p in 0:min(nI, M)) {
+    for (r in 0:min(nJ, M - p)) {
+      oA <- M - p - r
+      if (oA < 0 || oA > nOther) {
+        next
+      }
+      prob <- exp(lchoose(nI, p) + lchoose(nJ, r) + lchoose(nOther, oA) - logDen)
+      if (prob <= 0) {
+        next
+      }
+      q <- nI - p
+      s <- nJ - r
+      conc <- choose2(p) * choose2(s) + choose2(q) * choose2(r)
+      eConc <- eConc + prob * conc
+      eDec <- eDec + prob * (conc + p * q * r * s)
+    }
+  }
+  res <- c(eConc, eDec)
+  .ExpectedQuartetCache[[key]] <- res
+  res
+}
+
+.QuartetExpect <- function(charInt, logiSplits) {
+  nSplit <- ncol(logiSplits)
+  nChar <- ncol(charInt)
+  eConc <- eDec <- matrix(0, nSplit, nChar)
+  for (ci in seq_len(nChar)) {
+    col <- charInt[, ci]
+    scored <- !is.na(col)
+    states <- sort(unique(col[scored]))
+    nStates <- length(states)
+    if (nStates < 2L) {
+      next
+    }
+    tc <- sum(scored)
+    mSideA <- colSums(logiSplits & scored)
+    uM <- unique(mSideA)
+    idx <- match(mSideA, uM)
+    cnt <- tabulate(match(col[scored], states), nStates)
+    for (a in seq_len(nStates - 1L)) {
+      for (b in seq(a + 1L, nStates)) {
+        e <- vapply(uM, function(M) .ExpectedQuartet(cnt[a], cnt[b], M, tc),
+                    double(2))
+        eConc[, ci] <- eConc[, ci] + e[1, idx]
+        eDec[, ci] <- eDec[, ci] + e[2, idx]
+      }
+    }
+  }
+  list(concordant = eConc, decisive = eDec)
+}
+
+.QuartetMC <- function(charInt, logiSplits, nRelabel) {
+  nSplit <- ncol(logiSplits)
+  nChar <- ncol(charInt)
+  accConc <- accDec <- matrix(0, nSplit, nChar)
+  for (s in seq_len(nRelabel)) {
+    shuffled <- charInt
+    for (ci in seq_len(nChar)) {
+      col <- charInt[, ci]
+      scored <- !is.na(col)
+      shuffled[scored, ci] <- sample(col[scored])
+    }
+    kc <- quartet_concordance(logiSplits, shuffled)
+    accConc <- accConc + kc[["concordant"]]
+    accDec <- accDec + kc[["decisive"]]
+  }
+  list(concordant = accConc / nRelabel, decisive = accDec / nRelabel)
 }
 
 # Nelson-Ladiges fractional ("trit") currency for QuartetConcordance().

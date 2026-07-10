@@ -253,13 +253,18 @@ char FQ(c) = Σ_k  M(k,c)·Q(k,c)  /  Σ_k  M(k,c)
     never inside the measure. The `z → 1` blow-up is guarded (→ `NA`).
     `normalize` defaults to `FALSE`, so the published measure is unchanged unless
     the user opts in.
-  - **Raw `quartet` unit: deferred.** `normalize` currently errors for
-    `unit = "quartet"`. Re-baselining the raw currency needs the per-state-pair
-    cells (computed inside the C++ kernel but not exposed) and a decision on its
-    null (fixed-marginal vs the flat `1/3`); both are folded into the C++ port
-    (task 2) and the manuscript-figure review (task 3), which will compare
-    trit-with vs trit-without correction and decide whether the raw unit needs it
-    too.
+  - **Raw `quartet` unit: DONE.** `normalize` now works for `unit = "quartet"`
+    too, using the *same* fixed-marginal null. Per state-pair `conc` and `dec`
+    are polynomials in the cells (no floors), so the exact expectation
+    `E[conc]`, `E[dec]` is a clean sum over the same trivariate-hypergeometric
+    pmf as `.ExpectedTrit` (`.ExpectedQuartet` / `.QuartetExpect`); MC via
+    `.QuartetMC` reshuffles tokens and re-scores through the kernel. The pooled
+    `conc/dec` ratio is re-zeroed against `E[conc]/E[dec]` (weighted) or with
+    the same cell-matching as trits (unweighted). Validated exact≈MC across
+    edge/char × weight × binary/multistate (`test-Concordance.R`), and
+    `normalize = FALSE` is byte-identical to the published raw measure. The flat
+    `1/3` baseline stays rejected (it does not adapt to marginals; the
+    fixed-marginal null generalises it).
 - **`M = min(W_c,W_k)`** (settled): the pooling amount is the *shared*
   information, so it must be symmetric between character and split (both
   `return`s pool by the same `M`); `M = W_k` would make the char return weight a
