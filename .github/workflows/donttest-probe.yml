@@ -1,0 +1,117 @@
+# Fast debug-fix lane for the `--run-donttest` example hang (PR #270).
+#
+# The full R-CMD-check `checking examples with --run-donttest` step burns the
+# 6 h GitHub ceiling when an example runs away, and only tells us *that* it hung,
+# not *where*.  This workflow installs the branch and runs the suspect examples
+# directly, each wrapped in `timeout`, on the two surfaces the full check hangs
+# on (macOS-latest and the ubuntu R 4.1 leg).  Manual (`workflow_dispatch`) plus
+# push, with a hard `timeout-minutes` cap so a regression fails in minutes.
+name: donttest-probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/bremer-support-calculation-857d5f
+
+concurrency:
+  group: donttest-probe-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ${{ matrix.config.os }}
+    name: donttest-probe (${{ matrix.config.os }}, ${{ matrix.config.r }})
+    timeout-minutes: 25
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-latest, r: 'release'}
+          - {os: ubuntu-24.04, r: '4.1', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
+
+    env:
+      R_REALLY_FORCE_SYMBOLS: true
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      RSPM: ${{ matrix.config.rspm }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+          extra-packages: |
+            phangorn=?ignore-before-r=4.1.0
+            ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
+
+      - name: Install TreeSearch
+        run: R CMD INSTALL --no-multiarch --with-keep.source .
+        shell: bash
+
+      # ---------------------------------------------------------------------
+      # DIAGNOSTIC: reproduce the uncapped pool search that the example used to
+      # trigger, timed per replicate, so the log shows heavy-vs-frozen.  The
+      # `timeout` bounds it to 4 min; a timeout here is informative, not a
+      # failure, hence continue-on-error.
+      # ---------------------------------------------------------------------
+      - name: Diagnose per-replicate cost of the deep pool search
+        continue-on-error: true
+        run: |
+          cat > diag.R <<'EOF'
+          library(TreeSearch)
+          data("inapplicable.phyData", package = "TreeSearch")
+          d <- inapplicable.phyData[["Vinther2008"]]
+          cat("NTip:", TreeTools::NTip(d), "\n")
+          for (rr in c(1L, 2L, 4L)) {
+            set.seed(0)
+            t0 <- Sys.time()
+            st <- SuboptimalTrees(d, maxSuboptimal = 10, maxReplicates = rr,
+                                  nThreads = 1, verbosity = 2)
+            el <- as.double(difftime(Sys.time(), t0, units = "secs"))
+            cat(sprintf(">>> maxSuboptimal=10 maxReplicates=%d : %.1fs, poolsize=%d\n",
+                        rr, el, length(st)))
+          }
+          EOF
+          timeout 240 Rscript diag.R || echo "### DIAG hit the 240s timeout (single replicate never returned => heavy or looping)"
+        shell: bash
+
+      # ---------------------------------------------------------------------
+      # VERIFY (the pass/fail gate): the *bounded* Bremer donttest example must
+      # complete well within the timeout.  This is the exact code R CMD check
+      # runs under --run-donttest.
+      # ---------------------------------------------------------------------
+      - name: Verify the bounded Bremer donttest example completes
+        run: |
+          cat > verify.R <<'EOF'
+          library(TreeSearch)
+          t0 <- Sys.time()
+          example("Bremer", package = "TreeSearch", run.donttest = TRUE,
+                  character.only = TRUE, echo = FALSE)
+          cat(sprintf("Bremer example completed in %.1fs\n",
+                      as.double(difftime(Sys.time(), t0, units = "secs"))))
+          EOF
+          timeout 300 Rscript verify.R
+        shell: bash
+
+      - name: Verify the bounded SuboptimalTrees donttest example completes
+        run: |
+          cat > verify2.R <<'EOF'
+          library(TreeSearch)
+          t0 <- Sys.time()
+          example("SuboptimalTrees", package = "TreeSearch", run.donttest = TRUE,
+                  character.only = TRUE, echo = FALSE)
+          cat(sprintf("SuboptimalTrees example completed in %.1fs\n",
+                      as.double(difftime(Sys.time(), t0, units = "secs"))))
+          EOF
+          timeout 300 Rscript verify2.R
+        shell: bash

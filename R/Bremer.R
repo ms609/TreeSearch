@@ -84,8 +84,14 @@
 #' trees <- MaximizeParsimony(dataset, maxReplicates = 8, nThreads = 1,
 #'                            verbosity = 0)
 #'
-#' # A fast, approximate decay index read from the suboptimal-tree pool
-#' decay <- Bremer(trees, dataset, method = "pool", nThreads = 1,
+#' # A fast, approximate decay index read from the suboptimal-tree pool.
+#' # `maxBremer` caps the pool's suboptimality depth -- and hence how many trees
+#' # it retains and how long it searches; `maxReplicates` / `maxSeconds` bound
+#' # the underlying search so the preview stays quick.  Without these, the pool
+#' # search runs the full default budget (96 replicates, depth 10, no time
+#' # limit), which can take hours on a dataset of this size.
+#' decay <- Bremer(trees, dataset, method = "pool", maxBremer = 3,
+#'                 maxReplicates = 4, maxSeconds = 20, nThreads = 1,
 #'                 verbosity = 0)
 #' decay
 #'
