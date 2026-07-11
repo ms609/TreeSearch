@@ -1,17 +1,20 @@
 # Fast debug-fix lane for the `--run-donttest` example hang (PR #270).
 #
-# The full R-CMD-check `checking examples with --run-donttest` step burns the
-# 6 h GitHub ceiling when an example runs away, and only tells us *that* it hung,
-# not *where* or *why*.  This workflow installs the branch and runs targeted
-# reproductions under `gtimeout`/`timeout` on the surfaces the full check hangs
-# on (macOS-latest, the ubuntu R 4.1 leg) plus windows-latest (which passes) as
-# a determinism cross-check.  Manual + push, hard `timeout-minutes` cap.
+# Findings so far (see PR history):
+#   * The Bremer example -- bounded OR unbounded, default OR bgs kernel -- runs
+#     in <9 s on macOS AND ubuntu-4.1, byte-identical results. EXONERATED.
+#   * The hang is PR-introduced (cpp-search finishes the whole check, donttest
+#     included, in ~16 min on ubuntu-4.1) yet every donttest example runs in
+#     seconds *in isolation*.
+#   * R CMD check runs ALL \donttest blocks concatenated in ONE R process; the
+#     new serial searches run before TaxonInfluence's PARALLEL (default-nThreads)
+#     search. The untested condition is an interaction across that shared,
+#     accumulated process state -- exactly the class of the parallel-teardown
+#     bug in this package's history.
 #
-# Hypothesis under test: `Bremer(method = "pool")` defaults to
-# `inapplicable = "bgs"` (a float-based kernel) and forwards it into the pool
-# search; a platform-divergent float condition in that kernel loops on
-# macOS/ubuntu but exits on windows -- explaining a 6 h hang on one OS and a
-# ~1 h pass on another under the *same* seed and serial (nThreads = 1) path.
+# This workflow reproduces that faithful condition: it runs every donttest block
+# in Rd order, in one process, looped, with a durable marker trail, under
+# gtimeout/timeout. A hang's last marker localises the culprit block.
 name: donttest-probe
 
 on:
@@ -28,7 +31,7 @@ jobs:
   probe:
     runs-on: ${{ matrix.config.os }}
     name: donttest-probe (${{ matrix.config.os }}, ${{ matrix.config.r }})
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -70,86 +73,69 @@ jobs:
         shell: bash
 
       # ---------------------------------------------------------------------
-      # DISCRIMINATOR: same seeded, serial, 4-replicate deep pool search under
-      # the DEFAULT kernel vs the `inapplicable = "bgs"` kernel that
-      # Bremer(method = "pool") actually uses.  Prints poolsize + best score so
-      # the values can be compared across OSes (determinism cross-check).  If
-      # bgs hangs where default is seconds, that is the cause.
+      # FAITHFUL REPRO: every donttest block, one process, Rd order, looped,
+      # with a durable marker trail. If the process hangs, gtimeout kills it and
+      # the printed marker trail's last "START" (with no matching "DONE") names
+      # the culprit block.
       # ---------------------------------------------------------------------
-      - name: 'Discriminator: default kernel vs bgs kernel'
+      - name: Concatenated donttest reproduction (one process, marker trail)
         continue-on-error: true
         run: |
           TO=""
-          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 300";
-          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 300"; fi
-          cat > disc.R <<'EOF'
+          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 900";
+          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 900"; fi
+          rm -f MARKER.txt
+          cat > concat.R <<'EOF'
           library(TreeSearch)
-          data("inapplicable.phyData", package = "TreeSearch")
-          d <- inapplicable.phyData[["Vinther2008"]]
-          cat("OS:", Sys.info()[["sysname"]], "| R:", as.character(getRversion()),
-              "| NTip:", TreeTools::NTip(d), "\n")
-          run1 <- function(tag, ...) {
-            set.seed(0)
-            t0 <- Sys.time()
-            st <- SuboptimalTrees(d, maxSuboptimal = 10, maxReplicates = 4,
-                                  nThreads = 1, verbosity = 2, ...)
-            sc <- sort(round(as.double(attr(st, "scores")), 6))
-            cat(sprintf("[%s] %.1fs poolsize=%d best=%.6f digest=%s\n", tag,
-                        as.double(difftime(Sys.time(), t0, units = "secs")),
-                        length(st), min(sc),
-                        substr(paste(sc, collapse = ","), 1, 60)))
+          pdf(NULL)  # headless graphics device (R CMD check provides one)
+          markf <- "MARKER.txt"
+          mark <- function(msg) {
+            line <- sprintf("%s | %s", format(Sys.time(), "%H:%M:%S"), msg)
+            cat("MARKER:", line, "\n")
+            cat(line, "\n", file = markf, append = TRUE)
+            flush(stdout())
           }
-          run1("default")
-          run1("bgs", inapplicable = "bgs")
-          cat("DISCRIMINATOR DONE\n")
+          topics <- c("Bremer", "SuboptimalTrees", "TaxonInfluence", "TreeLength")
+          for (iter in 1:3) {
+            for (tp in topics) {
+              mark(sprintf("iter%d %s START", iter, tp))
+              example(tp, package = "TreeSearch", run.donttest = TRUE,
+                      character.only = TRUE, echo = FALSE)
+              mark(sprintf("iter%d %s DONE", iter, tp))
+            }
+          }
+          mark("ALL DONE")
           EOF
-          $TO Rscript disc.R || echo "### DISCRIMINATOR hit the timeout or errored (rc=$?)"
+          $TO Rscript concat.R || echo "### CONCAT hit timeout/err (rc=$?)"
+          echo "===== marker trail ====="; cat MARKER.txt 2>/dev/null || echo "(no marker file)"
         shell: bash
 
       # ---------------------------------------------------------------------
-      # FAITHFUL PRE-FIX REPRO: the verbatim unbounded Bremer(method = "pool")
-      # call (bgs default, 96 replicates, depth 10, no maxSeconds) that shipped
-      # on commit 88cb280a, under timeout with verbosity so a hang shows the
-      # last progress line.  continue-on-error: a timeout here is the finding.
+      # CONTROL: TaxonInfluence alone in a fresh process, looped, to tell an
+      # interaction (hangs only after the new examples) from a standalone
+      # TaxonInfluence hang.
       # ---------------------------------------------------------------------
-      - name: 'Faithful repro: unbounded Bremer(method="pool")'
+      - name: Control -- TaxonInfluence alone, looped
         continue-on-error: true
         run: |
           TO=""
-          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 300";
-          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 300"; fi
-          cat > repro.R <<'EOF'
+          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 600";
+          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 600"; fi
+          rm -f MARKER2.txt
+          cat > solo.R <<'EOF'
           library(TreeSearch)
-          data("inapplicable.phyData", package = "TreeSearch")
-          d <- inapplicable.phyData[["Vinther2008"]]
-          set.seed(0)
-          trees <- MaximizeParsimony(d, maxReplicates = 8, nThreads = 1, verbosity = 0)
-          cat("built", length(trees), "trees; starting unbounded pool Bremer...\n")
-          t0 <- Sys.time()
-          decay <- Bremer(trees, d, method = "pool", nThreads = 1, verbosity = 2)
-          cat(sprintf("UNBOUNDED Bremer pool completed in %.1fs\n",
-                      as.double(difftime(Sys.time(), t0, units = "secs"))))
-          print(decay)
+          pdf(NULL)
+          markf <- "MARKER2.txt"
+          for (iter in 1:5) {
+            line <- sprintf("%s | iter%d TaxonInfluence START",
+                            format(Sys.time(), "%H:%M:%S"), iter)
+            cat("MARKER:", line, "\n"); cat(line, "\n", file = markf, append = TRUE)
+            flush(stdout())
+            example("TaxonInfluence", package = "TreeSearch", run.donttest = TRUE,
+                    character.only = TRUE, echo = FALSE)
+          }
+          cat("SOLO ALL DONE\n")
           EOF
-          $TO Rscript repro.R || echo "### FAITHFUL REPRO hit the timeout or errored (rc=$?)"
-        shell: bash
-
-      # ---------------------------------------------------------------------
-      # VERIFY (gate): the *bounded* Bremer donttest example must complete fast.
-      # ---------------------------------------------------------------------
-      - name: Verify the bounded Bremer donttest example completes
-        run: |
-          TO=""
-          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 300";
-          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 300"; fi
-          cat > verify.R <<'EOF'
-          library(TreeSearch)
-          pdf(NULL)  # headless graphics device; R CMD check provides one, example() does not
-          t0 <- Sys.time()
-          example("Bremer", package = "TreeSearch", run.donttest = TRUE,
-                  character.only = TRUE, echo = FALSE)
-          cat(sprintf("Bremer example completed in %.1fs\n",
-                      as.double(difftime(Sys.time(), t0, units = "secs"))))
-          EOF
-          $TO Rscript verify.R
+          $TO Rscript solo.R || echo "### SOLO hit timeout/err (rc=$?)"
+          echo "===== marker trail ====="; cat MARKER2.txt 2>/dev/null || echo "(no marker file)"
         shell: bash
