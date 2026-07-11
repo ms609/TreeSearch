@@ -1,17 +1,19 @@
 # Fast debug-fix lane for the `--run-donttest` example hang (PR #270).
 #
-# Localized: the concatenated donttest set hangs in the TreeLength block, on
-# macOS + ubuntu-4.1 (windows completes), and ONLY after the PR's new
-# Bremer/SuboptimalTrees blocks have run in the same process. macOS survives
-# iter1 and hangs iter2 -- monotonic degradation across iterations, the
-# fingerprint of accumulating C++ scoring state (dirty cache/static left by the
-# bgs/NA searches), not RNG (Bremer & SuboptimalTrees both set.seed(0), so the
-# RNG entering TreeLength is reset identically each iter).
+# Localized: the hang is the pre-existing TreeLength(..., concavity = "profile")
+# call on inapplicable.phyData[[1]] == Agnarsson2004 (62 tips, 225 chars).
+#   * Fixed tree -> RNG refuted; unprimed control hangs -> accumulated-state
+#     refuted; single-threaded profile kernels -> parallel-teardown refuted.
+#   * Full `git diff cpp-search...HEAD` touches NO profile code (pp_info_extra_step.r,
+#     PrepareData.R, ts_mc_fitch.cpp, MaddisonSlatkin, ts_data.h) -> byte-identical
+#     to cpp-search -> pre-existing, not introduced by this PR.
+#   * Platform split: fast on windows, ~90s on ubuntu-4.1, hangs on macOS.
 #
-# This probe pins (a) WHICH of TreeLength's three sub-calls hangs -- profile /
-# random-5 / hsj -- and (b) whether .Random.seed differs across iterations
-# (rules RNG in or out), and (c) whether the hang needs the B/S priming
-# (unprimed control). All under gtimeout with a durable marker+seed trail.
+# PrepareDataProfile() computes StepInformation() per unique character pattern;
+# multistate 62-tip patterns hit .ApproxStepInformation -> mc_fitch_scores(split,
+# n_mc = 100000). This probe times each pattern with a START marker at n_mc=1000
+# then 100000, so the last START on macOS names the hanging pattern, and whether
+# the cost scales with n_mc tells MC-perf from exact-recursion.
 name: donttest-probe
 
 on:
@@ -70,77 +72,44 @@ jobs:
         shell: bash
 
       # ---------------------------------------------------------------------
-      # PRIMED: run the exact example sequence that precedes TreeLength in the
-      # concatenated file, then TreeLength's three sub-calls with a marker + RNG
-      # digest before each. Looped; the last START marker names the hanging call.
+      # Per-pattern StepInformation timing. n_mc=1000 first (should complete
+      # everywhere and map the expensive patterns), then n_mc=100000 (the real
+      # default, which hangs macOS). Last "START" with no matching time = culprit.
       # ---------------------------------------------------------------------
-      - name: 'Primed TreeLength sub-call localization'
+      - name: 'Per-pattern profile timing (n_mc 1000 then 100000)'
         continue-on-error: true
         run: |
           TO=""
-          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 900";
-          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 900"; fi
-          cat > primed.R <<'EOF'
+          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 1000";
+          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 1000"; fi
+          cat > prof.R <<'EOF'
           suppressMessages({library(TreeSearch); library(TreeTools)})
-          pdf(NULL)
           data("inapplicable.phyData", package = "TreeSearch")
-          d1 <- inapplicable.phyData[[1]]
-          tree <- BalancedTree(d1)
-          dataset6 <- inapplicable.phyData[["Vinther2008"]]
-          hier <- CharacterHierarchy("1" = 2:3)
-          tree6 <- BalancedTree(dataset6)
-          seeddig <- function() {
-            s <- if (exists(".Random.seed", envir = globalenv())) get(".Random.seed", globalenv()) else NA
-            substr(paste(utils::head(as.integer(s), 5), collapse = ","), 1, 44)
+          pd <- inapplicable.phyData[[1]]
+          mat <- PhyDatToMatrix(pd, ambigNA = FALSE)
+          uniqCols <- which(!duplicated(t(mat)))
+          cat(sprintf("OS=%s R=%s nTip=%d nSite=%d nUnique=%d\n",
+                      Sys.info()[["sysname"]], as.character(getRversion()),
+                      nrow(mat), ncol(mat), length(uniqCols)))
+          tokensig <- function(ch) {
+            ch <- ch[!ch %in% c("-", "?", NA)]
+            paste(sort(as.integer(table(ch)), decreasing = TRUE), collapse = ",")
           }
-          mark <- function(m) { cat(sprintf("MARKER: %s | seed=%s\n", m, seeddig())); flush(stdout()) }
-          prime <- function() {
-            for (tp in c("Bremer", "SuboptimalTrees", "TaxonInfluence"))
-              example(tp, package = "TreeSearch", run.donttest = TRUE,
-                      character.only = TRUE, echo = FALSE)
+          run_all <- function(nmc) {
+            cat(sprintf("===== n_mc = %d =====\n", nmc)); flush(stdout())
+            for (i in uniqCols) {
+              sig <- tokensig(mat[, i])
+              cat(sprintf("n_mc=%d col=%d START split=[%s]\n", nmc, i, sig)); flush(stdout())
+              t0 <- Sys.time()
+              invisible(StepInformation(mat[, i], n_mc = nmc))
+              el <- as.double(difftime(Sys.time(), t0, units = "secs"))
+              if (el > 0.5) { cat(sprintf("  -> col=%d %.2fs split=[%s]\n", i, el, sig)); flush(stdout()) }
+            }
+            cat(sprintf("n_mc=%d ALL PATTERNS DONE\n", nmc)); flush(stdout())
           }
-          for (iter in 1:4) {
-            prime()
-            mark(sprintf("iter%d profile START", iter))
-            print(TreeLength(tree, d1, concavity = "profile"))
-            mark(sprintf("iter%d random5 START", iter))
-            print(TreeLength(5, d1))
-            mark(sprintf("iter%d hsj START", iter))
-            print(TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj"))
-            mark(sprintf("iter%d TreeLength DONE", iter))
-          }
-          cat("PRIMED ALL DONE\n")
+          run_all(1000L)
+          run_all(100000L)
+          cat("PROFILE PROBE DONE\n")
           EOF
-          $TO Rscript primed.R || echo "### PRIMED hit timeout/err (rc=$?)"
-        shell: bash
-
-      # ---------------------------------------------------------------------
-      # UNPRIMED CONTROL: the same three TreeLength sub-calls, looped, with NO
-      # Bremer/SuboptimalTrees/TaxonInfluence priming. If this never hangs, the
-      # hang REQUIRES the accumulated state the bgs/NA searches leave behind.
-      # ---------------------------------------------------------------------
-      - name: 'Unprimed TreeLength control'
-        continue-on-error: true
-        run: |
-          TO=""
-          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 420";
-          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 420"; fi
-          cat > unprimed.R <<'EOF'
-          suppressMessages({library(TreeSearch); library(TreeTools)})
-          pdf(NULL)
-          data("inapplicable.phyData", package = "TreeSearch")
-          d1 <- inapplicable.phyData[[1]]
-          tree <- BalancedTree(d1)
-          dataset6 <- inapplicable.phyData[["Vinther2008"]]
-          hier <- CharacterHierarchy("1" = 2:3)
-          tree6 <- BalancedTree(dataset6)
-          mark <- function(m) { cat(sprintf("MARKER: %s\n", m)); flush(stdout()) }
-          for (iter in 1:6) {
-            mark(sprintf("iter%d profile", iter));  print(TreeLength(tree, d1, concavity = "profile"))
-            mark(sprintf("iter%d random5", iter));  print(TreeLength(5, d1))
-            mark(sprintf("iter%d hsj", iter));      print(TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj"))
-          }
-          cat("UNPRIMED ALL DONE\n")
-          EOF
-          $TO Rscript unprimed.R || echo "### UNPRIMED hit timeout/err (rc=$?)"
+          $TO Rscript prof.R || echo "### PROFILE PROBE hit timeout/err (rc=$?)"
         shell: bash
