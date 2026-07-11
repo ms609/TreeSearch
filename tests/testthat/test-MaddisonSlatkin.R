@@ -195,11 +195,24 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
   # Monte Carlo; on Apple Silicon the table filled first and the search hung
   # (observed as a 6 h --run-donttest CI timeout).  The solver must now detect
   # the impending overflow and fall back to the MC approximation instead.
+  #
+  # Two guards can trigger that fallback, and which fires is a timing-dependent
+  # race: the capacity guard once a memo table hits its reserved size, or the
+  # 2 s wall-clock budget.  A fast machine reaches the capacity first (cache
+  # warning); a slow one reaches 2 s first (time-budget warning).  Both warnings
+  # contain "exceeded" and both are correct outcomes -- the only wrong outcome is
+  # a hang.  So assert completion with finite values (the anti-hang property) and
+  # that *some* fallback warning fired, without pinning which guard won the race.
   char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
-  expect_warning(
-    si <- StepInformation(char, n_mc = 1000L),
-    "cache exceeded its reserved capacity"
+  warnings_seen <- character(0)
+  si <- withCallingHandlers(
+    StepInformation(char, n_mc = 1000L),
+    warning = function(w) {
+      warnings_seen <<- c(warnings_seen, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
   )
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
+  expect_match(paste(warnings_seen, collapse = "\n"), "exceeded")
 })
