@@ -94,6 +94,7 @@ jobs:
         run: |
           cat > verify.R <<'EOF'
           library(TreeSearch)
+          pdf(NULL)  # headless graphics device: R CMD check provides one; example() does not
           t0 <- Sys.time()
           example("Bremer", package = "TreeSearch", run.donttest = TRUE,
                   character.only = TRUE, echo = FALSE)
@@ -107,6 +108,7 @@ jobs:
         run: |
           cat > verify2.R <<'EOF'
           library(TreeSearch)
+          pdf(NULL)  # headless graphics device (harmless here; SuboptimalTrees does not plot)
           t0 <- Sys.time()
           example("SuboptimalTrees", package = "TreeSearch", run.donttest = TRUE,
                   character.only = TRUE, echo = FALSE)
