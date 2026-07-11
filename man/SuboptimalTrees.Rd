@@ -57,8 +57,10 @@ tree within \code{maxSuboptimal} steps: raise \code{maxReplicates} / \code{maxSe
 data("inapplicable.phyData", package = "TreeSearch")
 dataset <- inapplicable.phyData[["Vinther2008"]]
 \donttest{
+# `set.seed()` with `nThreads = 1` makes the heuristic search reproducible
+set.seed(0)
 trees <- SuboptimalTrees(dataset, maxSuboptimal = 3, maxReplicates = 8,
-                         verbosity = 0)
+                         nThreads = 1, verbosity = 0)
 attr(trees, "scores")        # parsimony length of each retained tree
 Suboptimality(trees)         # excess over the optimum
 }
