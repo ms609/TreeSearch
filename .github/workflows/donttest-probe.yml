@@ -1,20 +1,17 @@
 # Fast debug-fix lane for the `--run-donttest` example hang (PR #270).
 #
-# Findings so far (see PR history):
-#   * The Bremer example -- bounded OR unbounded, default OR bgs kernel -- runs
-#     in <9 s on macOS AND ubuntu-4.1, byte-identical results. EXONERATED.
-#   * The hang is PR-introduced (cpp-search finishes the whole check, donttest
-#     included, in ~16 min on ubuntu-4.1) yet every donttest example runs in
-#     seconds *in isolation*.
-#   * R CMD check runs ALL \donttest blocks concatenated in ONE R process; the
-#     new serial searches run before TaxonInfluence's PARALLEL (default-nThreads)
-#     search. The untested condition is an interaction across that shared,
-#     accumulated process state -- exactly the class of the parallel-teardown
-#     bug in this package's history.
+# Localized: the concatenated donttest set hangs in the TreeLength block, on
+# macOS + ubuntu-4.1 (windows completes), and ONLY after the PR's new
+# Bremer/SuboptimalTrees blocks have run in the same process. macOS survives
+# iter1 and hangs iter2 -- monotonic degradation across iterations, the
+# fingerprint of accumulating C++ scoring state (dirty cache/static left by the
+# bgs/NA searches), not RNG (Bremer & SuboptimalTrees both set.seed(0), so the
+# RNG entering TreeLength is reset identically each iter).
 #
-# This workflow reproduces that faithful condition: it runs every donttest block
-# in Rd order, in one process, looped, with a durable marker trail, under
-# gtimeout/timeout. A hang's last marker localises the culprit block.
+# This probe pins (a) WHICH of TreeLength's three sub-calls hangs -- profile /
+# random-5 / hsj -- and (b) whether .Random.seed differs across iterations
+# (rules RNG in or out), and (c) whether the hang needs the B/S priming
+# (unprimed control). All under gtimeout with a durable marker+seed trail.
 name: donttest-probe
 
 on:
@@ -73,69 +70,77 @@ jobs:
         shell: bash
 
       # ---------------------------------------------------------------------
-      # FAITHFUL REPRO: every donttest block, one process, Rd order, looped,
-      # with a durable marker trail. If the process hangs, gtimeout kills it and
-      # the printed marker trail's last "START" (with no matching "DONE") names
-      # the culprit block.
+      # PRIMED: run the exact example sequence that precedes TreeLength in the
+      # concatenated file, then TreeLength's three sub-calls with a marker + RNG
+      # digest before each. Looped; the last START marker names the hanging call.
       # ---------------------------------------------------------------------
-      - name: Concatenated donttest reproduction (one process, marker trail)
+      - name: 'Primed TreeLength sub-call localization'
         continue-on-error: true
         run: |
           TO=""
           if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 900";
           elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 900"; fi
-          rm -f MARKER.txt
-          cat > concat.R <<'EOF'
-          library(TreeSearch)
-          pdf(NULL)  # headless graphics device (R CMD check provides one)
-          markf <- "MARKER.txt"
-          mark <- function(msg) {
-            line <- sprintf("%s | %s", format(Sys.time(), "%H:%M:%S"), msg)
-            cat("MARKER:", line, "\n")
-            cat(line, "\n", file = markf, append = TRUE)
-            flush(stdout())
+          cat > primed.R <<'EOF'
+          suppressMessages({library(TreeSearch); library(TreeTools)})
+          pdf(NULL)
+          data("inapplicable.phyData", package = "TreeSearch")
+          d1 <- inapplicable.phyData[[1]]
+          tree <- BalancedTree(d1)
+          dataset6 <- inapplicable.phyData[["Vinther2008"]]
+          hier <- CharacterHierarchy("1" = 2:3)
+          tree6 <- BalancedTree(dataset6)
+          seeddig <- function() {
+            s <- if (exists(".Random.seed", envir = globalenv())) get(".Random.seed", globalenv()) else NA
+            substr(paste(utils::head(as.integer(s), 5), collapse = ","), 1, 44)
           }
-          topics <- c("Bremer", "SuboptimalTrees", "TaxonInfluence", "TreeLength")
-          for (iter in 1:3) {
-            for (tp in topics) {
-              mark(sprintf("iter%d %s START", iter, tp))
+          mark <- function(m) { cat(sprintf("MARKER: %s | seed=%s\n", m, seeddig())); flush(stdout()) }
+          prime <- function() {
+            for (tp in c("Bremer", "SuboptimalTrees", "TaxonInfluence"))
               example(tp, package = "TreeSearch", run.donttest = TRUE,
                       character.only = TRUE, echo = FALSE)
-              mark(sprintf("iter%d %s DONE", iter, tp))
-            }
           }
-          mark("ALL DONE")
+          for (iter in 1:4) {
+            prime()
+            mark(sprintf("iter%d profile START", iter))
+            print(TreeLength(tree, d1, concavity = "profile"))
+            mark(sprintf("iter%d random5 START", iter))
+            print(TreeLength(5, d1))
+            mark(sprintf("iter%d hsj START", iter))
+            print(TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj"))
+            mark(sprintf("iter%d TreeLength DONE", iter))
+          }
+          cat("PRIMED ALL DONE\n")
           EOF
-          $TO Rscript concat.R || echo "### CONCAT hit timeout/err (rc=$?)"
-          echo "===== marker trail ====="; cat MARKER.txt 2>/dev/null || echo "(no marker file)"
+          $TO Rscript primed.R || echo "### PRIMED hit timeout/err (rc=$?)"
         shell: bash
 
       # ---------------------------------------------------------------------
-      # CONTROL: TaxonInfluence alone in a fresh process, looped, to tell an
-      # interaction (hangs only after the new examples) from a standalone
-      # TaxonInfluence hang.
+      # UNPRIMED CONTROL: the same three TreeLength sub-calls, looped, with NO
+      # Bremer/SuboptimalTrees/TaxonInfluence priming. If this never hangs, the
+      # hang REQUIRES the accumulated state the bgs/NA searches leave behind.
       # ---------------------------------------------------------------------
-      - name: Control -- TaxonInfluence alone, looped
+      - name: 'Unprimed TreeLength control'
         continue-on-error: true
         run: |
           TO=""
-          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 600";
-          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 600"; fi
-          rm -f MARKER2.txt
-          cat > solo.R <<'EOF'
-          library(TreeSearch)
+          if command -v gtimeout >/dev/null 2>&1; then TO="gtimeout 420";
+          elif [ "$RUNNER_OS" = "Linux" ]; then TO="timeout 420"; fi
+          cat > unprimed.R <<'EOF'
+          suppressMessages({library(TreeSearch); library(TreeTools)})
           pdf(NULL)
-          markf <- "MARKER2.txt"
-          for (iter in 1:5) {
-            line <- sprintf("%s | iter%d TaxonInfluence START",
-                            format(Sys.time(), "%H:%M:%S"), iter)
-            cat("MARKER:", line, "\n"); cat(line, "\n", file = markf, append = TRUE)
-            flush(stdout())
-            example("TaxonInfluence", package = "TreeSearch", run.donttest = TRUE,
-                    character.only = TRUE, echo = FALSE)
+          data("inapplicable.phyData", package = "TreeSearch")
+          d1 <- inapplicable.phyData[[1]]
+          tree <- BalancedTree(d1)
+          dataset6 <- inapplicable.phyData[["Vinther2008"]]
+          hier <- CharacterHierarchy("1" = 2:3)
+          tree6 <- BalancedTree(dataset6)
+          mark <- function(m) { cat(sprintf("MARKER: %s\n", m)); flush(stdout()) }
+          for (iter in 1:6) {
+            mark(sprintf("iter%d profile", iter));  print(TreeLength(tree, d1, concavity = "profile"))
+            mark(sprintf("iter%d random5", iter));  print(TreeLength(5, d1))
+            mark(sprintf("iter%d hsj", iter));      print(TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj"))
           }
-          cat("SOLO ALL DONE\n")
+          cat("UNPRIMED ALL DONE\n")
           EOF
-          $TO Rscript solo.R || echo "### SOLO hit timeout/err (rc=$?)"
-          echo "===== marker trail ====="; cat MARKER2.txt 2>/dev/null || echo "(no marker file)"
+          $TO Rscript unprimed.R || echo "### UNPRIMED hit timeout/err (rc=$?)"
         shell: bash
