@@ -1,0 +1,101 @@
+# TEMPORARY verification lane for the MaddisonSlatkin profile-hang fix.
+#
+# Before the fix, TreeLength(concavity = "profile") on Agnarsson2004
+# (inapplicable.phyData[[1]]) hung indefinitely on macOS arm64 (a 6 h CI
+# timeout) because the exact solver's fixed-capacity memo tables overflowed and
+# probe_slot() spun forever. This lane installs the branch and runs the exact
+# reproduction under a tight gtimeout as a HARD gate on macOS (arm64), ubuntu
+# (x64) and windows (x64). Job success == the profile computation completes.
+# Remove this workflow before merging.
+name: profile-hang-verify
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/fix-maddisonslatkin-arm64-hang
+
+concurrency:
+  group: profile-hang-verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ${{ matrix.config.os }}
+    name: profile-hang-verify (${{ matrix.config.os }}, ${{ matrix.config.r }})
+    timeout-minutes: 25
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macos-latest, r: 'release'}
+          - {os: windows-latest, r: 'release'}
+          - {os: ubuntu-24.04, r: '4.1', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
+
+    env:
+      R_REALLY_FORCE_SYMBOLS: true
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      RSPM: ${{ matrix.config.rspm }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+          extra-packages: |
+            phangorn=?ignore-before-r=4.1.0
+            ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
+
+      - name: Install coreutils for gtimeout (macOS)
+        if: runner.os == 'macOS'
+        run: brew install coreutils
+
+      - name: Install TreeSearch (with the fix)
+        run: R CMD INSTALL --no-multiarch --with-keep.source .
+        shell: bash
+
+      # HARD GATE: the exact reproduction must complete well within the timeout.
+      - name: Profile hang reproduction must complete
+        run: |
+          TO="timeout 300"
+          command -v gtimeout >/dev/null 2>&1 && TO="gtimeout 300"
+          cat > verify.R <<'EOF'
+          suppressMessages({library(TreeSearch); library(TreeTools)})
+          cat("OS:", Sys.info()[["sysname"]], "machine:", Sys.info()[["machine"]],
+              "R:", as.character(getRversion()), "\n")
+
+          # 1) The exact culprit character (Agnarsson2004 col 83): must return,
+          #    with the cache-overflow warning, not hang.
+          char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))
+          t0 <- Sys.time()
+          w <- NULL
+          si <- withCallingHandlers(
+            StepInformation(char, n_mc = 1000L),
+            warning = function(m) { w <<- conditionMessage(m); invokeRestart("muffleWarning") })
+          cat(sprintf("[42,9,2] StepInformation: %.2fs  len=%d  warned=%s\n",
+                      as.double(difftime(Sys.time(), t0, units = "secs")),
+                      length(si), !is.null(w)))
+          stopifnot(is.numeric(si), all(is.finite(si)))
+
+          # 2) The full donttest profile call that hung in CI.
+          data("inapplicable.phyData", package = "TreeSearch")
+          d <- inapplicable.phyData[[1]]
+          t0 <- Sys.time()
+          tl <- suppressWarnings(TreeLength(BalancedTree(d), d, concavity = "profile"))
+          cat(sprintf("profile TreeLength(Agnarsson2004): %.2fs  length=%.4f\n",
+                      as.double(difftime(Sys.time(), t0, units = "secs")), tl))
+          stopifnot(is.finite(tl))
+          cat("PROFILE HANG FIX VERIFIED\n")
+          EOF
+          $TO Rscript verify.R
+        shell: bash
