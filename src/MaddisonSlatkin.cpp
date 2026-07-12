@@ -862,6 +862,16 @@ public:
   }
 
   size_t size()  const noexcept { return entries_.size(); }
+
+  // True once the table holds its reserved half-capacity (load factor 0.5).
+  // Inserting beyond this degrades toward a FULL table, at which point
+  // probe_slot() -- which stops only on an empty slot -- would loop forever.
+  // Callers must bail out before that (see SolverT's guard) rather than
+  // silently overflow.  Guards mask_ == 0 (before reserve()) to stay false.
+  bool at_capacity() const noexcept {
+    return mask_ && entries_.size() >= ((mask_ + 1) >> 1);
+  }
+
   void   clear()                { std::fill(hashes_.begin(), hashes_.end(), 0u); entries_.clear(); }
 };
 
@@ -912,6 +922,11 @@ class SolverT {
   static constexpr double TIME_BUDGET_S = 2.0;
   std::chrono::steady_clock::time_point start_time;
   bool budget_exceeded = false;
+  // Set when we bail because a memo table reached its reserved capacity (as
+  // opposed to the wall-clock budget).  Distinguishes the two in the warning
+  // and, more importantly, prevents the open-addressing probe_slot() infinite
+  // loop that a full table would otherwise cause.
+  bool cache_overflow = false;
   std::vector<double> bailout_vec;  // filled with NEG_INF at c_size
     
     // Specialized ValidDraws cache
@@ -1026,6 +1041,15 @@ class SolverT {
           return NEG_INF;
         }
       }
+      // Cache-capacity guard: the memo tables are fixed-size open-addressing
+      // maps; overflowing one sends probe_slot() into an infinite loop that the
+      // wall-clock budget above cannot interrupt (it lives outside LogB/LogPVec).
+      // Bail to the NA -> Monte-Carlo fallback before that can happen.
+      if (logPVec_idx.at_capacity() || logB_cache.at_capacity()) {
+        budget_exceeded = true;
+        cache_overflow = true;
+        return NEG_INF;
+      }
       const int n = leaves.sum();
       
       if (n == 1) {
@@ -1126,6 +1150,13 @@ class SolverT {
           budget_exceeded = true;
           return bailout_vec;
         }
+      }
+      // Cache-capacity guard (see LogB): bail before an open-addressing memo
+      // table fills and probe_slot() spins forever.
+      if (logPVec_idx.at_capacity() || logB_cache.at_capacity()) {
+        budget_exceeded = true;
+        cache_overflow = true;
+        return bailout_vec;
       }
 
       // --- Base case n == 1 ---
@@ -1314,9 +1345,15 @@ public:
     }
 
     if (budget_exceeded) {
-      Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
-                    "results will be NA. Consider reducing to binary.",
-                    TIME_BUDGET_S);
+      if (cache_overflow) {
+        Rcpp::warning("MaddisonSlatkin: exact state cache exceeded its reserved "
+                      "capacity; results will be NA (the caller falls back to "
+                      "the Monte Carlo approximation).");
+      } else {
+        Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+                      "results will be NA. Consider reducing to binary.",
+                      TIME_BUDGET_S);
+      }
       for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
       return;
     }
@@ -1335,9 +1372,15 @@ public:
     }
 
     if (budget_exceeded) {
-      Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
-                    "results will be NA. Consider reducing to binary.",
-                    TIME_BUDGET_S);
+      if (cache_overflow) {
+        Rcpp::warning("MaddisonSlatkin: exact state cache exceeded its reserved "
+                      "capacity; results will be NA (the caller falls back to "
+                      "the Monte Carlo approximation).");
+      } else {
+        Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+                      "results will be NA. Consider reducing to binary.",
+                      TIME_BUDGET_S);
+      }
       for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
       return;
     }
