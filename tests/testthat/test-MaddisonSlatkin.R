@@ -183,3 +183,32 @@ test_that(".MSSplitCount is correct for known cases", {
   expect_gt( sc(c(2L, 2L, 2L, 2L, 2L)), thresh[5]) # k=5 n=10 sc=51: blocked
 })
 
+
+test_that("StepInformation() falls back instead of hanging when the exact memo cache overflows", {
+  # A skewed 3-state character on many tips has a low split-count, so the
+  # feasibility gate classes it feasible for the exact MaddisonSlatkin recursion
+  # -- but on this many tips it generates more distinct (token, leaves) keys than
+  # the solver's fixed-capacity memo tables reserve.  Before the capacity guard,
+  # once such a table filled, probe_slot() spun forever (a hang that the 2 s
+  # wall-clock budget could not interrupt, because the loop is outside
+  # LogB/LogPVec).  On x86-64 the time budget usually won the race and bailed to
+  # Monte Carlo; on Apple Silicon the table filled first and the search hung
+  # (observed as a 6 h --run-donttest CI timeout).  The solver must now detect
+  # the impending overflow and fall back to the MC approximation instead.
+  #
+  # Two guards can trigger that fallback, and which fires is a timing-dependent
+  # race: the capacity guard once a memo table hits its reserved size, or the
+  # 2 s wall-clock budget.  A fast machine reaches the capacity first (cache
+  # warning); a slow one reaches 2 s first (time-budget warning).  Both warnings
+  # contain "exceeded" and both are correct outcomes -- the only wrong outcome is
+  # a hang.  So assert completion with finite values (the anti-hang property) and
+  # that *some* fallback warning fired, without pinning which guard won the race.
+  char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
+  # capture_warnings() evaluates its argument in this frame, so `si` is assigned
+  # here, and it collects every warning without pinning which guard won the race.
+  si <- NULL
+  warningsSeen <- capture_warnings(si <- StepInformation(char, n_mc = 1000L))
+  expect_type(si, "double")
+  expect_true(length(si) >= 1L && all(is.finite(si)))
+  expect_match(paste(warningsSeen, collapse = "\n"), "exceeded")
+})
