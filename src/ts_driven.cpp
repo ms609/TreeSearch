@@ -24,6 +24,7 @@
 #include <cstdlib>
 #include <string>
 #include <functional>
+#include <unordered_set>
 
 namespace ts {
 
@@ -60,10 +61,20 @@ ReplicateResult run_single_replicate(
     TreeState* starting_tree,
     const SplitFrequencyTable* split_freq,
     StartStrategy strategy,
-    const TreePool* pool)
+    const TreePool* pool,
+    bool transient_build)
 {
   ReplicateResult result;
   result.interrupted = false;
+
+  // TNT-style transient autoconstraint state (see DrivenParams docs).
+  // `cd` is a by-value pointer parameter, so we reassign it: nullptr for the
+  // (unconstrained) Wagner start, then a per-rep constraint over the early
+  // stages, then nullptr again before ratchet.  transient_cd must outlive
+  // every stage that reads `cd`, so it lives at function scope.
+  ConstraintData transient_cd;
+  bool transient_active = false;
+  int transient_n_mapped = 0;
 
   bool tree_large_enough_for_sectors =
       ds.n_tips >= 2 * params.sector_min_size;
@@ -155,6 +166,83 @@ ReplicateResult run_single_replicate(
               params.nni_first ? "+NNI" : "",
               best_wag, result.timings.wagner_ms,
               params.wagner_starts > 1 ? " (best of multiple starts)" : "");
+    }
+  }
+
+  // 1b. TNT-style transient autoconstraint (only when requested by the
+  // driver for this replicate).  Build a per-rep positive constraint =
+  // strict consensus of the PREVIOUS replicates' best-score pool trees,
+  // INTERSECTED with this replicate's own (unconstrained) Wagner start —
+  // i.e. consensus({previous trees} ∪ {this Wagner}).  Because every kept
+  // split is present in the Wagner start, the start satisfies the
+  // constraint by construction (no repair needed).  The constraint is
+  // enforced only over the early stages (initial TBR + first sectorial
+  // pass) and released before ratchet (see the release below).
+  if (transient_build && pool && pool->size() >= 2 && !starting_tree) {
+    int n_unan = 0, wps = 0;
+    std::vector<uint64_t> cons_bits = pool->extract_consensus_splits(n_unan, wps);
+    int n_kept = 0;
+    if (n_unan > 0 && wps > 0) {
+      // Hash the Wagner start's canonical splits (same canonicalisation as
+      // the pool's stored splits, so bitset hashes are directly comparable).
+      SplitSet wag = compute_splits(result.tree);
+      std::unordered_set<uint64_t> wag_hashes;
+      wag_hashes.reserve(static_cast<size_t>(wag.n_splits) * 2 + 1);
+      for (int i = 0; i < wag.n_splits; ++i) {
+        wag_hashes.insert(hash_single_split(wag.split(i), wag.words_per_split));
+      }
+      // Keep only consensus splits that the Wagner start also displays.
+      std::vector<uint64_t> kept;
+      kept.reserve(cons_bits.size());
+      for (int s = 0; s < n_unan; ++s) {
+        const uint64_t* sb = cons_bits.data() + static_cast<size_t>(s) * wps;
+        if (wag_hashes.count(hash_single_split(sb, wps))) {
+          kept.insert(kept.end(), sb, sb + wps);
+          ++n_kept;
+        }
+      }
+      int n_kept_mapped = 0;
+      if (n_kept > 0) {
+        transient_cd =
+            build_constraint_from_bitsets(kept.data(), n_kept, wps, ds.n_tips);
+        // Map constraint nodes on the start.  Every kept split is displayed
+        // by the Wagner start, but map_constraint_nodes matches a ROOTED node
+        // subtree EXACTLY, so a split whose tip-0-free clade is not a rooted
+        // clade of this tree (tip 0 sits inside the clade) will not map
+        // (constraint_node == -1) and would then spuriously reject moves.
+        // Empirically ~20-30% of kept splits fail to map on a 62-tip tree.
+        // Drop the unmapped splits and rebuild so the constraint is
+        // valid-by-construction (every enforced split maps to a real node),
+        // rather than enforcing a garbled over-restrictive constraint.
+        // (Mid-search, TBR re-maps after each accepted move — ts_tbr.cpp — so
+        // a split can still flip to -1 as tip 0 moves; that reverts to the
+        // conservative reject-its-violations semantics shared with the rigid
+        // and user-constraint paths, and only touches the early stages since
+        // the constraint is released before ratchet.)
+        update_constraint(result.tree, transient_cd);
+        std::vector<uint64_t> mapped_bits;
+        mapped_bits.reserve(kept.size());
+        for (int s = 0; s < transient_cd.n_splits; ++s) {
+          if (transient_cd.constraint_node[s] >= 0) {
+            const uint64_t* sb =
+                &transient_cd.split_tips[static_cast<size_t>(s) * wps];
+            mapped_bits.insert(mapped_bits.end(), sb, sb + wps);
+            ++n_kept_mapped;
+          }
+        }
+        if (n_kept_mapped > 0) {
+          transient_cd = build_constraint_from_bitsets(
+              mapped_bits.data(), n_kept_mapped, wps, ds.n_tips);
+          update_constraint(result.tree, transient_cd);  // all map now
+          transient_n_mapped = n_kept_mapped;
+          cd = &transient_cd;
+          transient_active = true;
+        }
+      }
+    }
+    if (verbosity >= 2) {
+      Rprintf("  Transient autoconstraint: consensus=%d, kept(∩wagner)=%d, "
+              "enforced(mapped)=%d\n", n_unan, n_kept, transient_n_mapped);
     }
   }
 
@@ -314,6 +402,21 @@ ReplicateResult run_single_replicate(
       result.interrupted = true;
       result.score = score_tree(result.tree, ds);
       return result;
+    }
+
+    // Transient autoconstraint RELEASE (TNT autoconst).  The constraint has
+    // now guided the early stages (initial TBR + the first sectorial pass);
+    // release it before ratchet/drift/later-sectorial/final-TBR so late
+    // search is free to cross into the (unconstrained) global optimum.  This
+    // is the whole point of the *transient* variant vs the rigid one: it
+    // never permanently locks a split.  Fires once (outer == 0 boundary);
+    // transient_active is false thereafter.
+    if (transient_active) {
+      cd = nullptr;
+      transient_active = false;
+      if (verbosity >= 2) {
+        Rprintf("  Transient autoconstraint released (pre-ratchet)\n");
+      }
     }
 
     // 4. Ratchet perturbation to escape local optima.
@@ -741,6 +844,23 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   ConstraintData auto_cd;  // built from pool consensus; reused across reps
   double auto_cd_best_score = 1e18;  // score when auto_cd was last built
 
+  // TNT-style TRANSIENT autoconstraint (per-rep, released before ratchet;
+  // see run_single_replicate).  Mutually exclusive with the rigid path and
+  // with a user constraint.  Env kill-switch TS_NO_TRANSIENT_AUTOCONST
+  // (read once here, not per replicate: std::getenv is comparatively slow
+  // on some platforms, so it is hoisted out of the replicate loop below).
+  bool use_transient_autoconst =
+      params.transient_autoconst && !use_auto_constraint && (!cd || !cd->active);
+  {
+    const char* kill = std::getenv("TS_NO_TRANSIENT_AUTOCONST");
+    if (kill && kill[0] != '\0' && kill[0] != '0') use_transient_autoconst = false;
+  }
+  // First-rep-of-hit tracking: a replicate is left UNCONSTRAINED when the
+  // immediately-preceding replicate improved the best score (a "new hit"),
+  // keeping hits independent (TNT: "hits are totally independent").
+  // Initialised true so rep 0 is also unconstrained.
+  bool prev_rep_improved = true;
+
   for (int rep = 0; rep < params.max_replicates; ++rep) {
     int rep1 = rep + 1;
 
@@ -904,6 +1024,15 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
+    // Transient autoconstraint: request a per-rep constraint build inside
+    // run_single_replicate for this replicate.  Skip the first rep of each
+    // hit (prev_rep_improved) so hits stay independent; need >= 2 best-score
+    // pool trees for a consensus.  rep_cd stays the (null) user constraint —
+    // the transient constraint is built AFTER the Wagner start, internally.
+    bool transient_now = use_transient_autoconst && !prev_rep_improved &&
+        result.replicates_completed >= params.transient_autoconst_min_reps &&
+        pool.size() >= 2 && !start_ptr;
+
     // Select starting-tree strategy for this replicate.
     StartStrategy rep_strategy = StartStrategy::WAGNER_RANDOM;
     if (start_ptr) {
@@ -922,7 +1051,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Run the single-replicate pipeline
     ReplicateResult rep_result = run_single_replicate(
         ds, rep_params, rep_cd, check_timeout, params.verbosity, start_ptr,
-        sft_ptr, rep_strategy, &pool);
+        sft_ptr, rep_strategy, &pool, transient_now);
 
     result.timings += rep_result.timings;
 
@@ -950,6 +1079,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     } else {
       ++unsuccessful_reps;
     }
+    // Feed the transient-autoconstraint first-rep-of-hit rule: the NEXT rep
+    // is left unconstrained iff THIS rep just established a new best.
+    prev_rep_improved = score_improved;
 
     // Update strategy bandit (T-190)
     if (params.adaptive_start) {

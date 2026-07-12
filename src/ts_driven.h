@@ -263,6 +263,22 @@ struct DrivenParams {
   bool consensus_constrain = false;
   int consensus_constrain_min_reps = 5;  // minimum replicates before engaging
 
+  // TNT-style TRANSIENT autoconstraint (distinct from the RIGID
+  // consensus_constrain above). Each replicate builds a per-rep constraint
+  // from the strict consensus of the PREVIOUS replicates' pool trees,
+  // intersected with THIS rep's own (unconstrained) Wagner start — i.e.
+  // consensus({previous trees} ∪ {this Wagner}) — then enforces it only over
+  // the EARLY pipeline stages (initial TBR → first sectorial pass) and
+  // RELEASES it before ratchet/drift/later-sectorial/final-TBR. The first
+  // replicate of each "hit" (rep 0, or any rep immediately after a new best)
+  // is left unconstrained so hits stay independent (TNT: "hits are totally
+  // independent"). Unlike the rigid path this refreshes EVERY rep and never
+  // permanently locks a split, so it can guide early search without
+  // entrenching a basin. Only active when no user constraint is present and
+  // consensus_constrain is off. Env kill-switch: TS_NO_TRANSIENT_AUTOCONST.
+  bool transient_autoconst = false;
+  int transient_autoconst_min_reps = 2;  // completed reps before engaging
+
   // Fraction of the time budget reserved for MPT enumeration (T-202).
   // The main search loop exits at budget × (1 - enum_time_fraction),
   // leaving the remainder for the plateau walk.  Default 0.1 = 10%.
@@ -366,7 +382,8 @@ ReplicateResult run_single_replicate(
     TreeState* starting_tree = nullptr,
     const SplitFrequencyTable* split_freq = nullptr,
     StartStrategy strategy = StartStrategy::WAGNER_RANDOM,
-    const TreePool* pool = nullptr);
+    const TreePool* pool = nullptr,
+    bool transient_build = false);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool
