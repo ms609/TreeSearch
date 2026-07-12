@@ -191,12 +191,14 @@ JackLabels(result[[1]], jackTrees)
 }
 \seealso{
 Other split support functions:
+\code{\link[=Bremer]{Bremer()}},
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
-\code{\link{SiteConcordance}}
+\code{\link{SiteConcordance}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }
 \concept{split support functions}

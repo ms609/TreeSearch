@@ -654,12 +654,19 @@ PruneReinsertResult prune_reinsert_search(
 
     // 7. Accept or revert
     double new_score = score_tree(tree, ds);
-    if (new_score < current_score - 1e-10) {
+    // Negative (converse/Bremer) constraint: the reduced-backbone TBR (step 4)
+    // runs cd-blind, so expand_and_reinsert can rebuild a forbidden clade.
+    // Reject such a tree even if it scores better, reverting to the (clade-free)
+    // pre-prune backup -- otherwise the replicate can strand on the clade.
+    // Soundness is already guaranteed by the pool backstop; this preserves reach.
+    bool neg_violated =
+        cd && cd->neg_active && displays_forbidden_clade(tree, *cd);
+    if (new_score < current_score - 1e-10 && !neg_violated) {
       current_score = new_score;
       result.best_score = new_score;
       ++result.n_improvements;
     } else {
-      tree = backup;  // revert
+      tree = backup;  // revert (worse, or would display the forbidden clade)
       // Re-sync constraint metadata after topology revert.
       // Same bug class as F-015 (ratchet), F-016 (NNI-perturb).
       if (cd) update_constraint(tree, *cd);

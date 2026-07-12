@@ -57,6 +57,38 @@
 }
 
 # Internal helper: prepare constraint data for C++ engine.
+# Build the forbidden-clade (negative / converse constraint) matrix for the
+# C++ engine.  A tree that displays any of these bipartitions will be rejected.
+# @param negConstraint A `Splits` object, or anything `as.Splits()` accepts
+#   (e.g. a `phylo`), giving the clade(s) to forbid.
+# @param dataset A phyDat whose names define the tip ordering.
+# @return An integer n_neg x n_tips membership matrix (columns in dataset tip
+#   order), or NULL if there is nothing to forbid.
+# @keywords internal
+#' @importFrom TreeTools as.Splits
+.PrepareNegativeConstraint <- function(negConstraint, dataset) {
+  if (is.null(negConstraint)) return(NULL)
+  tipLabels <- names(dataset)
+  if (!inherits(negConstraint, "Splits")) {
+    negConstraint <- as.Splits(negConstraint, tipLabels = tipLabels)
+  }
+  if (length(negConstraint) == 0L) return(NULL)
+
+  # as.logical(<Splits>) yields an n_splits x n_tips logical membership matrix.
+  membership <- as.logical(negConstraint)
+  if (is.null(dim(membership))) {
+    membership <- matrix(membership, nrow = 1L)
+  }
+  splitLabels <- attr(negConstraint, "tip.label")
+  colOrder <- match(tipLabels, splitLabels)
+  if (anyNA(colOrder)) {
+    stop("Forbidden-clade taxa do not match the dataset taxa.")
+  }
+  membership <- membership[, colOrder, drop = FALSE]
+  storage.mode(membership) <- "integer"
+  membership
+}
+
 # Returns a named list of constraint arguments (empty list if no constraint).
 # @param constraint A phyDat, phylo, or NULL.
 # @param dataset A phyDat whose names define the tip ordering.
@@ -568,12 +600,25 @@
 #'   collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 #'   visible (a constraint encodes external evidence the matrix does not
 #'   capture); unsupported non-constraint branches still collapse.
+#' @param .negativeConstraint Internal.  A splits object (or `NULL`) naming
+#'   clades that returned trees must *not* display; used by [`Bremer()`] to run
+#'   converse-constraint searches.  Not intended for direct use.
 #' @param ... Backward compatibility.
 #'
 #' @return A `multiPhylo` object containing the best tree(s) found, with
 #'   attributes:
 #'   \describe{
 #'     \item{`score`}{Best parsimony score.}
+#'     \item{`scoring`}{A list recording the scoring conditions the score is
+#'       optimal under (`concavity`, `inapplicable`, ...), so a saved score
+#'       remains interpretable.  [`Bremer()`][Bremer] checks it against its own
+#'       scoring arguments and warns on a mismatch.}
+#'     \item{`scores`}{Present only when `collapse = FALSE`: a numeric vector of
+#'       the parsimony score of each returned tree, aligned with the returned
+#'       `multiPhylo` (the same values are attached as a `score` attribute on
+#'       each individual tree).  With `poolSuboptimal > 0` this exposes the
+#'       retained suboptimal pool for landscape analysis (see
+#'       [`SuboptimalTrees()`], [`Suboptimality()`]).}
 #'     \item{`replicates`}{Number of replicates completed.}
 #'     \item{`hits_to_best`}{Number of independent discoveries of the best
 #'       score.}
@@ -641,6 +686,7 @@ MaximizeParsimony <- function(
     inapplicable = "bgs",
     hsj_alpha = 1.0,
     constraint,
+    .negativeConstraint = NULL,
     strategy = "auto",
     maxReplicates = 96L,
     targetHits = NULL,
@@ -663,6 +709,16 @@ MaximizeParsimony <- function(
   # below) would immediately flip `missing()`, so this top-of-body capture is
   # the only reliable read.
   userSetReps <- !missing(maxReplicates)
+
+  # Capture the scoring conditions the result is optimal under, BEFORE any
+  # normalization (e.g. inapplicable aliasing, profile -> Inf).  Attached to the
+  # returned trees so a saved optimal score is interpretable -- a bare score is
+  # meaningless without knowing the criterion it was found under, and Bremer()
+  # checks this signature against its own scoring arguments.
+  scoringSignature <- .ScoringSignature(
+    concavity = concavity, extended_iw = extended_iw, xpiwe_r = xpiwe_r,
+    xpiwe_max_f = xpiwe_max_f, hierarchy = hierarchy,
+    inapplicable = inapplicable, hsj_alpha = hsj_alpha)
 
   # --- Set targetHits default if not provided ---
   if (is.null(targetHits)) {
@@ -950,6 +1006,27 @@ MaximizeParsimony <- function(
     cli_alert_info("Constraint: {nrow(consArgs$consSplitMatrix)} split{?s}")
   }
 
+  # Negative (converse) constraints: forbidden clades.  Internal argument used
+  # by Bremer() -- the returned trees must NOT display any supplied split.
+  if (!is.null(.negativeConstraint)) {
+    # The negative-constraint soundness backstop (TreePool::set_forbidden) is
+    # wired only into the serial search path; the parallel pool has no such
+    # guard, so a forbidden clade could slip into the result under nThreads > 1.
+    # Force serial (Bremer() already does; this protects any other caller).
+    if (!identical(as.integer(nThreads), 1L)) {
+      warning("Negative (converse) constraints are supported only in serial ",
+              "search; forcing `nThreads = 1`.")
+      nThreads <- 1L
+    }
+    negMatrix <- .PrepareNegativeConstraint(.negativeConstraint, dataset)
+    if (!is.null(negMatrix)) {
+      consArgs[["consNegSplitMatrix"]] <- negMatrix
+      if (verbosity > 0L) {
+        cli_alert_info("Forbidding {nrow(negMatrix)} clade{?s}")
+      }
+    }
+  }
+
   # --- Profile parsimony: extract info_amounts ---
   profileArgs <- list()
   if (useProfile) {
@@ -1041,6 +1118,11 @@ MaximizeParsimony <- function(
     resultTrees <- list()
   }
   nTopologies <- result$n_topologies
+  # Per-tree scores aligned with result$trees; surfaced only in the collapse =
+  # FALSE path (the collapse = TRUE path keeps only best-score trees, so their
+  # scores are all result$best_score and the collapsed/deduped list no longer
+  # aligns with result$scores).  NULL here -> no "scores" attribute is attached.
+  perTreeScores <- NULL
   if (isTRUE(collapse) && length(resultTrees) > 0L) {
     # Contract zero-length (unsupported) branches into polytomies, à la TNT's
     # "collapse zero-length branches" -- done entirely in C++ (ts_collapse_pool)
@@ -1089,9 +1171,26 @@ MaximizeParsimony <- function(
       # C++ edge order may differ from template; renumber to valid preorder
       Renumber(tr)
     })
+    # Surface the per-tree parsimony scores the engine returns aligned with
+    # result$trees.  Attaching a "score" attribute to each tree lets
+    # Suboptimality(), SuboptimalTrees() and Bremer(method = "pool") read the
+    # suboptimal pool's landscape directly without re-scoring.
+    perTreeScores <- result$scores
+    if (length(perTreeScores) == length(outTrees)) {
+      outTrees <- Map(function(tr, sc) {
+        attr(tr, "score") <- sc
+        tr
+      }, outTrees, perTreeScores)
+    } else {
+      perTreeScores <- NULL
+    }
   }
   if (length(outTrees) == 0L) {
     outTrees <- list(treeTpl)
+    if (!isTRUE(collapse)) {
+      attr(outTrees[[1]], "score") <- result$best_score
+      perTreeScores <- result$best_score
+    }
   }
 
   # --- Output ---
@@ -1114,6 +1213,8 @@ MaximizeParsimony <- function(
   structure(
     outTrees,
     score = result$best_score,
+    scoring = scoringSignature,
+    scores = perTreeScores,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
     n_topologies = nTopologies,
@@ -1128,6 +1229,57 @@ MaximizeParsimony <- function(
     class = "multiPhylo"
   )
 }
+
+# Canonical scoring identity: the arguments that define the optimality criterion,
+# normalized so aliases compare equal.  Recorded on a MaximizeParsimony() result
+# (attr "scoring") and checked by Bremer() -- a saved optimal score is only
+# meaningful alongside the conditions it was optimal under.
+.ScoringSignature <- function(concavity = Inf, extended_iw = TRUE, xpiwe_r = 0.5,
+                              xpiwe_max_f = 5, hierarchy = NULL,
+                              inapplicable = "bgs", hsj_alpha = 1.0) {
+  inap <- tolower(as.character(inapplicable)[[1]])
+  if (inap == "brazeau") inap <- "bgs"   # documented alias for the bgs kernel
+  list(
+    concavity = if (is.numeric(concavity)) concavity else
+      tolower(as.character(concavity)[[1]]),
+    extended_iw = isTRUE(extended_iw),
+    xpiwe_r = as.double(xpiwe_r),
+    xpiwe_max_f = as.double(xpiwe_max_f),
+    # Presence only: comparing full hierarchy objects is heavy and brittle, and a
+    # present-vs-absent difference is the practically important mismatch.
+    hierarchy = !is.null(hierarchy),
+    inapplicable = inap,
+    hsj_alpha = as.double(hsj_alpha)
+  )
+}
+
+# TRUE if two scoring signatures denote the same optimality criterion.
+.ScoringSignatureMatch <- function(a, b, tol = 1e-8) {
+  numMatch <- function(x, y) {
+    if (is.numeric(x) && is.numeric(y)) {
+      (is.infinite(x) && is.infinite(y) && sign(x) == sign(y)) ||
+        (is.finite(x) && is.finite(y) && abs(x - y) <= tol)
+    } else {
+      identical(as.character(x), as.character(y))
+    }
+  }
+  numMatch(a[["concavity"]], b[["concavity"]]) &&
+    identical(a[["extended_iw"]], b[["extended_iw"]]) &&
+    isTRUE(abs(a[["xpiwe_r"]] - b[["xpiwe_r"]]) <= tol) &&
+    isTRUE(abs(a[["xpiwe_max_f"]] - b[["xpiwe_max_f"]]) <= tol) &&
+    identical(a[["hierarchy"]], b[["hierarchy"]]) &&
+    identical(a[["inapplicable"]], b[["inapplicable"]]) &&
+    isTRUE(abs(a[["hsj_alpha"]] - b[["hsj_alpha"]]) <= tol)
+}
+
+# Compact human-readable rendering of a scoring signature for diagnostics.
+.DescribeScoring <- function(sig) {
+  cn <- sig[["concavity"]]
+  weight <- if (is.numeric(cn) && is.infinite(cn)) "equal weights" else
+    paste0("concavity = ", if (is.numeric(cn)) signif(cn, 4) else cn)
+  paste0(weight, ", inapplicable = \"", sig[["inapplicable"]], "\"")
+}
+
 
 #' Launch tree search graphical user interface
 #'

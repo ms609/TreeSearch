@@ -18,6 +18,8 @@
 
 namespace ts {
 
+struct ConstraintData;  // fwd decl (ts_constraint.h); used only by pointer
+
 // Per-split frequency table for conflict-guided sector selection.
 // Maps per-split hash → count across best-score pool trees.
 struct SplitFrequencyTable {
@@ -45,6 +47,13 @@ public:
     : max_size(max_sz < 1 ? 1 : max_sz), suboptimal(subopt),
       best_score_(1e18), hits_to_best_(0),
       consensus_hash_(0), consensus_unchanged_(0) {}
+
+  // Register negative (converse) constraints: any tree displaying a forbidden
+  // clade is rejected by add()/add_collapsed().  Guarantees the pool -- and
+  // hence the returned best tree/score -- never contains a forbidden clade,
+  // regardless of which search phase produced the candidate.  Pass nullptr
+  // (default) to disable.  Used for Bremer converse-constraint searches.
+  void set_forbidden(const ConstraintData* f) { forbidden_ = f; }
 
   // Add a tree if it's not a duplicate and meets score threshold.
   // Returns true if the tree was actually added.
@@ -117,6 +126,9 @@ private:
   std::vector<PoolEntry> entries_;
   double best_score_;
   int hits_to_best_;
+
+  // Negative-constraint filter (not owned); nullptr disables.
+  const ConstraintData* forbidden_ = nullptr;
 
   // Consensus stability tracking
   uint64_t consensus_hash_;

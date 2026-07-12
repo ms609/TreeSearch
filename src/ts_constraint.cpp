@@ -150,6 +150,91 @@ std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words)
 }
 
 // =========================================================================
+// Negative (converse) constraints
+// =========================================================================
+
+void add_negative_constraint(
+    ConstraintData& cd, const int* neg_matrix, int n_neg, int n_tips)
+{
+  if (n_neg <= 0) return;
+
+  int n_words = (n_tips + 63) / 64;
+  if (!cd.active) {
+    // Initialize an otherwise-empty ConstraintData so the search's
+    // `constrained` path runs (it will be a no-op over zero positive splits).
+    cd.active = true;
+    cd.n_words = n_words;
+    int n_node = 2 * n_tips - 1;
+    cd.dfs_entry.assign(n_node, 0);
+    cd.dfs_exit.assign(n_node, 0);
+    cd.clip_tip_mask.resize(n_words, 0ULL);
+  }
+
+  cd.neg_active = true;
+  cd.n_neg_splits = n_neg;
+  cd.neg_split_tips.assign(
+      static_cast<size_t>(n_neg) * cd.n_words, 0ULL);
+
+  // Pack rows into bitmasks (column-major from R: [s, t] at s + n_neg * t),
+  // canonicalizing so tip 0 is always outside (bit 0 = 0), exactly as
+  // build_constraint() does for positive splits.
+  for (int s = 0; s < n_neg; ++s) {
+    uint64_t* mask = &cd.neg_split_tips[static_cast<size_t>(s) * cd.n_words];
+    for (int t = 0; t < n_tips; ++t) {
+      if (neg_matrix[s + n_neg * t]) {
+        mask[t / 64] |= (1ULL << (t % 64));
+      }
+    }
+    if (mask[0] & 1ULL) {
+      for (int w = 0; w < cd.n_words; ++w) {
+        mask[w] = ~mask[w];
+      }
+      int remainder = n_tips % 64;
+      if (remainder > 0) {
+        mask[cd.n_words - 1] &= (1ULL << remainder) - 1;
+      }
+    }
+  }
+}
+
+bool displays_forbidden_clade(const TreeState& tree, const ConstraintData& cd)
+{
+  if (!cd.neg_active || cd.n_neg_splits == 0) return false;
+
+  auto node_tips = compute_node_tips(tree, cd.n_words);
+
+  // The internal tree is not guaranteed to be rooted on tip 0, so a bipartition
+  // can be displayed as EITHER side.  Canonicalize each node's subtree mask to
+  // the tip-0-outside form (flipping if tip 0 is inside) before comparing to the
+  // canonical forbidden split; this matches a clade regardless of which side is
+  // the rooted subtree.
+  int n_tips = tree.n_tip;
+  int rem = n_tips % 64;
+  uint64_t last_mask = rem ? ((1ULL << rem) - 1) : ~0ULL;
+
+  std::vector<uint64_t> canon(cd.n_words);
+  for (int node : tree.postorder) {
+    const uint64_t* nd = &node_tips[static_cast<size_t>(node) * cd.n_words];
+    bool flip = (nd[0] & 1ULL) != 0;
+    for (int w = 0; w < cd.n_words; ++w) {
+      canon[w] = flip ? ~nd[w] : nd[w];
+    }
+    if (flip) canon[cd.n_words - 1] &= last_mask;
+
+    for (int s = 0; s < cd.n_neg_splits; ++s) {
+      const uint64_t* split =
+          &cd.neg_split_tips[static_cast<size_t>(s) * cd.n_words];
+      bool match = true;
+      for (int w = 0; w < cd.n_words; ++w) {
+        if (canon[w] != split[w]) { match = false; break; }
+      }
+      if (match) return true;
+    }
+  }
+  return false;
+}
+
+// =========================================================================
 // Map constraint nodes: find which internal node holds each split
 // =========================================================================
 

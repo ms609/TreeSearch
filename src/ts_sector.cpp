@@ -1504,6 +1504,16 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
   // (T-S6c micro-bank).
   static const bool _sect_debug = std::getenv("TS_SECT_DEBUG") != nullptr;
   bool constrained = cd && cd->active && cd->has_posthoc;
+  // Negative (converse/Bremer) constraint: the sector-internal reduced-dataset
+  // solve (search_sector/reinsert_sector) is constraint-blind, so a reinsertion
+  // can rebuild a forbidden clade even though the pre-sector tree lacked it.
+  // Reject such a reinsertion post-hoc (mirrors `constrained` above), keeping the
+  // live tree -- and hence every downstream phase -- in the space of trees
+  // lacking the clade.  Soundness is already guaranteed by the pool backstop;
+  // this preserves REACH (an un-reverted reinsertion can strand the replicate on
+  // the clade with no improving escape move).  Not covered by the <=7-tip oracle
+  // (sectors need >=12 tips).
+  bool neg_constrained = cd && cd->neg_active;
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -1747,6 +1757,16 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         score_tree(tree, ds);
         continue;
       }
+      // Post-hoc negative (converse) constraint check: reject a reinsertion that
+      // rebuilt a forbidden clade.  restore_clade undoes only the sector clade,
+      // which is the sole change since the pre-sector tree, so the reverted tree
+      // is clade-free.
+      if (neg_constrained && displays_forbidden_clade(tree, *cd)) {
+        restore_clade(tree, snap);
+        tree.build_postorder();
+        score_tree(tree, ds);
+        continue;
+      }
 
       bool kept;
       if (new_score < result.best_score) {
@@ -1891,6 +1911,11 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
   }
 
   bool constrained = cd && cd->active && cd->has_posthoc;
+  // Negative (converse/Bremer) constraint: the reduced-dataset sector solve is
+  // constraint-blind, so reject post-hoc any reinsertion that rebuilds a
+  // forbidden clade (see rss_search for the full rationale).  REACH-preserving;
+  // soundness is already guaranteed by the pool backstop.
+  bool neg_constrained = cd && cd->neg_active;
 
   for (int round = 0; round < params.xss_rounds; ++round) {
     double score_before_round = result.best_score;
@@ -1944,6 +1969,13 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
 
         // Post-hoc constraint check
         if (constrained && violates_constraint_posthoc(tree, *cd)) {
+          restore_clade(tree, snap);
+          tree.build_postorder();
+          score_tree(tree, ds);
+          continue;
+        }
+        // Post-hoc negative (converse) constraint check (see rss_search).
+        if (neg_constrained && displays_forbidden_clade(tree, *cd)) {
           restore_clade(tree, snap);
           tree.build_postorder();
           score_tree(tree, ds);

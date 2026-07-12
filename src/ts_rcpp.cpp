@@ -276,7 +276,8 @@ static ts::ConstraintData build_constraint_from_r(
     Nullable<IntegerMatrix> consTipData,
     Nullable<IntegerVector> consWeight,
     Nullable<CharacterVector> consLevels,
-    int consExpectedScore);
+    int consExpectedScore,
+    Nullable<IntegerMatrix> consNegSplitMatrix = R_NilValue);
 
 // [[Rcpp::export]]
 double ts_fitch_score(
@@ -1432,7 +1433,8 @@ static ts::ConstraintData build_constraint_from_r(
     Nullable<IntegerMatrix> consTipData,
     Nullable<IntegerVector> consWeight,
     Nullable<CharacterVector> consLevels,
-    int consExpectedScore)
+    int consExpectedScore,
+    Nullable<IntegerMatrix> consNegSplitMatrix)
 {
   ts::ConstraintData cd;
   if (consSplitMatrix.isNotNull()) {
@@ -1469,6 +1471,25 @@ static ts::ConstraintData build_constraint_from_r(
       }
     }
   }
+
+  // Negative (converse) constraints: forbidden clades (Bremer support).  May be
+  // supplied alone (cd otherwise empty) or alongside positive splits.
+  if (consNegSplitMatrix.isNotNull()) {
+    IntegerMatrix nsm(consNegSplitMatrix.get());
+    int n_neg = nsm.nrow();
+    if (n_neg > 0) {
+      // A column-count mismatch would otherwise silently drop the negative
+      // constraint, running an UNCONSTRAINED converse search and reporting a
+      // clade's Bremer support as 0 -- a silent wrong answer.  Fail loudly.
+      if (nsm.ncol() != n_tips) {
+        Rcpp::stop("consNegSplitMatrix has %d column(s) but the dataset has %d "
+                   "tip(s); a negative-constraint matrix needs one column per "
+                   "tip.", nsm.ncol(), n_tips);
+      }
+      ts::add_negative_constraint(cd, INTEGER(nsm), n_neg, n_tips);
+    }
+  }
+
   return cd;
 }
 
@@ -1691,6 +1712,9 @@ static ts::ConstraintData unpack_constraint(int n_tips,
     if (cc.containsElementNamed("consExpectedScore"))
       consExpectedScore = as<int>(cc["consExpectedScore"]);
 
+    SEXP nsm = cc.containsElementNamed("consNegSplitMatrix")
+                   ? SEXP(cc["consNegSplitMatrix"]) : R_NilValue;
+
     return build_constraint_from_r(
         n_tips,
         Nullable<IntegerMatrix>(csm),
@@ -1698,7 +1722,8 @@ static ts::ConstraintData unpack_constraint(int n_tips,
         Nullable<IntegerMatrix>(ctd),
         Nullable<IntegerVector>(cw),
         Nullable<CharacterVector>(cl),
-        consExpectedScore);
+        consExpectedScore,
+        Nullable<IntegerMatrix>(nsm));
   }
   return ts::ConstraintData{};
 }

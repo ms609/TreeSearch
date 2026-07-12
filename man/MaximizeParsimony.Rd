@@ -16,6 +16,7 @@ MaximizeParsimony(
   inapplicable = "bgs",
   hsj_alpha = 1,
   constraint,
+  .negativeConstraint = NULL,
   strategy = "auto",
   maxReplicates = 96L,
   targetHits = NULL,
@@ -114,6 +115,10 @@ returned trees will be perfectly compatible with each character in
 in any output tree.
 Constraint searches are supported natively: all tree rearrangements
 are filtered to respect the constraint topology.}
+
+\item{.negativeConstraint}{Internal.  A splits object (or \code{NULL}) naming
+clades that returned trees must \emph{not} display; used by \code{\link[=Bremer]{Bremer()}} to run
+converse-constraint searches.  Not intended for direct use.}
 
 \item{strategy}{Character: named strategy preset controlling the search
 heuristic parameters. Presets:
@@ -234,6 +239,16 @@ A \code{multiPhylo} object containing the best tree(s) found, with
 attributes:
 \describe{
 \item{\code{score}}{Best parsimony score.}
+\item{\code{scoring}}{A list recording the scoring conditions the score is
+optimal under (\code{concavity}, \code{inapplicable}, ...), so a saved score
+remains interpretable.  \code{\link[=Bremer]{Bremer()}} checks it against its own
+scoring arguments and warns on a mismatch.}
+\item{\code{scores}}{Present only when \code{collapse = FALSE}: a numeric vector of
+the parsimony score of each returned tree, aligned with the returned
+\code{multiPhylo} (the same values are attached as a \code{score} attribute on
+each individual tree).  With \code{poolSuboptimal > 0} this exposes the
+retained suboptimal pool for landscape analysis (see
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, \code{\link[=Suboptimality]{Suboptimality()}}).}
 \item{\code{replicates}}{Number of replicates completed.}
 \item{\code{hits_to_best}}{Number of independent discoveries of the best
 score.}
@@ -362,6 +377,7 @@ Other tree scoring:
 \code{\link[=MinimumLength]{MinimumLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
 \code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}},
 \code{\link[=TaxonInfluence]{TaxonInfluence()}},
 \code{\link[=TreeScore]{TreeScore()}},
 \code{\link[=WideSample]{WideSample()}}
