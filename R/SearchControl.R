@@ -207,7 +207,7 @@
 #'   is found.  Only active when no user-supplied `constraint` is
 #'   present.  Default `FALSE`.
 #' @param transientAutoconst Logical; use TNT-style *transient*
-#'   autoconstraint?  Distinct from the rigid `consensusConstrain`: each
+#'   auto-constraint?  Distinct from the rigid `consensusConstrain`: each
 #'   replicate builds a per-replicate constraint from the strict consensus
 #'   of the previous replicates' pool trees intersected with this
 #'   replicate's own Wagner start, enforces it only over the early pipeline
