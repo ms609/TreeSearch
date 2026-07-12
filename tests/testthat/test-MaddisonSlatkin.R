@@ -204,15 +204,11 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
   # a hang.  So assert completion with finite values (the anti-hang property) and
   # that *some* fallback warning fired, without pinning which guard won the race.
   char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
-  warnings_seen <- character(0)
-  si <- withCallingHandlers(
-    StepInformation(char, n_mc = 1000L),
-    warning = function(w) {
-      warnings_seen <<- c(warnings_seen, conditionMessage(w))
-      invokeRestart("muffleWarning")
-    }
-  )
+  # capture_warnings() evaluates its argument in this frame, so `si` is assigned
+  # here, and it collects every warning without pinning which guard won the race.
+  si <- NULL
+  warningsSeen <- capture_warnings(si <- StepInformation(char, n_mc = 1000L))
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
-  expect_match(paste(warnings_seen, collapse = "\n"), "exceeded")
+  expect_match(paste(warningsSeen, collapse = "\n"), "exceeded")
 })
