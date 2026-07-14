@@ -28,13 +28,15 @@ that matters, and lands the exact scorer opt-in behind a flag.
    applied outside drift's intended drift envelope.
 3. **The exact directional scan is exact here too** (validated:
    `applied_mismatch == 0` on every applied move, reroots included).
-4. **Search-quality effect (30-seed Hamilton matched-wall gate): a frontier
-   CROSSOVER, so land opt-in.** Exact wins the `auto`/wall-race regime on all
-   three (~2.7–3× faster, no time-to-optimum regression) but union wins the
-   `thorough`/saturated regime on 2/3 (its wrongness over-diversifies to a
-   marginally deeper optimum). `TS_DRIFT_EXACT` therefore lands **opt-in**, not
-   as the default. (`spr_search`/`TS_SPR_EXACT` is the opposite — a large
-   unambiguous reach win, no crossover.)
+4. **Search-quality effect (30-seed Hamilton matched-wall gate): exact wins the
+   `auto`/wall-race regime decisively on all three (~2.7–3× faster, no
+   time-to-optimum regression).** The saturated/`thorough` tail is NOT yet
+   resolved: both scorers were nCycles-capped at 256, but exact finishes ~3×
+   faster, so its high-wall frontier point is *censored* (it had unspent budget
+   union used). Exact was still descending at nc128→256, not flat. A discriminating
+   extension (exact+union at nc {512,1024}) is running to settle it. Either way
+   `TS_DRIFT_EXACT` lands **opt-in** (conservative). (`spr_search`/`TS_SPR_EXACT`
+   is the opposite — a large unambiguous reach win, no crossover.)
 
 ## Instrumentation (`TS_DRIFT_SCANCHK`, cf. `TS_IW_SCANCHK`)
 
@@ -190,18 +192,22 @@ seeds:
 | Dikow2009 union | 1608.1 | 1608.1 | 1607.6 | 1607.2 | 1607.1 | 1606.8 | **exact all budgets** |
 | Dikow2009 exact | **1608.0** | **1607.8** | **1607.2** | **1606.9** | **1606.7** | **1606.6** | (no crossover) |
 
-The 30-seed run **confirms the 8-seed pilot**, now with clean monotone gaps
-(no longer sub-noise):
 - **Exact wins the `auto`/wall-race regime on all three** — and by a large wall
   margin (at nc=256: Zanol exact 3.08s vs union 8.28s; Zhu 2.03s vs 6.27s;
   ~2.7–3× faster per matched cycle). No time-to-optimum regression anywhere.
-- **Union wins the `thorough`/saturated regime on 2/3** — exact plateaus (Zhu
-  624.8, Zanol 1261.9) while union climbs past (624.2, 1261.5); crossover at
-  ~1.0–1.6s (Zhu) / ~1.6–3.2s (Zanol). **Dikow: exact dominates every budget.**
+  This is solid and unaffected by the caveat below.
+- **CAVEAT — the saturated (high-W) tail above is confounded by the shared
+  nCycles cap and is NOT a settled result.** Both scorers stop at nc256, but
+  exact runs ~3× faster, so at W=3.2s/6.4s the frontier freezes exact at its
+  nc256 score (~2s of actual work) while union's nc256 spent ~6–8s: the exact
+  curve is *censored*, not plateaued. Exact is in fact still descending
+  nc128→256 (Zhu 624.90→624.80, Zanol 1261.93→1261.87, Dikow 1606.70→1606.60),
+  merely slower than union. So "union wins thorough on 2/3" is unproven from this
+  run. A discriminating extension (exact+union at nc {512,1024}) is running to
+  compare at genuinely matched wall out to ~15s; results appended below.
 - **best-of-30 is equal on all three** (Zhu 624, Zanol 1261, Dikow 1606): both
-  scorers *can* reach the same optimum; the difference is mean reach at matched
-  wall (a reliability effect, not reachability). The saturated-reach edge for
-  union is real but small (0.5–0.6 steps) and confined to the thorough regime.
+  scorers *can* reach the same optimum — a reliability/wall difference, not
+  reachability.
 
 ### spr_search (`TS_SPR_EXACT`) — validated, and a large win (no crossover)
 
@@ -215,18 +221,22 @@ without a full re-score → premature convergence. With nothing to clean it up,
 the fix is an unambiguous reach gain for `spr_search` — a stronger case than
 drift for eventually flipping its default (its own gate still recommended).
 
-## Gate — CLOSED (30-seed Hamilton). Verdict: LAND OPT-IN, do not flip the drift default
+## Gate verdict: LAND OPT-IN. (Saturated-tail question under final check)
 
-The authoritative 30-seed matched-wall gate confirms the crossover: exact wins the
-`auto`/wall-race regime on all three (no time-to-optimum regression, ~2.7–3×
-faster), but union wins the `thorough`/saturated regime on 2/3 (Zhu2013,
-Zanol2014; Dikow shows no crossover). Per the rule (`auto-vs-thorough-objective`:
-the thorough disqualifier is a saturated-reach regression), a scorer that
-regresses saturated reach on 2/3 must not become the global default. **`TS_DRIFT_EXACT`
-lands opt-in** — the better scorer for wall-limited/`auto` searches — while the
-union's productive-wrongness diversification is retained as the default for
-`thorough`. A natural follow-up (not done here): have the `auto`/fast presets
-enable `TS_DRIFT_EXACT` so the objective picks the scorer.
+**Settled:** exact wins the `auto`/wall-race regime decisively on all three
+(no time-to-optimum regression, ~2.7–3× faster). That alone justifies landing
+`TS_DRIFT_EXACT` and — as a follow-up — having the `auto`/fast presets enable it.
+
+**Under check:** whether union has a genuine `thorough`/saturated-reach edge on
+Zhu2013/Zanol2014 is NOT established by the nc≤256 run (exact's tail was censored
+by the shared cap; see caveat above). The nc {512,1024} extension resolves it:
+- if exact stays below union at matched wall → the crossover is real and opt-in
+  is doubly justified (don't flip the default);
+- if exact catches/passes union → there is no thorough regression and a default
+  flip becomes defensible (still gated on the thorough objective and a wall
+  check that the extra `compute_insertion_edge_sets` cost is repaid).
+Either outcome keeps the opt-in landing safe; only the *default-flip*
+recommendation depends on it.
 
 `spr_search` is the opposite case — a large unambiguous reach win, no crossover
 (the union over-count trips the `dominated` gate and prematurely converges, with
