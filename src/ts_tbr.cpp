@@ -1567,6 +1567,23 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   const bool b2_ceiling = std::getenv("TS_B2_CEILING") != nullptr;
   long long n_b2_eval = 0, n_b2_aggr = 0;
 
+  // Lever #6 / L3b (dev/plans/2026-07-14-lever6-incremental-edgeset-land.md):
+  // maintain the directional insertion edge set INCREMENTALLY per clip
+  // (patch-from-full "Scheme 1") instead of the from-scratch O(n_node)
+  // compute_insertion_edge_sets recompute.  Env-gated OFF by default; setting
+  // TS_L3B_INCREMENTAL turns on the incremental path (config C).  With the flag
+  // OFF the search is byte-identical to production (config A) — so C-vs-A is a
+  // pure wall-clock comparison on an identical trajectory (the ship gate).  The
+  // per-clip oracle (equality vs the from-scratch result) fires when
+  // TS_L3B_ORACLE is set OR under an asserts-on (NDEBUG-off) build.
+  const bool l3b_incremental = std::getenv("TS_L3B_INCREMENTAL") != nullptr;
+#ifdef NDEBUG
+  const bool l3b_oracle = std::getenv("TS_L3B_ORACLE") != nullptr;
+#else
+  const bool l3b_oracle = true;
+#endif
+  long long l3b_patch_clips = 0, l3b_changed_sum = 0, l3b_edges_sum = 0;
+
   // Lever #7 (dev/plans/2026-07-14-lever7-scorer-monomorphization.md): the
   // monomorphized plain-EW SPR scan is the DEFAULT path; TS_EW_MONO_OFF reverts
   // to the general per-candidate-dispatch loop (baseline for the byte-identity
@@ -1694,6 +1711,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // not reallocated/zeroed every clip.
   std::vector<uint64_t> edge_set_up;
   std::vector<int> edge_set_pre;
+  // L3b incremental path (lever #6): pristine intact-tree base recomputed once
+  // per pass; the working edge_set_buf/edge_set_up are patched per clip and
+  // restored (memcpy base -> buf over `l3b_changed`) between clips.  Oracle
+  // scratch holds the from-scratch reference for the per-clip equality assert.
+  std::vector<uint64_t> edge_set_base;
+  std::vector<uint64_t> up_base;
+  std::vector<int> l3b_changed;
+  std::vector<int> l3b_worklist;
+  std::vector<uint64_t> l3b_oracle_es, l3b_oracle_up;
+  std::vector<int> l3b_oracle_pre;
 
   TopoSnapshot snap;
   bool keep_going = true;
@@ -1729,6 +1756,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   double reroot_prev = HUGE_VAL;
   bool first_descent = true;
 
+  // L3b incremental edge-set maintenance is valid in the plain directional
+  // regime: EW/IW (use_directional), no NA, no sector / constraint / tabu /
+  // pool, no b2 probe.  The unrooted reroot loop (do_reroot) IS supported: it
+  // still restores the tree to the pass-start base after every clip (so the
+  // per-pass base is valid for all clips), re-roots only BETWEEN passes (base is
+  // recomputed at each pass top), and its root-edge moves use their own buffers
+  // — never edge_set_buf.  do_reroot only relaxes the smaller-side clip filter,
+  // so it exercises larger clips with larger footprints (a wall effect the ship
+  // test measures, not a correctness one).  Every other configuration falls back
+  // to the from-scratch recompute.  Loop-invariant, so evaluated once.
+  const bool l3b_active = l3b_incremental && use_directional
+      && sector_mask == nullptr && cd == nullptr && params.tabu_size == 0
+      && collect_pool == nullptr && !b2_ceiling
+      && tree.n_tip >= 4;
+
   for (;;) {
    keep_going = true;
   while (keep_going && !timed_out) {
@@ -1757,6 +1799,23 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // Recompute subtree sizes (needed for smaller-subtree filtering
     // and for clip ordering strategies)
     compute_subtree_sizes(tree, subtree_sizes);
+
+    // L3b: recompute the pristine intact-tree base edge_set/up ONCE per pass
+    // (the tree is a full binary tree here, restored to this state after every
+    // clip), then seed the working buffers from it.  Each clip patches the
+    // working buffers and restores them (base -> buf over l3b_changed) before
+    // the next clip, so they equal the base at every clip start.  O(n_node) per
+    // pass, negligible against the O(n_node) x n_clips it replaces per clip.
+    if (l3b_active) {
+      compute_insertion_edge_sets(tree, ds, edge_set_base, up_base,
+                                  edge_set_pre);
+      const size_t nbuf = static_cast<size_t>(tree.n_node) * tw;
+      if (edge_set_buf.size() < nbuf) edge_set_buf.resize(nbuf);
+      if (edge_set_up.size() < nbuf) edge_set_up.resize(nbuf);
+      std::memcpy(edge_set_buf.data(), edge_set_base.data(),
+                  nbuf * sizeof(uint64_t));
+      std::memcpy(edge_set_up.data(), up_base.data(), nbuf * sizeof(uint64_t));
+    }
 
     // Optimization #6: only reorder when the previous pass found no
     // improvement. After an accepted move, retry with the same ordering
@@ -1914,8 +1973,40 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // once per clip from the current (clipped) main-tree downpass, then used
       // by both the SPR scan and the rerooting vroot cache below.
       if (use_directional) {
-        compute_insertion_edge_sets(tree, ds, edge_set_buf,
-                                    edge_set_up, edge_set_pre);
+        if (l3b_active) {
+          // L3b: patch the working buffers (== the per-pass intact base at
+          // entry) to this divided tree, touching only the changed frontier.
+          // l3b_changed records touched nodes for the restore after the scan.
+          patch_insertion_edge_sets(tree, ds, nz, ns, up_base,
+                                    edge_set_up, edge_set_buf,
+                                    l3b_changed, l3b_worklist);
+          if (l3b_oracle) {
+            // The incremental result MUST equal a from-scratch recompute for
+            // every node the divided tree reads (its preorder, minus root).
+            // Abort on the first mismatch — trusting a wall number before this
+            // passes is unsafe (the suppress-node transition is the risk).
+            compute_insertion_edge_sets(tree, ds, l3b_oracle_es,
+                                        l3b_oracle_up, l3b_oracle_pre);
+            for (int D : l3b_oracle_pre) {
+              if (D == tree.n_tip) continue;   // root has no edge_set
+              size_t db = static_cast<size_t>(D) * tw;
+              if (std::memcmp(&edge_set_buf[db], &l3b_oracle_es[db],
+                              static_cast<size_t>(tw) * sizeof(uint64_t)) != 0) {
+                Rf_error("L3B-ORACLE mismatch clip=%d nz=%d ns=%d node=%d "
+                         "changed=%d (incremental edge_set != from-scratch)",
+                         clip_node, nz, ns, D,
+                         static_cast<int>(l3b_changed.size()));
+              }
+            }
+            l3b_edges_sum +=
+                static_cast<long long>(l3b_oracle_pre.size()) - 1;
+          }
+          ++l3b_patch_clips;
+          l3b_changed_sum += static_cast<long long>(l3b_changed.size());
+        } else {
+          compute_insertion_edge_sets(tree, ds, edge_set_buf,
+                                      edge_set_up, edge_set_pre);
+        }
       }
 
       collect_main_edges(tree, main_edges);
@@ -2416,6 +2507,24 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         }
       }
 
+      // L3b: restore the working edge_set/up buffers to the per-pass intact base
+      // over exactly the nodes this clip patched, so the next clip starts from
+      // base again.  The changed-node list IS the undo log (no separate save
+      // buffer).  Both buffers are fully consumed by now (SPR scan read
+      // edge_set_buf; the reroot vroot_cache copied its rows), and edge_set_up
+      // must be restored too — the next patch reads ancestor up-messages from it
+      // and assumes off-frontier nodes hold the base value.
+      if (l3b_active) {
+        for (int D : l3b_changed) {
+          size_t db = static_cast<size_t>(D) * tw;
+          std::memcpy(&edge_set_buf[db], &edge_set_base[db],
+                      static_cast<size_t>(tw) * sizeof(uint64_t));
+          std::memcpy(&edge_set_up[db], &up_base[db],
+                      static_cast<size_t>(tw) * sizeof(uint64_t));
+        }
+        l3b_changed.clear();
+      }
+
       // --- Phase 2: Restore original tree, verify best candidate ---
       // Restore states from pre-allocated undo (clip_undo_stack is empty)
       tree.restore_prealloc_undo();
@@ -2792,6 +2901,22 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
              (t_clip_ns + t_spr_ns + t_rer_ns) / 1e6,
              spr_mono_flat_fired, spr_mono_cached_fired, spr_mono_iw_fired,
              (double)n_clips_t);
+  }
+
+  // L3b footprint cross-check: the mean patched-node fraction should track the
+  // fp_ref measured in dev/profiling/l3b-footprint-482.md (a discovery that
+  // over- or under-reaches would diverge).  Reported only when TS_L3B_STATS is
+  // set; l3b_edges_sum is populated only under the oracle.
+  if (l3b_active && l3b_patch_clips > 0 && std::getenv("TS_L3B_STATS")) {
+    double meanChanged = (double)l3b_changed_sum / (double)l3b_patch_clips;
+    double fp = l3b_edges_sum > 0
+        ? (double)l3b_changed_sum / (double)l3b_edges_sum : -1.0;
+    REprintf("[L3B_STATS] patch_clips=%lld mean_changed=%.1f "
+             "mean_edges=%.1f fp_changed=%.3f\n",
+             l3b_patch_clips, meanChanged,
+             l3b_edges_sum > 0 ? (double)l3b_edges_sum / (double)l3b_patch_clips
+                               : -1.0,
+             fp);
   }
 
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,

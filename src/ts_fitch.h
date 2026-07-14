@@ -143,6 +143,26 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
                                  std::vector<uint64_t>& up,
                                  std::vector<int>& pre);
 
+// L3b (lever #6): incremental patch-from-full maintenance of the directional
+// insertion edge set for one clip.  Given the pristine intact-tree base
+// (`up_base`, computed once per pass by compute_insertion_edge_sets on the
+// unclipped tree) and working `up`/`edge_set` buffers that equal the base at
+// entry, patch them to the CURRENT divided (clipped, already-downpassed) tree's
+// values, touching only the changed frontier around the clip.  Every touched
+// node id is appended to `changed`; the caller restores the base for the next
+// clip by memcpy'ing base -> buffer over exactly those ids.  `worklist` is
+// caller-owned scratch (reused across clips).  nz/ns are the clip grandparent /
+// sibling from TreeState::clip_state.  Produces a result byte-identical to
+// compute_insertion_edge_sets for every node the divided tree reads (oracle-
+// asserted per clip).  Gate to the plain directional-EW/IW regime only.
+void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
+                               int nz, int ns,
+                               const std::vector<uint64_t>& up_base,
+                               std::vector<uint64_t>& up,
+                               std::vector<uint64_t>& edge_set,
+                               std::vector<int>& changed,
+                               std::vector<int>& worklist);
+
 // --- Flat EW specializations (skip weight/upweight overhead) ---
 //
 // These use FlatBlock metadata (1 cache line for all blocks) instead of

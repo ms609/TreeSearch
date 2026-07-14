@@ -502,6 +502,26 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
   return extra_steps;
 }
 
+// Fitch combine (per-character intersect-else-union) of state sets `a` and `b`
+// into `dst`, over every block of `ds`.  Factored out of the two
+// compute_insertion_edge_sets combine loops so the incremental patch
+// (patch_insertion_edge_sets, L3b) produces BYTE-IDENTICAL edge_set / up words —
+// the per-clip oracle equality rests on the two paths sharing this one kernel.
+static inline void ts_fitch_combine(uint64_t* dst, const uint64_t* a,
+                                    const uint64_t* b, const DataSet& ds) {
+  const int nb = ds.n_blocks;
+  for (int bi = 0; bi < nb; ++bi) {
+    const CharBlock& blk = ds.blocks[bi];
+    int off = ds.block_word_offset[bi];
+    uint64_t any_isect = 0;
+    for (int s = 0; s < blk.n_states; ++s) any_isect |= a[off + s] & b[off + s];
+    uint64_t needs_union = ~any_isect & blk.active_mask;
+    for (int s = 0; s < blk.n_states; ++s)
+      dst[off + s] = ((a[off + s] & b[off + s]) & any_isect)
+                   | ((a[off + s] | b[off + s]) & needs_union);
+  }
+}
+
 // Exact per-node insertion edge sets via directional Fitch messages.
 // See the header for the formula.  O(n * chars): one preorder up-pass plus one
 // combine per node.
@@ -533,7 +553,6 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
 #endif
   const int n_tip = tree.n_tip;
   const int tw    = tree.total_words;
-  const int nb    = ds.n_blocks;
   const int root  = n_tip;
 
   // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
@@ -567,16 +586,7 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
 
   // Fitch combine (per character intersect-else-union) of a & b into dst.
   auto combine = [&](uint64_t* dst, const uint64_t* a, const uint64_t* b) {
-    for (int bi = 0; bi < nb; ++bi) {
-      const CharBlock& blk = ds.blocks[bi];
-      int off = ds.block_word_offset[bi];
-      uint64_t any_isect = 0;
-      for (int s = 0; s < blk.n_states; ++s) any_isect |= a[off + s] & b[off + s];
-      uint64_t needs_union = ~any_isect & blk.active_mask;
-      for (int s = 0; s < blk.n_states; ++s)
-        dst[off + s] = ((a[off + s] & b[off + s]) & any_isect)
-                     | ((a[off + s] | b[off + s]) & needs_union);
-    }
+    ts_fitch_combine(dst, a, b, ds);
   };
 
   // Directional up-pass: up[D] = combine(up[parent], prelim[sibling]);
@@ -621,6 +631,132 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
            "compute_insertion_edge_sets: in-tree node left unwritten");
   }
 #endif
+}
+
+// --- L3b (lever #6): incremental patch-from-full edge-set maintenance ---
+//
+// compute_insertion_edge_sets recomputes the whole directional up-pass +
+// edge-set combine from scratch for EVERY clip (O(n_node) per clip).  But the
+// TBR clip loop RESTORES the tree to a fixed per-pass base after every clip, so
+// each clip is an independent perturbation of one intact tree.  The divided
+// (clipped) tree's edge_set[] differs from the intact base's only in a small
+// frontier around the clip (mean fp_ref ~0.18 at 482t; dev/profiling/
+// l3b-footprint-482.md).  patch_insertion_edge_sets patches the working
+// up[]/edge_set[] (== the intact base at entry, restored by the caller between
+// clips) to the divided-tree values, touching ONLY that frontier, and appends
+// every touched node id to `changed` (the caller's undo list: memcpy base->buf
+// over `changed` restores the base for the next clip).
+//
+// Correctness rests on: (1) sharing ts_fitch_combine with the from-scratch path
+// (byte-identical words); (2) discovery being value-based (recompute up[D],
+// stop where it equals the base = the combine-attenuation frontier), so it is
+// correct-by-construction and an over-reach only wastes work.  A per-clip oracle
+// (ts_tbr.cpp) asserts the result equals compute_insertion_edge_sets for the
+// full array.
+//
+// nz = clip grandparent (root of the changed-prelim path, from spr_clip), ns =
+// clip sibling (now a child of nz in the divided tree).  Requires: the divided
+// tree already downpassed (tree.prelim current, e.g. fitch_incremental_downpass
+// from nz); up/edge_set == the intact base at entry; up_base = the pristine
+// intact up-messages (kept read-only by the caller for the whole pass).
+void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
+                               int nz, int ns,
+                               const std::vector<uint64_t>& up_base,
+                               std::vector<uint64_t>& up,
+                               std::vector<uint64_t>& edge_set,
+                               std::vector<int>& changed,
+                               std::vector<int>& worklist) {
+  const int n_tip = tree.n_tip;
+  const int root  = n_tip;
+  const int tw    = tree.total_words;
+
+  changed.clear();
+  worklist.clear();
+
+  // Recompute up[D] (divided) in place from the CURRENT (divided) topology and
+  // prelim, reading up[parent] from the working buffer (patched for ancestors
+  // already visited this call, == base otherwise).  Root degree-2 special case:
+  // up[child] = prelim[other child].  Identical to the compute_insertion_edge_
+  // sets up-pass, so a patched value equals the from-scratch value word-for-word.
+  auto recompute_up = [&](int D) {
+    size_t db = static_cast<size_t>(D) * tw;
+    int A   = tree.parent[D];
+    int ai  = A - n_tip;
+    int Sib = (tree.left[ai] == D) ? tree.right[ai] : tree.left[ai];
+    const uint64_t* pS = &tree.prelim[static_cast<size_t>(Sib) * tw];
+    if (A == root) {
+      for (int w = 0; w < tw; ++w) up[db + w] = pS[w];
+    } else {
+      ts_fitch_combine(&up[db], &up[static_cast<size_t>(A) * tw], pS, ds);
+    }
+  };
+
+  // Examine node D whose up-message may have changed: recompute up[D]; if it
+  // differs from the intact base, refresh edge_set[D], record D for undo, and
+  // enqueue it so its children are examined next.  If up[D] is unchanged the
+  // recompute leaves up[D] == base (a benign no-op write) and D's subtree is
+  // left untouched (the attenuation frontier — no further propagation).
+  auto examine = [&](int D) {
+    recompute_up(D);
+    size_t db = static_cast<size_t>(D) * tw;
+    bool diff = false;
+    for (int w = 0; w < tw; ++w)
+      if (up[db + w] != up_base[db + w]) { diff = true; break; }
+    if (!diff) return;
+    ts_fitch_combine(&edge_set[db], &tree.prelim[static_cast<size_t>(D) * tw],
+                     &up[db], ds);
+    changed.push_back(D);
+    worklist.push_back(D);
+  };
+
+  // Phase A: path nodes nz -> root.  Their prelim changed (incremental downpass)
+  // but their up-message is INVARIANT (up[path] depends only on up[ancestor]
+  // (invariant) and prelim[off-path sibling] (unchanged)), so only edge_set[]
+  // needs refreshing = combine(divided prelim[m], base up[m]).  Each path node's
+  // OFF-PATH sibling, in contrast, has up changed (its sibling m's prelim moved),
+  // so it is seeded via examine().  Walking the full path (even past the downpass
+  // early-stop frontier) is safe: unchanged prelim -> base edge_set, unchanged
+  // sibling up -> examine() no-ops.
+  {
+    int m = nz;
+    for (;;) {
+      if (m != root) {
+        size_t mb = static_cast<size_t>(m) * tw;
+        ts_fitch_combine(&edge_set[mb], &tree.prelim[mb], &up_base[mb], ds);
+        changed.push_back(m);
+        int A   = tree.parent[m];
+        int ai  = A - n_tip;
+        int sib = (tree.left[ai] == m) ? tree.right[ai] : tree.left[ai];
+        examine(sib);
+      }
+      if (m == root) break;
+      m = tree.parent[m];
+    }
+  }
+
+  // Phase B: the two children of nz whose up changed by the suppress-node
+  // topology move — ns (newly joined to nz) and W (nz's other child, sibling
+  // changed nx -> ns).  (When nz == root both are handled by the root special
+  // case in recompute_up.)
+  {
+    int nzi = nz - n_tip;
+    int W = (tree.left[nzi] == ns) ? tree.right[nzi] : tree.left[nzi];
+    examine(ns);
+    examine(W);
+  }
+
+  // Phase C: propagate each up-change down its subtree until it attenuates.
+  // FIFO ⇒ a node's parent is patched before the node is examined.  Each in-tree
+  // node has one parent and the seed subtrees are disjoint, so every node is
+  // examined at most once (no visited-set needed).
+  size_t head = 0;
+  while (head < worklist.size()) {
+    int X = worklist[head++];
+    if (X < n_tip) continue;               // tip: no children
+    int xi = X - n_tip;
+    examine(tree.left[xi]);
+    examine(tree.right[xi]);
+  }
 }
 
 
