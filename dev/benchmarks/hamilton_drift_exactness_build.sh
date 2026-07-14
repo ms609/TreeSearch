@@ -17,6 +17,10 @@ module load gcc/14.2
 BRANCH=claude/happy-jennings-e7a165
 LIB=/nobackup/$USER/TreeSearch/lib-driftexact
 REPO=/nobackup/$USER/TreeSearch-driftexact
+# Dependencies (Rcpp, TreeTools, ape, ...) live in the shared TreeSearch/lib;
+# resolve them from there while installing OUR TreeSearch into the dedicated LIB
+# (so we never clobber the shared lib other sessions use).
+export R_LIBS_USER=/nobackup/$USER/TreeSearch/lib
 mkdir -p "$LIB" /nobackup/$USER/TreeSearch/logs
 
 if [ ! -d "$REPO/.git" ]; then

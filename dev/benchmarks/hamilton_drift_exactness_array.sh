@@ -18,6 +18,10 @@ module load r/4.5.1
 module load gcc/14.2
 export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
+# Dependencies + TreeTools come from the shared lib; our TreeSearch is loaded
+# explicitly from LIB via the harness's lib.loc=GATE_LIB (so this shared path
+# resolves deps without shadowing the branch build).
+export R_LIBS_USER=/nobackup/$USER/TreeSearch/lib
 
 LIB=/nobackup/$USER/TreeSearch/lib-driftexact
 REPO=/nobackup/$USER/TreeSearch-driftexact
