@@ -1267,6 +1267,81 @@ static void order_clips(
   }
 }
 
+// --- Lever #7: monomorphized plain-EW SPR candidate scan ---
+//
+// The general SPR loop in tbr_search re-tests, for EVERY candidate, checks that
+// are constant for the whole search: the criterion flavour (has_na / use_iw /
+// all_weight_one) and the search-mode gates (sector_mask / constrained /
+// collapsed / b2_ceiling). This template lifts that dispatch out of the hot
+// loop: it is instantiated ONCE per weight-class at dispatch (a runtime switch
+// in tbr_search selects the instantiation), so the dead-in-plain-EW branches
+// compile away and the compiler picks a specialised kernel.
+//
+// The template is called ONLY in the plain-EW regime (no NA, no IW, no sector /
+// constraint / collapsed / b2), so keeping only the identity skip + scorer +
+// strict-< accept is trajectory-identical to the general loop: the removed
+// branches never fire there, so the candidate sequence, every accept, and the
+// n_evaluated count are BYTE-IDENTICAL. Only the per-candidate instruction
+// count differs.
+//
+// UseFlat is the payoff: the weight-blind flat kernel (fitch_indirect_cached_
+// flat) drops the CharBlock deref + weight-multiply + active_mask==0 skip. It
+// is UNSAFE as a global toggle (weight-blind), but SAFE as a template
+// instantiation because dispatch selects UseFlat=true ONLY for all_weight_one
+// data, where it computes exactly the same extra_steps as the general
+// fitch_indirect_length_cached (verified byte-identical, dev/profiling/
+// s7-fastpath-sizing.md). UseFlat=false (weighted / ratchet upweight) keeps the
+// general scorer, so that path is byte-identical too.
+//
+// Wrong is a positive-control ONLY (env TS_EW_MONO_WRONG): it corrupts the
+// scorer output so a live specialised path provably changes the result,
+// distinguishing "path fired + output used" from a no-op that passes the gate
+// falsely (the false-0% trap documented in s7-fastpath-sizing.md).
+template<bool UseFlat, bool Wrong>
+static inline void spr_scan_plain_ew(
+    const std::vector<std::pair<int,int>>& main_edges,
+    int nz, int ns,
+    const uint64_t* clip_prelim,
+    const std::vector<uint64_t>& edge_set_buf,
+    int tw, const DataSet& ds,
+    double divided_length,
+    double& best_candidate,
+    int& best_above, int& best_below,
+    int& best_reroot_parent, int& best_reroot_child,
+    int& n_evaluated, int& cutoff) {
+  for (auto& [above, below] : main_edges) {
+    if (above == nz && below == ns) continue;
+    const uint64_t* vroot = &edge_set_buf[static_cast<size_t>(below) * tw];
+    int extra;
+    if constexpr (UseFlat) {
+      // Weight-blind flat kernel — safe ONLY because dispatch selects UseFlat
+      // for all_weight_one data, where it returns exactly the same extra_steps
+      // as the general scorer below (verified byte-identical: the accept
+      // decision is identical because a bailed candidate, extra >= cutoff, is
+      // always rejected, and a non-bailed candidate returns the true total).
+      extra = fitch_indirect_cached_flat(clip_prelim, vroot, ds, cutoff);
+    } else {
+      extra = fitch_indirect_length_cached(clip_prelim, vroot, ds, cutoff);
+    }
+    // Positive control only (never in prod): a DATA-DEPENDENT, always->=1
+    // corruption. Unlike a uniform +1 (which preserves intra-SPR ordering and
+    // so only flips SPR-vs-reroot ties), this perturbs each candidate by a
+    // different amount, so it changes the SPR argmin whenever an SPR move can
+    // win — a faithful stand-in for "the flat kernel returns wrong values".
+    if constexpr (Wrong) extra += static_cast<int>(below & 7) + 1;
+    double candidate = divided_length + extra;
+    ++n_evaluated;
+    if (candidate < best_candidate) {
+      best_candidate = candidate;
+      best_above = above;
+      best_below = below;
+      best_reroot_parent = -1;
+      best_reroot_child = -1;
+      cutoff = static_cast<int>(best_candidate - divided_length + 1);
+    }
+  }
+}
+
 // --- Main TBR search ---
 
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
@@ -1406,6 +1481,29 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // scan); its cost hides in VTune's ucrtbase self-time, so a per-clip read is
   // a real, profiler-invisible cost (see findings.md T-P5n).
   const bool use_collapsed = !collapsed.empty();
+  // Lever #7 dispatch gate: the collapsed vector is ALWAYS sized n_node
+  // (compute_collapsed_flags does assign(n_node, 0)), so use_collapsed is true
+  // even for morphological EW where every flag is 0 and the per-candidate
+  // collapsed[below] check never skips. The monomorphized plain-EW scan can
+  // strip that check only when every flag is CURRENTLY 0. Gating on
+  // collapsed_all_zero (not !use_collapsed) is what avoids the false-BASE-vs-
+  // BASE trap that a first A/B hit (dev/profiling/s7-fastpath-sizing.md).
+  //
+  // collapsed IS mutated across clips: compute_collapsed_flags is re-run after
+  // every accepted move (post-accept, and after each root-edge re-descent),
+  // and a new tree can introduce zero-length branches => set flags. So this
+  // bool must be REFRESHED at every recompute, not cached once — else the gate
+  // goes stale, the template wrongly skips the collapsed check, and it
+  // evaluates edges the general loop skips (a byte-identity break the
+  // MaximizeParsimony gate caught on Zhu2013). Cost: an O(n_node) scan per
+  // accept — negligible beside the candidate scan.
+  bool collapsed_all_zero = true;
+  auto refresh_collapsed_all_zero = [&collapsed, &collapsed_all_zero]() {
+    collapsed_all_zero = true;
+    for (size_t ci = 0; ci < collapsed.size(); ++ci)
+      if (collapsed[ci]) { collapsed_all_zero = false; break; }
+  };
+  refresh_collapsed_all_zero();
   const bool revert_check = std::getenv("TS_REVERT_CHECK") != nullptr;
   const bool iw_scanchk = std::getenv("TS_IW_SCANCHK") != nullptr;
   // TS_PHYS_REROOT selects the legacy physical-reroot reference path; it is read
@@ -1419,6 +1517,22 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // realizable regraft saving.  See dev/benchmarks/b2_collapsed_density.R.
   const bool b2_ceiling = std::getenv("TS_B2_CEILING") != nullptr;
   long long n_b2_eval = 0, n_b2_aggr = 0;
+
+  // Lever #7 (dev/plans/2026-07-14-lever7-scorer-monomorphization.md): the
+  // monomorphized plain-EW SPR scan is the DEFAULT path; TS_EW_MONO_OFF reverts
+  // to the general per-candidate-dispatch loop (baseline for the byte-identity
+  // gate + A/B, and a production kill-switch). Exact/byte-identical, so it is
+  // safe as the default. TS_EW_MONO_WRONG selects the corrupted positive-
+  // control instantiation (must DIVERGE — proves the specialised path's output
+  // actually drives the search, not just that a branch was entered).
+  const bool ew_mono = std::getenv("TS_EW_MONO_OFF") == nullptr;
+  const bool ew_mono_wrong = std::getenv("TS_EW_MONO_WRONG") != nullptr;
+  // Positive-control fire counters, split by weight class: proving A fast path
+  // fired is NOT enough (the UseFlat=false path calls the same scorer as
+  // baseline, so it passes the gate trivially). To know the FLAT kernel — the
+  // actual #7 payoff — executed, spr_mono_flat_fired must be nonzero on an
+  // all_weight_one dataset. Reported in the TS_IW_TIMING line.
+  long long spr_mono_flat_fired = 0, spr_mono_cached_fired = 0;
 
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
@@ -1792,6 +1906,40 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       std::chrono::steady_clock::time_point _t_scan;
       long long _e_spr = n_evaluated;
       if (iw_timing) _t_scan = std::chrono::steady_clock::now();
+      // Lever #7 dispatch: in the plain-EW regime EVERY per-candidate branch
+      // below except the identity skip is provably dead, so route to the
+      // monomorphized template (chosen once per weight class). Byte-identical;
+      // ew_mono default ON, TS_EW_MONO_OFF reverts to the general loop.
+      const bool ew_mono_plain = ew_mono && !has_na && !use_iw
+          && sector_mask == nullptr && !constrained && collapsed_all_zero
+          && !b2_ceiling;
+      if (ew_mono_plain) {
+        if (use_flat) {
+          ++spr_mono_flat_fired;
+          if (ew_mono_wrong)
+            spr_scan_plain_ew<true, true>(main_edges, nz, ns, clip_prelim,
+                edge_set_buf, tw, ds, divided_length, best_candidate,
+                best_above, best_below, best_reroot_parent, best_reroot_child,
+                n_evaluated, cutoff);
+          else
+            spr_scan_plain_ew<true, false>(main_edges, nz, ns, clip_prelim,
+                edge_set_buf, tw, ds, divided_length, best_candidate,
+                best_above, best_below, best_reroot_parent, best_reroot_child,
+                n_evaluated, cutoff);
+        } else {
+          ++spr_mono_cached_fired;
+          if (ew_mono_wrong)
+            spr_scan_plain_ew<false, true>(main_edges, nz, ns, clip_prelim,
+                edge_set_buf, tw, ds, divided_length, best_candidate,
+                best_above, best_below, best_reroot_parent, best_reroot_child,
+                n_evaluated, cutoff);
+          else
+            spr_scan_plain_ew<false, false>(main_edges, nz, ns, clip_prelim,
+                edge_set_buf, tw, ds, divided_length, best_candidate,
+                best_above, best_below, best_reroot_parent, best_reroot_child,
+                n_evaluated, cutoff);
+        }
+      } else {
       for (auto& [above, below] : main_edges) {
         if (above == nz && below == ns) continue;
         if (sector_mask && !(*sector_mask)[below]) continue;
@@ -1858,6 +2006,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           cutoff = static_cast<int>(best_candidate - divided_length + 1);
         }
       }
+      }  // end else (general SPR loop; ew_mono_plain template dispatch above)
       if (iw_timing) {
         t_spr_ns += std::chrono::duration_cast<std::chrono::nanoseconds>(
             std::chrono::steady_clock::now() - _t_scan).count();
@@ -2443,6 +2592,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // valid from full_rescore in the accept path above).
         if (!collapsed.empty()) {
           compute_collapsed_flags(tree, ds, collapsed);
+          refresh_collapsed_all_zero();  // lever #7 gate must not go stale
         }
         // Optimization #6: don't reshuffle after acceptance — the topology
         // changed near this clip, so re-trying the same ordering focuses
@@ -2506,6 +2656,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     if (!collapsed.empty()) {
       if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
       else               compute_collapsed_flags(tree, ds, collapsed);
+      refresh_collapsed_all_zero();  // lever #7 gate must not go stale
     }
     continue;                              // re-descend from the improved tree
   }
@@ -2553,12 +2704,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   }
   if (iw_timing) {
     REprintf("IWT regime=%s clips=%.0f clip_us/clip=%.3f | "
-             "SPR n=%.0f %.2fns | REROOT n=%.0f %.2fns | total %.1fms\n",
+             "SPR n=%.0f %.2fns | REROOT n=%.0f %.2fns | total %.1fms | "
+             "sprmono flat=%lld cached=%lld/%.0f\n",
              use_iw ? "IW" : "EW", (double)n_clips_t,
              n_clips_t ? t_clip_ns / 1000.0 / (double)n_clips_t : 0.0,
              (double)n_spr_t, n_spr_t ? (double)t_spr_ns / (double)n_spr_t : 0.0,
              (double)n_rer_t, n_rer_t ? (double)t_rer_ns / (double)n_rer_t : 0.0,
-             (t_clip_ns + t_spr_ns + t_rer_ns) / 1e6);
+             (t_clip_ns + t_spr_ns + t_rer_ns) / 1e6,
+             spr_mono_flat_fired, spr_mono_cached_fired, (double)n_clips_t);
   }
 
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
