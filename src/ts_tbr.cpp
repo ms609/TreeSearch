@@ -1570,13 +1570,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // Lever #6 / L3b (dev/plans/2026-07-14-lever6-incremental-edgeset-land.md):
   // maintain the directional insertion edge set INCREMENTALLY per clip
   // (patch-from-full "Scheme 1") instead of the from-scratch O(n_node)
-  // compute_insertion_edge_sets recompute.  Env-gated OFF by default; setting
-  // TS_L3B_INCREMENTAL turns on the incremental path (config C).  With the flag
-  // OFF the search is byte-identical to production (config A) — so C-vs-A is a
-  // pure wall-clock comparison on an identical trajectory (the ship gate).  The
-  // per-clip oracle (equality vs the from-scratch result) fires when
-  // TS_L3B_ORACLE is set OR under an asserts-on (NDEBUG-off) build.
-  const bool l3b_incremental = std::getenv("TS_L3B_INCREMENTAL") != nullptr;
+  // compute_insertion_edge_sets recompute.  DEFAULT-ON for large trees
+  // (n_tip >= 150): the patch is EXACT (bit-identical trajectory to config A)
+  // and 1.36-1.38x faster on raw large-N TBR, a clean wash in full
+  // MaximizeParsimony (dev/profiling/l3b-land.md).  Kill-switch TS_L3B_OFF
+  // disables it entirely; TS_L3B_INCREMENTAL forces it ON regardless of size
+  // (A/B + small-tree byte-identity testing).  The per-clip oracle (equality
+  // vs the from-scratch result) fires when TS_L3B_ORACLE is set OR asserts-on.
+  const bool l3b_force    = std::getenv("TS_L3B_INCREMENTAL") != nullptr;
+  const bool l3b_disabled = std::getenv("TS_L3B_OFF") != nullptr;
 #ifdef NDEBUG
   const bool l3b_oracle = std::getenv("TS_L3B_ORACLE") != nullptr;
 #else
@@ -1775,7 +1777,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // so it exercises larger clips with larger footprints (a wall effect the ship
   // test measures, not a correctness one).  Every other configuration falls back
   // to the from-scratch recompute.  Loop-invariant, so evaluated once.
-  const bool l3b_active = l3b_incremental && use_directional
+  const bool l3b_active = !l3b_disabled && (l3b_force || tree.n_tip >= 150)
+      && use_directional
       && sector_mask == nullptr && cd == nullptr && params.tabu_size == 0
       && collect_pool == nullptr && !b2_ceiling
       && tree.n_tip >= 4;
