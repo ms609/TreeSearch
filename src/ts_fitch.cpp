@@ -403,15 +403,21 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
   //   Y = final(A) | final(D)
   // Extra steps = count of characters where clip_prelim & Y == 0.
   //
-  // NOTE: this is an APPROXIMATION, not exact.  The union of the two endpoints'
-  // final sets is a superset of the true directional Fitch edge set, so it makes
-  // more states appear "available" on the edge than any most-parsimonious
-  // reconstruction allows — hence it UNDER-counts the true insertion cost (never
-  // over-counts).  The exact cost uses the directional edge set
-  //   edge_set[D] = combine(prelim[D], up[D])   (per-character intersect-else-union)
-  // via compute_insertion_edge_sets() + fitch_indirect_length_cached(); see
-  // ts_fitch.h.  This cheaper union variant is retained for callers (temper) that
-  // rank candidates approximately and then re-score the chosen move exactly.
+  // NOTE: this is an APPROXIMATION, not exact.  final_ here is the simplified
+  // uppass_node up-pass (final(D) = final(anc) & prelim(D) if non-empty, else
+  // prelim(D)), which is a SUBSET of prelim(D) and of the true MPR set.  Hence the
+  // union final(A) | final(D) is a SUBSET of the true directional Fitch edge set
+  //   edge_set[D] = combine(prelim[D], up[D])  = MPR(D),
+  // so it makes FEWER states appear "available" on the edge than a most-
+  // parsimonious reconstruction allows — hence it OVER-counts the true insertion
+  // cost (never under-counts), i.e. it is an UPPER bound, NOT a sound lower bound.
+  // Do NOT use it as a pruning/rejection screen: it can discard genuinely improving
+  // moves.  (The superset/under-count argument would hold only for TRUE MPR finals,
+  // which uppass_node does not compute.)  The exact cost uses the directional edge
+  // set edge_set[D] via compute_insertion_edge_sets() + fitch_indirect_length_cached();
+  // see ts_fitch.h.  This cheaper union variant is retained ONLY for callers (temper)
+  // that rank candidates approximately and then re-score the chosen move exactly.
+  // Proof: dev/red-team/union-of-finals-bound-proof.md.
 
   int extra_steps = 0;
 
