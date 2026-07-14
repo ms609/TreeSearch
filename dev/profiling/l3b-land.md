@@ -177,12 +177,20 @@ score identical in every row):
 | 120 | 3             | 19.03 | 18.81 | 1.01× (wash)       |
 | 240 | 2             | 59.84 | 59.51 | 1.01× (wash)       |
 
-**Both are a wash — even at 240t, where the raw-TBR lever is 1.39×.** The dilution is
-strong: MP's TBR calls (a short initial descent from a good start + many short
-ratchet-recovery passes) amortize the per-pass O(n_node) base recompute far worse
-than my single Wagner→convergence raw measurement (which is dominated by long early
-passes), and the sector ~30% is entirely l3b-off. The raw-TBR win does not survive
-into the production full search at the sizes measured.
+**Both are a wash — even at 240t, where the raw-TBR lever is 1.39×.**
+
+Why (discriminated, not guessed): two hypotheses could explain the wash — (a)
+per-pass base-recompute amortization across ratchet's many short passes, or (b) the
+per-clip win being structurally small in-search because ratchet perturbs to
+higher-homoplasy trees with a larger footprint. The `TS_L3B_STATS` in-search
+`fp_changed` at 240t MP settles it: **0.244** (changed/clip 77.2, edges/clip 316.4) —
+essentially the *clean* 240t footprint (`l3b-footprint-482.md` reports 0.243), so
+(b) is refuted: **the per-clip win is intact.** The culprit is (a) + the sector
+exclusion: sector-off alone predicts ~1.24× (`1/(0.3 + 0.7/1.39)`); the drop from
+1.24× to 1.01× is the per-pass O(n_node) base recompute, which MP's short
+ratchet-recovery passes amortize far worse than my single Wagner→convergence raw
+measurement (dominated by long early passes). So the recompute overhead, not the
+patch, eats the win in the full search.
 
 ## Honest caveats / open items
 
@@ -193,9 +201,13 @@ into the production full search at the sizes measured.
   framing: **this is a large-N raw-TBR wall lever, not (yet) a net mission-wall
   lever.** To make it mission-relevant, in rough priority:
   1. **Incrementally update the base after an accept** instead of the per-pass full
-     `compute_insertion_edge_sets`. The accept mutates only a local region, so an
-     O(footprint) base update would remove the dominant end-to-end overhead (the
-     per-pass O(n_node) recompute) — the single highest-value follow-on.
+     `compute_insertion_edge_sets`. The in-search fp=0.244 measurement confirms the
+     per-clip patch is intact, so this recompute IS the dominant end-to-end overhead;
+     the accept mutates only a local region, so an O(footprint) base update should
+     recover most of the sector-diluted ~1.24× ceiling — the highest-value follow-on.
+     **Caveat: this is itself a correctness-critical kernel** — incremental edge-set
+     maintenance across a *TBR accept* (two dirty prelim paths, nz→root and nx→root,
+     plus possible reroot) is harder than the clip patch and needs its own oracle.
   2. **Gate to large N only** (e.g. n_tip ≥ ~150) so small-N searches, where the win
      is a wash/loss, keep the from-scratch path. Cheap, safe, one line.
   3. **Extend to the sector path** (the ~30% currently excluded) — larger follow-on.
