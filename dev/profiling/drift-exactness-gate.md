@@ -214,17 +214,29 @@ seeds:
   scorers *can* reach the same optimum — a reliability/wall difference, not
   reachability.
 
-### spr_search (`TS_SPR_EXACT`) — validated, and a large win (no crossover)
+### spr_search — PROMOTED to exact default (large win, no crossover)
 
-`spr_search` is a pure hill-climb with no compensating exact-TBR phase. Smoked on
-Zhu2013 (5 seeds, run to convergence): the exact-path returned score equals an
-independent `ts_fitch_score` of the returned tree on all runs (wiring valid), and
-**exact converges far deeper than union** (e.g. 639/631/626/634/630 vs
-810/682/717/690/698). The union over-count inflates `best_candidate` past the
-`dominated` gate (`ts_search.cpp:379`), so improving SPR moves are skipped
-without a full re-score → premature convergence. With nothing to clean it up,
-the fix is an unambiguous reach gain for `spr_search` — a stronger case than
-drift for eventually flipping its default (its own gate still recommended).
+`spr_search` is a pure hill-climb with no compensating exact-TBR phase, so the
+union over-count (inflating `best_candidate` past the `dominated` gate,
+`ts_search.cpp:379`) makes it converge **catastrophically short** with nothing
+to recover. Multistart matched-wall check (25 random starts, run to convergence):
+
+| dataset | union best-of-25 | exact best-of-25 | union wall/start | exact wall/start |
+|---|---|---|---|---|
+| Zhu2013 | 650 | **625** | 0.29s | **0.22s** |
+| Zanol2014 | 1292 | **1265** | 0.41s | **0.32s** |
+
+Union's shortfall (25–70 steps) is a *systematic* premature-convergence floor,
+not variance — union's best-of-many can't approach exact's single-start reach.
+And exact is **faster per start** (cheaper cached scan + cleaner convergence).
+Best-of-starts favours exact at every matched-wall budget; **no crossover**
+(unlike drift — spr_search has no exact-TBR phase to launder union's
+over-diversification into reach). Wiring validated (returned score ==
+independent `ts_fitch_score` on every run). **Landed exact as the DEFAULT**
+(`ts_search.cpp`); `TS_SPR_UNION` restores the old scorer (kill switch). Reach:
+the `sprFirst` warmup is OFF in all presets, so this affects the standalone
+`ts_spr_search` today — but it also makes an SPR warmup *viable*, so
+`sprFirst=TRUE` in a fast preset is now worth its own gate.
 
 ## Gate — CLOSED. Verdict: LAND OPT-IN, do not flip the drift default
 
@@ -242,8 +254,8 @@ diversification stays the default for `thorough`.
 
 `spr_search` is the opposite case — a large unambiguous reach win, no crossover
 (the union over-count trips the `dominated` gate and prematurely converges, with
-no exact-TBR phase to recover). Flipping its default is well-motivated but
-warrants its own matched-wall gate; kept opt-in (`TS_SPR_EXACT`) here.
+no exact-TBR phase to recover). **Promoted to exact default** (kill switch
+`TS_SPR_UNION`); see the spr_search section for the multistart evidence.
 
 The correctness/severity finding (no score leak; two-sided error + optimizer's
 curse) is independent of and unaffected by the gate outcome.

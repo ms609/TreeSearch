@@ -213,15 +213,18 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
-  // TS_SPR_EXACT (read once; std::getenv is ~2.4us on ucrt) routes the pure-EW
-  // SPR scorer to the exact directional edge set instead of the union-of-finals
-  // approximation -- the same fix tbr_search adopted (2b299e4b) and drift's
-  // TS_DRIFT_EXACT.  The union OVER-counts (dev/profiling/exactness-gate.md P2),
-  // inflating best_candidate and so making `dominated` (line ~379) trigger too
-  // readily -- it can only HIDE an improving SPR move (full_rescore verifies
-  // before accept, so no inexact score is ever recorded).  Opt-in; union stays
-  // default until a matched-wall gate clears it.
-  const bool ew_exact = std::getenv("TS_SPR_EXACT") != nullptr;
+  // Pure-EW SPR uses the EXACT directional edge set (like tbr_search, 2b299e4b),
+  // NOT the union-of-finals approximation.  Union OVER-counts, inflating
+  // best_candidate so the `dominated` gate (line ~379) triggers too readily and
+  // HIDES improving moves -- and spr_search is a pure hill-climb with no
+  // exact-TBR phase to recover, so union converges catastrophically short
+  // (Zhu2013 best-of-25 starts 650 vs exact 625; ~25-70 steps, systematic; exact
+  // is also faster per start -- dev/profiling/drift-exactness-gate.md).  So exact
+  // is the DEFAULT here; `TS_SPR_UNION` restores the old union scorer (kill
+  // switch).  Read once (getenv ~2.4us on ucrt).  Only reaches EW spr_search
+  // (NA/IW keep their own scorers below); production use is the sprFirst warmup
+  // (OFF in all presets) + the standalone ts_spr_search binding.
+  const bool ew_exact = std::getenv("TS_SPR_UNION") == nullptr;
   const int tw = tree.total_words;
   const bool ew_path = !has_na && !use_iw;
   const bool need_edge_set = ew_path && ew_exact;
