@@ -11,9 +11,19 @@ An EXACT (bit-identical) incremental replacement for the per-clip from-scratch
 regime. On real project5432 data it delivers a **raw-`tbr_search` wall speedup of
 1.36–1.38× at 482t** (both single-rooting and the production `unrooted` reroot
 config), rising from a wash at ≤75t — exactly the predicted large-N ceiling. Score
-and trajectory are bit-identical to production. **This is a positive ship result**
-for the lever; the remaining open item is the *end-to-end* `MaximizeParsimony` wall
-at the shipped ratchet on Hamilton (diluted by the sector share, which is gated out).
+and trajectory are bit-identical to production; the per-clip oracle is clean on real
+multi-state/ambiguous data including the ratchet `upweight_mask`/`collapsed` context.
+
+**But the end-to-end `MaximizeParsimony` win is a WASH** (measured, 1.01× at both 120t
+and 240t), because the sectorial ~30% of wall is gated out AND ratchet's short passes
+amortize the per-pass O(n_node) base recompute poorly. **So the honest verdict is: an
+exact, correct, large-N *raw-TBR* wall lever that does NOT (as built) translate into a
+net *mission-wall* win** in full `MaximizeParsimony` at the sizes measured. Per the
+spec ("a clean STOP with recorded numbers is a valid result"), this is a recorded
+near-negative on the mission metric: **land default-OFF as a validated building block;
+do NOT flip default-ON.** The unlock is the base-incremental-update follow-on (removes
+the per-pass overhead that eats the win — see caveats). This is the measurement-first
+outcome the spec asked for.
 
 ## Why Scheme 1, not the Euler "Config C" the design doc locked
 
@@ -138,16 +148,62 @@ mission scale — matching the honest ceiling (edge-set machinery ~17 of ~51 ns/
 40→80→160t, tracking `l3b-footprint-482.md`). It holds in the production `unrooted=1`
 config (1.36×).
 
+### End-to-end `MaximizeParsimony` (ratchet + sector + driven) — DILUTED
+
+The raw-`tbr_search` number above is NOT the end-to-end mission wall. Two effects
+dilute it in a full search:
+
+1. **Coverage** (confirmed by `TS_L3B_STATS`): l3b fires in the driven-TBR and
+   **ratchet** phases (ratchet's inner `tbr_search` is l3b-eligible — no
+   sector_mask, `upweight_mask` doesn't gate it). But the **sectorial workhorse
+   (~30% of wall) is gated OUT** (`sector_mask != null`), so ~30% of the search sees
+   no speedup.
+2. **Per-pass base-recompute amortization.** The pristine base is recomputed once
+   per pass = one from-scratch-equivalent (O(n_node)). A pass ends at its first
+   accept (ts_tbr.cpp:2790 `break`), so a pass of k clips nets a win iff
+   **k > 1/(1−fp_ref)** (≈1.2 at 482t fp=0.18, but ≈5 at 75t fp=0.8). Ratchet's
+   short high-fp perturbation-recovery passes (10–40 clips each at 75t, many of them)
+   therefore amortize the O(n_node) base poorly — at small N this can erase the win.
+
+**Oracle re-confirmed in this context** (Zhu2013 EW, ratchet+sector, `TS_L3B_ORACLE`):
+0 mismatches across the whole full-search run — the `upweight_mask`/`collapsed`/
+interleaved-accept contexts my `ts_tbr_diagnostics` validation never hit are clean.
+
+Measured full `MaximizeParsimony` C-vs-A (project5432, EW, deterministic start/seed,
+score identical in every row):
+
+| N   | maxReplicates | A (s) | C (s) | end-to-end speedup |
+|-----|---------------|-------|-------|--------------------|
+| 120 | 3             | 19.03 | 18.81 | 1.01× (wash)       |
+| 240 | 2             | 59.84 | 59.51 | 1.01× (wash)       |
+
+**Both are a wash — even at 240t, where the raw-TBR lever is 1.39×.** The dilution is
+strong: MP's TBR calls (a short initial descent from a good start + many short
+ratchet-recovery passes) amortize the per-pass O(n_node) base recompute far worse
+than my single Wagner→convergence raw measurement (which is dominated by long early
+passes), and the sector ~30% is entirely l3b-off. The raw-TBR win does not survive
+into the production full search at the sizes measured.
+
 ## Honest caveats / open items
 
-- **Raw-`tbr_search`, not end-to-end.** 1.36–1.38× is the speedup of a single TBR
-  search to convergence. In full `MaximizeParsimony` the lever fires only in the
-  non-sector TBR portions (initial TBR + ratchet's full-tree inner search); the
-  **sectorial workhorse (~30% of wall) is gated out** (`sector_mask != null`). So the
-  end-to-end mission speedup is diluted (rough estimate ~1.2× if ~65% of wall is
-  l3b-eligible). **OPEN:** measure full `MaximizeParsimony` C-vs-A at the *shipped*
-  ratchet on the 5432 gradient on Hamilton (heavy — offloaded, not run locally).
-  Extending l3b to the sector path is a distinct, larger follow-on (excluded per spec).
+- **Raw-`tbr_search` win is real; end-to-end is diluted (MEASURED, not estimated).**
+  1.36–1.38× is a single TBR search to convergence. Full `MaximizeParsimony` is a
+  wash at 120t and diluted at scale — see the End-to-end table above and its two
+  causes (sector ~30% gated out; per-pass base-recompute amortization). The honest
+  framing: **this is a large-N raw-TBR wall lever, not (yet) a net mission-wall
+  lever.** To make it mission-relevant, in rough priority:
+  1. **Incrementally update the base after an accept** instead of the per-pass full
+     `compute_insertion_edge_sets`. The accept mutates only a local region, so an
+     O(footprint) base update would remove the dominant end-to-end overhead (the
+     per-pass O(n_node) recompute) — the single highest-value follow-on.
+  2. **Gate to large N only** (e.g. n_tip ≥ ~150) so small-N searches, where the win
+     is a wash/loss, keep the from-scratch path. Cheap, safe, one line.
+  3. **Extend to the sector path** (the ~30% currently excluded) — larger follow-on.
+  - **Hamilton full-search 482t: NOT worth running yet.** The end-to-end wash at
+    120t AND 240t means a full `MaximizeParsimony` 482t run would very likely also be
+    a wash (the dilution is structural, not size-threshold), so the Hamilton deploy
+    cost is not justified until the base-incremental-update (1) lands and re-opens a
+    plausible end-to-end win. Re-run it then, at the shipped ratchet, multi-seed.
 - **Memory:** +2 arrays (`edge_set_base`, `up_base`, each n_node×total_words) beyond
   the existing `edge_set_buf`/`edge_set_up`. Fine at 482t; note for very large N.
 - **Orthogonal to project5432 *reach*** (cold-start basin capture) — a general large-N
