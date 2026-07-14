@@ -6,20 +6,22 @@
 
 ## Headline
 
-Landed the EXACT (byte-identical) per-candidate speedup: the plain-EW SPR candidate scan is now a
-**compile-time monomorphized template** (`spr_scan_plain_ew<UseFlat, Wrong>` in `src/ts_tbr.cpp`),
-dispatched ONCE per weight-class at the scan site. The dead-in-plain-EW per-candidate branches
-(NA / IW / sector_mask / constrained / collapsed / b2_ceiling) compile away, and — the actual payoff —
-the `UseFlat=true` instantiation uses the weight-blind **flat kernel** (`fitch_indirect_cached_flat`),
-which is UNSAFE as a global toggle but SAFE as an instantiation because dispatch selects it ONLY for
-`all_weight_one` data.
+Landed the EXACT (byte-identical) per-candidate speedup: the plain SPR candidate scan is now a
+**compile-time monomorphized template**, dispatched ONCE per criterion flavour at the scan site —
+`spr_scan_plain_ew<UseFlat, Wrong>` for equal-weights and `spr_scan_plain_iw<Wrong>` for implied
+weights (both in `src/ts_tbr.cpp`). The dead-in-that-regime per-candidate branches
+(NA / the other criterion / sector_mask / constrained / collapsed / b2_ceiling) compile away, and — the
+EW payoff — the `UseFlat=true` instantiation uses the weight-blind **flat kernel**
+(`fitch_indirect_cached_flat`), which is UNSAFE as a global toggle but SAFE as an instantiation because
+dispatch selects it ONLY for `all_weight_one` data. IW has no flat analogue (per-pattern weights), so
+its win is the dead-branch strip only.
 
-- **Byte-identity gate: PASSED** (score + `candidates_evaluated` + per-pass `n_candidates_evaluated`),
-  via BOTH `ts_tbr_diagnostics` AND full `MaximizeParsimony`, plus a gold-standard clean-HEAD
-  cross-check and a positive control. **The MaximizeParsimony gate caught a real bug** (below).
-- **Per-candidate SPR win (min-of-runs, direct):** flat kernel **+12–19%** of the SPR scan on
-  unit-weight data; dead-branch strip alone **+6%** on weighted data. Matches the sizing prediction
-  (~17% flat / ~5% strip).
+- **Byte-identity gate: PASSED for BOTH EW and IW** (score + `candidates_evaluated` + per-pass
+  `n_candidates_evaluated`), via `ts_tbr_diagnostics` AND full `MaximizeParsimony`, plus a gold-standard
+  clean-HEAD cross-check and a positive control. **The MaximizeParsimony gate caught a real bug** (below).
+- **Per-candidate SPR win (min-of-runs, direct):** EW flat kernel **+12–19%** of the SPR scan on
+  unit-weight data; EW dead-branch strip **+6%** on weighted; **IW strip +2.7–4.0%** (heavier
+  double-accumulator scorer → smaller branch fraction, no flat bonus). Matches the sizing prediction.
 - **Whole-search:** modest and dataset-dependent — the one resolvable unit-weight run,
   full-`MaximizeParsimony` on Zhu2013, is **+1.3%** (single-descent proxy +2.7%); weighted Zanol2014
   +0.1% (noise). The ~5% is a scan-level ceiling, NOT a whole-search floor, and shrinks at 5432 scale
@@ -29,32 +31,42 @@ which is UNSAFE as a global toggle but SAFE as an instantiation because dispatch
 Default ON (it is exact); kill-switch `TS_EW_MONO_OFF` reverts to the general per-candidate-dispatch
 loop.
 
-## What changed (src/ts_tbr.cpp only; +155/−2)
+## What changed (src/ts_tbr.cpp only; +232/−2)
 
 1. `template<bool UseFlat, bool Wrong> spr_scan_plain_ew(...)` — file-scope, before `tbr_search`.
    Identity-skip + scorer + strict-`<` accept only. `if constexpr (UseFlat)` picks
    `fitch_indirect_cached_flat` (unit-weight) vs `fitch_indirect_length_cached` (general). `Wrong` is a
    positive-control-only corruption.
-2. Dispatch at the SPR scan site: `if (ew_mono_plain) { use_flat ? <flat> : <cached> } else { <verbatim
-   general loop> }`. `ew_mono_plain = ew_mono && !has_na && !use_iw && sector_mask==nullptr &&
-   !constrained && collapsed_all_zero && !b2_ceiling`. The general loop is textually unchanged (baseline
-   integrity — verified by git diff AND a clean-HEAD binary cross-check).
-3. `collapsed_all_zero` gate + `refresh_collapsed_all_zero()` lambda, refreshed at EVERY
+2. `template<bool Wrong> spr_scan_plain_iw(...)` — the IW/XPIWE analogue. Same dead-branch strip, but
+   NO flat variant: implied weights must apply the per-pattern `iw_delta`, so there is no weight-blind
+   kernel to swap in — the win is the ~5%-of-SPR strip only. Scorer + accept reproduced verbatim from
+   the general loop's IW branch (incl. the dead-on-IW `cutoff` update, kept so byte-identity does not
+   rest on a "cutoff is IW-dead" argument).
+3. 3-way dispatch at the SPR scan site: `if (ew_mono_plain) {flat|cached} else if (iw_mono_plain) {iw}
+   else { <verbatim general loop> }`, gated on a shared `mono_plain = ew_mono && !has_na &&
+   sector_mask==nullptr && !constrained && collapsed_all_zero && !b2_ceiling` (then `!use_iw` for EW,
+   `use_iw` for IW). The general loop is textually unchanged (baseline integrity — verified by git diff
+   AND a clean-HEAD binary cross-check).
+4. `collapsed_all_zero` gate + `refresh_collapsed_all_zero()` lambda, refreshed at EVERY
    `compute_collapsed_flags` recompute (see the bug below).
-4. Positive-control machinery: `ew_mono` / `ew_mono_wrong` flags, split fire counters
-   (`spr_mono_flat_fired` / `spr_mono_cached_fired`) surfaced in the `TS_IW_TIMING` line.
+5. Positive-control machinery: `ew_mono` flag (default ON; `TS_EW_MONO_OFF` reverts BOTH EW+IW to the
+   general loop), the compile-gated `ew_mono_wrong`, and split fire counters
+   (`spr_mono_flat_fired` / `spr_mono_cached_fired` / `spr_mono_iw_fired`) in the `TS_IW_TIMING` line.
 
-**Reroot path: no change, by design.** For unit-weight EW the reroot is ALREADY the branch-free x4
-flat kernel (`fitch_indirect_cached_flat_x4`) — the sizing doc measured "nothing to strip" (control
-delta ±2.5% noise). Its residual `has_na` branch is per-batch and well-predicted (~0%). Extracting the
-250-line reroot loop into a template risks byte-identity for ~0% payoff, so it was NOT done; "cover both
-paths" is satisfied honestly — the reroot is already monomorphic for the case that matters.
+**Reroot path: no change, by design (EW and IW).** The reroot is ALREADY x4-batched and branch-free for
+the case that matters: `fitch_indirect_cached_flat_x4` for unit-weight EW, `indirect_iw_cached_flat_x4`
+for IW/XPIWE. The sizing doc measured "nothing to strip" on the EW reroot (control delta ±2.5% noise);
+the reroot control deltas in the IW timing table above (±0.4%, and the −3.0% Dikow outlier) confirm the
+same for IW. The residual per-batch `has_na` branch is well-predicted (~0%). Extracting the ~250-line
+reroot loop into a template risks byte-identity for ~0% payoff, so it was NOT done; "cover both paths"
+is satisfied honestly — the reroot is already monomorphic where it counts, for both criteria.
 
 ## Correctness gate (MANDATORY — passed before any timing)
 
-Scripts (session scratchpad): `s7_gate.R` (ts_tbr_diagnostics + positive control),
-`s7_gate_mp.R` (MaximizeParsimony), `s7_xcheck.R` / `s7_xcheck_mp.R` (clean-HEAD cross-checks),
-`s7_determinism.R`. Datasets Wortley2006 / Zanol2014 / Zhu2013, gaps `-`→`?` (EW), ≥2 seeds.
+Scripts (session scratchpad): `s7_gate.R` (EW ts_tbr_diagnostics + positive control),
+`s7_gate_mp.R` (EW MaximizeParsimony), `s7_gate_iw.R` / `s7_gate_mp_iw.R` (IW analogues, concavity=10),
+`s7_xcheck.R` / `s7_xcheck_mp.R` (clean-HEAD cross-checks), `s7_determinism.R`. Datasets
+Wortley2006 / Zanol2014 / Zhu2013, gaps `-`→`?`, ≥2 seeds (EW) / 3 seeds (IW MP).
 
 - **`ts_tbr_diagnostics` (kernel-level), 6/6 PASS:** `score`, `n_evaluated`, and per-pass
   `n_candidates_evaluated` all exactly `identical()` between BASE (`TS_EW_MONO_OFF=1`) and NEW.
@@ -65,6 +77,13 @@ Scripts (session scratchpad): `s7_gate.R` (ts_tbr_diagnostics + positive control
 - **Gold-standard clean-HEAD cross-check:** a SEPARATE binary built from clean `f5894837` (`.agent-base`,
   no toggle) vs the templated binary, both at their DEFAULTS — byte-identical for BOTH
   `ts_tbr_diagnostics` and `MaximizeParsimony`. Rules out a symmetric perturbation of the general loop.
+- **IW/XPIWE gate (`s7_gate_iw.R`, concavity=10), byte-identical:** `ts_tbr_diagnostics` **6/6** (IW
+  scores are doubles — identical to full precision — plus `n_evaluated` + per-pass) and
+  `MaximizeParsimony` (XPIWE) **9/9** (3 seeds × 3 sets: `candidates_evaluated`, per-replicate scores,
+  best, `n_topologies` all identical). The IW template fired 100% of clips (`iw=764/1563/1173`,
+  `flat=0 cached=0`, `regime=IW`), and the compile-gated wrong IW instantiation DIVERGES on the flagged
+  build (Wortley 30.04→29.84, Zanol 64.54→64.92, Zhu 47.22→47.72). **EW regression re-checked 6/6 PASS**
+  after the 3-way dispatch refactor.
 - **Positive control (replicated per spec, strengthened):** split fire counters prove the FLAT
   instantiation actually executed — `flat=450/450` (Wortley), `flat=803/803` (Zhu), `cached=1220/1220`
   (Zanol); i.e. Wortley2006 AND Zhu2013 are `all_weight_one` and drive `UseFlat=true`. A deliberately-
@@ -112,12 +131,26 @@ Script: `s7_timing.R` + `parse_timing2.R`.
 | Zanol2014 (74)  | weighted → cached (strip)  | 19.35 | 18.10 | **+6.0%**  | +0.5% | 18% |
 | Dikow2009 (88)  | weighted → cached (strip)  | 23.07 | 21.93 | **+5.8%**  | −0.9% | 21% |
 
-- SPR-specific = SPR raw delta − REROOT control delta. The two weight classes match the sizing
+IW (concavity=10, `s7_timing_iw.R` — all datasets go through `spr_scan_plain_iw`; strip-only, no flat):
+
+| Dataset (n_tip) | BASE SPR ns | NEW SPR ns | SPR-specific | REROOT ctrl | SPR share of scan |
+|---|---|---|---|---|---|
+| Zhu2013 (75)    | 38.38 | 36.87 | **+4.0%** | −0.0% | 15% |
+| Wortley2006 (74)| 36.75 | 35.30 | **+3.5%** | +0.4% | 35% |
+| Zanol2014 (74)  | 50.57 | 49.19 | **+2.7%** | +0.1% | 21% |
+| Dikow2009 (88)  | 54.27 | 54.90 | +1.8% (within −3.0% control noise) | −3.0% | 24% |
+
+- SPR-specific = SPR raw delta − REROOT control delta. For **EW** the two weight classes match the sizing
   prediction: the dead-branch strip alone recovers ~5% of SPR (weighted: Zanol +6.0%, Dikow +5.8%),
   and adding the flat kernel roughly triples that to ~13–19% (unit-weight: Zhu +18.6%, Wortley +12.5%).
   The clean WITHIN-dataset flat-vs-strip comparison is the sizing doc's Zhu2013 figures (−6.5% strip →
   −17.4% flat); the unit-vs-weighted rows above differ by dataset too, so read them as "flat-eligible
   vs strip-only," not a controlled flat/strip contrast.
+- **IW** SPR-specific is +2.7–4.0% (Dikow +1.8% is within its own control noise) — the strip only, as
+  predicted (no flat kernel possible). It is SMALLER than EW's ~5–6% strip because the IW
+  double-accumulator scorer is ~2.5–4× heavier per candidate (BASE SPR 38–54 ns vs EW's 14–23 ns), so
+  the FIXED branch cost is a smaller fraction of it. IW/XPIWE is the production default, so this is a
+  real (if small, exact) win on the common path; whole-scan(timed) ~0.6–1.7%.
 - **Single-descent whole-call** (a full `ts_tbr_diagnostics` descent, min of 12×40 loops, `s7_wall.R`):
   Zhu2013 **+2.7%** — an UPPER proxy (one plain-EW TBR descent, the regime where the flat kernel fires
   most).

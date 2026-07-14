@@ -1344,6 +1344,53 @@ static inline void spr_scan_plain_ew(
   }
 }
 
+// Monomorphized plain-IW SPR candidate scan (lever #7, IW/XPIWE analogue of
+// spr_scan_plain_ew). Same dead-branch strip (no NA / no EW / no sector /
+// constraint / collapsed / b2), dispatched once at the scan site for a pure-IW
+// (has_na=false, use_iw=true) search. There is NO flat-kernel bonus here: the
+// implied-weights scorer must apply the per-pattern concavity weights (iw_delta)
+// on every candidate, so — unlike EW — there is no weight-blind variant to swap
+// in. The win is only the ~5%-of-SPR dead-branch strip, on a heavier
+// double-accumulator scorer, so it is smaller than the EW-flat win.
+//
+// Byte-identical to the general loop's IW branch: the scorer
+// (indirect_iw_length_cached, bounding on best_candidate) and the accept block
+// are reproduced verbatim — including the `cutoff` update, which is dead on the
+// IW path (the IW reroot bounds on best_candidate, never cutoff) but is kept
+// line-for-line so byte-identity does not rest on a "cutoff is IW-dead"
+// argument. Wrong is the compile-gated positive control (see spr_scan_plain_ew).
+template<bool Wrong>
+static inline void spr_scan_plain_iw(
+    const std::vector<std::pair<int,int>>& main_edges,
+    int nz, int ns,
+    const uint64_t* clip_prelim,
+    const std::vector<uint64_t>& edge_set_buf,
+    int tw, const DataSet& ds,
+    double base_iw,
+    const std::vector<double>& iw_delta,
+    double divided_length,
+    double& best_candidate,
+    int& best_above, int& best_below,
+    int& best_reroot_parent, int& best_reroot_child,
+    int& n_evaluated, int& cutoff) {
+  for (auto& [above, below] : main_edges) {
+    if (above == nz && below == ns) continue;
+    double candidate = indirect_iw_length_cached(
+        clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
+        ds, base_iw, iw_delta, best_candidate);
+    if constexpr (Wrong) candidate += static_cast<double>((below & 7) + 1);
+    ++n_evaluated;
+    if (candidate < best_candidate) {
+      best_candidate = candidate;
+      best_above = above;
+      best_below = below;
+      best_reroot_parent = -1;
+      best_reroot_child = -1;
+      cutoff = static_cast<int>(best_candidate - divided_length + 1);
+    }
+  }
+}
+
 // --- Main TBR search ---
 
 TBRResult tbr_search(TreeState& tree, const DataSet& ds,
@@ -1539,7 +1586,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // baseline, so it passes the gate trivially). To know the FLAT kernel — the
   // actual #7 payoff — executed, spr_mono_flat_fired must be nonzero on an
   // all_weight_one dataset. Reported in the TS_IW_TIMING line.
-  long long spr_mono_flat_fired = 0, spr_mono_cached_fired = 0;
+  long long spr_mono_flat_fired = 0, spr_mono_cached_fired = 0, spr_mono_iw_fired = 0;
 
   std::vector<std::pair<int,int>> main_edges;
   std::vector<std::pair<int,int>> sub_edges;
@@ -1913,13 +1960,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       std::chrono::steady_clock::time_point _t_scan;
       long long _e_spr = n_evaluated;
       if (iw_timing) _t_scan = std::chrono::steady_clock::now();
-      // Lever #7 dispatch: in the plain-EW regime EVERY per-candidate branch
-      // below except the identity skip is provably dead, so route to the
-      // monomorphized template (chosen once per weight class). Byte-identical;
-      // ew_mono default ON, TS_EW_MONO_OFF reverts to the general loop.
-      const bool ew_mono_plain = ew_mono && !has_na && !use_iw
+      // Lever #7 dispatch: in the "plain" regime (no NA, no sector / constraint
+      // / collapsed / b2) EVERY per-candidate branch below except the identity
+      // skip is provably dead, so route to the monomorphized template chosen
+      // once by criterion flavour — EW (with the flat-kernel weight-class split)
+      // or IW/XPIWE (strip-only, no flat variant). Byte-identical; ew_mono
+      // default ON, TS_EW_MONO_OFF reverts to the general loop for BOTH.
+      const bool mono_plain = ew_mono && !has_na
           && sector_mask == nullptr && !constrained && collapsed_all_zero
           && !b2_ceiling;
+      const bool ew_mono_plain = mono_plain && !use_iw;
+      const bool iw_mono_plain = mono_plain && use_iw;
       if (ew_mono_plain) {
         if (use_flat) {
           ++spr_mono_flat_fired;
@@ -1950,6 +2001,20 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 best_above, best_below, best_reroot_parent, best_reroot_child,
                 n_evaluated, cutoff);
         }
+      } else if (iw_mono_plain) {
+        ++spr_mono_iw_fired;
+#ifdef TS_EW_MONO_WRONG
+        if (ew_mono_wrong)
+          spr_scan_plain_iw<true>(main_edges, nz, ns, clip_prelim, edge_set_buf,
+              tw, ds, base_iw, iw_delta, divided_length, best_candidate,
+              best_above, best_below, best_reroot_parent, best_reroot_child,
+              n_evaluated, cutoff);
+        else
+#endif
+          spr_scan_plain_iw<false>(main_edges, nz, ns, clip_prelim, edge_set_buf,
+              tw, ds, base_iw, iw_delta, divided_length, best_candidate,
+              best_above, best_below, best_reroot_parent, best_reroot_child,
+              n_evaluated, cutoff);
       } else {
       for (auto& [above, below] : main_edges) {
         if (above == nz && below == ns) continue;
@@ -2716,13 +2781,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   if (iw_timing) {
     REprintf("IWT regime=%s clips=%.0f clip_us/clip=%.3f | "
              "SPR n=%.0f %.2fns | REROOT n=%.0f %.2fns | total %.1fms | "
-             "sprmono flat=%lld cached=%lld/%.0f\n",
+             "sprmono flat=%lld cached=%lld iw=%lld/%.0f\n",
              use_iw ? "IW" : "EW", (double)n_clips_t,
              n_clips_t ? t_clip_ns / 1000.0 / (double)n_clips_t : 0.0,
              (double)n_spr_t, n_spr_t ? (double)t_spr_ns / (double)n_spr_t : 0.0,
              (double)n_rer_t, n_rer_t ? (double)t_rer_ns / (double)n_rer_t : 0.0,
              (t_clip_ns + t_spr_ns + t_rer_ns) / 1e6,
-             spr_mono_flat_fired, spr_mono_cached_fired, (double)n_clips_t);
+             spr_mono_flat_fired, spr_mono_cached_fired, spr_mono_iw_fired,
+             (double)n_clips_t);
   }
 
   return TBRResult{best_score, n_accepted, n_evaluated, n_zero_skipped,
