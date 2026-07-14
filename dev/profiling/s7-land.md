@@ -20,10 +20,11 @@ which is UNSAFE as a global toggle but SAFE as an instantiation because dispatch
 - **Per-candidate SPR win (min-of-runs, direct):** flat kernel **+12–19%** of the SPR scan on
   unit-weight data; dead-branch strip alone **+6%** on weighted data. Matches the sizing prediction
   (~17% flat / ~5% strip).
-- **Whole-search:** modest and dataset-dependent — full-`MaximizeParsimony` wall **+1.3%** on Zhu2013
-  (single-descent proxy +2.7%); ~1–2% unit-weight, sub-1% weighted; the ~5% is a scan-level ceiling not
-  a whole-search floor, and shrinks at 5432 scale (fixed cost / growing gather). **We take the 5% where
-  we find it.** Orthogonal to 5432 reach — does NOT change which trees are found.
+- **Whole-search:** modest and dataset-dependent — the one resolvable unit-weight run,
+  full-`MaximizeParsimony` on Zhu2013, is **+1.3%** (single-descent proxy +2.7%); weighted Zanol2014
+  +0.1% (noise). The ~5% is a scan-level ceiling, NOT a whole-search floor, and shrinks at 5432 scale
+  (fixed cost / growing gather). **We take the 5% where we find it.** Orthogonal to 5432 reach — does
+  NOT change which trees are found.
 
 Default ON (it is exact); kill-switch `TS_EW_MONO_OFF` reverts to the general per-candidate-dispatch
 loop.
@@ -88,9 +89,16 @@ root-edge re-descent) — a new tree can introduce zero-length branches that set
 did, the stale gate let the template skip the collapsed check while the general loop's
 `if (use_collapsed && collapsed[below]) continue;` still fired → the template evaluated edges the
 general loop skipped (NEW's +40, "evaluated more"). Fix: `refresh_collapsed_all_zero()` at every
-recompute site. After the fix, all 6 MaximizeParsimony runs are byte-identical including Zhu2013/seed202
-(262689659==262689659). `ts_tbr_diagnostics` never hit this (single descent, few/no zero-length
-branches) — exactly the regime the spec warns the kernel oracle can't reach.
+recompute site. After the fix, all 18 MaximizeParsimony runs (6 seeds) are byte-identical including
+Zhu2013/seed202 (262689659==262689659). `ts_tbr_diagnostics` never hit this (single descent, few/no
+zero-length branches) — exactly the regime the spec warns the kernel oracle can't reach.
+
+The fix is structurally complete, not a patch of one instance: `collapsed_all_zero` is the ONLY
+per-clip-mutable input to the `ew_mono_plain` gate. Every other input (`ew_mono`, `has_na`, `use_iw`,
+`sector_mask`, `constrained`, `b2_ceiling`, and the `use_flat` weight-class sub-branch) is computed once
+and constant for the whole `tbr_search` call — the reroot path reads the SAME once-computed `use_flat`,
+so SPR and reroot cannot diverge on weight class. `collapsed` was uniquely dangerous because it is a
+vector recomputed mid-search; refreshing the bool at every recompute closes the entire staleness class.
 
 ## Measurement (per-candidate ns, TS_IW_TIMING chrono, single-thread, min-of-runs, 20 reps)
 
@@ -118,10 +126,10 @@ Script: `s7_timing.R` + `parse_timing2.R`.
   than the single-descent proxy, as expected: the ratchet (upweight → cached, not flat), sectorial, and
   enumeration phases don't hit the flat SPR path, diluting the win. Zanol2014 (weighted, cached path
   only): **+0.1%** (22.83s → 22.80s, within run-to-run noise, as expected for a strip-only 18%-share
-  SPR). Wortley2006's full-MP converges in ~0.27s (too short to resolve above timer noise). So the
-  honest whole-search figure is
-  **~1–2% on unit-weight, sub-1% weighted** — a modest, EXACT lever; the ~5% is a scan-level ceiling,
-  not a whole-search floor, and it shrinks further at 5432 scale (fixed cost / growing gather).
+  SPR). Wortley2006's full-MP converges in ~0.27s (too short to resolve above timer noise). So the one
+  meaningfully-resolvable whole-search number is **+1.3% (Zhu, unit-weight)**, with weighted sub-1% —
+  a modest, EXACT lever; the ~5% is a scan-level ceiling, not a whole-search floor, and it shrinks
+  further at 5432 scale (fixed cost / growing gather).
 
 ## Honest framing
 
