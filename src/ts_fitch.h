@@ -163,6 +163,24 @@ void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
                                std::vector<int>& changed,
                                std::vector<int>& worklist);
 
+// L3b base-incremental-update: after an accepted SPR move (subtree at clip_node,
+// parent nx, sibling ns, grandparent nz, relocated to edge (above, below)),
+// patch the per-pass intact base (up_base / edge_set_base) from the pre-move to
+// the post-move tree in place, touching only the changed frontier — instead of a
+// full O(n_node) compute_insertion_edge_sets recompute.  Requires the post-move
+// tree already downpassed (tree.prelim current, e.g. fitch_dirty_downpass(nz,nx)).
+// Every touched node id is appended to `changed` (caller syncs the working
+// buffers over them).  `worklist`/`tmp` are caller-owned scratch (tmp >=
+// total_words).  SPR only (reroot_parent < 0); caller falls back to a full
+// recompute otherwise.  Oracle-asserted vs a from-scratch recompute per call.
+void update_base_after_spr_move(const TreeState& tree, const DataSet& ds,
+                                int nz, int nx, int ns, int above, int below,
+                                std::vector<uint64_t>& up_base,
+                                std::vector<uint64_t>& edge_set_base,
+                                std::vector<int>& changed,
+                                std::vector<int>& worklist,
+                                std::vector<uint64_t>& tmp);
+
 // --- Flat EW specializations (skip weight/upweight overhead) ---
 //
 // These use FlatBlock metadata (1 cache line for all blocks) instead of

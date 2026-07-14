@@ -15,14 +15,16 @@ and trajectory are bit-identical to production; the per-clip oracle is clean on 
 multi-state/ambiguous data including the ratchet `upweight_mask`/`collapsed` context.
 
 **But the end-to-end `MaximizeParsimony` win is a WASH** (measured, 1.01× at both 120t
-and 240t), because the sectorial ~30% of wall is gated out AND ratchet's short passes
-amortize the per-pass O(n_node) base recompute poorly. **So the honest verdict is: an
-exact, correct, large-N *raw-TBR* wall lever that does NOT (as built) translate into a
-net *mission-wall* win** in full `MaximizeParsimony` at the sizes measured. Per the
-spec ("a clean STOP with recorded numbers is a valid result"), this is a recorded
-near-negative on the mission metric: **land default-OFF as a validated building block;
-do NOT flip default-ON.** The unlock is the base-incremental-update follow-on (removes
-the per-pass overhead that eats the win — see caveats). This is the measurement-first
+and 240t), because the sectorial ~30% of wall is gated out AND `MaximizeParsimony`'s
+TBR is dominated by short ratchet-recovery passes with too few clips/pass for the
+per-clip patch to pay. **The base-incremental-update follow-on was built, validated,
+and measured** (§ below): it is exact and removes the per-pass recompute — which
+converts plain-l3b's small MP *regression* into a clean wash — **but it does not
+produce a net MP win**, proving the base recompute was not the bottleneck. **So the
+honest verdict is: an exact, correct, large-N *raw-TBR* wall lever that does NOT
+translate into a net *mission-wall* win** in full `MaximizeParsimony`. Per the spec
+("a clean STOP with recorded numbers is a valid result"): **land default-OFF as a
+validated building block; do NOT flip default-ON.** This is the measurement-first
 outcome the spec asked for.
 
 ## Why Scheme 1, not the Euler "Config C" the design doc locked
@@ -192,30 +194,61 @@ ratchet-recovery passes amortize far worse than my single Wagner→convergence r
 measurement (dominated by long early passes). So the recompute overhead, not the
 patch, eats the win in the full search.
 
+### Base-incremental-update follow-on (BUILT + measured — does not unlock the win)
+
+Hypothesis (from the fp=0.244 discrimination): the per-pass O(n_node)
+`compute_insertion_edge_sets` base recompute is the fixed cost that eats the win in
+accept-dense passes; replace it with an O(footprint) update after each accept and the
+wash should flip to ~1.1–1.2× (sector-limited ceiling ~1.24×). Built
+`update_base_after_spr_move` (src/ts_fitch.cpp) — patches `up_base`/`edge_set_base`
+in place across an SPR accept (the move decomposes into a remove-leg at `nz` + a
+single-site insert-leg at `above`; `nx` gets a *fresh* up, so A1-path up is
+recomputed, not assumed invariant — the advisor's warning, and the first version's
+oracle-caught bug was exactly the root-child seed). Gated: SPR accepts only, TBR-reroot
+accepts + reroots + first pass fall back to full recompute; kill switch
+`TS_L3B_NOBASEINCR`. **Correctness:** the base oracle (base == from-scratch after every
+SPR accept) is clean across EW+IW `tbr_oracle` (to 120t×18) and full ratchet
+`MaximizeParsimony` on real Zhu2013/Zanol2014.
+
+Measured (project5432, EW, deterministic; score identical everywhere):
+
+| N   | A (s) | C, +base-incr | C, l3b only (no base-incr) |
+|-----|-------|---------------|----------------------------|
+| 120 | 18.95 | 18.80 (1.01×) | 18.86 (1.00×)              |
+| 240 | 61.37 | 61.16 (1.00×) | 61.76 (**0.99× — regresses**) |
+
+Raw `tbr_search` 482t stays **1.39×** (base-incr slightly helps the accept-burst); raw
+37t stays 0.97× (unchanged — tiny-N clip overhead, few accepts).
+
+**Reading:** base-incr does exactly what it should — it removes the per-pass recompute,
+which turns plain-l3b's small MP *regression* (0.99× at 240t) into a clean wash
+(1.00×). But it produces **no net win**, so the base recompute was *not* the
+bottleneck. The real cause of the MP wash is structural: `MaximizeParsimony`'s TBR is
+mostly short ratchet-recovery passes (few clips/pass ⇒ little aggregate per-clip
+saving), and the sector ~30% is excluded. base-incr's lasting value is defensive — it
+makes l3b "wash-or-better" in MP (removes the regression risk), and preserves the raw
+large-N win — not a mission-wall lever. **STOP** per the advisor's gate (fp intact +
+fixed-cost removed + still no win ⇒ the fixed cost wasn't the whole story).
+
 ## Honest caveats / open items
 
-- **Raw-`tbr_search` win is real; end-to-end is diluted (MEASURED, not estimated).**
-  1.36–1.38× is a single TBR search to convergence. Full `MaximizeParsimony` is a
-  wash at 120t and diluted at scale — see the End-to-end table above and its two
-  causes (sector ~30% gated out; per-pass base-recompute amortization). The honest
-  framing: **this is a large-N raw-TBR wall lever, not (yet) a net mission-wall
-  lever.** To make it mission-relevant, in rough priority:
-  1. **Incrementally update the base after an accept** instead of the per-pass full
-     `compute_insertion_edge_sets`. The in-search fp=0.244 measurement confirms the
-     per-clip patch is intact, so this recompute IS the dominant end-to-end overhead;
-     the accept mutates only a local region, so an O(footprint) base update should
-     recover most of the sector-diluted ~1.24× ceiling — the highest-value follow-on.
-     **Caveat: this is itself a correctness-critical kernel** — incremental edge-set
-     maintenance across a *TBR accept* (two dirty prelim paths, nz→root and nx→root,
-     plus possible reroot) is harder than the clip patch and needs its own oracle.
-  2. **Gate to large N only** (e.g. n_tip ≥ ~150) so small-N searches, where the win
-     is a wash/loss, keep the from-scratch path. Cheap, safe, one line.
-  3. **Extend to the sector path** (the ~30% currently excluded) — larger follow-on.
-  - **Hamilton full-search 482t: NOT worth running yet.** The end-to-end wash at
-    120t AND 240t means a full `MaximizeParsimony` 482t run would very likely also be
-    a wash (the dilution is structural, not size-threshold), so the Hamilton deploy
-    cost is not justified until the base-incremental-update (1) lands and re-opens a
-    plausible end-to-end win. Re-run it then, at the shipped ratchet, multi-seed.
+- **Raw-`tbr_search` win is real; end-to-end is a wash (MEASURED).** 1.36–1.39× is a
+  single TBR search to convergence; full `MaximizeParsimony` is a wash at 120t AND
+  240t (both tables above). The base-incremental-update follow-on — the hypothesised
+  unlock — was built + validated + measured: it removes the per-pass recompute (turning
+  plain-l3b's small MP regression into a wash) but yields no net win, so the recompute
+  was NOT the bottleneck. **This is a large-N raw-TBR wall lever, not a net mission-wall
+  lever.** What remains (diminishing returns, secondary):
+  1. **Extend to the sector path** (the ~30% currently excluded) — but the now-known
+     dominant cause is MP's short-pass TBR profile, which the sector path shares, so
+     limited upside.
+  2. **Gate to large N** (n_tip ≥ ~150) IF ever default-on — belt-and-braces against
+     the tiny-N raw 0.97×; unnecessary at the MP level (base-incr already makes MP a
+     wash, not a regression).
+  - **Hamilton full-search 482t: NOT worth running.** The end-to-end wash is structural
+    (short-pass TBR profile + sector exclusion), unchanged by base-incr, and holds at
+    both 120t and 240t — a 482t full-search run would be a wash too, not worth the
+    deploy.
 - **Memory:** +2 arrays (`edge_set_base`, `up_base`, each n_node×total_words) beyond
   the existing `edge_set_buf`/`edge_set_up`. Fine at 482t; note for very large N.
 - **Orthogonal to project5432 *reach*** (cold-start basin capture) — a general large-N
@@ -231,11 +264,15 @@ TS_L3B_INCREMENTAL=1 TS_L3B_ORACLE=1 Rscript dev/benchmarks/tbr_oracle.R 150 12
 TS_L3B_INCREMENTAL=1 TS_L3B_ORACLE=1 Rscript dev/benchmarks/tbr_oracle_iw.R 80 12 3
 # wall + footprint: see scratchpad real_wall.R / fp_one.R (TS_L3B_STATS=1 for fp_changed).
 ```
-Flags: `TS_L3B_INCREMENTAL` (on), `TS_L3B_ORACLE` (per-clip assert; auto in asserts-on
-builds), `TS_L3B_STATS` (mean patched-node fraction, oracle-populated).
+Flags: `TS_L3B_INCREMENTAL` (on), `TS_L3B_ORACLE` (per-clip + per-accept base assert;
+auto in asserts-on builds), `TS_L3B_STATS` (mean patched-node fraction,
+oracle-populated), `TS_L3B_NOBASEINCR` (disable the base-incremental-update follow-on).
 
 ## Files (worktree branch `claude/lever6-edgeset`, NOT pushed)
 
-- `src/ts_fitch.cpp` — `ts_fitch_combine` (factored), `patch_insertion_edge_sets`.
-- `src/ts_fitch.h` — declaration.
-- `src/ts_tbr.cpp` — `l3b_active` gate, per-pass base, per-clip patch + oracle + restore, stats.
+- `src/ts_fitch.cpp` — `ts_fitch_combine` (factored), `patch_insertion_edge_sets`,
+  `update_base_after_spr_move` (base-incr follow-on).
+- `src/ts_fitch.h` — declarations.
+- `src/ts_tbr.cpp` — `l3b_active` gate, per-pass base (skipped when `l3b_base_current`),
+  per-clip patch + oracle + restore, accept-time base-incr update + base oracle + buf
+  sync, stats.

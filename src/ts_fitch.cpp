@@ -2,6 +2,7 @@
 #include "ts_hsj.h"
 #include "ts_sankoff.h"
 #include <vector>
+#include <algorithm>
 #include <cassert>
 #include <R.h>
 #ifdef TS_AUDIT_PROBE
@@ -753,6 +754,122 @@ void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
   while (head < worklist.size()) {
     int X = worklist[head++];
     if (X < n_tip) continue;               // tip: no children
+    int xi = X - n_tip;
+    examine(tree.left[xi]);
+    examine(tree.right[xi]);
+  }
+}
+
+// --- L3b base-incremental-update: refresh the per-pass intact base after an
+// accepted SPR move, instead of the full O(n_node) compute_insertion_edge_sets ---
+//
+// The per-pass base recompute is the fixed per-pass overhead that drowns the
+// clip-patch win in accept-dense (ratchet) passes (dev/profiling/l3b-land.md).
+// An accepted SPR move mutates the tree only locally: the subtree at clip_node
+// (parent nx, sibling ns, grandparent nz) relocates to edge (above, below), so
+// tree.prelim changed only on nz->root and nx->root (exactly what the accept's
+// fitch_dirty_downpass(nz,nx) already recomputed).  This patches up_base /
+// edge_set_base from the PRE-move tree (T0) to the POST-move tree (T1),
+// touching only the changed frontier, and records touched nodes in `changed`
+// (the caller syncs the working buffers over them).  Correct-by-construction +
+// value-based attenuation, like patch_insertion_edge_sets; oracle-asserted vs a
+// from-scratch recompute after each call.
+//
+// Decomposition (advisor): T1 = (T0 with the subtree clipped = a remove-leg at
+// nz) + (one regraft insertion = an insert-leg at above).  Unlike the clip, the
+// insert-leg's up is NOT invariant on its path: nx is EFFECTIVELY a fresh node
+// (its context changed wholesale) and `above` gains a new-sibling child, so the
+// A1 path nodes here have their up RECOMPUTED (not assumed invariant).  Runs
+// only for SPR accepts (reroot_parent < 0 / == clip_node); the caller falls back
+// to a full recompute for TBR-reroot accepts, reroots, and the first pass.
+//
+// tmp is caller-owned scratch (>= total_words).  NO O(n_node) work: A1 is the
+// two rootward paths (O(depth)), merged top-down in O(|A1|).
+void update_base_after_spr_move(const TreeState& tree, const DataSet& ds,
+                                int nz, int nx, int ns, int above, int below,
+                                std::vector<uint64_t>& up_base,
+                                std::vector<uint64_t>& edge_set_base,
+                                std::vector<int>& changed,
+                                std::vector<int>& worklist,
+                                std::vector<uint64_t>& tmp) {
+  const int n_tip = tree.n_tip;
+  const int root  = n_tip;
+  const int tw    = tree.total_words;
+  (void)nx; (void)ns; (void)above; (void)below;  // topology read via tree (T1)
+
+  changed.clear();
+  worklist.clear();
+  if (static_cast<int>(tmp.size()) < tw) tmp.resize(tw);
+
+  // Recompute up[D] (T1) into dst, reading up[parent] from up_base (already
+  // updated for A1 ancestors; == base for clean nodes).  Root degree-2 special.
+  auto recompute_up = [&](int D, uint64_t* dst) {
+    int A   = tree.parent[D];
+    int ai  = A - n_tip;
+    int Sib = (tree.left[ai] == D) ? tree.right[ai] : tree.left[ai];
+    const uint64_t* pS = &tree.prelim[static_cast<size_t>(Sib) * tw];
+    if (A == root) {
+      for (int w = 0; w < tw; ++w) dst[w] = pS[w];
+    } else {
+      ts_fitch_combine(dst, &up_base[static_cast<size_t>(A) * tw], pS, ds);
+    }
+  };
+
+  // Examine a node whose up MIGHT have changed (worklist propagation): recompute
+  // into tmp, compare to the OLD up_base (read-before-write — up_base is being
+  // mutated in place), and on change write up_base + edge_set_base, record, and
+  // enqueue.  Stops at the attenuation frontier (recompute == old).
+  auto examine = [&](int D) {
+    recompute_up(D, tmp.data());
+    size_t db = static_cast<size_t>(D) * tw;
+    bool diff = false;
+    for (int w = 0; w < tw; ++w)
+      if (tmp[w] != up_base[db + w]) { diff = true; break; }
+    if (!diff) return;
+    for (int w = 0; w < tw; ++w) up_base[db + w] = tmp[w];
+    ts_fitch_combine(&edge_set_base[db], &tree.prelim[static_cast<size_t>(D) * tw],
+                     &up_base[db], ds);
+    changed.push_back(D);
+    worklist.push_back(D);
+  };
+
+  // Collect A1 = (nz->root) UNION (nx->root) in T1, top-down (root-first) with no
+  // O(n_node) marker: gather each path bottom-up, then merge the shared root-ward
+  // prefix once.  `ordered` = common-prefix (root..merge) + nz-tail + nx-tail.
+  std::vector<int> nzUp, nxUp, ordered;
+  for (int m = nz; ; m = tree.parent[m]) { nzUp.push_back(m); if (m == root) break; }
+  for (int m = nx; ; m = tree.parent[m]) { nxUp.push_back(m); if (m == root) break; }
+  std::reverse(nzUp.begin(), nzUp.end());   // top-down: root .. nz
+  std::reverse(nxUp.begin(), nxUp.end());   // top-down: root .. nx
+  size_t k = 0;
+  while (k < nzUp.size() && k < nxUp.size() && nzUp[k] == nxUp[k]) ++k;
+  ordered.insert(ordered.end(), nzUp.begin(), nzUp.begin() + k);   // shared prefix
+  ordered.insert(ordered.end(), nzUp.begin() + k, nzUp.end());     // nz tail
+  ordered.insert(ordered.end(), nxUp.begin() + k, nxUp.end());     // nx tail
+
+  // A1 nodes: prelim changed => edge_set changes; up may ALSO change (insert-leg
+  // is not up-invariant), so recompute up top-down.  Record + enqueue children.
+  // The root itself has no up/edge_set, but MUST still be enqueued: its children
+  // read the OTHER root child's prelim (root degree-2 special), which changed, so
+  // a root child's up can change and must be examined.
+  for (int m : ordered) {
+    if (m != root) {
+      size_t mb = static_cast<size_t>(m) * tw;
+      recompute_up(m, tmp.data());
+      for (int w = 0; w < tw; ++w) up_base[mb + w] = tmp[w];
+      ts_fitch_combine(&edge_set_base[mb], &tree.prelim[mb], &up_base[mb], ds);
+      changed.push_back(m);
+    }
+    if (m >= n_tip) worklist.push_back(m);  // enqueue for child propagation
+  }
+
+  // Propagate down each A1 node's subtree (off-path siblings, relocated subtree,
+  // nz's new child ns, above's new sibling) until up attenuates.  examine()
+  // re-visiting an already-set A1 node is a benign no-op (recompute == current).
+  size_t head = 0;
+  while (head < worklist.size()) {
+    int X = worklist[head++];
+    if (X < n_tip) continue;
     int xi = X - n_tip;
     examine(tree.left[xi]);
     examine(tree.right[xi]);

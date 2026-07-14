@@ -1721,6 +1721,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   std::vector<int> l3b_worklist;
   std::vector<uint64_t> l3b_oracle_es, l3b_oracle_up;
   std::vector<int> l3b_oracle_pre;
+  // Base-incremental-update (dev/profiling/l3b-land.md follow-on): after an
+  // accepted SPR move, patch the base in place instead of the per-pass full
+  // recompute.  base_current == "base + working buffers already reflect the
+  // current tree" — set true after a successful incremental update, false on
+  // first entry / after a reroot / after a TBR-reroot (non-SPR) accept, forcing
+  // a full recompute at the next pass top.  Kill switch TS_L3B_NOBASEINCR.
+  std::vector<uint64_t> l3b_base_tmp;
+  bool l3b_base_current = false;
+  const bool l3b_baseincr = std::getenv("TS_L3B_NOBASEINCR") == nullptr;
 
   TopoSnapshot snap;
   bool keep_going = true;
@@ -1773,6 +1782,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
   for (;;) {
    keep_going = true;
+   // L3b: the tree is (re)established here — first entry, or re-rooted at the
+   // end of the previous outer iteration (do_reroot).  Either invalidates the
+   // incremental base, so force a full recompute at the first inner pass.
+   l3b_base_current = false;
   while (keep_going && !timed_out) {
     keep_going = false;
 
@@ -1800,13 +1813,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // and for clip ordering strategies)
     compute_subtree_sizes(tree, subtree_sizes);
 
-    // L3b: recompute the pristine intact-tree base edge_set/up ONCE per pass
+    // L3b: establish the pristine intact-tree base edge_set/up for this pass
     // (the tree is a full binary tree here, restored to this state after every
     // clip), then seed the working buffers from it.  Each clip patches the
     // working buffers and restores them (base -> buf over l3b_changed) before
-    // the next clip, so they equal the base at every clip start.  O(n_node) per
-    // pass, negligible against the O(n_node) x n_clips it replaces per clip.
-    if (l3b_active) {
+    // the next clip, so they equal the base at every clip start.  When
+    // l3b_base_current the base + buffers were already brought current by the
+    // accept-time incremental update (base-incr follow-on), so the O(n_node)
+    // full recompute + memcpy is skipped — this is what removes the per-pass
+    // fixed cost that drowned the clip-patch win in accept-dense passes.
+    if (l3b_active && !l3b_base_current) {
       compute_insertion_edge_sets(tree, ds, edge_set_base, up_base,
                                   edge_set_pre);
       const size_t nbuf = static_cast<size_t>(tree.n_node) * tw;
@@ -1815,6 +1831,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       std::memcpy(edge_set_buf.data(), edge_set_base.data(),
                   nbuf * sizeof(uint64_t));
       std::memcpy(edge_set_up.data(), up_base.data(), nbuf * sizeof(uint64_t));
+      l3b_base_current = true;
     }
 
     // Optimization #6: only reorder when the previous pass found no
@@ -2783,6 +2800,51 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // changed near this clip, so re-trying the same ordering focuses
         // on the productive region.
         need_shuffle = false;
+
+        // L3b base-incremental-update: bring the base + working buffers current
+        // for the post-move tree WITHOUT the per-pass full recompute (the fixed
+        // cost that drowned the clip-patch win in accept-dense passes).  prelim
+        // is coherent here (the accept path ran dirty passes or full_rescore).
+        // SPR moves only (local relocation of the clip subtree); TBR-reroot
+        // accepts leave base_current false → full recompute at the next pass.
+        if (l3b_active) {
+          const bool spr_move =
+              (best_reroot_parent < 0 || best_reroot_parent == clip_node);
+          if (l3b_baseincr && spr_move) {
+            update_base_after_spr_move(tree, ds, nz, nx, ns,
+                best_above, best_below, up_base, edge_set_base,
+                l3b_changed, l3b_worklist, l3b_base_tmp);
+            if (l3b_oracle) {
+              // The incrementally-updated base MUST equal a from-scratch
+              // recompute of the post-move tree, full array.  Abort on mismatch.
+              compute_insertion_edge_sets(tree, ds, l3b_oracle_es,
+                                          l3b_oracle_up, l3b_oracle_pre);
+              for (int D : l3b_oracle_pre) {
+                if (D == tree.n_tip) continue;
+                size_t db = static_cast<size_t>(D) * tw;
+                if (std::memcmp(&edge_set_base[db], &l3b_oracle_es[db],
+                        static_cast<size_t>(tw) * sizeof(uint64_t)) != 0) {
+                  Rf_error("L3B-BASE-ORACLE mismatch clip=%d nz=%d nx=%d "
+                           "above=%d below=%d node=%d (base != from-scratch)",
+                           clip_node, nz, nx, best_above, best_below, D);
+                }
+              }
+            }
+            // Sync the working buffers to the updated base over the touched
+            // nodes (buf == the OLD base after this clip's restore above).
+            for (int D : l3b_changed) {
+              size_t db = static_cast<size_t>(D) * tw;
+              std::memcpy(&edge_set_buf[db], &edge_set_base[db],
+                          static_cast<size_t>(tw) * sizeof(uint64_t));
+              std::memcpy(&edge_set_up[db], &up_base[db],
+                          static_cast<size_t>(tw) * sizeof(uint64_t));
+            }
+            l3b_base_current = true;
+          } else {
+            l3b_base_current = false;   // TBR-reroot accept → full recompute
+          }
+        }
+
         if (params.max_accepted_changes > 0
             && n_accepted >= params.max_accepted_changes) {
           keep_going = false;
