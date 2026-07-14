@@ -2753,7 +2753,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   reroot_tip = (reroot_tip + 1) % tree.n_tip;
   best_score = full_rescore(tree, ds);   // root-invariant; refreshes states
   score_fresh = true;
-  if (!collapsed.empty()) compute_collapsed_flags(tree, ds, collapsed);
+  if (!collapsed.empty()) {
+    compute_collapsed_flags(tree, ds, collapsed);
+    refresh_collapsed_all_zero();  // lever #7 gate must not go stale (legacy reroot)
+  }
   }  // end outer reroot for(;;)
 
   tree.prealloc_undo = nullptr;

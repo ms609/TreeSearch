@@ -119,6 +119,16 @@ and constant for the whole `tbr_search` call — the reroot path reads the SAME 
 so SPR and reroot cannot diverge on weight class. `collapsed` was uniquely dangerous because it is a
 vector recomputed mid-search; refreshing the bool at every recompute closes the entire staleness class.
 
+**Follow-up (supervisor review, 2026-07-14).** An independent review found the "every recompute site"
+claim was ONE site short: the LEGACY physical-reroot path (`TS_PHYS_REROOT=1`, `src/ts_tbr.cpp` ~2756)
+recomputed `collapsed` WITHOUT the `refresh_collapsed_all_zero()` that the default fast-reroot (2735)
+and accepted-move (2671) sites carry. The gap is LATENT — default `phys_reroot=false` never runs that
+branch, and NEW==BASE stayed byte-identical on Zhu2013 seeds 101/202 even under `TS_PHYS_REROOT=1`
+(1.08–1.22B candidates; a physical reroot did not flip `collapsed_all_zero` on those cases) — but it
+broke the pattern and could diverge on data where a reroot flips a non-root-child zero-length branch.
+Fixed by adding the same refresh at 2756; re-verified byte-identical on the default path AND under
+`TS_PHYS_REROOT=1`. The staleness class is now genuinely closed at all THREE collapsed-recompute sites.
+
 ## Measurement (per-candidate ns, TS_IW_TIMING chrono, single-thread, min-of-runs, 20 reps)
 
 Panel recoded `-`→`?` (EW). BASE = cached general loop; NEW = template. REROOT is the untouched control.
