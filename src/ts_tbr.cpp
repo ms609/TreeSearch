@@ -1293,10 +1293,12 @@ static void order_clips(
 // s7-fastpath-sizing.md). UseFlat=false (weighted / ratchet upweight) keeps the
 // general scorer, so that path is byte-identical too.
 //
-// Wrong is a positive-control ONLY (env TS_EW_MONO_WRONG): it corrupts the
-// scorer output so a live specialised path provably changes the result,
-// distinguishing "path fired + output used" from a no-op that passes the gate
-// falsely (the false-0% trap documented in s7-fastpath-sizing.md).
+// Wrong is a positive-control ONLY: the <..,true> instantiations are emitted
+// solely under -DTS_EW_MONO_WRONG (see the dispatch), so a production binary
+// has NO code path — and no env var — that can corrupt the scorer. Under that
+// build flag it corrupts the output so a live specialised path provably changes
+// the result, distinguishing "path fired + output used" from a no-op that
+// passes the gate falsely (the false-0% trap documented in s7-fastpath-sizing).
 template<bool UseFlat, bool Wrong>
 static inline void spr_scan_plain_ew(
     const std::vector<std::pair<int,int>>& main_edges,
@@ -1522,11 +1524,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // monomorphized plain-EW SPR scan is the DEFAULT path; TS_EW_MONO_OFF reverts
   // to the general per-candidate-dispatch loop (baseline for the byte-identity
   // gate + A/B, and a production kill-switch). Exact/byte-identical, so it is
-  // safe as the default. TS_EW_MONO_WRONG selects the corrupted positive-
-  // control instantiation (must DIVERGE — proves the specialised path's output
-  // actually drives the search, not just that a branch was entered).
+  // safe as the default.
   const bool ew_mono = std::getenv("TS_EW_MONO_OFF") == nullptr;
+#ifdef TS_EW_MONO_WRONG
+  // Positive-control build only (compile-time gated so there is NO env-var
+  // path to a corrupted scorer in a production binary — the same discipline as
+  // the removed TS_EW_MONO_ASSERT probe). Rebuild with -DTS_EW_MONO_WRONG in
+  // PKG_CPPFLAGS, then TS_EW_MONO_WRONG=1 selects the corrupted instantiation
+  // (must DIVERGE — proves the specialised path's output drives the search).
   const bool ew_mono_wrong = std::getenv("TS_EW_MONO_WRONG") != nullptr;
+#endif
   // Positive-control fire counters, split by weight class: proving A fast path
   // fired is NOT enough (the UseFlat=false path calls the same scorer as
   // baseline, so it passes the gate trivially). To know the FLAT kernel — the
@@ -1916,24 +1923,28 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       if (ew_mono_plain) {
         if (use_flat) {
           ++spr_mono_flat_fired;
+#ifdef TS_EW_MONO_WRONG
           if (ew_mono_wrong)
             spr_scan_plain_ew<true, true>(main_edges, nz, ns, clip_prelim,
                 edge_set_buf, tw, ds, divided_length, best_candidate,
                 best_above, best_below, best_reroot_parent, best_reroot_child,
                 n_evaluated, cutoff);
           else
+#endif
             spr_scan_plain_ew<true, false>(main_edges, nz, ns, clip_prelim,
                 edge_set_buf, tw, ds, divided_length, best_candidate,
                 best_above, best_below, best_reroot_parent, best_reroot_child,
                 n_evaluated, cutoff);
         } else {
           ++spr_mono_cached_fired;
+#ifdef TS_EW_MONO_WRONG
           if (ew_mono_wrong)
             spr_scan_plain_ew<false, true>(main_edges, nz, ns, clip_prelim,
                 edge_set_buf, tw, ds, divided_length, best_candidate,
                 best_above, best_below, best_reroot_parent, best_reroot_child,
                 n_evaluated, cutoff);
           else
+#endif
             spr_scan_plain_ew<false, false>(main_edges, nz, ns, clip_prelim,
                 edge_set_buf, tw, ds, divided_length, best_candidate,
                 best_above, best_below, best_reroot_parent, best_reroot_child,

@@ -20,9 +20,10 @@ which is UNSAFE as a global toggle but SAFE as an instantiation because dispatch
 - **Per-candidate SPR win (min-of-runs, direct):** flat kernel **+12–19%** of the SPR scan on
   unit-weight data; dead-branch strip alone **+6%** on weighted data. Matches the sizing prediction
   (~17% flat / ~5% strip).
-- **Whole-search:** modest and dataset-dependent — Zhu2013 whole-call wall **+2.7%**; honest ceiling
-  ~5% on unit-weight, ~1% on weighted, shrinking at 5432 scale (fixed cost / growing gather). **We take
-  the 5%.** Orthogonal to 5432 reach — does NOT change which trees are found.
+- **Whole-search:** modest and dataset-dependent — full-`MaximizeParsimony` wall **+1.3%** on Zhu2013
+  (single-descent proxy +2.7%); ~1–2% unit-weight, sub-1% weighted; the ~5% is a scan-level ceiling not
+  a whole-search floor, and shrinks at 5432 scale (fixed cost / growing gather). **We take the 5% where
+  we find it.** Orthogonal to 5432 reach — does NOT change which trees are found.
 
 Default ON (it is exact); kill-switch `TS_EW_MONO_OFF` reverts to the general per-candidate-dispatch
 loop.
@@ -56,17 +57,22 @@ Scripts (session scratchpad): `s7_gate.R` (ts_tbr_diagnostics + positive control
 
 - **`ts_tbr_diagnostics` (kernel-level), 6/6 PASS:** `score`, `n_evaluated`, and per-pass
   `n_candidates_evaluated` all exactly `identical()` between BASE (`TS_EW_MONO_OFF=1`) and NEW.
-- **`MaximizeParsimony` (ratchet `use_flat=false` + sector regimes), 6/6 PASS:** `candidates_evaluated`,
-  per-replicate scores, best score, and `n_topologies` all identical.
+- **`MaximizeParsimony` (ratchet `use_flat=false` + sector regimes), 18/18 PASS (6 seeds × 3 sets):**
+  `candidates_evaluated`, per-replicate scores, best score, and `n_topologies` all identical. Extended
+  from 2 to 6 seeds specifically to confirm the collapsed fix is not seed-luck (the bug below first
+  surfaced on 1 of 2 seeds).
 - **Gold-standard clean-HEAD cross-check:** a SEPARATE binary built from clean `f5894837` (`.agent-base`,
   no toggle) vs the templated binary, both at their DEFAULTS — byte-identical for BOTH
   `ts_tbr_diagnostics` and `MaximizeParsimony`. Rules out a symmetric perturbation of the general loop.
 - **Positive control (replicated per spec, strengthened):** split fire counters prove the FLAT
   instantiation actually executed — `flat=450/450` (Wortley), `flat=803/803` (Zhu), `cached=1220/1220`
   (Zanol); i.e. Wortley2006 AND Zhu2013 are `all_weight_one` and drive `UseFlat=true`. A deliberately-
-  wrong instantiation (`TS_EW_MONO_WRONG`, data-dependent always-≥1 corruption) DIVERGES on all three
-  (flat and cached), proving the specialised path's output drives the search — not a no-op that passes
-  the gate falsely (the false-0% trap from the sizing doc).
+  wrong instantiation (data-dependent always-≥1 corruption) DIVERGES on all three (flat and cached),
+  proving the specialised path's output drives the search — not a no-op that passes the gate falsely
+  (the false-0% trap from the sizing doc). The wrong instantiations are emitted ONLY under a compile
+  flag (`-DTS_EW_MONO_WRONG`), so a PRODUCTION binary has no env-var path to a corrupted scorer:
+  verified that `TS_EW_MONO_WRONG=1` is INERT on the default build, and the divergence reproduces only
+  on a flag-built binary (`.agent-wrong`).
 - **Determinism control:** `MaximizeParsimony` at `nThreads=1` + fixed seed is reproducible run-to-run
   (BASE==BASE, NEW==NEW) — so a BASE-vs-NEW difference is a real signal, not noise.
 - **Targeted testthat (extra net, default-ON build):** 383 assertions across `test-ts-tbr-search`,
@@ -98,13 +104,24 @@ Script: `s7_timing.R` + `parse_timing2.R`.
 | Zanol2014 (74)  | weighted → cached (strip)  | 19.35 | 18.10 | **+6.0%**  | +0.5% | 18% |
 | Dikow2009 (88)  | weighted → cached (strip)  | 23.07 | 21.93 | **+5.8%**  | −0.9% | 21% |
 
-- SPR-specific = SPR raw delta − REROOT control delta. The flat kernel roughly triples the strip-only
-  win on unit-weight data (+18.6% vs +6.0%), exactly the sizing prediction (~17% flat vs ~5% strip).
-- **Whole-call wall-clock** (a full `ts_tbr_diagnostics` descent, min of 12×40 loops, `s7_wall.R`):
-  Zhu2013 **+2.7%**; Wortley2006 / Zanol2014 within timer noise (both fast; the weighted strip on an
-  18%-share SPR is ~1%, sub-resolution). The whole call dilutes the SPR win with non-scan overhead
-  (full_rescore, per-clip precompute), so ~2–4% whole-search on unit-weight, ~1% weighted — consistent
-  with the spec's ~5% ceiling.
+- SPR-specific = SPR raw delta − REROOT control delta. The two weight classes match the sizing
+  prediction: the dead-branch strip alone recovers ~5% of SPR (weighted: Zanol +6.0%, Dikow +5.8%),
+  and adding the flat kernel roughly triples that to ~13–19% (unit-weight: Zhu +18.6%, Wortley +12.5%).
+  The clean WITHIN-dataset flat-vs-strip comparison is the sizing doc's Zhu2013 figures (−6.5% strip →
+  −17.4% flat); the unit-vs-weighted rows above differ by dataset too, so read them as "flat-eligible
+  vs strip-only," not a controlled flat/strip contrast.
+- **Single-descent whole-call** (a full `ts_tbr_diagnostics` descent, min of 12×40 loops, `s7_wall.R`):
+  Zhu2013 **+2.7%** — an UPPER proxy (one plain-EW TBR descent, the regime where the flat kernel fires
+  most).
+- **Faithful whole-search** (a full `MaximizeParsimony` run — ratchet + sector + drift + fuse +
+  enumeration — min-of-runs, `nThreads=1`, `s7_wall_mp.R`): **Zhu2013 +1.3%** (18.8s → 18.5s). Lower
+  than the single-descent proxy, as expected: the ratchet (upweight → cached, not flat), sectorial, and
+  enumeration phases don't hit the flat SPR path, diluting the win. Zanol2014 (weighted, cached path
+  only): **+0.1%** (22.83s → 22.80s, within run-to-run noise, as expected for a strip-only 18%-share
+  SPR). Wortley2006's full-MP converges in ~0.27s (too short to resolve above timer noise). So the
+  honest whole-search figure is
+  **~1–2% on unit-weight, sub-1% weighted** — a modest, EXACT lever; the ~5% is a scan-level ceiling,
+  not a whole-search floor, and it shrinks further at 5432 scale (fixed cost / growing gather).
 
 ## Honest framing
 
