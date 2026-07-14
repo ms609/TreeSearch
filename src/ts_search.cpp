@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
+#include <cstdlib>
 #include <random>
 #include <vector>
 
@@ -212,6 +213,21 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
+  // TS_SPR_EXACT (read once; std::getenv is ~2.4us on ucrt) routes the pure-EW
+  // SPR scorer to the exact directional edge set instead of the union-of-finals
+  // approximation -- the same fix tbr_search adopted (2b299e4b) and drift's
+  // TS_DRIFT_EXACT.  The union OVER-counts (dev/profiling/exactness-gate.md P2),
+  // inflating best_candidate and so making `dominated` (line ~379) trigger too
+  // readily -- it can only HIDE an improving SPR move (full_rescore verifies
+  // before accept, so no inexact score is ever recorded).  Opt-in; union stays
+  // default until a matched-wall gate clears it.
+  const bool ew_exact = std::getenv("TS_SPR_EXACT") != nullptr;
+  const int tw = tree.total_words;
+  const bool ew_path = !has_na && !use_iw;
+  const bool need_edge_set = ew_path && ew_exact;
+  std::vector<uint64_t> edge_set_buf, edge_set_up;
+  std::vector<int> edge_set_pre;
+
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -306,6 +322,13 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
         divided_length = best_score + delta - nx_cost;
       }
 
+      // Exact directional insertion edge sets for the pure-EW path (mirrors
+      // ts_tbr.cpp:1749); indexed by `below` in the candidate scan below.
+      if (need_edge_set) {
+        compute_insertion_edge_sets(tree, ds, edge_set_buf,
+                                    edge_set_up, edge_set_pre);
+      }
+
       const uint64_t* clip_prelim =
           &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words];
 
@@ -362,8 +385,12 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
           int cutoff = (best_candidate < HUGE_VAL)
               ? static_cast<int>(best_candidate - divided_length + 1)
               : INT_MAX;
-          int extra = fitch_indirect_length_bounded(
-              clip_prelim, tree, ds, above, below, cutoff);
+          int extra = ew_exact
+              ? fitch_indirect_length_cached(
+                    clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
+                    ds, cutoff)
+              : fitch_indirect_length_bounded(
+                    clip_prelim, tree, ds, above, below, cutoff);
           candidate_score = divided_length + extra;
         }
         ++n_iterations;

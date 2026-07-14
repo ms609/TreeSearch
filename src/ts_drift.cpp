@@ -9,12 +9,54 @@
 #include <vector>
 #include <climits>
 #include <cmath>
+#include <cstdlib>
 
 #include <Rcpp.h>
 #include <R.h>
 #include <Rinternals.h>
 
 namespace ts {
+
+// Scan-accuracy census for the pure-EW drift candidate scorer (env
+// TS_DRIFT_SCANCHK).  Quantifies how far the deployed union-of-finals
+// approximation (fitch_indirect_length_bounded, reads the incrementally
+// maintained tree.final_) diverges from the EXACT directional insertion cost
+// (fitch_indirect_length_cached over compute_insertion_edge_sets), the same
+// exact quantity tbr_search migrated to in 2b299e4b.
+//
+// The union error is TWO-SIDED on the deployed path (empirically): it both
+// over- and under-counts by up to tens of steps -- NOT the strict over-count
+// the exactness gate measured with FRESH finals (dev/profiling/exactness-gate.md
+// P2).  The decision-relevant harm comes from the UNDER-counts via an
+// optimizer's-curse effect: selecting argmin over (divided_length + u_cost)
+// preferentially picks candidates whose u_cost < e_cost (the moves the estimator
+// is most optimistic about), so the SELECTED move's error is biased negative --
+// a truly-expensive move can look cheap, pass the AFD gate, and be applied
+// outside drift's intended drift envelope.  The exact scan (error == 0) has no
+// such bias.  Recorded scores stay exact regardless (every accept is
+// drift_full_rescore'd) -- this measures the scan/decision error, not a leak.
+struct DriftEwCensus {
+  long long clips = 0;             // EW drift clips the census examined
+  long long candidates = 0;        // EW candidates scored (SPR + reroot)
+  long long overcount_cands = 0;   // candidates where union > exact
+  long long overcount_sum = 0;     // sum of (union - exact) over over-counts
+  int overcount_max = 0;           // largest single (union - exact)
+  long long undercount_cands = 0;  // candidates where union < exact (dangerous)
+  long long undercount_sum = 0;    // sum of (exact - union) over under-counts
+  int undercount_max = 0;          // largest single (exact - union)
+  long long select_flip = 0;       // clips where union-best move != exact-best move
+  double select_regret_sum = 0.0;  // sum over select_flip clips of exact-cost regret
+  long long env_violation = 0;     // clips where union admits a move whose TRUE
+                                   // delta exceeds afd_limit (drift walks outside
+                                   // its intended AFD envelope)
+  // TS_IW_SCANCHK analog: predicted best_candidate vs post-apply full_rescore of
+  // the applied move.  On the exact path this MUST be 0 (validates the wiring).
+  long long applied_checked = 0;
+  long long applied_mismatch = 0;
+  long long applied_under = 0;     // applied moves truly WORSE than the scan said
+                                   // (optimizer's-curse signature)
+  double applied_maxdiff = 0.0;
+};
 
 // --- Helpers (file-local, mirrored from ts_tbr.cpp) ---
 
@@ -320,7 +362,9 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
                        int afd_limit, double rfd_limit,
                        int max_changes, std::mt19937& rng,
                        ConstraintData* cd = nullptr,
-                       const std::vector<bool>* sector_mask = nullptr) {
+                       const std::vector<bool>* sector_mask = nullptr,
+                       bool ew_exact = false, bool scanchk = false,
+                       DriftEwCensus* census = nullptr) {
   bool constrained = cd && cd->active;
   if (constrained) update_constraint(tree, *cd);
   double score = drift_full_rescore(tree, ds);
@@ -365,6 +409,19 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
   std::vector<uint64_t> from_above(
       static_cast<size_t>(tree.n_node) * tree.total_words, 0);
   std::vector<uint64_t> virtual_prelim(tree.total_words);
+
+  // Exact directional insertion edge sets for the pure-EW path, mirroring
+  // tbr_search (ts_tbr.cpp:1749).  Computed once per clip; edge_set[below] is
+  // the exact edge set above node `below`, used by both the SPR and reroot
+  // scans.  Caller-owned scratch, size-ensured (non-zeroing) and reused across
+  // clips.  Only touched on the EW path when the exact scorer or the census is
+  // active; NA/IW drift never allocate these.
+  const int tw = tree.total_words;
+  const bool ew_path = !has_na && !use_iw;
+  const bool need_edge_set = ew_path && (ew_exact || scanchk);
+  std::vector<uint64_t> edge_set_buf;
+  std::vector<uint64_t> edge_set_up;
+  std::vector<int> edge_set_pre;
 
   // IW buffers
   std::vector<int> divided_steps;
@@ -442,6 +499,14 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       divided_length = score + delta - nx_cost;
     }
 
+    // Exact directional insertion edge sets for the pure-EW path (mirrors
+    // ts_tbr.cpp:1749): computed once per clip from the current clipped-tree
+    // downpass, then indexed by `below` in both the SPR and reroot scans.
+    if (need_edge_set) {
+      compute_insertion_edge_sets(tree, ds, edge_set_buf,
+                                  edge_set_up, edge_set_pre);
+    }
+
     // Weighted scoring (IW or profile): precompute base score and deltas
     double base_iw = 0.0;
     if (use_iw) {
@@ -473,6 +538,52 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
     size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
     const uint64_t* clip_prelim = &tree.prelim[clip_base];
 
+    // Per-clip census bests (only used under scanchk): the union-selected best
+    // move (cen_bc_union) with the EXACT cost of that same move (cen_e_at_union),
+    // and the exact-selected best move (cen_bc_exact).  All are full candidate
+    // scores (divided_length + insertion cost).
+    double cen_bc_union = HUGE_VAL, cen_bc_exact = HUGE_VAL,
+           cen_e_at_union = HUGE_VAL;
+
+    // Pure-EW candidate scorer: returns divided_length + insertion cost.  When
+    // ew_exact, selects on the EXACT directional edge set (edge_set_buf[below]),
+    // matching tbr_search; otherwise the deployed union-of-finals approximation.
+    // Under scanchk it computes BOTH (unbounded -- byte-identical selection to
+    // the bounded form, since the bail only triggers once the value already
+    // exceeds the cutoff) and feeds the decision-flip census.  `above` is only
+    // needed by the union scorer; the exact scorer indexes by `below`.
+    auto score_ew = [&](const uint64_t* prelim, int above, int below,
+                        int ew_cutoff) -> double {
+      if (!scanchk) {
+        int extra = ew_exact
+            ? fitch_indirect_length_cached(
+                  prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
+                  ds, ew_cutoff)
+            : fitch_indirect_length_bounded(prelim, tree, ds,
+                                            above, below, ew_cutoff);
+        return divided_length + extra;
+      }
+      int u_cost = fitch_indirect_length_bounded(prelim, tree, ds,
+                                                 above, below, INT_MAX);
+      int e_cost = fitch_indirect_length_cached(
+          prelim, &edge_set_buf[static_cast<size_t>(below) * tw], ds, INT_MAX);
+      ++census->candidates;
+      int over = u_cost - e_cost;  // union - exact; TWO-SIDED on the deployed path
+      if (over > 0) {
+        ++census->overcount_cands;
+        census->overcount_sum += over;
+        if (over > census->overcount_max) census->overcount_max = over;
+      } else if (over < 0) {
+        ++census->undercount_cands;
+        census->undercount_sum += (-over);
+        if (-over > census->undercount_max) census->undercount_max = -over;
+      }
+      double cu = divided_length + u_cost, ce = divided_length + e_cost;
+      if (cu < cen_bc_union) { cen_bc_union = cu; cen_e_at_union = ce; }
+      if (ce < cen_bc_exact) { cen_bc_exact = ce; }
+      return divided_length + (ew_exact ? e_cost : u_cost);
+    };
+
     // SPR candidates (bounded to skip losing positions early)
     for (auto& [above, below] : main_edges) {
       if (above == nz && below == ns) continue;
@@ -501,9 +612,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
       } else {
         int ew_cutoff = (best_candidate < HUGE_VAL)
             ? static_cast<int>(best_candidate - divided_length) : INT_MAX;
-        candidate = divided_length +
-            fitch_indirect_length_bounded(clip_prelim, tree, ds,
-                                          above, below, ew_cutoff);
+        candidate = score_ew(clip_prelim, above, below, ew_cutoff);
       }
       if (candidate < best_candidate) {
         best_candidate = candidate;
@@ -559,9 +668,7 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
             int ew_cutoff = (best_candidate < HUGE_VAL)
                 ? static_cast<int>(best_candidate - divided_length)
                 : INT_MAX;
-            candidate = divided_length +
-                fitch_indirect_length_bounded(virtual_prelim.data(), tree, ds,
-                                              above, below, ew_cutoff);
+            candidate = score_ew(virtual_prelim.data(), above, below, ew_cutoff);
           }
           if (candidate < best_candidate) {
             best_candidate = candidate;
@@ -572,6 +679,23 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
           }
         }
       }
+    }
+
+    // Census: per-clip decision accounting.  select_flip counts clips where the
+    // union-chosen move is EXACT-suboptimal (the exact scorer would pick a
+    // strictly better move).  env_violation counts clips where the union scan
+    // GATES IN its chosen move (union delta within the AFD limit) but that
+    // move's TRUE cost exceeds the AFD limit -- drift then walks outside its
+    // intended drift envelope, the direct consequence of the under-count.
+    if (scanchk && cen_bc_union < HUGE_VAL) {
+      ++census->clips;
+      if (cen_e_at_union > cen_bc_exact + eps) {
+        ++census->select_flip;
+        census->select_regret_sum += (cen_e_at_union - cen_bc_exact);
+      }
+      bool union_gated_in = (cen_bc_union - score) <= afd_limit + eps;
+      bool true_out_of_env = (cen_e_at_union - score) > afd_limit + eps;
+      if (union_gated_in && true_out_of_env) ++census->env_violation;
     }
 
     // --- Phase 2: Restore and decide ---
@@ -619,6 +743,23 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
         drift_full_rescore(tree, ds);
         update_constraint(tree, *cd);
         continue;
+      }
+    }
+
+    // TS_IW_SCANCHK analog: the move has been applied and validated; compare the
+    // scan's predicted best_candidate against the authoritative full_rescore.
+    // One extra rescore per applied clip (diagnostic only); the branch logic
+    // below recomputes score idempotently.
+    if (scanchk) {
+      tree.build_postorder();
+      double applied_exact = drift_full_rescore(tree, ds);
+      ++census->applied_checked;
+      double signed_err = applied_exact - best_candidate;  // >0 => truth worse
+      double d = std::fabs(signed_err);
+      if (d > 1e-6) {
+        ++census->applied_mismatch;
+        if (signed_err > 0) ++census->applied_under;  // optimizer's-curse signature
+        if (d > census->applied_maxdiff) census->applied_maxdiff = d;
       }
     }
 
@@ -739,6 +880,16 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
   int total_drift_moves = 0;
   int total_tbr_moves = 0;
 
+  // Env flags read ONCE per drift_search (never per candidate: std::getenv is
+  // ~2.4us on ucrt and would confound matched-wall timing -- see memory node
+  // getenv-ucrt-cost).  TS_DRIFT_EXACT routes the pure-EW drift scorer to the
+  // exact directional edge set (opt-in; union-of-finals remains the default so
+  // committed behaviour is unchanged until the matched-wall gate clears it).
+  // TS_DRIFT_SCANCHK enables the divergence census below.
+  const bool ew_exact = std::getenv("TS_DRIFT_EXACT") != nullptr;
+  const bool scanchk  = std::getenv("TS_DRIFT_SCANCHK") != nullptr;
+  DriftEwCensus census;
+
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -756,7 +907,9 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       // Suboptimal drift phase
       int drift_moves = drift_phase(tree, ds,
                                      params.afd_limit, params.rfd_limit,
-                                     max_drift_changes, rng, cd, sector_mask);
+                                     max_drift_changes, rng, cd, sector_mask,
+                                     ew_exact, scanchk,
+                                     scanchk ? &census : nullptr);
       total_drift_moves += drift_moves;
     } else {
       // Equal-score drift phase
@@ -800,6 +953,36 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
   drift_restore_topology(tree, best_snap);
   tree.build_postorder();
   drift_full_rescore(tree, ds);
+
+  if (scanchk) {
+    // over/under: two-sided per-candidate scan error vs the exact directional
+    // cost.  select_flip/env_violation: per-clip decision harm on the union
+    // path (property of the candidate set; on the exact path they measure what
+    // union WOULD have done).  applied_mismatch/under: scan-vs-full_rescore of
+    // the APPLIED move -- MUST be 0 on the exact path (ew_exact=1), validating
+    // the wiring; on the union path applied_under exposes the optimizer's curse.
+    REprintf("DRIFT-SCANCHK ew_exact=%d clips=%lld cands=%lld "
+             "over=%lld(%.1f%%,max%d) under=%lld(%.1f%%,max%d) "
+             "select_flip=%lld(%.1f%%) regret=%.0f env_violation=%lld(%.1f%%) "
+             "applied=%lld mism=%lld under=%lld maxdiff=%.1f\n",
+             ew_exact ? 1 : 0,
+             census.clips, census.candidates,
+             census.overcount_cands,
+             census.candidates
+                 ? 100.0 * census.overcount_cands / census.candidates : 0.0,
+             census.overcount_max,
+             census.undercount_cands,
+             census.candidates
+                 ? 100.0 * census.undercount_cands / census.candidates : 0.0,
+             census.undercount_max,
+             census.select_flip,
+             census.clips ? 100.0 * census.select_flip / census.clips : 0.0,
+             census.select_regret_sum,
+             census.env_violation,
+             census.clips ? 100.0 * census.env_violation / census.clips : 0.0,
+             census.applied_checked, census.applied_mismatch,
+             census.applied_under, census.applied_maxdiff);
+  }
 
   return DriftResult{best_score, params.n_cycles,
                      total_drift_moves, total_tbr_moves};
