@@ -491,7 +491,7 @@ List ts_na_debug_char(
       if (base[st] & mask) {
         if (!s.empty()) s += "/";
         if (blk.has_inapplicable && st == 0) s += "-";
-        else s += std::to_string(st - (blk.has_inapplicable ? 1 : 0));
+        else s += std::to_string(blk.plane_state[st - (blk.has_inapplicable ? 1 : 0)]);
       }
     }
     return s.empty() ? "." : s;

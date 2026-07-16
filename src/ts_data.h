@@ -85,6 +85,13 @@ struct CharBlock {
   // For IW: map each character back to its original pattern index
   // (multiple characters may share the same pattern after weight expansion)
   int pattern_index[MAX_CHARS_PER_BLOCK];
+
+  // Display label for each applicable plane: plane_state[p] is the global
+  // applicable state index occupying plane p. Identity (plane_state[p]==p)
+  // in the default global-alphabet layout; under TS_PACK_LOCAL plane p holds
+  // the p-th local-alphabet state, so this maps it back to its global label.
+  // Consumed by state/ancestral-state reconstruction (ts_rcpp.cpp).
+  int plane_state[MAX_STATES];
 };
 
 // Cache-friendly metadata for indirect scoring hot paths.
