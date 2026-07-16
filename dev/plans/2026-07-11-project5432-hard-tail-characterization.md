@@ -19,6 +19,18 @@ gaps=missing, inapplicable=missing) — and records the corrected diagnosis.
 > lands ~109 TBR moves from 1943 and never routes within the capture radius. The
 > reconciliation below keeps both facts.
 
+> **CORRECTION (2026-07-16, user).** The best-known score for project5432 is **1939**
+> (found by TNT), **not 1943**. Throughout this note "1943" is a strong, TS-HOLDABLE
+> tree (TS's TBR holds it when seeded and rebuilds it from within ~8–12 TBR) but it is
+> an **intermediate/suboptimal basin, not the optimum**. Corrected ladder: **1939**
+> (TNT best-known) < **1943** (TS-holdable) < 1944 (TNT reliable) < 1945 (TS kick
+> floor) < ~1947 (TS production). So the true cold-reach gap is TS 1945 → 1939 ≈ **6
+> steps**, not the "~2 steps to 1943" stated below. The restore238 / basin-radius work
+> characterised the **1943** basin; the **1939** basin is not yet characterised. The
+> 1939 tree-file provenance is being confirmed on Hamilton (this session); see memory
+> `project5432-best-known-1939`. Numbers below are left as originally written and should
+> be read through this correction.
+
 ## TL;DR — cold-start basin capture, not a missing operator, not clade-generation
 
 - **The gap is small and on one matrix.** TS's production multistart floor is
@@ -139,6 +151,82 @@ splits, then plateaus at 1945 — 2 steps from 1943.
 3. **Smarter breadth, not naive.** 2150+ uniform cold reps = 0 hits → uniform
    restarts refuted; open question is whether STRUCTURED / diversified starts raise
    the per-rep basin-capture rate.
+
+## Route #2 taken (2026-07-16): the lever is the ACCEPTANCE FRAME, not the kick knobs
+
+Mechanism read of `src/ts_ratchet.cpp:186–227`: TS's ratchet is a **monotone
+strict-descent iterated local search**, not a basin-hop. Each cycle perturbs weights →
+short TBR → restores weights → full TBR, then accepts the result **only if strictly
+better** (`<`, line 213) and otherwise **resets to the current best tree** (line 220);
+kick *strength* (`perturb_max_moves`) is constant across cycles. All three things angle
+#2 lists — strength, schedule, multi-kick — operate *inside* that monotone frame, so
+none can accumulate the uphill step needed to leave the 1945 local optimum. A hard
+plateau at 1945 is exactly the signature of monotone ILS. **The lever is the frame
+(accept-worse), not the knobs.**
+
+Plan (advisor-reviewed, cost-gated — do NOT launch the expensive sweep before the gate):
+
+1. **Gate (cheap, buildless — `dev/benchmarks/basin_hop_gate.R`).** Re-score the TNT
+   target by label (confirm 1939 vs 1943; RenumberTips gotcha → `TreeLength` by label,
+   never edge+tip_data by index) and compute **TBRDist(TS-1945-floor → target)**. Short
+   bounded uphill (a few TBR, one ridge) → accept-worse can plausibly bridge it, probe/
+   build worth it; 15+ TBR through rugged terrain → accept-worse from 1945 is a random
+   walk and route #2 is likely dead (data to hand the user, not a route to override). TS
+   *holding* 1945 under TBR already proves it is a true local optimum outside 1943's
+   downhill basin, so SOME uphill is required; the distance answers only HOW MUCH.
+
+2. **Buildless probe (only if the gate is favourable).** The whole-tree drift step
+   (`src/ts_driven.cpp:452`, `drift_search` on `result.tree`) already composes with the
+   ratchet in the replicate loop and already accepts worse moves within
+   `driftAfdLimit`/`driftRfdLimit`. `thorough` runs it at `driftCycles=2, afd=5`;
+   `default`/`sprint` run none. So the probe is an **afd-limit (uphill-tolerance) sweep**
+   past the default, on top of the saturated kick, matched-wall on 5432 (+ project2771,
+   the one other kick-sensitive matrix — the only shot past n=1), with every returned
+   tree re-scored in R by label. This is the existence test for accept-worse, using
+   validated machinery (no build). A phantom is impossible: the reported number is an
+   independent R-side `TreeLength`, not the engine's internal accept score.
+
+3. **Gated engine build (only if the probe crosses 1945).** A small, default-OFF
+   accept-worse-in-ratchet change to `ts_ratchet.cpp`: in the not-improved branch, accept
+   the perturbed local optimum under a schedule instead of always resetting. Keep a
+   `current` tree that may wander uphill SEPARATE from a `best_tree` that tracks the true
+   best (the classic basin-hop bug: conflating them returns a worse tree than was found).
+   A/B on 5432 + project2771. Bar = **opt-in hard-tail lever** (no wall/reach regression
+   on the thorough path), not a default — `kick-anytime-not-a-default` already settled
+   that a landscape-specific kick lever is not a broad default.
+
+### GATE RESULT — route #2 REFUTED (2026-07-16, buildless; no probe/build run)
+
+`dev/benchmarks/basin_hop_gate.R` re-scored the near-optimal TS trees by label (ordered-char
+scorer; self-check `L(1943 floor)==1943` PASSED) and measured `TBRDist(exact=FALSE)` (hard
+lower bounds) to the 1943 floor. **Every generation method's near-optimal tree is `tbr_min`
+≥97 TBR from 1943:**
+
+| method | score (+gap) | tbr_min..max | CID |
+|---|---|---|---|
+| kick p025m160 | 1945 (+2) | **97**..279 | 0.220 |
+| invweight | 1950 | 97..282 | 0.272 |
+| strongperturb | 1945 (+2) | 100..286 | 0.229 |
+| p025m40 | 1946 (+3) | 101..293 | 0.269 |
+| cold ts5432 | 1958 | 102..299 | 0.379 |
+| largefirst | 1950 | 107..310 | 0.298 |
+| random | 1949 | 116..335 | 0.361 |
+
+The **best kick tree is only 2 score-steps above 1943 yet provably ≥97 TBR away**, barely
+closer than a cold tree (97 vs 102). Corroborated: basin_5432 descent returns to 1943 only
+for d≤12, **0/5 by d≈20** (the floor is ≥97 out); geom_full ~109. **No accept-worse schedule
+— drift OR iterated reweighting — traverses ~100 rearrangements to a narrow basin unreachable
+from 20 TBR out.** `afd_limit` is a per-move score tolerance, not a distance budget. The
+reweight-schedule loophole is closed empirically (all method-diverse near-optimal trees, incl.
+reweight-space, are ~97–116 TBR out). The afd-sweep probe and the accept-worse build were NOT
+run — the ≥97 bound guarantees their outcome.
+
+**Kick is not useless:** CID 0.22 (kick) < 0.38 (cold) — the kick moves meaningfully closer in
+information terms; it improves score by finding a **better LOCAL basin**, just bottoms out ~97
+TBR short. **Scope of the refutation:** route #2 only (escape the floor via *any* accept-worse
+schedule). Angle #1 (a cold-start CONSTRUCTOR that GENERATES a start inside 1943's basin) and
+angle #3 (structured breadth) are UNTOUCHED — they do not walk from a floor, so the distance
+wall does not apply. Memory `basin-hop-schedule-refuted`.
 
 ## Status
 
