@@ -16,12 +16,11 @@ module load gcc/14.2
 
 LIB=/nobackup/$USER/TreeSearch/dsslib
 REPO=/nobackup/$USER/TreeSearch-dss
-SRC=/nobackup/$USER/TreeSearch-a           # existing clone, source of origin URL
+ORIGIN=https://github.com/ms609/TreeSearch.git
 mkdir -p "$LIB" /nobackup/$USER/TreeSearch/logs
 
 # Dedicated checkout of the probe branch (clone once from origin, then fetch).
 if [ ! -d "$REPO/.git" ]; then
-  ORIGIN=$(git -C "$SRC" remote get-url origin)
   echo "Cloning $ORIGIN -> $REPO"
   git clone "$ORIGIN" "$REPO" || { echo "FATAL: clone failed"; exit 1; }
 fi
