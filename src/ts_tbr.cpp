@@ -35,6 +35,22 @@ namespace ts {
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
 // Word-at-a-time multiply-xor hash (faster than byte-by-byte FNV-1a).
 
+// EW/NA integer bail-cutoff slack. The cutoff is best_candidate - divided_length
+// + slack; the scorer bails on extra_steps >= cutoff. slack=1 (the historical
+// value) lets an equal-length, NON-improving candidate accumulate its full extra
+// before rejection (candidate == best is not < best); slack=0 makes it bail the
+// moment its running extra reaches the current minimum. Byte-identical either way
+// (acceptance is strict-<, so no equal candidate is ever recorded, and improvers
+// -- true extra < min -- never reach the tighter cutoff): the drift path already
+// ships slack=0 (ts_drift.cpp). DEFAULT 0 (tight); TS_TBR_LOOSE_CUTOFF reverts to
+// 1 for the A/B. Read once (recompute fires only on improvement, but cache anyway
+// per the getenv-cost lesson). IW is unaffected (it bounds on the float
+// best_candidate directly, already tight).
+static inline int tbr_cutoff_slack() {
+  static const int v = std::getenv("TS_TBR_LOOSE_CUTOFF") ? 1 : 0;
+  return v;
+}
+
 static uint64_t fast_hash(const uint64_t* data, int n_words) {
   uint64_t hash = 14695981039346656037ULL;
   for (int i = 0; i < n_words; ++i) {
@@ -1351,7 +1367,7 @@ static inline void spr_scan_plain_ew(
       best_below = below;
       best_reroot_parent = -1;
       best_reroot_child = -1;
-      cutoff = static_cast<int>(best_candidate - divided_length + 1);
+      cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
     }
   }
 }
@@ -2210,7 +2226,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           best_below = below;
           best_reroot_parent = -1;
           best_reroot_child = -1;
-          cutoff = static_cast<int>(best_candidate - divided_length + 1);
+          cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
         }
       }
       }  // end else (general SPR loop; ew_mono_plain template dispatch above)
@@ -2400,7 +2416,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                   best_below = main_edges[b_ei[k]].second;
                   best_reroot_parent = sp;
                   best_reroot_child = sc;
-                  cutoff = static_cast<int>(best_candidate - divided_length + 1);
+                  cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
                 }
               }
             }
@@ -2559,7 +2575,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 best_below = below;
                 best_reroot_parent = sp;
                 best_reroot_child = sc;
-                cutoff = static_cast<int>(best_candidate - divided_length + 1);
+                cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
               }
             }
           }
