@@ -43,16 +43,25 @@ this is a CONFIRMED recipe defect.
   benefit on solved matrices UNTESTED"). If it helps broadly → a deployable default fix (needs small-tree
   non-regression + user OK to change a default). Reach benefit was 5432-only (n=1); wall benefit is open.
 
-## Genuinely-open angles (the mission's search space — none yet refuted)
-1. **A cold-start CONSTRUCTOR that generates starts near the target basin.** The fan-out's original goal
-   stands even though BSS (one instantiation) is dead. Candidates: constraint-guided / char-informed
-   addition sequence; progressive assembly; a start-generator that lands within capture radius. The bar:
-   does it land TS within ~8–12 TBR of the best basin?
-2. **Push the reweighting kick as a basin-HOPPING schedule** (the one thing that worked) — strength,
-   schedule, multi-kick — beyond the single-knob ratchet default. Plateaus at 1945; can a schedule cross
-   the last ~2 steps?
-3. **Smarter breadth**, not naive: 2150+ uniform cold reps = 0 hits, so uniform restarts are refuted;
-   the open question is whether STRUCTURED / diversified starts raise the per-rep basin-capture rate.
+## These three angles are now ALL CLOSED (2026-07-16) — do NOT re-investigate
+Full evidence + harnesses in `2026-07-11-project5432-hard-tail-characterization.md`
+("Mission A angles — ALL CLOSED") and the memory nodes cited there.
+1. **Cold-start CONSTRUCTOR — CLOSED five ways:** per-split detectability (anti-detect), absolute
+   synapomorphy count (chance), joint clique recovery (36th pctile count-matched), scaffold-sufficiency
+   (all 25 deep splits fixed → 1/12), clique-START routability (0/60, WORSE than RAS), clique-proportional
+   reweight (≈uniform, wrong-skew). Harnesses `detect_backbone.R`/`detect_synap.R`/`scaffold_suff.R`/
+   `clique_prep.R`/`clique_start.R`/`clique_weight_probe.R`.
+2. **Basin-HOPPING schedule — CLOSED:** every near-optimal TS tree ≥97 TBR from 1943; ratchet is monotone
+   ILS; no accept-worse schedule walks ~100 rearrangements.
+3. **Structured breadth — CLOSED:** random char-resample starts land FARTHER than cold (0/400).
+
+**CAPSTONE / why:** the 1943 deep backbone has ≈no clean character support (≈4/183 chars) — it is an
+EMERGENT AGGREGATE feature (wins only on total tree length), so NO per-char / compatibility / reweight
+start-generator can bias toward it. **Reach is NOT a hard limit** (TNT ~1/3). The only remaining lever is
+**search-side**: sectorial-over-retained-diverse-pool (already in TS, insufficient alone on 5432) or the
+UNTRIED CID-tabu / diversity-gated restarts ([[diversity-generation-gates]]). Best tree stored = **1942**
+(`floors/project5432_regen_1942.tre`). The next 1939 phase should start from the search-side lever, NOT a
+constructor.
 
 ## Discipline (the campaign's hard-won rules — obey them)
 - **Existence-before-build.** BSS was saved from a 250-line dead build by a structural precondition test.
