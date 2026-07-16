@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
+#include <cstdlib>
 #include <random>
 #include <vector>
 
@@ -212,6 +213,24 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
 
+  // Pure-EW SPR uses the EXACT directional edge set (like tbr_search, 2b299e4b),
+  // NOT the union-of-finals approximation.  Union OVER-counts, inflating
+  // best_candidate so the `dominated` gate (line ~379) triggers too readily and
+  // HIDES improving moves -- and spr_search is a pure hill-climb with no
+  // exact-TBR phase to recover, so union converges catastrophically short
+  // (Zhu2013 best-of-25 starts 650 vs exact 625; ~25-70 steps, systematic; exact
+  // is also faster per start -- dev/profiling/drift-exactness-gate.md).  So exact
+  // is the DEFAULT here; `TS_SPR_UNION` restores the old union scorer (kill
+  // switch).  Read once (getenv ~2.4us on ucrt).  Only reaches EW spr_search
+  // (NA/IW keep their own scorers below); production use is the sprFirst warmup
+  // (OFF in all presets) + the standalone ts_spr_search binding.
+  const bool ew_exact = std::getenv("TS_SPR_UNION") == nullptr;
+  const int tw = tree.total_words;
+  const bool ew_path = !has_na && !use_iw;
+  const bool need_edge_set = ew_path && ew_exact;
+  std::vector<uint64_t> edge_set_buf, edge_set_up;
+  std::vector<int> edge_set_pre;
+
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -306,6 +325,13 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
         divided_length = best_score + delta - nx_cost;
       }
 
+      // Exact directional insertion edge sets for the pure-EW path (mirrors
+      // ts_tbr.cpp:1749); indexed by `below` in the candidate scan below.
+      if (need_edge_set) {
+        compute_insertion_edge_sets(tree, ds, edge_set_buf,
+                                    edge_set_up, edge_set_pre);
+      }
+
       const uint64_t* clip_prelim =
           &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words];
 
@@ -362,8 +388,12 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
           int cutoff = (best_candidate < HUGE_VAL)
               ? static_cast<int>(best_candidate - divided_length + 1)
               : INT_MAX;
-          int extra = fitch_indirect_length_bounded(
-              clip_prelim, tree, ds, above, below, cutoff);
+          int extra = ew_exact
+              ? fitch_indirect_length_cached(
+                    clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
+                    ds, cutoff)
+              : fitch_indirect_length_bounded(
+                    clip_prelim, tree, ds, above, below, cutoff);
           candidate_score = divided_length + extra;
         }
         ++n_iterations;
