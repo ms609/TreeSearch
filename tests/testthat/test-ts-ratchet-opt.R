@@ -57,6 +57,22 @@ test_that("Upweight mode produces valid trees", {
 })
 
 test_that("Upweight mode gives different behavior than zero mode", {
+  # Zero mode (Nixon/Goloboff character deletion) and upweight mode (character
+  # doubling) reshape the perturbation landscape differently, so their TBR
+  # trajectories should diverge.  On any *single* small dataset the two modes can
+  # coincidentally reach the same local optimum with the same move count (~3% of
+  # seeds on this 15x10 binary matrix).  Which seeds coincide is trajectory- and
+  # platform-dependent: ordering characters by homoplasy (see the "faster bounded
+  # scan" change in src/ts_data.cpp) shifted the RNG-seeded search path, and on
+  # macOS's std::sort tie-break the old single fixed seed (1001) landed on a
+  # coincidence -- so the previous single-seed assertion flaked there.
+  #
+  # Assert instead that the modes are not identical *for every* seed: divergence on
+  # >= 1 seed proves the two modes are distinct code paths, while a genuine
+  # collapse (upweight silently equivalent to zero) would coincide on all of them.
+  # The deterministic guarantee that the two weighting regimes are keyed apart is
+  # covered by test-ts-na-evcache.R.  Early `break` keeps the common case to two
+  # ratchet calls.
   set.seed(6284)
   mat <- matrix(sample(0:1, 15 * 10, replace = TRUE),
                 nrow = 15,
@@ -65,18 +81,22 @@ test_that("Upweight mode gives different behavior than zero mode", {
   ds <- make_ts_data(dataset)
   tree <- as.phylo(1, 15)
 
-  set.seed(1001)
-  result_zero <- ts_ratchet(tree, ds, nCycles = 5L,
-                            perturbProb = 0.15, perturbMode = 0L)
-  set.seed(1001)
-  result_up <- ts_ratchet(tree, ds, nCycles = 5L,
-                          perturbProb = 0.15, perturbMode = 1L)
-
-  # Different modes should produce different TBR move counts or scores
-  differ <- (result_zero$total_tbr_moves != result_up$total_tbr_moves) ||
-            (result_zero$score != result_up$score)
+  differ <- FALSE
+  for (seed in c(1001L, 7L, 13L, 29L, 51L, 88L)) {
+    set.seed(seed)
+    result_zero <- ts_ratchet(tree, ds, nCycles = 5L,
+                              perturbProb = 0.15, perturbMode = 0L)
+    set.seed(seed)
+    result_up <- ts_ratchet(tree, ds, nCycles = 5L,
+                            perturbProb = 0.15, perturbMode = 1L)
+    if ((result_zero$total_tbr_moves != result_up$total_tbr_moves) ||
+        (result_zero$score != result_up$score)) {
+      differ <- TRUE
+      break
+    }
+  }
   expect_true(differ,
-    info = "Zero and upweight modes should produce different behavior")
+    info = "Zero and upweight modes should diverge on at least one seed")
 })
 
 
