@@ -139,18 +139,53 @@ splits, then plateaus at 1945 — 2 steps from 1943.
   opt-in hard-tail intensity lever** (ties `intensity-thorough-hardtail`,
   `auto-vs-thorough-objective`).
 
-## Genuinely-open angles (Mission A's search space — none refuted)
+## Mission A angles — ALL CLOSED (2026-07-16). Do NOT re-investigate.
 
-1. **A cold-start CONSTRUCTOR that generates starts near the target basin.** BSS
-   (one instantiation) is structurally dead, but the goal stands: constraint-guided
-   / char-informed addition sequence; progressive assembly; any start-generator that
-   lands TS within ~8–12 TBR of the best basin.
-2. **Push the reweighting kick as a basin-HOPPING schedule** (the one thing that
-   worked) — strength, schedule, multi-kick — beyond the single-knob ratchet
-   default. Plateaus at 1945; can a schedule cross the last ~2 steps?
-3. **Smarter breadth, not naive.** 2150+ uniform cold reps = 0 hits → uniform
-   restarts refuted; open question is whether STRUCTURED / diversified starts raise
-   the per-rep basin-capture rate.
+All three angles once listed here as open are now refuted **by measurement** (Hamilton
+jobs; harnesses in `dev/benchmarks/`; memory nodes cited). Cold-start CONSTRUCTION from
+data structure cannot reach the 1943/1939 basin; the residual is a **search-side**
+problem, not a start-generator.
+
+1. **Cold-start CONSTRUCTOR (angle #1) — CLOSED, five independent ways.**
+   - *Per-split detectability:* data-derived per-split signals (QuartetConcordance,
+     PhylogeneticConcordance) do NOT rank true deep splits above wrong — they ANTI-detect
+     at depth (238-split PC 9th pct). `detect_backbone.R` (job 17887714). Memory
+     `detectability-proportion-signals-refuted-5432`.
+   - *Absolute synapomorphy count:* does NOT discriminate true vs wrong deep splits
+     (size≥60 AUC 0.51–0.55; 238-split 48th pct). `detect_synap.R`.
+   - *Joint / clique recovery (count-matched):* a blind max-compatibility clique recovers
+     the true deep splits at CHANCE (36th pctile). `detect_clique.R` (session 9d2149a8).
+     Memory `joint-compatibility-clique-refuted-5432`.
+   - *Scaffold-sufficiency:* constraining on the TRUE deep backbone (all 25 min-side≥100
+     splits, held=1.0) routes in only 1/12; k5/k10/k20 flat near cold; only the FULL tree
+     → 1943. `scaffold_suff.R` (job 17893429). Memory `scaffold-sufficiency-refuted-5432`.
+   - *Clique-START routability (ground truth):* 12 diverse clique backbones as constraint
+     starts → **0/60** hit ≤1944, best 1981 **WORSE** than RAS 1957 (compatibility cliques
+     lock homoplastic-but-wrong splits; held≈1.0). `clique_start.R`/`clique_prep.R` (job
+     17894813). Memory `clique-structure-5432`.
+   - *Clique-proportional reweight (user variant):* ≈ uniform (effective-char ratio 0.83)
+     and its mild skew favours clean-SHALLOW chars, down-weighting the ≈4/183 deep-supporting
+     chars → reduces to the refuted random resample or worse. `clique_weight_probe.R`.
+2. **Basin-HOPPING schedule (angle #2) — CLOSED.** Every near-optimal TS tree (all methods)
+   is ≥97 TBR from 1943; ratchet is monotone ILS; no accept-worse schedule walks ~100
+   rearrangements (see Route #2 section below). Memory `basin-hop-schedule-refuted`.
+3. **Structured breadth (angle #3) — CLOSED.** Random char-resample START-gen lands FARTHER
+   than cold (0/400 in capture radius). (job 17887750). Memory `structured-breadth-refuted-5432`.
+
+**CAPSTONE MECHANISM — why every constructor fails.** The 1943 deep backbone has essentially
+**no clean character support** (≈4/183 informative chars cleanly support any min-side≥100
+split). It is an **emergent aggregate** feature — it wins only on TOTAL tree length,
+integrating many individually-homoplastic, mutually-conflicting characters. So no per-character
+signal, compatibility clique, or character-reweighting start-generator can detect, construct,
+or bias toward it; up-weighting "clean/compatible" structure moves AWAY from it. Only the
+aggregate parsimony objective over many restarts finds it (which is what TNT does, ~1/3).
+
+**Where reach work MUST go next (NOT a constructor).** Reach is not a hard limit (TNT finds
+1943/1939). The only live lever is **search-side aggregate-objective diversity**: (a) TNT-style
+sectorial over a retained diverse pool — already in TS (`ts_driven.cpp`) but does not crack
+5432 alone; (b) CID-tabu / diversity-gated restarts (Whelan-2007, UNTRIED; headwind: 5432's
+basin is a tiny distant target — `diversity-generation-gates`). Best tree now stored =
+**1942** (`floors/project5432_regen_1942.tre`); regenerate + store the 1939 tree when feasible.
 
 ## Route #2 taken (2026-07-16): the lever is the ACCEPTANCE FRAME, not the kick knobs
 
@@ -235,9 +270,12 @@ wall does not apply. Memory `basin-hop-schedule-refuted`.
 - **Build question (freeze-a-seed operators): CLOSED.** BSS structurally refuted;
   fuse structurally cannot assemble ungenerated clades; every ported TNT feature
   built+A/B'd → refuted or matched.
-- **5432 arm: OPEN** only for a genuinely-new mechanism that lands cold starts (or a
-  trajectory) within the ~8–12 TBR capture radius on large trees — a constructor or
-  a basin-hopping schedule, not a config of the exhausted levers.
+- **5432 arm: cold-start CONSTRUCTION CLOSED (2026-07-16)** — all constructor / schedule /
+  breadth angles refuted (see "Mission A angles — ALL CLOSED" above; capstone: the deep
+  backbone is an emergent aggregate with ≈no clean character support, so no start-generator
+  can bias toward it). Reach is NOT a hard limit (TNT ~1/3); the only remaining lever is
+  **search-side** (sectorial-over-diverse-pool, already in TS; or UNTRIED CID-tabu restarts) —
+  a different program from a start-generator. Do NOT re-open the constructor line.
 - **Mission read:** not a reach *regression* (thorough's disqualifier) and not a
   wall-clock regression on anything else — one 482-tip matrix where TNT itself is
   1/3-reliable. Whether the last 1–2 steps justify a new engine is a user-level
