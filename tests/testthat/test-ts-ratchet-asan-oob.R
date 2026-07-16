@@ -1,17 +1,21 @@
-# DIAGNOSTIC repro for the ratchet multistate heap-corruption bug
-# (memory node: ratchet-multistate-segfault). Deliberately NOT gated by
-# skip_extended(), so the gcc-ASAN workflow (ASan.yml, which runs plain
-# `tests`) executes it and halts on the first out-of-bounds access, giving
-# an exact src/*.cpp file:line trace.
+# Memory-safety stress guard for the C++ ratchet on multistate data.
+# Deliberately NOT gated by skip_extended(), so the gcc-ASAN workflow
+# (ASan.yml runs plain `tests`) executes it: many repeated ts_ratchet_search
+# calls in one process on a 30-tip x 25-char 3-state matrix, which is exactly
+# the shape that would surface a heap out-of-bounds write in the TBR/fitch
+# undo/rescore machinery if one were ever introduced.
 #
-# Cumulative per-call heap corruption: a single isolated ratchet call is
-# fine; the OOB write only lands somewhere fatal after many repeated calls
-# in one process. Worse (fewer calls to crash) with more chars/states/tips.
-# On native Windows/MinGW the process dies with exit 139 partway through
-# the loop; under ASan the offending access is reported deterministically.
+# Origin: a 2026-07-16 report of an exit-139 heap-corruption crash here
+# (memory node: ratchet-multistate-segfault). Investigation could NOT
+# reproduce it on ANY clean build — Linux gcc-ASAN clean, and a fresh local
+# Windows -O2 build ran 500 iterations without a crash — while the search
+# kernels were byte-identical to the reported commit. The crash was most
+# consistent with a stale-object / mixed-ABI incremental build (see memory
+# node stale-object-abi-gotcha), not a defect in committed source.
 #
-# EXPECTED to fail (ASan abort) until the underlying OOB is fixed. Once the
-# bug is fixed this becomes a passing regression test.
+# So: this test is EXPECTED TO PASS. If it ever fails, first REBUILD CLEAN
+# (rm src/*.o; CCACHE_DISABLE=1 R CMD INSTALL --preclean) and re-run before
+# treating it as a genuine source regression.
 
 # --- Config 1 (PRIMARY): ZERO_ONLY perturbation, 3-state EW -----------------
 # 30 tips x 25 chars, states 0:2, equal weights, perturbMode = 0 (ZERO_ONLY).
