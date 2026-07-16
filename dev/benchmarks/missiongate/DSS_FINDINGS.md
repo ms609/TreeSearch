@@ -18,9 +18,14 @@ The primary driver of "smaller sector" is TIP-COUNT, controlled by the EXISTING
 1.0n; only picks/ras/rounds swept). Diameter-limiting is a STRICTLY-more-restrictive geometry
 ON TOP of size, so if shrinking maxS doesn't climb toward ratchet, the diameter build cannot
 rescue it. So we probed the size axis first, no new source: `smallmax` (maxS ∈ {12,20,30},
-min 6, collapse off, ras=3, auto picks, rounds {1,4,16,64}) vs `selectem_large` (rev5 recipe,
-maxS=n, collapse 0.4n, ras=3) vs `ratchet_ref` (default, single-start), from the fixed TNT T0,
-RSS the only escape engine. (A true diameter *ball* needs multi-HTU reduced datasets —
+min 6, collapse off, ras=3, auto picks, rounds {1,4,16,64}) vs `selectem_large` (maxS=n,
+collapse 0.4n, ras=3, AUTO picks) vs `ratchet_ref` (default, single-start), from the fixed TNT
+T0, RSS the only escape engine. **CAVEAT on `selectem_large`:** it uses auto picks (~3/round for
+the large band), which UNDER-provisions rev5's `selectem` (explicit pk ∈ {5,20}); it is a rough
+large-sector reference, NOT a faithful rev5 reproduction (my Zhu selectem_large median −1 vs
+rev5's selectem −6). This only weakens the large-sector arm — it does not affect the
+smallmax-vs-ratchet verdict below (smallmax auto picks give MANY picks for small bands, e.g.
+~16/round at maxS=12, so smallmax is if anything over-provisioned). (A true diameter *ball* needs multi-HTU reduced datasets —
 rejected: breaks the root_ok/reinsertion/HTU-anchor invariants the file rests on, for a lever
 the priors argue against.) Scripts: `dss_size_probe.R`, `dss_size_aggregate.R`,
 `dss_reach_zanol.R`; Hamilton `hamilton_dss_{build,array}.sh`.
@@ -45,12 +50,15 @@ Escape<0 = better than T0. st/s = escape/wall (wall axis). st/Mc = escape/Mcand 
 | Wortley2006 (−5)| −7 / −15 / −86.4 / −6.76 | faster but shallower median | −9.8 | NO |
 | Giles2015 (−4)  | −3 / −5 / −13.2 / −0.55 | ~−5 (esc 0) | −0.44 | NO |
 
-**VERDICT: 0 / 4 datasets — no small-sector config reaches ratchet's median depth at ≤ its
-wall.** On the HARD target (Zanol) ratchet dominates on EVERY axis, including the biased
-steps/Mcand (−1.90 beats every smallmax; best smallmax −1.78). On easy datasets small sectors
-are faster-per-step (higher st/s) but reach a SHALLOWER median, so they never satisfy the
-gate (reach ratchet's depth cheaper). Small sectors' median escape is uniformly worse than
-ratchet's; where they reach the target at all it is only best-of-15 at 2–10× ratchet's wall.
+**VERDICT: 0 / 4 datasets — no small-sector config has better MEDIAN escape than ratchet at
+≤ its wall** (esc_med vs esc_med, same 3 seeds pooled for both arms → apples-to-apples). On
+the HARD target (Zanol) ratchet dominates on EVERY axis, including the biased steps/Mcand
+(−1.90 beats every smallmax; best smallmax −1.78). On easy datasets small sectors are
+faster-per-step (higher st/s) but reach a SHALLOWER median, so they never satisfy the gate
+(reach ratchet's depth cheaper). Small sectors' median escape is uniformly worse than
+ratchet's. NB the per-config `reach`/`esc_best` column is NOT load-bearing: the aggregate's
+"target" pools 3 seeds with different starts, so treat esc_best only as a loose best-of-15,
+not a clean target comparison. The verdict rests on the esc_med-vs-ratchet-at-wall gate.
 
 ## The n=3 local pilot's apparent LEAD was noise + metric bias — do not trust it
 The local pilot (n=3, Zanol s1 / Zhu s1) showed smallmax maxS=12 r=1 = −2.39 st/Mcand
@@ -67,6 +75,9 @@ target ratchet wins even on the biased metric. Diameter-limiting is strictly MOR
 shallower/less-competitive → moves the wrong way. **No C++ diameter knob is warranted.** This
 CONFIRMS and EXTENDS rev5 ("sectorial Pareto-dominated by ratchet; 0/4 escape cheaper") to the
 small-maxS regime rev5 never measured — the whole size axis is now covered, and rev5's verdict
-holds across it. The rev5 handoff nuance (small/moderate maxS + ras=3 vs a SINGLE ratchet
-start on ratchet-unreliable Zhu/Giles) is also NOT borne out at n=15: smallmax median ≤ ratchet
-median on all cells. Sectorial-escape / dss thread CLOSED.
+holds across it. **NOT tested here:** rev5's own handoff (large-band `selectem` at pk 5-20,
+ras≥3 being lower-VARIANCE than a single ratchet start on ratchet-unreliable Zhu/Giles). That
+is a different config (large band, explicit picks) and a variance question; my `selectem_large`
+used auto picks (~3) so it under-provisions that config and cannot speak to it. The handoff
+remains an OPEN budget/recipe question for another session, exactly as rev5 left it — the dss/
+speed question does not bear on it. Sectorial-escape / dss (small-sector) thread CLOSED.
