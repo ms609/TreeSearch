@@ -18,6 +18,18 @@
 #include <R.h>
 #include <Rinternals.h>
 
+// Software-prefetch hint (read, low temporal locality), mirroring the scalar
+// reroot path's existing scheme (ts_tbr.cpp scalar branch).  A pure
+// microarchitectural directive: it moves no program-visible state and is
+// non-faulting on a bad/OOB address, so it never changes a score or trajectory.
+#if defined(__GNUC__) || defined(__clang__)
+#define TS_PREFETCH_R0(p) __builtin_prefetch((p), 0, 0)
+#elif defined(_MSC_VER) && defined(TS_SIMD_SSE2)
+#define TS_PREFETCH_R0(p) _mm_prefetch(reinterpret_cast<const char*>(p), _MM_HINT_T0)
+#else
+#define TS_PREFETCH_R0(p) ((void)0)
+#endif
+
 namespace ts {
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
@@ -1441,6 +1453,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // scalar reroot path (for A/B). Read once (no per-clip getenv, per the
   // getenv-cost lesson).
   const bool iw_x4 = std::getenv("TS_IW_NOX4") == nullptr;
+  // Software-prefetch the x4 reroot batches' next vroot_cache row-heads, giving
+  // the flat-x4 EW/IW/NA batches the same L2/L3-latency hiding the scalar reroot
+  // path already has (the x4 kernels currently issue 4 cold demand loads to
+  // scattered rows with no hint).  Pure hint => byte-identical.  DEFAULT-OFF
+  // (opt-in TS_TBR_PREFETCH=1): local Windows/MinGW is flat, so the win/wash is
+  // settled on Hamilton EPYC raw-TBR + MaximizeParsimony wall (min-of-runs)
+  // before any default flip.  Read once (no per-clip getenv, getenv-cost lesson).
+  const bool tbr_prefetch = std::getenv("TS_TBR_PREFETCH") != nullptr;
   // Pure-IW extract_char_steps dirty-region: derive per-clip divided_steps
   // incrementally (full_char_steps + cs_delta - nx) instead of the O(n_node)
   // walk. On by default; kill-switch TS_IW_NODIRTY reverts to extract+add.
@@ -2200,6 +2220,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               }
               if (b_n == 0) break;
 
+              // Prefetch the NEXT batch's vroot rows (ki now indexes it) so the
+              // 4 cold row-heads overlap this batch's reduce.  Candidate order,
+              // cutoff and tie-breaks untouched — a pure latency hint.
+              if (tbr_prefetch) {
+                for (size_t p = 0; p < 4 && ki + p < n_kept; ++p)
+                  TS_PREFETCH_R0(
+                      &vroot_cache[static_cast<size_t>(kept_ei[ki + p]) * tw]);
+              }
+
               // cutoff is maintained across the clip (recomputed only on
               // improvement); byte-identical to the old per-batch recompute.
               int cutoff_b = cutoff;
@@ -2275,6 +2304,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             // iw_x4 is disabled (TS_IW_NOX4) this whole branch is skipped and
             // both NA and no-NA IW fall through to the scalar `else` below.
             int ei = 0;
+            size_t iw_pf = 0;  // parallel cursor into kept_ei (prefetch only):
+                               // kept_ei carries the identical skip predicate in
+                               // the same ascending order, so iw_pf == the count
+                               // of kept_ei consumed after each batch.
             while (ei < n_main) {
               int b_ei[4];
               int b_n = 0;
@@ -2288,6 +2321,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 ++ei;
               }
               if (b_n == 0) break;
+
+              // Prefetch the next batch's vroot rows via kept_ei (see iw_pf).
+              // Pure latency hint; candidate order, cutoff and tie-breaks are
+              // untouched (the scan above still drives selection off main_edges).
+              iw_pf += static_cast<size_t>(b_n);
+              if (tbr_prefetch) {
+                const size_t nk = kept_ei.size();
+                for (size_t p = 0; p < 4 && iw_pf + p < nk; ++p)
+                  TS_PREFETCH_R0(
+                      &vroot_cache[static_cast<size_t>(kept_ei[iw_pf + p]) * tw]);
+              }
 
               double scores[4] = {best_candidate, best_candidate,
                                   best_candidate, best_candidate};
