@@ -3,7 +3,10 @@
 Always check the contents of `.AGENTS` for memories and policies relevant to
 the task you have been assigned.
 
-Update memory files with anything relevant you learn. But keep them lean.
+Update memory files with anything relevant you learn. But keep them lean — the
+auto-memory archive is organised as campaign hubs indexed at the top of `MEMORY.md`;
+advance a campaign by updating its hub the same turn, not by dropping an unindexed
+detail file the next session won't find.
 
 ### GHA dispatch (primary validation path)
 
