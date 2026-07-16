@@ -18,9 +18,10 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 
 LIB=/nobackup/$USER/TreeSearch/dsslib
+DEPLIB=/nobackup/$USER/TreeSearch/lib      # deps (TreeTools/ape/Rcpp/...); my TreeSearch is in $LIB
 REPO=/nobackup/$USER/TreeSearch-dss
-export R_LIBS_USER=$LIB
-export TS_LIB=$LIB
+export R_LIBS_USER="$LIB:$DEPLIB"
+export TS_LIB=$LIB                          # dss_size_probe.R pins TreeSearch via lib.loc=TS_LIB
 export T0_DIR=$REPO/dev/benchmarks/missiongate/t0
 export OUT_DIR=/nobackup/$USER/TreeSearch/dss_out
 export TS_REPS=5

@@ -15,8 +15,10 @@ module load r/4.5.1
 module load gcc/14.2
 
 LIB=/nobackup/$USER/TreeSearch/dsslib
+DEPLIB=/nobackup/$USER/TreeSearch/lib      # has TreeTools/Rcpp/ape/... (deps only; not installed into)
 REPO=/nobackup/$USER/TreeSearch-dss
 ORIGIN=https://github.com/ms609/TreeSearch.git
+export R_LIBS_USER="$LIB:$DEPLIB"          # INSTALL must SEE deps; TreeSearch target = $LIB
 mkdir -p "$LIB" /nobackup/$USER/TreeSearch/logs
 
 # Dedicated checkout of the probe branch (clone once from origin, then fetch).
@@ -34,5 +36,5 @@ R CMD build --no-build-vignettes --no-manual --no-resave-data .
 R CMD INSTALL --library="$LIB" TreeSearch_*.tar.gz
 rc=$?
 rm -f TreeSearch_*.tar.gz
-echo "INSTALL exit: $rc; version: $(R_LIBS_USER=$LIB Rscript -e 'cat(as.character(packageVersion("TreeSearch")))' 2>/dev/null)"
+echo "INSTALL exit: $rc; version: $(Rscript -e 'cat(as.character(packageVersion("TreeSearch")))' 2>/dev/null)"
 exit $rc
