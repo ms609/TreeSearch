@@ -20,7 +20,10 @@ BASE=/nobackup/pjjg18/tsmarch; DEPLOY=$BASE/lib; SRC=$BASE/src
 mkdir -p $BASE/logs
 rm -rf $SRC && git clone --depth 1 -b cpp-search https://github.com/ms609/TreeSearch.git $SRC
 echo "cloned cpp-search @ $(cd $SRC && git rev-parse --short HEAD)"
-echo 'PKG_CPPFLAGS = -march=native' > $SRC/src/Makevars
+# -ffp-contract=off: keep the AVX2-inline win (the boundary-kill, not FMA) but
+# forbid FMA fusion so IW/profile FLOAT scores stay bit-identical to the -msse2
+# release -> transparent speedup, safe for IW-tie-sensitive race trajectories.
+echo 'PKG_CPPFLAGS = -march=native -ffp-contract=off' > $SRC/src/Makevars
 rm -rf $DEPLOY && mkdir -p $DEPLOY
 R CMD INSTALL --preclean --no-docs --no-help --library=$DEPLOY $SRC > $BASE/build.log 2>&1 \
   && echo "BUILD OK -> $DEPLOY/TreeSearch" || { echo "BUILD FAILED"; tail -25 $BASE/build.log; exit 1; }
