@@ -1,63 +1,66 @@
-# AVX2 reduce-codegen gate: packing reopened a ~9% per-candidate win — 2026-07-16
+# AVX2 reduce-codegen: real per-candidate win, MODEST end-to-end — RESOLVED on EPYC 2026-07-17
 
-**Status:** FINDING recorded; **no code landed** (the portable source capture did not work locally
-— reverted). Resolution deferred to a Hamilton EPYC `-msse2` vs `-mavx2` A/B (fold into the packbuild
-rebuild after the 5432 job `17887591` completes — do NOT rebuild packbuild while it runs).
+**Verdict:** the shipped `-msse2` build pays a per-block AVX2-call-boundary on EPYC; a `-mavx2`
+(or `-march=native`) build removes it for a **1.26–1.67× per-candidate** win — but that dilutes to
+**~1–10% end-to-end** `MaximizeParsimony` wall, because the default `auto` search is dominated by
+non-scoring machinery (ratchet/sectorial/tree-ops), not the reroot reduce. **Banked as a
+`-march=native` Hamilton deployment build** (free, machine-specific, off the CRAN release). Not worth
+a portable source change. Confirms the mission: the per-move kernel is not the end-to-end bottleneck.
 
-## The finding
+## Per-candidate A/B on EPYC (job 17908514; `avx2ab/lib_base` vs `lib_avx2`, kern_real min-of-15)
 
-The package builds `-O2 -msse2` (no `-mavx2`; `~/.R/Makevars.win` CXXFLAGS). The AVX2 reduce
-(`any_hit_reduce_avx2`, `__attribute__((target("avx2")))`, ts_simd.h) is therefore a **non-inlined
-call boundary** on every candidate. Packing (landed today, e8a17e60) cut hot blocks to
-`n_states`=2-4, where that fixed call/setup/spill is a big fraction of a tiny block body — so
-inlining the reduce now pays where it did not pre-packing.
+Linux `__builtin_cpu_supports("avx2")` = **true** (unlike the MinGW box).
 
-**Whole-program `-mavx2` A/B (local, back-to-back, cutoff-tight/prefetch-off, min-of-15):**
+| dataset | blocks | `-msse2` ns | `-mavx2` ns | speedup |
+|---|---|---|---|---|
+| project970 (1844c) | ~29 | 142.2 | 85.0 | **1.67×** |
+| project510 (2954c) | ~46 | 116.0 | 84.3 | **1.38×** |
+| project2668 (1227c)| ~20 | 67.5 | 53.6 | **1.26×** |
+| project5432 (189c) | 3 | 22.6 | 21.0 | 1.07× |
 
-| dataset | `-msse2` ns/cand | `-mavx2` ns/cand | speedup |
-|---|---|---|---|
-| project970 (1844c) | 60.57 | 55.25 | **1.088× (8.8%)** |
-| project2668 (1227c) | 34.72 | 31.90 | **1.081× (8.1%)** |
+Scales with block count. **Mechanism:** `cpu_has_avx2()` is true on EPYC, so the `-msse2` build
+calls `any_hit_reduce_avx2` (`__attribute__((target("avx2")))`, ts_simd.h) **across a target
+boundary it cannot inline — once per block**, plus a `hor_or256` horizontal reduce each block. On
+Zen2 that call/spill is costly and compounds over ~29 blocks × millions of candidates. `-mavx2`
+compiles the scorer in an AVX2 context so the helper inlines. **Windows masked this:** there
+`cpu_has_avx2()` is *false*, so the base build used inline SSE2 (no boundary) and the gap looked like
+only ~9%.
 
-Reproducible, not session drift. This is the **largest exact per-candidate lever found** post-packing.
-Contrast the pre-packing prior (T-P5f whole-program codegen: −1.2%) — packing *reopened* it, exactly
-as the lever-hunt `map:simd-reduce` predicted. (Injected via `src/Makevars.win` `PKG_CPPFLAGS=-mavx2`
-+ `touch src/*.cpp` to force a flag-correct recompile; the env `PKG_CPPFLAGS` and a `~/.R/Makevars.win`
-CXXFLAGS edit both silently did NOT take — R rebuilds the flag string.)
+## End-to-end MaximizeParsimony wall (job 17908602; same libs, fixed-seed maxReplicates=4 → identical trajectory)
 
-## Why the portable source capture did NOT work here (reverted)
+| dataset | base wall | avx2 wall | end-to-end | reach |
+|---|---|---|---|---|
+| project970 | 3357.1 s | 3321.0 s | **1.01×** | 11704 = 11704 |
+| project510 | 847.8 s | 768.3 s | **1.10×** | 18345 = 18345 |
 
-Attempted the map's "hoist target(avx2) to the scorer": an `always_inline` core shared by a default
-wrapper and a `TS_TARGET_AVX2` clone of `fitch_indirect_cached_flat_x4`, dispatched by
-`cpu_has_avx2()`. REROOT ns was **flat** (58.9→58.8) even when the clone was force-called.
+**The per-candidate win does NOT propagate.** Amdahl backs out the scoring fraction: project970
+scoring ≈ **3%** of wall (1.67× on 3% → 1.01×); project510 ≈ **34%** (1.38× on 34% → 1.10×). So
+~66–97% of `auto`-search wall is non-scoring machinery (ratchet cycles, sectorial decomposition,
+tree management, collapse/pool), dataset-dependent. Same dilution that sank lever-6.
 
-Diagnosis (by elimination — a standalone `__builtin_cpu_supports` probe won't link on this rtools
-box, an unrelated `ld` quirk): **`cpu_has_avx2()` is almost certainly `false` on this MinGW/Windows
-machine** (`__builtin_cpu_supports("avx2")` is known-unreliable there — the CPU-feature init may not
-run). If it were true, the `-msse2` baseline would already call `any_hit_reduce_avx2` and inlining it
-(the clone) would have captured the win. It was flat because the clone's *internal* `any_hit_reduce`
-also took the SSE2 path (`cpu_has_avx2()` false), so the `target(avx2)` wrapper ran SSE2 code. The
-whole-program `-mavx2` win is therefore SSE2→AVX2 via *unconditional* codegen (which ignores the
-runtime check).
+Reconciles why **packing** landed 1.2–1.5× end-to-end but AVX2 only ~1–10%: packing shrinks
+`total_words` *pervasively* (scoring + edge-set buffer/cache + precompute across every phase),
+whereas AVX2 only speeds the reduce *compute* — a smaller slice.
 
-**Implication (strong hypothesis, verify on Linux/CI):** the shipped **Windows** binary likely runs
-the SSE2 reduce, never its AVX2 helpers. On Linux/EPYC `__builtin_cpu_supports` works, so
-`cpu_has_avx2()` is true there and the `-msse2` build already uses the AVX2 helpers (with the call
-boundary) — a *different* baseline, where the target-clone (killing the boundary) is the right lever.
+## Windows note (separate, unresolved)
 
-## Two portable capture paths (platform-dependent) — resolve on Hamilton
+`cpu_has_avx2()` is almost certainly **false on MinGW/Windows** (`__builtin_cpu_supports` unreliable
+there; a standalone probe would not link — `ld` quirk). So the shipped **Windows** binary likely runs
+the SSE2 reduce and never its AVX2 helpers. Low priority (Windows isn't the compute platform), but a
+robust CPU-detect (manual CPUID / Windows API) would let Windows use the AVX2 helpers.
 
-1. **If Windows silently runs SSE2** (`cpu_has_avx2()` false): fix CPU detection on MinGW (manual
-   CPUID / Windows API instead of `__builtin_cpu_supports`) → Windows uses the AVX2 helpers. Portable,
-   shippable, no `-mavx2` build needed. (Then the target-clone adds the boundary-elimination on top.)
-2. **Where `cpu_has_avx2()` is true** (Linux/EPYC, most non-MinGW): a `target(avx2)` scorer clone
-   dispatched by `cpu_has_avx2()` kills the per-candidate call boundary. (My local test could not
-   validate this because the runtime check is false here.)
+## Banked
 
-## Next step (deferred, non-blocking)
+- **Hamilton:** `-march=native` deployment build recipe (`/nobackup/pjjg18/tsmarch/tsmarch_build.sh`)
+  → `/nobackup/pjjg18/tsmarch/lib`; point search jobs' `lib.loc` / `R_LIBS_USER` at it for the free
+  ~1–10% (larger on scoring-bound char-rich data). Machine-specific; **must not** go in the CRAN
+  source (`-march=native` breaks non-AVX2 CPUs — the release keeps `-msse2` + runtime dispatch).
+- **Not pursued:** the portable `target(avx2)` scorer clone. It *would* work on Linux (the boundary
+  is real there), but with scoring at ~3–34% of wall the end-to-end payoff is small and
+  dataset-dependent — not worth the cross-platform multi-versioning risk. Recorded, not built.
 
-Hamilton EPYC A/B once `17887591` (5432) finishes: rebuild packbuild `-msse2` vs `-mavx2`, measure
-raw-`tbr_search` wall + full `MaximizeParsimony` wall (min-of-runs) on project970/510/5432, and print
-`cpu_has_avx2()` on Linux. That settles (a) the achievable end-to-end win, (b) which portable path
-applies, and (c) the Windows-SSE2 hypothesis. Consistent with [[hamilton-gcc-module-noop]] (codegen
-wins seen on Hamilton, deployment-gated).
+## Takeaway
+
+Real kernel headroom exists on EPYC, but time-to-optimum is bounded by the **search machinery /
+stopping**, not the per-move reduce — the next real wall lever is there (Mission A / over-search),
+not further per-candidate scoring. Consistent with [[hamilton-gcc-module-noop]].
