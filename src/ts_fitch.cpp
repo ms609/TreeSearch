@@ -445,6 +445,25 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
 }
 
 
+#ifdef TS_AUDIT_PROBE
+// Bail-depth histogram: g_bail_hist[d] = #candidates that scanned exactly d
+// blocks before busting their own cutoff (or d=n_blocks if they ran to the end =
+// a deep/equal-length scan). Answers shallow-vs-deep for the SCALAR per-candidate
+// scorers (the weighted path most real morphological data takes). Defined before
+// first use in fitch_indirect_length_cached / fitch_indirect_cached_flat.
+static long long g_bail_hist[130] = {0};
+static long long g_bail_cands = 0;
+void dump_bail_hist() {
+  std::fprintf(stderr, "BAILHIST cands=%lld :", g_bail_cands);
+  for (int d = 0; d < 130; ++d) if (g_bail_hist[d]) std::fprintf(stderr, " d%d=%lld", d, g_bail_hist[d]);
+  std::fprintf(stderr, "\n");
+}
+inline void record_bail(int depth) {
+  if (depth >= 0 && depth < 130) g_bail_hist[depth]++;
+  if ((++g_bail_cands % 2000000LL) == 0) dump_bail_hist();
+}
+#endif
+
 // Early-termination variant of fitch_indirect_length.
 int fitch_indirect_length_bounded(const uint64_t* clip_prelim,
                                   const TreeState& tree,
@@ -496,9 +515,16 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
     int ns = popcount64(needs_step);
     if (blk.upweight_mask) ns += popcount64(needs_step & blk.upweight_mask);
     extra_steps += blk.weight * ns;
-    if (extra_steps >= cutoff) return extra_steps;
+    if (extra_steps >= cutoff) {
+#ifdef TS_AUDIT_PROBE
+      record_bail(b + 1);
+#endif
+      return extra_steps;
+    }
   }
-
+#ifdef TS_AUDIT_PROBE
+  record_bail(ds.n_blocks);
+#endif
   return extra_steps;
 }
 
@@ -666,8 +692,16 @@ int fitch_indirect_cached_flat(const uint64_t* clip_prelim,
         &clip_prelim[fb[b].offset], &vroot[fb[b].offset],
         fb[b].n_states);
     extra_steps += popcount64(~any_hit & fb[b].active_mask);
-    if (extra_steps >= cutoff) return extra_steps;
+    if (extra_steps >= cutoff) {
+#ifdef TS_AUDIT_PROBE
+      record_bail(b + 1);
+#endif
+      return extra_steps;
+    }
   }
+#ifdef TS_AUDIT_PROBE
+  record_bail(ds.n_blocks);
+#endif
   return extra_steps;
 }
 
@@ -812,13 +846,20 @@ void fitch_indirect_cached_flat_x4(
     for (int i = 0; i < 4; ++i) {
       int bi = (bail[i] < 0) ? B : bail[i];
       g_x4_waste += (B - bi);
+      // per-candidate blocks scanned = bail depth (bi), or full n_blocks if it
+      // never busted its own cutoff within the batch's scanned span. A candidate
+      // that never bailed AND the batch ran to the end scanned all n_blocks.
+      int depth = (bail[i] < 0) ? ds.n_blocks : bail[i];
+      if (depth >= 0 && depth < 130) g_bail_hist[depth]++;
+      ++g_bail_cands;
     }
     g_x4_total += 4LL * B;
-    if ((++g_x4_calls % 5000000ULL) == 0) {
+    if ((++g_x4_calls % 1000000ULL) == 0) {
       std::fprintf(stderr, "X4_WASTE calls=%llu wasted=%lld total=%lld frac=%.4f\n",
                    (unsigned long long)g_x4_calls, (long long)g_x4_waste,
                    (long long)g_x4_total,
                    g_x4_total ? (double)g_x4_waste / (double)g_x4_total : 0.0);
+      dump_bail_hist();
     }
   }
 #endif
