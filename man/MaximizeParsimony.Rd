@@ -169,8 +169,32 @@ finding all MPTs.  A rough minimum is
 A warning is issued when an explicit value falls below this threshold
 for datasets with 30 or more taxa.}
 
-\item{targetHits}{Integer: stop when the best score has been found
-independently this many times (default: \code{max(10, NTip / 5)}).}
+\item{targetHits}{Integer: stop a replicate series once the best score has
+been re-found this many times without further improvement
+(default: \code{max(10, NTip / 5)}).  This is the main control over \emph{how hard the
+search tries to be sure it is finished}, and it is shared by every
+\code{strategy} preset -- the presets differ in per-replicate effort, not in when
+they stop.  It sets the balance between the two goals a user may bring to a
+search:
+\describe{
+\item{A single tree one can be reasonably confident is
+most-parsimonious}{Use a small \code{targetHits} (e.g. 4--10).  The search
+stops soon after the score stops improving: fast, and safe on datasets
+whose optimum is reached early.  On hard datasets the score can still
+improve after a long unproductive stretch (a better tree may lie many
+replicates away), so a small \code{targetHits} trades a chance at the true
+optimum for speed; raise it (or \code{maxReplicates}) when certainty matters
+more than wall-clock.}
+\item{A set of trees representing the full range of most-parsimonious
+trees}{Use a large \code{targetHits} with a high \code{maxReplicates}.  Distinct
+equally-parsimonious topologies -- and whole \acronym{TBR}-disconnected
+islands of them -- keep being discovered for as long as replicates run,
+and the terminal enumeration step can only fill in trees on islands a
+replicate has already reached, so a larger budget samples more islands.
+No stopping rule can \emph{detect} that every island has been found: a long
+run with no new topology is not proof that none remain, so completeness
+is bought with search effort, never inferred.}
+}}
 
 \item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
 search. When reached, the current replicate finishes and the search

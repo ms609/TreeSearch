@@ -517,8 +517,32 @@
 #'   `max(10, ceiling(NTip * NChar / 5000))`, where `NChar = sum(weight)`.
 #'   A warning is issued when an explicit value falls below this threshold
 #'   for datasets with 30 or more taxa.
-#' @param targetHits Integer: stop when the best score has been found
-#'   independently this many times (default: `max(10, NTip / 5)`).
+#' @param targetHits Integer: stop a replicate series once the best score has
+#'   been re-found this many times without further improvement
+#'   (default: `max(10, NTip / 5)`).  This is the main control over *how hard the
+#'   search tries to be sure it is finished*, and it is shared by every
+#'   `strategy` preset -- the presets differ in per-replicate effort, not in when
+#'   they stop.  It sets the balance between the two goals a user may bring to a
+#'   search:
+#'   \describe{
+#'     \item{A single tree one can be reasonably confident is
+#'       most-parsimonious}{Use a small `targetHits` (e.g. 4--10).  The search
+#'       stops soon after the score stops improving: fast, and safe on datasets
+#'       whose optimum is reached early.  On hard datasets the score can still
+#'       improve after a long unproductive stretch (a better tree may lie many
+#'       replicates away), so a small `targetHits` trades a chance at the true
+#'       optimum for speed; raise it (or `maxReplicates`) when certainty matters
+#'       more than wall-clock.}
+#'     \item{A set of trees representing the full range of most-parsimonious
+#'       trees}{Use a large `targetHits` with a high `maxReplicates`.  Distinct
+#'       equally-parsimonious topologies -- and whole \acronym{TBR}-disconnected
+#'       islands of them -- keep being discovered for as long as replicates run,
+#'       and the terminal enumeration step can only fill in trees on islands a
+#'       replicate has already reached, so a larger budget samples more islands.
+#'       No stopping rule can *detect* that every island has been found: a long
+#'       run with no new topology is not proof that none remain, so completeness
+#'       is bought with search effort, never inferred.}
+#'   }
 #' @param maxSeconds Numeric: maximum wall-clock time in seconds for the
 #'   search. When reached, the current replicate finishes and the search
 #'   stops. `0` (default) means no time limit.
