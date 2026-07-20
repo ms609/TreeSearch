@@ -17,9 +17,9 @@ test_that("TS_PACK_LOCAL is score-exact per tree (NA dataset)", {
   phy <- inapplicable.phyData[["Sansom2010"]]
   trees <- lapply(c(1L, 7L, 99L), FixedTree, dataset = phy)
 
-  lenOff <- withr::with_envvar(c(TS_PACK_LOCAL = "0"),
+  lenOff <- with_envvar(c(TS_PACK_LOCAL = "0"),
     vapply(trees, TreeLength, double(1), dataset = phy))
-  lenOn <- withr::with_envvar(c(TS_PACK_LOCAL = "1"),
+  lenOn <- with_envvar(c(TS_PACK_LOCAL = "1"),
     vapply(trees, TreeLength, double(1), dataset = phy))
 
   expect_identical(lenOn, lenOff)
@@ -56,7 +56,7 @@ test_that("packed reconstruction maps planes back to global state labels", {
   edge <- TreeTools::Preorder(tree)[["edge"]]
 
   debugChar <- function(pack, target) {
-    withr::with_envvar(c(TS_PACK_LOCAL = if (pack) "1" else "0"),
+    with_envvar(c(TS_PACK_LOCAL = if (pack) "1" else "0"),
       TreeSearch:::ts_na_debug_char(edge, contrast, tipData, weight, levels,
                                     target))
   }

@@ -1,6 +1,20 @@
 # Shared helpers for ts-* test files.
 # testthat auto-sources helper-*.R files before running tests.
 
+#' Set environment variables for the duration of `code`, restoring (or
+#' unsetting) the prior values on exit. Minimal single-purpose stand-in for
+#' withr::with_envvar so the package doesn't need withr just for this.
+with_envvar <- function(vars, code) {
+  old <- Sys.getenv(names(vars), unset = NA, names = TRUE)
+  on.exit({
+    keep <- !is.na(old)
+    if (any(keep)) do.call(Sys.setenv, as.list(old[keep]))
+    if (any(!keep)) Sys.unsetenv(names(old)[!keep])
+  })
+  do.call(Sys.setenv, as.list(vars))
+  code
+}
+
 #' Skip a test unless TREESEARCH_EXTENDED_TESTS=true is set.
 #' Use inside test_that() or at file level for Tier 3 (stress/bench) tests.
 #' See tests/testing-strategy.md for full tiering documentation.

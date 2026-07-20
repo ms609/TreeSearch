@@ -1,5 +1,14 @@
 library(shinytest2)
 
+#' Set options for the duration of `code`, restoring the prior values on
+#' exit. Minimal single-purpose stand-in for withr::with_options so the
+#' package doesn't need withr just for this.
+with_options <- function(new, code) {
+  old <- options(new)
+  on.exit(options(old))
+  code
+}
+
 # ---------------------------------------------------------------------------
 # new_app_driver(): shared AppDriver factory for the three integration tests.
 #
