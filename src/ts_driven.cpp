@@ -741,6 +741,35 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   ConstraintData auto_cd;  // built from pool consensus; reused across reps
   double auto_cd_best_score = 1e18;  // score when auto_cd was last built
 
+  // POOL_RESEED probe (opt-in TS_POOL_RESEED, default OFF -> deployed path
+  // byte-identical).  For a fraction `pr_prob` of replicates, seed the pipeline
+  // from a retained best-score pool tree instead of a fresh Wagner start.  The
+  // reseeded tree then runs the full TBR + XSS/RSS/CSS + ratchet + drift
+  // pipeline, giving the diverse equal-length pool set its own sectorial
+  // RE-SOLVE pass — TNT's cross-set channel ("whole-tree reuse as starting
+  // points"), which the fresh-start bandit arms never exercise.  getenv is
+  // hoisted here (per-loop getenv is ~2.4us on ucrt; negligible per-rep but
+  // hoisted on principle).  Selection is a uniform draw over best-score
+  // entries; no diversity-weighting until the plain version shows signal.
+  // NB validate matched-WALL (targetHits huge) so a reseeded rep re-deriving
+  // the best score cannot inflate hits_to_best into an early stop; hits-
+  // accounting is a deploy-gate concern, not a probe-measurement one.
+  bool pr_enabled = false;
+  double pr_prob = 0.5;
+  {
+    const char* pr_env = std::getenv("TS_POOL_RESEED");
+    if (pr_env && pr_env[0] != '\0') {
+      // Gate on the PARSED value, not the first char: "0.25"/"0.5" begin with
+      // '0' but are enabled; only "0"/""/non-positive disable.  (A prior guard
+      // `pr_env[0] != '0'` wrongly disabled every fractional probability.)
+      double v = std::atof(pr_env);
+      if (v > 0.0 && v <= 1.0) {
+        pr_enabled = true;
+        pr_prob = v;  // "1" -> 1.0, "0.25" -> 0.25
+      }
+    }
+  }
+
   for (int rep = 0; rep < params.max_replicates; ++rep) {
     int rep1 = rep + 1;
 
@@ -761,6 +790,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Use starting tree for replicate 0 if provided
     TreeState* start_ptr = nullptr;
     TreeState start_tree;
+    bool pr_reseeded = false;  // this rep seeded from a pool tree (POOL_RESEED)
     if (rep == 0 && params.start_n_edge > 0 &&
         static_cast<int>(params.start_edge.size()) >= 2 * params.start_n_edge) {
       const int* edge_parent = params.start_edge.data();
@@ -768,6 +798,31 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       start_tree.init_from_edge(edge_parent, edge_child,
                                 params.start_n_edge, ds);
       start_ptr = &start_tree;
+    }
+
+    // POOL_RESEED: when enabled and no user start is in play, seed this rep
+    // from a uniformly-chosen best-score pool tree (>=2 entries required).
+    // Reuses the existing starting_tree plumbing, so the reseeded tree flows
+    // through the full pipeline exactly as a Wagner start would.
+    if (pr_enabled && start_ptr == nullptr && pool.size() >= 2) {
+      std::uniform_real_distribution<double> pr_draw(0.0, 1.0);
+      if (pr_draw(bandit_rng) < pr_prob) {
+        const auto& entries = pool.all();
+        const double pool_best = pool.best_score();
+        // Collect indices of best-score entries, pick one uniformly.
+        std::vector<int> best_idx;
+        best_idx.reserve(entries.size());
+        for (int ei = 0; ei < static_cast<int>(entries.size()); ++ei) {
+          if (entries[ei].score <= pool_best) best_idx.push_back(ei);
+        }
+        if (!best_idx.empty()) {
+          std::uniform_int_distribution<int> pick(
+              0, static_cast<int>(best_idx.size()) - 1);
+          start_tree = entries[best_idx[pick(bandit_rng)]].tree;
+          start_ptr = &start_tree;
+          pr_reseeded = true;
+        }
+      }
     }
 
     // Adaptive level: adjust ratchet/drift cycles based on hit rate.
@@ -951,8 +1006,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       ++unsuccessful_reps;
     }
 
-    // Update strategy bandit (T-190)
-    if (params.adaptive_start) {
+    // Update strategy bandit (T-190).  Skip reseeded reps: they did not use a
+    // fresh-start arm, so crediting/blaming one would corrupt the bandit.
+    if (params.adaptive_start && !pr_reseeded) {
       bool hit_best = (rep_result.score <= pool.best_score());
       strategy_tracker.update(rep_strategy, hit_best);
       if (score_improved) {
@@ -1187,6 +1243,105 @@ finish:
     if (params.verbosity >= 2) {
       Rprintf("MPT enumeration: %d trees in pool (%.1f s)\n",
               pool.size(), elapsed());
+    }
+  }
+
+  // Terminal fuse pass (opt-in: TS_TERMINAL_FUSE=1).
+  // The periodic in-loop fuse (see above) is the LAST fuse the search runs;
+  // perturbStop and the MPT-enumeration phase both ENRICH the pool afterwards
+  // with diverse equal-score topologies that are never fused. A single pass
+  // over the converged+enriched pool can recombine complementary clades the
+  // loop never got to (project175: a converged 406 pool fuses to 405 in one
+  // exchange from almost any best-score anchor). Robust multi-anchor: best-only
+  // has a small unlucky-anchor failure rate, so fuse into a few best-score
+  // anchors and keep the best. tree_fuse iterates ALL donors per anchor, so a
+  // handful of anchors suffices. Default OFF pending across-seed validation.
+  {
+    const char* tf_env = std::getenv("TS_TERMINAL_FUSE");
+    if (tf_env && tf_env[0] == '1' && pool.size() >= 2) {
+      auto tf_start = std::chrono::steady_clock::now();
+      FuseParams fp;
+      fp.accept_equal = params.fuse_accept_equal;
+      fp.max_rounds = 10;
+      const double best_before = pool.best_score();
+
+      TreeState best_fused;
+      double best_fused_score = best_before;
+      bool have_fused = false;
+      const auto& entries = pool.all();
+      int anchors_tried = 0;
+      for (int ei = 0;
+           ei < static_cast<int>(entries.size()) && anchors_tried < 3; ++ei) {
+        if (entries[ei].score > best_before) continue;  // best-score anchors
+        ++anchors_tried;
+        TreeState cand = entries[ei].tree;
+        tree_fuse(cand, ds, pool, fp);
+        double cs = score_tree(cand, ds);
+        if (!have_fused || cs < best_fused_score) {
+          best_fused = std::move(cand);
+          best_fused_score = cs;
+          have_fused = true;
+        }
+      }
+
+      // Diagnostic: always report the terminal-fuse attempt (verbosity>=1),
+      // so "executed-but-no-key" is distinguishable from "never executed".
+      if (params.verbosity >= 1 && !has_callback) {
+        Rprintf("Terminal fuse attempt: pool=%d anchors=%d best_before=%.5g "
+                "-> best_fused=%.5g\n",
+                static_cast<int>(pool.size()), anchors_tried, best_before,
+                best_fused_score);
+      }
+
+      if (have_fused && best_fused_score < best_before) {
+        // Constraint repair, mirroring the in-loop fuse path.
+        bool fused_ok = true;
+        if (cd && cd->active) {
+          map_constraint_nodes(best_fused, *cd);
+          bool viol = false;
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) { viol = true; break; }
+          }
+          if (viol) {
+            impose_constraint(best_fused, *cd);
+            best_fused.build_postorder();
+            best_fused.reset_states(ds);
+            best_fused_score = score_tree(best_fused, ds);
+            map_constraint_nodes(best_fused, *cd);
+            for (int _s = 0; _s < cd->n_splits; ++_s) {
+              if (cd->constraint_node[_s] < 0) { fused_ok = false; break; }
+            }
+          }
+        }
+        if (fused_ok && best_fused_score < best_before) {
+          std::vector<uint8_t> fused_collapsed;
+          compute_collapsed_flags(best_fused, ds, fused_collapsed);
+          pool.add_collapsed(best_fused, best_fused_score, fused_collapsed);
+          result.last_improved_rep = result.replicates_completed;
+          if (params.verbosity >= 1 && !has_callback) {
+            Rprintf("Terminal fuse improved: %.5g -> %.5g\n",
+                    best_before, best_fused_score);
+          }
+          // Re-enumerate MPTs of the improved island so the returned set is
+          // honest (add_collapsed evicted the now-suboptimal trees).
+          if (pool.size() > 0 && pool.size() < pool.max_size) {
+            TBRParams tp;
+            tp.accept_equal = true;
+            tp.tabu_size = params.tabu_size > 0 ? params.tabu_size : 100;
+            int seed_idx = 0;
+            while (seed_idx < pool.size() && pool.size() < pool.max_size) {
+              if (check_enum_timeout()) break;
+              TreeState enum_tree = pool.all()[seed_idx].tree;
+              tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
+              tbr_search(enum_tree, ds, tp, cd, nullptr, &pool,
+                         check_enum_timeout);
+              ++seed_idx;
+            }
+          }
+        }
+      }
+      result.timings.fuse_ms += std::chrono::duration<double, std::milli>(
+          std::chrono::steady_clock::now() - tf_start).count();
     }
   }
 

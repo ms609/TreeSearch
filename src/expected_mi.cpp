@@ -38,8 +38,7 @@ inline double l2factorial(int n) {
 //' small or unbalanced partitions, where raw mutual information is appreciably
 //' inflated by chance agreement.
 //'
-//' The value is computed analytically \insertCite{Vinh2010}{TreeDist},
-//' summing over
+//' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
 //' the hypergeometric distribution of cell overlaps, and is returned in bits
 //' (logarithms to base two).
 //'
