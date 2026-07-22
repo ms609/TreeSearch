@@ -5,6 +5,30 @@ REACH mission. Canonical hard case: **project5432** (482t, 189 chars, ~44% missi
 production search reliably lands at ~1947 (best-ever across every config); TNT reaches **1943** ~1/3 of
 runs and **1944** reliably. Gap = 3 steps / ~0.15% on this one matrix.
 
+## UPDATE 2026-07-22 — TS reaches 1943; 1943 is a *shared* floor; gap is luck+speed, not pathology
+Two things have moved since this doc was written; read this before the (still-valid) CLOSED sections below.
+- **"1939" is retracted — it was never a real tree** (a sectorial-search bestScore-column *trace phantom*;
+  `best` over all 10 000 saved trees of the run that "showed" it = 1942). Ignore every "1939 phase" / "1939
+  target" reference below. Best-known ladder is **1942 (stored) / 1943 (both engines' working floor)**.
+- **TreeSearch now reaches 1943** — the new best TS-*generated* score, one step below the prior TS-side best
+  of 1944. Reached by an aggressive perturbation swarm (Hamilton array 17943743, 16 seeds × ~48 h; block 1
+  cold then `tree=best` warm-forward; deep reweighting kick `ratchetPerturbMaxMoves=0` + drift 25 +
+  `postRatchetSectorial` + `adaptiveStart` + intraFuse, iterated). Floor **1943 on 6/16 seeds**, canonically
+  verified. Recorded observationally: block-1 **cold still floors ~1945–1947** (the cold-start diagnosis
+  below is unchanged); it is the *sustained iteration under this stack* that descends. Because `tree=` warms
+  only rep 1 (7/8 reps/block are cold RAS), no single mechanism is isolated beyond "the perturbation stack" —
+  but against the old 1870-rep breadth null (0 hits), the differentiator is the **stack, not restart volume**.
+- **⇒ Reframing (user, 2026-07-22): the residual 1943 → 1942 gap is a rarity / luck-and-speed gap, not a TS
+  pathology.** A 28 h heavy TNT hammer also floored at 1943 across all seeds; 1942 is a rare lucky escape for
+  *either* engine. Both sit in the same 1943-quality basin regime. This supersedes the "TS 0/20 cold vs TNT
+  4/12" mechanism-gap read for the 1943→1942 step specifically (the cold-start basin capture *to 1943* is
+  what the swarm's iteration achieves; the sub-1943 escape is rare for both).
+- **Committed artifacts (so they never go missing):** `dev/benchmarks/hardtail/` — `project5432_best_1942_tnt.tre`
+  (1942, verified), `project5432_ts_reach_1943.tre` (1943, verified), and a self-contained `README.md`
+  (regime, provenance, config, the stale-engine "should we re-run?" footnote). Swarm ran on Hamilton lib
+  TreeSearch 2.0.0 (lags `cpp-search`); a current-engine re-run to settle whether TS reaches 1942 is **held
+  for a go decision, not launched**.
+
 ## The diagnosis is DONE and it is actionable (read [[project5432-basin-structure]] in memory first)
 - **1943 is a VALID, STABLE TS optimum.** Seeded at 1943, TS's own TBR HOLDS it (0 improving moves);
   MaximizeParsimony retains it. NOT a completeness / representation / rooting problem.
