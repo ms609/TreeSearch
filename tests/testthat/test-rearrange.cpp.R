@@ -2,41 +2,41 @@ library("TreeTools")
 
 test_that("TBR errors", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
-  expect_equal(0, length(expect_warning(all_tbr(tr$edge, -1))))
-  expect_equal(0, length(expect_warning(all_tbr(tr$edge, 1))))
-  expect_equal(0, length(expect_warning(all_tbr(tr$edge, 111))))
+  expect_warning(r1 <- TreeSearch:::all_tbr(tr$edge, -1));   expect_equal(0, length(r1))
+  expect_warning(r2 <- TreeSearch:::all_tbr(tr$edge, 1));    expect_equal(0, length(r2))
+  expect_warning(r3 <- TreeSearch:::all_tbr(tr$edge, 111));  expect_equal(0, length(r3))
 })
 
 test_that("SPR errors", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
-  expect_equal(0, length(expect_warning(all_spr(tr$edge, -1))))
-  expect_equal(0, length(expect_warning(all_spr(tr$edge, 1))))
-  expect_equal(0, length(expect_warning(all_spr(tr$edge, 111))))
+  expect_warning(r1 <- TreeSearch:::all_spr(tr$edge, -1));   expect_equal(0, length(r1))
+  expect_warning(r2 <- TreeSearch:::all_spr(tr$edge, 1));    expect_equal(0, length(r2))
+  expect_warning(r3 <- TreeSearch:::all_spr(tr$edge, 111));  expect_equal(0, length(r3))
 })
 
 test_that("TBR working", {
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
 
   # Move single tip
-  expect_equal(8, length(x <- all_tbr(tr$edge, 12)))
-  expect_equal(8, length(x <- all_tbr(tr$edge, 11)))
-  expect_equal(8, length(x <- all_tbr(tr$edge, 10)))
-  expect_equal(8, length(x <- all_tbr(tr$edge, 7)))
-  expect_equal(8, length(x <- all_tbr(tr$edge, 6)))
-  expect_equal(8, length(x <- all_tbr(tr$edge, 3)))
+  expect_equal(8, length(x <- TreeSearch:::all_tbr(tr$edge, 12)))
+  expect_equal(8, length(x <- TreeSearch:::all_tbr(tr$edge, 11)))
+  expect_equal(8, length(x <- TreeSearch:::all_tbr(tr$edge, 10)))
+  expect_equal(8, length(x <- TreeSearch:::all_tbr(tr$edge, 7)))
+  expect_equal(8, length(x <- TreeSearch:::all_tbr(tr$edge, 6)))
+  expect_equal(8, length(x <- TreeSearch:::all_tbr(tr$edge, 3)))
   
   # Move cherry
-  expect_equal(6, length(x <- all_tbr(tr$edge, 9)))
-  expect_equal(6, length(x <- all_tbr(tr$edge, 5)))
+  expect_equal(6, length(x <- TreeSearch:::all_tbr(tr$edge, 9)))
+  expect_equal(6, length(x <- TreeSearch:::all_tbr(tr$edge, 5)))
   expect_equal(6, length(TBRMoves(tr, 5)))
   
   # Move more
-  expect_equal(6, length(unique(x <- all_tbr(tr$edge, 4))))
-  expect_equal(3 * 4 + 2, length(unique(x <- all_tbr(tr$edge, 8))))
+  expect_equal(6, length(unique(x <- TreeSearch:::all_tbr(tr$edge, 4))))
+  expect_equal(3 * 4 + 2, length(unique(x <- TreeSearch:::all_tbr(tr$edge, 8))))
   
   # All moves
-  expect_equal(6*8 + 12+ 6 + 14, length(x <- all_tbr(tr$edge, integer(0))))
-  expect_equal(58, length(unique(x <- all_tbr(tr$edge, integer(0))))) # 58 not formally calculated
+  expect_equal(6*8 + 12+ 6 + 14, length(x <- TreeSearch:::all_tbr(tr$edge, integer(0))))
+  expect_equal(58, length(unique(x <- TreeSearch:::all_tbr(tr$edge, integer(0))))) # 58 not formally calculated
   expect_equal(58, length(TBRMoves(tr)))
   
   tr <- Preorder(root(TreeTools::BalancedTree(14), 't1', resolve.root = TRUE))
@@ -45,13 +45,13 @@ test_that("TBR working", {
   external <- c(3, 6, 7, 11, 12, 13, 17, 18, 20, 21, 24:26)
   # Move single
   for (leaf in external) {
-    expect_equal(22, length(x <- all_tbr(tr$edge, leaf)))
+    expect_equal(22, length(x <- TreeSearch:::all_tbr(tr$edge, leaf)))
   }
   
   Test <- function (edge) {
     nDesc <- desc[tr$edge[edge, 2]]
     expected <- (2 * nDesc - 3) * (22 - (2 * nDesc - 3)) - 1
-    expect_equal(expected, length(all_tbr(tr$edge, edge)))
+    expect_equal(expected, length(TreeSearch:::all_tbr(tr$edge, edge)))
   }
   for (internal in which(!1:26 %in% external)[-(1:2)]) {
     Test(internal)
@@ -59,38 +59,38 @@ test_that("TBR working", {
 })
 
 test_that("SPR fails gracefully", {
-  expect_error(.all_spr(as.phylo(1, 3)$edge, integer(0)))
-  expect_error(.all_spr(Postorder(as.phylo(1, 6))$edge, integer(0)))
-  expect_error(.all_spr(SortTree(as.phylo(1, 6))$edge, integer(0)))
+  expect_error(.TreeSearch:::all_spr(as.phylo(1, 3)$edge, integer(0)))
+  expect_error(.TreeSearch:::all_spr(Postorder(as.phylo(1, 6))$edge, integer(0)))
+  expect_error(.TreeSearch:::all_spr(SortTree(as.phylo(1, 6))$edge, integer(0)))
 })
 
 test_that("SPR works", {
   t2 <- as.phylo(518, 7) # (t1, ((t2, t3), ((t4, t5), (t6, t7))))
-  expect_equal(8, length(all_spr(t2$edge, 2)))
+  expect_equal(8, length(TreeSearch:::all_spr(t2$edge, 2)))
   
   tr <- Preorder(root(TreeTools::BalancedTree(7), 't1', resolve.root = TRUE))
 
   # Move single tip
-  expect_equal(8, length(all_spr(tr$edge, 12)))
-  expect_equal(8, length(all_spr(tr$edge, 11)))
-  expect_equal(8, length(all_spr(tr$edge, 10)))
-  expect_equal(8, length(all_spr(tr$edge, 7)))
-  expect_equal(8, length(all_spr(tr$edge, 6)))
-  expect_equal(8, length(all_spr(tr$edge, 3)))
-  expect_equal(8, length(all_spr(tr$edge, 2)))
+  expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 12)))
+  expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 11)))
+  expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 10)))
+  expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 7)))
+  expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 6)))
+  expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 3)))
+  expect_equal(8, length(TreeSearch:::all_spr(tr$edge, 2)))
   
   # Move cherry
-  expect_equal(6, length(all_spr(tr$edge, 9)))
-  expect_equal(6, length(all_spr(tr$edge, 5)))
-  expect_equal(12, length(all_spr(tr$edge, c(9, 5))))
+  expect_equal(6, length(TreeSearch:::all_spr(tr$edge, 9)))
+  expect_equal(6, length(TreeSearch:::all_spr(tr$edge, 5)))
+  expect_equal(12, length(TreeSearch:::all_spr(tr$edge, c(9, 5))))
   
   # Move more
-  expect_equal(0, length(unique(all_spr(tr$edge, 4))))
-  expect_equal(4, length(unique(all_spr(tr$edge, 8))))
+  expect_equal(0, length(unique(TreeSearch:::all_spr(tr$edge, 4))))
+  expect_equal(4, length(unique(TreeSearch:::all_spr(tr$edge, 8))))
   
   # All moves
-  expect_equal(7*8 + 2*6 + 4, length(all_spr(tr$edge, integer(0))))
-  uniqueMoves <- length(unique(all_spr(tr$edge, integer(0))))
+  expect_equal(7*8 + 2*6 + 4, length(TreeSearch:::all_spr(tr$edge, integer(0))))
+  uniqueMoves <- length(unique(TreeSearch:::all_spr(tr$edge, integer(0))))
   expect_equal(54, # Not formally calculated
                uniqueMoves)
   expect_equal(uniqueMoves, length(SPRMoves(tr)))
@@ -102,13 +102,13 @@ test_that("SPR works", {
   external <- c(3, 6, 7, 11, 12, 13, 17, 18, 20, 21, 24:26)
   # Move single
   for (leaf in external) {
-    expect_equal(22, length(x <- all_spr(tr$edge, leaf)))
+    expect_equal(22, length(x <- TreeSearch:::all_spr(tr$edge, leaf)))
   }
   
   Test <- function (edge) {
     nDesc <- desc[tr$edge[edge, 2]]
     expected <- (22 - (2 * nDesc - 3)) - 1
-    expect_equal(expected, length(all_spr(tr$edge, edge)))
+    expect_equal(expected, length(TreeSearch:::all_spr(tr$edge, edge)))
   }
   for (internal in which(!1:26 %in% external)[-(1:2)]) {
     Test(internal)

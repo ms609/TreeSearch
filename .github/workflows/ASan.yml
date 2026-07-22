@@ -52,4 +52,11 @@ jobs:
           # adds no coverage to TreeSearch's own compiled code.  All Rogue use
           # (two vignettes + the Shiny consensus module) is requireNamespace-
           # guarded and skips cleanly when absent.
-          exclude-packages: Rogue
+          #
+          # MaxMin is GitHub-only (Remotes: ms609/MaxMin); pak::pkg_install()
+          # resolves the vignettes leg's Suggests as plain CRAN refs and can't
+          # see the local DESCRIPTION's Remotes mapping, so it fails the whole
+          # dependency solve with "Can't find package called MaxMin". All
+          # MaxMin use (WideSample()) is requireNamespace-guarded and skips
+          # cleanly when absent.
+          exclude-packages: Rogue,MaxMin

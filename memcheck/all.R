@@ -1,4 +1,6 @@
-devtools::load_all()
+# Run with:
+#   R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/all.R
+# Package must be installed first.
+testthat::test_local()
 devtools::run_examples()
-devtools::build_vignettes()
-devtools::test()
+tools::buildVignettes(dir = ".")

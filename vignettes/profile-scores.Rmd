@@ -114,6 +114,23 @@ and distribution of observed states, and other factors
 Moreover, some adjustment must be made for 'missing' data,
 i.e. ambiguous tokens, which reduce the opportunity to observe homoplasy
 [@Goloboff2014].
+Characters with many missing entries have fewer observed cells in which
+homoplasy could manifest, so their observed homoplasy _e_ tends to be
+artificially low, leading to inflated weights.
+@Goloboff2014 proposed an "extended" implied weighting correction (his
+Extension 3) in which each character's concavity constant is reduced in
+proportion to its missing data.
+Specifically, the effective concavity for character $c$ is
+$k_c = k / f_c$, where the extrapolation factor
+$f_c = 1 + r \cdot m_c / o_c$ accounts for the ratio of missing ($m_c$) to
+observed ($o_c$) entries; $r$ controls the expected rate of homoplasy in
+unobserved entries (default 0.5), and $f_c$ is capped at a maximum value
+(default 5) to prevent extreme adjustments.
+The per-character cost is then rescaled by a factor
+$\phi_c = (1 + k_c) / (1 + k)$ to preserve comparability across characters.
+This correction is enabled by default in `TreeSearch` (matching the default
+behaviour of TNT), and can be disabled by setting `extended_iw = FALSE`.
+
 Implied weighting is described as an approximation [@Goloboff1993], and I am not
 aware of a straightforward interpretation of the 'fit' score, or a principled
 definition of the nature of the quantity that is being approximated.
@@ -250,17 +267,20 @@ character.
 
 ## Implementation
 
-The present implementation of profile parsimony in "TreeSearch" is restricted:
-inapplicable tokens are treated as ambiguous; partial ambiguity (e.g. `{02}`)
-is treated as complete (`?`), and informative states (i.e. states present in 
-more than one taxon) beyond the first two are ignored (treated as ambiguous).
-This reflects the complicated mathematics of calculating the number of trees
-with a given number of steps.
+Profile parsimony in "TreeSearch" supports characters with up to five
+informative states (i.e. states present in more than one taxon).
+Characters with two informative states use the exact formula of
+Carter _et al._ [-@Carter1990]; characters with three to five states use the
+recursive algorithm of Maddison & Slatkin [-@Maddison1991].
+Characters with more than five informative states are reduced to their five
+most frequent states (with a warning).
+Inapplicable tokens are treated as ambiguous, and partial ambiguity
+(e.g. `{02}`) is treated as complete (`?`).
 
 Tree length can be calculated with 
 [`TreeLength(concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/TreeLength.html),
 and tree search performed with 
-[`MaximizeParsimony(concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
+[`MaximizeParsimony(dataset, concavity = "profile")`](https://ms609.github.io/TreeSearch/reference/MaximizeParsimony.html).
 Data can be prepared for profile parsimony using [`PrepareDataProfile()`](https://ms609.github.io/TreeSearch/reference/PrepareDataProfile.html), and the profile of a character calculated using 
 [`StepInformation()`](https://ms609.github.io/TreeSearch/reference/StepInformation.html).
 

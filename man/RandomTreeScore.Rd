@@ -2,20 +2,20 @@
 % Please edit documentation in R/RandomTreeScore.R
 \name{RandomTreeScore}
 \alias{RandomTreeScore}
-\title{Parsimony score of random postorder tree}
+\title{Parsimony score of random tree}
 \usage{
-RandomTreeScore(morphyObj)
+RandomTreeScore(dataset)
 }
 \arguments{
-\item{morphyObj}{Object of class \code{morphy}, perhaps created with
-\code{\link[=PhyDat2Morphy]{PhyDat2Morphy()}}.}
+\item{dataset}{A \code{phyDat} object (recommended), or a \code{ParsimonyData} object
+created with \code{\link[=PrepareData]{PrepareData()}}.}
 }
 \value{
-\code{RandomTreeScore()} returns the parsimony score of a random tree
-for the given Morphy object.
+\code{RandomTreeScore()} returns a numeric parsimony score.
 }
 \description{
-Parsimony score of random postorder tree
+Generates a random tree topology and returns its parsimony score under
+equal weights.
 }
 \examples{
 tokens <- matrix(c(
@@ -24,9 +24,5 @@ tokens <- matrix(c(
   0, "-", "-", 0, 0, 0), byrow = TRUE, nrow = 3L,
   dimnames = list(letters[1:3], NULL))
 pd <- TreeTools::MatrixToPhyDat(tokens)
-morphyObj <- PhyDat2Morphy(pd)
-
-RandomTreeScore(morphyObj)
-
-morphyObj <- UnloadMorphy(morphyObj)
+RandomTreeScore(pd)
 }

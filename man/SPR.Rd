@@ -99,8 +99,8 @@ SPR(tree)
 }
 }
 \references{
-The \acronym{SPR} algorithm is summarized in
-\insertRef{Felsenstein2004}{TreeSearch}
+\insertCite{Felsenstein2004}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
 \itemize{

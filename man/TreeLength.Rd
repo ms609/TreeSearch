@@ -12,15 +12,65 @@
 \usage{
 IWScore(tree, dataset, concavity = 10L, ...)
 
-TreeLength(tree, dataset, concavity = Inf)
+TreeLength(
+  tree,
+  dataset,
+  concavity = Inf,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
+  hierarchy = NULL,
+  inapplicable = "bgs",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{phylo}(tree, dataset, concavity = Inf)
+\method{TreeLength}{phylo}(
+  tree,
+  dataset,
+  concavity = Inf,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
+  hierarchy = NULL,
+  inapplicable = "bgs",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{numeric}(tree, dataset, concavity = Inf)
+\method{TreeLength}{numeric}(
+  tree,
+  dataset,
+  concavity = Inf,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
+  hierarchy = NULL,
+  inapplicable = "bgs",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{list}(tree, dataset, concavity = Inf)
+\method{TreeLength}{list}(
+  tree,
+  dataset,
+  concavity = Inf,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
+  hierarchy = NULL,
+  inapplicable = "bgs",
+  hsj_alpha = 1
+)
 
-\method{TreeLength}{multiPhylo}(tree, dataset, concavity = Inf)
+\method{TreeLength}{multiPhylo}(
+  tree,
+  dataset,
+  concavity = Inf,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
+  hierarchy = NULL,
+  inapplicable = "bgs",
+  hsj_alpha = 1
+)
 
 Fitch(tree, dataset)
 }
@@ -30,68 +80,134 @@ Fitch(tree, dataset)
 uniformly sampled.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
 \insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally,
-(which underperforms step weighting approaches
-\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
-Specify \code{"profile"} to employ an approximation of profile parsimony
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
 \insertCite{Faith2001}{TreeSearch}.}
 
 \item{\dots}{unused; allows additional parameters specified within \dots to be
 received by the function without throwing an error.}
+
+\item{extended_iw}{Logical: if \code{TRUE} (default) and \code{concavity} is finite,
+apply the missing-entries correction of
+\insertCite{Goloboff2014;textual}{TreeSearch}.
+Characters with missing data receive a reduced effective concavity
+\emph{k_c} = \emph{k} / \emph{f_c}, making their weights drop off faster.
+This compensates for the artificially low homoplasy of poorly sampled
+characters.  Set \code{FALSE} for legacy Goloboff (1993) behaviour.
+Ignored when \code{concavity = Inf} (equal weights) or \code{"profile"}.}
+
+\item{xpiwe_r}{Numeric in (0, 1]: proportion of observed homoplasy
+expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+Only used when \code{extended_iw = TRUE}.}
+
+\item{xpiwe_max_f}{Numeric >= 1: maximum extrapolation factor.
+Characters with very few observed entries are clamped so that the
+extrapolation factor does not exceed this value.  Default 5 (following
+TNT).  Only used when \code{extended_iw = TRUE}.}
+
+\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
+characters are controlling primaries and which are their dependent
+secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
+ignored when \code{inapplicable = "bgs"} (the default).
+See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}} for automated construction from
+TNT-style character names.}
+
+\item{inapplicable}{Character: method for handling inapplicable characters.
+Case-insensitive.
+See \code{vignette("inapplicable", package = "TreeSearch")} for details.
+\describe{
+\item{\code{"bgs"} (default)}{Three-pass algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
+regions from the \code{"-"} token.  No hierarchy required.}
+\item{\code{"missing"}}{Pure Fitch parsimony
+\insertCite{Fitch1971}{TreeSearch}: the inapplicable (\code{"-"}) state is
+treated as missing data, so any token that includes a gap is recoded
+as fully ambiguous (\code{"?"}) and contributes no steps -- including
+polymorphisms such as \verb{\{0,-\}}, which become \verb{?}.  Reproduces standard
+Fitch analyses (e.g. PAUP*, or TNT with gaps read as missing) that do
+not use the Brazeau-Gardner-Smith inapplicable algorithm.  No
+hierarchy required.}
+\item{\code{"hsj"}}{Dissimilarity-metric scoring of
+\insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}; controlled by \code{hsj_alpha}.}
+\item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
+via x-transformations
+\insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}.}
+}}
+
+\item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
+character contributions under the HSJ method.  0 = secondaries ignored;
+1 (default) = secondaries contribute up to 1 per branch per hierarchy
+block.  Only used when \code{inapplicable = "hsj"}.}
 }
 \value{
 \code{TreeLength()} returns a numeric vector containing the score for
 each tree in \code{tree}.
 }
 \description{
-\code{TreeLength()} uses the Morphy library \insertCite{Brazeau2017}{TreeSearch}
-to calculate a parsimony score for a tree, handling inapplicable data
-according to the algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
+\code{TreeLength()} calculates a parsimony score for a tree.
 Trees may be scored using equal weights, implied weights
 \insertCite{Goloboff1993}{TreeSearch}, or profile parsimony
 \insertCite{Faith2001}{TreeSearch}.
+Inapplicable characters are handled using the algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch} by default, or
+alternatively using the hierarchical scoring of
+\insertCite{Hopkins2021;textual}{TreeSearch} when
+\code{inapplicable = "hsj"} and a \code{\link{CharacterHierarchy}} is provided.
 }
 \examples{
 data("inapplicable.datasets")
 tree <- TreeTools::BalancedTree(inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]])
 TreeLength(tree, inapplicable.phyData[[1]], concavity = 10)
+\donttest{ # PrepareDataProfile() and random-tree scoring are slower:
 TreeLength(tree, inapplicable.phyData[[1]], concavity = "profile")
 TreeLength(5, inapplicable.phyData[[1]])
+
+# HSJ scoring with a character hierarchy
+dataset6 <- inapplicable.phyData[["Vinther2008"]]
+hier <- CharacterHierarchy("1" = 2:3)
+tree6 <- TreeTools::BalancedTree(dataset6)
+TreeLength(tree6, dataset6, hierarchy = hier, inapplicable = "hsj")
+}
 }
 \references{
 \insertAllCited{}
 }
 \seealso{
 \itemize{
-\item Conduct tree search using \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} (command line),
-\code{\link[=EasyTrees]{EasyTrees()}} (graphical user interface), or \code{\link[=TreeSearch]{TreeSearch()}}
-(custom optimality criteria).
+\item Conduct tree search using \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} (command line) or
+\code{\link[=EasyTrees]{EasyTrees()}} (graphical user interface).
 \item See score for each character: \code{\link[=CharacterLength]{CharacterLength()}}.
 }
 
 Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
 \code{\link[=CharacterLength]{CharacterLength()}},
 \code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
-\code{\link[=TaxonInfluence]{TaxonInfluence()}}
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
-Martin R. Smith (using Morphy C library, by Martin Brazeau)
+Martin R. Smith
 }
 \concept{tree scoring}

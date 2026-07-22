@@ -151,7 +151,7 @@ NULL
 #' @importFrom abind abind
 #' @importFrom stats setNames
 #' @importFrom TreeDist ClusteringEntropy Entropy entropy_int
-#' MutualClusteringInfo
+#' @importFrom TreeDist MutualClusteringInfo
 #' @importFrom TreeTools as.Splits MatchStrings Subsplit TipLabels
 #' @export
 ClusteringConcordance <- function(
@@ -166,7 +166,7 @@ ClusteringConcordance <- function(
     return(NULL)
   }
   if (is.null(tree)) {
-    warning("Cannot calculate concordance without `dataset`.")
+    warning("Cannot calculate concordance without `tree`.")
     return(NULL)
   }
 
@@ -259,7 +259,17 @@ ClusteringConcordance <- function(
     charInfo <- MutualClusteringInfo(tree, charSplits)[at[["index"]]]
     if (is.numeric(normalize)) {
       rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
-      randInfo <- MutualClusteringInfo(rTrees, charSplits)[, attr(dataset, "index")]
+      # Score each random tree against `charSplits` separately: characters with
+      # ambiguous tokens yield splits over different tip subsets, and the
+      # vectorised `MutualClusteringInfo(<list of trees>, <list of splits>)`
+      # path cannot reconcile a single label set across them ("Old and new
+      # labels must match"). Looping one tree at a time mirrors the working
+      # `charInfo` call above.
+      randInfo <- t(vapply(
+        rTrees,
+        function(rt) MutualClusteringInfo(rt, charSplits),
+        double(length(charSplits))
+      ))[, attr(dataset, "index"), drop = FALSE]
       randMean <- colMeans(randInfo)
       var <- rowSums((t(randInfo) - randMean) ^ 2) / (normalize - 1)
       mcse <- sqrt(var / normalize)
@@ -311,6 +321,16 @@ ClusteringConcordance <- function(
              mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
              structure(ret, hMax = charMax, mcse = mcseInfo)
            } else {
+             # The characterwise return is deliberately NOT random-expectation
+             # normalized for logical `normalize`: `charInfo` is
+             # MutualClusteringInfo() against the whole tree, whereas the
+             # analytic `zero` baseline above is per-single-split expected MI, so
+             # subtracting it would mix incompatible quantities (and the
+             # entropy-weighted variant was abandoned -- see the note below the
+             # @return docs). Only the Monte-Carlo path (numeric `normalize`)
+             # offers a same-scale empirical baseline. So return charInfo scaled
+             # by its maximum (hBest-like), as shipped since the original
+             # implementation (#205).
              structure(charInfo / charMax, hMax = charMax)
            }
          }, {
@@ -452,11 +472,20 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' If a vector (length > 1), each entry controls one side following the usual
 #' `par(mar)` order — `c(bottom, left, top, right)` — where a positive value
 #' enables that strip with the given width/height and `NA` or `0` suppresses it.
-#' Currently only the bottom (entry 1) and left (entry 2) strips are
-#' implemented; further entries are accepted but ignored.
-#' The left strip is coloured by the characterwise concordance (weighted mean
-#' across edges); the bottom strip by the edgewise concordance (weighted mean
-#' across characters). One blank cell separates each strip from the main grid.
+#' The left and right strips are coloured by the characterwise concordance
+#' (weighted mean across edges); the bottom and top strips by the edgewise
+#' concordance (weighted mean across characters).
+#' One blank cell separates each strip from the main grid.
+#' @param paintSize Integer scalar or vector.  Adds a painted strip OUTSIDE any
+#'   `marginSize` strip, using hue from [TreeTools::PaintTree()] (edges) and the
+#'   [PaintCharacters()] algorithm (characters).  A scalar `> 0` adds a right
+#'   strip (characters) and a top strip (edges), each `paintSize` cells wide/tall.
+#'   A length-4 vector follows `c(bottom, left, top, right)` like `marginSize`;
+#'   `NA` or `0` suppresses that side.  One blank cell separates each paint strip
+#'   from the adjacent margin strip (or main grid if no margin exists on that side).
+#' @param palette Palette specification passed to [TreeTools::PaintTree()].
+#'   Either a character string (`"default"`, `"protanopia"`, `"tritanopia"`) or
+#'   a function `function(h, s)`.  Ignored when `paintSize` is zero on all sides.
 #' @param \dots Arguments to `abline`, to control the appearance of vertical
 #' lines marking important edges.
 #' @returns `ConcordanceTable()` invisibly returns an named list containing:
@@ -474,7 +503,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #'
 #' # Plot tree and identify nodes
 #' library("TreeTools", quietly = TRUE)
-#' plot(tree)
+#' paint <- PaintTree(tree)
+#' plot(tree, edge.col = paint$edgeCol, tip.col = paint$tipCol, edge.width = 2)
 #' nodeIndex <- as.integer(rownames(as.Splits(tree)))
 #' nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
 #'            frame = "none", bg = NULL)
@@ -482,7 +512,7 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #'
 #' # View information shared by characters and edges
 #' ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
-#'                  marginSize = 1:4)
+#'                  marginSize = c(0, 0, 1, 2), paintSize = c(1, 2, 0, 0))
 #' axis(1)
 #' axis(2)
 #'
@@ -490,7 +520,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 #'       xlab = "Leaf", ylab = "Character")
 #' @importFrom graphics abline image mtext
-#' @importFrom TreeTools CladeSizes NTip
+#' @importFrom grDevices col2rgb convertColor rgb
+#' @importFrom TreeTools CladeSizes NTip PaintTree
 #' @family split support functions
 #' @seealso
 #' - [SiteConcordance()]: compute underlying concordance values.
@@ -498,7 +529,8 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
                              xlab = "Edge", ylab = "Character",
                              normalize = TRUE, plot = TRUE,
-                             marginSize = 0L, ...) {
+                             marginSize = 0L, paintSize = 0L,
+                             palette = "default", ...) {
   cc <- ClusteringConcordance(tree, dataset, return = "all",
                               normalize = normalize)
   nodes <- seq_len(dim(cc)[[2]])
@@ -512,21 +544,47 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 
   col <- matrix(Col(quality, amount), dim(amount)[[1]], dim(amount)[[2]])
 
-  # Parse marginSize: scalar → both sides; vector → c(bottom, left, ...)
+  # Parse marginSize: scalar → bottom + left; vector → c(bottom, left, top, right)
   ms <- as.integer(marginSize)
   if (length(ms) == 1L) {
     ms_bottom <- if (!is.na(ms) && ms > 0L) ms else 0L
     ms_left   <- ms_bottom
+    ms_top    <- 0L
+    ms_right  <- 0L
   } else {
-    ms_bottom <- ms[1L] # [] returns NA if length(ms) < 1
-    if (is.na(ms_bottom) || ms_bottom < 0L) ms_bottom <- 0L
-    ms_left <- ms[2L]
-    if (is.na(ms_left) || ms_left < 0L) ms_left <- 0L
+    ms_bottom <- if (!is.na(ms[1L]) && ms[1L] > 0L) ms[1L] else 0L
+    ms_left   <- if (length(ms) >= 2L && !is.na(ms[2L]) && ms[2L] > 0L) ms[2L] else 0L
+    ms_top    <- if (length(ms) >= 3L && !is.na(ms[3L]) && ms[3L] > 0L) ms[3L] else 0L
+    ms_right  <- if (length(ms) >= 4L && !is.na(ms[4L]) && ms[4L] > 0L) ms[4L] else 0L
   }
-  x_offset <- if (ms_left   > 0L) ms_left   + 1L else 0L
-  y_offset <- if (ms_bottom > 0L) ms_bottom + 1L else 0L
 
-  if (ms_left > 0L || ms_bottom > 0L) {
+  # Parse paintSize: scalar → top + right; vector → c(bottom, left, top, right)
+  ps <- as.integer(paintSize)
+  if (length(ps) == 1L) {
+    ps_top    <- if (!is.na(ps) && ps > 0L) ps else 0L
+    ps_right  <- ps_top
+    ps_bottom <- 0L
+    ps_left   <- 0L
+  } else {
+    ps_bottom <- if (!is.na(ps[1L]) && ps[1L] > 0L) ps[1L] else 0L
+    ps_left   <- if (length(ps) >= 2L && !is.na(ps[2L]) && ps[2L] > 0L) ps[2L] else 0L
+    ps_top    <- if (length(ps) >= 3L && !is.na(ps[3L]) && ps[3L] > 0L) ps[3L] else 0L
+    ps_right  <- if (length(ps) >= 4L && !is.na(ps[4L]) && ps[4L] > 0L) ps[4L] else 0L
+  }
+
+  # Paint is outermost; its width is prepended/appended to the margin offset.
+  ps_x_offset <- if (ps_left   > 0L) ps_left   + 1L else 0L
+  ps_y_offset <- if (ps_bottom > 0L) ps_bottom + 1L else 0L
+  ps_x_suffix <- if (ps_right  > 0L) ps_right  + 1L else 0L
+  ps_y_suffix <- if (ps_top    > 0L) ps_top    + 1L else 0L
+
+  x_offset <- ps_x_offset + if (ms_left   > 0L) ms_left   + 1L else 0L
+  y_offset <- ps_y_offset + if (ms_bottom > 0L) ms_bottom + 1L else 0L
+  x_suffix <- (if (ms_right  > 0L) ms_right  + 1L else 0L) + ps_x_suffix
+  y_suffix <- (if (ms_top    > 0L) ms_top    + 1L else 0L) + ps_y_suffix
+
+  if (ms_left > 0L || ms_bottom > 0L || ms_top > 0L || ms_right > 0L ||
+      ps_left > 0L || ps_bottom > 0L || ps_top > 0L || ps_right > 0L) {
     n_edges <- dim(cc)[[2]]
     n_chars <- dim(cc)[[3]]
 
@@ -536,29 +594,75 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     # `quality` already has NAs zeroed above
 
     # Extended layout (x = left→right, y = bottom→top):
-    #   x: [char margin: 1..ms_left] [blank: ms_left+1] [grid: (x_offset+1)..(x_offset+n_edges)]
-    #   y: [edge margin: 1..ms_bottom] [blank: ms_bottom+1] [grid: (y_offset+1)..(y_offset+n_chars)]
-    # (absent margin ↔ x_offset or y_offset = 0, so that portion of the range vanishes)
-    nx <- x_offset + n_edges
-    ny <- y_offset + n_chars
+    #   x: [paint_left] [blank] [margin_left] [blank] [grid] [blank] [margin_right] [blank] [paint_right]
+    #   y: [paint_bottom] [blank] [margin_bottom] [blank] [grid] [blank] [margin_top] [blank] [paint_top]
+    nx <- x_offset + n_edges + x_suffix
+    ny <- y_offset + n_chars + y_suffix
     ext_col <- matrix("#FFFFFF", nx, ny)
 
     xi <- (x_offset + 1L):(x_offset + n_edges)  # x indices of main grid
     yi <- (y_offset + 1L):(y_offset + n_chars)   # y indices of main grid
     ext_col[xi, yi] <- col
 
-    if (ms_left > 0L) {
+    if (ms_left > 0L || ms_right > 0L) {
       denom_c <- colSums(hBest_w)
-      char_conc <- ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c)
+      char_conc <- pmax(-1, pmin(1,
+        ifelse(denom_c == 0, 0, colSums(quality * hBest_w) / denom_c)))
       charInfo <- cc["hChar", 1, ] * cc["n", 1, ]
       char_cols <- Col(char_conc, charInfo / max(charInfo))
-      for (i in seq_len(ms_left)) ext_col[i, yi] <- char_cols
+      if (ms_left > 0L) {
+        for (i in seq_len(ms_left)) ext_col[ps_x_offset + i, yi] <- char_cols
+      }
+      if (ms_right > 0L) {
+        for (i in seq_len(ms_right)) ext_col[x_offset + n_edges + 1L + i, yi] <- char_cols
+      }
     }
-    if (ms_bottom > 0L) {
+    if (ms_bottom > 0L || ms_top > 0L) {
       denom_e <- rowSums(hBest_w)
-      edge_conc <- ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)
+      edge_conc <- pmax(-1, pmin(1,
+        ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)))
       edge_cols <- Col(edge_conc, rowMeans(cc["hSplit", , ]))
-      for (j in seq_len(ms_bottom)) ext_col[xi, j] <- edge_cols
+      if (ms_bottom > 0L) {
+        for (j in seq_len(ms_bottom)) ext_col[xi, ps_y_offset + j] <- edge_cols
+      }
+      if (ms_top > 0L) {
+        for (j in seq_len(ms_top)) ext_col[xi, y_offset + n_chars + 1L + j] <- edge_cols
+      }
+    }
+
+    if (ps_left > 0L || ps_right > 0L || ps_top > 0L || ps_bottom > 0L) {
+      paint <- PaintTree(tree, palette)
+      ctNodes <- as.integer(rownames(info))
+      edgeIdx <- match(ctNodes, tree[["edge"]][, 2L])
+      edge_paint_cols <- paint$edgeCol[edgeIdx]
+
+      if (ps_left > 0L || ps_right > 0L) {
+        # Per-character colours: Lab-weighted mean of edge paint colours,
+        # reusing `amount` (= relInfo) and `quality` already NA-zeroed above.
+        labMat <- matrix(
+          convertColor(t(col2rgb(edge_paint_cols)) / 255, from = "sRGB", to = "Lab"),
+          ncol = 3L
+        )
+        wMat_p   <- pmax(quality, 0) * amount
+        wSum_p   <- colSums(wMat_p)
+        noInfo_p <- wSum_p == 0
+        labAvg_p <- t(t(labMat) %*% wMat_p) / ifelse(noInfo_p, 1, wSum_p)
+        rgbAvg_p <- matrix(
+          pmax(0, pmin(1, convertColor(labAvg_p, from = "Lab", to = "sRGB"))),
+          ncol = 3L
+        )
+        char_paint_cols <- rgb(rgbAvg_p[, 1L], rgbAvg_p[, 2L], rgbAvg_p[, 3L])
+        char_paint_cols[noInfo_p] <- "#888888"
+
+        if (ps_left  > 0L)
+          for (i in seq_len(ps_left))  ext_col[i, yi] <- char_paint_cols
+        if (ps_right > 0L)
+          for (i in seq_len(ps_right)) ext_col[nx - ps_right + i, yi] <- char_paint_cols
+      }
+      if (ps_bottom > 0L)
+        for (j in seq_len(ps_bottom)) ext_col[xi, j] <- edge_paint_cols
+      if (ps_top    > 0L)
+        for (j in seq_len(ps_top))    ext_col[xi, ny - ps_top + j] <- edge_paint_cols
     }
 
     image(seq_len(nx), seq_len(ny),
@@ -686,19 +790,32 @@ QuartetConcordance <- function(
     warning("No overlap between tree labels and dataset.")
     return(NULL)
   }
+  
   dataset <- dataset[tipLabels, drop = FALSE]
   splits <- as.Splits(tree, dataset)
   logiSplits <- vapply(seq_along(splits), function (i) as.logical(splits[[i]]),
                        logical(NTip(dataset)))
   
-  characters <- PhyDatToMatrix(dataset, ambigNA = TRUE)
+  contrast <- attr(dataset, "contrast")
   charLevels <- attr(dataset, "allLevels")
-  isAmbig <- rowSums(attr(dataset, "contrast")) > 1
+  
   isInapp <- charLevels == "-"
-  nonGroupingLevels <- charLevels[isAmbig | isInapp]
-  characters[characters %in% nonGroupingLevels] <- NA
-
-  charInt <- `mode<-`(characters, "integer")
+  isAmbig <- rowSums(contrast[, colnames(contrast) != "-"]) > 1
+  isGrouping <- !isAmbig & !isInapp
+  
+  # For each grouping level, which column of the contrast matrix does it uniquely set?
+  groupingCols <- apply(contrast[isGrouping, , drop = FALSE] > 0, 1, which)
+  
+  levelToInt <- rep(NA_integer_, length(charLevels))
+  levelToInt[isGrouping] <- as.integer(groupingCols)
+  
+  characters <- PhyDatToMatrix(dataset)
+  charInt <- array(
+    levelToInt[match(characters, charLevels)],
+    dim      = dim(characters),
+    dimnames = dimnames(characters)
+  )
+  
   raw_counts <- quartet_concordance(logiSplits, charInt)
 
   num <- raw_counts$concordant
@@ -752,24 +869,22 @@ QuartetConcordance <- function(
   }
 }
 
-#' @importFrom fastmap fastmap
-.ExpectedMICache <- fastmap()
+.ExpectedMICache <- new.env(hash = TRUE, parent = emptyenv())
 
 # @param a must be a vector of length <= 2
 # @param b may be longer
-#' @importFrom base64enc base64encode
 .ExpectedMI <- function(a, b) {
   if (length(a) < 2 || length(b) < 2) {
     0
   } else {
-    key <- base64enc::base64encode(mi_key(a, b))
-    if (.ExpectedMICache$has(key)) {
-      .ExpectedMICache$get(key)
+    key <- mi_key(a, b)
+    if (!is.null(.ExpectedMICache[[key]])) {
+      .ExpectedMICache[[key]]
     } else {
       ret <- expected_mi(a, b)
 
       # Cache:
-      .ExpectedMICache$set(key, ret)
+      .ExpectedMICache[[key]] <- ret
       # Return:
       ret
     }
@@ -809,7 +924,7 @@ QuartetConcordance <- function(
 #' split's internal numbering.
 #'
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
-#' MatchStrings
+#' @importFrom TreeTools MatchStrings
 #' @export
 PhylogeneticConcordance <- function(tree, dataset) {
   if (is.null(dataset)) {
@@ -887,9 +1002,6 @@ SharedPhylogeneticConcordance <- function(tree, dataset) {
 #' consistent with a specified phylogenetic tree, and the signal:noise
 #' ratio of the character matrix implied if the tree is true.
 #'
-#' Presently restricted to datasets whose characters contain a maximum of
-#' two parsimony-informative states.
-#'
 #' @return `ConcordantInformation()` returns a named vector with elements:
 #'
 #' - `informationContent`: cladistic information content of `dataset`
@@ -903,8 +1015,7 @@ SharedPhylogeneticConcordance <- function(tree, dataset) {
 #' matrix to the cladistic information content of the tree, a measure of the
 #' redundancy of the matrix
 #' - `ignored`: information content of characters whose signal and noise could
-#' not be calculated (too many states) and so are not included in the totals
-#' above.
+#' not be calculated, and so are not included in the totals above.
 #'
 #' @inheritParams TreeTools::Renumber
 #' @inheritParams MaximizeParsimony
@@ -913,7 +1024,8 @@ SharedPhylogeneticConcordance <- function(tree, dataset) {
 #' myMatrix <- congreveLamsdellMatrices[[10]]
 #' ConcordantInformation(TreeTools::NJTree(myMatrix), myMatrix)
 #' @template MRS
-#' @importFrom TreeTools Log2UnrootedMult Log2Unrooted MatchStrings
+#' @importFrom TreeTools CharacterInformation Log2UnrootedMult Log2Unrooted
+#' @importFrom TreeTools MatchStrings
 #' @export
 ConcordantInformation <- function(tree, dataset) {
   dataset <- dataset[MatchStrings(TipLabels(tree), names(dataset))]

@@ -1,0 +1,4 @@
+Best-known target = 1261.  INDEP: min=1261, median=1263 (gap +0), 4% of restarts reach optimum, 4966 distinct topologies / 4992 trees, mean CID=0.222.
+Fuse A/B (paired over 8 seeds): fusing strictly helps on 0% of seeds, hurts 0%, median score delta +0.00 (>0 = fusing better). Reach optimum: prod_on 75% of seeds vs prod_off 75%.
+VERDICT: Inconclusive at this budget (on reach=75%, off reach=75%, tnt reaches=TRUE). Increase seeds/reps.
+TNT optimal island (separate axis): best=1261, 28 distinct trees at best score.

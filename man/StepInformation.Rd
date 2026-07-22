@@ -4,13 +4,29 @@
 \alias{StepInformation}
 \title{Information content of a character known to contain \emph{e} steps}
 \usage{
-StepInformation(char, ambiguousTokens = c("-", "?"))
+StepInformation(
+  char,
+  ambiguousTokens = c("-", "?"),
+  approx = "auto",
+  n_mc = 100000L
+)
 }
 \arguments{
 \item{char}{Vector of tokens listing states for the character in question.}
 
 \item{ambiguousTokens}{Vector specifying which tokens, if any, correspond to
 the ambiguous token (\verb{?}).}
+
+\item{approx}{Character string controlling the computation method:
+\code{"auto"} (default) uses exact computation when feasible, falling back to
+Monte Carlo for large or complex characters (see Details);
+\code{"mc"} always uses the Monte Carlo approximation;
+\code{"exact"} forces exact computation regardless of cost (may be very slow
+for large or complex characters).}
+
+\item{n_mc}{Integer.  Number of random trees used by the MC approximation.
+Larger values improve accuracy but increase computation time.
+Default: 100 000.}
 }
 \value{
 \code{StepInformation()} returns a numeric vector detailing the amount
@@ -29,6 +45,27 @@ values of \emph{e}.
 Calculates the number of trees consistent with the character having
 \emph{e} extra steps, where \emph{e} ranges from its minimum possible value
 (i.e. number of different tokens minus one) to its maximum.
+
+For characters with 2 informative tokens, uses the exact formula of
+Carter \emph{et al.} (1990) via \code{\link[=LogCarter1]{LogCarter1()}}.
+For characters with 3 or more informative tokens, uses the recursive
+algorithm of Maddison & Slatkin (1991) via \code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}}, falling
+back to a Monte Carlo approximation for large or complex characters.
+
+When the Maddison & Slatkin computation would be infeasible (exponential
+in the number of tips for a given number of tokens), behaviour depends on
+the \code{approx} argument.  With \code{"auto"} (default), the exact solver is used
+where feasible and the Monte Carlo approximation is used otherwise.
+With \code{"mc"}, the Monte Carlo approximation is always used.
+The MC approximation computes the exact
+minimum-steps probability analytically, uses random trees for the
+distribution body, and bridges the gap with a log-quadratic interpolation.
+The exact feasibility threshold depends on the partition shape
+(balanced partitions are harder); roughly, 3-state characters
+beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
+~9 tips trigger the approximation.
+With \code{"exact"}, the full Maddison & Slatkin recursion is forced regardless
+of cost (may be very slow for large or complex characters).
 }
 \examples{
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))
@@ -36,7 +73,7 @@ StepInformation(character)
 }
 \seealso{
 Other profile parsimony functions:
-\code{\link[=Carter1]{Carter1()}},
+\code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}},
 \code{\link[=PrepareDataProfile]{PrepareDataProfile()}},
 \code{\link[=WithOneExtraStep]{WithOneExtraStep()}},
 \code{\link{profiles}}

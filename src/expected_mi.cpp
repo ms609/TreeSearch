@@ -27,9 +27,35 @@ inline double l2factorial(int n) {
   }
 }
 
-// ni and nj are vectors listing the number of entitites in each cluster
+//' Expected mutual information between two partitions
+//'
+//' Computes the mutual information expected purely by chance between two
+//' partitions of the same `N` items, under the hypergeometric null in which the
+//' block sizes (marginals) of each partition are fixed but the items are
+//' associated at random.  Subtracting this baseline from an observed mutual
+//' information yields a chance-corrected ("adjusted") mutual information, as
+//' applied by [`SiteConcordance`]`(normalize = TRUE)`; it is most material for
+//' small or unbalanced partitions, where raw mutual information is appreciably
+//' inflated by chance agreement.
+//'
+//' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
+//' the hypergeometric distribution of cell overlaps, and is returned in bits
+//' (logarithms to base two).
+//'
+//' @param ni Integer vector of length two giving the sizes of the two blocks of
+//'   the first (bi-)partition; these sum to the total item count `N`.
+//' @param nj Integer vector giving the block sizes of the second partition
+//'   (also summing to `N`).
+//' @return The expected mutual information, in bits.
+//' @references \insertAllCited{}
+//' @seealso [`SiteConcordance`]
+//' @examples
+//' # Expected MI between a 3|4 split and a 2|5 split of 7 items:
+//' expected_mi(c(3L, 4L), c(2L, 5L))
+//' @export
 // [[Rcpp::export]]
 double expected_mi(const IntegerVector &ni, const IntegerVector &nj) {
+  // ni and nj are vectors listing the number of entitites in each cluster
   // ni = {a, N-a}; nj = counts of character states
   const int a = ni[0];
   const int N = ni[0] + ni[1];
@@ -86,43 +112,39 @@ double expected_mi(const IntegerVector &ni, const IntegerVector &nj) {
 }
 
 // [[Rcpp::export]]
-RawVector mi_key(IntegerVector ni, IntegerVector nj) {
+std::string mi_key(IntegerVector ni, IntegerVector nj) {
   if (ni.size() != 2) {
     Rcpp::stop("ni must be a vector of length 2.");
   }
   
   std::vector<uint16_t> ni_vals = {static_cast<uint16_t>(ni[0]),
                                    static_cast<uint16_t>(ni[1])};
-  if (ni_vals[0] > 65535 || ni_vals[1] > 65535) {
-    Rcpp::stop("ni values must be ≤ 65535.");
-  }
   std::sort(ni_vals.begin(), ni_vals.end());
   
   std::vector<uint16_t> nj_vals;
+  nj_vals.reserve(nj.size());
   for (int val : nj) {
-    if (val > 65535) {
-      Rcpp::stop("nj values must be ≤ 65535.");
-    }
     nj_vals.push_back(static_cast<uint16_t>(val));
   }
   std::sort(nj_vals.begin(), nj_vals.end());
   
+  // Encode each uint16_t as 4 hex characters — no R allocation needed
+  static const char hex[] = "0123456789abcdef";
+  std::string key;
+  key.reserve((2 + nj_vals.size()) * 4);
   
-  // Total number of 16-bit ints
-  size_t n = 2 + nj_vals.size();
-  RawVector key_raw(n * 2);
-  
-  // Write ni
-  key_raw[0] = ni_vals[0] >> 8;
-  key_raw[1] = ni_vals[0] & 0xFF;
-  key_raw[2] = ni_vals[1] >> 8;
-  key_raw[3] = ni_vals[1] & 0xFF;
-  
-  // Write nj
-  for (size_t i = 0; i < nj_vals.size(); ++i) {
-    key_raw[4 + i + i]     = nj_vals[i] >> 8;
-    key_raw[4 + i + i + 1] = nj_vals[i] & 0xFF;
+  for (uint16_t v : ni_vals) {
+    key += hex[(v >> 12) & 0xF];
+    key += hex[(v >> 8)  & 0xF];
+    key += hex[(v >> 4)  & 0xF];
+    key += hex[(v)       & 0xF];
+  }
+  for (uint16_t v : nj_vals) {
+    key += hex[(v >> 12) & 0xF];
+    key += hex[(v >> 8)  & 0xF];
+    key += hex[(v >> 4)  & 0xF];
+    key += hex[(v)       & 0xF];
   }
   
-  return key_raw;
+  return key;
 }

@@ -100,26 +100,26 @@ test_that(".SortTokens() works", {
                           0, 0, 1, 0, 0, 1, 0, 0, 0,
                           0, 0, 1, 0, 0, 0, 1, 0, 0), dim = c(9, 6), 
                         dimnames = list(NULL, c("-", "0", "1", "2", "3", "4")))
-  cont <- apply(contrast, 1, .Bin)
+  cont <- apply(contrast, 1, TreeSearch:::.Bin)
   # Simplest
-  expect_equal(.SortTokens(rep(1:2, 5:4), 1:2, NA), rep(c(2, 4), 5:4))
-  expect_equal(.SortTokens(rep(1:2, 4:5), 1:2, NA), rep(c(4, 2), 4:5))
-  expect_equal(.SortTokens(rep(1:3, 4:6), 1:3, NA), rep(c(4, 2, 6), 4:6))
+  expect_equal(TreeSearch:::.SortTokens(rep(1:2, 5:4), 1:2, NA), rep(c(2, 4), 5:4))
+  expect_equal(TreeSearch:::.SortTokens(rep(1:2, 4:5), 1:2, NA), rep(c(4, 2), 4:5))
+  expect_equal(TreeSearch:::.SortTokens(rep(1:3, 4:6), 1:3, NA), rep(c(4, 2, 6), 4:6))
   
   # Straightforward, no inapp
-  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = NA),
+  expect_equal(TreeSearch:::.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = NA),
                rep(c(2, 8, 4), c(4, 2, 3)))
   
   # Straightforward
-  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 2),
+  expect_equal(TreeSearch:::.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 2),
                rep(c(1, 4, 2), c(4, 2, 3)))
-  expect_equal(.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 4),
+  expect_equal(TreeSearch:::.SortTokens(rep(c(1, 2, 4), c(4, 2, 3)), cont, inapp = 4),
                rep(c(2, 1, 4), c(4, 2, 3)))
   
   # Inapplicables with ambiguity
   # TODO it would be nice to return 7 in place of 63, but
   # unnecessarily complex to implement at the moment
-  expect_equal(.SortTokens(rep(c(1, 2, 3, 4, 8, 9), 
+  expect_equal(TreeSearch:::.SortTokens(rep(c(1, 2, 3, 4, 8, 9), 
                                c(2, 3, 4, 5, 1, 1)), cont, inapp = 1),
                rep(c(4, 2, 63, 1, 3, 6), c(2, 3, 4, 5, 1, 1)))
   

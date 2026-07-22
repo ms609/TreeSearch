@@ -119,8 +119,57 @@ test_that("QuartetConcordance() handles incomplete data", {
   expect_equal(unname(QuartetConcordance(tree, dat)), rep(NA_real_, 5))
 })
 
+test_that("QuartetConcordance() handles non-integer data", {
+  tree <- BalancedTree(8)
+  splits <- as.Splits(tree)
+  mataset <- matrix(c("A", "A", "[AC]", "C", "C", "C", "T", "T", rep("?", 8)),
+                    8, dimnames = list(paste0("t", 1:8), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  
+  intSet <- matrix(c("1", "1", "[12]", "2", "2", "2", "4", "4", rep("?", 8)),
+                    8, dimnames = list(paste0("t", 1:8), NULL))
+  
+  expect_equal(QuartetConcordance(tree, dat),
+               QuartetConcordance(tree, MatrixToPhyDat(intSet)))
+})
+
 test_that(".Rezero() works", {
-  expect_equal(.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
+  expect_equal(TreeSearch:::.Rezero(seq(0, 1, by = 0.1), 0.1), -1:9 / 9)
+})
+
+test_that("ConcordanceTable() marginSize top/right strips", {
+  skip_if_not_installed("vdiffr")
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+  tree <- TreeSearch::referenceTree
+
+  vdiffr::expect_doppelganger("conc-tbl-xx34", function() {
+    expect_named(
+      ConcordanceTable(tree, dataset, marginSize = c(NA, NA, 2, 2)),
+      c("info", "relInfo", "quality", "col")
+    )
+  })
+
+  vdiffr::expect_doppelganger("conc-tbl-all", function() {
+    ConcordanceTable(tree, dataset, marginSize = c(2, 2, 2, 2))
+  })
+  vdiffr::expect_doppelganger("conc-tbl-2", function() {
+    capture.output(ConcordanceTable(tree, dataset, marginSize = 2))
+  })
+})
+
+test_that("ConcordanceTable() paintSize strips", {
+  skip_if_not_installed("vdiffr")
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  dataset <- congreveLamsdellMatrices[[1]][, 1:20]
+  tree <- TreeSearch::referenceTree
+
+  vdiffr::expect_doppelganger("conc-tbl-paint-scalar", function() {
+    ConcordanceTable(tree, dataset, paintSize = 1)
+  })
+  vdiffr::expect_doppelganger("conc-tbl-paint-with-margin", function() {
+    ConcordanceTable(tree, dataset, marginSize = 2, paintSize = 1)
+  })
 })
 
 test_that("ClusteringConcordance() gives sensible values", {
@@ -153,9 +202,9 @@ test_that("ClusteringConcordance() gives sensible values", {
     TreeDist::Entropy(c(...) / sum(...))
   }
   .NormExp <- function(a, b, ab) {
-    .Rezero(
+    TreeSearch:::.Rezero(
       (.Entropy(a) + .Entropy(b) - .Entropy(ab)) / .Entropy(a),
-      .ExpectedMI(a, b) / .Entropy(a)
+      TreeSearch:::.ExpectedMI(a, b) / .Entropy(a)
     )
   }
   expect_equal(cc["normalized", ],
@@ -173,13 +222,44 @@ test_that("ClusteringConcordance() gives sensible values", {
                tolerance = 0.05)
 })
 
+test_that("ClusteringConcordance(return = 'char') Monte-Carlo handles ambiguity", {
+  # Regression for T-330: characters whose ambiguous tokens drop different tips
+  # give `charSplits` over heterogeneous tip sets. The Monte-Carlo `normalize`
+  # path scored a *list* of random trees against that list in one call, which
+  # could not reconcile a common label set ("Old and new labels must match").
+  tree <- ape::read.tree(text = "((a, b, c, d, e), (f, g, h));")
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      0, 0, 0, 0, 0, 1, 1, 1,
+                      0, 0, 0, 0, rep("?", 4), # drops 4 tips
+                      0, 0, 1, 1, rep("?", 4), # drops a different 4 tips
+                      rep("?", 8)),            # all ambiguous
+                    8, dimnames = list(letters[1:8], NULL))
+  dat <- MatrixToPhyDat(mataset)
+
+  set.seed(1)
+  # Previously errored: "Old and new labels must match"
+  cc <- ClusteringConcordance(tree, dat, return = "char", normalize = 10L)
+  nChar <- length(attr(dat, "index"))
+  expect_length(cc, nChar)
+  expect_length(attr(cc, "mcse"), nChar)
+  # Character 2 matches the only split perfectly, so normalization leaves it at 1
+  expect_equal(unname(cc[2]), 1)
+  expect_equal(unname(attr(cc, "mcse")[2]), 0)
+  # Monte-Carlo score never exceeds the un-normalized score (subtracts a baseline)
+  bare <- ClusteringConcordance(tree, dat, return = "char", normalize = FALSE)
+  finite <- is.finite(cc) & is.finite(bare)
+  expect_true(all(cc[finite] <= bare[finite] + 1e-8))
+})
+
 test_that("ConcordantInformation() works", {
   data(congreveLamsdellMatrices)
   dat <- congreveLamsdellMatrices[[10]]
   tree <- TreeTools::NJTree(dat)
   
-  ci <- ConcordantInformation(tree, dat)
-  expect_equal(expect_warning(Evaluate(tree, dat)), ci)
+  expect_message(ci <- ConcordantInformation(tree, dat),
+                 "dataset contains .* bits")
+  expect_warning(suppressMessages(eval_val <- Evaluate(tree, dat)))
+  expect_equal(eval_val, ci)
   expect_equal(TreeLength(tree, dat, concavity = "prof"),
                unname(ci["noise"]))
   expect_equal(Log2Unrooted(22), unname(ci["treeInformation"]))
@@ -188,17 +268,20 @@ test_that("ConcordantInformation() works", {
   
   dataset <- MatrixToPhyDat(cbind(setNames(c(rep(1, 11), 2:5), paste0("t", 1:15))))
   tree <- TreeTools::PectinateTree(length(dataset))
-  expect_error(ConcordantInformation(tree, dataset))
-  # expect_equal(0, unname(ci["signal"]))
-  # expect_equal(0, unname(ci["noise"]))
+  # All non-1 states are singletons → no informative characters → zero concordance
+  ci_empty <- suppressMessages(ConcordantInformation(tree, dataset))
+  expect_equal(0, unname(ci_empty["signal"]))
+  expect_equal(0, unname(ci_empty["noise"]))
   
   dataset <- MatrixToPhyDat(c(a = 1, b = 2, c = 1, d = 2, e = 3, f = 3))
   tree <- TreeTools::PectinateTree(dataset)
-  ci <- expect_warning(ConcordantInformation(tree, dataset))
-  expect_equal(c(signal = log2(3)), ci["signal"])
-  expect_equal(c(noise = log2(3)), ci["noise"])
-  expect_equal(c(ignored = CharacterInformation(c(0,0,1,1,2,2)) - 
-                   log2(3) - log2(3)), ci["ignored"])
+  # After T-107, 3-state chars with 6 tips are within the MaddisonSlatkin
+  # feasibility threshold (k=3, max=15 tips), so no binary reduction occurs.
+  # Signal/noise are computed via the full 3-state profile (no warning).
+  ci <- suppressMessages(ConcordantInformation(tree, dataset))
+  expect_equal(c(signal = 0.7835082), ci["signal"], tolerance = 1e-5)
+  expect_equal(c(noise = 3.1233824), ci["noise"], tolerance = 1e-5)
+  expect_equal(c(ignored = 0), ci["ignored"])
   
 })
 

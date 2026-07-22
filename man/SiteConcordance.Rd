@@ -23,10 +23,7 @@ SharedPhylogeneticConcordance(tree, dataset)
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{return}{Character specifying the summary to return. Options are:
 \itemize{
@@ -251,9 +248,10 @@ Other split support functions:
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
-\code{\link[=PresCont]{PresCont()}}
+\code{\link[=PaintCharacters]{PaintCharacters()}},
+\code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -23,7 +23,7 @@ MinimumLength(x, compress = FALSE)
 
 MinimumSteps(x)
 
-MaximumLength(x, compress = TRUE)
+MaximumLength(x, compress = FALSE)
 
 \method{MaximumLength}{numeric}(x, compress = NA)
 }
@@ -56,7 +56,7 @@ any tree.
 }
 \details{
 Ambiguous inapplicable states (e.g. \verb{\{0, -\}}) are currently replaced with the
-plain inapplicable token \code{-}, reflecting the current behaviour of Morphy.
+plain inapplicable token \code{-}.
 }
 \examples{
 data("inapplicable.datasets")
@@ -81,12 +81,18 @@ MaximumLength("----0011")
 }
 \seealso{
 Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
 \code{\link[=CharacterLength]{CharacterLength()}},
 \code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
 \code{\link[=IWScore]{IWScore()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
-\code{\link[=TaxonInfluence]{TaxonInfluence()}}
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

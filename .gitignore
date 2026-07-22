@@ -22,6 +22,7 @@ inst/ape
 inst/doc
 results-*
 revdep/
+.tnt-survey/
 tests/testthat/_snaps/*.new.*
 vignettes/*.html
 vignettes/*.pdf
@@ -57,3 +58,31 @@ test_output.txt
 /.tnt-bench
 /.vtune*
 /vtune*
+dev/profiling/.vtune-lib-*/
+dev/profiling/.build-*
+dev/profiling/.Makevars.symboled
+/.claude
+!/.claude/CLAUDE.md
+
+# /profile skill — VTune results and profvis HTML are large and stale fast
+dev/profiling/result_*/
+dev/profiling/drivers/*-profvis.html
+dev/profiling/drivers/*-profvis_files/
+dev/profiling/*-lib/
+dev/profiling/*-lib-*/
+
+# Dispatcher state and logs (ephemeral runtime files)
+.dispatch/
+!.dispatch/logs/.gitkeep
+
+# T-300 NA benchmark artifacts
+dev/profiling/.bench-libs/
+dev/profiling/t300_na_bench_*.rds
+
+# dev/benchmarks throwaway outputs (regenerable from the bench_*/diag_* scripts)
+dev/benchmarks/*.csv
+dev/benchmarks/.*.csv
+dev/benchmarks/*.run
+dev/benchmarks/*.png
+dev/benchmarks/trace_*.txt
+dev/benchmarks/*_raw.txt

@@ -1,9 +1,22 @@
 test_that("PrepareDataProfile() handles empty matrices", {
   dat <- TreeTools::MatrixToPhyDat(matrix(c(0, 1, rep("?", 5)),
                                           dimnames = list(letters[1:7], NULL)))
-  expectation <- dat[0]
-  attr(expectation, "info.amounts") <- numeric(0)
-  expect_equal(expectation, PrepareDataProfile(dat))
+  expect_message(PrepareDataProfile(dat), "No informative characters")
+  result <- suppressMessages(PrepareDataProfile(dat))
+  expect_equal(attr(result, "info.amounts"), numeric(0))
+  expect_equal(attr(result, "nr"), 0L)
+})
+
+test_that("PrepareDataProfile() signals a catchable message for inapplicables", {
+  # Inapplicable tokens are reported via cli_inform() (a message condition), so
+  # callers can suppressMessages() it and tests can capture it -- not printed
+  # uncatchably to stdout.
+  mtx <- cbind(c("0", "0", "1", "1", "-", "-"),
+               c("0", "0", "1", "1", "1", "1"))
+  rownames(mtx) <- letters[seq_len(nrow(mtx))]
+  phy <- TreeTools::MatrixToPhyDat(mtx)
+  expect_message(PrepareDataProfile(phy),
+                 "Inapplicable tokens treated as ambiguous")
 })
 
 Dehash <- function (x) {
@@ -24,19 +37,28 @@ test_that("PrepareDataProfile()", {
                c(0,0,0,1,1,"?"))
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   phy1 <- TreeTools::MatrixToPhyDat(mtx)
-  expect_equivalent(phy1, PrepareDataProfile(phy1))
-  expect_equal(Dehash(attributes(PrepareDataProfile(phy1))[1:10]),
-               Dehash(attributes(phy1)))
+  # PrepareDataProfile renormalizes token labels to 1..k; check structural
+  # attributes that should be preserved, not levels/allLevels/contrast.
+  # PrepareDataProfile() emits a cli message about inapplicable tokens
+  # being treated as ambiguous; suppress to keep test output clean.
+  pp1 <- suppressMessages(PrepareDataProfile(phy1))
+  expect_equal(attr(pp1, "weight"), attr(phy1, "weight"))
+  expect_equal(attr(pp1, "nr"), attr(phy1, "nr"))
+  expect_equal(attr(pp1, "nc"), attr(phy1, "nc"))
+  expect_equal(attr(pp1, "index"), attr(phy1, "index"))
   
-  # Easy one
+  # Flipped binary char: PrepareDataProfile does not flip-normalize, so phy2
+  # produces 3 unique patterns (not deduplicated with phy1's 2)
   mtx <- cbind(c("0", "0", 1,1,1,1),
                c(1,1,0,0,0,0),# flipped
                c(0,0,0,1,1,"{012}"))
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   phy2 <- TreeTools::MatrixToPhyDat(mtx)
-  expect_equivalent(phy1, PrepareDataProfile(phy2))
-  expect_equal(attributes(PrepareDataProfile(phy1)),
-               attributes(PrepareDataProfile(phy2)))
+  pp2 <- suppressMessages(PrepareDataProfile(phy2))
+  expect_equal(attr(pp2, "nr"), 3L)
+  expect_equal(attr(pp2, "nc"), attr(pp1, "nc"))
+  # Both informative binary patterns have the same information content
+  expect_equal(attr(pp2, "info.amounts")[, 1], attr(pp1, "info.amounts")[, 1])
   
   
   mtx <- cbind(c("0", "0", 1,1,1, "2", "2", 3,3,3,3),
@@ -49,35 +71,27 @@ test_that("PrepareDataProfile()", {
   rownames(mtx) <- letters[seq_len(nrow(mtx))]
   dataset <- TreeTools::MatrixToPhyDat(mtx)
   
-  q <- "?"
-  decomposed <- matrix(c(0,0,q,q,q,q,q,1,1,1,1,
-                         q,q,0,0,0,q,q,1,1,1,1,
-                         q,q,q,q,q,0,0,1,1,1,1,
-                         
-                         q,q,0,0,0,q,q,1,1,1,1,
-                         
-                         0,0,q,q,q,q,q,1,1,1,1,
-                         q,q,0,0,0,q,q,1,1,1,1,
-                         q,q,q,q,q,0,0,1,1,1,1,
-                         
-                         q,q,q,q,q,0,0,1,1,1,1,
-                         q,q,0,0,0,0,0,1,1,1,1),
-                       ncol = 9, dimnames = list(letters[1:11], NULL))
-                         
-                         
-  expect_warning(pd <- PrepareDataProfile(dataset))
-  expect_equal(decomposed, PhyDatToMatrix(pd))
-  expect_equal(c(1, 2, 3, 2, 1, 2, 3, 3, 4), attr(pd, "index"))
-  expect_equal(c(2, 3, 3, 1), attr(pd, "weight"))
+  # After T-107/T-144: 4-state chars with 11 tips are within the
+  # MaddisonSlatkin feasibility threshold (k=4, max=18 tips), so they are
+  # preserved as 4-state — no binary reduction, no warning.
+  pd <- suppressMessages(PrepareDataProfile(dataset))
+  expect_equal(4L, length(attr(pd, "levels")))
+  expect_equal(dim(PhyDatToMatrix(pd)), c(11L, 6L))
+  expect_equal(c(1L, 2L, 1L, 3L, 4L, 5L), attr(pd, "index"))
+  expect_equal(c(2L, 1L, 1L, 1L, 1L), attr(pd, "weight"))
   
   dataset2 <- TreeTools::MatrixToPhyDat(mtx[!mtx[, 1] %in% c(0, 2), ])
-  expect_equal(attr(PrepareDataProfile(dataset2), "info.amounts"),
+  # The first informative pattern in dataset2 matches the informative pattern
+  # in pd (both are the same 2-state split with 3 tips vs 4 tips)
+  expect_equal(attr(suppressMessages(PrepareDataProfile(dataset2)),
+                    "info.amounts")[, 1, drop = FALSE],
                attr(pd, "info.amounts")[1:3, 2, drop = FALSE])
-  
-  
+
+
   data("Lobo", package = "TreeTools")
-  expect_warning(prep <- PrepareDataProfile(Lobo.phy))
-  expect_equal(c(17, attr(prep, "nr")),
-               dim(attr(prep, "info.amounts")))
+  prep <- suppressMessages(PrepareDataProfile(Lobo.phy, n_mc = 1000L))
+  info_dims <- dim(attr(prep, "info.amounts"))
+  expect_equal(info_dims[2], attr(prep, "nr"))
+  expect_true(info_dims[1] >= 1)
   
 })

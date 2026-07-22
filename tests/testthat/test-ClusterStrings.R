@@ -1,3 +1,6 @@
+skip_if_not_installed("cluster")
+skip_if_not_installed("protoclust")
+
 test_that("ClusterStrings() works", {
   x <- rep(letters[1:6], 1:6)
   expect_equal(ClusterStrings(x),

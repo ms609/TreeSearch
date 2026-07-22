@@ -13,10 +13,7 @@ FastCharacterLength(tree, dataset)
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{compress}{Logical specifying whether to retain the compression of a
 \code{phyDat} object or to return a vector specifying to each individual
@@ -48,12 +45,18 @@ CharacterLength(tree, dataset, compress = TRUE)
 }
 \seealso{
 Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
 \code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
 \code{\link[=IWScore]{IWScore()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
-\code{\link[=TaxonInfluence]{TaxonInfluence()}}
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

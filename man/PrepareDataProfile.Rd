@@ -6,12 +6,23 @@
 \alias{PrepareDataIW}
 \title{Prepare data for Profile Parsimony}
 \usage{
-PrepareDataProfile(dataset)
+PrepareDataProfile(dataset, approx = "auto", n_mc = 100000L)
 
 PrepareDataIW(dataset)
 }
 \arguments{
 \item{dataset}{dataset of class \code{phyDat}}
+
+\item{approx}{Character string controlling how profile information amounts
+are computed for multi-state characters with many tips.
+\code{"auto"} (default) uses the exact Maddison & Slatkin calculation when
+feasible, falling back to a Monte Carlo approximation for large or
+complex characters.
+\code{"mc"} always uses the Monte Carlo approximation;
+\code{"exact"} always uses the exact calculation (may be very slow).}
+
+\item{n_mc}{Integer; number of Monte Carlo samples for the MC
+approximation.  Default 100 000.}
 }
 \value{
 An object of class \code{phyDat}, with additional attributes.
@@ -21,9 +32,9 @@ An object of class \code{phyDat}, with additional attributes.
 character when subject to N additional steps.
 \item \code{informative}: logical specifying which characters contain any
 phylogenetic information.
-\item \code{bootstrap}: The character vector
-\code{c("info.amounts", "split.sizes")}, indicating attributes to sample
-when bootstrapping the dataset (e.g. in Ratchet searches).
+\item \code{bootstrap}: A character vector naming the attributes to resample when
+bootstrapping the dataset (e.g. in Ratchet searches); \code{PrepareDataProfile}
+adds \code{"info.amounts"}.
 }
 
 \code{PrepareDataIW} adds the attribute:
@@ -33,17 +44,21 @@ transformation series.
 }
 }
 \description{
-Calculates profiles for each character in a dataset.  Will also simplify
-characters, with a warning, where they are too complex for the present
-implementation of profile parsimony:
+Calculates profiles for each character in a dataset.
+Characters with 2 informative states (i.e. states present in more than one
+taxon) use the exact formula of Carter \emph{et al.} (1990).
+Characters with 3 or more informative states use the recursive algorithm of
+Maddison & Slatkin (1991), falling back to a Monte Carlo approximation for
+large or complex characters.
+}
+\details{
+Characters are simplified where necessary:
 \itemize{
-\item inapplicable tokens will be replaced with the ambiguous token
-(i.e. \code{-} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?});
-\item Ambiguous tokens will be treated as fully ambiguous
-(i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?})
-\item Where more than two states are informative (i.e. unambiguously present in
-more than one taxon), states beyond the two most informative will be
-ignored.
+\item inapplicable tokens are replaced with the ambiguous token
+(i.e. \code{-} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?}),
+reported with a message;
+\item ambiguous tokens are treated as fully ambiguous
+(i.e. \code{{02}} \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} \verb{?}).
 }
 }
 \section{Functions}{
@@ -58,7 +73,7 @@ PrepareDataProfile(dataset)
 }
 \seealso{
 Other profile parsimony functions:
-\code{\link[=Carter1]{Carter1()}},
+\code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}},
 \code{\link[=StepInformation]{StepInformation()}},
 \code{\link[=WithOneExtraStep]{WithOneExtraStep()}},
 \code{\link{profiles}}

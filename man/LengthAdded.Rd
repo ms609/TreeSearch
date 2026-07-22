@@ -17,15 +17,13 @@ PolEscapa(trees, char, concavity = Inf)
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
 \insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally,
-(which underperforms step weighting approaches
-\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
-Specify \code{"profile"} to employ an approximation of profile parsimony
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
 \insertCite{Faith2001}{TreeSearch}.}
 }
 \value{
@@ -69,12 +67,18 @@ PlotCharacter(
 }
 \seealso{
 Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
 \code{\link[=CharacterLength]{CharacterLength()}},
 \code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
 \code{\link[=IWScore]{IWScore()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}},
-\code{\link[=TaxonInfluence]{TaxonInfluence()}}
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

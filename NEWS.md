@@ -1,3 +1,401 @@
+# To integrate into 2.0.0 notes
+
+- `MaximizeParsimony()` now contracts zero-length (unsupported) branches into
+  polytomies by default (`collapse = TRUE`), deduplicating the returned trees on
+  the resulting collapsed topologies, à la TNT's "collapse zero-length
+  branches".  `n_topologies` counts distinct collapsed topologies, comparable
+  across programs; this avoids reporting unsupported groupings and stops a single
+  soft polytomy from inflating the apparent number of optimal trees by orders of
+  magnitude.  Pass `collapse = FALSE` to recover fully-resolved trees (one
+  arbitrary resolution per distinct topology).  Collapsed trees are returned
+  rooted on the first leaf (a deterministic convention, as in TNT).  Under a
+  topological `constraint`, the enforced splits are protected from collapse, so
+  an enforced-but-unsupported clade stays visible while unsupported
+  non-constraint branches still collapse.
+
+- Fixed an internal inconsistency in the returned MPT set: the post-search MPT
+  enumeration now deduplicates on collapsed topology, matching the main search
+  loop, instead of keeping every resolved variant of one collapsed topology.
+  On datasets with no zero-length branches (e.g. fully-resolved matrices) the
+  returned set is unchanged; on datasets with soft polytomies it is smaller and
+  internally consistent.
+
+- `MaximizeParsimony(strategy = "thorough")` now adds 2 drift cycles and 5 Wagner
+  starts, making `"thorough"` a higher-effort tier that trades wall-clock for more
+  exhaustive search.  The drift cycles recover equal-score most parsimonious trees
+  that sit on TBR-disconnected islands, which pure restarts rarely both seed: on a
+  two-island exemplar (Zhu et al. 2013) two-island recovery rises 0.73 -> 0.95 over
+  30 seeds.  A powered anytime study on 20 MorphoBank training matrices (65-120
+  tips) quantifies the cost: drift is per-replicate overhead, so at a fixed budget
+  `"thorough"` completes fewer replicates and reaches the optimum somewhat less
+  reliably than before on the general pool -- it therefore needs a correspondingly
+  larger replicate budget / more time to converge (see `maxReplicates`).  Choose
+  `"thorough"` when tree quality and set-completeness matter more than turnaround.
+- `strategy = "intensive"` is now a deprecated alias of `"thorough"`: the extra
+  Wagner starts that once distinguished it are folded into `"thorough"`, so the two
+  are identical.  Existing calls continue to work.
+
+- **MorphyLib removed.** The Morphy Phylogenetic Library (C/C++) has
+  been dropped; all parsimony scoring now runs through the native C++ kernel,
+  which implements the Brazeau, Guillerme & Smith (2019) inapplicable-state
+  algorithm correctly — including ambiguous-with-inapplicable tokens such as
+  `{1-}`, which MorphyLib scored incorrectly.
+
+- **`concavity` argument for `PrepareData()`.**  Implied-weights and profile
+  searches with the custom-search functions no longer need a hand-written
+  scorer: pass `concavity = k` (a finite constant) for implied weights,
+  `concavity = "profile"` for profile parsimony, or the default `Inf` for
+  equal weights, when preparing `dataset`; the default `TreeScorer`,
+  [`EdgeListScore()`], honours it automatically.  (Adapted from the parallel
+  T-200 work, PR #216.)
+
+- **Custom-search scoring layer renamed** to drop the now-meaningless "Morphy"
+  branding.  `PhyDat2Morphy()` → `PrepareData()`; `UnloadMorphy()` →
+  `ReleaseData()`; `is.morphyPtr()` → `is.ParsimonyData()`; `SingleCharMorphy()`
+  → `SingleCharData()`; `MorphyLength()` → `EdgeListScore()`;
+  `MorphyTreeLength()` → `TreeScore()`; `MorphyBootstrap()` → `BootstrapTree()`;
+  `RandomMorphyTree()` → `RandomPostorderTree()`.  The old names remain as
+  deprecated aliases and will be removed in a future release.  `PrepareData()`
+  returns a lightweight, garbage-collected `ParsimonyData` object; only the
+  default `"inapplicable"` gap treatment is supported (recode data for the
+  missing/extra-state treatments).
+
+- **`TreeSearch()`, `Ratchet()` and `Jackknife()` no longer prepare `dataset`
+  for you.**  Prepare it yourself -- typically with `PrepareData()` -- before
+  calling these functions; a custom `TreeScorer` may take any `dataset` it
+  likes (e.g. a raw `phyDat` object).  The `InitializeData` and `CleanUpData`
+  arguments that formerly did this automatically are deprecated (a warning is
+  issued if supplied) and will be removed in a future release: with scoring
+  now handled by plain R data structures rather than external Morphy
+  pointers, there is nothing left to initialize or destroy on the framework's
+  behalf.  If your own `TreeScorer` holds an external resource that needs
+  releasing, use your own `on.exit()`.
+
+- `Jackknife()` and `BootstrapTree()` (formerly `MorphyBootstrap()`) now
+  resample characters natively, scoring the resampled weights through the
+  native kernel rather than by mutating a MorphyLib object — fixing a case
+  where resampled weights could be silently ignored.
+
+- The low-level MorphyLib bindings (`mpl_*()`), together with the
+  `MorphyWeights()`, `SetMorphyWeights()`, `GapHandler()`, `MorphyErrorCheck()`,
+  `GetMorphyLength()` and `C_MorphyLength()` helpers and the
+  `summary.morphyPtr()` method, have been removed.
+
+- `MaximizeParsimony()` results now carry a `candidates_evaluated` attribute:
+  the number of TBR/SPR-class rearrangements examined during a single-threaded
+  search (the analogue of TNT's "rearrangements examined"), for diagnosing
+  search efficiency.
+
+- New `SearchControl()` option `stallEscalateFactor` (default `1`, disabled):
+  when a driven search stalls, escalate ratchet perturbation strength for
+  subsequent replicates so the search adapts to a difficult dataset at runtime.
+
+- Faster driven search: per-clip allocation churn in the TBR kernel removed
+  (reusable scratch buffers and an open-addressed rerooting de-duplication
+  table), and
+  the debug-only topology validation no longer runs in release builds.
+
+- Further driven-search speedup: the exact directional insertion edge-set
+  computation now reuses caller-owned scratch and skips its per-clip zero-fill
+  (under a write-before-read invariant, debug-asserted), saving up to ~16% wall
+  on large datasets where the `O(n_node * words)` zero-fill dominated.  Search
+  results are bit-identical (score and `candidates_evaluated` unchanged).
+
+- HSJ (Hopkins & St John 2021) scoring is now invariant to the
+  arbitrary ordering of a `phyDat` object's `levels`.  Both the primary
+  absent/present term and the secondary-character dissimilarity term
+  previously depended on the internal token ordering, so the same dataset
+  could score differently under different (equivalent) `levels`.
+
+- Hierarchical-scoring helpers renamed to the package's `BigCamelCase`
+  convention (the snake_case names are removed): `recode_hierarchy()` ->
+  `RecodeHierarchy()`, `hierarchy_from_names()` -> `HierarchyFromNames()`,
+  `validate_hierarchy()` -> `ValidateHierarchy()`, `hierarchy_chars()` ->
+  `HierarchyChars()`, `hierarchy_controlling()` -> `HierarchyControlling()`.
+  The internal C++-bridge helpers (`build_tip_labels()`,
+  `hierarchy_to_blocks()`, `non_hierarchy_weights()`, `hsj_absent_state()`)
+  are now private and no longer exported.
+
+- `WideSample()` now dispatches to the appropriate Max-Min diversity (MMDP)
+  solver from the `MaxMin` package, choosing the tier automatically
+  from `length(trees)`.
+
+- New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
+  fit branch lengths to, the tree that best matches a target distance matrix
+  under a least-squares criterion, reusing the optimised C++ rearrangement
+  kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
+  (`method = "nnls"`) least squares are supported, with optional
+  Fitch-Margoliash (`weight = "fm"`) or custom weighting.
+  `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in the native
+  kernel.
+
+
+- `attr(dataset, "weight")` now accepts non-integer character weights.  The
+  C++ scoring engine still stores `int` weights internally; fractional
+  inputs are rescaled to integer with a configurable precision (default
+  ~0.001, controlled by `getOption("TreeSearch.fractional.scale", 1260L)`).
+  Previously, fractional weights were silently truncated at the Rcpp
+  boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
+  the respective characters' contributions).  Integer weights pass
+  through unchanged.  `TreeLength()` and other scores are returned in
+  units of `steps * scale` when fractional weights are present; within-
+  run ranking is unaffected.
+
+- `LengthAdded()` removes a temporary warning guard that fired on datasets
+  triggering the T-302 `qmApp` scalar-unwrap fix; regression tests now cover
+  both the `qmApp` (T-302) and `qm` (commit e8b318c3) scalar-unwrap paths,
+  confirming all deltas are non-negative and match independent computation.
+
+# TreeSearch 2.0.0
+
+## Breaking changes
+
+- Implied weighting now applies the missing-entries correction of
+  Goloboff (2014) by default (`extended_iw = TRUE`).  Characters with
+  many missing entries receive a reduced effective concavity, compensating
+  for artificially low observed homoplasy.  Set `extended_iw = FALSE` to
+  reproduce pre-2.0.0 behaviour.
+- `MaximizeParsimony()` has an entirely new parameter interface.
+  The previous `MaximizeParsimony()` (R-loop search using MorphyLib) has been
+  renamed to `Morphy()`.
+  Code that passes Morphy-style parameters (e.g. `ratchIter`, `tbrIter`,
+  `maxHits`) to `MaximizeParsimony()` will be automatically forwarded to
+  `Morphy()` with a deprecation warning.
+  Update your code to call `Morphy()` directly, or adopt the new
+  `MaximizeParsimony()` parameters.
+  This compatibility shim will be removed in a future release.
+
+## C++ search engine
+
+`MaximizeParsimony()` is rewritten from the ground up with a native C++ search
+engine, replacing the R-loop/MorphyLib backend for equal weights, implied
+weights, and profile parsimony.  Typical searches are an order of magnitude
+faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
+
+### New features
+
+- `ScoreSpectrum()`: Chao1-style landscape coverage estimator.  Treats
+  distinct parsimony scores found across replicates as "species" and estimates
+  how thoroughly the parsimony landscape has been sampled (Good-Turing sample
+  coverage, Chao1 richness lower bound, unseen score-level fraction).  The
+  Shiny app's confidence panel now displays the coverage estimate when
+  sufficient replicates have been completed.  `MaximizeParsimony()` now
+  returns a `replicate_scores` attribute containing per-replicate local-optimum
+  scores for this purpose.
+
+- **Multi-replicate driven search** pipeline: random Wagner tree → TBR →
+  sectorial search (XSS, RSS, CSS) → ratchet → drift → tree fusing →
+  final TBR.
+- **Parallel search** via `nThreads`: replicates run on independent threads
+  with a shared tree pool.
+- **Timeout** via `maxSeconds`.
+- **User-supplied starting tree**: when a `tree` argument is provided, the
+  first replicate begins from that topology; subsequent replicates use
+  random Wagner trees.
+- **Adaptive strategy presets** via `strategy`: `"auto"` (default) selects
+  `"sprint"`, `"default"`, or `"thorough"` based on the number of tips.
+  Explicit parameters always override preset values.
+- **Profile parsimony** runs natively in C++; no longer delegates to
+  `Morphy()`.
+- **Topological constraints** enforced natively in C++ (including during
+  Wagner tree construction and sectorial search).
+- **Per-phase timing** returned as a `timings` attribute on the result.
+- **MPT enumeration**: after the main search converges, a TBR plateau walk
+  from each pool tree discovers additional most-parsimonious topologies on the
+  same and neighbouring score plateaus, up to `poolMaxSize`.
+- `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
+  fit branch lengths to, the tree that best matches a target distance matrix
+  under a least-squares criterion, reusing the optimised C++ rearrangement
+  kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
+  (`method = "nnls"`) least squares are supported, with optional
+  Fitch-Margoliash (`weight = "fm"`) or custom weighting.  This provides the
+  topology-search step of Lapointe & Cucumel's (1997) average consensus
+  procedure; `LeastSquaresFit()` mirrors `phangorn::nnls.tree()` but runs in
+  the native kernel.
+- `PaintCharacters()` colours each character in a morphological
+  dataset by the hue of the tree edges it most concordantly supports, using
+  `ConcordanceTable()` MI weights averaged in CIELAB colour space.  Pairs with
+  `TreeTools::PaintTree()` to visually map characters to clades.
+- `attr(dataset, "weight")` now accepts non-integer character weights.  The
+  C++ scoring engine still stores `int` weights internally; fractional
+  inputs are rescaled to integer with a configurable precision (default
+  ~0.001, controlled by `getOption("TreeSearch.fractional.scale", 1260L)`).
+  Previously, fractional weights were silently truncated at the Rcpp
+  boundary (e.g. `c(0.5, 1.7)` became `c(0L, 1L)`, dropping 50% / 41% of
+  the respective characters' contributions).  Integer weights pass
+  through unchanged.  `TreeLength()` and other scores are returned in
+  units of `steps * scale` when fractional weights are present; within-
+  run ranking is unaffected.
+
+### New parameters for `MaximizeParsimony()`
+
+- `strategy` — `"auto"` (default), `"sprint"`, `"default"`, `"thorough"`,
+  or `"none"`.
+- `nThreads` — number of parallel worker threads (default 1).
+- `maxSeconds` — wall-clock timeout (0 = no limit).
+- `sprFirst` — run SPR before TBR in each replicate.
+- `ratchetPerturbMode`, `ratchetPerturbMaxMoves`, `ratchetAdaptive` —
+  configure ratchet perturbation (zero-weight, up-weight, mixed, adaptive).
+- `driftCycles`, `driftAfdLimit`, `driftRfdLimit` — drift search parameters.
+- `xssRounds`, `xssPartitions`, `rssRounds`, `cssRounds`, `cssPartitions`,
+  `sectorMinSize`, `sectorMaxSize` — sectorial search parameters.
+- `fuseInterval`, `fuseAcceptEqual` — tree fusing parameters.
+- `poolMaxSize`, `poolSuboptimal` — tree pool management.
+- `tbrMaxHits`, `wagnerStarts`, `tabuSize`.
+- `nniFirst` — NNI warmup pass before SPR/TBR in each replicate; at
+  ≥100 tips this substantially improves the Wagner starting-tree quality
+  at negligible cost for small datasets.
+- `postRatchetSectorial` — run a second XSS+RSS+CSS pass after ratchet
+  perturbation; approximates TNT's interleaved sectorial pattern.
+  Enabled by default in the `"thorough"` preset.
+- `outerCycles`, `maxOuterResets` — repeat the full
+  \[XSS/RSS/CSS → ratchet → NNI-perturbation → drift → TBR\] sequence
+  _n_ times per replicate; budget is divided evenly.  Enabled in the
+  `"thorough"` preset (`outerCycles = 2`).
+- `wagnerBias`, `wagnerBiasTemp` — bias taxon addition order during Wagner
+  tree construction toward taxa with more informative characters
+  (Goloboff 2014), substantially improving starting-tree quality at large
+  tip counts.
+- `perturbStopFactor` — stop after `nTip × perturbStopFactor` consecutive
+  replicates that fail to improve the best score; provides 2–7× speedup on
+  converged searches at no score cost.
+- `pruneReinsertCycles`, `pruneReinsertDrop`, `pruneReinsertSelection` —
+  taxon pruning-reinsertion perturbation: drop a fraction of leaves, let
+  the backbone re-optimise with TBR, then reinsert taxa greedily.
+  Complementary to the ratchet (which perturbs character weights).
+- `nniPerturbCycles`, `nniPerturbFraction` — stochastic NNI-perturbation:
+  randomly apply NNI swaps to a fraction of internal branches and
+  reconverge, escaping local optima without altering character weights.
+- `annealCycles`, `annealPhases`, `annealTStart`, `annealTEnd`,
+  `annealMovesPerPhase` — multi-cycle PCSA (simulated annealing
+  perturbation) phase.
+- `adaptiveLevel` — dynamically scale ratchet and drift effort per
+  replicate based on the observed hit rate.
+- `adaptiveStart` — Thompson-sampling bandit strategy for starting-tree
+  selection; adapts over replicates to which strategies yield best scores.
+- `enumTimeFraction` — fraction of `maxSeconds` reserved for the MPT
+  plateau enumeration walk at the end of the search (default 10%).
+- `intraFuse` — within-replicate tree fusing against pool donors after TBR
+  polish; approximates TNT's within-replicate fusing pattern.
+- `ratchetTaper` — gradually reduce ratchet perturbation probability as
+  the pool stabilises, allowing finer local exploration late in the search.
+- `consensusConstrain` — lock pool-consensus splits as topological
+  constraints for subsequent replicates.
+- `consensusStableReps` — stop when the strict consensus is unchanged for
+  this many consecutive replicates (0 = disabled; set e.g. 3 to enable).
+- `progressCallback` — R function called after each replicate (for custom
+  progress reporting).
+
+### Search output
+
+- **Convergence summary**: when `verbosity > 0` (the default),
+  `MaximizeParsimony()` now prints a one-line summary on exit reporting the
+  best score, number of replicates completed, replicates since last
+  improvement, number of distinct MPTs found, stop reason (time limit,
+  target hits, perturbation-stop, or user interrupt), and elapsed time.
+  The same information is available as named attributes on the returned
+  tree list.
+
+### Search optimizations
+
+- **Collapsed-edge clip skipping**: TBR, SPR, and drift search skip
+  clips at zero-length edges that provably cannot improve the score,
+  reducing unnecessary evaluations on sparse data.
+- **Conflict-guided sectorial search**: random sectorial search targets
+  sectors around splits that conflict across pool trees.
+- **Diversity-aware pool eviction**: when the tree pool is full, the most
+  topologically similar entry is evicted to maintain diversity.
+- **Cross-replicate consensus constraint tightening**: opt-in via
+  `consensusConstrain = TRUE` in `SearchControl()`.
+- **Consensus-stability early stopping**: when `consensusStableReps > 0` in
+  `SearchControl()`, search stops when the strict consensus of best-score
+  pool trees has been unchanged for that many consecutive replicates.
+  Disabled by default.
+
+### Batch resampling
+
+- `Resample()` gains `nReplicates` and `nThreads` parameters for batch and
+  parallel jackknife/bootstrap resampling via a single C++ call.
+- `SuccessiveApproximations()` gains `concavity` and `constraint` parameters.
+
+## Profile parsimony: multi-state support
+
+- Profile parsimony now supports characters with up to 5 informative states
+  (previously limited to 2).  Characters with 3--5 states use the recursive
+  algorithm of Maddison & Slatkin (1991).
+- New C++ function `MaddisonSlatkin()` computes the number of labelled
+  histories for multi-state characters.
+
+## Data simulation
+
+- New function `ParsSim()` simulates morphological datasets under a parsimony
+  model (equal weights, implied weights, or profile parsimony).  Each
+  character starts at minimum steps; extra steps are placed one at a time,
+  verified to increase the Fitch score by exactly 1.
+
+## Scoring
+
+- `TreeLength()` and `CharacterLength()` / `FastCharacterLength()` use the
+  C++ engine for all scoring modes (equal weights, implied weights, profile
+  parsimony).
+
+## Function rename
+
+- `TaxonInfluence()` now uses `MaximizeParsimony()` internally.
+- `AdditionTree()` now uses the C++ Wagner tree engine, with native support
+  for implied weights, profile parsimony, and constraints.
+
+## Bug fixes
+
+- `LengthAdded()` no longer errors on datasets whose contrast matrix contains
+  zero-sum rows for tokens that are declared in the SYMBOLS list but not used
+  by any taxon in the character being scored (#294).
+
+- `LengthAdded()` no longer returns negative values when multiple rows of the
+  contrast matrix satisfy the fully-ambiguous applicable condition (e.g.
+  datasets with ~19 taxa and certain character structures); the first matching
+  row is now used consistently (#302).
+
+- Shiny: scoring error notification now shows the actual error message
+  (e.g. "Trees have different numbers of edges") rather than the generic
+  "Could not score all trees with dataset".
+- Shiny: fix search requiring two clicks to start when trees have mixed
+  topologies (polytomous/binary).  The "Search" shortcut button now appears
+  only after the modal is dismissed via its own Search button, so it is never
+  obscured by the modal backdrop.
+- Fix output trees from `MaximizeParsimony()` having invalid preorder
+  numbering (affected `DropTip()`, distance calculations, and plotting).
+- Fix `fuseInterval = 0` causing a crash (division by zero).
+- Fix `is_uninformative()` misclassifying ambiguous characters as
+  uninformative.
+- Fix `compute_fixed_steps()` undercount for all-ambiguous characters.
+- Fix IW scoring with missing `min_steps` offset.
+- Fix crash when dataset contains only ambiguous (`?`) tokens.
+
+## Custom search functions
+
+- `Ratchet()`, `MultiRatchet()`, `Jackknife()`, `MorphyBootstrap()`, and
+  `TreeSearch()` are no longer deprecated.  These functions support pluggable
+  `TreeScorer` and `EdgeSwapper` functions for custom scoring strategies;
+  for standard parsimony, use `MaximizeParsimony()`.
+
+## App improvements (`EasyTrees()`)
+
+- **Async search**: the session remains responsive while a search is running.
+- **Parallel search**: the search settings modal includes a thread count slider
+  (when multiple cores are available).
+- **Tree accumulation**: repeated "Continue search" runs accumulate trees at
+  the same optimal score, with de-duplication by topology.
+- **Search confidence**: after each search, the results pane shows the hit rate
+  and an estimate of the replicates needed for 95% confidence.
+- **Search config modal** reorganized into labelled sections (step weighting,
+  parallelization, search intensity, results to keep).
+- Fix `PlotCharacter()` crash on multifurcating consensus trees.
+- Fix first search not appearing to update trees in memory.
+- Clarified "Stop after best score found N times" slider label with help text.
+- Dataset-adaptive timeout default (1–15 minutes based on dataset size).
+- Internal modularization of the Shiny app into proper Shiny modules.
+
 # TreeSearch 1.8.0.9001 (2026-04-23)
 
 - Reorder parameters in `Q[A]Col(quality, amount)`.

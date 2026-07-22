@@ -2,17 +2,21 @@
 #'
 #' `Ratchet()` uses the parsimony ratchet \insertCite{Nixon1999}{TreeSearch} 
 #' to search for a more parsimonious tree using custom optimality criteria.
+#' For standard parsimony searches, [`MaximizeParsimony()`] is faster;
+#' use `Ratchet()` when you need a custom `TreeScorer` or `EdgeSwapper`.
 #' 
 #' For usage pointers, see the 
 #' [vignette](https://ms609.github.io/TreeSearch/articles/custom.html).
 #'
 #' @inheritParams TreeTools::Renumber
-#' @param dataset a dataset in the format required by `TreeScorer()`.
+#' @param dataset a dataset in the format required by `TreeScorer()`; the
+#' default [`EdgeListScore()`] requires a [`ParsimonyData`][PrepareData]
+#' object.
 #' @inheritParams TreeSearch
 #' @inheritParams Bootstrap
 #' @param Bootstrapper Function to perform bootstrapped rearrangements of tree.
-#'  First arguments will be an `edgeList` and a dataset, initialized using 
-#'  `InitializeData()`. Should return a rearranged `edgeList`.
+#'  First arguments will be an `edgeList` and `dataset`.
+#'  Should return a rearranged `edgeList`.
 #' @param swappers A list of functions to use to conduct edge rearrangement
 #'  during tree search.
 #'  Provide functions like \code{\link{NNISwap}} to shuffle root position,
@@ -43,7 +47,11 @@
 #' @param suboptimal retain trees that are suboptimal by this score.
 #'  Defaults to a small value that will counter rounding errors.
 #' 
-#' @return `Ratchet()` returns a tree modified by parsimony ratchet iterations.
+#' @return When `returnAll = FALSE` (the default), `Ratchet()` returns a single
+#'  optimal `phylo` tree, with its parsimony score in attribute `"score"`.
+#'  When `returnAll = TRUE`, it returns a `multiPhylo` of the optimal (and
+#'  near-optimal, within `suboptimal`) trees encountered, each carrying its own
+#'  `"score"` attribute.
 #'
 #' @references 
 #' \insertAllCited{}
@@ -51,8 +59,9 @@
 #' @examples
 #' data("Lobo", package = "TreeTools")
 #' njtree <- TreeTools::NJTree(Lobo.phy)
+#' loboData <- PrepareData(Lobo.phy)
 #' # Increase value of ratchIter and searchHits to do a proper search
-#' quickResult <- Ratchet(njtree, Lobo.phy, ratchIter = 2, searchHits = 3)
+#' quickResult <- Ratchet(njtree, loboData, ratchIter = 2, searchHits = 3)
 #' 
 #' # Plot result (legibly)
 #' oldPar <- par(mar = rep(0, 4), cex = 0.75)
@@ -67,34 +76,41 @@
 #' @family custom search functions
 #' @importFrom TreeTools RenumberEdges RenumberTips
 #' @export
-Ratchet <- function(tree, dataset, 
-                    InitializeData = PhyDat2Morphy,
-                    CleanUpData    = UnloadMorphy,
-                    TreeScorer     = MorphyLength,
-                    Bootstrapper   = MorphyBootstrap,
+Ratchet <- function(tree, dataset,
+                    InitializeData = NULL,
+                    CleanUpData    = NULL,
+                    TreeScorer     = EdgeListScore,
+                    Bootstrapper   = BootstrapTree,
                     swappers = list(TBRSwap, SPRSwap, NNISwap),
                     BootstrapSwapper = if (is.list(swappers))
                      swappers[[length(swappers)]] else swappers,
                     returnAll = FALSE, stopAtScore = NULL,
-                    stopAtPeak = FALSE, stopAtPlateau = 0L, 
+                    stopAtPeak = FALSE, stopAtPlateau = 0L,
                     ratchIter = 100, ratchHits = 10,
                     searchIter = 4000, searchHits = 42,
                     bootstrapIter = searchIter, bootstrapHits = searchHits,
-                    verbosity = 1L, 
+                    verbosity = 1L,
                     suboptimal = sqrt(.Machine[["double.eps"]]), ...) {
   epsilon <- sqrt(.Machine[["double.eps"]])
   hits <- 0L
-  # initialize tree and data
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
-  tree <- RenumberTips(tree, names(dataset))
+  tree <- RenumberTips(tree, .SearchTipLabels(dataset))
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
-  initializedData <- InitializeData(dataset)
-  on.exit(initializedData <- CleanUpData(initializedData))
-  
+  if (!is.null(InitializeData) || !is.null(CleanUpData)) {
+    .DeprecatedSearchHooks("Ratchet")
+    initializedData <- if (is.null(InitializeData)) dataset else
+      InitializeData(dataset)
+    if (!is.null(CleanUpData)) {
+      on.exit(initializedData <- CleanUpData(initializedData))
+    }
+  } else {
+    initializedData <- dataset
+  }
+
   bestScore <- TreeScorer(edgeList[[1]], edgeList[[2]], initializedData, ...)
   
   if (verbosity > 0L) {
@@ -210,14 +226,17 @@ Ratchet <- function(tree, dataset,
         # Return to lapply: 
         x})
       ret <- unique(forest)
+      class(ret) <- "multiPhylo"
       if (verbosity > 1L) {
         message(" - Removing duplicates leaves ", length(ret), " unique trees")
       }
       uniqueScores <- vapply(ret, attr, double(1), "score")
     } else if (length(forest) == 1) {
-      ret <- tree
       newEdge <- forest[[1]]
-      ret[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
+      onlyTree <- tree
+      onlyTree[["edge"]] <- cbind(newEdge[[1]], newEdge[[2]])
+      attr(onlyTree, "score") <- newEdge[[3]]
+      ret <- structure(list(onlyTree), class = "multiPhylo")
       uniqueScores <- newEdge[[3]]
     } else {
       stop("\nNo trees!? Is suboptimal set to a sensible (positive) value?")

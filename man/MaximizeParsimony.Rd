@@ -3,364 +3,395 @@
 \encoding{UTF-8}
 \name{MaximizeParsimony}
 \alias{MaximizeParsimony}
-\alias{Resample}
-\alias{EasyTrees}
-\alias{EasyTreesy}
 \title{Find most parsimonious trees}
 \usage{
 MaximizeParsimony(
   dataset,
   tree,
-  ratchIter = 7L,
-  tbrIter = 2L,
-  startIter = 2L,
-  finalIter = 1L,
-  maxHits = NTip(dataset) * 1.8,
-  maxTime = 60,
-  quickHits = 1/3,
   concavity = Inf,
-  ratchEW = TRUE,
-  tolerance = sqrt(.Machine[["double.eps"]]),
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5,
+  hierarchy = NULL,
+  inapplicable = "bgs",
+  hsj_alpha = 1,
   constraint,
-  verbosity = 3L
-)
-
-Resample(
-  dataset,
-  tree,
-  method = "jack",
-  proportion = 2/3,
-  ratchIter = 1L,
-  tbrIter = 8L,
-  finalIter = 3L,
-  maxHits = 12L,
-  concavity = Inf,
-  tolerance = sqrt(.Machine[["double.eps"]]),
-  constraint,
-  verbosity = 2L,
+  strategy = "auto",
+  maxReplicates = 96L,
+  targetHits = NULL,
+  maxSeconds = 0,
+  nThreads = 1L,
+  verbosity = 1L,
+  progressCallback = NULL,
+  control = SearchControl(),
+  collapse = TRUE,
   ...
 )
-
-EasyTrees()
-
-EasyTreesy()
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-containing only the tips listed in \code{dataset}, from which the search
-should begin.
-If unspecified, an \link[=AdditionTree]{addition tree} will be generated from
-\code{dataset}, respecting any supplied \code{constraint}.
+or a \code{multiPhylo} (first tree used).
+When supplied, the first replicate uses this topology as its starting
+point (warm-start), skipping the random Wagner tree construction.
+Subsequent replicates still begin from random Wagner trees.
+This is useful for continuing a search from a previously found optimum.
+If unspecified, all replicates start from random Wagner trees.
 Edge lengths are not supported and will be deleted.}
-
-\item{ratchIter}{Numeric specifying number of iterations of the
-parsimony ratchet \insertCite{Nixon1999}{TreeSearch} to conduct.}
-
-\item{tbrIter}{Numeric specifying the maximum number of \acronym{TBR}
-break points on a given tree to evaluate before terminating the search.
-One "iteration" comprises selecting a branch to break, and evaluating
-each possible reconnection point in turn until a new tree improves the
-score. If a better score is found, then the counter is reset to zero,
-and tree search continues from the improved tree.}
-
-\item{startIter}{Numeric: an initial round of tree search with
-\code{startIter} × \code{tbrIter} \acronym{TBR} break points is conducted in
-order to locate a local optimum before beginning ratchet searches.}
-
-\item{finalIter}{Numeric: a final round of tree search will evaluate
-\code{finalIter} × \code{tbrIter} \acronym{TBR} break points, in order to
-sample the final optimal neighbourhood more intensely.}
-
-\item{maxHits}{Numeric specifying the maximum times that an optimal
-parsimony score may be hit before concluding a ratchet iteration or final
-search concluded.}
-
-\item{maxTime}{Numeric: after \code{maxTime} minutes, stop tree search at the
-next opportunity.}
-
-\item{quickHits}{Numeric: iterations on subsampled datasets
-will retain \code{quickHits} × \code{maxHits} trees with the best score.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
 \insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
+\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally,
-(which underperforms step weighting approaches
-\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
-Specify \code{"profile"} to employ an approximation of profile parsimony
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
 \insertCite{Faith2001}{TreeSearch}.}
 
-\item{ratchEW}{Logical specifying whether to use equal weighting during
-ratchet iterations, improving search speed whilst still facilitating
-escape from local optima.}
+\item{extended_iw}{Logical: if \code{TRUE} (default) and \code{concavity} is finite,
+apply the missing-entries correction of
+\insertCite{Goloboff2014;textual}{TreeSearch}.
+Characters with missing data receive a reduced effective concavity
+\emph{k_c} = \emph{k} / \emph{f_c}, making their weights drop off faster.
+This compensates for the artificially low homoplasy of poorly sampled
+characters.  Set \code{FALSE} for legacy Goloboff (1993) behaviour.
+Ignored when \code{concavity = Inf} (equal weights) or \code{"profile"}.}
 
-\item{tolerance}{Numeric specifying degree of suboptimality to tolerate
-before rejecting a tree.  The default, \code{sqrt(.Machine$double.eps)}, retains
-trees that may be equally parsimonious but for rounding errors.
-Setting to larger values will include trees suboptimal by up to \code{tolerance}
-in search results, which may improve the accuracy of the consensus tree
-(at the expense of resolution) \insertCite{Smith2019}{TreeSearch}.}
+\item{xpiwe_r}{Numeric in (0, 1]: proportion of observed homoplasy
+expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+Only used when \code{extended_iw = TRUE}.}
+
+\item{xpiwe_max_f}{Numeric >= 1: maximum extrapolation factor.
+Characters with very few observed entries are clamped so that the
+extrapolation factor does not exceed this value.  Default 5 (following
+TNT).  Only used when \code{extended_iw = TRUE}.}
+
+\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
+characters are controlling primaries and which are their dependent
+secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
+ignored when \code{inapplicable = "bgs"} (the default).
+See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}} for automated construction from
+TNT-style character names.}
+
+\item{inapplicable}{Character: method for handling inapplicable characters.
+Case-insensitive.
+See \code{vignette("inapplicable", package = "TreeSearch")} for details.
+\describe{
+\item{\code{"bgs"} (default)}{Three-pass algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
+regions from the \code{"-"} token.  No hierarchy required.}
+\item{\code{"missing"}}{Pure Fitch parsimony
+\insertCite{Fitch1971}{TreeSearch}: the inapplicable (\code{"-"}) state is
+treated as missing data, so any token that includes a gap is recoded
+as fully ambiguous (\code{"?"}) and contributes no steps -- including
+polymorphisms such as \verb{\{0,-\}}, which become \verb{?}.  Reproduces standard
+Fitch analyses (e.g. PAUP*, or TNT with gaps read as missing) that do
+not use the Brazeau-Gardner-Smith inapplicable algorithm.  No
+hierarchy required.}
+\item{\code{"hsj"}}{Dissimilarity-metric scoring of
+\insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}; controlled by \code{hsj_alpha}.}
+\item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
+via x-transformations
+\insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
+\code{hierarchy}.}
+}}
+
+\item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
+character contributions under the HSJ method.  0 = secondaries ignored;
+1 (default) = secondaries contribute up to 1 per branch per hierarchy
+block.  Only used when \code{inapplicable = "hsj"}.}
 
 \item{constraint}{Either an object of class \code{phyDat}, in which case
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
-See \code{\link[TreeTools:ImposeConstraint]{ImposeConstraint()}} and
-\href{https://ms609.github.io/TreeSearch/articles/tree-search.html}{vignette}
-for further examples.}
+Constraint searches are supported natively: all tree rearrangements
+are filtered to respect the constraint topology.}
+
+\item{strategy}{Character: named strategy preset controlling the search
+heuristic parameters. Presets:
+\describe{
+\item{\code{"auto"} (default)}{Selects automatically based on dataset size
+and character count:
+\code{"sprint"} for <=30 taxa; \code{"large"} for >=120 taxa with >=100
+character patterns; \code{"thorough"} for 65-119 taxa with >=100
+character patterns; \code{"default"} otherwise.}
+\item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
+sectorial. Good for small datasets or quick surveys.}
+\item{\code{"default"}}{Balanced: 6 ratchet cycles, sectorial search and
+fusing.}
+\item{\code{"thorough"}}{Intensive: 20 ratchet cycles, adaptive
+perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
+starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
+character patterns; the drift cycles also recover equal-score trees on
+TBR-disconnected islands that random restarts alone miss.}
+\item{\code{"large"}}{Large-tree search (>=120 tips): the \code{"thorough"}
+settings with \code{maxReplicates} raised to 500 to suit the higher
+per-replicate cost.}
+\item{\code{"intensive"}}{Deprecated alias of \code{"thorough"}, retained for
+backward compatibility.  The extra Wagner starts (5) that once
+distinguished it are now folded into \code{"thorough"}, so the two are
+identical.}
+\item{\code{"none"}}{Use only the explicitly supplied parameter values.}
+}
+Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
+rule; \code{consensusStableReps} (consensus-stability stopping) is off by default
+and is not enabled by any preset.
+Explicit \code{control} fields always override the preset; for example,
+\verb{strategy = "sprint", control = SearchControl(ratchetCycles = 10L)} uses
+sprint defaults for everything except \code{ratchetCycles}.}
+
+\item{maxReplicates}{Integer: maximum number of independent search
+replicates (default: 96).
+The default is a multiple of 48 (= LCM(12, 16)) so that replicates
+divide evenly across common 12- or 16-core machines when running in
+parallel.
+When \code{strategy} resolves to \code{"large"} (automatically selected for
+datasets of \eqn{\ge}{>=} 120 tips and \eqn{\ge}{>=} 100 characters) and
+\code{maxReplicates} is left at its default, the
+cap is raised to 500: a 120--180-tip sweep showed the fraction of runs
+reaching the best-known score climbing from 0.68 at 96 replicates to 0.79
+at 250 and still rising at 500, with no plateau.  Raising the cap only
+appends later replicates, so it never delays an earlier improvement, and
+easy datasets still stop early once \code{targetHits} is met; only genuinely
+hard datasets run the extra replicates.  An explicit \code{maxReplicates}
+is always respected.
+For large or complex datasets a higher value improves the chance of
+finding all MPTs.  A rough minimum is
+\code{max(10, ceiling(NTip * NChar / 5000))}, where \code{NChar = sum(weight)}.
+A warning is issued when an explicit value falls below this threshold
+for datasets with 30 or more taxa.}
+
+\item{targetHits}{Integer: stop a replicate series once the best score has
+been re-found this many times without further improvement
+(default: \code{max(10, NTip / 5)}).  This is the main control over \emph{how hard the
+search tries to be sure it is finished}, and it is shared by every
+\code{strategy} preset -- the presets differ in per-replicate effort, not in when
+they stop.  It sets the balance between the two goals a user may bring to a
+search:
+\describe{
+\item{A single tree one can be reasonably confident is
+most-parsimonious}{Use a small \code{targetHits} (e.g. 4--10).  The search
+stops soon after the score stops improving: fast, and safe on datasets
+whose optimum is reached early.  On hard datasets the score can still
+improve after a long unproductive stretch (a better tree may lie many
+replicates away), so a small \code{targetHits} trades a chance at the true
+optimum for speed; raise it (or \code{maxReplicates}) when certainty matters
+more than wall-clock.}
+\item{A set of trees representing the full range of most-parsimonious
+trees}{Use a large \code{targetHits} with a high \code{maxReplicates}.  Distinct
+equally-parsimonious topologies -- and whole \acronym{TBR}-disconnected
+islands of them -- keep being discovered for as long as replicates run,
+and the terminal enumeration step can only fill in trees on islands a
+replicate has already reached, so a larger budget samples more islands.
+No stopping rule can \emph{detect} that every island has been found: a long
+run with no new topology is not proof that none remain, so completeness
+is bought with search effort, never inferred.}
+}}
+
+\item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
+search. When reached, the current replicate finishes and the search
+stops. \code{0} (default) means no time limit.}
+
+\item{nThreads}{Integer: number of parallel threads for search replicates.
+\describe{
+\item{\code{1} (default)}{Serial execution -- identical to previous behaviour.}
+\item{\code{0}}{Auto-detect: use one fewer thread than the number of CPU
+cores.}
+\item{\verb{> 1}}{Use the specified number of worker threads.}
+}
+In parallel mode, each replicate runs independently with a shared tree
+pool. Results may vary across runs with the same \code{set.seed()} due to
+thread scheduling nondeterminism. Use \code{nThreads = 1} for reproducible
+results.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
-more detailed commentary on search progress. Set to \code{0} to run silently.}
+more detail. Set to \code{0} to run silently.}
 
-\item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
-specifying how to resample characters.  Note that jackknife is considered
-to give more meaningful results.}
+\item{progressCallback}{Optional function called with a single list
+argument containing search progress information.
+The list includes elements: \code{replicate}, \code{max_replicates},
+\code{best_score}, \code{hits_to_best}, \code{target_hits}, \code{pool_size},
+\code{phase} (character), \code{elapsed} (seconds), and \code{phase_score}.
+When \code{NULL} (default) and \code{verbosity >= 1} in an interactive session,
+a \code{cli} progress bar is created automatically.
+Supply a custom function (e.g. using \code{\link[shiny:setProgress]{shiny::setProgress()}})
+to control progress display.}
 
-\item{proportion}{Numeric between 0 and 1 specifying what proportion of
-characters to retain under jackknife resampling.}
+\item{control}{A \code{\link{SearchControl}} object (or a named list) of low-level
+search parameters.  Most users can rely on the \code{strategy} presets and
+ignore this argument; see \code{\link[=SearchControl]{SearchControl()}} for full documentation
+of individual fields.}
 
-\item{\dots}{Additional parameters to \code{MaximizeParsimony()}.}
+\item{collapse}{Logical: if \code{TRUE} (default), contract zero-length
+(unsupported) branches in the returned trees into polytomies before
+returning, and de-duplicate the result on the resulting collapsed
+topologies, akin to TNT's "collapse zero-length branches".  A branch is
+treated as zero-length when it has minimum possible length 0 (there exists
+a most-parsimonious reconstruction with no change along it), evaluated
+under the same scoring method used for the search.  \code{n_topologies} then
+counts distinct collapsed topologies, which is comparable across programs.
+This is the recommended behaviour: a fully-resolved tree containing a
+zero-length branch asserts a grouping the data do not support, and a single
+soft polytomy can otherwise inflate the apparent number of optimal trees by
+orders of magnitude.  Set \code{FALSE} to return fully-resolved trees instead
+(one arbitrary resolution per distinct collapsed topology), e.g. when a
+downstream step requires binary trees.
+Collapsing is applied to the best-score trees (the MPTs); any suboptimal
+pool trees retained via \code{poolSuboptimal} are omitted from the collapsed set.
+When a \code{constraint} is supplied, its enforced splits are protected from
+collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
+visible (a constraint encodes external evidence the matrix does not
+capture); unsupported non-constraint branches still collapse.}
+
+\item{...}{Backward compatibility.}
 }
 \value{
-\code{MaximizeParsimony()} returns a list of trees with class
-\code{multiPhylo}. This lists all trees found during each search step that
-are within \code{tolerance} of the optimal score, listed in the sequence that
-they were first visited, and named according to the step in which they were
-first found; it may contain more than \code{maxHits} elements.
-Note that the default search parameters may need to be increased in order for
-these trees to be the globally optimal trees; examine the messages printed
-during tree search to evaluate whether the optimal score has stabilized.
-
-The return value has the attribute \code{firstHit}, a named integer vector listing
-the number of optimal trees visited for the first time in each stage of
-the tree search. Stages are named:
-\itemize{
-\item \code{seed}: starting trees;
-\item \code{start}: Initial TBR search;
-\item \code{ratchN}: Ratchet iteration \code{N};
-\item \code{final}: Final TBR search.
-The first tree hit for the first time in ratchet iteration three is named
-\code{ratch3_1}.
+A \code{multiPhylo} object containing the best tree(s) found, with
+attributes:
+\describe{
+\item{\code{score}}{Best parsimony score.}
+\item{\code{replicates}}{Number of replicates completed.}
+\item{\code{hits_to_best}}{Number of independent discoveries of the best
+score.}
+\item{\code{n_topologies}}{Number of distinct best-score topologies returned.
+With \code{collapse = TRUE} (default) this counts distinct \emph{collapsed}
+topologies (equal to \code{length()} of the result); with \code{collapse = FALSE}
+it is the number of distinct fully-resolved topologies in the pool at
+the best score.}
+\item{\code{last_improved_rep}}{1-based index of the replicate that last
+improved the best score (0 if not tracked, e.g. parallel search).}
+\item{\code{timed_out}}{Logical: \code{TRUE} if the search stopped because
+\code{maxSeconds} was exceeded.}
+\item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped
+because the strict consensus was unchanged for
+\code{consensusStableReps} consecutive replicates.}
+\item{\code{perturb_stop}}{Logical: \code{TRUE} if the search stopped because
+\code{nTip * perturbStopFactor} consecutive replicates failed to improve
+the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
+\item{\code{timings}}{Named numeric vector of cumulative wall-clock time
+(in milliseconds) spent in each search phase across all replicates:
+\code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},
+\code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}.}
+\item{\code{replicate_scores}}{Numeric vector of the best parsimony score
+found by each completed replicate.  Passed to \code{\link[=ScoreSpectrum]{ScoreSpectrum()}} for
+Chao1-style landscape coverage estimation.}
+\item{\code{candidates_evaluated}}{Number of TBR/SPR-class candidate
+rearrangements evaluated across the whole search — the analogue of
+TNT's "rearrangements examined", useful for comparing search
+efficiency (candidates per unit of score improvement).  Counted only
+for single-threaded searches (\code{0} when \code{nThreads > 1}); excludes
+NNI-warmup and simulated-annealing candidates.}
 }
-
-\code{Resample()} returns a \code{multiPhylo} object containing a list of
-trees obtained by tree search using a resampled version of \code{dataset}.
 }
 \description{
-Search for most parsimonious trees using the parsimony ratchet and
-\acronym{TBR} rearrangements, treating inapplicable data as such using the
-algorithm of \insertCite{Brazeau2019;textual}{TreeSearch}.
-
-Tree search will be conducted from a specified or automatically-generated
-starting tree in order to find a tree with an optimal parsimony score,
-under implied or equal weights, treating inapplicable characters as such
-in order to avoid the artefacts of the standard Fitch algorithm
-\insertCite{@see @Maddison1993; @Brazeau2019}{TreeSearch}.
-Tree length is calculated using the MorphyLib C library
-\insertCite{Brazeau2017}{TreeSearch}.
+\code{MaximizeParsimony()} performs a multi-replicate driven search for
+most-parsimonious trees, combining random addition sequence (Wagner)
+starting trees, tree bisection and reconnection  (\acronym{TBR})
+rearrangement, exclusive sectorial search (\acronym{XSS}),
+ratchet perturbation, drift, and tree fusing.
 }
 \details{
-Tree search commences with \code{ratchIter} iterations of the parsimony ratchet
-\insertCite{Nixon1999}{TreeSearch}, which bootstraps the input dataset
-in order to escape local optima.
-A final round of tree bisection and reconnection (\acronym{TBR})
-is conducted to broaden the sampling of trees.
+The search pipeline follows the "new technology search" approach of
+\insertCite{Goloboff1999;textual}{TreeSearch}, and resembles the
+implementation in TNT \insertCite{Goloboff2016}{TreeSearch}.
+Parsimony scoring uses the Fitch
+\insertCite{Fitch1971}{TreeSearch} algorithm; inapplicable characters
+are handled with the algorithm of
+\insertCite{Brazeau2019;textual}{TreeSearch}.
+Each replicate builds a random addition sequence (Wagner) tree
+\insertCite{Kluge1969}{TreeSearch}, optimizes it with TBR,
+applies sectorial search and the parsimony ratchet
+\insertCite{Nixon1999}{TreeSearch} to escape local optima, then adds
+the result to a pool of unique topologies.
+Periodically, tree fusing recombines the best trees in the pool.
+The search stops when the best score has been independently discovered
+\code{targetHits} times, or \code{maxReplicates} replicates have been completed.
+}
+\section{Completeness of the returned tree set}{
 
-This function can be called using the R command line / terminal, or through
-the "shiny" graphical user interface app (type \code{EasyTrees()} to launch).
-
-The optimal strategy for tree search depends in part on how close to optimal
-the starting tree is, the size of the search space (which increases
-super-exponentially with the number of leaves), and the complexity of the
-search space (e.g. the existence of multiple local optima).
-
-One possible approach is to employ four phases:
+\code{MaximizeParsimony()} returns the distinct, fully-resolved optimal
+topologies held in its tree pool; it does not guarantee that every
+most-parsimonious tree (\acronym{MPT}) is recovered.
+The size of the returned set is bounded by, in order:
 \enumerate{
-\item Rapid search for local optimum: tree score is typically easy to improve
-early in a search, because the initial tree is often far from optimal.
-When many moves are likely to be accepted, running several rounds of search
-with a low value of \code{maxHits} and a high value of \code{tbrIter} allows many
-trees to be evaluated quickly, hopefully moving quickly to a more promising
-region of tree space.
-\item Identification of local optimum:
-Once close to a local optimum, a more extensive search
-with a higher value of \code{maxHits} allows a region to be explored in more
-detail.  Setting a high value of \code{tbrIter} will search a local
-neighbourhood more completely
-\item Search for nearby peaks:
-Ratchet iterations allow escape from local optima.
-Setting \code{ratchIter} to a high value searches the wider neighbourhood more
-extensively for other nearby peaks; \code{ratchEW = TRUE} accelerates these
-exploratory searches.  Ratchet iterations can be ineffective when \code{maxHits}
-is too low for the search to escape its initial location.
-\item Extensive search of final optimum.  As with step 2, it may be valuable to
-fully explore the optimum that is found after ratchet searches to be sure
-that the locally optimal score has been obtained.  Setting a high value of
-\code{finalIter} performs a thorough search that can give confidence that further
-searches would not find better (local) trees.
+\item \strong{\code{poolMaxSize}} (default \code{100}) — a hard ceiling on the number of
+trees retained.  Raise it (via \code{\link[=SearchControl]{SearchControl()}}) to keep more MPTs;
+with the default you will never see more than 100.
+\item \strong{MPT-enumeration time.} After the main search, a TBR plateau walk
+enumerates equal-score neighbours of each pool tree, within a time
+reserve of \code{maxSeconds * enumTimeFraction}.  If this phase times out it
+returns a \emph{partial} set (the run reports \code{stop = "timeout"}); allow more
+\code{maxSeconds}, or raise \code{enumTimeFraction}, for a more complete set.
+\item \strong{TBR-island coverage.} The plateau walk only explores islands of
+equal-score trees that a main-loop replicate actually landed on.  MPTs
+in unvisited islands are never enumerated, however large \code{poolMaxSize}
+is; increase \code{maxReplicates} to seed more islands.
 }
+By default (\code{collapse = TRUE}), zero-length (unsupported) branches are
+contracted into polytomies and the returned set is deduplicated on the
+resulting collapsed topologies, so \code{n_topologies} counts distinct \emph{collapsed}
+topologies — the same convention TNT applies under "collapse zero-length
+branches".
+This matters because a single soft polytomy (an unsupported clade of
+\eqn{k} taxa) has \eqn{(2k-3)!!}
+equally-parsimonious binary resolutions, so leaving branches resolved can
+inflate the apparent number of optimal trees by orders of magnitude without
+adding any biological information.  Set \code{collapse = FALSE} to return
+fully-resolved trees instead (one arbitrary resolution per distinct collapsed
+topology).
 
-A search is unlikely to have found a global optimum if:
-\itemize{
-\item Tree score continues to improve on the final iteration.  If a local optimum
-has not yet been reached, it is unlikely that a global optimum has
-been reached.
-Try increasing \code{maxHits}.
-\item Successive ratchet iterations continue to improve tree scores.
-If a recent ratchet iteration improved the score, rather than finding
-a different region of tree space with the same optimal score, it is likely
-that still better global optima remain to be found.  Try increasing
-\code{ratchIter} (more iterations give more chance for improvement) and
-\code{maxHits} (to get closer to the local optimum after each ratchet iteration).
-\item Optimal areas of tree space are only visited by a single ratchet iteration.
-(See vignette: \href{https://ms609.github.io/TreeSearch/articles/tree-space.html}{Exploring tree space}.)
-If some areas of tree space are only found by one ratchet iteration, there
-may well be other, better areas that have not yet been visited.
-Try increasing \code{ratchIter}.
-}
-
-When continuing a tree search, it is usually best to start from an optimal
-tree found during the previous iteration - there is no need to start from
-scratch.
-
-A more time consuming way of checking that a global optimum has been reached
-is to repeat a search with the same parameters multiple times, starting
-from a different, entirely random tree each time. If all searches obtain the
-same optimal tree score despite their different starting points,
-this score is likely to correspond to the global optimum.
-
-For detailed documentation of the "TreeSearch" package, including full
-instructions for loading phylogenetic data into R and initiating and
-configuring tree search, see the
-\href{https://ms609.github.io/TreeSearch/}{package documentation}.
-}
-\section{Resampling}{
-
-Note that bootstrap support is a measure of the amount of data supporting
-a split, rather than the amount of confidence that should be afforded the
-grouping.
-"Bootstrap support of 100\% is not enough, the tree must also be correct"
-\insertCite{Phillips2004}{TreeSearch}.
-See discussion in \insertCite{Egan2006;textual}{TreeSearch};
-\insertCite{Wagele2009;textual}{TreeSearch};
-\insertCite{Simmons2011}{TreeSearch};
-\insertCite{Kumar2012;textual}{TreeSearch}.
-
-For a discussion of suitable search parameters in resampling estimates, see
-\insertCite{Muller2005;textual}{TreeSearch}.
-The user should decide whether to start each resampling
-from the optimal tree (which may be quicker, but result in overestimated
-support values as searches get stuck in local optima close to the
-optimal tree) or a random tree (which may take longer as more rearrangements
-are necessary to find an optimal tree on each iteration).
-
-For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{SiteConcordance()}}.
+Implied weighting is supported natively: set \code{concavity} to a numeric
+value (e.g.\sspace{}10).
+Profile parsimony (\code{concavity = "profile"}) is supported natively.
+Inapplicable tokens are treated as ambiguous, and each character is scored
+by its information profile \insertCite{Faith2001}{TreeSearch}; see
+\code{\link[=PrepareDataProfile]{PrepareDataProfile()}} for how multi-state profiles are computed.
 }
 
 \examples{
-## Only run examples in interactive R sessions
-if (interactive()) {
-  # launch "shiny" point-and-click interface
-  EasyTrees()
-  
-  # Here too, use the "continue search" function to ensure that tree score
-  # has stabilized and a global optimum has been found
-}
-
-
-# Load data for analysis in R
-library("TreeTools")
 data("inapplicable.phyData", package = "TreeSearch")
-dataset <- inapplicable.phyData[["Asher2005"]]
-
-# A very quick run for demonstration purposes
-trees <- MaximizeParsimony(dataset, ratchIter = 0, startIter = 0,
-                           tbrIter = 1, maxHits = 4, maxTime = 1/100,
-                           concavity = 10, verbosity = 4)
-names(trees)
-cons <- Consensus(trees)
-
-# In actual use, be sure to check that the score has converged on a global
-# optimum, conducting additional iterations and runs as necessary.
- 
-if (interactive()) {
-# Jackknife resampling
-nReplicates <- 10
-jackTrees <- replicate(nReplicates,
-  #c() ensures that each replicate returns a list of trees
-  c(Resample(dataset, trees, ratchIter = 0, tbrIter = 2, startIter = 1,
-             maxHits = 5, maxTime = 1 / 10,
-             concavity = 10, verbosity = 0))
- )
-
-# In a serious analysis, more replicates would be conducted, and each
-# search would undergo more iterations.
-
-# Now we must decide what to do with the multiple optimal trees from
-# each replicate.
-
-# Set graphical parameters for plotting
-oPar <- par(mar = rep(0, 4), cex = 0.9)
-
-# Take the strict consensus of all trees for each replicate
-# (May underestimate support)
-JackLabels(cons, lapply(jackTrees, ape::consensus))
-
-# Take a single tree from each replicate (here, the first)
-# Potentially problematic if chosen tree is not representative
-JackLabels(cons, lapply(jackTrees, `[[`, 1))
-
-# Count iteration as support if all most parsimonious trees support a split;
-# as contradiction if all trees contradict it; don't include replicates where
-# not all trees agree on the resolution of a split.
-labels <- JackLabels(cons, jackTrees)
-
-# How many iterations were decisive for each node?
-attr(labels, "decisive")
-
-# Show as proportion of decisive iterations
-JackLabels(cons, jackTrees, showFrac = TRUE)
-
-# Restore graphical parameters
-par(oPar)
-}
-
-# Tree search with a constraint
-constraint <- MatrixToPhyDat(c(a = 1, b = 1, c = 0, d = 0, e = 0, f = 0))
-characters <- MatrixToPhyDat(matrix(
-  c(0, 1, 1, 1, 0, 0,
-    1, 1, 1, 0, 0, 0), ncol = 2,
-  dimnames = list(letters[1:6], NULL)))
-MaximizeParsimony(characters, constraint = constraint, verbosity = 0)
+dataset <- inapplicable.phyData[["Vinther2008"]]
+result <- MaximizeParsimony(
+  dataset,
+  inapp = "missing",
+  maxReplicates = 12L,
+  targetHits = 4L
+)
+result
+attr(result, "score")
 
 }
 \references{
 \insertAllCited{}
 }
 \seealso{
-Tree search \emph{via} graphical user interface: \code{\link[=EasyTrees]{EasyTrees()}}
+\code{\link[=Resample]{Resample()}} for jackknife and bootstrap resampling.
+\code{\link[=SearchControl]{SearchControl()}} for expert-level tuning of the search heuristics.
 
-Other split support functions:
-\code{\link[=ConcordanceTable]{ConcordanceTable()}},
-\code{\link[=JackLabels]{JackLabels()}},
-\code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
-\code{\link[=PresCont]{PresCont()}},
-\code{\link{SiteConcordance}}
+Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
+\code{\link[=CharacterLength]{CharacterLength()}},
+\code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
+\code{\link[=IWScore]{IWScore()}},
+\code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MinimumLength]{MinimumLength()}},
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=TaxonInfluence]{TaxonInfluence()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}
 (\href{mailto:martin.smith@durham.ac.uk}{martin.smith@durham.ac.uk})
 }
-\concept{split support functions}
+\concept{tree scoring}

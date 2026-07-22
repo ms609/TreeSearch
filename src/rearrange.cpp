@@ -1,3 +1,11 @@
+// DEAD CODE — This file is compiled but no functions are exported or called.
+// All [[Rcpp::export]] tags are commented out. None of these functions are
+// referenced by other C++ code. The C++ driven search engine (ts_*.cpp) has
+// replaced these R-level NNI/SPR/TBR implementations.
+//
+// Safe to remove if build time is a concern (~635 lines, ~2-3s compile).
+// Kept for reference until the package maintainer decides to delete it.
+
 #include <Rcpp.h>
 // [ [Rcpp::depends(TreeTools)]]
 #include <TreeTools/renumber_tree.h> /* for preorder_edges_and_nodes */

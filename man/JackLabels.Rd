@@ -87,9 +87,10 @@ parsimony searches, or \code{\link[=Jackknife]{Jackknife()}} for custom search c
 Other split support functions:
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
+\code{\link[=Resample]{Resample()}},
 \code{\link{SiteConcordance}}
 }
 \author{

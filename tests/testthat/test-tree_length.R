@@ -12,20 +12,6 @@ test_that("Failures are graceful", {
   bal$tip.label[1:2] <- c("no1", "no2")
   expect_error(TreeLength(bal, dat), "Missing in `dataset`: no1, no2")
   
-  mo <- PhyDat2Morphy(dat)
-  on.exit(mo <- UnloadMorphy(mo))
-  
-  sparse <- DropTip(RandomTree(dat, root = FALSE), 10)
-  expect_error(MorphyTreeLength(sparse, mo),
-               "Number of taxa .* not equal to number of tips")
-  expect_error(MorphyTreeLength(sparse, NA),
-               "a valid Morphy pointer")
-  
-  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], mo, nTaxa = 0),
-               mpl_translate_error(0))
-  expect_error(MorphyLength(sparse$edge[, 1], sparse$edge[, 2], dat),
-               "must be a Morphy pointer")
-  
   expect_null(TreeLength(NULL))
   
 })
@@ -34,14 +20,22 @@ test_that("Deprecations throw warning", {
   data("inapplicable.datasets")
   dat <- inapplicable.phyData[[1]]
   tree <- TreeTools::RandomTree(dat, root = TRUE)
-  expect_equal(TreeLength(tree, dat),
-               expect_warning(Fitch(tree, dat)))
-  expect_equal(CharacterLength(tree, dat, compress = TRUE),
-               expect_warning(FitchSteps(tree, dat)))
+  expect_warning(fitch_val <- Fitch(tree, dat))
+  expect_equal(TreeLength(tree, dat), fitch_val)
+  expect_warning(fitch_steps_val <- FitchSteps(tree, dat))
+  expect_equal(CharacterLength(tree, dat, compress = TRUE), fitch_steps_val)
   
 })
 
-test_that("Morphy generates correct lengths", {
+test_that("Simple EW scoring is correct", {
+  tree <- Preorder(RootTree(BalancedTree(6), 1))
+  dat <- MatrixToPhyDat(matrix(c(0, 1, 0, 1, 0, 1,
+                                 0, 0, 0, 1, 1, 1), byrow = FALSE, 6,
+                                dimnames = list(TipLabels(6), NULL)))
+  expect_equal(TreeLength(tree, dat), 4)
+})
+
+test_that("Inapplicable characters scored correctly", {
   ## Tree
   tree <- ape::read.tree(text = "((((((1,2),3),4),5),6),(7,(8,(9,(10,(11,12))))));")
   relabel <- ape::read.tree(text = "((6,(5,(4,(3,(2,1))))),(7,(8,(9,(10,(11,12))))));")
@@ -87,7 +81,7 @@ test_that("Morphy generates correct lengths", {
                   "320--??3--21", # 37, expect score = 5
                   "000011110000"  # 38, expect score = 2
                   ) 
-  ## Results
+  ## Expected per-character results
   expected_results <- c(5, 2, 3, 2, 1, 5, 5, 2, 5, 2, 2, 4, 3, 2, 5, 0, 5, 2,
                         4, 5, 2, 4, 3, 3, 2, 5, 1, 4, 4, 0, 5, 5, 4, 5, 2, 1, 
                         3, 5, 2)
@@ -96,17 +90,6 @@ test_that("Morphy generates correct lengths", {
                           1, 3, 1)
   expected_homoplasies <- expected_results - expected_minLength
 
-  ##plot(tree); nodelabels(12:22); tiplabels(0:11)
-  ## Run the tests
-  for(test in seq_along(characters)) {
-    morphyObj <- SingleCharMorphy(characters[test])
-    tree_length <- MorphyTreeLength(tree, morphyObj)
-    morphyObj <- UnloadMorphy(morphyObj)
-    #if (tree_length != expected_results[test]) message("Test case", test - 1, characters[test], "unequal: Morphy calcluates",
-    #  tree_length, "instead of", expected_results[test],"\n")
-    expect_equal(tree_length, expected_results[test])
-  }
-  
   ## Test combined matrix
   bigPhy <- TreeTools::StringToPhyDat(paste0(characters, collapse = "\n"),
                                       tree$tip.label, 
@@ -127,47 +110,40 @@ test_that("Morphy generates correct lengths", {
                                                  concatenate = TRUE),
                     start = 0, stop = length(characters)))
   
-  morphyObj <- PhyDat2Morphy(bigPhy)
-  moSummary <- summary(morphyObj)
-  expect_equal(c(length(bigPhy), attr(bigPhy, "nr"), length(bigPhy) - 1),
-               c(moSummary$nTax, moSummary$nChar, moSummary$nInternal))
-  tree_length <- MorphyTreeLength(tree, morphyObj)
-  morphyObj <- UnloadMorphy(morphyObj)
-  
-  expect_equal("0123", moSummary$allStates)
-  expect_equal(tree_length, sum(expected_results))
+  # Per-character scores should match expected results
+  expect_equal(CharacterLength(tree, bigPhy), expected_results)
+
+  tree_length <- sum(expected_results)
   expect_equal(tree_length, TreeLength(tree, bigPhy))
   expect_equal(tree_length, TreeLength(relabel, bigPhy))
   expect_equal(rep(tree_length, 2), TreeLength(trees, bigPhy))
   
   expected_fit <- expected_homoplasies / (expected_homoplasies + 6)
-  tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6)
+  tree_score_iw <- TreeLength(tree, bigPhy, concavity = 6, extended_iw = FALSE)
   expect_equal(sum(expected_fit), tree_score_iw)
-  expect_equal(tree_score_iw, TreeLength(relabel, bigPhy, concavity = 6))
-  expect_equal(vapply(trees, TreeLength, double(1), bigPhy, concavity = 6),
-               TreeLength(trees, bigPhy, concavity = 6))
+  expect_equal(tree_score_iw, TreeLength(relabel, bigPhy, concavity = 6,
+                                         extended_iw = FALSE))
+  expect_equal(vapply(trees, TreeLength, double(1), bigPhy, concavity = 6,
+                      extended_iw = FALSE),
+               TreeLength(trees, bigPhy, concavity = 6, extended_iw = FALSE))
   
-  expect_equal(vapply(trees, TreeLength, double(1), profPhy, concavity = "p"),
-               TreeLength(trees, profPhy, concavity = "profile"))
+  # TreeLength(., concavity = "profile") internally calls PrepareDataProfile()
+  # which emits a cli message about inapplicable tokens.  Suppress so the
+  # message does not leak into testthat output.
+  expect_equal(suppressMessages(
+                 vapply(trees, TreeLength, double(1), profPhy, concavity = "p")
+               ),
+               suppressMessages(
+                 TreeLength(trees, profPhy, concavity = "profile")
+               ))
   
 
-  ## Run the bigger tree tests
+  ## Bigger tree with inapplicable tokens
   bigTree <- ape::read.tree(
     text = "((1,2),((3,(4,5)),(6,(7,(8,(9,(10,((11,(12,(13,(14,15)))),(16,(17,(18,(19,20))))))))))));")
-  bigChars <- c("11111---111---11---1")
-  ## Results
-  expected_results <- c(3)
-
-  ## Run the tests
-  for(test in 1:length(bigChars)) {
-    phy <- TreeTools::StringToPhyDat(bigChars[test], bigTree$tip.label)
-    # Presently a good test to confirm that PhyDat2Morphy works with single-character phys
-    morphyObj <- PhyDat2Morphy(phy)
-    on.exit(morphyObj <- UnloadMorphy(morphyObj))
-    tree_length <- MorphyTreeLength(bigTree, morphyObj)
-    
-    expect_equal(tree_length, expected_results[test])
-  }
+  bigPhy2 <- TreeTools::StringToPhyDat("11111---111---11---1",
+                                       bigTree$tip.label)
+  expect_equal(3, TreeLength(bigTree, bigPhy2))
 })
 
 test_that("(random) lists of trees are scored", {
@@ -177,7 +153,9 @@ test_that("(random) lists of trees are scored", {
   # Expected values calculated from 100k samples
   expect_gt(t.test(TreeLength(100, mat), mu = 318.5877)$p.val, 0.001)
   expect_gt(t.test(TreeLength(100, mat, 10L), mu = 17.16911)$p.val, 0.001)
-  expect_gt(t.test(TreeLength(100, mat, "profile"), mu = 830.0585)$p.val, 0.001)
+  expect_gt(t.test(suppressMessages(
+              TreeLength(100, mat, "profile")
+            ), mu = 830.0585)$p.val, 0.001)
 })
 
 test_that("TreeLength() handles unrooted / non-preorder trees", {
@@ -195,14 +173,18 @@ test_that("TreeLength() handles unrooted / non-preorder trees", {
   set.seed(0)
   unrooted <- RandomTree(mat, root = FALSE)
   
-  expect_equal(expect_warning(TreeLength(c(unrooted), mat),
-                              "rooted on tip 1"),
-               TreeLength(c(RootTree(unrooted, 1)), mat))
+  # TreeLength() on an unrooted tree warns "rooted on tip 1" (R warning)
+  # and also emits a cli message ("X not in tree") that does not match the
+  # warning regex; suppress the latter so it does not leak.
+  expect_warning(suppressMessages(
+                   tmp_tl <- TreeLength(c(unrooted), mat)),
+                 "rooted on tip 1")
+  expect_equal(tmp_tl, TreeLength(c(RootTree(unrooted, 1)), mat))
   
   expect_equal(TreeLength(RootTree(Postorder(unrooted), 1), mat),
                TreeLength(RootTree(unrooted, 1), mat))
-  scores <- expect_warning(
-    TreeLength(c(unrooted, Postorder(unrooted)), mat),
+  expect_warning(suppressMessages(
+    scores <- TreeLength(c(unrooted, Postorder(unrooted)), mat)),
     "rooted on tip 1")
   expect_equal(scores[[1]], scores[[2]])
   expect_equal(TreeLength(RootTree(unrooted, 1), mat), scores[[1]])
@@ -220,23 +202,11 @@ test_that("Profile scoring is reported correctly", {
   dataset <- congreveLamsdellMatrices[[42]]
   prepDataset <- PrepareDataProfile(dataset)
   tree <- NJTree(prepDataset)
-  edge <- Preorder(tree)$edge
-  at <- attributes(prepDataset)
-  profiles <- attr(prepDataset, "info.amounts")
-  charSeq <- seq_along(prepDataset[[1]]) - 1L
-  
-  characters <- PhyToString(prepDataset, ps = '', useIndex = FALSE,
-                            byTaxon = FALSE, concatenate = FALSE)
-  startWeights <- at$weight
-  morphyObjects <- lapply(characters, SingleCharMorphy)
-  on.exit(morphyObjects <- vapply(morphyObjects, UnloadMorphy, integer(1)),
-          add = TRUE)
   
   expect_equal(TreeLength(tree, dataset, "profile"),
                TreeLength(tree, prepDataset, "profile"))
-  expect_equal(TreeLength(tree, dataset, "profile"),
-               morphy_profile(edge, morphyObjects, startWeights, charSeq, 
-                              profiles, Inf))
+  expect_equal(TreeLength(tree, prepDataset, "profile"), 653.4463,
+               tolerance = 1e-3)
 })
 
 test_that("CharacterLength() fails gracefully", {
@@ -250,19 +220,24 @@ test_that("CharacterLength() fails gracefully", {
   # Missing leaves
   expect_error(CharacterLength(as.phylo(1, 4), dataset))
   tMinus1 <- as.phylo(1, 42, tipLabels = names(dataset)[-1])
+  # CharacterLength() drops dataset tips absent from the tree, emitting a
+  # cli message ("Acanthoctenus not in tree" here); suppress so the alert
+  # does not leak into testthat output.
   expect_equal(CharacterLength(tMinus1, dataset[-1]),
-               CharacterLength(tMinus1, dataset))
+               suppressMessages(CharacterLength(tMinus1, dataset)))
   expect_error(CharacterLength(as.phylo(1, 43), dataset))
   tPlus1 <- as.phylo(1, 44, tipLabels = c("extra", names(dataset)))
+  # CharacterLength() with an extra tip emits a cli message
+  # ("extra not in `dataset`"); suppress so it does not leak.
   expect_equal(CharacterLength(DropTip(tPlus1, "extra"), dataset),
-               CharacterLength(tPlus1, dataset))
+               suppressMessages(CharacterLength(tPlus1, dataset)))
   expect_error(CharacterLength(as.phylo(1:2, 43, tipLabels = names(dataset)),
                                dataset))
   # no error:
   CharacterLength(as.phylo(1, 43, tipLabels = names(dataset)), dataset)
   
   skip_if_not_installed("phangorn")
-  library("phangorn") # for phyDat subsetting
+  suppressPackageStartupMessages(library("phangorn")) # for phyDat subsetting
   expect_equal(c(53, 59, 6),
                as.numeric(table(CharacterLength(NJTree(dataset[1:4, ]),
                                                 dataset[1:4], compress = TRUE))))
@@ -282,32 +257,208 @@ test_that("Character compression works", {
                c(118, 4))
 })
 
-test_that("X_MorphyLength", {
-  dataset <- congreveLamsdellMatrices[[42]]
-  morphyObj <- PhyDat2Morphy(dataset)
-  on.exit(UnloadMorphy(morphyObj))
-  nTaxa <- mpl_get_numtaxa(morphyObj)
-  
-  tree <- NJTree(dataset)
-  edgeList <- Preorder(tree$edge)
-  edgeList <- edgeList[PostorderOrder(edgeList), ]
-  parent <- edgeList[, 1]
-  child <- edgeList[, 2]
+# --- TreeLength HSJ support (T-123) ---
 
-  maxNode <- nTaxa + mpl_get_num_internal_nodes(morphyObj)
-  rootNode <- nTaxa + 1L
-  allNodes <- rootNode:maxNode
-  
-  parentOf <- parent[match(seq_len(maxNode), child)]
-  parentOf[rootNode] <- rootNode # Root node's parent is a dummy node
-  leftChild <- child[length(parent) + 1L - match(allNodes, rev(parent))]
-  rightChild <- child[match(allNodes, parent)]
+# Helper for HSJ test datasets: reductive coding with levels = c("-", "0", "1")
+.make_hsj_dat <- function(mat) {
+  phangorn::phyDat(mat, type = "USER",
+                   levels = c("-", "0", "1"), ambiguity = "?")
+}
 
-  expected <- MorphyLength(parent, child, morphyObj)
-  
-  expect_equal(expected,
-               C_MorphyLength(parentOf, leftChild, rightChild, morphyObj))
-  expect_equal(expected,
-               GetMorphyLength(parentOf - 1, leftChild - 1, rightChild - 1,
-                              morphyObj))
+test_that("TreeLength validates inapplicable parameters", {
+  # Use a properly coded dataset for hierarchy validation tests
+  mat <- matrix(c(
+    # pri  sec2  sec3
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  tree <- TreeTools::BalancedTree(ds)
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  expect_error(TreeLength(tree, ds, inapplicable = "hsj"),
+               "hierarchy.*required")
+  expect_error(TreeLength(tree, ds, inapplicable = "hsj", hierarchy = "bad"),
+               "CharacterHierarchy")
+  # xform should work now (not error)
+  xform_score <- TreeLength(tree, ds, inapplicable = "xform",
+                            hierarchy = hier)
+  expect_true(is.numeric(xform_score))
+  expect_error(TreeLength(tree, ds, hsj_alpha = -1),
+               "hsj_alpha")
+  expect_error(TreeLength(tree, ds, hsj_alpha = 2),
+               "hsj_alpha")
+  expect_error(TreeLength(tree, ds, concavity = 10,
+                          inapplicable = "hsj", hierarchy = hier),
+               "Implied weighting.*not currently supported")
+  expect_error(TreeLength(tree, ds, concavity = "profile",
+                          inapplicable = "hsj", hierarchy = hier),
+               "Profile parsimony.*not currently supported")
+})
+
+test_that("TreeLength HSJ returns valid score", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+
+  hsj <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_true(is.numeric(hsj))
+  expect_equal(length(hsj), 1L)
+  expect_true(hsj >= 0)
+})
+
+test_that("TreeLength HSJ works on multiPhylo", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+  trees <- c(tree, tree)
+  class(trees) <- "multiPhylo"
+
+  scores <- TreeLength(trees, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_equal(length(scores), 2L)
+  expect_equal(scores[1], scores[2])
+
+  single <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_equal(scores[1], single)
+})
+
+test_that("TreeLength HSJ alpha=0 ignores secondaries", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+
+  s0 <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj",
+                   hsj_alpha = 0)
+  s1 <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "hsj",
+                   hsj_alpha = 1)
+  expect_true(s0 <= s1)
+})
+
+test_that("TreeLength HSJ works on random trees (numeric input)", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  set.seed(4721)
+  scores <- TreeLength(3L, ds, hierarchy = hier, inapplicable = "hsj")
+  expect_equal(length(scores), 3L)
+  expect_true(all(is.numeric(scores)))
+})
+
+# --- TreeLength xform (step-matrix) support ---
+
+test_that("TreeLength xform returns valid score", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+
+  xform <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "xform")
+  expect_true(is.numeric(xform))
+  expect_equal(length(xform), 1L)
+  expect_true(xform >= 0)
+})
+
+test_that("TreeLength xform works on multiPhylo", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+  tree <- TreeTools::BalancedTree(ds)
+  trees <- c(tree, tree)
+  class(trees) <- "multiPhylo"
+
+  scores <- TreeLength(trees, ds, hierarchy = hier, inapplicable = "xform")
+  expect_equal(length(scores), 2L)
+  expect_equal(scores[1], scores[2])
+
+  single <- TreeLength(tree, ds, hierarchy = hier, inapplicable = "xform")
+  expect_equal(scores[1], single)
+})
+
+test_that("TreeLength xform on random trees", {
+  mat <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE,
+  dimnames = list(c("t1", "t2", "t3", "t4"), NULL))
+  ds <- .make_hsj_dat(mat)
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  set.seed(8193)
+  scores <- TreeLength(3L, ds, hierarchy = hier, inapplicable = "xform")
+  expect_equal(length(scores), 3L)
+  expect_true(all(is.numeric(scores)))
+})
+
+test_that("TreeLength xform treats '?' in controlling char as ambiguous", {
+  # Regression (RTS-002): the `-1` ("?") and `-2` (present, unknown secondary)
+  # sentinels emitted by RecodeHierarchy() were skipped when building Sankoff
+  # tip costs, leaving every state at INF, so any "?" forced the score to Inf.
+  mat4 <- matrix(c(
+    "0",  "-",  "-",
+    "1",  "0",  "1",
+    "1",  "1",  "0",
+    "1",  "0",  "0"
+  ), nrow = 4, byrow = TRUE, dimnames = list(paste0("t", 1:4), NULL))
+  hier <- CharacterHierarchy("1" = 2:3)
+
+  ds4 <- .make_hsj_dat(mat4)
+  tree4 <- TreeTools::BalancedTree(ds4)
+  score4 <- TreeLength(tree4, ds4, hierarchy = hier, inapplicable = "xform")
+
+  # Add a fully ambiguous taxon ('?' for every character) onto a fixed edge so
+  # the induced topology on t1..t4 is unchanged. An unconstrained tip adds no
+  # steps, so the score must stay finite and equal to the 4-taxon score.
+  mat5 <- rbind(mat4, t5 = c("?", "?", "?"))
+  ds5 <- .make_hsj_dat(mat5)
+  tree5 <- TreeTools::AddTip(tree4, where = which(tree4$tip.label == "t1"),
+                             label = "t5")
+  score5 <- TreeLength(tree5, ds5, hierarchy = hier, inapplicable = "xform")
+
+  expect_true(is.finite(score5))
+  expect_equal(score5, score4)
 })

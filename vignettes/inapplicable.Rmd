@@ -1,0 +1,176 @@
+---
+title: "Inapplicable characters"
+author: "Martin R. Smith"
+date: "`r Sys.Date()`"
+bibliography: ../inst/REFERENCES.bib
+csl: ../inst/apa-old-doi-prefix.csl
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Inapplicable characters}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Morphological datasets frequently contain characters that are "inapplicable"
+for certain taxa.
+For example, a character describing tail colour is inapplicable for taxa that
+lack a tail; one describing wing venation is inapplicable for wingless taxa.
+These characters are coded with the token `"-"` in the data matrix.
+
+TreeSearch provides three approaches to handling inapplicable characters,
+selected via the `inapplicable` argument to `MaximizeParsimony()`.
+
+## Approaches
+
+### Brazeau et al. (default)
+
+The default method [@Brazeau2019] uses a three-pass Fitch-like algorithm
+that infers applicability regions from the `"-"` token.
+No additional information is needed:
+
+```{r brazeau, eval = FALSE}
+MaximizeParsimony(dataset)
+```
+
+This approach does not require explicit specification of which characters
+depend on which, because it infers inapplicable regions directly from the
+`"-"` coding.
+
+### Hopkins & St. John (HSJ)
+
+The HSJ method [@Hopkins2021] scores inapplicable characters using a
+dissimilarity-metric approach.
+Each hierarchy block—consisting of a controlling primary character
+(presence/absence) and its dependent secondary characters—is scored
+with a dynamic programming algorithm that accounts for secondary
+character variation within the "present" region.
+
+The `hsj_alpha` parameter (0–1) controls how much weight is given to
+secondary character variation:
+
+- `hsj_alpha = 0`: Only the primary absent/present pattern matters.
+- `hsj_alpha = 1` (default): Each branch where the primary is present at both
+  endpoints incurs a penalty proportional to the fraction of secondary
+  characters that differ.
+
+```{r hsj, eval = FALSE}
+hierarchy <- CharacterHierarchy("1" = 2:5, "6" = 7:8)
+MaximizeParsimony(dataset, hierarchy = hierarchy,
+                  inapplicable = "hsj", hsj_alpha = 1.0)
+```
+
+### X-transformation (step-matrix recoding)
+
+The x-transformation approach [@Goloboff2021] recodes each hierarchy block
+as a single step-matrix character with asymmetric costs.
+The "absent" state is separated from all possible combinations of
+secondary character states, with a high cost for gaining the structure
+(absent → present) and a low cost for losing it (present → absent):
+
+- **Gain cost**: _n_ + 1 (where _n_ is the number of secondary characters)
+- **Loss cost**: 1
+- **Present → present**: Hamming distance (number of secondary characters that differ)
+
+This asymmetry captures the idea that independently evolving a complex
+structure (and its associated secondary characters) is less parsimonious
+than losing it.
+
+```{r xform, eval = FALSE}
+hierarchy <- CharacterHierarchy("1" = 2:5)
+MaximizeParsimony(dataset, hierarchy = hierarchy,
+                  inapplicable = "xform")
+```
+
+## Specifying the character hierarchy
+
+Both the HSJ and x-transformation methods require a `CharacterHierarchy`
+object that specifies which characters control which.
+
+### Manual specification
+
+Use `CharacterHierarchy()` with named arguments.
+Each name is the index of a controlling (primary) character,
+and each value is a vector of the character indices it controls:
+
+```{r hierarchy-manual}
+library(TreeSearch)
+
+# Character 1 controls characters 2-5
+h <- CharacterHierarchy("1" = 2:5)
+
+# Multiple controlling primaries
+h <- CharacterHierarchy("1" = 2:5, "6" = 7:8)
+```
+
+### Auto-detection from character names
+
+If your dataset uses the TNT naming convention (`sup_<tag>` for controlling
+characters, `sub_<tag>_<suffix>` for their dependents), you can auto-detect
+the hierarchy:
+
+```{r hierarchy-auto}
+names <- c("sup_tail", "sub_tail_colour", "sub_tail_shape",
+           "sup_wing", "sub_wing_venation", "other_char")
+HierarchyFromNames(names)
+```
+
+## Worked example
+
+```{r example}
+# Create a small dataset with inapplicable characters
+mat <- matrix(c(
+  # pri  sec1  sec2  indep1  indep2
+  "0",  "-",  "-",  "0",    "0",
+  "0",  "-",  "-",  "0",    "1",
+  "1",  "0",  "0",  "1",    "0",
+  "1",  "0",  "1",  "1",    "0",
+  "1",  "1",  "0",  "1",    "1",
+  "1",  "1",  "1",  "0",    "1"
+), nrow = 6, byrow = TRUE,
+dimnames = list(paste0("t", 1:6), NULL))
+dataset <- TreeTools::MatrixToPhyDat(mat)
+hierarchy <- CharacterHierarchy("1" = 2:3)
+
+# Default: Brazeau et al. algorithm (no hierarchy needed)
+brazeau_trees <- MaximizeParsimony(dataset, maxReplicates = 3,
+                                   targetHits = 2, verbosity = 0)
+
+# HSJ: dissimilarity-metric scoring
+hsj_trees <- MaximizeParsimony(dataset, hierarchy = hierarchy,
+                               inapplicable = "hsj", hsj_alpha = 1.0,
+                               maxReplicates = 3, targetHits = 2,
+                               verbosity = 0)
+
+# X-transformation: step-matrix recoding
+xform_trees <- MaximizeParsimony(dataset, hierarchy = hierarchy,
+                                 inapplicable = "xform",
+                                 maxReplicates = 3, targetHits = 2,
+                                 verbosity = 0)
+```
+
+## Choosing a method
+
+| Criterion | Brazeau | HSJ | X-transformation |
+|-----------|---------|-----|------------------|
+| Hierarchy required | No | Yes | Yes |
+| Secondary char. variation | Not modelled | Penalised (via \U{03B1}) | Penalised (via Hamming) |
+| Gain/loss asymmetry | No | No | Yes (n+1 : 1) |
+| Tuning parameter | None | `hsj_alpha` | None |
+| Speed | Fastest | Moderate | Moderate |
+
+**Brazeau** is appropriate when you do not have a clear hierarchy
+specification or want a fast default analysis.
+
+**HSJ** is appropriate when you have a hierarchy and want to
+penalize secondary character variation, with control over how
+strongly secondaries contribute (via `hsj_alpha`).
+
+**X-transformation** is appropriate when you believe gains of
+complex structures should be penalized more heavily than losses,
+following the maximum-homology philosophy of @Goloboff2021.
+
+## References

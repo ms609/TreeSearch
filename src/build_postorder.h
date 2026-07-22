@@ -1,5 +1,6 @@
 #include <stdlib.h>
-#include "RMorphy.h"
+#include <R.h>
+#include <Rinternals.h>
 
 /* Random number generator from http://www.cse.yorku.ca/~oz/marsaglia-rng.html
 / 1+random_int%10 generates an integer from 1 to 10 [MWC renamed to random_int]
@@ -10,7 +11,18 @@
 
 /* Global static variables: */
 static unsigned long z = 362436069, w = 521288629;
-/* Use random seeds to reset z and w*/
+
+/* Reseed the MWC generator so that callers can make random-tree generation
+ * reproducible under R's set.seed().  Without this the generator runs from a
+ * fixed initial state that advances across calls and ignores R's RNG entirely,
+ * making any consumer (e.g. the Monte Carlo profile-parsimony information
+ * estimate in mc_fitch_scores) non-deterministic under a fixed seed.
+ * A zero z or w collapses the corresponding MWC stream to a fixed point, so
+ * fall back to the original non-zero constants if a zero seed is supplied. */
+void seed_random_tree(unsigned long zs, unsigned long ws) {
+  z = zs ? zs : 362436069UL;
+  w = ws ? ws : 521288629UL;
+}
 
 void insert_tip_below (const int *new_tip,
                        const int *add_below, const int *new_node,
@@ -134,6 +146,11 @@ extern SEXP RANDOM_TREE(SEXP ntip) {
   if (n_tip < 2) {
     (Rf_error)("n_tip must be at least two");
   }
+  GetRNGstate();
+  unsigned long zs = 1UL + (unsigned long)(unif_rand() * 4294967294.0);
+  unsigned long ws = 1UL + (unsigned long)(unif_rand() * 4294967294.0);
+  PutRNGstate();
+  seed_random_tree(zs, ws);
   SEXP RESULT = PROTECT(allocVector(VECSXP, 3)),
     PARENT_OF = PROTECT(allocVector(INTSXP, n_tip + n_tip - 1)),
          LEFT = PROTECT(allocVector(INTSXP, n_tip - 1)),
@@ -149,36 +166,5 @@ extern SEXP RANDOM_TREE(SEXP ntip) {
   SET_VECTOR_ELT(RESULT, 1, LEFT);
   SET_VECTOR_ELT(RESULT, 2, RIGHT);
   UNPROTECT(4);
-  return(RESULT);
-}
-
-extern SEXP RANDOM_TREE_SCORE(SEXP ntip, SEXP MorphyHandl) {
-  const int n_tip = INTEGER(ntip)[0];
-  if (n_tip < 2) {
-    (Rf_error)("n_tip must be at least two");
-  }
-  Morphy handl = R_ExternalPtrAddr(MorphyHandl);
-  SEXP RESULT = PROTECT(allocVector(INTSXP, 1));
-  int *score,
-    *parent_of = calloc(n_tip + n_tip - 1 , sizeof(int)),
-    *left = calloc(n_tip - 1              , sizeof(int)),
-    *right = calloc(n_tip - 1             , sizeof(int));
-    
-  score = INTEGER(RESULT);
-  *score = 0;
-  if (n_tip < 2) {
-    INTEGER(RESULT)[0] = 0;
-    UNPROTECT(1);
-    return(RESULT);
-  }
-  
-  
-  random_tree(parent_of, left, right, &n_tip);
-  morphy_length(parent_of, left, right, handl, score); 
-  
-  free(parent_of);
-  free(left);
-  free(right);
-  UNPROTECT(1);
   return(RESULT);
 }

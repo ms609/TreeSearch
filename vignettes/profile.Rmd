@@ -79,18 +79,15 @@ njTree <- TreeTools::NJTree(myMatrix)
 TreeLength(njTree, myMatrix, "profile")
 ```
 
-We search for trees with a better score using TBR rearrangements and the 
-parsimony ratchet [@Nixon1999]:
+We search for trees with a better score using `MaximizeParsimony()`, which
+combines TBR rearrangements, sectorial search, the parsimony ratchet
+[@Nixon1999], and tree drifting:
 
 ```{R starting-score, message = FALSE}
-betterTrees <- MaximizeParsimony(myMatrix, additionTree, concavity = "profile",
-                                 ratchIter = 3, tbrIter = 3, maxHits = 8)
+betterTrees <- MaximizeParsimony(myMatrix, concavity = "profile")
 ```
 
-We've used very low values of `ratchIter`, `tbrIter` and `maxHits` for a rapid
-run, so this is not necessarily a thorough enough search to find a globally
-optimal tree.
-Nevertheless, let's see the resultant tree, and its score:
+Let's see the resultant tree, and its score:
 
 ```{r ratchet-search-results}
 TreeLength(betterTrees[[1]], myMatrix, "profile")
@@ -98,9 +95,8 @@ par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(betterTrees))
 ```
 
-The default parameters may not be enough to find the optimal tree; type 
-`?MaximizeParsimony` to view all search parameters --
-or keep repeating the search until tree score stops improving.
+Type `?MaximizeParsimony` to view all search parameters, including strategy
+presets, time limits, and parallel search options.
 
 ## View the results
 
@@ -108,16 +104,13 @@ In parsimony search, it is good practice to consider trees that are slightly sub
 
 Here, we'll take a consensus that includes all trees that are suboptimal by up
 to 3 bits.
-To sample this region of tree space well, the trick is to use large values of 
-`ratchHits` and `ratchIter`, and small values of `searchHits` and
-`searchiter`, so that many runs don't quite hit the optimal tree.
-In a serious study, you would want to sample many more than the 3 Ratchet hits (`ratchHits`) we'll settle for here, probably using many more Ratchet iterations.
+`MaximizeParsimony()` can retain suboptimal trees using the `poolSuboptimal`
+parameter, which specifies how many score units below the best to retain.
+In a serious study, you would want to use more replicates and a larger pool.
 
 ```{R suboptimal-sampling, message = FALSE}
-suboptimals <- MaximizeParsimony(myMatrix, betterTrees, tolerance = 3,
-                                 ratchIter = 2, tbrIter = 3,
-                                 maxHits = 25,
-                                 concavity = "profile")
+suboptimals <- MaximizeParsimony(myMatrix, concavity = "profile",
+                                 poolSuboptimal = 3)
 ```
 
 The consensus of these slightly suboptimal trees provides a less resolved, but
