@@ -640,6 +640,21 @@ std::vector<ResampleResult> parallel_resample(
     ts::thread_rng = &local_rng;
     ts::thread_stop_flag = &stop_flag;
 
+    // T-336: per-worker copy of the mutable ConstraintData.  `cd` carries
+    // per-tree/per-clip workspace (constraint_node, dfs_entry/exit, clip_zones,
+    // clip_tip_mask, posthoc_data) that every search WRITES via
+    // map_constraint_nodes/impose_constraint and reads back to gate acceptance.
+    // Sharing one instance across workers is a data race; mirror worker_thread
+    // (above) and give each worker its own copy.  One copy per worker suffices
+    // because searches within a worker run sequentially.  Pass `cd` through
+    // unchanged when it is null / inactive (unchanged behaviour on that path).
+    ConstraintData cd_local;
+    ConstraintData* cd_ptr = cd;
+    if (cd && cd->active) {
+      cd_local = *cd;
+      cd_ptr = &cd_local;
+    }
+
     while (true) {
       int rep = next_rep.fetch_add(1, std::memory_order_relaxed);
       if (rep >= n_replicates) break;
@@ -652,7 +667,7 @@ std::vector<ResampleResult> parallel_resample(
           tip_data_r, n_tips, n_patterns,
           original_weights, levels_r, min_steps_r,
           concavity, params,
-          info_amounts_r, info_max_steps, cd,
+          info_amounts_r, info_max_steps, cd_ptr,
           xpiwe, xpiwe_r, xpiwe_max_f, obs_count_r);
     }
 
