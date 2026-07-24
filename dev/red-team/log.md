@@ -19,6 +19,68 @@ in `findings.md`.
 
 ---
 
+area: 3 (Ratchet & perturbation — DIRECTED round: "what's new in MaximizeParsimony since last inspection")
+reviewed_by: opus finder (ace557dc) + haiku verifier (a057639d) + orchestrator (advisor-briefed scoping); pinned @ ec8edd50
+date: 2026-07-24
+tier: opus
+yield: 1 (T-335 P3 latent tripwire; 1 candidate RT-A3-02 REFUTED as inverted)
+notes: First area-3 review since **2026-05-26** (yield 0). The prior 3 dry opus-depth rounds (RT12-02 flagged
+them) ALL predate this new surface → **fresh-surface opus pass, not a dry re-mine.** New commits reviewed:
+sector in-sector drifting (`1333c9e2`, opt-in), RSS size-scaling (`1dcd5b1e`, default-OFF), per-sector
+column-axis reduction (`830b8cc3` `TS_SECT_COLREDUCE`, default-OFF), prune-reinsert exact directional scorer
+(`4007f8e8`, opt-in), fuse per-round reroot + `replace_subtree` guard (`ac8e808a`, default-ON). All 4 in-scope
+files verified byte-identical to the pinned tip `ec8edd50` (concurrent session actively editing
+ts_sector/ts_fuse — cited lines re-checked against the pinned hash to avoid phantom findings). **Advisor
+reframed the round: the T-330 HSJ/XFORM analogy is a severity TRAP, not a multiplier** — T-330 was P1 only
+because it is default-ON TERMINAL output with no downstream recompute; the sector family is SEARCH-INTERNAL
+heuristic + mostly opt-in. **CORE DELIVERABLE — Target #1 full-dataset-rescore firewall: YES.** Every
+splice-back accept is gated on a rescore of the FULL tree against the COMPLETE dataset: rss `reinsert_sector
++ build_postorder + score_tree(tree, ds)` (ts_sector.cpp:1734-1736, accept/revert :1752-1772), xss identical
+(:1941-1977), css never builds a reduced dataset (runs tbr_search against full `ds`, :2028-2099),
+prune-reinsert whole-tree backup + full rescore gate + full restore on reject (ts_prune_reinsert.cpp:601/656/662),
+sector-gocomb + top-level pool fuse both rescore via `score_tree` before pooling (ts_sector.cpp:1351;
+ts_driven.cpp:1058,1135). **HSJ/XFORM sectors are SKIPPED entirely** (rss:1522-1525, xss:1888-1891) — the
+old T-303 mitigation ("guard rss/xss/css for HSJ/XFORM") is now IMPLEMENTED, so the HSJ/XFORM-blind
+reduced-dataset field-copy is moot for those modes. **Consequence: the HSJ/XFORM-blind reduced dataset AND
+the new TS_SECT_COLREDUCE are HEURISTIC-QUALITY only (worst case a mis-ranked/missed candidate = reach, P3),
+never a wrong returned score.** The one memo that could have leaked reach across the reduced↔full boundary —
+the `exact_verify` NA-optimum cache (advisor-directed check) — was TRACED to a confirmed NON-bug:
+`evs_false_cache`/`evs_last_fp` are per-DataSet-INSTANCE members (ts_data.h:211-212), reduced sectors use a
+fresh isolated `rd.data` (never copies `evs_false_cache`), and the key `tree_topo_hash ^ ds_fingerprint ^
+weight_fingerprint` (ts_tbr.cpp:864) distinguishes both reduced-vs-full and base-vs-perturbed regime axes
+(the 78b74147 fix, present at tip). **T-335 (P3, verified REAL by haiku) FILED:** `reduce_sector_columns_ew`
+(ts_sector.cpp:407-411) rewrites `pattern_index` to identity but leaves `n_patterns`/`min_steps`/`pattern_freq`/
+`precomputed_steps` at full size/content — INERT today (hard EW-only gate at :315-317: `scoring_mode==EW &&
+all_weight_one && no upweight/inapplicable`; the invoked EW scorers read only block structure, never those 4
+arrays) but a live wrong-score + OOB tripwire if the gate is loosened toward IW. Filed defensively because
+the concurrent mission-b work is actively on ts_sector. **RT-A3-02 REFUTED (not filed):** the finder INVERTED
+the divergent-field claim — BOTH sector `build_reduced_dataset` fns DO copy `precomputed_steps`
+(ts_sector.cpp:605,810); the true (opposite) divergence is prune-reinsert OMITTING `info_amounts`/
+`info_max_steps` (ts_prune_reinsert.cpp:298-321), which is PROFILE-guarded (prune-reinsert skips PROFILE/HSJ/
+XFORM) and harmless. Carried as a corrected note here, NOT a findings row (matches the 2026-05-26 precedent of
+logging-not-filing the divergent-fns footgun). **Targets #2-#4 CLEAN:** (#2 composition) each sector pick
+builds a fresh `ReducedDataset rd` destroyed at pick-end; drift/TBR/fuse operate on `rd.subtree`/`rd.data`;
+the sector-level revert is topology-only (`save_left/right/parent` + `original_score`) which SUFFICES because
+`reinsert_sector` reads only topology and the full-tree layer is restored by `restore_clade` + full
+`score_tree` — drift's torn state arrays are never read post-reject → structurally immune to cross-pick
+contamination. (#3 fuse per-round reroot, DEFAULT-ON) `reroot_at_tip0` early-return invariant (ts_fuse.cpp:23)
+relies on incoming valid postorder, verified on all in-scope call paths; PRE-EXISTING invariant unchanged by
+`ac8e808a` (which only ADDS reroot calls — strictly safer). (#4 prune-reinsert exact scorer) full
+backup/rescore/restore, no T-235-class stale-array leak. **Ratchet:** `ts_ratchet.cpp` did NOT exist pre-
+2026-05-26 (extracted by 78b74147 on 2026-06-19, behaviour-preserving) — NOT re-audited-old-code; masks/
+pattern_freq restored + flat_blocks synced every cycle before the accept check. `0fb6de9b` thread_local probe
+accumulators are behind `#ifdef TS_SCOREAPPROX_PROBE` (not compiled in production). **Default-state map (from
+code, not commit titles):** default-ON = between-replicate `tree_fuse` (`fuse_interval=3`); everything else
+(`intra_fuse`, sector drift/comb, `collapse_target`, `TS_SECT_COLREDUCE`, RSS size-scaling, prune-reinsert
+`prune_reinsert_cycles=0`) is opt-in / default-OFF. **Seam status: RAN DRY on the new surface (evidenced,
+not assumed)** → per doctrine **next area-3 visit escalates to FABLE**, BUT the fable residual is THIN: the
+whole new surface is opt-in/heuristic behind the full-dataset firewall, so a correctness bug is structurally
+hard to hide here. **Recommend area 3 as a DOWNTIER/retire candidate at the next area-12 meta-review** — this
+is now the 4th dry round, and the firewall explains WHY (RT12-02 already flagged the 3-dry-round tension).
+Fable residual if pursued: exact numeric correctness of `compute_from_above_for_sector` / `build_ras_sector`
+heuristic proxies (firewall-protected → reach-only, not a returned-score risk). NEXT ROTATION AREA = 4
+(Parallelism & RNG).
+
 area: 2 (Search topology invariants — DIRECTED round: "what's new in MaximizeParsimony since last inspection")
 reviewed_by: opus finder (aa75cdea) + haiku verifier (a67fbb31) + orchestrator (advisor-briefed scoping)
 date: 2026-07-24
@@ -767,4 +829,4 @@ tier: opus (rotation: (12 mod 13)+1 = 13; continuing the seam the 2026-07-02 rou
 yield: 1 (T-13-A → MERGED into existing T-324, augmented — not a new ID; verify-before-capture audit otherwise clean)
 notes: Started exactly where the 2026-07-02 round deferred — verify-before-capture on EVERY impose_constraint() caller. **AUDIT RESULT (the core deliverable):** fuse (ts_driven.cpp:1042-1058) OK — maps constraint nodes, imposes, re-verifies, gates the pool add on `fused_ok` (orchestrator-confirmed by read). parallel-fuse (ts_parallel.cpp:84-94) OK — same map+re-check pattern (orchestrator-confirmed). sector (ts_sector.cpp:1367-1372, 1536-1541) OK — revert-on-violation (restore_clade+continue), never captures a violating tree (finder-reported, not independently re-traced). **Wagner build-retry NOT OK → the finding.** (1) **T-13-A is NOT a new ID — it re-discovers + DEEPENS existing T-324** (2026-06-16, area 9), so per "avoid re-reporting" I AUGMENTED T-324 rather than file T-333. Novel contributions beyond T-324's original `AdditionTree()`-scoped, warning-parity framing: (a) the `MaximizeParsimony()` per-replicate pool capture at ts_driven.cpp:929 is **ungated** — asymmetric to the fuse gate 100 lines below; (b) **confirmed NO downstream filter** (ts_rcpp.cpp post-:1390 + MaximizeParsimony.R post-search = collapse-protection only, :1028-1034) → a violating start reaches the user unflagged; (c) a violating start is NOT repaired by constrained TBR (regraft_violates_constraint returns true for all moves once constraint_node[s]<0, ts_constraint.cpp:354-360 → freeze), only conditionally by nni_perturb's impose_constraint (nni_perturb_per>0 + heuristic success); (d) **fix caveat (advisor-caught mis-patch trap):** the :929 gate must use `violates_constraint_posthoc`, NOT the fuse-style `constraint_node[s]<0` check, because a posthoc-only violation (all cn>=0 but fails full-Fitch) would slip a constraint_node gate. **Severity: P3-proven (missing gate + missing warning), escalates to P2 IFF reachability confirmed** — i.e. a satisfiable USER constraint whose violation survives all 100 independent reshuffles (has_posthoc=true only on user constraints; ts_rcpp.cpp:1390→build_constraint). The retry loop's existence proves pass-construction/fail-posthoc trees exist; open bit = 100-reshuffle persistence → **Hamilton hard-but-satisfiable-constraint probe recommended** (heavy compute, not local). Also updated T-324's STALE line numbers (767-780/731-737/554 → 745-754/784-797/571-576) to HEAD 4b833e7f. (2) **T-13-B RULED DOWN, not filed** — the parallel-fuse `violates_constraint_posthoc` short-circuit (returns false when !has_posthoc, ts_constraint.cpp:388) only bites an `auto_cd` constraint (build_constraint_from_bitsets, has_posthoc=false), and auto_cd (consensus-tightening heuristic) engages ONLY when there is no user constraint (use_auto_constraint = consensus_constrain && (!cd||!cd->active), ts_driven.cpp:724, and consensus_constrain defaults false). A tree "violating" auto_cd is search guidance escaping consensus, not a user-facing correctness bug. Advisor concurred. (3) **HIGH-SEV SIGNAL — escalates area 13 next round; SHARPENED this session from a vague lead to a precise, resolvable question (do NOT record CLEAN KILL).** The impose_one_pass stale-best_node concern is the machinery of ALREADY-FIXED T-327 (6b60f235: `reanchor_best_node` before every move + snapshot-validate-revert gated on `build_postorder().postorder.size()==n_internal`, ts_constraint.cpp:702-743). A THIRD dedicated opus finder this session emit-stalled TWICE (channel = binding constraint, per [[dispatch-gotchas]]), so the orchestrator traced it directly (opus) + advisor cross-check. **Refined question:** can the `postorder.size()!=n_internal` revert-guard (build_postorder, ts_tree.cpp:75-112 — DFS over left/right with NO visited-set, cap `preorder.size()>n_internal` at :103) be SLIPPED by a stale-`M` topology_spr corruption netting to EXACTLY n_internal (duplicate +k offset by orphan −k)? **Advisor-corrected invariant (my FIRST trace had a flawed mechanism — same trap as [[redteam-reverify-flawed-refutes]], caught before locking; I wrongly called Case A a double-parent/over-count when `above==parent(below)` re-parents `below` → floating cycle/under-count):** topology_spr preserves the child-slot BIJECTION (every non-root node in-degree 1) in NON-DEGENERATE position → any corruption is a floating rho-component → UNDER-count → caught. The bijection can ONLY break for DEGENERATE slot-collision graft targets (above/below coinciding with nx/nz/ns); one case checked (graft onto edge (nx,ns) → ns in-degree 2, nx orphaned — a duplicate+orphan, but ns's 2nd parent IS the orphan so still under-counts → caught). **Net-zero slip (a duplicate DOUBLY-reachable-from-root + a compensating orphan) remains UNPROVEN.** VERDICT: guard robust in the bijection-preserving regime; residual P1 risk confined to the degenerate slot-collision regime; NOT retired. **NEXT VISIT: NOT another finder — a BOUNDED EXHAUSTIVE HARNESS (mcmc-diagnostician / heavy-test under dev/red-team/heavy-tests/): for n_tip 4–8, enumerate trees × the exact (clip,above,below) triples impose_one_pass can emit, apply topology_spr, assert FULL validity (in-degree-1 + root-reachable + acyclic) whenever `try_move` returns true. Accept-on-invalid = confirming P1 repro; exhaustive small-n silence = strong kill. Directly tests whether `postorder.size()==n_internal ⟺ validity`, which IS the whole question — stop hand-enumerating (error-prone, already mis-traced once).** (4) NOT reached this round: Q3 (clip-gating FALSE-NEGATIVE — does regraft_violates_constraint ever ALLOW a violating regraft) and Q4 (laminar/nested-split consistency across TBR/Wagner/sector paths) — both untouched, open. Finder + orchestrator both traced against HEAD 4b833e7f (area-13 source unchanged since c74ee6e6; no in-flight edits). Finder's final emit stalled mid-stream (198 tokens) — recovered via SendMessage compact re-emit (76k tokens). Seam status: STILL YIELDING (deepened T-324 + open high-sev signal, now precisely characterized) → next area-13 visit = a BOUNDED VALIDITY HARNESS on the topology_spr / build_postorder-guard equivalence (see (3)), NOT another finder; the finder-shaped questions Q3 (clip-gating false-negative) and Q4 (laminar consistency) remain for a later opus finder round.
 
-last_focus: 2
+last_focus: 3
