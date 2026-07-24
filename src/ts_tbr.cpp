@@ -2856,7 +2856,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // Recompute collapsed regions after the accepted move (states are
         // valid from full_rescore in the accept path above).
         if (!collapsed.empty()) {
-          compute_collapsed_flags(tree, ds, collapsed);
+          if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
+          else               compute_collapsed_flags(tree, ds, collapsed);
           refresh_collapsed_all_zero();  // lever #7 gate must not go stale
         }
         // Optimization #6: don't reshuffle after acceptance — the topology
@@ -2988,7 +2989,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   best_score = full_rescore(tree, ds);   // root-invariant; refreshes states
   score_fresh = true;
   if (!collapsed.empty()) {
-    compute_collapsed_flags(tree, ds, collapsed);
+    if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
+    else               compute_collapsed_flags(tree, ds, collapsed);
     refresh_collapsed_all_zero();  // lever #7 gate must not go stale (legacy reroot)
   }
   }  // end outer reroot for(;;)
