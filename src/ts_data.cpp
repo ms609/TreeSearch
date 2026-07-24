@@ -120,7 +120,8 @@ DataSet build_dataset(
   for (int s = 0; s < n_states; ++s)
     if (s != inapp_state) full_app_mask |= (1u << s);
 
-  // TS_PACK_LOCAL (default OFF): per-block LOCAL state alphabets. Each block carries
+  // TS_PACK_LOCAL (default ON since 2026-07-16; see "DEFAULT-ON" note below): per-block
+  // LOCAL state alphabets. Each block carries
   // only the union of its chars' actual state alphabets (not the global n_states),
   // cutting words gathered/reduced per candidate on low-state morphological data.
   // EXACT (Fitch length invariant under the "?"->char-alphabet substitution and a

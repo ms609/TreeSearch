@@ -19,6 +19,164 @@ in `findings.md`.
 
 ---
 
+area: 2 (Search topology invariants — DIRECTED round: "what's new in MaximizeParsimony since last inspection")
+reviewed_by: opus finder (aa75cdea) + haiku verifier (a67fbb31) + orchestrator (advisor-briefed scoping)
+date: 2026-07-24
+tier: opus
+yield: 1 (T-334 P3 — low-sev, exact-preserving, opt-in prototype consistency; found OFF the reject angle)
+notes: First area-2 review since **2026-05-26** (2-month gap; that round was yield-0 AND pre-tier AND
+predates this entire new surface → this is a **fresh-surface opus first pass, NOT a dry-seam re-mine** —
+do not misread it as violating escalate-on-empty). Angle = **topology-restore-on-REJECT** (the canonical
+area-2 bug class: T-235 stale SPR state, drift `saved_postorder`, T-316 stale constraint metadata — "stale
+state survives a rejected move"), deliberately **ORTHOGONAL to the area-1 (2026-07-24) scoring angle**:
+L3b edge-set VALUES (byte-identical to from-scratch, accept-dense oracle) + the cutoff trajectory were
+handed to the finder as area-1 GIVENS, NOT re-verification targets (anti-collision — prevents an opus
+finder re-closing area 1's work). **Advisor's load-bearing insight (shaped suspect #1):** area-1's oracle
+proves *relative* correctness (incremental *tracks* `compute_insertion_edge_sets`), but `00d73d6a` (skip
+per-clip zero-fill) **modified that from-scratch reference function ITSELF** → the oracle is structurally
+BLIND to whether from-scratch is still correct post-zero-fill-removal (a read-before-write / stale-slot
+would be invisible by construction). **RESULT: the four ranked reject-invariant suspects ALL resolved
+clean at high confidence** (static trace; the finder judged an oracle build not worth the stale-ABI risk
+vs a confirmatory-only run — see below). (1) **`00d73d6a` zero-fill skip — closed by construction.**
+`ts_fitch_combine` tiles `[0, sum_n_states)` contiguously (`block_word_offset` = cumulative sum of
+`n_states`, ts_data.cpp:325-337), so combine overwrites every word any reader can touch; every reader
+masks per-block to `[off, off+n_states)` (`fitch_indirect_length_cached`, `..._flat_x4:1041`, IW cached
+kernels); `simd::any_hit_reduce` never over-reads (4/2-wide loops gated, scalar remainder); the ONLY word
+left unwritten is the trailing even-pad (ts_data.cpp:333-337, odd `sum(n_states)`) and no reader reads it
+unmasked. Zero-fill was pure waste; removal safe on real NDEBUG. (2) **L3b base-incremental rollback on
+reject (`d9e6515a`, default-ON n_tip>=150) — closed by construction.** `edge_set_base`/`up_base` are
+mutated ONLY inside the `if (keep_going)` accept block (`update_base_after_spr_move`, ts_tbr.cpp:2877);
+`patch_insertion_edge_sets` takes `up_base` as `const`; the per-clip restore (:2597) writes only the
+WORKING buffers (`edge_set_buf`/`edge_set_up`) over `l3b_changed` and clears it *before* the accept/reject
+decision; exactly one accept per clip-pass (`break` :2915). So within a pass the base is a read-only
+reference describing exactly the tree each rejected clip restores to → a reject provably cannot leak a
+stale base slot. (Area-1's oracle ran accept-DENSE, which is why this reject-path rollback was still open
+going in; it is now closed analytically.) (3) **x4 reroot-batch (`994f19a9` default IW + `20c96e52`/
+`d6856bc5`) + spr_search-default (`ae62e0a8`) reject paths — ruled out.** spr_search saves/restores both
+`prelim` and `final_` via `save_node_state`/`restore_saved_states`; the T-235 `regraft_was_rescored`
+full_rescore is intact (the exact directional scorer changes only WHICH array is read, not the restore
+requirement); x4 batch is read-only on persistent state; drift exact scorer (`TS_DRIFT_EXACT`, opt-in)
+recomputes `edge_set_buf` FRESH per clip (no cross-move persistence, unlike L3b). (4) **`5d7e7c2c`
+collapsed_all_zero refresh → surfaced the one finding, T-334.** **T-334 (P3, verified REAL by haiku):**
+the aggressive-collapse neighbourhood criterion is applied inconsistently across the four
+`compute_collapsed_flags*` recompute sites — the initial (ts_tbr.cpp:1539-1540) and default-root-edge
+(:2967-2968) sites branch on `collapse_aggr`; the post-accept (:2859) and legacy-reroot (:2991) sites call
+plain `compute_collapsed_flags` UNCONDITIONALLY. Under the opt-in default-OFF `TS_COLLAPSE_AGGRESSIVE=1`
+(set once :1536), the `collapsed` set is aggressive for pass 1 then silently reverts to conservative after
+the first accepted move. **EXACT-PRESERVING** — `collapsed[]` feeds only enumeration skip/continue
+conditions (:1903,2177,2305,2446), never a scorer, and conservative marks a strict subset collapsible
+(only *widens* the neighbourhood, never hides a move) → cannot corrupt a score or the MPT set; the defect
+is purely that the opt-in prototype's neighbourhood-reduction is inconsistent within a search (muddies A/B
+against it). Filed for the prototype author to adjudicate rather than fixed inline (plausible
+intentionality + shared-branch no-edit discipline). **UPDATE (same day, concurrent session): T-334
+adjudicated UNINTENTIONAL (briefing `dev/plans/2026-06-22-collapse-aggressive-strategy-briefing.md`
+documents only testing/results, no "explore-then-settle" rationale) and FIXED** — branch on `collapse_aggr`
+at :2859/:2991 mirroring :1539/:2967, rebuilt clean; findings.md row marked Closed. The ts_tbr.cpp fix is a
+parallel session's in-flight edit (NOT committed by this red-team round — [[concurrent-session-git-hazard]]). **Ruled out:** `ts_pool` (relocated `78b74147`, behaviour unchanged) — dedup is split-based
+(`compute_splits`/`compute_collapsed_splits`+`splits_equal`, topology-invariant), eviction is
+score+diversity, and pool `add()`/`add_collapsed()` is decoupled from the TBR accept/reject cycle → no
+reject interaction. `ts_tree` ASAN/zero-Fitch/T-327/T-329 changes are UB/crash/constraint-construction
+guards outside the save/restore machinery (T-327 = a `build_postorder` cyclic-tree backstop, inert for
+valid trees — off the reject angle). **Latent, not a bug:** spr_search leaves `prealloc_undo` nullptr
+(only tbr/drift/temper set it) → its save/restore uses the slow per-clip `NodeSnapshot` heap path; correct
+but a per-clip alloc cost, matters only if spr_search is promoted onto a hot production path (the exact-
+scorer default now makes an SPR warmup viable). **Oracle NOT run locally** (the brief's cheap reject-dense
+`TS_L3B_INCREMENTAL=1 TS_L3B_ORACLE=1` experiment): a *reliable* build is a preclean full rebuild
+(stale-ABI hazard, [[stale-object-abi-gotcha]]), not the ~30s local budget, and it is confirmatory-only —
+`patch` holds `up_base` const so rejects provably can't mutate the base, and both oracle sides read
+`tree.prelim` so it can't catch a prelim-coherence bug anyway. If belt-and-suspenders wanted, offload to
+Hamilton ([[feedback-no-local-heavy-compute]]). **Seam status: RAN DRY on the reject-invariant angle at
+opus** — the high-value new surface (suspects #1-#4) is exhausted; the one finding is a low-sev off-angle
+consistency nit. Per doctrine (dry static opus on a numerical core ⇒ escalate), **next area-2 visit
+escalates to FABLE** — and it must carry **BOTH** unconfirmed residuals with the RIGHT check for each
+(a static-only retirement of #1 is exactly what fable exists to double-check; do NOT let the blind spot
+propagate by re-aiming only at #2): **(#1, ORACLE-BLIND — the higher-value carry-forward):** absolute
+correctness of `compute_insertion_edge_sets` AFTER the `00d73d6a` zero-fill removal. The L3b oracle CANNOT
+see this — both oracle sides now call the same zero-fill-skipped from-scratch, so "zero mismatch" can never
+detect a from-scratch bug. Confirmable only by end-to-end **score/reach-equivalence vs an INDEPENDENT
+baseline** (non-incremental `score_tree`, or a pre-`00d73d6a` build) on homoplasy-rich data. **Blast radius
+bounded to REACH, never a wrong returned score, by the full_rescore firewall:** `compute_insertion_edge_sets`
+feeds candidate SELECTION/bounds, not accepted scores; accepted scores are ALWAYS full_rescored (T-235
+lineage, `regraft_was_rescored` intact) → a zero-fill bug's worst case is a wrongly-bailed candidate =
+reach/quality degradation. (This firewall — not the tiling-completeness argument — is what makes shipping
+this round safe.) **(#2, ORACLE-VISIBLE):** value-correctness of `update_base_after_spr_move` across many
+consecutive same-pass-then-next-pass accepts on large real data (n_tip>=150 default-ON) → the Hamilton L3b
+oracle CAN confirm this (incremental vs from-scratch). Both checks are Hamilton-class
+([[feedback-no-local-heavy-compute]]); mirrors the area-1 fable residual on `ts_fitch_combine` absolute
+correctness. All traces at the current cpp-search tip; no builds, no commits, named-file edits only
+(findings.md + this log). NEXT ROTATION AREA = 3 (Ratchet & perturbation).
+
+area: 1 (Fitch scoring correctness — DIRECTED round: "what's new in MaximizeParsimony since last inspection")
+reviewed_by: opus finder (a1cee41d) + orchestrator (advisor-briefed scoping) + inline verify
+date: 2026-07-24
+tier: opus
+yield: 0 correctness (1 trivial doc fix applied inline — A1-OP-01)
+notes: First red-team of area 1 since **2026-05-26** (a 2-month gap). The MaximizeParsimony
+scoring stack accumulated a large, correctness-critical, **DEFAULT-ON** delta in that window;
+this round targeted the two riskiest new pieces (advisor-scoped tight — depth over breadth):
+**(A) L3b incremental edge-set maintenance** (77938a84 `patch_insertion_edge_sets` +
+d9e6515a base-incremental `update_base_after_spr_move`; **default-ON for n_tip>=150** via
+e499a420) and **(B) EW/NA bail-cutoff "drop the +1"** (8ed13c44, default-on `tbr_cutoff_slack()`).
+The advisor's #1 angle drove the brief: each change was validated byte-identical *against its
+own baseline*, but they landed in sequence against a **moving baseline** (per-block-local
+packing 89ebd870 + homoplasy char-reorder d8c59998 also went default-ON same window) — isolation
+A/Bs structurally cannot catch a cross-change interaction; and the L3b per-clip oracle fires
+ONLY under `TS_L3B_ORACLE`/asserts-on, so the shipped NDEBUG default path has **no runtime
+exactness guard**. **RESULT: both deltas CONFIRMED EXACT with real empirical evidence** (not just
+a code-trace). The opus finder built oracle+A/B harnesses and ran them on the **real NDEBUG
+codegen**: (A) forced-on oracle (`TS_L3B_INCREMENTAL=1 TS_L3B_ORACLE=1`) on a 70-tip/315-char
+multi-alphabet homoplasy-rich matrix across **4 layouts** (default pack+MINORITY, `TS_PACK_SORT=1`,
+`TS_PACK_LOCAL=0`, `TS_L3B_NOBASEINCR=1`) over 25 accept-dense ratchet cycles (fp_changed
+≈0.4-0.55, ~half the tree patched/clip) → **zero** L3B-ORACLE / L3B-BASE-ORACLE mismatch; the
+finder even temporarily extended the oracle to memcmp the `up`/`up_base` buffers (the one thing
+the shipped oracle omits) → still zero; L3b ON-vs-OFF end-to-end byte-identical score+edges+moves.
+(B) trajectory A/B `TS_TBR_LOOSE_CUTOFF`(slack 1) vs default(slack 0) byte-identical final
+score/topology/move-count, EW (L3b off AND on) + a 55-tip genuine-inapplicable NA matrix. The
+**cutoff monotonicity invariant** (the load-bearing claim) verified in the scorers: every bounded
+scorer accumulates non-negative popcounts and bails at `>=cutoff`; with strict-`<` accept, slack
+0 vs 1 selects the identical argmin. The still-`+1` site at ts_tbr.cpp:1417 (IW mono scan) is a
+deliberately-preserved dead computation (IW bounds on `best_candidate`, never `cutoff`) — verified,
+NOT a missed site. x4 early-exit reject-safe (breaks only when ALL 4 accumulators `>=cutoff` →
+inflated bailed values are `>=cutoff` → rejected). **A1-OP-01 (low, cosmetic) FIXED INLINE:**
+ts_data.cpp:123 header comment read "TS_PACK_LOCAL (default OFF)" while the code (:134-136) and
+body comment (:131-132) are default-ON — self-contradicting stale doc that would mislead a
+reviewer reasoning about the shipped layout (the exact stale-doc trap behind prior phantom rounds).
+Corrected to "default ON since 2026-07-16"; doc-only, no build needed. Not filed (trivial). **Seam
+status: RAN DRY at opus** — a deep empirical opus pass on the crown jewel found zero correctness
+defects in the targeted delta. Per doctrine + advisor, **next area-1 visit escalates to FABLE**,
+aimed at the ONE residual the oracle structurally cannot see: a *shared* bug inside the underlying
+full scorer / `ts_fitch_combine` (the oracle proves incremental==full-recompute i.e. *relative*
+equivalence; *absolute* correctness needs an independent reference-scorer cross-check — fable-class,
+the finder correctly parked it). **ORACLE AUDITED (orchestrator, advisor-prompted — the check that licenses the "exact"
+wording):** the `TS_L3B_ORACLE` path is NOT a tautology. Confirmed from source at ts_tbr.cpp:2039-2059
+(patch) and :2880-2895 (base-incr): the from-scratch `compute_insertion_edge_sets` writes an
+INDEPENDENT buffer (`l3b_oracle_es`, distinct vector from the incremental `edge_set_buf`/
+`edge_set_base`), `std::memcmp`s it over every preorder node minus root, and aborts via **`Rf_error`**
+(loud R-level longjmp, NOT a silent counter) on the first divergence. So the finder's completed
+25-cycle run with `patch_clips` firing = the incremental path genuinely matched from-scratch (a
+mismatch would have crashed the run). Guards against this repo's phantom-harness failure class
+([[redteam-verify-against-current-tip]]).
+**ESCALATION SCOPE — read carefully so the next round doesn't misread it:** "fable next" applies
+ONLY to the single residual the oracle structurally CANNOT see — a *shared* bug inside the common
+`ts_fitch_combine` / full scorer that both incremental and from-scratch call (absolute correctness,
+needs an independent reference-scorer cross-check). The area-1 **opus surface is NOT exhausted**;
+the parked leads below are still opus-class and should be run at opus, not fable.
+**PARKED LEADS for future rounds** (opus-class, logged, not spent this round):
+monomorphized plain-EW/IW SPR scans (52d5114d, 0e0c6e1e); packing-in-its-own-right incl. the
+`plane_state` reconstruction map ts_data.cpp:384-391 (89ebd870); IW x4-reroot+dirty-region
+default-ON (994f19a9); Morphy-removal NA three-pass edge-case coverage vs a reference NA scorer
+(cf9f19b3 — this round's NA A/B exercised it without crash/divergence but did not cross-check
+absolute NA scores). **Completeness nicety (not a blocker):** exactness was proven by *forcing*
+L3b at 55-70 tips, not at the literal shipped `n_tip>=150` trigger; the post-gate path is
+byte-identical to the forced-small path (and small trees stress the L3b frontier HARDER,
+fp_changed ≈0.5 vs ~0.18 at 482t), so this is strong — a single ≥150-tip default-path oracle run
+on Hamilton ([[feedback-no-local-heavy-compute]]) would close the last inch. Harnesses reusable in
+session scratchpad (`l3b_oracle.R`, `l3b_ab.R`, `na_cutoff_ab.R`). **Next area: 2** (Search
+topology invariants) by rotation — but area 1's fable escalation is the higher-value follow-up on
+this seam when the user wants it.
+
+---
+
 area: 13 (constraints — assigned deep-dive, NOT a rotation round; last_focus left at 11)
 reviewed_by: opus orchestrator (harness author) + advisor (2 rounds)
 date: 2026-07-04
@@ -609,4 +767,4 @@ tier: opus (rotation: (12 mod 13)+1 = 13; continuing the seam the 2026-07-02 rou
 yield: 1 (T-13-A → MERGED into existing T-324, augmented — not a new ID; verify-before-capture audit otherwise clean)
 notes: Started exactly where the 2026-07-02 round deferred — verify-before-capture on EVERY impose_constraint() caller. **AUDIT RESULT (the core deliverable):** fuse (ts_driven.cpp:1042-1058) OK — maps constraint nodes, imposes, re-verifies, gates the pool add on `fused_ok` (orchestrator-confirmed by read). parallel-fuse (ts_parallel.cpp:84-94) OK — same map+re-check pattern (orchestrator-confirmed). sector (ts_sector.cpp:1367-1372, 1536-1541) OK — revert-on-violation (restore_clade+continue), never captures a violating tree (finder-reported, not independently re-traced). **Wagner build-retry NOT OK → the finding.** (1) **T-13-A is NOT a new ID — it re-discovers + DEEPENS existing T-324** (2026-06-16, area 9), so per "avoid re-reporting" I AUGMENTED T-324 rather than file T-333. Novel contributions beyond T-324's original `AdditionTree()`-scoped, warning-parity framing: (a) the `MaximizeParsimony()` per-replicate pool capture at ts_driven.cpp:929 is **ungated** — asymmetric to the fuse gate 100 lines below; (b) **confirmed NO downstream filter** (ts_rcpp.cpp post-:1390 + MaximizeParsimony.R post-search = collapse-protection only, :1028-1034) → a violating start reaches the user unflagged; (c) a violating start is NOT repaired by constrained TBR (regraft_violates_constraint returns true for all moves once constraint_node[s]<0, ts_constraint.cpp:354-360 → freeze), only conditionally by nni_perturb's impose_constraint (nni_perturb_per>0 + heuristic success); (d) **fix caveat (advisor-caught mis-patch trap):** the :929 gate must use `violates_constraint_posthoc`, NOT the fuse-style `constraint_node[s]<0` check, because a posthoc-only violation (all cn>=0 but fails full-Fitch) would slip a constraint_node gate. **Severity: P3-proven (missing gate + missing warning), escalates to P2 IFF reachability confirmed** — i.e. a satisfiable USER constraint whose violation survives all 100 independent reshuffles (has_posthoc=true only on user constraints; ts_rcpp.cpp:1390→build_constraint). The retry loop's existence proves pass-construction/fail-posthoc trees exist; open bit = 100-reshuffle persistence → **Hamilton hard-but-satisfiable-constraint probe recommended** (heavy compute, not local). Also updated T-324's STALE line numbers (767-780/731-737/554 → 745-754/784-797/571-576) to HEAD 4b833e7f. (2) **T-13-B RULED DOWN, not filed** — the parallel-fuse `violates_constraint_posthoc` short-circuit (returns false when !has_posthoc, ts_constraint.cpp:388) only bites an `auto_cd` constraint (build_constraint_from_bitsets, has_posthoc=false), and auto_cd (consensus-tightening heuristic) engages ONLY when there is no user constraint (use_auto_constraint = consensus_constrain && (!cd||!cd->active), ts_driven.cpp:724, and consensus_constrain defaults false). A tree "violating" auto_cd is search guidance escaping consensus, not a user-facing correctness bug. Advisor concurred. (3) **HIGH-SEV SIGNAL — escalates area 13 next round; SHARPENED this session from a vague lead to a precise, resolvable question (do NOT record CLEAN KILL).** The impose_one_pass stale-best_node concern is the machinery of ALREADY-FIXED T-327 (6b60f235: `reanchor_best_node` before every move + snapshot-validate-revert gated on `build_postorder().postorder.size()==n_internal`, ts_constraint.cpp:702-743). A THIRD dedicated opus finder this session emit-stalled TWICE (channel = binding constraint, per [[dispatch-gotchas]]), so the orchestrator traced it directly (opus) + advisor cross-check. **Refined question:** can the `postorder.size()!=n_internal` revert-guard (build_postorder, ts_tree.cpp:75-112 — DFS over left/right with NO visited-set, cap `preorder.size()>n_internal` at :103) be SLIPPED by a stale-`M` topology_spr corruption netting to EXACTLY n_internal (duplicate +k offset by orphan −k)? **Advisor-corrected invariant (my FIRST trace had a flawed mechanism — same trap as [[redteam-reverify-flawed-refutes]], caught before locking; I wrongly called Case A a double-parent/over-count when `above==parent(below)` re-parents `below` → floating cycle/under-count):** topology_spr preserves the child-slot BIJECTION (every non-root node in-degree 1) in NON-DEGENERATE position → any corruption is a floating rho-component → UNDER-count → caught. The bijection can ONLY break for DEGENERATE slot-collision graft targets (above/below coinciding with nx/nz/ns); one case checked (graft onto edge (nx,ns) → ns in-degree 2, nx orphaned — a duplicate+orphan, but ns's 2nd parent IS the orphan so still under-counts → caught). **Net-zero slip (a duplicate DOUBLY-reachable-from-root + a compensating orphan) remains UNPROVEN.** VERDICT: guard robust in the bijection-preserving regime; residual P1 risk confined to the degenerate slot-collision regime; NOT retired. **NEXT VISIT: NOT another finder — a BOUNDED EXHAUSTIVE HARNESS (mcmc-diagnostician / heavy-test under dev/red-team/heavy-tests/): for n_tip 4–8, enumerate trees × the exact (clip,above,below) triples impose_one_pass can emit, apply topology_spr, assert FULL validity (in-degree-1 + root-reachable + acyclic) whenever `try_move` returns true. Accept-on-invalid = confirming P1 repro; exhaustive small-n silence = strong kill. Directly tests whether `postorder.size()==n_internal ⟺ validity`, which IS the whole question — stop hand-enumerating (error-prone, already mis-traced once).** (4) NOT reached this round: Q3 (clip-gating FALSE-NEGATIVE — does regraft_violates_constraint ever ALLOW a violating regraft) and Q4 (laminar/nested-split consistency across TBR/Wagner/sector paths) — both untouched, open. Finder + orchestrator both traced against HEAD 4b833e7f (area-13 source unchanged since c74ee6e6; no in-flight edits). Finder's final emit stalled mid-stream (198 tokens) — recovered via SendMessage compact re-emit (76k tokens). Seam status: STILL YIELDING (deepened T-324 + open high-sev signal, now precisely characterized) → next area-13 visit = a BOUNDED VALIDITY HARNESS on the topology_spr / build_postorder-guard equivalence (see (3)), NOT another finder; the finder-shaped questions Q3 (clip-gating false-negative) and Q4 (laminar consistency) remain for a later opus finder round.
 
-last_focus: 13
+last_focus: 2
