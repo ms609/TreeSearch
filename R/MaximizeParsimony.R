@@ -619,7 +619,8 @@
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
-#'       `drift_ms`, `final_tbr_ms`, `fuse_ms`.}
+#'       `drift_ms`, `final_tbr_ms`, `fuse_ms`, `nni_ms`, `nni_perturb_ms`,
+#'       `anneal_ms`, `prune_reinsert_ms`.}
 #'     \item{`replicate_scores`}{Numeric vector of the best parsimony score
 #'       found by each completed replicate.  Passed to [ScoreSpectrum()] for
 #'       Chao1-style landscape coverage estimation.}
