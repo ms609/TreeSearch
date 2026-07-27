@@ -37,6 +37,8 @@ results-*
 inst/DELETE*
 *.bak
 /.agent*
+# paired A/B libraries built by dev/benchmarks/ab_*.R
+/.ab-*
 /agent-*.md
 /to-do.md
 /issues.md

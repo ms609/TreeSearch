@@ -802,6 +802,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
                                 params.start_n_edge, ds);
       start_ptr = &start_tree;
     }
+    // Captured before POOL_RESEED can also set start_ptr, so this flags the
+    // user-supplied case alone.  Like pr_reseeded, it bars this rep from
+    // voting in the bandit below.
+    const bool user_started = (start_ptr != nullptr);
 
     // POOL_RESEED: when enabled and no user start is in play, seed this rep
     // from a uniformly-chosen best-score pool tree (>=2 entries required).
@@ -965,7 +969,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Select starting-tree strategy for this replicate.
     StartStrategy rep_strategy = StartStrategy::WAGNER_RANDOM;
     if (start_ptr) {
-      // User-supplied starting tree for rep 0 — strategy is moot
+      // Warm start (user tree or POOL_RESEED): run_single_replicate() takes
+      // the supplied topology and never reaches the strategy switch, so
+      // rep_strategy is inert here — and must not be fed back to the bandit.
     } else if (params.adaptive_start) {
       rep_strategy = strategy_tracker.select(bandit_rng);
     } else if (params.wagner_bias != 0) {
@@ -973,7 +979,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       rep_strategy = static_cast<StartStrategy>(params.wagner_bias);
     }
 
-    if (params.verbosity >= 2 && params.adaptive_start && !has_callback) {
+    if (params.verbosity >= 2 && params.adaptive_start && !has_callback &&
+        start_ptr == nullptr) {
+      // Suppressed for warm starts: no arm was pulled, so naming one would
+      // misreport what the replicate actually did.
       Rprintf("  Strategy: %s\n", strategy_name(rep_strategy));
     }
 
@@ -1009,14 +1018,21 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       ++unsuccessful_reps;
     }
 
-    // Update strategy bandit (T-190).  Skip reseeded reps: they did not use a
-    // fresh-start arm, so crediting/blaming one would corrupt the bandit.
-    if (params.adaptive_start && !pr_reseeded) {
+    // Update strategy bandit (T-190).  Skip warm-started reps — POOL_RESEED
+    // (pr_reseeded) and user-supplied `tree =` (user_started) alike: they did
+    // not use a fresh-start arm, so crediting/blaming one would corrupt the
+    // bandit.  Together these two flags mean exactly `start_ptr == nullptr`;
+    // any future warm-start source must be excluded here too.
+    if (params.adaptive_start && !pr_reseeded && !user_started) {
       bool hit_best = (rep_result.score <= pool.best_score());
       strategy_tracker.update(rep_strategy, hit_best);
-      if (score_improved) {
-        strategy_tracker.decay(0.5);
-      }
+    }
+    // Decay is landscape staleness, not arm attribution: an improved best
+    // score dates the evidence gathered so far whatever built the tree, so it
+    // fires for warm-started reps too.  (Kept out of the guard above so that
+    // excluding a rep from voting does not silently also stop the clock.)
+    if (params.adaptive_start && score_improved) {
+      strategy_tracker.decay(0.5);
     }
 
     ++result.replicates_completed;

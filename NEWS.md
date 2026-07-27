@@ -18,6 +18,25 @@
   segfaulted inside the rooting code, below the level at which R can trap
   anything.  Valid trees, rooted or unrooted, are unaffected.
 
+- `adaptiveStart = TRUE` (set by `strategy = "thorough"`) no longer credits a
+  starting-tree strategy for replicates that began from a tree supplied via
+  `tree = `.  Such replicates never build a start of their own, so the
+  Thompson-sampling bandit was recording a `Wagner(random)` trial that never
+  happened — one per supplied tree, silently biasing arm selection for the
+  rest of the search.  Reseeded replicates were already excluded on the same
+  grounds.  This changes which strategies later replicates sample when
+  `adaptiveStart` and `tree = ` are combined; searches using either alone are
+  unaffected.  `attr(, "strategy_diagnostics")$attempts` now counts only
+  replicates that actually chose a strategy, so it can sum to fewer than the
+  number of replicates completed, and at `verbosity = 2` the per-replicate
+  `Strategy:` line is omitted for warm-started replicates rather than naming an
+  arm that was never pulled.  The bandit's decay-on-improvement is deliberately
+  *not* subject to this exclusion: it measures how stale the accumulated
+  evidence is, not which arm ran, so it still fires when a warm-started
+  replicate improves the best score.  That widens it slightly — a reseeded
+  replicate that improved the score previously skipped the decay and now
+  triggers it; `TS_POOL_RESEED` is off by default, so that path is dormant.
+
 - `MaximizeParsimony()` now contracts zero-length (unsupported) branches into
   polytomies by default (`collapse = TRUE`), deduplicating the returned trees on
   the resulting collapsed topologies, à la TNT's "collapse zero-length
