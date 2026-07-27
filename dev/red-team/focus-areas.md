@@ -16,6 +16,12 @@ The rotation still adjusts per recorded yield — a dry round escalates one tier
 round re-visits at the same tier with a fresh agent, a high-severity signal escalates
 immediately. Treat these as the starting point, not a ceiling.
 
+**A tier is a rung, not a model.** A dry verdict is scoped to the *version* that produced it,
+and a version bump at the same rung is a cheaper step than a rung bump — so `opus-4.8 dry` goes
+to **Opus 5**, not to fable. The alias→version mapping lives in the model-version legend at the
+top of `log.md`; seams that a version bump has made re-eligible are queued in
+`escalation-backlog.md`.
+
 | # | Area | Files | start_tier | Key questions |
 |---|------|-------|-----------|---------------|
 | 1 | **Fitch scoring correctness** | `src/ts_fitch.h/.cpp`, `src/ts_fitch_na.h`, `src/ts_fitch_na_incr.h`, `src/ts_fitch_na_dirty.h` | **opus** | Does incremental / dirty-set scoring match full `score_tree()`? Bounded variants bail correctly? NA three-pass edge cases? Write a targeted test if you find a gap. |
@@ -35,7 +41,9 @@ immediately. Treat these as the starting point, not a ceiling.
 ### Maturity / tier rationale (one line each)
 
 - **1 Fitch correctness — opus.** Crown jewel; T-300 (systematic delta=−3) and T-306 were
-  opus-class subtle bugs. Prime **fable**-escalation target the moment opus runs dry.
+  opus-class subtle bugs. Dry at **opus-4.8** (2026-07-24) ⇒ next visit is **opus (Opus 5)**,
+  fresh-angle; **fable** is the escalation only once Opus 5 *also* runs dry (version bump before
+  rung bump — see the model-version legend at the top of `log.md`).
 - **2 Topology invariants — opus.** Deep state-restore subtleties; T-235 (SPR stale state),
   T-316 (P1 stale constraint metadata after tabu rejection).
 - **3 Ratchet & perturbation — opus.** Mature, but the `build_reduced_dataset` /
@@ -53,7 +61,10 @@ immediately. Treat these as the starting point, not a ceiling.
   asserts) and test-gap notes (T-304).
 - **9 Wagner & addition — opus.** Kernel code; WGN-01 (P1 OOB write via `AdditionTree(sequence=)`).
 - **10 Profile & IW — opus.** Numerical delta algebra; subtle conservative bugs (profile
-  delta capping). Secondary **fable**-candidate alongside area 1.
+  delta capping). Secondary escalation candidate alongside area 1 — but its only dry rounds
+  (2026-05-19, 2026-05-26) are **pre-tier and version-unrecorded**, so it has *zero*
+  version-scoped dry verdicts: the next visit is a first-versioned **opus (Opus 5)**
+  measurement, not a fable escalation.
 - **11 Zero-length collapse — opus, NEVER REVIEWED.** New + default-on; implementation hit
   three subtle traps in one sitting (conservative flags rooting-sensitive; aggressive flags
   need tip-rooting; tip-data alignment via `RenumberTips`). Cross-mode correctness
