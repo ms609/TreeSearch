@@ -57,10 +57,10 @@ persistently-dry reputation leans on pre-tier rounds (areas 3 and 10 both do) ha
 ---
 
 area: **n/a — `tidy` housekeeping pass** (no finder, no verifier, no new findings; `last_focus:` deliberately untouched at 7)
-reviewed_by: orchestrator only (opus, Opus 5) — git-archaeology + source inspection at `cpp-search` HEAD `d9a08c34`, plus one empirical repro re-run
+reviewed_by: orchestrator only (opus, Opus 5) — git-archaeology + source inspection at `cpp-search` HEAD (`d9a08c34` at the start of the pass, `d700bc95` by the end: a concurrent session landed the T-354/T-360 fix mid-pass), plus one empirical repro re-run
 date: 2026-07-27
 tier: n/a (tidy dispatches no agent, so this entry contributes no tier/yield evidence to any area)
-yield: n/a — **21 rows archived, 5 reconstructed, 2 narrowed, 1 re-anchored.** `findings.md` 40 open → **19 open**
+yield: n/a — **23 rows archived, 5 reconstructed, 2 narrowed, 1 re-anchored**, plus 13 stale status cells repaired in the coupled `to-do.md`. `findings.md` 40 open → **17 open**
 
 notes: Second-ever `tidy`; the first was 2026-07-13. Triggered by status drift and by
 `findings-archive.md` never having existed, **not** by volume (40 rows is far under the
@@ -173,18 +173,23 @@ Resolved-history stub is still accurate — no row I archived is referenced ther
 `dev/red-team/**/*.rds` ignore rule shadows nothing: `git ls-files dev/red-team | git
 check-ignore --stdin` returns empty, so no tracked file became ignored.
 
-**T-354's FIX APPEARS TO BE IN FLIGHT** (noted, not acted on). At the end of this pass a
-concurrent session is holding uncommitted modifications to `inst/Parsimony/server/logging.R`,
-`inst/Parsimony/server/mod_data.R` and
-`inst/Parsimony/tests/testthat/_snaps/Distribution/Distribution-001-ClusterCons.zip` — the
-emitter, the correct sibling, and the exact snapshot T-354 identified as the one that must be
-regenerated. Uncommitted is not landed, so the row correctly stays open; the next `tidy` should
-expect to archive it.
+**T-354 AND T-360 LANDED MID-PASS AND WERE ARCHIVED BEFORE IT CLOSED.** Partway through, a
+concurrent session was holding uncommitted edits to `inst/Parsimony/server/logging.R`,
+`mod_data.R` and `_snaps/Distribution/Distribution-001-ClusterCons.zip` — the emitter, the
+correct sibling, and the exact snapshot T-354 named as the one that must be regenerated. That
+work committed as **`d700bc95`** while this pass was still running, so both rows were verified
+at HEAD and moved rather than left open: `BeginLogP()` now emits `WideSample(trees[…])`
+(`logging.R:161`), `mod_data.R:199-207` seeds before `WideSample()` and logs the `set.seed()`
+call (T-360, fixed alongside exactly as the row recommended), and the snapshot was regenerated
+in the same commit. **Turnaround: filed 11:12, fixed 12:04.** Leaving them open because they
+were open when the pass started would have recreated the drift the pass exists to remove — a
+`tidy` reconciles against reality at the moment it closes, not at the moment it began.
 
 **COUNT CORRECTION.** `d9a08c34`'s message says `findings.md` carried **41** `T-` rows; the true
-figure was **40** (the 41st match is the filing-template comment). Post-tidy: **19 open** —
-T-324, T-335, T-337, T-338, T-339, T-340, T-341, T-342, T-343, T-344, T-346, T-351,
-T-354…T-360.
+figure was **40** (the 41st match is the filing-template comment). Post-tidy: **17 open** —
+T-324, T-335, T-337, T-338, T-339, T-340, T-341, T-342, T-343, T-344, T-346, T-351, T-355,
+T-356, T-357, T-358, T-359. By severity: **0 P1**, **3 P2** (T-337, T-339, T-340), 14 P3 — the
+first time in this log's history that no P1 is open.
 
 **`README.md` created** (first time): directory map, the lifecycle, and the two rules this
 directory has actually been burned by — *landed means present in `cpp-search` HEAD, not merged
