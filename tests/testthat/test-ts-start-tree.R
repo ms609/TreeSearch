@@ -33,6 +33,24 @@ test_that("User-supplied tree is used as starting topology", {
   expect_true(warm_score <= best_score)
 })
 
+test_that("Unrooted, non-TreeTools start tree is accepted", {
+  # ape::rtree() + ape::unroot() yields a structurally valid unrooted binary
+  # tree (nrow(edge) == 2 * NTip - 3), distinct from the malformed trees
+  # ape::unroot() can produce from a TreeTools `order = "preorder"` tree
+  # (covered separately in test-MaximizeParsimony-features.R). Previously
+  # this shape reached MakeTreeBinary() before being rooted, which misread
+  # the unrooted root's legitimate degree-3 trifurcation as a polytomy,
+  # corrupting the tree and surfacing as "argument is of length zero".
+  set.seed(9)
+  tr <- ape::unroot(ape::rtree(NTip(dataset), tip.label = names(dataset)))
+  expect_false(TreeTools::TreeIsRooted(tr))
+  res <- MaximizeParsimony(
+    dataset, tree = tr, maxReplicates = 1L, targetHits = 1L, verbosity = 0L
+  )
+  expect_s3_class(res, "multiPhylo")
+  expect_true(attr(res, "score") > 0)
+})
+
 test_that("multiPhylo input warm-starts from the whole pool", {
   set.seed(2987)
   res <- MaximizeParsimony(
