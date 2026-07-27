@@ -368,3 +368,73 @@ test_that("perturbStopFactor=0 disables the rule", {
                       ratchetCycles = 1L, perturbStopFactor = 0L)
   expect_true(result$pool_size >= 1)
 })
+
+test_that("perturbStopFactor fires and sets perturb_stop attribute (public API)", {
+  # Moved from test-MaximizeParsimony-features.R (Tier 1): ~20s to force the
+  # cutoff via the public API, far over that file's < 2s budget. The :::-level
+  # test above covers the same mechanism cheaply; this adds the public-API
+  # attribute passthrough. perturbStopFactor=1 on Vinther2008 (23 tips) means
+  # limit = 23 reps.
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  set.seed(4618)
+  result <- MaximizeParsimony(dataset, maxReplicates = 500L, targetHits = 500L,
+                               control = SearchControl(
+                                 perturbStopFactor = 1L,
+                                 ratchetCycles = 1L),
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_lt(attr(result, "replicates"), 500L)
+  expect_true(attr(result, "perturb_stop"))
+  expect_false(attr(result, "timed_out"))
+})
+
+test_that("multiPhylo input warm-starts one replicate per tree", {
+  # Moved from test-MaximizeParsimony-features.R (Tier 1): ~4s, over 2x that
+  # file's whole budget, from the five MaximizeParsimony() calls needed to
+  # discriminate per-tree assignment.
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  set.seed(3571)
+  trees <- list(
+    RandomTree(dataset, root = TRUE),
+    RandomTree(dataset, root = TRUE),
+    RandomTree(dataset, root = TRUE)
+  )
+  class(trees) <- "multiPhylo"
+  trees <- Preorder(trees)
+
+  Search <- function(startTree) {
+    set.seed(8081)
+    MaximizeParsimony(dataset, tree = startTree, maxReplicates = 2L,
+                      targetHits = 99L, verbosity = 0L)
+  }
+
+  # A pool of one is exactly the single-tree warm start: only replicate 1
+  # differs from a cold start, so every reported quantity must agree.
+  single <- Search(trees[[1]])
+  oneTree <- Search(trees[1])
+  expect_s3_class(trees[1], "multiPhylo")
+  expect_equal(attr(oneTree, "replicate_scores"),
+               attr(single, "replicate_scores"))
+  expect_equal(attr(oneTree, "candidates_evaluated"),
+               attr(single, "candidates_evaluated"))
+  expect_equal(vapply(oneTree, ape::write.tree, character(1)),
+               vapply(single, ape::write.tree, character(1)))
+
+  # Shared-prefix discriminator.  Comparing a pool against a single tree only
+  # shows that *something* changed -- reusing tree 1 for every replicate would
+  # look the same.  These two pools agree in position 1 and differ only in
+  # position 2, so a difference can be attributed to tree 2 alone, and pins
+  # rep i -> tree i rather than "some supplied tree, repeatedly".
+  # Scores saturate at the optimum on this matrix, so count the work done:
+  # candidates_evaluated tracks the trajectory, not just its endpoint.
+  poolA <- Search(structure(trees[c(1, 2)], class = "multiPhylo"))
+  poolB <- Search(structure(trees[c(1, 3)], class = "multiPhylo"))
+  expect_false(identical(attr(poolA, "candidates_evaluated"),
+                         attr(poolB, "candidates_evaluated")))
+  # ...and order matters, so position is respected, not just membership.
+  poolBA <- Search(structure(trees[c(2, 1)], class = "multiPhylo"))
+  expect_false(identical(attr(poolA, "candidates_evaluated"),
+                         attr(poolBA, "candidates_evaluated")))
+})
