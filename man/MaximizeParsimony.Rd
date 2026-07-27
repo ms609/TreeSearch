@@ -309,7 +309,8 @@ Chao1-style landscape coverage estimation.}
 rearrangements evaluated across the whole search — the analogue of
 TNT's "rearrangements examined", useful for comparing search
 efficiency (candidates per unit of score improvement).  Counted only
-for single-threaded searches (\code{0} when \code{nThreads > 1}); excludes
+for single-threaded searches (\code{0} for any parallel search, i.e.
+\code{nThreads != 1}, including \code{nThreads = 0} auto-detect); excludes
 NNI-warmup and simulated-annealing candidates.}
 }
 }

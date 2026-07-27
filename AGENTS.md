@@ -84,8 +84,10 @@ DLL loaded. Kill it or wait, then retry.
 
 ### `TreeSearch-init.c` arg count mismatch
 
-After `Rcpp::compileAttributes()`, **always** run `Rscript check_init.R` to
-verify arg counts match between `RcppExports.cpp` and `TreeSearch-init.c`.
+After any C++ signature change, use `Rscript .claude/tools/compile-attrs.R` —
+it runs `compileAttributes()`, normalises line endings to LF, and then
+`check_init.R` to verify arg counts match between `RcppExports.cpp` and
+`TreeSearch-init.c`.
 
 ### Quick recovery
 
@@ -256,7 +258,7 @@ Run these before committing whenever the trigger applies:
 |---------|---------|
 | Function signature or roxygen block changed | `Rscript -e "devtools::check_man()"` |
 | Documentation prose changed | `Rscript -e "spelling::spell_check_package()"` |
-| `Rcpp::compileAttributes()` run | `Rscript check_init.R` (verifies `ts_rcpp.cpp` / `TreeSearch-init.c` arg counts) |
+| C++ signature changed | `Rscript .claude/tools/compile-attrs.R` (normalises LF + verifies `ts_rcpp.cpp` / `TreeSearch-init.c` arg counts) |
 | Search behaviour changed (heuristics, scoring, stopping, pool) | Update `vignettes/search-algorithm.Rmd` |
 
 Full details: `.AGENTS/memory/r-package-conventions.md`.
