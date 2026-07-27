@@ -394,6 +394,46 @@ test_that("IW mode works with strategy presets", {
   expect_equal(cpp_score, tl_score, tolerance = 0.01)
 })
 
+# --- T-340 regression: `concavity` normalization ---
+
+test_that("concavity as a numeric-coercible string behaves like the number", {
+  # A bare "10" must not silently drop into IW mode with unpopulated
+  # min_steps (uncorrected homoplasy) -- it should match concavity = 10
+  # exactly, seed-for-seed.
+  set.seed(4012)
+  asString <- MaximizeParsimony(ds, concavity = "10", strategy = "sprint",
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 verbosity = 0L)
+  set.seed(4012)
+  asNumber <- MaximizeParsimony(ds, concavity = 10, strategy = "sprint",
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 verbosity = 0L)
+  expect_equal(attr(asString, "score"), attr(asNumber, "score"))
+  expect_equal(asString[[1]][["edge"]], asNumber[[1]][["edge"]])
+})
+
+test_that("concavity = 'Profile'/'prof' route to profile mode like 'profile'", {
+  set.seed(4012)
+  canonical <- MaximizeParsimony(ds, concavity = "profile", strategy = "sprint",
+                                  maxReplicates = 2L, targetHits = 1L,
+                                  verbosity = 0L)
+  for (spelling in c("Profile", "prof")) {
+    set.seed(4012)
+    result <- MaximizeParsimony(ds, concavity = spelling, strategy = "sprint",
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 verbosity = 0L)
+    expect_equal(attr(result, "score"), attr(canonical, "score"))
+  }
+})
+
+test_that("an invalid concavity string errors cleanly instead of silently using EW", {
+  expect_error(
+    MaximizeParsimony(ds, concavity = "banana", maxReplicates = 1L,
+                       targetHits = 1L, verbosity = 0L),
+    "`concavity` must be a single positive number"
+  )
+})
+
 # --- Output tree validity ---
 
 test_that("output trees have valid preorder numbering", {
