@@ -57,6 +57,7 @@ persistently-dry reputation leans on pre-tier rounds (areas 3 and 10 both do) ha
 ---
 
 area: **n/a — `tidy` housekeeping pass #2 of 2026-07-27** (no finder, no verifier, no new findings; `last_focus:` deliberately untouched at 8)
+&nbsp;&nbsp;↳ *Reading this file cold: the `tidy` entry a few screens below says "untouched at **7**", and both statements are correct. Neither `tidy` moved the pointer — the **area-8 round between them** advanced it 7 → 8, exactly as a rotation round should. Two adjacent tidy entries naming different untouched values is the pointer working, not drift.*
 reviewed_by: orchestrator only (opus, Opus 5) — content inspection at `cpp-search` HEAD `e357e1b7`, plus git archaeology on the merge history
 date: 2026-07-27
 tier: n/a (tidy dispatches no agent, so this entry contributes no tier/yield evidence to any area)
