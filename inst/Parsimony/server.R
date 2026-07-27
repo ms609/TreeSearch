@@ -82,6 +82,18 @@ server <- function(input, output, session) {
       ""))
   })
 
+  # Legend for the "clus" / "space" plot views, shown alongside the
+  # cluster-coloured tree/point plots. Mirrors the static "instabLegend"
+  # markup in mod_consensus.R (T-357: this output was never bound, leaving
+  # the panel permanently empty).
+  output$instabLegend2 <- renderUI({
+    tagList(
+      tags$span(class = "legendLeft", "Stable"),
+      tags$span(class = "infernoScale legendBar", "\ua0"),
+      tags$span(class = "legendRight", "Unstable")
+    )
+  })
+
   # Clustering module
   cl <- clustering_server("clustering",
     r = r,
@@ -189,9 +201,18 @@ server <- function(input, output, session) {
     if (file.exists(cmdLogFile)) {
       unlink(cmdLogFile)
     }
-    # Clean cached input files from tempdir (data, tree, and excel)
-    unlink(list.files(tempdir(), pattern = "^(data|tree|excel)File-",
-                      full.names = TRUE))
+    # Clean cached input files from tempdir (data, tree, and excel).
+    # Filenames are namespaced by session token (T-356), so this only
+    # touches the ending session's own files, not other tabs' in-progress
+    # uploads sharing the same process-wide tempdir().
+    unlink(list.files(
+      tempdir(),
+      pattern = paste0(
+        "^(data|tree|excel)File-",
+        gsub("[^A-Za-z0-9]", "", session$token), "-"
+      ),
+      full.names = TRUE
+    ))
     # T-312: also remove search/profile cancel + progress signal files; the
     # pattern above does not match them, so they otherwise leak on error /
     # interrupt / disconnect paths and accumulate across searches.
