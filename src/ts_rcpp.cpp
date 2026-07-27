@@ -1,5 +1,6 @@
 #include <Rcpp.h>
 #include <chrono>
+#include <climits>
 #include <cstdio>
 #include <random>
 #include <unordered_map>
@@ -1882,7 +1883,7 @@ List ts_driven_search(
 
   ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
   ts::DrivenResult result;
-  if (nThreads > 1) {
+  if (nThreads != 1) {
     result = ts::parallel_driven_search(pool, ds, params, cd_ptr, nThreads);
   } else {
     result = ts::driven_search(pool, ds, params, cd_ptr);
@@ -1907,7 +1908,7 @@ List ts_driven_search(
 
   // Per-strategy diagnostics (T-190)
   List strategy_diag = R_NilValue;
-  if (params.adaptive_start || nThreads > 1) {
+  if (params.adaptive_start || nThreads != 1) {
     CharacterVector sn(ts::N_STRAT);
     IntegerVector sa(ts::N_STRAT), ss(ts::N_STRAT);
     for (int i = 0; i < ts::N_STRAT; ++i) {
@@ -2298,6 +2299,22 @@ List ts_parallel_resample(
   int n_tokens = contrast.nrow();
   int n_states = contrast.ncol();
 
+  // T-337: every replicate on the parallel path runs resample_search() (and
+  // the build_dataset()/wagner construction it calls) on a worker thread.
+  // Any Rf_error() reached from there longjmps to R's main-thread context,
+  // which is UB/crash across threads. The conditions below are all
+  // replicate-independent (same for every worker), so check them once, here,
+  // on the main thread, before any workers are spawned -- mirroring the
+  // guards in build_dataset() (n_states), ts_wagner.cpp (n_tip), and
+  // resample_search() (weight sanity).
+  if (n_states > ts::MAX_STATES) {
+    Rcpp::stop("TreeSearch C++ engine: n_states (%d) exceeds MAX_STATES (%d)",
+               n_states, ts::MAX_STATES);
+  }
+  if (n_tips < 3) {
+    Rcpp::stop("Wagner tree requires at least 3 taxa (got %d)", n_tips);
+  }
+
   // Validate parallel-vector lengths at the boundary: build_dataset() indexes
   // these by raw pointer over [0, n_patterns)/[0, n_states), so a short vector
   // is an out-of-bounds read. Public wrappers always size them correctly; this
@@ -2320,6 +2337,29 @@ List ts_parallel_resample(
                "(%d)", static_cast<int>(obs_count.size()), n_patterns);
   }
   validate_tip_data_values(INTEGER(tip_data), n_tips, n_patterns, n_tokens);
+
+  // T-337 (continued): resample_search() itself guards against negative
+  // weights and an INT_MAX weight-sum overflow (both replicate-independent,
+  // since resampling only redistributes multiplicities of the same original
+  // weights). Same cross-thread-longjmp hazard as above -- check once here,
+  // now that `weight`'s length is confirmed to equal n_patterns.
+  {
+    size_t total_chars = 0;
+    const int* w_ptr = INTEGER(weight);
+    for (int p = 0; p < n_patterns; ++p) {
+      if (w_ptr[p] < 0) {
+        Rcpp::stop("TreeSearch: character weight[%d] = %d is negative",
+                   p, w_ptr[p]);
+      }
+      total_chars += static_cast<size_t>(w_ptr[p]);
+    }
+    if (total_chars > static_cast<size_t>(INT_MAX)) {
+      Rcpp::stop("TreeSearch: sum of character weights (%zu) exceeds INT_MAX.\n"
+                 "  Reduce options(\"TreeSearch.fractional.scale\") or set\n"
+                 "  weights to smaller values before calling Resample().",
+                 total_chars);
+    }
+  }
 
   std::vector<std::string> level_strs(n_states);
   std::vector<const char*> level_ptrs(n_states);
@@ -2356,7 +2396,7 @@ List ts_parallel_resample(
   if (nReplicates < 1) nReplicates = 1;
 
   std::vector<ts::ResampleResult> results;
-  if (nThreads > 1 && nReplicates > 1) {
+  if (nThreads != 1 && nReplicates > 1) {
     results = ts::parallel_resample(
         REAL(contrast), n_tokens, n_states,
         INTEGER(tip_data), n_tips, n_patterns,

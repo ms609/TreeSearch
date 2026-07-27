@@ -282,10 +282,11 @@ DrivenResult parallel_driven_search(
     return result;
   }
 
-  // Auto-detect thread count
+  // Auto-detect thread count: one fewer thread than the number of CPU cores
+  // (docs: MaximizeParsimony(nThreads = 0)), floored at 1.
   if (n_threads <= 0) {
-    n_threads = static_cast<int>(std::thread::hardware_concurrency());
-    if (n_threads <= 1) n_threads = 2;  // at least 2 if auto
+    n_threads = static_cast<int>(std::thread::hardware_concurrency()) - 1;
+    if (n_threads < 1) n_threads = 1;
     n_threads = std::min(n_threads, params.max_replicates);
   }
   n_threads = std::max(1, std::min(n_threads, params.max_replicates));
@@ -618,9 +619,11 @@ std::vector<ResampleResult> parallel_resample(
     double xpiwe_max_f,
     const int* obs_count_r)
 {
+  // Auto-detect thread count: one fewer thread than the number of CPU cores
+  // (docs: Resample(nThreads = 0)), floored at 1.
   if (n_threads <= 0) {
-    n_threads = static_cast<int>(std::thread::hardware_concurrency());
-    if (n_threads <= 1) n_threads = 2;
+    n_threads = static_cast<int>(std::thread::hardware_concurrency()) - 1;
+    if (n_threads < 1) n_threads = 1;
     n_threads = std::min(n_threads, n_replicates);
   }
   n_threads = std::max(1, std::min(n_threads, n_replicates));

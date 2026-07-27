@@ -673,7 +673,8 @@
 #'       rearrangements evaluated across the whole search — the analogue of
 #'       TNT's "rearrangements examined", useful for comparing search
 #'       efficiency (candidates per unit of score improvement).  Counted only
-#'       for single-threaded searches (`0` when `nThreads > 1`); excludes
+#'       for single-threaded searches (`0` for any parallel search, i.e.
+#'       `nThreads != 1`, including `nThreads = 0` auto-detect); excludes
 #'       NNI-warmup and simulated-annealing candidates.}
 #'   }
 #'

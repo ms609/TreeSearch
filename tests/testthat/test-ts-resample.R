@@ -210,3 +210,63 @@ test_that("SA score is a valid EW parsimony score", {
   )
   expect_equal(result$score, expected)
 })
+
+# ---------- Threading dispatch (T-339, T-337) ----------
+
+test_that("nThreads = 0 dispatches to the parallel resample path", {
+  skip_on_cran()
+  # T-339: the dispatch gate used to read `nThreads > 1`, so nThreads = 0
+  # (documented auto-detect) silently fell through to the serial loop
+  # instead of parallel_resample()'s own auto-detect.
+  #
+  # Each replicate's character-resampling draws are seeded independently of
+  # thread count (seeds[rep], pre-generated on the main thread from
+  # set.seed()), so the parallel path gives byte-identical results for any
+  # nThreads > 1 -- including nThreads = 0 once auto-detect correctly
+  # resolves to a real thread count. The serial path instead draws directly
+  # from R's live RNG stream, so it diverges. This makes result identity a
+  # reliable, thread-count-independent signal of which branch ran.
+  # nReplicates capped at 2L: nThreads = 0 auto-detects hardware_concurrency()
+  # - 1, but parallel_resample() also clamps the pool to nReplicates, so this
+  # keeps the actual thread count within the 2-cores-per-agent budget
+  # (see AGENTS.md) regardless of host core count.
+  run <- function(nThreads, seed) {
+    set.seed(seed)
+    TreeSearch:::ts_parallel_resample(
+      small_ds$contrast, small_ds$tip_data, small_ds$weight, small_ds$levels,
+      nReplicates = 2L, nThreads = nThreads,
+      maxReplicates = 2L, targetHits = 1L, ratchetCycles = 1L
+    )
+  }
+
+  serial <- run(1L, 8642)
+  parallel2 <- run(2L, 8642)
+  auto <- run(0L, 8642)
+
+  expect_equal(auto$scores, parallel2$scores)
+  expect_false(isTRUE(all.equal(auto$scores, serial$scores)))
+})
+
+test_that("Resample with > 32 states errors cleanly on the main thread", {
+  skip_on_cran()
+  # T-337: build_dataset()'s n_states guard calls Rf_error(), which longjmps
+  # to R's main-thread context. On the parallel path that guard used to run
+  # inside a worker thread (via resample_search), which is UB/crash rather
+  # than a clean R error. ts_parallel_resample() now validates n_states on
+  # the main thread before any workers are spawned.
+  n <- 33
+  syms <- c(as.character(0:9), LETTERS)[1:n]
+  mat <- matrix(syms, nrow = n, ncol = 1,
+                dimnames = list(paste0("t", 1:n), NULL))
+  wide_dataset <- MatrixToPhyDat(mat)
+  wide_ds <- make_ts_data(wide_dataset)
+
+  expect_error(
+    TreeSearch:::ts_parallel_resample(
+      wide_ds$contrast, wide_ds$tip_data, wide_ds$weight, wide_ds$levels,
+      nReplicates = 4L, nThreads = 2L,
+      maxReplicates = 2L, targetHits = 1L, ratchetCycles = 1L
+    ),
+    "exceeds MAX_STATES"
+  )
+})
