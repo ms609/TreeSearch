@@ -86,7 +86,6 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     inapp <- logical(nrow(cont))
     app <- !inapp
   }
-  inappLevel <- which.max(inapp)
   qmApp <- which(apply(contApp == 1, 1, all) & !inapp)
   if (length(qmApp) == 0) {
     attr(char, "contrast") <- rbind(cont, colnames(cont) != "-")
