@@ -33,6 +33,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -460,11 +461,18 @@ DrivenResult parallel_driven_search(
       if (dry_spell > 0) {
         int hits = shared_pool.hits_to_best();
         if (hits > 0) {
-          int limit = (params.target_hits > 0)
-              ? static_cast<int>(
-                  static_cast<double>(params.target_hits) / hits
-                  * ds_prototype.n_tips * params.perturb_stop_factor)
-              : ds_prototype.n_tips * params.perturb_stop_factor;
+          // Saturate rather than truncate -- see the serial path in ts_driven.cpp: the
+          // product overflows `int` for large stop settings, and casting an out-of-range
+          // double to int is undefined behaviour that lands negative, stopping the search
+          // on its first non-improving replicate.
+          const double limit_d = (params.target_hits > 0)
+              ? static_cast<double>(params.target_hits) / hits
+                * ds_prototype.n_tips * params.perturb_stop_factor
+              : static_cast<double>(ds_prototype.n_tips) * params.perturb_stop_factor;
+          const int limit =
+              limit_d >= static_cast<double>(std::numeric_limits<int>::max())
+              ? std::numeric_limits<int>::max()
+              : static_cast<int>(limit_d);
           if (dry_spell >= limit) {
             stop_flag.store(true, std::memory_order_relaxed);
             result.perturb_stop = true;

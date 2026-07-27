@@ -1,5 +1,14 @@
 # To integrate into 2.0.0 notes
 
+- Fixed: a large `targetHits` combined with a large `perturbStopFactor` stopped the
+  search after two replicates and silently returned a worse tree.  The
+  no-improvement rule computes `(targetHits / hits) * nTip * perturbStopFactor`,
+  which overflowed for such settings; the out-of-range value became a negative
+  limit, so the rule fired on the first replicate that failed to improve.  The
+  limit now saturates, so settings that ask for more search get more search.
+  Affected both the serial and the parallel search paths.  Note that `0`, not a
+  large value, is the way to switch these rules off.
+
 - Implied-weights searches under `strategy = "thorough"` or `"large"` now run a
   deeper parsimony ratchet (48 cycles, up from 20).  Under implied weights the
   optimum can sit in a small basin a fraction of a step below an easy-to-find
