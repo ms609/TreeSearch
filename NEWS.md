@@ -18,6 +18,15 @@
   segfaulted inside the rooting code, below the level at which R can trap
   anything.  Valid trees, rooted or unrooted, are unaffected.
 
+- `MaximizeParsimony(tree = )` no longer fails with "argument is of length
+  zero" on some *valid* unrooted starting trees (e.g. `ape::unroot(ape::rtree())`).
+  The bifurcating-tree check conflated "needs resolving" with "needs rooting":
+  a valid unrooted binary tree has `nrow(edge) == 2 * NTip - 3`, which fails
+  that check exactly as a genuine polytomy would, so it was passed to
+  `MakeTreeBinary()`, which misread the unrooted root's legitimate degree-3
+  trifurcation as a polytomy and corrupted the tree. Unrooted starts are now
+  rooted (arbitrarily, on their first tip) before the bifurcating check runs.
+
 - `MaximizeParsimony()` now contracts zero-length (unsupported) branches into
   polytomies by default (`collapse = TRUE`), deduplicating the returned trees on
   the resulting collapsed topologies, à la TNT's "collapse zero-length

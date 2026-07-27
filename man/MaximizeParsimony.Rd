@@ -49,7 +49,10 @@ limit, whichever fires first — draws on only part of a large pool, and
 says so in a warning.  Raise \code{targetHits} as well as \code{maxReplicates} to
 use more of it.
 If unspecified, all replicates start from random Wagner trees.
-Edge lengths are not supported and will be deleted.}
+Edge lengths are not supported and will be deleted.
+Rooted and unrooted trees are both accepted; an unrooted tree is rooted
+arbitrarily (on its first tip) before the search begins, which may
+affect how any polytomies it contains are resolved.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting

@@ -343,6 +343,20 @@ test_that("multiPhylo warm starts are validated", {
                       maxReplicates = 1L, targetHits = 1L, verbosity = 0L)
   )
 
+  # A validly unrooted tree from outside TreeTools (e.g. ape::rtree() then
+  # ape::unroot(), unlike `broken` above) has nrow(edge) == 2 * n - 3, which
+  # fails the "is this already bifurcating?" test the same way a genuine
+  # polytomy would, because that test conflates "needs resolving" with "needs
+  # rooting".  Passing it to MakeTreeBinary() misreads the unrooted root's
+  # legitimate degree-3 trifurcation as a polytomy, corrupting the tree and
+  # previously surfacing downstream as "argument is of length zero".
+  set.seed(9)
+  apeUnrooted <- ape::unroot(ape::rtree(NTip(ds), tip.label = names(ds)))
+  expect_silent(
+    MaximizeParsimony(ds, tree = apeUnrooted,
+                      maxReplicates = 1L, targetHits = 1L, verbosity = 0L)
+  )
+
   # Unused pool members are reported against the replicates actually run,
   # which targetHits can cut short well below maxReplicates.
   expect_warning(

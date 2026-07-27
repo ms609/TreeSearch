@@ -441,6 +441,9 @@
 #'   use more of it.
 #'   If unspecified, all replicates start from random Wagner trees.
 #'   Edge lengths are not supported and will be deleted.
+#'   Rooted and unrooted trees are both accepted; an unrooted tree is rooted
+#'   arbitrarily (on its first tip) before the search begins, which may
+#'   affect how any polytomies it contains are resolved.
 #' @param concavity Determines the degree to which extra steps beyond the first
 #' are penalized.  Specify a numeric value to use implied weighting
 #' \insertCite{Goloboff1993}{TreeSearch}; `concavity` specifies _k_ in
@@ -994,6 +997,16 @@ MaximizeParsimony <- function(
     # one segfaults inside the dependency, below the level at which R can
     # catch anything, so the guard has to sit ahead of the repair block.
     .CheckStartTree(tr, if (length(startTrees) > 1L) i else NA_integer_)
+
+    # Root before checking for bifurcation: MakeTreeBinary() assumes a rooted
+    # tree, where the root's "effective" degree needs +1 for its absent
+    # parent edge.  Applied to an already-unrooted tree, that +1 misreads the
+    # root's legitimate degree-3 trifurcation as a polytomy and inserts a
+    # spurious node.  TreeTools::TreeIsRooted() is used (not ape::is.rooted(),
+    # which returns NA for some valid trees here and would break this `if`).
+    if (!TreeTools::TreeIsRooted(tr)) {
+      tr <- RootTree(tr, 1L)
+    }
 
     # Make bifurcating if needed
     if (dim(tr[["edge"]])[1] != 2L * tr[["Nnode"]]) {
