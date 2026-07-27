@@ -93,6 +93,32 @@ scope row**, which lists only `src/ts_fitch.cpp` IW paths, `src/ts_data.cpp`, `s
 `src/ts_sankoff.*`. They are not in any other area's row either. This is a concrete instance of
 the `R/*.R` coverage gap area 12 flagged on 2026-07-03 but never diffed.
 
+### Item 6 — `expand_and_reinsert` ignores its `ConstraintData*` (UNVERIFIED lead)
+
+Recorded 2026-07-27 by the area-9 round. **Cross-area, so it is here rather than only in
+`log.md`** — the rule this file adopted in the same round, applied to its first case: area 9
+found it, areas 3 and 13 own it, and a note left only in area 9's log entry would be read by
+nobody.
+
+`src/ts_prune_reinsert.cpp:353` — `expand_and_reinsert(…, ts::ConstraintData* cd)` takes a
+constraint pointer and **never references it**, which is why it shows up as a pre-existing
+`-Wunused-parameter` under `g++ -Wall -Wextra`. If that function genuinely re-inserts tips
+without consulting the constraint, it is a [`T-324`](findings.md)-shaped gap on a different
+path — reinsertion producing a violating tree that only the downstream posthoc check might
+catch.
+
+**Status: UNVERIFIED, and it must not be treated as a finding until someone reads the
+function.** Three things a reader should settle: whether reinsertion is genuinely
+constraint-blind or the constraint is enforced by a caller; whether any capture path can retain
+a violating tree; and whether the parameter is simply vestigial (in which case deleting it is
+the fix, and the warning goes away).
+
+Two reasons it is worth someone's time rather than a shrug. It surfaced from a **compiler
+warning, not from reading** — nobody has read this function's constraint handling, so its
+silence is not evidence. And the same function is already the subject of
+[`T-366`](findings.md) (mixed-regime `prelim`), so a reader is going in there anyway; settling
+both in one pass costs barely more than settling one.
+
 ### Not in this backlog (deliberately)
 
 - **Area 4 (Parallelism & RNG), 6 (R↔C++), 7 (Shiny), 8 (Tests), 9 (Wagner), 11 (Collapse),
