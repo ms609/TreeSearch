@@ -89,5 +89,8 @@ normalize_download <- function(lines) {
   lines <- sub("^# System: .*", "# System: <SYS-INFO>", lines, perl = TRUE)
   # Package/R version lines: "# - TreeSearch 2.0.0.9999" -> "# - TreeSearch <VERSION>"
   lines <- sub("^(# - [A-Za-z.]+ ).*", "\\1<VERSION>", lines, perl = TRUE)
+  # WideSample() thinning seed (T-360): freshly drawn each run, so scrub the
+  # value while still asserting that a set.seed() call precedes WideSample().
+  lines <- sub("^set\\.seed\\([0-9]+\\)$", "set.seed(<SEED>)", lines, perl = TRUE)
   lines
 }
