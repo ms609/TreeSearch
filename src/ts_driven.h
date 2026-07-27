@@ -224,6 +224,22 @@ struct DrivenParams {
   // replicates that fail to improve the best score.  Resets on
   // every improvement.
   int perturb_stop_factor = 0;
+
+  // EXPERIMENTAL, opt-in via TS_STOP_PATIENCE; 0 = disabled (the default).
+  // Stop after this many consecutive replicates fail to improve the best score,
+  // as a FLAT count with no reference to the hit count.
+  //
+  // Why this exists.  Both shipped rules are indexed on replicates *via hits*:
+  // targetHits waits for N independent re-hits, and perturb_stop_factor scales
+  // its own dry-spell limit by targetHits/hits.  So any change that makes a
+  // replicate individually better but slower delays the stop rather than
+  // improving the answer -- measured three times (2026-07-27), and an offline
+  // replay over 1088 recorded trajectories found that a flat patience of 15-30
+  // replicates, paired with a deeper ratchet, beats the shipped stop on BOTH
+  // score and wall.  This knob exists to test that live; it is deliberately not
+  // a SearchControl field until it has been confirmed.
+  int stop_patience = 0;
+
   // Adaptive search level.
   // When true, dynamically scale ratchet_cycles and drift_cycles based
   // on the hit rate (fraction of replicates that find the current best

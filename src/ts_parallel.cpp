@@ -451,7 +451,10 @@ DrivenResult parallel_driven_search(
     // Dynamic limit: (targetHits / hits) * nTip * psf.
     // When hits == 0 the limit is infinite (no data yet on hit rate).
     // When targetHits == 0 (disabled) falls back to flat nTip * psf.
-    if (params.perturb_stop_factor > 0) {
+    // The dry-spell bookkeeping is shared by both no-improvement rules, so it has to run
+    // whenever EITHER is active -- guarding it on perturb_stop_factor alone would leave
+    // reps_at_last_improvement frozen and make the patience rule fire on the first check.
+    if (params.perturb_stop_factor > 0 || params.stop_patience > 0) {
       int done = replicates_done.load(std::memory_order_relaxed);
       double cur_best = shared_pool.best_score();
       if (cur_best < last_known_best) {
@@ -459,7 +462,19 @@ DrivenResult parallel_driven_search(
         reps_at_last_improvement = done;
       }
       int dry_spell = done - reps_at_last_improvement;
-      if (dry_spell > 0) {
+      // Flat replicate patience (experimental, TS_STOP_PATIENCE): no reference to the hit
+      // count, so its firing time does not stretch when replicates get more expensive.
+      if (params.stop_patience > 0 && dry_spell >= params.stop_patience) {
+        stop_flag.store(true, std::memory_order_relaxed);
+        result.perturb_stop = true;
+        if (params.verbosity >= 1) {
+          if (progress_on_line) { Rprintf("\n"); progress_on_line = false; }
+          Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                  "(TS_STOP_PATIENCE %d)\n", dry_spell, params.stop_patience);
+        }
+        break;
+      }
+      if (params.perturb_stop_factor > 0 && dry_spell > 0) {
         int hits = shared_pool.hits_to_best();
         if (hits > 0) {
           // Saturate rather than truncate -- see the serial path in ts_driven.cpp: the
