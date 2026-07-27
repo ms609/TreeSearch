@@ -1,0 +1,61 @@
+# Red-team findings — TreeSearch (ARCHIVE)
+
+Terminal-state findings (`fixed` / `closed` / `wontfix`), one line each, newest ID last within
+each block. **Archive, never delete.** A row here is not dead paperwork: it is
+anti-duplication memory. An archived row still stops a future finder re-hunting a bug that is
+already fixed, and the `closed — no longer reproducible` rows are the highest-value records of
+all, because they are what stops an expensive Opus/Fable pass chasing a ghost.
+
+Open findings live in [`findings.md`](findings.md). Full context for every row lives in the
+round entry in [`log.md`](log.md); this file carries only the one-line claim and the
+resolution.
+
+**What "landed" means in this project.** The `/red-team` skill's lifecycle says
+`fixed (PR #N)` = "merged to `main`". That is *not* the convention here: development happens
+on **`cpp-search`**, which is 179 commits ahead of `main`, and nothing archived below has
+merged to `main`. In this file, **landed = present in `cpp-search` HEAD**, and the resolution
+column cites a **commit SHA** (a PR number too, where the fix arrived through one). Every row
+below was confirmed by inspecting the code at `cpp-search` HEAD on the date of the `tidy` pass
+that archived it — not by trusting the row's own prior status text.
+
+**A quirk of the 2026-07-27 directed round.** That round reviewed the warm-start pool feature
+as an **uncommitted working diff**. Its findings were fixed before the feature was committed,
+so several fixes are dated *inside* the very commit (`ee91dacc`) whose pre-commit state the
+round reviewed. Those rows were therefore filed as `open` and were already resolved at the
+moment of filing. This is expected for a directed pre-commit round; it is not status drift.
+
+| ID | Sev | Area | Title | Resolution |
+|----|-----|------|-------|------------|
+| T-309 | P2 | 7 (Shiny) | EasyTrees: stale profile dataset scores wrong trees (hash stamped at completion, not at invoke) | **fixed `78b74147`** (2026-06-19) — `profilePrepHash` snapshot-at-invoke (`mod_search.R:449`) + clear on dataset change (`:1176-1182`) |
+| T-310 | P2 | 7 (Shiny) | EasyTrees double-launch: `StartSearch()` had no re-entrancy guard | **fixed `78b74147`** — `if (isTRUE(r$searchInProgress)) return(invisible())` at `mod_search.R:663` |
+| T-311 | P3 | 7 (Shiny) | Session disconnect never cancelled the running search worker | **fixed `78b74147`** — `session$onSessionEnded` cancel-file write, `mod_search.R:594-602` |
+| T-312 | P3 | 7 (Shiny) | Search temp files (`ts_*`) leaked on session end | **fixed `78b74147`** — `^ts_(cancel\|progress\|profile_prog\|profile_cancel)_` unlink, `server.R:195-200` |
+| T-313 | P3 | 7 (Shiny) | Topology dedup keyed on `write.tree()` output, so branch lengths inflated the pool | **fixed `78b74147`** — branch lengths stripped before serialising, `mod_search.R:1095-1104` |
+| T-322 | P3 | 8 (Tests) | Wagner NA+IW regression test was tautological (omitted `min_steps`, so `h = steps − 0` on both sides) | **fixed `78b74147`** — both calls now pass `MinimumLength(pd, compress = TRUE)`, `test-ts-wagner.R:223-247` |
+| T-323 | P2 | 9 (Wagner) | `addition_order` unvalidated at the Rcpp boundary → OOB read/write, reproduced SIGSEGV | **fixed `61f71479`** (PR #261) — `validate_addition_order()` length + range + duplicate check, `ts_rcpp.cpp:62-79` |
+| T-325 | P2 | 11 (Collapse) | MPT-enumeration path not collapse-deduped → ~30 trees returned where ~1 was correct | **closed `7eb1172a`** (Round 2026-07-02) — already fixed by `0daea13f` eight days *before* the finding was filed; the finder read a stale build. Kept as the canonical stale-lib phantom |
+| T-326 | P3 | 11 (Collapse) | `test-ts-collapsed.R:160` asserted only `pool_size >= 1`, never that the returned set is collapse-deduped | **closed `7eb1172a`** (Round 2026-07-02) — ask already covered by `test-MaximizeParsimony-features.R:402-421`, added in `0daea13f` |
+| T-327 | P2 | 13 (Constraints) | `impose_one_pass` relocated the captured `best_node` mid-repair → cyclic tree → unbounded `build_postorder` → `std::bad_alloc` | **fixed `6b60f235`** — `reanchor_best_node` before every move + snapshot/validate/revert, `ts_constraint.cpp:702-743` |
+| T-328 | P2 | 9 (Wagner) | `tip_data` *values* unvalidated at the Rcpp boundary → `token_states[]` OOB read | **fixed `61f71479`** (PR #261) — `validate_tip_data_values()`, `ts_rcpp.cpp:42-52`, called at `:127` |
+| T-329 | P2 | 13 (Constraints) | Impossible (non-laminar) constraint reached the kernel → silent constraint violation, TBR freeze, and an OOB heap write from a `-1` phantom item | **fixed `c9ea624e`** (PR #264) — four-gamete split-compatibility rejection in `.PrepareConstraint` (`MaximizeParsimony.R:157-178`) + the `split_root[j] >= 0` guard at `ts_wagner.cpp:1096`. Follow-up `t329-constraint-gate-overbroad`: the first gate was laminar-subset and rejected *satisfiable* constraints; corrected to four-gamete |
+| T-330 | P1 | 11 (Collapse) | Zero-length-branch collapse blind to HSJ/XFORM character support → over-collapsed correctly-supported clades and corrupted the MPT set during enumeration | **fixed `13dcebd8`** — both `compute_collapsed_flags` and `_aggressive` no-op for `ScoringMode::HSJ`/`XFORM` (`ts_collapsed.cpp:24-25`, `:140-141`), which covers every call site including the unguarded enum-dedup ones. Regression test landed: `tests/testthat/test-ts-t330-collapse-hsj-xform.R`. (The finder's repro worktree `scratchpad/rt11-wt` no longer exists) |
+| T-331 | P3 | 11 (Collapse) | `total_words == 0` early return → fully-uninformative data returned binary trees and an inflated `n_topologies` instead of the star tree | **fixed `7f9c1966`** (merge `42e9e116`). Row had been *deleted* by `973d4831` under the old "remove the row" header; reconstructed here 2026-07-27 |
+| T-332 | P3 | 11 (Collapse) | `ts_collapse_pool` hung indefinitely on a non-binary (multifurcating) edge matrix | **fixed `4b833e7f`** (after `1b9b5dc8`, merge `997f57b4`) — explicit not-binary `Rcpp::stop` at `ts_rcpp.cpp:2063-2065` |
+| T-333 | P3 | 13 (Constraints) | The T-327 repair guard was not a complete structural validator | **fixed `3d50dfd4`** — unconditional cap + caller re-verify; test `test-ts-impose-constraint.R` "T-333: structural guard survives root-child repair". Row deleted under the old header; reconstructed here 2026-07-27 |
+| T-334 | P3 | 2 (Topology) | Aggressive collapse-neighbourhood criterion silently reverted to conservative after the first accepted move | **fixed `b1e9e096`** — branch on `collapse_aggr` at `ts_tbr.cpp:2859` and `:2991`, mirroring `:1539-1540`/`:2967-2968` |
+| T-336 | P1 | 4 (Parallelism/RNG) | One shared `ConstraintData` handed to every parallel `Resample()` worker → data race (UB), wrong-tree constraint gating, non-reproducibility | **fixed `f951df5a`** — per-worker `ConstraintData cd_local = *cd;` in the resample worker lambda, mirroring `parallel_driven`. Thread-race validation still deferred to GHA ASan/TSan (local ASan blocked on MinGW) |
+| T-345 | P1 | directed / 6 (R↔C++) | `MaximizeParsimony(tree = <unrooted phylo>)` SIGSEGV from the public API (`MakeTreeBinary` misread the unrooted root as a polytomy, returned a malformed object, `RootTree` died before the `stop()` guard) | **fixed `6fa97764`** (merge `430c4618`) — root before the bifurcation check, `MaximizeParsimony.R:1087-1096`, plus the `.CheckStartTree()` validity guard. **Repro re-run at HEAD 2026-07-27: no crash** — the recorded input is itself malformed (`ape::checkValidPhylo` FATAL) and is now rejected with a clean R error; a *genuinely* valid unrooted tree searches to completion (score 79 on Vinther2008). Note the fix took a third route: neither of the filed asks (strip the stale `order` attribute; validate `MakeTreeBinary`'s output) was implemented — `MakeTreeBinary` is simply never reached on unrooted input now |
+| T-347 | P3 | directed | `startEdge` list path enforced `nrow` consistency but never `ncol` → segfault on an n×1 member | **fixed `ee91dacc`** — `se.ncol() != 2` check beside the `nrow` one, `ts_rcpp.cpp`; test in `test-ts-driven.R` ("exactly 2 columns") |
+| T-348 | P3 | directed | New pool warning fired on the single-`phylo` path whenever `maxReplicates < 1`, contradicting the NEWS "unchanged in every respect" claim | **closed (Round 2026-07-27)** — no longer reproducible: the pre-commit warning was replaced in `ee91dacc` by a *post-search* consumption warning guarded on `length(startTrees) > 1L` (`MaximizeParsimony.R:1166`), which cannot fire for a single tree |
+| T-349 | P3 | directed | None of the three new test blocks could distinguish "pool consumed in rep order" from "tree 1 reused for every replicate" | **fixed `ee91dacc`** — the finding's own recommended shared-prefix discriminator landed (`test-MaximizeParsimony-features.R:265-280`: `poolA`/`poolB` differ in position 2 only, plus a `poolBA` order-matters check on `candidates_evaluated`). Residual, not worth a row: `test-ts-start-tree.R`'s `expect_equal(attr(pooled, "replicates"), 3L)` is still forced by the arguments, and the suite still has no compressed-`multiPhylo` test |
+| T-350 | P3 | directed | `?Resample` contradicted itself: the new `@param tree` said replicates search from scratch, the old `@details` said they may begin from the optimal tree | **fixed `ee91dacc`** — `@details` rewritten to "Each resample replicate searches the resampled matrix from scratch, rather than from `tree`", `Resample.R:182-185` |
+| T-352 | P3 | directed | `startEdge = list()` silently cold-started while `startEdge = "foo"` errored — asymmetric validation between sibling paths | **fixed `ee91dacc`** — an empty list now errors ("supplies no edge matrices"), `ts_rcpp.cpp`; test in `test-ts-driven.R` |
+| T-353 | P1 | directed | Regression introduced by the warm-start diff: a `multiPhylo` pool whose tree *k* (k ≥ 2) was unrooted now SIGSEGV'd where pre-diff it ran (trees 2..n used to be discarded before normalization) | **fixed `6fa97764`** (merge `430c4618`) — shares T-345's fix. **Repro re-run at HEAD 2026-07-27:** clean error with the per-member context the finding asked for — "`tree[[2]]` is not a valid tree: every leaf must be the child of exactly one edge" |
+| T-354 | P2 | 7 (Shiny) | EasyTrees "R script" download reconstructed a *different* tree subset than the user saw — naive stride sampling emitted where the app ran `WideSample()`'s Max-Min diversity solver, so the downloaded script recomputed silhouettes and cluster consensus from a non-representative subset (19/48 overlap on Sun2018; the stride subset contained duplicate topologies) | **fixed `d700bc95`** (2026-07-27, landed by a concurrent session while this `tidy` pass ran) — `BeginLogP()` now emits `WideSample(trees[…])` (`logging.R:161`), and the snapshot the finding identified as the only one carrying the bad line, `_snaps/Distribution/Distribution-001-ClusterCons.zip`, was regenerated in the same commit |
+| T-360 | P3 | 7 (Shiny) | "Save log" download's `WideSample()` line had no captured seed, so even the *correct* algorithm could reproduce a different tie-optimal subset | **fixed `d700bc95`** — `mod_data.R:199-207` seeds before `WideSample()` and logs the `set.seed()` call, so the exact/Grasp tiers' tie-breaks reproduce from the downloaded script. Fixed alongside T-354 exactly as the row recommended |
+| T-361 | P3 | 7 (Shiny) | `EnC(character(0))` emits the literal `c()` into generated reproduction code, which evaluates to `NULL` rather than an empty vector | **closed on filing (Round 2026-07-27)** — verified inert: every consumer branches on `length(x) == 0`, true for both. Filed and archived purely so a future finder does not re-derive it. Reopen only if `EnC`'s consumers stop branching on `length(x) == 0` |
+
+<!--
+Archive row template (one line, compressed from the findings.md row):
+| T-NNN | P1/P2/P3 | <area #> | One-sentence claim. | **fixed `<sha>`** (PR #N) / **closed (Round <date>)** — how it was confirmed at cpp-search HEAD. |
+-->

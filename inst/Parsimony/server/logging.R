@@ -153,10 +153,15 @@
         paste0("treeFile <- ", Enquote(TreeFileName(r$treeFiles))),
         "trees <- read.nexus(treeFile)",
         if (!identical(r$trees, r$allTrees)) {
-          paste0(
-            "trees <- trees[unique(as.integer(seq.int(",
-            r$treeRange[1], ", ", r$treeRange[2],
-            ", length.out = ", r$nTree, ")))]"
+          c(
+            if (!is.null(r$thinningSeed)) {
+              paste0("set.seed(", r$thinningSeed, ")")
+            },
+            paste0(
+              "trees <- WideSample(trees[",
+              r$treeRange[1], ":", r$treeRange[2],
+              "], ", r$nTree, ")"
+            )
           )
         }
       ))

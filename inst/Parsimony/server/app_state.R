@@ -40,6 +40,7 @@ AppState <- function() {
     nTree         = 0L,            # integer: current max trees to display
     treeRange     = c(1L, 1L),     # integer[2]: active range of tree indices
     updatingTrees = FALSE,         # reentrancy guard for UpdateActiveTrees()
+    thinningSeed  = NULL,          # integer: seed used for the last WideSample() thinning (T-360)
 
     # -- "Old" values for change detection --
     # These track previous input values so observers can detect real changes

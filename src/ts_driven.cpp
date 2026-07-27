@@ -22,6 +22,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <string>
 #include <functional>
 
@@ -1206,11 +1207,20 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     if (params.perturb_stop_factor > 0 && unsuccessful_reps > 0) {
       int hits = pool.hits_to_best();
       if (hits > 0) {
-        int limit = (params.target_hits > 0)
-            ? static_cast<int>(
-                static_cast<double>(params.target_hits) / hits
-                * ds.n_tips * params.perturb_stop_factor)
-            : ds.n_tips * params.perturb_stop_factor;
+        // Saturate rather than truncate: the product overflows `int` for large stop
+        // settings (e.g. 100000 hits x 69 tips x factor 10000), and casting an
+        // out-of-range double to int is undefined behaviour -- in practice it lands
+        // negative, so the rule fires on the very first non-improving replicate and the
+        // search returns a worse tree with no warning.  An enormous limit means "in
+        // effect, never stop on this rule", which is what such settings ask for.
+        const double limit_d = (params.target_hits > 0)
+            ? static_cast<double>(params.target_hits) / hits
+              * ds.n_tips * params.perturb_stop_factor
+            : static_cast<double>(ds.n_tips) * params.perturb_stop_factor;
+        const int limit =
+            limit_d >= static_cast<double>(std::numeric_limits<int>::max())
+            ? std::numeric_limits<int>::max()
+            : static_cast<int>(limit_d);
         if (unsuccessful_reps >= limit) {
           if (params.verbosity >= 1 && !has_callback) {
             Rprintf("Stopped: %d consecutive unsuccessful replicates "

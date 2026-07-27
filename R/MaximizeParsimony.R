@@ -198,6 +198,43 @@
   )
 }
 
+# Ratchet depth for implied weights under `thorough`/`large`, applied after the
+# strategy preset (see MaximizeParsimony()). Kept out of `.StrategyPresets()` so
+# the preset table stays scorer-agnostic: this depth is calibrated for implied
+# weights only, and equal weights measurably does not want it.
+.iwRatchetCycles <- 48L
+# Largest depth with supporting measurements; user escalation is capped here
+# rather than extrapolated. Quoted as a literal in the `targetHits` docs -- keep
+# the two in step if this changes.
+.iwRatchetMaxCycles <- 115L
+
+# Ratchet depth to impose for this call, or NULL to leave the preset's value.
+# `userSet` names the fields the caller set themselves (never overridden).
+# See the call site in MaximizeParsimony() for the calibration behind it.
+.IwRatchetDepth <- function(strategy, concavity, targetHits, defaultHits,
+                            userSet = character(0)) {
+  if (!length(strategy) || !strategy %in% c("thorough", "large")) {
+    return(NULL)
+  }
+  # `concavity` may still be the "profile" sentinel here: profile parsimony is a
+  # different objective and is left alone, as is equal weights (infinite).
+  if (length(concavity) != 1L || !is.numeric(concavity) ||
+      !is.finite(concavity)) {
+    return(NULL)
+  }
+  if ("ratchetCycles" %in% userSet) {
+    return(NULL)
+  }
+  escalation <- if (length(defaultHits) == 1L && is.finite(defaultHits) &&
+                    defaultHits > 0 && length(targetHits) == 1L &&
+                    is.finite(targetHits)) {
+    max(1, targetHits / defaultHits)
+  } else {
+    1
+  }
+  min(.iwRatchetMaxCycles, as.integer(round(.iwRatchetCycles * escalation)))
+}
+
 # Strategy presets for adaptive search (Phase 6E).
 # Wrapped in a function to avoid load-order dependency on SearchControl().
 .StrategyPresets <- function() {
@@ -588,6 +625,14 @@
 #'       run with no new topology is not proof that none remain, so completeness
 #'       is bought with search effort, never inferred.}
 #'   }
+#'   Under implied weights (finite `concavity`) with `strategy = "thorough"` or
+#'   `"large"`, raising `targetHits` above its default also deepens the ratchet
+#'   in proportion, up to 115 cycles: no dataset property reliably predicts how
+#'   much character reweighting a matrix needs, so a raised `targetHits` is taken
+#'   as the user's own signal that this one needs more.  Lowering `targetHits`
+#'   does not make the ratchet shallower than its default depth (fewer cycles
+#'   were slower to the optimum on every matrix tested), and setting
+#'   `ratchetCycles` yourself overrides this entirely.
 #' @param maxSeconds Numeric: maximum wall-clock time in seconds for the
 #'   search. When reached, the current replicate finishes and the search
 #'   stops. `0` (default) means no time limit.
@@ -735,8 +780,12 @@ MaximizeParsimony <- function(
   userSetReps <- !missing(maxReplicates)
 
   # --- Set targetHits default if not provided ---
+  # `defaultHits` is retained even when the user supplies `targetHits`: the
+  # implied-weights ratchet depth below scales with the user's *escalation*
+  # (targetHits / defaultHits), not with the absolute value.
+  defaultHits <- max(10L, as.integer(NTip(dataset) / 5))
   if (is.null(targetHits)) {
-    targetHits <- max(10L, as.integer(NTip(dataset) / 5))
+    targetHits <- defaultHits
   }
 
   # --- Backward compatibility: intercept maxTime → maxSeconds ---
@@ -811,6 +860,45 @@ MaximizeParsimony <- function(
         if (!is.na(stratReps)) {
           maxReplicates <- stratReps
         }
+      }
+
+      # Implied-weights ratchet depth. Under implied weights the optimum often
+      # sits in a small basin at fine score resolution, separated from an
+      # easy-to-find near-optimum by a fraction of a step; character reweighting
+      # (the ratchet) is what crosses that gap, and extra *replicates* cannot
+      # substitute for it: on one 106-tip matrix 20 000 random-addition restarts
+      # all plateau above the optimum that a deeper ratchet reaches.  A 36-matrix
+      # grid over
+      # `ratchetCycles` in {6, 12, 20, 48, 96} (implied weights, k = 10) found
+      # expected wall-clock-to-optimum minimised at 48: on the 4 cycle-sensitive
+      # matrices the mean fell 1435 s -> 709 s, while the 32 others paid a median
+      # +0.2 s with reach unchanged.  The curve is flat from ~20 to ~96 and rises
+      # steeply below 20, so 48 is a broad optimum rather than a knife-edge --
+      # hence a constant, not a per-dataset function: dataset size cannot target
+      # the need (94-, 106- and 110-tip matrices each appear as both
+      # cycle-sensitive and insensitive), and a Wagner-tree consistency gate,
+      # though it does correlate with the need, beats the constant by nothing
+      # once the constant sits in the flat region.
+      #
+      # `targetHits` is the user's own statement of how hard this dataset is, so
+      # raising it deepens the ratchet in proportion -- the one signal available
+      # that no dataset feature supplies.  Escalation only: de-escalating (the
+      # documented `targetHits = 4` "one tree, quickly" idiom) must not drop
+      # below 48, since fewer cycles were slower for *every* stratum measured.
+      # Capped at the largest depth actually tested.
+      #
+      # Equal weights is excluded deliberately: the same 3-arm test over 68
+      # matrices found no reach gain there (0.970 vs 0.965) for a small wall
+      # cost, the integer landscape lacking the fractional basins this escapes.
+      # Scoped to `thorough`/`large`, whose other knobs match the grid; `default`
+      # and `sprint` co-tuned their ratchet with different sectorial settings and
+      # are untouched.
+      iwCycles <- .IwRatchetDepth(
+        strategy, concavity, targetHits, defaultHits,
+        userSet = union(names(controlDots), attr(control, "explicit"))
+      )
+      if (!is.null(iwCycles)) {
+        control[["ratchetCycles"]] <- iwCycles
       }
     } else if (!identical(strategy, "auto")) {
       warning("Unknown strategy '", strategy, "'; using default parameters.")

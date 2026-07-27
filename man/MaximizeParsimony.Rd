@@ -207,7 +207,15 @@ replicate has already reached, so a larger budget samples more islands.
 No stopping rule can \emph{detect} that every island has been found: a long
 run with no new topology is not proof that none remain, so completeness
 is bought with search effort, never inferred.}
-}}
+}
+Under implied weights (finite \code{concavity}) with \code{strategy = "thorough"} or
+\code{"large"}, raising \code{targetHits} above its default also deepens the ratchet
+in proportion, up to 115 cycles: no dataset property reliably predicts how
+much character reweighting a matrix needs, so a raised \code{targetHits} is taken
+as the user's own signal that this one needs more.  Lowering \code{targetHits}
+does not make the ratchet shallower than its default depth (fewer cycles
+were slower to the optimum on every matrix tested), and setting
+\code{ratchetCycles} yourself overrides this entirely.}
 
 \item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
 search. When reached, the current replicate finishes and the search
