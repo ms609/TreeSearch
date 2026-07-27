@@ -30,7 +30,7 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
 | 4 | **Parallelism & RNG** | `src/ts_parallel.cpp`, `src/ts_rng.h/.cpp`, `src/ts_driven.cpp`, `src/ts_resample.cpp` | **opus** | Thread-local RNG set before any search call? **No R API (incl. `unif_rand`/`Get/PutRNGstate`) from worker threads** — note the resample path. Pool mutex correct? Atomic stop-flag races? Seeds drawn from R RNG before spawn? |
 | 5 | **Data pipeline & simplification** | `src/ts_data.h/.cpp`, `src/ts_simplify.h/.cpp`, `src/ts_ls.h/.cpp` | **opus** | `build_dataset` handles edge cases (all-ambiguous, single-state, zero-weight, `n_states==32` UBSAN)? `build_reduced_dataset` copies all fields? XPIWE `obs==0` division? Least-squares distance fitting (`ts_ls.cpp`) — degenerate `dist` (NA/Inf) handled (cf. filed P1: `LeastSquaresFit`/`LeastSquaresTree` RSS=0 garbage)? |
 | 6 | **R ↔ C++ interface** | `src/ts_rcpp.cpp`, `src/TreeSearch-init.c`, `R/RcppExports.R`, `R/MaximizeParsimony.R`, `R/SearchControl.R` | **sonnet** | Arg counts match? Concavity sentinel translated? Edge-matrix conventions? Return value attributes/types set (frozen-API `logical` vs `integer`)? Parameter validation in R layer? |
-| 7 | **Shiny module wiring** | `inst/Parsimony/server.R`, `inst/Parsimony/server/mod_*.R`, `inst/Parsimony/server/events.R` | **sonnet** | Forward-ref callbacks resolve? Cross-module `updateXxxInput` namespaces correct? Re-entrancy / double-launch guards? Stale dataset-hash on async tasks? `onStop` cleanup (cancel signal + temp files)? Orphaned observers? |
+| 7 | **Shiny module wiring** | `inst/Parsimony/server.R`, `inst/Parsimony/global.R`, `inst/Parsimony/ui.R`, `inst/Parsimony/server/mod_*.R`, `inst/Parsimony/server/app_state.R`, `inst/Parsimony/server/logging.R` | **sonnet** | Forward-ref callbacks resolve? Cross-module `updateXxxInput` namespaces correct? Re-entrancy / double-launch guards? Stale dataset-hash on async tasks? `onStop` cleanup (cancel signal + temp files)? Orphaned observers? |
 | 8 | **Test suite health** | `tests/testthat/test-ts-*.R`, `tests/testthat/helper-ts.R` | **sonnet** | Tier guards correct? Vacuous (always-pass) assertions? Missing `TreeSearch:::` prefixes? `set.seed()` before `sample()`? Edge-case coverage gaps (3-tip, single-char, all-NA)? Enduring regression for incremental-rescore? |
 | 9 | **Wagner & addition trees** | `src/ts_wagner.h/.cpp`, `R/AdditionTree.R`, `R/PolEscapa.R` | **opus** | NA-incremental scoring staleness acceptable? Constraint mapping (LCA-based) correct? Retry loop fires? 3-taxon base case handles all orderings? R-layer index/`sequence` validation (OOB-write guard)? |
 | 10 | **Alternative scoring kernels: Profile/IW/HSJ/XFORM** | `src/ts_fitch.cpp` (IW/profile paths), `src/ts_data.cpp` (precompute), `src/ts_hsj.cpp/.h`, `src/ts_sankoff.cpp/.h` | **opus** | `e/(k+e)` delta correct? Profile `info_amounts` lookup + capping matches? `concavity = 1.0` sentinel activates weighted path? `precompute_profile_delta` includes `precomputed_steps` offset? Clipped-subtree homoplasy in screening? HSJ/XFORM (`ds.hierarchy_blocks`/`ds.sankoff_*`) scoring correctness in its own right (not just collapse-flag blindness, cf. T-330 area 11) — does anything else outside collapse assume `ds.blocks[]` is exhaustive? |
@@ -56,7 +56,12 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
   run. T-310 (frozen-API `pruneReinsertNni` type) shows it still occasionally yields —
   escalate if a sonnet pass goes dry.
 - **7 Shiny wiring — sonnet.** **Immature seam:** a Sonnet pass found 5 bugs on 2026-06-16
-  (T-309…T-313). Keep mining cheap until it runs dry.
+  (T-309…T-313). Keep mining cheap until it runs dry. *(Scope row corrected 2026-07-27: it
+  named a phantom `server/events.R` — no such file — while omitting `global.R` (430 lines),
+  `ui.R`, `app_state.R` and `logging.R`, ~850 real lines that no round had ever owned. The
+  2026-06-16 round read only `server.R` + `mod_search.R`, so `mod_consensus.R` (1449),
+  `mod_treespace.R` (776), `mod_data.R` (660), `mod_clustering.R`, `mod_downloads.R` and
+  `mod_references.R` remain unreviewed at any tier.)*
 - **8 Test suite health — sonnet.** Reliably yields inline fixes (`set.seed`, vacuous
   asserts) and test-gap notes (T-304).
 - **9 Wagner & addition — opus.** Kernel code; WGN-01 (P1 OOB write via `AdditionTree(sequence=)`).
