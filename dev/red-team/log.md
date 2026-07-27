@@ -152,6 +152,35 @@ shows permanently in `git status` and is one `git add -A` away from being commit
 red-team's remit and on a file another session was editing this session
 (`concurrent-session-git-hazard`), so it is flagged here rather than changed.
 
+**THE COUPLED TRACKER WAS WORSE — `to-do.md`, 13 STALE STATUS CELLS, REPAIRED.** `findings.md`'s
+own header names the root `to-do.md` as the *dispatcher's* queue over the same findings, and
+the project's own closure precedent (`7eb1172a`) updates both. Reconciling only one of two
+coupled trackers would have left the drift in the file the dispatcher actually reads — i.e. the
+one that can cause an agent to be assigned work that is already done, including a **P1**
+(T-330). Repaired, status cell only, no descriptions touched: **T-309…T-313** `OPEN` →
+`FIXED (78b74147)`; **T-323, T-328** → `FIXED (61f71479, PR #261)`; **T-329** →
+`FIXED (c9ea624e, PR #264)`; **T-330** → `FIXED (13dcebd8)`; **T-332** → `FIXED (4b833e7f)`; and
+three rows that had never been flipped after their PRs merged on 2026-06-15 — **T-303**
+(PR #247), **T-304** (PR #248), **T-306** (PR #249). Those last three needed a content check
+rather than an ancestry check: their merge commits are **not** ancestors of `cpp-search` HEAD
+(they merged to `main`), but the fixes reached this branch under different SHAs, confirmed by
+`test-ts-hsj.R`, `test-ts-tbr-dirty-rescore.R` and `test-ts-t306-accept-guard.R` all existing at
+HEAD. **A SHA that is not an ancestor is not evidence a fix is missing** — check the content.
+
+**CHECKED AND NEEDED NOTHING.** `escalation-backlog.md`: its five items are keyed by *area* and
+*residual*, not by `T-` ID (the single `T-`-looking match is a commit hash fragment), and its
+Resolved-history stub is still accurate — no row I archived is referenced there. The new
+`dev/red-team/**/*.rds` ignore rule shadows nothing: `git ls-files dev/red-team | git
+check-ignore --stdin` returns empty, so no tracked file became ignored.
+
+**T-354's FIX APPEARS TO BE IN FLIGHT** (noted, not acted on). At the end of this pass a
+concurrent session is holding uncommitted modifications to `inst/Parsimony/server/logging.R`,
+`inst/Parsimony/server/mod_data.R` and
+`inst/Parsimony/tests/testthat/_snaps/Distribution/Distribution-001-ClusterCons.zip` — the
+emitter, the correct sibling, and the exact snapshot T-354 identified as the one that must be
+regenerated. Uncommitted is not landed, so the row correctly stays open; the next `tidy` should
+expect to archive it.
+
 **COUNT CORRECTION.** `d9a08c34`'s message says `findings.md` carried **41** `T-` rows; the true
 figure was **40** (the 41st match is the filing-template comment). Post-tidy: **19 open** —
 T-324, T-335, T-337, T-338, T-339, T-340, T-341, T-342, T-343, T-344, T-346, T-351,
