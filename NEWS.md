@@ -24,6 +24,22 @@
   is hard.  Lowering `targetHits` does not make the ratchet shallower, and
   setting `ratchetCycles` yourself overrides all of this.
 
+- `MaximizeParsimony()` now normalizes `concavity` before dispatching to the
+  search engine, instead of coercing it silently later.  Previously,
+  `concavity = "10"` (a numeric-coercible string) skipped the R-side
+  minimum-steps calculation entirely, yet still reached the C++ engine as a
+  finite value and ran in implied-weighting mode with homoplasy uncorrected
+  — a silently wrong score with no error or warning.  Separately,
+  `concavity = "Profile"` or `"prof"` failed the search entry's exact-match
+  check (unlike scoring functions such as `TreeLength()`, which already
+  matched case- and prefix-insensitively) and silently searched under equal
+  weights instead of profile parsimony.  Both symptoms are now closed:
+  profile-mode matching is shared with the scoring entry points, and any
+  other `concavity` value is coerced with `as.numeric()` and rejected with a
+  clear error if it is not a single positive number (or `Inf`).
+  `concavity = 10`, `concavity = "profile"`, and `concavity = Inf` behave
+  exactly as before.
+
 - `MaximizeParsimony(tree = )` now accepts a whole pool of starting trees:
   given a `multiPhylo`, replicate _i_ warm-starts from tree _i_, and any
   replicates beyond the pool build random Wagner trees as before.  Previously

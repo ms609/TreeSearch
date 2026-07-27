@@ -961,8 +961,28 @@ MaximizeParsimony <- function(
     }
   }
 
+  # --- Normalize `concavity` ---
+  # Route the profile-mode test through the same lenient matcher used at the
+  # scoring entry points (`.UseProfile()`, called from tree_length.R and
+  # PolEscapa.R) so concavity = "Profile" or "prof" search in profile mode
+  # exactly as later re-scoring the result would.  Everything else must
+  # resolve to a valid positive number (or Inf) *here*: letting a bad string
+  # such as "10" reach as.double() unchecked would silently coerce to 10 while
+  # leaving IW's min_steps unpopulated downstream, so the C++ engine would run
+  # IW uncorrected for homoplasy with no error or warning (see min_steps in
+  # ts_data.cpp / ts_fitch.cpp).
+  useProfile <- !missing(concavity) && .UseProfile(concavity)
+  if (!useProfile) {
+    rawConcavity <- concavity
+    concavity <- suppressWarnings(as.numeric(concavity))
+    if (length(concavity) != 1L || is.na(concavity)) {
+      stop("`concavity` must be a single positive number, Inf (for equal ",
+           "weights), or \"profile\" (for profile parsimony); got ",
+           deparse(rawConcavity), ".")
+    }
+  }
+
   # --- Profile parsimony: prepare data ---
-  useProfile <- !missing(concavity) && identical(concavity, "profile")
   if (useProfile) {
     profileApprox <- if (!is.null(dots[["profile_approx"]])) {
       dots[["profile_approx"]]
