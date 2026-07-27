@@ -10,8 +10,13 @@
 #' data("inapplicable.phyData", package = "TreeSearch")
 #' AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 #' @template MRS
-#' @return `AdditionTree()` returns a tree of class `phylo`, rooted on
-#' `sequence[1]`.
+#' @return `AdditionTree()` returns a tree of class `phylo`. The tree carries a
+#' degree-two root, but its root position is an arbitrary by-product of the
+#' order in which taxa were added and is not `sequence[1]`; parsimony scores are
+#' unaffected by rooting, so root the result explicitly (e.g. with
+#' `TreeTools::RootTree()`) if a particular root is needed. With fewer than four
+#' taxa there is nothing to optimise, and a pectinate tree of the dataset's taxa
+#' is returned without consulting `sequence` or `constraint`.
 #' @importFrom TreeTools PectinateTree Renumber
 #' @family tree generation functions
 #' @seealso 
