@@ -56,6 +56,119 @@ persistently-dry reputation leans on pre-tier rounds (areas 3 and 10 both do) ha
 
 ---
 
+area: **n/a — `tidy` housekeeping pass** (no finder, no verifier, no new findings; `last_focus:` deliberately untouched at 7)
+reviewed_by: orchestrator only (opus, Opus 5) — git-archaeology + source inspection at `cpp-search` HEAD `d9a08c34`, plus one empirical repro re-run
+date: 2026-07-27
+tier: n/a (tidy dispatches no agent, so this entry contributes no tier/yield evidence to any area)
+yield: n/a — **21 rows archived, 5 reconstructed, 2 narrowed, 1 re-anchored.** `findings.md` 40 open → **19 open**
+
+notes: Second-ever `tidy`; the first was 2026-07-13. Triggered by status drift and by
+`findings-archive.md` never having existed, **not** by volume (40 rows is far under the
+skill's ~150-open threshold).
+
+**THE HEADLINE: 12 findings were sitting in the OPEN table already fixed at HEAD — three of
+them P1.** Not five, which is what the area-7 round three hours earlier had found and
+flagged; the round only checked its own area. Every one was confirmed by inspecting the code
+at HEAD, not by trusting a status line:
+
+| Was listed | Actually | Since |
+|---|---|---|
+| T-323, T-328 (P2, Wagner Rcpp OOB) | `validate_addition_order()` / `validate_tip_data_values()` both present | `61f71479` (PR #261), 2026-07-04 |
+| T-329 (P2, impossible constraint → OOB heap write) | four-gamete compatibility gate in `.PrepareConstraint` + the `split_root[j] >= 0` guard | `c9ea624e` (PR #264), 2026-07-04 |
+| **T-330 (P1, collapse blind to HSJ/XFORM)** | both `compute_collapsed_flags` variants no-op for HSJ/XFORM; regression test `test-ts-t330-collapse-hsj-xform.R` exists | `13dcebd8`, 2026-07-03 |
+| T-332 (P3, `ts_collapse_pool` hang) | explicit not-binary `Rcpp::stop` at `ts_rcpp.cpp:2063` | `4b833e7f`, 2026-07-03 |
+| **T-345, T-353 (P1, SIGSEGV on unrooted start / unrooted pool member)** | root-before-binary-check + `.CheckStartTree` | `6fa97764` (merge `430c4618`), **the same day** |
+| T-347, T-348, T-349, T-350, T-352 (directed round) | all five fixed inside `ee91dacc` | see below |
+
+**Why the five directed-round rows were born stale, which is a process fact worth keeping.**
+That round reviewed the warm-start pool feature as an **uncommitted working diff**. The fixes
+were applied and the feature committed as `ee91dacc` (08:48), and the round record committed
+as `02de896d` (08:49) — so the findings were filed `open` 51 seconds after their own fixes
+landed. `git log -S` on each fix string points at `ee91dacc`, i.e. at the very commit whose
+pre-commit state was reviewed. **This is expected for a pre-commit directed round and is not
+drift** — but nothing in the workflow reconciles it, so it reads identically to drift three
+weeks later. A directed round on an uncommitted diff should close its own rows when it applies
+the fixes.
+
+**T-345/T-353 were not archived on a source trace — the repros were re-run.** Both rows record
+`SIGSEGV, exit 139`, while the fix commit's own message describes a *non-crash* symptom
+("argument is of length zero"), and the fix takes a **third route** from either of T-345's two
+filed asks (it neither strips the stale `order` attribute nor validates `MakeTreeBinary`'s
+output — it simply never reaches `MakeTreeBinary` on unrooted input). That mismatch is exactly
+the shape of a fix that closes the repro while leaving the mechanism live, so it was tested:
+
+- T-345's exact recorded repro → clean R error, no crash. **And the recorded input is itself
+  malformed**: `ape::unroot(Preorder(RandomTree(ds, root = TRUE)))` fails
+  `ape::checkValidPhylo` (tip 13 appears twice; the root appears in column 2). So the tree the
+  P1 was filed on was never a valid unrooted tree, and HEAD now rejects it accurately.
+- T-353's exact recorded repro → clean error carrying the per-member context the finding
+  asked for: "`tree[[2]]` is not a valid tree: every leaf must be the child of exactly one edge."
+- Control, because "rejects everything" would also pass the two tests above: a **genuinely**
+  valid unrooted tree (`ape::unroot(ape::rtree(…))`) searches to completion, score 79 on
+  Vinther2008 — so the new `@param tree` promise that unrooted input is accepted holds.
+
+**ROWS RECONSTRUCTED (5) — the archive doing the job the old header prevented.** `findings.md`
+carried a "when a finding lands (PR merged), **remove the row**… do not keep a resolved trophy
+table" instruction. It was followed: `973d4831` is literally titled *"remove landed T-331 row"*.
+Reconstruction was bounded to IDs that still have live cross-references — from
+`heavy-tests/impose_validity/`, from source comments in `src/ts_constraint.cpp` and
+`src/ts_collapsed.cpp`, and from this log: **T-325, T-326** (the stale-lib phantom — the single
+highest-value anti-dup record in the file), **T-327, T-331, T-333**. Older deleted rows were
+*not* reconstructed; if a pre-T-325 ID turns up in a source comment, it will need the same
+treatment. **The header is now rewritten to point at `findings-archive.md` by name** — that
+paragraph, not any individual row, is the actual fix for this class of drift.
+
+**NARROWED, NOT ARCHIVED (2).** Both had landed *most* of their fix, which is the case a binary
+open/closed field handles worst:
+- **T-346** P2 → **P3**. The recommended post-search consumption warning landed
+  (`MaximizeParsimony.R:1166-1172`, ungated by `verbosity`, pinned by a test), and `@param tree`
+  was rewritten to match. Residual is **one sentence** in `vignettes/tree-search.Rmd:321-322`
+  still implying trees up to `maxReplicates` are used. Nothing behavioural remains, hence the
+  downgrade.
+- **T-351**. The diff's own new blocks are now `skip_on_cran()`-guarded (`:237`, `:283`), so the
+  ~13% aggravation is gone; the pre-existing breach the finding was careful to separate stands
+  — `perturbStopFactor` (`:163`) is unguarded and ~20 s on its own, 10× the whole-file budget.
+
+**RE-ANCHORED (1).** T-324's cited `ts_driven.cpp:929` had drifted to **`:1004` and `:1012`** —
+and there are **two** ungated `pool.add_collapsed(rep_result.tree, …)` sites, not one, so a fix
+must gate both. Wagner returns re-anchored to `:774`/`:811`. Also recorded on the row: its
+sibling T-329 is now fixed, and that gate retires the *impossible*-constraint subset of T-324,
+leaving only the satisfiable-constraint case. Stale line numbers are the tell for a stale build
+(see the T-325/T-326 phantom); re-anchoring is cheap insurance.
+
+**LINK INTEGRITY.** Checked before moving anything. `heavy-tests/impose_validity/` and
+`reviews/cpp-search-sect-colreduce/` both **kept** — the latter backs still-open T-335, the
+former is the reusable harness area 13's next visit is supposed to build on. Source comments
+and `dev/plans/*` referencing archived IDs stay resolvable *because* the IDs were archived
+rather than deleted. One dead pointer found and dropped rather than carried forward: T-330's
+repro worktree `scratchpad/rt11-wt` no longer exists.
+
+**ARTIFACT HYGIENE.** `.gitignore` had **zero** red-team entries; added a block mirroring the
+`dev/profiling/` one, covering heavy-test/review run logs, `*-results/`, build dirs and
+`*.rds`, while leaving every committed driver, repro script, proof and review note tracked. No
+`RT-area*-*.rds` fixtures exist, so no negation was needed. No stray dumps found.
+**Observed, not acted on:** `scratchpad/` at the repo root is untracked *and* unignored, so it
+shows permanently in `git status` and is one `git add -A` away from being committed — out of
+red-team's remit and on a file another session was editing this session
+(`concurrent-session-git-hazard`), so it is flagged here rather than changed.
+
+**COUNT CORRECTION.** `d9a08c34`'s message says `findings.md` carried **41** `T-` rows; the true
+figure was **40** (the 41st match is the filing-template comment). Post-tidy: **19 open** —
+T-324, T-335, T-337, T-338, T-339, T-340, T-341, T-342, T-343, T-344, T-346, T-351,
+T-354…T-360.
+
+**`README.md` created** (first time): directory map, the lifecycle, and the two rules this
+directory has actually been burned by — *landed means present in `cpp-search` HEAD, not merged
+to `main`* (which is ~180 commits behind, so the skill's generic "merged to main" wording would
+make nothing archivable), and *archive, never delete*.
+
+**`last_focus:` unchanged at 7.** `tidy` dispatches no agent, so it contributes no tier or
+yield evidence to any area, and the next `/red-team` still runs **area 8 (Test suite health)** —
+which now inherits a materially cleaner brief: T-322 archived, T-351 narrowed to the one block
+that is genuinely over budget.
+
+---
+
 area: 7 (Shiny module wiring — EasyTrees, `inst/Parsimony/`)
 reviewed_by: sonnet finder (a2ad2c91, 229k tokens / 53 tool-uses / 1463s) + opus peer verifier (af2fad95, 2 medium+ rows) + haiku verifier (a7c2f411, 7-row low-sev batch) + orchestrator (fix-status reconciliation, scope-row repair)
 date: 2026-07-27
