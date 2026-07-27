@@ -780,6 +780,15 @@ MaximizeParsimony <- function(
   # the only reliable read.
   userSetReps <- !missing(maxReplicates)
 
+  # `maxReplicates < 1` runs the search loop zero times: the pool stays
+  # empty, `best_score` never leaves its C++ sentinel of -1, and the
+  # empty-pool fallback below would silently return the random starting
+  # tree tagged with that bogus score instead of erroring.
+  if (length(maxReplicates) != 1L || is.na(maxReplicates) ||
+      as.integer(maxReplicates) < 1L) {
+    stop("`maxReplicates` must be a single integer of at least 1.")
+  }
+
   # --- Set targetHits default if not provided ---
   # `defaultHits` is retained even when the user supplies `targetHits`: the
   # implied-weights ratchet depth below scales with the user's *escalation*
@@ -1160,7 +1169,11 @@ MaximizeParsimony <- function(
   # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
   # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
   if (userSetReps && nTip >= 30L && verbosity > 0L) {
-    nChars <- sum(weight)
+    # `weight` here is the .ScaleWeight()-integerised value used by the C++
+    # engine (up to ~1260x the original for fractional weights); the
+    # recommendation formula is about the number of characters in the
+    # dataset, so it must read `at$weight` (pre-scaling) rather than `weight`.
+    nChars <- sum(at$weight)
     minReps <- pmax(10L, ceiling(nTip * nChars / 5000L))
     if (maxReplicates < minReps) {
       warning(

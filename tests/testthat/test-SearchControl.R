@@ -169,6 +169,38 @@ test_that("stallEscalateFactor is validated and stored", {
                "stallEscalateFactor.*>= 1")
 })
 
+test_that("out-of-range fractional/size parameters are rejected (T-343)", {
+  # enumTimeFraction documented range is [0, 0.5]
+  expect_error(SearchControl(enumTimeFraction = 0.6),
+               "enumTimeFraction.*0 and 0.5")
+  expect_error(SearchControl(enumTimeFraction = -0.1),
+               "enumTimeFraction.*0 and 0.5")
+  expect_equal(SearchControl(enumTimeFraction = 0.5)$enumTimeFraction, 0.5)
+  expect_equal(SearchControl(enumTimeFraction = 0)$enumTimeFraction, 0)
+
+  # nniPerturbFraction and ratchetPerturbProb are documented as [0, 1]
+  expect_error(SearchControl(nniPerturbFraction = 1.1),
+               "nniPerturbFraction.*0 and 1")
+  expect_error(SearchControl(nniPerturbFraction = -0.1),
+               "nniPerturbFraction.*0 and 1")
+  expect_equal(SearchControl(nniPerturbFraction = 1)$nniPerturbFraction, 1)
+
+  expect_error(SearchControl(ratchetPerturbProb = 1.1),
+               "ratchetPerturbProb.*0 and 1")
+  expect_error(SearchControl(ratchetPerturbProb = -0.1),
+               "ratchetPerturbProb.*0 and 1")
+  expect_equal(SearchControl(ratchetPerturbProb = 1)$ratchetPerturbProb, 1)
+
+  # sectorMinSize must not exceed sectorMaxSize
+  expect_error(
+    SearchControl(sectorMinSize = 60L, sectorMaxSize = 50L),
+    "sectorMinSize.*sectorMaxSize"
+  )
+  expect_equal(
+    SearchControl(sectorMinSize = 10L, sectorMaxSize = 10L)$sectorMinSize, 10L
+  )
+})
+
 test_that("SearchControl() records which fields the caller set explicitly", {
   # No arguments -> nothing explicit (so a strategy preset applies in full).
   expect_null(attr(SearchControl(), "explicit"))

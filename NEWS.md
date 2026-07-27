@@ -40,6 +40,24 @@
   `concavity = 10`, `concavity = "profile"`, and `concavity = Inf` behave
   exactly as before.
 
+- `MaximizeParsimony()` now rejects `maxReplicates < 1` with a clear error,
+  rather than silently returning the random starting tree tagged with a
+  bogus `attr(, "score")` of `-1` (the search loop ran zero times, so the
+  pool was left empty).
+
+- `SearchControl()` now validates `enumTimeFraction`, `nniPerturbFraction`,
+  and `ratchetPerturbProb` against their documented ranges, and rejects
+  `sectorMinSize > sectorMaxSize`.  Out-of-range values previously reached
+  the C++ engine unchecked and produced silently degenerate search
+  behaviour rather than an error.
+
+- Fixed: the "increase `maxReplicates`" advisory warning in
+  `MaximizeParsimony()` reported the character count using the
+  internally-scaled integer weight (up to ~1260x the true value for
+  fractional-weight datasets) rather than the dataset's actual weights,
+  inflating the recommended replicate count. Cosmetic only: no change in
+  search behaviour.
+
 - `MaximizeParsimony(tree = )` now accepts a whole pool of starting trees:
   given a `multiPhylo`, replicate _i_ warm-starts from tree _i_, and any
   replicates beyond the pool build random Wagner trees as before.  Previously
