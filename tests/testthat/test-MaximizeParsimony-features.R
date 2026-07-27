@@ -13,6 +13,46 @@ test_that("MaximizeParsimony stops with message when dataset is NULL", {
   )
 })
 
+test_that("MaximizeParsimony rejects maxReplicates < 1 (T-341)", {
+  # maxReplicates = 0 runs the search loop zero times, leaving the pool
+  # empty and best_score at the C++ sentinel of -1; without this guard, the
+  # empty-pool fallback silently returned the random starting tree tagged
+  # with that bogus score instead of erroring.
+  expect_error(
+    MaximizeParsimony(ds, maxReplicates = 0L, targetHits = 1L,
+                      verbosity = 0L),
+    "`maxReplicates` must be"
+  )
+  expect_error(
+    MaximizeParsimony(ds, maxReplicates = -1L, targetHits = 1L,
+                      verbosity = 0L),
+    "`maxReplicates` must be"
+  )
+  expect_error(
+    MaximizeParsimony(ds, maxReplicates = NA_integer_, targetHits = 1L,
+                      verbosity = 0L),
+    "`maxReplicates` must be"
+  )
+})
+
+test_that("replicate-adequacy warning uses unscaled character count (T-342)", {
+  # `weight` is the .ScaleWeight()-integerised value (up to ~1260x for
+  # fractional weights); the printed `nChars` must reflect the true number
+  # of characters, not that internal scale factor. The warning only fires
+  # for nTip >= 30, so use a synthetic dataset large enough to trigger it.
+  set.seed(1)
+  dat <- TreeTools::MatrixToPhyDat(matrix(
+    sample(0:1, 30 * 10, replace = TRUE), nrow = 30,
+    dimnames = list(paste0("t", 1:30), NULL)))
+  attr(dat, "weight") <- rep(0.5, attr(dat, "nr"))
+  nCharsTrue <- sum(attr(dat, "weight"))
+  expect_warning(
+    MaximizeParsimony(dat, maxReplicates = 1L, targetHits = 1L,
+                      verbosity = 1L),
+    paste0(nCharsTrue, " characters")
+  )
+})
+
 # --- Strategy presets ---
 
 test_that("strategy = 'sprint' runs and returns valid result", {

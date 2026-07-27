@@ -388,6 +388,26 @@ SearchControl <- function(
   if (length(.se) != 1L || is.na(.se) || .se < 1) {
     stop("`stallEscalateFactor` must be a single number >= 1")
   }
+  # Documented-range parameters passed straight to the C++ engine unchecked:
+  # out-of-range values don't crash, they silently produce degenerate search
+  # behaviour (e.g. a negative probability or a fraction > 1), which is worse
+  # than an explicit error.
+  .etf <- as.double(enumTimeFraction)
+  if (length(.etf) != 1L || is.na(.etf) || .etf < 0 || .etf > 0.5) {
+    stop("`enumTimeFraction` must be a single number between 0 and 0.5")
+  }
+  for (.p in c("nniPerturbFraction", "ratchetPerturbProb")) {
+    .v <- as.double(get(.p))
+    if (length(.v) != 1L || is.na(.v) || .v < 0 || .v > 1) {
+      stop("`", .p, "` must be a single number between 0 and 1")
+    }
+  }
+  .sMin <- as.integer(sectorMinSize)
+  .sMax <- as.integer(sectorMaxSize)
+  if (length(.sMin) != 1L || length(.sMax) != 1L ||
+      is.na(.sMin) || is.na(.sMax) || .sMin > .sMax) {
+    stop("`sectorMinSize` must be less than or equal to `sectorMaxSize`")
+  }
   structure(
     list(
       tbrMaxHits = as.integer(tbrMaxHits),
