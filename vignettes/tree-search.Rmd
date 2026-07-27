@@ -318,8 +318,11 @@ MaximizeParsimony(vinther, tree = previousResult)
 
 This matters because the returned trees are topologically diverse, and tree
 fusing recombines that diversity from the outset; one tree cannot supply it.
-Replicates beyond the supplied pool still start from random Wagner trees, and
-trees beyond `maxReplicates` are not used.
+Replicates beyond the supplied pool still start from random Wagner trees.
+One tree is consumed per replicate actually run, so a search that converges
+early -- on `targetHits`, the usual case -- draws on only part of a large
+pool, and warns when it does; raise `targetHits` as well as `maxReplicates`
+to use more of it.
 
 ## Implied weighting
 
