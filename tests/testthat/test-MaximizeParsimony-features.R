@@ -56,6 +56,7 @@ test_that("replicate-adequacy warning uses unscaled character count (T-342)", {
 # --- Strategy presets ---
 
 test_that("strategy = 'sprint' runs and returns valid result", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(3418)
   result <- MaximizeParsimony(ds, strategy = "sprint",
                                maxReplicates = 2L, targetHits = 1L,
@@ -67,6 +68,7 @@ test_that("strategy = 'sprint' runs and returns valid result", {
 })
 
 test_that("candidates_evaluated attribute is reported for serial search", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   # Diagnostic counter (TNT "rearrangements examined" analogue): a positive,
   # finite scalar for a single-threaded search. See MaximizeParsimony @return.
   set.seed(3418)
@@ -80,6 +82,7 @@ test_that("candidates_evaluated attribute is reported for serial search", {
 })
 
 test_that("strategy = 'intensive' (opt-in) runs and returns valid result", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(5726)
   result <- MaximizeParsimony(ds, strategy = "intensive",
                                maxReplicates = 2L, targetHits = 1L,
@@ -91,6 +94,7 @@ test_that("strategy = 'intensive' (opt-in) runs and returns valid result", {
 })
 
 test_that("strategy = 'default' runs and returns valid result", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(5726)
   result <- MaximizeParsimony(ds, strategy = "default",
                                maxReplicates = 2L, targetHits = 1L,
@@ -100,6 +104,7 @@ test_that("strategy = 'default' runs and returns valid result", {
 })
 
 test_that("strategy = 'thorough' runs and returns valid result", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8103)
   result <- MaximizeParsimony(ds, strategy = "thorough",
                                maxReplicates = 1L, targetHits = 1L,
@@ -138,6 +143,7 @@ test_that(".AutoStrategy selects on size and signal density", {
 })
 
 test_that("strategy = 'auto' selects based on dataset size", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(2944)
   # Vinther2008 has 23 tips -> should auto-select "sprint"
   result <- MaximizeParsimony(ds, strategy = "auto",
@@ -148,6 +154,7 @@ test_that("strategy = 'auto' selects based on dataset size", {
 })
 
 test_that("strategy = 'none' uses raw parameter defaults", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(6017)
   result <- MaximizeParsimony(ds, strategy = "none",
                                maxReplicates = 2L, targetHits = 1L,
@@ -158,6 +165,7 @@ test_that("strategy = 'none' uses raw parameter defaults", {
 })
 
 test_that("explicit params override strategy preset", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(1589)
   # Sprint has driftCycles=0; override to 1
   result <- MaximizeParsimony(ds, strategy = "sprint",
@@ -169,6 +177,7 @@ test_that("explicit params override strategy preset", {
 })
 
 test_that("unknown strategy gives warning", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(4821)
   expect_warning(
     MaximizeParsimony(ds, strategy = "nonexistent",
@@ -193,6 +202,7 @@ test_that("maxSeconds stops search before maxReplicates", {
 })
 
 test_that("maxSeconds = 0 means no timeout", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8456)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                maxSeconds = 0, verbosity = 0L)
@@ -201,6 +211,7 @@ test_that("maxSeconds = 0 means no timeout", {
 })
 
 test_that("verbosity = 1 prints 'Search complete' summary to console", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(3071)
   # MaximizeParsimony emits two streams at verbosity = 1: cli messages
   # via message() ("Strategy: ...", "Search complete: ...") and C++
@@ -223,6 +234,7 @@ test_that("verbosity = 1 prints 'Search complete' summary to console", {
 # --- nThreads ---
 
 test_that("nThreads = 1 (serial) runs correctly", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(5193)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                nThreads = 1L, verbosity = 0L)
@@ -231,6 +243,7 @@ test_that("nThreads = 1 (serial) runs correctly", {
 })
 
 test_that("nThreads = 2 (parallel) runs correctly", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(6274)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                nThreads = 2L, verbosity = 0L)
@@ -243,6 +256,7 @@ test_that("nThreads = 2 (parallel) runs correctly", {
 # --- User-supplied starting tree (warm-start) ---
 
 test_that("user tree is used as warm start", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   # Build a known tree
   set.seed(9847)
   user_tree <- RandomTree(ds, root = TRUE)
@@ -280,6 +294,7 @@ test_that("multiPhylo warm starts survive tip renumbering and polytomies", {
 })
 
 test_that("multiPhylo warm starts are validated", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(6003)
   t1 <- Preorder(RandomTree(ds, root = TRUE))
   t2 <- Preorder(RandomTree(ds, root = TRUE))
@@ -350,6 +365,7 @@ test_that("multiPhylo warm starts are validated", {
 # --- timings attribute ---
 
 test_that("timings attribute is returned", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(2689)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
@@ -364,6 +380,7 @@ test_that("timings attribute is returned", {
 # --- IW with strategy ---
 
 test_that("IW mode works with strategy presets", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(4012)
   result <- MaximizeParsimony(ds, concavity = 10, strategy = "sprint",
                                maxReplicates = 2L, targetHits = 1L,
@@ -377,6 +394,7 @@ test_that("IW mode works with strategy presets", {
 # --- T-340 regression: `concavity` normalization ---
 
 test_that("concavity as a numeric-coercible string behaves like the number", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   # A bare "10" must not silently drop into IW mode with unpopulated
   # min_steps (uncorrected homoplasy) -- it should match concavity = 10
   # exactly, seed-for-seed.
@@ -393,6 +411,7 @@ test_that("concavity as a numeric-coercible string behaves like the number", {
 })
 
 test_that("concavity = 'Profile'/'prof' route to profile mode like 'profile'", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(4012)
   canonical <- MaximizeParsimony(ds, concavity = "profile", strategy = "sprint",
                                   maxReplicates = 2L, targetHits = 1L,
@@ -417,6 +436,7 @@ test_that("an invalid concavity string errors cleanly instead of silently using 
 # --- Output tree validity ---
 
 test_that("output trees have valid preorder numbering", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8734)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
@@ -485,6 +505,7 @@ test_that("Constrained Wagner tree works with multiple seeds", {
 # --- Intra-replicate fusing (T-258) ---
 
 test_that("intraFuse runs without error", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8517)
   result <- MaximizeParsimony(ds, strategy = "sprint",
                               maxReplicates = 5L, targetHits = 2L,
@@ -496,6 +517,7 @@ test_that("intraFuse runs without error", {
 })
 
 test_that("intraFuse with dataset size change does not crash", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   ds_large <- inapplicable.phyData[["Agnarsson2004"]]  # 62 tips
   ds_small <- inapplicable.phyData[["Vinther2008"]]     # 23 tips
 
@@ -538,6 +560,7 @@ test_that("intraFuse with dataset size change does not crash", {
 }
 
 test_that("collapse = TRUE contracts a soft polytomy to one collapsed tree", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   phy <- .SoftPolytomyData(5L)
   set.seed(1L)
   resolved <- MaximizeParsimony(
@@ -573,6 +596,7 @@ test_that("collapse = TRUE contracts a soft polytomy to one collapsed tree", {
 })
 
 test_that("collapse = TRUE is a no-op when no branch is unsupported", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   # Vinther2008 MPTs are fully resolved (no zero-length branches): collapse must
   # leave every tree binary and topologically unchanged.
   set.seed(3418)
