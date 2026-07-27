@@ -449,8 +449,16 @@ void expand_and_reinsert(
     // Exact insertion cost via directional edge sets: edge_set[D] =
     // combine(prelim[D], up[D]).  Replaces the union-of-finals approximation
     // (final_[node] | final_[child]) that undercut insertion cost (~+30% Wagner
-    // trees); mirrors the main Wagner builder.  prelim is current here
-    // (wagner_incremental_rescore maintains both prelim and final_).
+    // trees); mirrors the main Wagner builder.  prelim is current here, which
+    // is all compute_insertion_edge_sets reads.
+    //
+    // Do NOT extend this to final_: wagner_incremental_rescore does NOT keep
+    // final_ current.  Its Phase-2 uppass stops descending as soon as a node's
+    // final_ is unchanged, but the changed-prelim region lies BELOW the point
+    // where Phase 1 broke out, so final_ for nodes under that break — including
+    // freshly created internals, which init_wagner_state left at 0 — can be
+    // stale.  Reading final_ here without a full uppass first is a wrong-cost
+    // bug, and was one before this edge-set rewrite landed.
     if (have_words) {
       compute_insertion_edge_sets(tree, ds, pr_edge_set, pr_up, pr_pre);
     }
@@ -511,10 +519,10 @@ void expand_and_reinsert(
 
 #ifdef TS_SCOREAPPROX_PROBE
     // Observational scoring-approximation probe (non-perturbing; production
-    // still inserts at the _bounded choice).  prelim/final_ are both current
-    // here (wagner_incremental_rescore maintains them) and the in-tree portion
-    // is fully binary from root, so compute_insertion_edge_sets is exact and
-    // safe.  Tally Δ = exact_cost(E_bounded) − min_E exact_cost(E), per the
+    // still inserts at the _bounded choice).  prelim is current here and the
+    // in-tree portion is fully binary from root, so compute_insertion_edge_sets
+    // — which reads only prelim — is exact and safe.  final_ is NOT current;
+    // see the note at the production edge-set call above.  Tally Δ = exact_cost(E_bounded) − min_E exact_cost(E), per the
     // advisor: exact-suboptimality of the bounded choice, not raw edge flips.
     if (have_words && best_below >= 0 && best_below != n_tip) {
       compute_insertion_edge_sets(tree, ds, sa_edge_set, sa_up, sa_pre);

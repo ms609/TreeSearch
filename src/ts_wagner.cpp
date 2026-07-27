@@ -444,9 +444,14 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   // Build initial 3-taxon tree and do full two-pass scoring.
   // This sets up prelim/final_ for indirect length evaluation of the first
   // insertion candidate. Subsequent insertions use incremental scoring.
+  //
+  // The returned score is deliberately discarded, but DO NOT DELETE THE CALL:
+  // it is load-bearing, seeding prelim/final_/local_cost for the i == 3
+  // insertion step.  score_tree() at the end of this function is the
+  // authoritative scorer, so nothing needs the number itself.
   build_three_taxon_tree(tree, order[0], order[1], order[2]);
   tree.build_postorder();
-  int ew_score = fitch_score(tree, ds);
+  (void) fitch_score(tree, ds);
 
   // Track which tips have been added (bitmask)
   int n_words = constrained ? cd->n_words : 0;
@@ -566,9 +571,11 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
     // Insert tip at the best edge
     insert_tip_at_edge(tree, tip, new_internal, best_above, best_below);
 
-    // Incremental rescore: update only the insertion-to-root path
-    int delta = wagner_incremental_rescore(tree, ds, new_internal);
-    ew_score += delta;
+    // Incremental rescore: update only the insertion-to-root path.  The
+    // returned delta is discarded — this call is kept for its effect on
+    // prelim (which compute_insertion_edge_sets reads on the next step), not
+    // for its score.  See the score_tree() call below.
+    (void) wagner_incremental_rescore(tree, ds, new_internal);
 
     if (constrained) {
       added_tips[tip / 64] |= (1ULL << (tip % 64));
@@ -580,8 +587,8 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   }
 
   // Build postorder (needed by subsequent TBR search) and compute final score.
-  // The incremental EW score tracked during construction is exact for standard
-  // Fitch; for NA datasets or IW, score_tree gives the authoritative result.
+  // score_tree is the authoritative scorer: construction above places tips by
+  // an equal-weights Fitch proxy, which is not the objective under NA or IW.
   tree.build_postorder();
   double score = score_tree(tree, ds);
 
