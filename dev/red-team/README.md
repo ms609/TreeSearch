@@ -22,9 +22,12 @@ hypothetical, it is what the 2026-07-27 rounds measured.
 Working artifacts under `proofs/`, `heavy-tests/` and `reviews/` are **live** as long as the
 finding they back is open. Never sweep them without checking `findings.md` first.
 
-**Current state:** **11 open findings** — 0 P1, 0 P2, 11 P3 — and **36 archived**, as of the
-`tidy` pass of 2026-07-27. That is the first time the open table has held neither a P1 nor a
-P2. (Count is maintained by `tidy`; if it disagrees with `findings.md`, trust the file.)
+**Current state:** **19 open findings** — 1 P1, 1 P2, 17 P3 — and **36 archived**, after the
+area-9 round of 2026-07-27 filed eight. The `tidy` pass earlier that same day had taken the
+table to 11 open with neither a P1 nor a P2, the first time that had happened; one opus round
+on a seam whose files had only been touched *incidentally* by four other-area commits put both
+back. Worth remembering before reading an empty high-severity column as a finished job.
+(Count is maintained by `tidy`; if it disagrees with `findings.md`, trust the file.)
 
 ## The finding lifecycle
 
