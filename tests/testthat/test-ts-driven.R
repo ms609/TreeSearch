@@ -370,11 +370,9 @@ test_that("perturbStopFactor=0 disables the rule", {
 })
 
 test_that("perturbStopFactor fires and sets perturb_stop attribute (public API)", {
-  # Moved from test-MaximizeParsimony-features.R (Tier 1): ~20s to force the
-  # cutoff via the public API, far over that file's < 2s budget. The :::-level
-  # test above covers the same mechanism cheaply; this adds the public-API
-  # attribute passthrough. perturbStopFactor=1 on Vinther2008 (23 tips) means
-  # limit = 23 reps.
+  # The :::-level test above covers the same mechanism cheaply; this checks
+  # the attribute actually reaches the public API. perturbStopFactor=1 on
+  # Vinther2008 (23 tips) means limit = 23 reps.
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
   set.seed(4618)
@@ -390,9 +388,6 @@ test_that("perturbStopFactor fires and sets perturb_stop attribute (public API)"
 })
 
 test_that("multiPhylo input warm-starts one replicate per tree", {
-  # Moved from test-MaximizeParsimony-features.R (Tier 1): ~4s, over 2x that
-  # file's whole budget, from the five MaximizeParsimony() calls needed to
-  # discriminate per-tree assignment.
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
   set.seed(3571)

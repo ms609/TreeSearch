@@ -160,11 +160,6 @@ test_that("maxSeconds = 0 means no timeout", {
   expect_false(attr(result, "timed_out"))
 })
 
-# perturbStopFactor + MaximizeParsimony(): moved to test-ts-driven.R (Tier 2).
-# Runs 500 replicates against Vinther2008 to force the cutoff (~20s), well
-# over the Tier 1 budget; test-ts-driven.R already exercises perturbStopFactor
-# at the :::-level, so this adds the public-API attribute passthrough there.
-
 test_that("verbosity = 1 prints 'Search complete' summary to console", {
   set.seed(3071)
   # MaximizeParsimony emits two streams at verbosity = 1: cli messages
@@ -223,10 +218,6 @@ test_that("user tree is used as warm start", {
   input_score <- TreeLength(user_tree, ds)
   expect_true(result_score <= input_score)
 })
-
-# "multiPhylo input warm-starts one replicate per tree": moved to
-# test-ts-driven.R (Tier 2). Five MaximizeParsimony() calls to discriminate
-# per-tree assignment push this to ~4s, over 2x the whole Tier 1 file budget.
 
 test_that("multiPhylo warm starts survive tip renumbering and polytomies", {
   skip_on_cran()
