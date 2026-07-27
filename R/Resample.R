@@ -143,6 +143,11 @@
 #' 
 #' @inheritParams MaximizeParsimony
 #'
+#' @param tree A tree of class \code{\link[ape]{phylo}} whose splits are to be
+#' supported.  Each resample replicate searches from scratch; `tree` is
+#' returned in place of any replicate whose search yields no tree, and is not
+#' used as a starting point (unlike [`MaximizeParsimony()`]'s `tree`).
+#'
 #' @param method Unambiguous abbreviation of `jackknife` or `bootstrap`
 #' specifying how to resample characters.  Note that jackknife is considered
 #' to give more meaningful results.
@@ -174,10 +179,10 @@
 #' 
 #' For a discussion of suitable search parameters in resampling estimates, see
 #' \insertCite{Muller2005;textual}{TreeSearch}.
-#' Each resampling may begin from the optimal tree
-#' (potentially quicker, but may overestimate support values as searches get
-#' stuck in local optima close to the optimal tree)
-#' or a random tree (whence finding an optimal tree may take longer).
+#' Each resample replicate searches the resampled matrix from scratch, rather
+#' than from `tree`.  Starting each replicate from the optimal tree would be
+#' quicker, but risks overestimating support: searches get stuck in local
+#' optima close to the tree whose support is being measured.
 #' 
 #' For other ways to estimate clade concordance, see [`SiteConcordance()`].
 #' 

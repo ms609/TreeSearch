@@ -33,11 +33,21 @@ MaximizeParsimony(
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-or a \code{multiPhylo} (first tree used).
-When supplied, the first replicate uses this topology as its starting
-point (warm-start), skipping the random Wagner tree construction.
-Subsequent replicates still begin from random Wagner trees.
-This is useful for continuing a search from a previously found optimum.
+or a \code{multiPhylo} containing a pool of such trees, which must all bear the
+same tip labels.
+Replicate \emph{i} starts from tree \emph{i} of the pool (warm-start), skipping the
+random Wagner tree construction; any further replicates begin from random
+Wagner trees.  Supplying a single tree thus warm-starts the first
+replicate only.
+This is useful for continuing a search from previously found optima: a
+whole \code{multiPhylo} of most-parsimonious trees seeds the search with the
+topological diversity that tree fusing exploits, which a single tree
+cannot.
+One tree is consumed per replicate actually run, so a search that
+converges early — on \code{targetHits}, \code{maxSeconds} or the perturbation
+limit, whichever fires first — draws on only part of a large pool, and
+says so in a warning.  Raise \code{targetHits} as well as \code{maxReplicates} to
+use more of it.
 If unspecified, all replicates start from random Wagner trees.
 Edge lengths are not supported and will be deleted.}
 
@@ -279,7 +289,8 @@ the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
 \item{\code{timings}}{Named numeric vector of cumulative wall-clock time
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},
-\code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}.}
+\code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}, \code{nni_ms}, \code{nni_perturb_ms},
+\code{anneal_ms}, \code{prune_reinsert_ms}.}
 \item{\code{replicate_scores}}{Numeric vector of the best parsimony score
 found by each completed replicate.  Passed to \code{\link[=ScoreSpectrum]{ScoreSpectrum()}} for
 Chao1-style landscape coverage estimation.}

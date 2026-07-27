@@ -1599,16 +1599,58 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
   params.verbosity      = as<int>(rt["verbosity"]);
   int nThreads          = as<int>(rt["nThreads"]);
 
-  // Starting tree edge matrix (optional)
+  // Starting tree(s) (optional): either one edge matrix or a list of them,
+  // one per replicate.  MaximizeParsimony() always sends a list (a `phylo`
+  // becoming a list of one); the bare-matrix shape is kept for the flat
+  // ts_driven_search() compatibility wrapper, which passes it through.
   if (rt.containsElementNamed("startEdge") &&
       !Rf_isNull(rt["startEdge"])) {
-    IntegerMatrix se = as<IntegerMatrix>(rt["startEdge"]);
-    int n_edge = se.nrow();
-    params.start_n_edge = n_edge;
-    params.start_edge.resize(2 * n_edge);
-    for (int i = 0; i < n_edge; ++i) {
-      params.start_edge[i] = se(i, 0);
-      params.start_edge[n_edge + i] = se(i, 1);
+    SEXP se_sexp = rt["startEdge"];
+    std::vector<IntegerMatrix> mats;
+    if (Rf_isMatrix(se_sexp)) {
+      mats.push_back(as<IntegerMatrix>(se_sexp));
+    } else if (TYPEOF(se_sexp) == VECSXP) {
+      List se_list(se_sexp);
+      mats.reserve(se_list.size());
+      for (R_xlen_t i = 0; i < se_list.size(); ++i) {
+        // A hole in the list would shift every later replicate onto the
+        // wrong start, so it is an error rather than something to skip.
+        if (Rf_isNull(se_list[i])) {
+          stop("`startEdge` list element %d is NULL.", static_cast<int>(i + 1));
+        }
+        mats.push_back(as<IntegerMatrix>(se_list[i]));
+      }
+    } else {
+      stop("`startEdge` must be an edge matrix or a list of edge matrices.");
+    }
+    // An empty list is a caller mistake, not a request to cold-start: it
+    // would silently discard whatever the caller meant to supply, and a
+    // non-matrix `startEdge` already errors rather than being ignored.
+    if (mats.empty()) {
+      stop("`startEdge` supplies no edge matrices.");
+    }
+    {
+      const int n_edge = mats[0].nrow();
+      params.start_n_edge = n_edge;
+      params.start_edges.reserve(mats.size());
+      for (const IntegerMatrix& se : mats) {
+        // Skipping a mismatched tree would shift every later replicate onto
+        // the wrong start, so an inconsistent pool is an error, not a filter.
+        if (se.nrow() != n_edge) {
+          stop("All `startEdge` matrices must have the same number of edges.");
+        }
+        // ncol is read below as se(i, 0) / se(i, 1); an n x 1 matrix would
+        // index past the end of the underlying vector.
+        if (se.ncol() != 2) {
+          stop("Each `startEdge` matrix must have exactly 2 columns.");
+        }
+        std::vector<int> flat(2 * n_edge);
+        for (int i = 0; i < n_edge; ++i) {
+          flat[i] = se(i, 0);
+          flat[n_edge + i] = se(i, 1);
+        }
+        params.start_edges.push_back(std::move(flat));
+      }
     }
   }
 

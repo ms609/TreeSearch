@@ -787,14 +787,17 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
-    // Use starting tree for replicate 0 if provided
+    // Use the rep'th user-supplied starting tree, if the pool reaches it
     TreeState* start_ptr = nullptr;
     TreeState start_tree;
     bool pr_reseeded = false;  // this rep seeded from a pool tree (POOL_RESEED)
-    if (rep == 0 && params.start_n_edge > 0 &&
-        static_cast<int>(params.start_edge.size()) >= 2 * params.start_n_edge) {
-      const int* edge_parent = params.start_edge.data();
-      const int* edge_child = params.start_edge.data() + params.start_n_edge;
+    if (rep < static_cast<int>(params.start_edges.size()) &&
+        params.start_n_edge > 0 &&
+        static_cast<int>(params.start_edges[rep].size()) >=
+            2 * params.start_n_edge) {
+      const int* edge_parent = params.start_edges[rep].data();
+      const int* edge_child =
+          params.start_edges[rep].data() + params.start_n_edge;
       start_tree.init_from_edge(edge_parent, edge_child,
                                 params.start_n_edge, ds);
       start_ptr = &start_tree;

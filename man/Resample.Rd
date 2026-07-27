@@ -33,14 +33,10 @@ Resample(
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
-\item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-or a \code{multiPhylo} (first tree used).
-When supplied, the first replicate uses this topology as its starting
-point (warm-start), skipping the random Wagner tree construction.
-Subsequent replicates still begin from random Wagner trees.
-This is useful for continuing a search from a previously found optimum.
-If unspecified, all replicates start from random Wagner trees.
-Edge lengths are not supported and will be deleted.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}} whose splits are to be
+supported.  Each resample replicate searches from scratch; \code{tree} is
+returned in place of any replicate whose search yields no tree, and is not
+used as a starting point (unlike \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}'s \code{tree}).}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered
@@ -168,10 +164,10 @@ See discussion in \insertCite{Egan2006;textual}{TreeSearch};
 
 For a discussion of suitable search parameters in resampling estimates, see
 \insertCite{Muller2005;textual}{TreeSearch}.
-Each resampling may begin from the optimal tree
-(potentially quicker, but may overestimate support values as searches get
-stuck in local optima close to the optimal tree)
-or a random tree (whence finding an optimal tree may take longer).
+Each resample replicate searches the resampled matrix from scratch, rather
+than from \code{tree}.  Starting each replicate from the optimal tree would be
+quicker, but risks overestimating support: searches get stuck in local
+optima close to the tree whose support is being measured.
 
 For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{SiteConcordance()}}.
 }

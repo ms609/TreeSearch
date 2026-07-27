@@ -261,6 +261,44 @@ test_that("Zero replicates returns empty result", {
   expect_false(result$timed_out)
 })
 
+test_that("startEdge accepts a bare matrix or a list of matrices", {
+  # MaximizeParsimony() always sends a list; the flat compatibility wrapper
+  # passes a bare matrix straight through, so the engine must take both.
+  set.seed(5150)
+  starts <- lapply(1:3, function(i) Preorder(RandomTree(small_dataset,
+                                                        root = TRUE)))
+  starts <- lapply(starts, RenumberTips, names(small_dataset))
+  edges <- lapply(starts, `[[`, "edge")
+
+  Run <- function(startEdge) {
+    set.seed(2718)
+    ts_driven(small_ds, maxReplicates = 3L, targetHits = 99L,
+              ratchetCycles = 1L, startEdge = startEdge)
+  }
+  bare <- Run(edges[[1]])
+  listOfOne <- Run(edges[1])
+  pooled <- Run(edges)
+
+  expect_equal(bare$best_score, listOfOne$best_score)
+  expect_equal(bare$replicate_scores, listOfOne$replicate_scores)
+  expect_true(pooled$best_score > 0)
+  expect_equal(pooled$replicate_scores[[1]], bare$replicate_scores[[1]])
+
+  expect_error(
+    Run(list(edges[[1]], edges[[2]][-1, , drop = FALSE])),
+    "same number of edges"
+  )
+  expect_error(Run("not an edge matrix"),
+               "must be an edge matrix or a list")
+  # A hole or a wrong-shaped member would silently shift later replicates
+  # onto the wrong start, and an n x 1 matrix reads past the end of its data.
+  expect_error(Run(list(edges[[1]], NULL, edges[[3]])),
+               "element 2 is NULL")
+  expect_error(Run(list(edges[[1]][, 1, drop = FALSE])),
+               "exactly 2 columns")
+  expect_error(Run(list()), "supplies no edge matrices")
+})
+
 test_that("MaximizeParsimony() uses C++ engine", {
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]

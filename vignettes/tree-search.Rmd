@@ -305,11 +305,21 @@ attr(result, "timed_out") # TRUE if time limit was hit
 Supply a tree to start the first replicate from a known topology:
 
 ```r
+MaximizeParsimony(vinther, tree = previousBestTree)
+```
+
+Supply a `multiPhylo` and each of its trees seeds a replicate of its own —
+replicate _i_ starts from tree _i_ — so a previous search can be resumed from
+its whole set of optimal trees rather than from one arbitrary member:
+
+```r
 MaximizeParsimony(vinther, tree = previousResult)
 ```
 
-The first replicate refines the supplied tree; subsequent replicates still
-start from random Wagner trees.
+This matters because the returned trees are topologically diverse, and tree
+fusing recombines that diversity from the outset; one tree cannot supply it.
+Replicates beyond the supplied pool still start from random Wagner trees, and
+trees beyond `maxReplicates` are not used.
 
 ## Implied weighting
 

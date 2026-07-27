@@ -56,6 +56,38 @@
   dataset
 }
 
+# Internal helper: structural sanity check on a user-supplied starting tree.
+#
+# Deliberately not `ape::checkValidPhylo()`, which prints a report rather than
+# signalling a condition.  This checks only the invariants whose violation
+# makes TreeTools' C++ rooting and traversal routines index out of bounds --
+# a segfault the caller cannot trap, so it has to be pre-empted rather than
+# handled.  Reachable in practice: `ape::unroot()` accepts TreeTools' `order =
+# "preorder"` attribute and then mishandles it, so unrooting any TreeTools
+# tree returns an edge matrix containing NA.
+# @param tr A candidate starting tree.
+# @param i Index within the supplied pool, or `NA_integer_` for a lone tree.
+# @return `tr`, invisibly; called for the error.
+# @keywords internal
+.CheckStartTree <- function(tr, i) {
+  what <- if (is.na(i)) "`tree`" else paste0("`tree[[", i, "]]`")
+  edge <- tr[["edge"]]
+  if (!is.matrix(edge) || dim(edge)[2L] != 2L || !is.numeric(edge) ||
+      anyNA(edge)) {
+    stop(what, " has a malformed edge matrix.")
+  }
+  nTip <- length(tr[["tip.label"]])
+  child <- edge[, 2L]
+  if (!identical(sort(as.integer(child[child <= nTip])), seq_len(nTip))) {
+    stop(what, " is not a valid tree: every leaf must be the child of ",
+         "exactly one edge.")
+  }
+  if (any(edge[, 1L] <= nTip)) {
+    stop(what, " is not a valid tree: a leaf cannot be a parent.")
+  }
+  invisible(tr)
+}
+
 # Internal helper: prepare constraint data for C++ engine.
 # Returns a named list of constraint arguments (empty list if no constraint).
 # @param constraint A phyDat, phylo, or NULL.
@@ -392,11 +424,21 @@
 #' @param dataset A phylogenetic data matrix of \pkg{phangorn} class
 #' \code{phyDat}, whose names correspond to the labels of any accompanying tree.
 #' @param tree (optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-#'   or a `multiPhylo` (first tree used).
-#'   When supplied, the first replicate uses this topology as its starting
-#'   point (warm-start), skipping the random Wagner tree construction.
-#'   Subsequent replicates still begin from random Wagner trees.
-#'   This is useful for continuing a search from a previously found optimum.
+#'   or a `multiPhylo` containing a pool of such trees, which must all bear the
+#'   same tip labels.
+#'   Replicate _i_ starts from tree _i_ of the pool (warm-start), skipping the
+#'   random Wagner tree construction; any further replicates begin from random
+#'   Wagner trees.  Supplying a single tree thus warm-starts the first
+#'   replicate only.
+#'   This is useful for continuing a search from previously found optima: a
+#'   whole `multiPhylo` of most-parsimonious trees seeds the search with the
+#'   topological diversity that tree fusing exploits, which a single tree
+#'   cannot.
+#'   One tree is consumed per replicate actually run, so a search that
+#'   converges early — on `targetHits`, `maxSeconds` or the perturbation
+#'   limit, whichever fires first — draws on only part of a large pool, and
+#'   says so in a warning.  Raise `targetHits` as well as `maxReplicates` to
+#'   use more of it.
 #'   If unspecified, all replicates start from random Wagner trees.
 #'   Edge lengths are not supported and will be deleted.
 #' @param concavity Determines the degree to which extra steps beyond the first
@@ -891,38 +933,49 @@ MaximizeParsimony <- function(
          "or \"profile\" for profile parsimony).")
   }
 
-  # --- Starting tree ---
+  # --- Starting tree(s) ---
+  # `tree` may be a single `phylo` or a `multiPhylo` holding a whole pool of
+  # warm starts: replicate i then begins from tree i, and replicates beyond
+  # the pool build random Wagner trees as usual.  Resuming from a previous
+  # run's MPTs is the motivating case -- the pool's topological diversity is
+  # exactly what the fusing machinery needs, and one tree cannot supply it.
   userTree <- !missing(tree) && !is.null(tree)
   if (!userTree) {
     tree <- TreeTools::RandomTree(nTip, root = TRUE)
     tree[["tip.label"]] <- names(dataset)
+    startTrees <- list(tree)
   } else if (inherits(tree, "multiPhylo")) {
-    tree <- tree[[1L]]
+    # `[[` rather than unclass(): a compressed `multiPhylo` stores tip labels
+    # once in a shared `TipLabel` attribute, and only `[[` restores them.
+    startTrees <- lapply(seq_along(tree), function(i) tree[[i]])
+    if (length(startTrees) == 0L) {
+      stop("`tree` contains no trees.")
+    }
+  } else {
+    startTrees <- list(tree)
   }
-  if (!inherits(tree, "phylo")) {
+  if (!all(vapply(startTrees, inherits, logical(1), "phylo"))) {
     stop("`tree` must be of class 'phylo'.")
   }
-
-  # Make bifurcating if needed
-  if (dim(tree[["edge"]])[1] != 2L * tree[["Nnode"]]) {
-    tree <- MakeTreeBinary(tree)
-    if (dim(tree[["edge"]])[1] != 2L * tree[["Nnode"]]) {
-      tree <- RootTree(tree, 1L)
-    }
-    if (dim(tree[["edge"]])[1] != 2L * tree[["Nnode"]]) {
-      stop("Could not make `tree` binary.")
+  if (length(startTrees) > 1L) {
+    refLabels <- sort(startTrees[[1L]][["tip.label"]])
+    sameTips <- vapply(startTrees[-1L], function(x) {
+      identical(sort(x[["tip.label"]]), refLabels)
+    }, logical(1))
+    if (!all(sameTips)) {
+      stop("All trees in `tree` must bear the same tip labels.")
     }
   }
 
   # --- Match tree tips to dataset ---
-  leaves <- tree[["tip.label"]]
+  # Every starting tree shares a tip set, so resolve the mismatch once.
+  leaves <- startTrees[[1L]][["tip.label"]]
   taxa <- names(dataset)
   treeOnly <- setdiff(leaves, taxa)
   datOnly <- setdiff(taxa, leaves)
   if (length(treeOnly)) {
     warning("Dropping taxa on tree but not in dataset: ",
             paste0(treeOnly, collapse = ", "))
-    tree <- TreeTools::DropTip(tree, treeOnly)
   }
   if (length(datOnly)) {
     warning("Dropping taxa in dataset but not on tree: ",
@@ -930,13 +983,46 @@ MaximizeParsimony <- function(
     dataset <- dataset[-match(datOnly, taxa)]
   }
 
-  # Reorder tips to match dataset, put in preorder
-  tree <- Preorder(RenumberTips(tree, names(dataset)))
+  # Normalize each start into the form the C++ engine expects.
+  startTrees <- lapply(seq_along(startTrees), function(i) {
+    tr <- startTrees[[i]]
 
-  # Ensure root's first child is a tip (for C++ engine compatibility)
-  if (tree[["edge"]][1L, 2L] > NTip(tree)) {
-    tree <- RootTree(tree, 1L)
-  }
+    # Reject a structurally invalid `phylo` before any traversal code sees it.
+    # These objects are not exotic: ape::unroot() accepts TreeTools' `order =
+    # "preorder"` attribute and then mishandles it, so unrooting any TreeTools
+    # tree yields an edge matrix carrying NA entries.  Rooting or reordering
+    # one segfaults inside the dependency, below the level at which R can
+    # catch anything, so the guard has to sit ahead of the repair block.
+    .CheckStartTree(tr, if (length(startTrees) > 1L) i else NA_integer_)
+
+    # Make bifurcating if needed
+    if (dim(tr[["edge"]])[1] != 2L * tr[["Nnode"]]) {
+      tr <- MakeTreeBinary(tr)
+      # Re-check: MakeTreeBinary() can itself return a malformed object, and
+      # the RootTree() below is exactly where such an object kills the session.
+      .CheckStartTree(tr, if (length(startTrees) > 1L) i else NA_integer_)
+      if (dim(tr[["edge"]])[1] != 2L * tr[["Nnode"]]) {
+        tr <- RootTree(tr, 1L)
+      }
+      if (dim(tr[["edge"]])[1] != 2L * tr[["Nnode"]]) {
+        stop("Could not make `tree` binary.")
+      }
+    }
+    if (length(treeOnly)) {
+      tr <- TreeTools::DropTip(tr, treeOnly)
+    }
+
+    # Reorder tips to match dataset, put in preorder
+    tr <- Preorder(RenumberTips(tr, names(dataset)))
+
+    # Ensure root's first child is a tip (for C++ engine compatibility)
+    if (tr[["edge"]][1L, 2L] > NTip(tr)) {
+      tr <- RootTree(tr, 1L)
+    }
+    tr
+  })
+  tree <- startTrees[[1L]]
+
 
   # --- Extract data matrices ---
   at <- attributes(dataset)
@@ -1032,7 +1118,7 @@ MaximizeParsimony <- function(
     maxSeconds = as.double(maxSeconds),
     verbosity = as.integer(verbosity),
     nThreads = as.integer(nThreads),
-    startEdge = if (userTree) tree[["edge"]] else NULL,
+    startEdge = if (userTree) lapply(startTrees, `[[`, "edge") else NULL,
     progressCallback = progressCallback
   )
 
@@ -1057,6 +1143,20 @@ MaximizeParsimony <- function(
     control, runtimeConfig, scoringConfig,
     constraintConfig, hsjConfig, xformConfig
   )
+
+  # A pool is consumed one tree per replicate *run*, which is bounded by
+  # whichever stopping rule fires first -- usually `targetHits`, not
+  # `maxReplicates`.  Only the completed count is a truthful bound, so report
+  # it after the fact rather than guessing beforehand.  Ungated by `verbosity`,
+  # like the taxon-dropping warnings above: silently ignoring supplied data
+  # warrants a warning however quiet the search itself is.
+  if (length(startTrees) > 1L && result$replicates < length(startTrees)) {
+    warning("Used ", result$replicates, " of the ", length(startTrees),
+            " trees supplied to `tree`: the search ran ", result$replicates,
+            " replicate", if (result$replicates == 1L) "" else "s",
+            " and each starts from one tree. Raise `targetHits` or ",
+            "`maxReplicates` to draw on more of the pool.", call. = FALSE)
+  }
 
   # --- Reconstruct phylo from edge matrices ---
   treeTpl <- tree

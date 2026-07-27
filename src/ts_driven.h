@@ -201,10 +201,13 @@ struct DrivenParams {
   // re-exploration after escaping local optima.
   int max_outer_resets = 0;
 
-  // Optional starting tree edge matrix (R format: n_edge × 2, 1-based).
-  // When non-empty, replicate 0 uses this topology instead of Wagner.
-  // Subsequent replicates still use random Wagner trees.
-  std::vector<int> start_edge;  // flattened column-major [parent|child]
+  // Optional pool of starting tree edge matrices (R format: n_edge × 2,
+  // 1-based).  Replicate i uses start_edges[i] instead of a Wagner start;
+  // replicates past the end of the pool still use random Wagner trees.
+  // A single user tree is simply a pool of one, so the one-tree path is
+  // unchanged.  All trees are binary over the same taxa, so they share
+  // start_n_edge.
+  std::vector<std::vector<int>> start_edges;  // each flat col-major [par|chi]
   int start_n_edge = 0;
 
   // Consensus-stability stopping criterion.

@@ -189,15 +189,18 @@ void worker_thread(WorkerContext ctx) {
     // Seed RNG for this replicate
     local_rng.seed((*ctx.seeds)[rep]);
 
-    // Use starting tree for replicate 0 if provided
+    // Use the rep'th user-supplied starting tree, if the pool reaches it.
+    // Reps are claimed dynamically, but rep -> tree stays 1:1 (as rep -> seed
+    // does), so which thread runs a rep does not change what it starts from.
     TreeState* start_ptr = nullptr;
     TreeState start_tree;
-    if (rep == 0 && ctx.params->start_n_edge > 0 &&
-        static_cast<int>(ctx.params->start_edge.size()) >=
+    if (rep < static_cast<int>(ctx.params->start_edges.size()) &&
+        ctx.params->start_n_edge > 0 &&
+        static_cast<int>(ctx.params->start_edges[rep].size()) >=
             2 * ctx.params->start_n_edge) {
-      const int* edge_parent = ctx.params->start_edge.data();
+      const int* edge_parent = ctx.params->start_edges[rep].data();
       const int* edge_child =
-          ctx.params->start_edge.data() + ctx.params->start_n_edge;
+          ctx.params->start_edges[rep].data() + ctx.params->start_n_edge;
       start_tree.init_from_edge(edge_parent, edge_child,
                                 ctx.params->start_n_edge, ds_local);
       start_ptr = &start_tree;

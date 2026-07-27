@@ -1,5 +1,23 @@
 # To integrate into 2.0.0 notes
 
+- `MaximizeParsimony(tree = )` now accepts a whole pool of starting trees:
+  given a `multiPhylo`, replicate _i_ warm-starts from tree _i_, and any
+  replicates beyond the pool build random Wagner trees as before.  Previously
+  only the first tree of a `multiPhylo` was used and the rest were silently
+  discarded, so resuming a search from a previous run's most-parsimonious trees
+  threw away exactly the topological diversity that tree fusing exploits.  All
+  supplied trees must bear the same tip labels.  One tree is consumed per
+  replicate actually run, so a search that converges on `targetHits` before
+  exhausting a large pool now warns rather than discarding the remainder
+  silently.  Passing a single `phylo` searches exactly as it did before.
+
+- `MaximizeParsimony()` now rejects a structurally invalid `tree` with an R
+  error instead of crashing the session.  `ape::unroot()` accepts \pkg{TreeTools}'
+  `order = "preorder"` attribute and then mishandles it, so unrooting a
+  \pkg{TreeTools} tree returns an edge matrix containing `NA`; passing one on
+  segfaulted inside the rooting code, below the level at which R can trap
+  anything.  Valid trees, rooted or unrooted, are unaffected.
+
 - `MaximizeParsimony()` now contracts zero-length (unsupported) branches into
   polytomies by default (`collapse = TRUE`), deduplicating the returned trees on
   the resulting collapsed topologies, à la TNT's "collapse zero-length

@@ -233,20 +233,124 @@ test_that("user tree is used as warm start", {
   expect_true(result_score <= input_score)
 })
 
-test_that("multiPhylo input uses first tree as warm start", {
+test_that("multiPhylo input warm-starts one replicate per tree", {
+  skip_on_cran()
   set.seed(3571)
   trees <- list(
+    RandomTree(ds, root = TRUE),
     RandomTree(ds, root = TRUE),
     RandomTree(ds, root = TRUE)
   )
   class(trees) <- "multiPhylo"
   trees <- Preorder(trees)
 
-  result <- MaximizeParsimony(ds, tree = trees,
-                               maxReplicates = 1L, targetHits = 1L,
-                               verbosity = 0L)
+  Search <- function(startTree) {
+    set.seed(8081)
+    MaximizeParsimony(ds, tree = startTree, maxReplicates = 2L,
+                      targetHits = 99L, verbosity = 0L)
+  }
+
+  # A pool of one is exactly the single-tree warm start: only replicate 1
+  # differs from a cold start, so every reported quantity must agree.
+  single <- Search(trees[[1]])
+  oneTree <- Search(trees[1])
+  expect_s3_class(trees[1], "multiPhylo")
+  expect_equal(attr(oneTree, "replicate_scores"),
+               attr(single, "replicate_scores"))
+  expect_equal(attr(oneTree, "candidates_evaluated"),
+               attr(single, "candidates_evaluated"))
+  expect_equal(vapply(oneTree, ape::write.tree, character(1)),
+               vapply(single, ape::write.tree, character(1)))
+
+  # Shared-prefix discriminator.  Comparing a pool against a single tree only
+  # shows that *something* changed -- reusing tree 1 for every replicate would
+  # look the same.  These two pools agree in position 1 and differ only in
+  # position 2, so a difference can be attributed to tree 2 alone, and pins
+  # rep i -> tree i rather than "some supplied tree, repeatedly".
+  # Scores saturate at the optimum on this matrix, so count the work done:
+  # candidates_evaluated tracks the trajectory, not just its endpoint.
+  poolA <- Search(structure(trees[c(1, 2)], class = "multiPhylo"))
+  poolB <- Search(structure(trees[c(1, 3)], class = "multiPhylo"))
+  expect_false(identical(attr(poolA, "candidates_evaluated"),
+                         attr(poolB, "candidates_evaluated")))
+  # ...and order matters, so position is respected, not just membership.
+  poolBA <- Search(structure(trees[c(2, 1)], class = "multiPhylo"))
+  expect_false(identical(attr(poolA, "candidates_evaluated"),
+                         attr(poolBA, "candidates_evaluated")))
+})
+
+test_that("multiPhylo warm starts survive tip renumbering and polytomies", {
+  skip_on_cran()
+  # Trees whose tip order differs from the dataset, one of them unresolved:
+  # every start must be normalized (renumbered, resolved, rerooted) before it
+  # reaches the engine, not just the first.
+  set.seed(1002)
+  shuffled <- RandomTree(ds, root = TRUE)
+  shuffled <- KeepTip(shuffled, rev(TipLabels(shuffled)))
+  polytomous <- CollapseNode(Preorder(RandomTree(ds, root = TRUE)),
+                             NTip(ds) + 3L)
+  trees <- structure(list(shuffled, polytomous), class = "multiPhylo")
+
+  set.seed(4004)
+  result <- MaximizeParsimony(ds, tree = trees, maxReplicates = 2L,
+                              targetHits = 99L, verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
-  expect_true(is.finite(attr(result, "score")))
+  expect_equal(attr(result, "score"), TreeLength(result[[1]], ds))
+  expect_setequal(TipLabels(result[[1]]), names(ds))
+})
+
+test_that("multiPhylo warm starts are validated", {
+  set.seed(6003)
+  t1 <- Preorder(RandomTree(ds, root = TRUE))
+  t2 <- Preorder(RandomTree(ds, root = TRUE))
+  t2[["tip.label"]][[1]] <- "not_a_taxon"
+
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(), class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "contains no trees"
+  )
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(t1, t2), class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "same tip labels"
+  )
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(t1, "not a tree"),
+                                           class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "class 'phylo'"
+  )
+
+  # A structurally invalid `phylo` must be rejected in R.  ape::unroot()
+  # manufactures one from any TreeTools `order = "preorder"` tree, and passing
+  # it on segfaults inside TreeTools' rooting code -- unrecoverable, so the
+  # error has to come first.  The index tells the user which tree is at fault.
+  broken <- ape::unroot(t1)
+  expect_error(
+    MaximizeParsimony(ds, tree = broken, maxReplicates = 1L, verbosity = 0L),
+    "`tree` is not a valid tree"
+  )
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(t1, broken),
+                                           class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "`tree\\[\\[2\\]\\]` is not a valid tree"
+  )
+  # A genuinely unrooted tree is fine; only the corrupted object is refused.
+  expect_silent(
+    MaximizeParsimony(ds, tree = RandomTree(ds, root = FALSE),
+                      maxReplicates = 1L, targetHits = 1L, verbosity = 0L)
+  )
+
+  # Unused pool members are reported against the replicates actually run,
+  # which targetHits can cut short well below maxReplicates.
+  expect_warning(
+    MaximizeParsimony(ds, tree = structure(list(t1, t1, t1),
+                                           class = "multiPhylo"),
+                      maxReplicates = 9L, targetHits = 1L, verbosity = 0L),
+    "of the 3 trees supplied"
+  )
 })
 
 # --- timings attribute ---
