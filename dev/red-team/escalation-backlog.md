@@ -41,6 +41,17 @@ derivation" conclusions in as claims to break), not to re-read the same files th
   them. A version bump does not reopen a yielding seam (there is no dormancy to reopen).
 - **Area 13's next visit** is a *bounded exhaustive harness*, not a finder at any rung
   (log.md, area 13, 2026-07-03) — a work-shape decision the version bump does not change.
+- **The `sonnet` 4.6 → 5 and `fable` bumps of the same day reopened NOTHING** — checked by
+  `tidy` 2026-07-27, recorded here so `/red-team revisit` need not redo it. A version bump only
+  reopens a *dry* verdict, and every sonnet-tier area (6, 7, 8, 12) was recorded **still
+  yielding** at its last visit; area 6 has in any case already escalated past sonnet (its
+  2026-07-24 round ran opus + fable dual-tier and yielded T-339/T-340, both since fixed). So
+  the opus bump is the only one with re-eligible seams behind it, and they are the five above.
+- **Area 8's residual from the 2026-07-27 round is deliberately NOT here.** It is a
+  *within-area, same-rung* next-round note (extend mutation testing to the rest of the
+  per-finding regression corpus; settle whether `test-ts-hsj.R:352`'s smoke test would catch a
+  *wrong* `absent_state` rather than only a crash), so `log.md` is its home. This file is for
+  seams re-eligible at a **different rung** than rotation would give them.
 
 ---
 

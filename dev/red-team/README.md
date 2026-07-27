@@ -17,9 +17,14 @@ hypothetical, it is what the 2026-07-27 rounds measured.
 | `proofs/` | Written derivations backing a specific finding (e.g. `union-construct-lower-bound.md`). | Whoever needs one |
 | `heavy-tests/` | Standalone harnesses too slow for the test suite (e.g. `impose_validity/`, the T-327/T-333 constraint-repair driver). | Whoever needs one |
 | `reviews/` | Per-review working notes and repro scripts (e.g. `cpp-search-sect-colreduce/`, which backs open T-335). | Whoever needs one |
+| `union-of-finals-bound-proof.md`, `union-construct-gate.R` | **Do not move these into `proofs/`.** They live at top level because things outside this directory cite them *by path* — most importantly a comment in shipped source, `src/ts_fitch.cpp:421`, plus `dev/plans/2026-07-14-mission-B-kernel-8x-goloboff-screen.md`, `dev/profiling/mission-b-goloboff-gates.md` and `proofs/union-construct-lower-bound.md` itself. Relocating them for neatness breaks a source-code reference. | math-prover lane; leave in place |
 
 Working artifacts under `proofs/`, `heavy-tests/` and `reviews/` are **live** as long as the
 finding they back is open. Never sweep them without checking `findings.md` first.
+
+**Current state:** **11 open findings** — 0 P1, 0 P2, 11 P3 — and **36 archived**, as of the
+`tidy` pass of 2026-07-27. That is the first time the open table has held neither a P1 nor a
+P2. (Count is maintained by `tidy`; if it disagrees with `findings.md`, trust the file.)
 
 ## The finding lifecycle
 
