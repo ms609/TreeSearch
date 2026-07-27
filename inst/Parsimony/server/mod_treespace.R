@@ -743,6 +743,13 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
       mppng <- mapping()
       mppng <- mapping()[, seq_len(min(dim(mppng)[2], dims()))]
       neighbs <- min(10L, length(r$trees) / 2)
+      # T-359: unlike the search worker (mod_search.R, T-311), this future has
+      # no session-end cancellation and no mid-flight interruption point —
+      # TreeDist::MappingQuality() runs to completion even after the client
+      # disconnects. Left as-is intentionally: it is a single bounded distance
+      # computation (a handful of seconds even for large tree sets), not an
+      # open-ended search that can run for up to an hour, so an orphaned run
+      # is low-cost and not worth a bespoke cancellation mechanism.
       future_promise(
         TreeDist::MappingQuality(dstnc, dist(mppng), neighbs),
         seed = TRUE) %...>% QualityPlot
