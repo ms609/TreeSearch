@@ -302,8 +302,8 @@ because the strict consensus was unchanged for
 run of replicates failed to improve the best score -- either the
 \code{nTip * perturbStopFactor} dry-spell limit or the flat \code{stopPatience}
 count (see \code{\link[=SearchControl]{SearchControl()}}).  The flag does not distinguish which of
-the two fired; compare \code{last_improved_rep + stopPatience} against
-\code{replicates} if you need to know.}
+the two fired; in a serial search, comparing
+\code{last_improved_rep + stopPatience} against \code{replicates} will tell you.}
 \item{\code{timings}}{Named numeric vector of cumulative wall-clock time
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},

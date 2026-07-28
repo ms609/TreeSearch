@@ -89,6 +89,44 @@ test_that("stopPatience survives the SearchControl round trip", {
   expect_equal(attr(r, "replicates"), attr(r, "last_improved_rep") + 7L)
 })
 
+test_that("stopPatience also stops the parallel search", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
+  # The parallel path has its OWN implementation of this rule: it counts a dry spell over
+  # replicates completed into the shared pool, not the serial `unsuccessful_reps`, so the
+  # `lastImprovement + patience` identity above does NOT transfer -- the firing replicate
+  # varies with `nThreads` (patience 5 on this matrix: 6 replicates serial, 21 on two
+  # threads, 65 on four).  Assert only what holds on both paths.
+  #
+  # `testDataset()` is deliberately NOT used here.  Its replicates are so cheap that all 120
+  # finish inside the parallel monitor's first 200 ms sleep, so the loop's next act is to
+  # observe `replicates_done >= max_replicates` and break -- the rule is never evaluated and
+  # the search runs to the cap.  That polling granularity is shared by every stopping rule on
+  # this path, not specific to `stopPatience`; it needs replicates slow enough for a poll to
+  # observe the dry spell.  Hence a 40-tip matrix under implied weights.
+  #
+  # Worth exercising for a second reason: nThreads >= 2 has a history of MinGW heap
+  # corruption here (PR #258), and this change restructured a guard in the replicate loop.
+  set.seed(2)
+  dataset <- TreeTools::MatrixToPhyDat(
+    matrix(sample(0:1, 40 * 30, TRUE), nrow = 40,
+           dimnames = list(paste0("t", seq_len(40)), NULL))
+  )
+  cap <- 120L
+  # `strategy = "none"` is load-bearing: 40 tips and 30 characters make `auto` resolve to
+  # `default`, which under implied weights now ships stopPatience 15 -- so a control arm left
+  # on `auto` stops at ~21 replicates and the comparison measures nothing.
+  args <- list(dataset = dataset, strategy = "none", concavity = 10,
+               targetHits = 99999L, perturbStopFactor = 0L,
+               consensusStableReps = 0L, maxReplicates = cap, nThreads = 2L,
+               verbosity = 0L)
+  full <- do.call(MaximizeParsimony, args)
+  short <- do.call(MaximizeParsimony, c(args, list(stopPatience = 3L)))
+  expect_equal(attr(full, "replicates"), cap)      # nothing else ends the search
+  expect_lt(attr(short, "replicates"), cap)
+  expect_true(attr(short, "perturb_stop"))
+  expect_equal(min(attr(short, "score")), min(attr(full, "score")))
+})
+
 # ---- the shipped implied-weights operating point --------------------------------------------
 # `sprint`/`default` take a deeper ratchet paid for by this patience, under implied weights
 # ONLY (2026-07-28, 4624 cells).  Equal weights and profile parsimony were never measured, so

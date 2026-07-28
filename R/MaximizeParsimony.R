@@ -744,8 +744,8 @@
 #'       run of replicates failed to improve the best score -- either the
 #'       `nTip * perturbStopFactor` dry-spell limit or the flat `stopPatience`
 #'       count (see [`SearchControl()`]).  The flag does not distinguish which of
-#'       the two fired; compare `last_improved_rep + stopPatience` against
-#'       `replicates` if you need to know.}
+#'       the two fired; in a serial search, comparing
+#'       `last_improved_rep + stopPatience` against `replicates` will tell you.}
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
@@ -976,6 +976,11 @@ MaximizeParsimony <- function(
       # Residual cost, deliberately accepted and worth stating plainly: 9 of 44
       # `default` matrices are still >10% slower (worst +110%), those where
       # patience does not bite and the deeper ratchet is not paid for.
+      #
+      # All of it was measured with `nThreads = 1`.  The parallel path implements
+      # the same rule over the shared pool but evaluates it on the coordinating
+      # thread's poll, so patience bites later there and the wall saving will be
+      # smaller; the deeper ratchet applies unchanged either way.
       #
       # `default` sets `adaptiveLevel = TRUE`, so 20 is a BASE that the hit-rate
       # rescaler moves within ~10-30 at runtime; the measured arm had exactly

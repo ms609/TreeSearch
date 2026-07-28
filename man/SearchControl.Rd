@@ -294,7 +294,13 @@ so the replicate at which it fires does not stretch as replicates become
 individually more expensive.  Deeper per-replicate search (a longer
 ratchet, say) therefore buys quality without also extending the run.
 Counts reset on every improvement, so a search that keeps improving is
-never cut short: it stops at \code{lastImprovement + stopPatience} replicates.
+never cut short: a serial search stops at \code{lastImprovement + stopPatience}
+replicates.  With \code{nThreads > 1} the count is instead taken over replicates
+completed into the shared tree pool and is evaluated when the coordinating
+thread polls, so the rule fires later and less precisely -- and if every
+replicate is quick enough that the search finishes between polls, not at
+all.  As with \code{perturbStopFactor} and \code{consensusStableReps}, only the serial
+path gives an exact replicate count.
 0 (default) disables this criterion.  When several stopping criteria are
 active the search stops as soon as any one of them is met.}
 
