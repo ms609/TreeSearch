@@ -2,6 +2,7 @@
 #include "ts_fitch.h"
 #include "ts_splits.h"
 #include "ts_tbr.h"
+#include "ts_rng.h"
 #include <algorithm>
 #include <cstring>
 #include <unordered_map>
@@ -366,6 +367,7 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
 
   bool improved = true;
   while (improved && result.n_rounds < params.max_rounds) {
+    if (ts::check_interrupt()) break;
     improved = false;
     ++result.n_rounds;
 
@@ -389,6 +391,7 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
     }
 
     for (int di = 0; di < n_donors; ++di) {
+      if (ts::check_interrupt()) break;
       // Lazy initialization: prepare donor on first access
       if (!donor_ready[di]) {
         donor_trees[di] = copy_topology(entries[di].tree, ds);
