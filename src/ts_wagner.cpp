@@ -651,6 +651,10 @@ std::vector<double> wagner_goloboff_scores(const DataSet& ds) {
 //
 // A taxon with entirely specific single-state codings scores highest.
 // A fully ambiguous taxon scores 0.  The maximum is (n_states-1)*n_chars.
+// Like wagner_goloboff_scores above, this is deliberately weight-blind (uses
+// blk.n_chars, not blk.weight): the two scorers are kept consistent on
+// purpose, not by oversight. Whether either *should* be weight-aware is an
+// open question (T-371) — untested, would shift start trees, needs an A/B.
 std::vector<double> wagner_entropy_scores(const DataSet& ds) {
   int n_tip = ds.n_tips;
   int tw    = ds.total_words;

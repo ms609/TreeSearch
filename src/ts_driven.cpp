@@ -666,6 +666,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   auto start_time = std::chrono::steady_clock::now();
 
   // Cancel file: read path from environment variable (set by Shiny app).
+  // T-338: worker-thread-reachable getenv() (driven_search runs on the
+  // resample-worker path); safe today, no concurrent setenv/putenv in src/.
+  // See dev/red-team/findings.md T-338.
   std::string cancel_path;
   {
     const char* cancel_env = std::getenv("TREESEARCH_CANCEL_FILE");
@@ -755,6 +758,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   // NB validate matched-WALL (targetHits huge) so a reseeded rep re-deriving
   // the best score cannot inflate hits_to_best into an early stop; hits-
   // accounting is a deploy-gate concern, not a probe-measurement one.
+  // T-338: worker-thread-reachable getenv(); inert (see :671 note above).
   bool pr_enabled = false;
   double pr_prob = 0.5;
   {
@@ -1069,6 +1073,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       // any suboptimal recipients. Read per-fuse (fusing fires only every
       // fuse_interval reps, so the getenv cost is negligible — and a plain
       // read stays togglable per-call, unlike a process-lifetime static).
+      // T-338: worker-thread-reachable getenv(); inert (see :671 note above).
       const char* fp_env = std::getenv("TS_FUSE_PAIRWISE");
       const bool fuse_pairwise = fp_env && fp_env[0] == '1';
 
@@ -1282,6 +1287,8 @@ finish:
       tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_enum_timeout);
       ++seed_idx;
     }
+    // T-338: worker-thread-reachable Rprintf; inert because verbosity
+    // defaults to 0 and ts_parallel_resample never wires it up.
     if (params.verbosity >= 2) {
       Rprintf("MPT enumeration: %d trees in pool (%.1f s)\n",
               pool.size(), elapsed());
@@ -1299,6 +1306,7 @@ finish:
   // anchors and keep the best. tree_fuse iterates ALL donors per anchor, so a
   // handful of anchors suffices. Default OFF pending across-seed validation.
   {
+    // T-338: worker-thread-reachable getenv(); inert (see :671 note above).
     const char* tf_env = std::getenv("TS_TERMINAL_FUSE");
     if (tf_env && tf_env[0] == '1' && pool.size() >= 2) {
       auto tf_start = std::chrono::steady_clock::now();
@@ -1328,6 +1336,7 @@ finish:
 
       // Diagnostic: always report the terminal-fuse attempt (verbosity>=1),
       // so "executed-but-no-key" is distinguishable from "never executed".
+      // T-338: worker-thread-reachable Rprintf; inert (see :1290 note above).
       if (params.verbosity >= 1 && !has_callback) {
         Rprintf("Terminal fuse attempt: pool=%d anchors=%d best_before=%.5g "
                 "-> best_fused=%.5g\n",

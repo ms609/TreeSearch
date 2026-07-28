@@ -1016,6 +1016,10 @@ int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
 // "wasted" = per-member blocks scanned AFTER that member individually crossed the
 // cutoff; frac = wasted / total-scanned. Measures the ceiling for a force-scalar
 // reroot (ILP-confounded, so a large frac still needs a wall A/B to settle sign).
+// T-338: worker-thread-reachable, unsynchronized file-static counters. Safe
+// only because TS_AUDIT_PROBE is never defined in CI/production builds
+// (requires explicit -DTS_AUDIT_PROBE); keep audit-probe profiling runs
+// serial if this is ever built with parallel resample. See T-338.
 static long long g_x4_waste = 0;
 static long long g_x4_total = 0;
 static unsigned long long g_x4_calls = 0;

@@ -290,6 +290,9 @@ static void collect_clade_nodes(const TreeState& tree, int node,
 #ifdef TS_AUDIT_PROBE
 #include <cstdio>
 // Audit #56: realized per-sector column-axis reduction counters.
+// T-338: worker-thread-reachable, unsynchronized. Safe only because
+// TS_AUDIT_PROBE is never defined in CI/production builds; keep audit-probe
+// profiling runs serial. See dev/red-team/findings.md T-338.
 long long g_sect_inf_chars = 0, g_sect_tot_chars = 0;
 long long g_sect_fp_blocks = 0, g_sect_tot_blocks = 0;
 unsigned long long g_sect_calls = 0;
@@ -409,7 +412,17 @@ static void reduce_sector_columns_ew(ReducedDataset& rd, int n_sector_tips) {
   //    read ONLY the block structure, and the dropped chars' 0 contribution keeps
   //    scores exact. (Extending past the EW gate would require remapping those
   //    per-pattern arrays over the survivors.)
+  //    T-335: `plane_state` is also left zero-initialized (CharBlock cb{} above
+  //    never assigns it) and is stale/full-dataset-sized alongside those four
+  //    arrays. This is INERT ONLY because the :315-317 gate above is hard-limited
+  //    to pure EW (weight 1, no upweight, no inapplicable) and the EW scorers
+  //    actually invoked never read n_patterns/min_steps/pattern_freq/
+  //    precomputed_steps/plane_state. If this gate is EVER loosened toward IW or
+  //    weighted scoring, those five arrays MUST be rebuilt over the survivor set
+  //    here, not just pattern_index (line 369) -- otherwise a widened gate lands
+  //    a silent stale-array bug. See dev/red-team/findings.md T-335.
 #ifdef TS_AUDIT_PROBE
+  // T-338: worker-thread-reachable, unsynchronized static; inert (see :290 note).
   static bool announced = false;
   if (!announced) {
     announced = true;
