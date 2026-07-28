@@ -44,9 +44,10 @@ taxa. Randomized if not provided.}
 \value{
 \code{AdditionTree()} returns a tree of class \code{phylo}. The tree carries a
 degree-two root, but its root position is an arbitrary by-product of the
-order in which taxa were added and is not \code{sequence[1]}; parsimony scores are
-unaffected by rooting, so root the result explicitly (e.g. with
-\code{TreeTools::RootTree()}) if a particular root is needed. With fewer than four
+order in which taxa were added and is not necessarily \code{sequence[1]};
+parsimony scores are unaffected by rooting, so root the result yourself with
+\href{https://ms609.github.io/TreeTools/reference/RootTree}{\code{TreeTools::RootTree()}}
+if the position of the root matters to you. With fewer than four
 taxa there is nothing to optimise, and a pectinate tree of the dataset's taxa
 is returned without consulting \code{sequence} or \code{constraint}.
 }

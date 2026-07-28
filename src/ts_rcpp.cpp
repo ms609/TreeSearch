@@ -1836,6 +1836,10 @@ static void unpack_xform(Nullable<List> xformConfig,
     for (int ch = 0; ch < n_xf; ++ch) {
       List rc = xf_list[ch];
       IntegerVector ts_r = as<IntegerVector>(rc["tip_states"]);
+      if (ts_r.size() != n_t) {
+        Rcpp::stop("`tip_states` length (%d) must equal the number of tips "
+                   "(%d)", static_cast<int>(ts_r.size()), n_t);
+      }
       int ns = ns_vec[ch];
       for (int t = 0; t < n_t; ++t) {
         int state = ts_r[t];
