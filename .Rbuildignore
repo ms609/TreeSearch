@@ -1,3 +1,4 @@
+^\.Rprofile$
 .covrignore
 .github
 ^CRAN-RELEASE$
