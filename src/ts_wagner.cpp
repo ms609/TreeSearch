@@ -94,17 +94,22 @@ void insert_tip_at_edge(TreeState& tree, int tip, int new_internal,
   }
 }
 
-// Incremental two-pass Fitch scoring after Wagner insertion.
+// Incremental downpass rescore after Wagner insertion.
 //
 // After inserting a tip at edge (above, below) with new_internal between them,
-// recompute downpass states from new_internal to root, then uppass from root
-// back down through changed nodes. Returns the score delta (positive = score
-// increased, which it always will during Wagner construction).
+// recompute downpass states from new_internal to root. Returns the score delta
+// (positive = score increased, which it always will during Wagner
+// construction).
 //
-// Downpass: O(depth×C) — walk from new_internal to root, stop when prelim
-// stabilizes.
-// Uppass: DFS from root with early termination — O(affected_region × C),
-// typically much less than a full uppass.
+// O(depth×C) — walk from new_internal to root, stop when prelim stabilizes.
+//
+// Does NOT update final_: every caller only reads prelim (via
+// compute_insertion_edge_sets) before its next full uppass/rescore, so an
+// uppass here would be dead work. If a future caller needs final_ live after
+// an incremental insertion, add a correct uppass rather than reviving this
+// function's old one, which stopped descending on final_ equality alone and
+// could leave stale (zero) final_ below the point where the downpass above
+// broke out.
 int wagner_incremental_rescore(TreeState& tree, const DataSet& ds,
                                int new_internal) {
   int n_tip = tree.n_tip;
@@ -169,68 +174,6 @@ int wagner_incremental_rescore(TreeState& tree, const DataSet& ds,
     // Early termination: if prelim didn't change, ancestors are unaffected
     if (!changed) break;
     node = tree.parent[node];
-  }
-
-  // --- Phase 2: Uppass from root with early termination ---
-  // Set root final = prelim, then DFS through internal nodes, computing
-  // final from parent's final + own prelim. Skip subtrees where final
-  // didn't change.
-
-  size_t root_base = static_cast<size_t>(root) * tw;
-  for (int w = 0; w < tw; ++w) {
-    tree.final_[root_base + w] = tree.prelim[root_base + w];
-  }
-
-  // DFS from root's children. Each internal node whose final_ changes
-  // has its children pushed for processing.
-  std::vector<int> up_stack;
-  {
-    int ri = root - n_tip;
-    int lc = tree.left[ri];
-    int rc = tree.right[ri];
-    if (lc >= 0) up_stack.push_back(lc);
-    if (rc >= 0) up_stack.push_back(rc);
-  }
-
-  while (!up_stack.empty()) {
-    int n = up_stack.back();
-    up_stack.pop_back();
-    if (n < n_tip) continue;  // tip: final = prelim, already correct
-
-    int anc = tree.parent[n];
-    size_t n_base = static_cast<size_t>(n) * tw;
-    size_t a_base = static_cast<size_t>(anc) * tw;
-    bool changed = false;
-
-    for (int b = 0; b < nb; ++b) {
-      const CharBlock& blk = ds.blocks[b];
-      int offset = ds.block_word_offset[b];
-
-      uint64_t any_isect = 0;
-      for (int s = 0; s < blk.n_states; ++s) {
-        any_isect |= (tree.final_[a_base + offset + s]
-                    & tree.prelim[n_base + offset + s]);
-      }
-      uint64_t no_isect = ~any_isect & blk.active_mask;
-
-      for (int s = 0; s < blk.n_states; ++s) {
-        uint64_t isect = tree.final_[a_base + offset + s]
-                       & tree.prelim[n_base + offset + s];
-        uint64_t new_val = (isect & any_isect)
-                         | (tree.prelim[n_base + offset + s] & no_isect);
-        if (new_val != tree.final_[n_base + offset + s]) changed = true;
-        tree.final_[n_base + offset + s] = new_val;
-      }
-    }
-
-    // Propagate to children only if final changed
-    if (changed) {
-      int ni_idx = n - n_tip;
-      int lc = tree.left[ni_idx];
-      int rc = tree.right[ni_idx];
-      if (lc >= 0) up_stack.push_back(lc);
-      if (rc >= 0) up_stack.push_back(rc);
-    }
   }
 
   return score_delta;
