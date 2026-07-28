@@ -606,6 +606,10 @@
 #'       identical.}
 #'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
 #'   }
+#'   Any unambiguous abbreviation is accepted: `"thoro"`, `"thor"` and `"t"` all
+#'   select `"thorough"`.  Every preset's initial differs, so a single letter is
+#'   always enough.  A value that matches nothing -- or matches ambiguously --
+#'   warns and falls back to the default parameters rather than erroring.
 #'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement
 #'   rule; `consensusStableReps` (consensus-stability stopping) is off by default
 #'   and is not enabled by any preset.
@@ -686,6 +690,16 @@
 #'   results.
 #' @param verbosity Integer specifying level of messaging; higher values give
 #' more detail. Set to `0` to run silently.
+#'   At `1` (default) each replicate reports its score, pool size and hit count;
+#'   at `2` and above each search phase reports on completion.
+#'
+#'   On a large dataset a single phase can run for many minutes, during which
+#'   neither level would print anything: on a 182-tip, 420-character matrix with
+#'   inapplicable tokens throughout, one TBR phase took 582 s and one ratchet
+#'   549 s, together 96% of a 1173 s replicate.  A *heartbeat* therefore reports
+#'   from inside the long phases -- overwriting one console line at a terminal,
+#'   or emitting discrete lines to a batch log -- so a slow search is
+#'   distinguishable from a hung one.  See the environment variables below.
 #' @param progressCallback Optional function called with a single list
 #'   argument containing search progress information.
 #'   The list includes elements: `replicate`, `max_replicates`,
@@ -695,6 +709,39 @@
 #'   a `cli` progress bar is created automatically.
 #'   Supply a custom function (e.g. using [shiny::setProgress()])
 #'   to control progress display.
+#'
+#'   Note that supplying a callback *replaces* the per-replicate console line
+#'   rather than adding to it, and that the callback fires only when a replicate
+#'   or a fuse completes -- so on a dataset whose replicates take many minutes,
+#'   nothing arrives until the first one finishes.  The heartbeat described under
+#'   `verbosity` is independent of the callback and reports throughout.
+#' @section Progress reporting in non-interactive sessions:
+#'
+#' The automatic `cli` progress bar requires an interactive session.  Under
+#' `Rscript` (including a batch or cluster job) two environment variables control
+#' reporting instead:
+#'
+#' \describe{
+#'   \item{`TREESEARCH_PROGRESS_FILE`}{Path to a status file.  After each
+#'     replicate, a single line is written -- and the file truncated, so it
+#'     always holds current state rather than a history -- containing
+#'     `replicate`, `max_replicates`, `best_score`, `hits_to_best` and
+#'     `target_hits`, space-separated.  Poll it to monitor a long job:
+#'     `TREESEARCH_PROGRESS_FILE=progress.txt Rscript analysis.R`.  Only
+#'     consulted when `progressCallback` is `NULL`.}
+#'   \item{`TS_HEARTBEAT_SECONDS`}{Heartbeat cadence in seconds; fractional
+#'     values are allowed.  Defaults to 30 at a terminal (where the line
+#'     overwrites itself) and 120 to a batch log (where every heartbeat is a
+#'     permanent line).  Set to `0` to disable.  An unparseable value falls back
+#'     to the default rather than disabling.}
+#' }
+#'
+#' The heartbeat reports only from searches of the whole tree under the real
+#' character weights.  Sectorial searches score a subtree, and the ratchet's
+#' perturbation phase scores a reweighted matrix; both legitimately run far below
+#' the true optimum, so reporting them would look like erratic progress.  Any
+#' score the heartbeat prints is therefore directly comparable with the final
+#' tree score.
 #' @param control A [`SearchControl`] object (or a named list) of low-level
 #'   search parameters.  Most users can rely on the `strategy` presets and
 #'   ignore this argument; see [`SearchControl()`] for full documentation
@@ -882,6 +929,26 @@ MaximizeParsimony <- function(
   if (length(otherDots)) {
     warning("Unknown arguments ignored: ",
             paste0(sQuote(names(otherDots)), collapse = ", "))
+  }
+
+  # --- Resolve an abbreviated strategy to its canonical name ---
+  # Must run BEFORE the preset lookup below, and before `.IwRatchetDepth()` /
+  # `.IwStopPackage()`, both of which test `strategy %in% c("thorough", "large")`
+  # by exact string.  Resolving later would let `strategy = "thoro"` pick up
+  # `thorough`'s preset while silently skipping its implied-weights package --
+  # a worse failure than not matching at all, because it looks like it worked.
+  #
+  # `pmatch()` rather than `match.arg()`: an unrecognised or ambiguous value must
+  # keep falling through to the existing "Unknown strategy" warning (leaving
+  # `strategy` as the user typed it, so the warning names it), not error.
+  if (length(strategy) == 1L && is.character(strategy) && !is.na(strategy)) {
+    strategyChoices <- c(names(.StrategyPresets()), "auto", "none")
+    if (!strategy %in% strategyChoices) {
+      matched <- pmatch(strategy, strategyChoices)
+      if (!is.na(matched)) {
+        strategy <- strategyChoices[[matched]]
+      }
+    }
   }
 
   # --- Apply strategy preset ---

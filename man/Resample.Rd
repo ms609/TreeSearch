@@ -75,7 +75,17 @@ Constraint searches are supported natively: all tree rearrangements
 are filtered to respect the constraint topology.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
-more detail. Set to \code{0} to run silently.}
+more detail. Set to \code{0} to run silently.
+At \code{1} (default) each replicate reports its score, pool size and hit count;
+at \code{2} and above each search phase reports on completion.
+
+On a large dataset a single phase can run for many minutes, during which
+neither level would print anything: on a 182-tip, 420-character matrix with
+inapplicable tokens throughout, one TBR phase took 582 s and one ratchet
+549 s, together 96\% of a 1173 s replicate.  A \emph{heartbeat} therefore reports
+from inside the long phases -- overwriting one console line at a terminal,
+or emitting discrete lines to a batch log -- so a slow search is
+distinguishable from a hung one.  See the environment variables below.}
 
 \item{nReplicates}{Integer specifying how many resample replicates to run.
 Default \code{1L} runs a single replicate (original behaviour).

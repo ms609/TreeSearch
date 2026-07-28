@@ -42,6 +42,14 @@ struct TBRParams {
   // sector_mask / cd / tabu / pool are active (state would be invalidated).
   // See dev/plans/2026-06-18-tbr-shared-start.md.
   bool unrooted = true;
+  // Progress-heartbeat label, e.g. "TBR".  Left null by default, which SILENCES
+  // the heartbeat for this call.  Opt-in rather than opt-out because a caller is
+  // the only thing that knows whether this search's running best is on the user's
+  // objective: a sectorial search scores a subtree, and the ratchet's
+  // perturbation phase scores a reweighted matrix, so both would report numbers
+  // far below the true optimum and read as nonsense progress.  Set it only from
+  // call sites searching the whole tree under the real weights.
+  const char* heartbeat_label = nullptr;
 };
 
 // Per-pass diagnostic record (populated only when TBRParams::diagnostics

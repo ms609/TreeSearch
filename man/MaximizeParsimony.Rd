@@ -154,6 +154,10 @@ distinguished it are now folded into \code{"thorough"}, so the two are
 identical.}
 \item{\code{"none"}}{Use only the explicitly supplied parameter values.}
 }
+Any unambiguous abbreviation is accepted: \code{"thoro"}, \code{"thor"} and \code{"t"} all
+select \code{"thorough"}.  Every preset's initial differs, so a single letter is
+always enough.  A value that matches nothing -- or matches ambiguously --
+warns and falls back to the default parameters rather than erroring.
 Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
 rule; \code{consensusStableReps} (consensus-stability stopping) is off by default
 and is not enabled by any preset.
@@ -238,7 +242,17 @@ thread scheduling nondeterminism. Use \code{nThreads = 1} for reproducible
 results.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
-more detail. Set to \code{0} to run silently.}
+more detail. Set to \code{0} to run silently.
+At \code{1} (default) each replicate reports its score, pool size and hit count;
+at \code{2} and above each search phase reports on completion.
+
+On a large dataset a single phase can run for many minutes, during which
+neither level would print anything: on a 182-tip, 420-character matrix with
+inapplicable tokens throughout, one TBR phase took 582 s and one ratchet
+549 s, together 96\% of a 1173 s replicate.  A \emph{heartbeat} therefore reports
+from inside the long phases -- overwriting one console line at a terminal,
+or emitting discrete lines to a batch log -- so a slow search is
+distinguishable from a hung one.  See the environment variables below.}
 
 \item{progressCallback}{Optional function called with a single list
 argument containing search progress information.
@@ -248,7 +262,13 @@ The list includes elements: \code{replicate}, \code{max_replicates},
 When \code{NULL} (default) and \code{verbosity >= 1} in an interactive session,
 a \code{cli} progress bar is created automatically.
 Supply a custom function (e.g. using \code{\link[shiny:setProgress]{shiny::setProgress()}})
-to control progress display.}
+to control progress display.
+
+Note that supplying a callback \emph{replaces} the per-replicate console line
+rather than adding to it, and that the callback fires only when a replicate
+or a fuse completes -- so on a dataset whose replicates take many minutes,
+nothing arrives until the first one finishes.  The heartbeat described under
+\code{verbosity} is independent of the callback and reports throughout.}
 
 \item{control}{A \code{\link{SearchControl}} object (or a named list) of low-level
 search parameters.  Most users can rely on the \code{strategy} presets and
@@ -384,6 +404,36 @@ Profile parsimony (\code{concavity = "profile"}) is supported natively.
 Inapplicable tokens are treated as ambiguous, and each character is scored
 by its information profile \insertCite{Faith2001}{TreeSearch}; see
 \code{\link[=PrepareDataProfile]{PrepareDataProfile()}} for how multi-state profiles are computed.
+}
+
+\section{Progress reporting in non-interactive sessions}{
+
+
+The automatic \code{cli} progress bar requires an interactive session.  Under
+\code{Rscript} (including a batch or cluster job) two environment variables control
+reporting instead:
+
+\describe{
+\item{\code{TREESEARCH_PROGRESS_FILE}}{Path to a status file.  After each
+replicate, a single line is written -- and the file truncated, so it
+always holds current state rather than a history -- containing
+\code{replicate}, \code{max_replicates}, \code{best_score}, \code{hits_to_best} and
+\code{target_hits}, space-separated.  Poll it to monitor a long job:
+\verb{TREESEARCH_PROGRESS_FILE=progress.txt Rscript analysis.R}.  Only
+consulted when \code{progressCallback} is \code{NULL}.}
+\item{\code{TS_HEARTBEAT_SECONDS}}{Heartbeat cadence in seconds; fractional
+values are allowed.  Defaults to 30 at a terminal (where the line
+overwrites itself) and 120 to a batch log (where every heartbeat is a
+permanent line).  Set to \code{0} to disable.  An unparseable value falls back
+to the default rather than disabling.}
+}
+
+The heartbeat reports only from searches of the whole tree under the real
+character weights.  Sectorial searches score a subtree, and the ratchet's
+perturbation phase scores a reweighted matrix; both legitimately run far below
+the true optimum, so reporting them would look like erratic progress.  Any
+score the heartbeat prints is therefore directly comparable with the final
+tree score.
 }
 
 \examples{

@@ -2,6 +2,7 @@
 #include "ts_tbr.h"
 #include "ts_fitch.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 
 #include <random>
 #include <algorithm>
@@ -149,6 +150,11 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   search_params.max_hits = params.max_hits;
   search_params.tabu_size = params.tabu_size;
   search_params.clip_order = static_cast<ClipOrder>(params.clip_order);
+  // Whole tree under the real weights (this params set is used for the baseline
+  // TBR and for the post-restore search each cycle), so its running best is the
+  // user's objective and is safe to report.  ratchet_search() is only ever called
+  // on the whole tree -- never on a sector -- so this cannot leak a subtree score.
+  search_params.heartbeat_label = "Ratchet";
 
   TBRResult initial = tbr_search(tree, ds, search_params, cd,
                                    nullptr, nullptr, check_timeout);
@@ -199,7 +205,12 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
         break;
     }
 
-    // 2. Short TBR on perturbed landscape
+    // 2. Short TBR on perturbed landscape.
+    // `perturb_params` deliberately carries no heartbeat_label: `ds` currently
+    // holds perturbed character weights, so this search's running best is on a
+    // different objective and can sit far below the true optimum (33 where the
+    // real optimum is 79, on Vinther2008).  Reporting it would read as wild
+    // progress.  The unperturbed search below is the one that reports.
     TBRResult perturb_result = tbr_search(tree, ds, perturb_params, cd,
                                            nullptr, nullptr, check_timeout);
     total_moves += perturb_result.n_accepted;
@@ -241,6 +252,12 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
       }
       recent_escapes = 0;
     }
+
+    // Stride 1: a ratchet cycle is coarse (seconds to minutes on a large
+    // matrix), so checking the clock once per cycle costs nothing measurable,
+    // and a larger stride would silence the heartbeat entirely on the deep
+    // ratchets implied weights asks for.
+    ts::heartbeat("Ratchet", best_score, 1);
 
     if (ts::check_interrupt()) break;
     if (check_timeout && check_timeout()) break;

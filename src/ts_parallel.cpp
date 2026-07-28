@@ -2,6 +2,7 @@
 #include "ts_collapsed.h"
 #include "ts_constraint.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 #include "ts_fitch.h"
 #include "ts_fuse.h"
 #include "ts_tbr.h"
@@ -374,6 +375,10 @@ DrivenResult parallel_driven_search(
   // Main thread: poll for interrupt and timeout
   int last_stab_done = 0;     // replicates_done at last consensus check
   int last_progress_done = -1; // replicate count at last progress print
+  // Wall-clock of the last progress emission, so the heartbeat can fire between
+  // replicate completions.  Seeded to the search start, not the epoch, so the
+  // first heartbeat lands one full interval in rather than immediately.
+  auto last_progress_time = start_time;
   bool progress_on_line = false; // true after a \r progress line is open
   while (true) {
     // Sleep briefly to avoid spinning
@@ -519,21 +524,40 @@ DrivenResult parallel_driven_search(
     // the check.  At verbosity >= 2 emit a plain \n line so batch logs still
     // carry progress detail without the flush risk.
     if (params.verbosity >= 1) {
+      const bool isTty = TS_ISATTY();
       int done = replicates_done.load(std::memory_order_relaxed);
-      if (done != last_progress_done) {
+      const bool repFinished = (done != last_progress_done);
+      // Heartbeat: a replicate on a large matrix can run for hours, so reporting
+      // only when `done` changes leaves a batch log silent for that whole time
+      // and indistinguishable from a hung job.  Re-emit on a wall-clock cadence
+      // even when no replicate has finished.
+      bool dueByTime = false;
+      const double hbInterval = ts::heartbeat_interval(isTty);
+      auto pollNow = std::chrono::steady_clock::now();
+      if (hbInterval > 0) {
+        const double sinceEmit =
+            std::chrono::duration<double>(pollNow - last_progress_time).count();
+        dueByTime = sinceEmit >= hbInterval;
+      }
+      if (repFinished || dueByTime) {
         auto st = shared_pool.status();
-        if (TS_ISATTY()) {
-          Rprintf("\r[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d",
+        const double elapsedS =
+            std::chrono::duration<double>(pollNow - start_time).count();
+        if (isTty) {
+          Rprintf("\r[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d | %.0fs   ",
                   n_threads, done, params.max_replicates,
-                  st.best_score, st.pool_size, st.hits_to_best);
+                  st.best_score, st.pool_size, st.hits_to_best, elapsedS);
           R_FlushConsole();
           progress_on_line = true;
-        } else if (params.verbosity >= 2) {
-          Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d\n",
+        } else if (params.verbosity >= 2 || dueByTime) {
+          // At verbosity 1 a non-tty run prints only the time-driven heartbeat,
+          // keeping the previous per-replicate quiet default for batch logs.
+          Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d | %.0fs\n",
                   n_threads, done, params.max_replicates,
-                  st.best_score, st.pool_size, st.hits_to_best);
+                  st.best_score, st.pool_size, st.hits_to_best, elapsedS);
         }
         last_progress_done = done;
+        last_progress_time = pollNow;
       }
     }
   }

@@ -14,6 +14,7 @@
 #include "ts_splits.h"
 #include "ts_prune_reinsert.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 
 #include <R.h>
 #include <Rmath.h>
@@ -75,6 +76,12 @@ ReplicateResult run_single_replicate(
     auto now = PhClock::now();
     double ms = std::chrono::duration<double, std::milli>(now - ph_start).count();
     ph_start = now;
+    // Every phase boundary passes through here, immediately before that phase's
+    // own summary line is printed.  Hooking the heartbeat here — rather than at
+    // each of the dozen `verbosity >= 2` blocks — guarantees an in-place
+    // heartbeat line is cleared before anything else writes over it, and resets
+    // the in-phase timer so the next phase reports its own elapsed time.
+    ts::heartbeat_phase(nullptr);
     return ms;
   };
 
@@ -170,6 +177,10 @@ ReplicateResult run_single_replicate(
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
     tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+    // Whole tree, real weights: this search's running best IS the user's
+    // objective, so it is safe to report.  Measured at 582 s on a 182-tip
+    // inapplicable matrix -- the single longest silent stretch in a replicate.
+    tp.heartbeat_label = "TBR";
     tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.tbr_ms = ph_lap();
@@ -564,6 +575,7 @@ ReplicateResult run_single_replicate(
       TBRParams tp;
       tp.tabu_size = params.tabu_size;
       tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+      tp.heartbeat_label = "TBR";  // whole tree, real weights: safe to report
       tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
     }
     result.timings.final_tbr_ms += ph_lap();
@@ -707,6 +719,12 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   };
 
   bool has_callback = static_cast<bool>(params.progress_callback);
+
+  // Intra-phase heartbeat.  Phase-boundary lines alone leave the console silent
+  // for as long as one phase runs, which on a large inapplicable matrix is
+  // ~10 minutes for TBR and again for the ratchet.  Serial only: heartbeat_begin
+  // no-ops on worker threads, and the parallel path reports from its coordinator.
+  ts::HeartbeatScope heartbeatScope(params.verbosity);
 
   // Helper: report progress via callback or Rprintf fallback.
   // Callbacks are ALWAYS invoked when present (regardless of verbosity)

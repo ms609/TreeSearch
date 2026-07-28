@@ -2,6 +2,7 @@
 #include "ts_fitch.h"
 #include "ts_collapsed.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 #include "ts_tabu.h"
 #include "ts_splits.h"
 #include <algorithm>
@@ -2917,6 +2918,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       pass_candidates_evaluated += (n_evaluated - clip_evals_before);
+
+      // Piggyback the existing per-clip poll rather than adding a clock read to
+      // the candidate loop: the profiling campaign left the hot path at-limit,
+      // and a per-candidate chrono::now() would reopen it.  Stride 64 amortises
+      // the clock read across clips, which are individually cheap.
+      // Silent unless the caller labelled this search -- see TBRParams.
+      if (params.heartbeat_label != nullptr) {
+        ts::heartbeat(params.heartbeat_label, best_score, 64);
+      }
 
       if (ts::check_interrupt()) break;
       ++clips_since_timeout_check;
