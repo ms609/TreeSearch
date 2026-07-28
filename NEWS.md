@@ -1,5 +1,30 @@
 # To integrate into 2.0.0 notes
 
+- New `SearchControl()` parameter `stopPatience`: stop after this many consecutive
+  replicates fail to improve the best score.  Unlike `perturbStopFactor` it is a
+  flat count, referring neither to the tip count nor to the number of hits, so the
+  replicate at which it fires does not stretch as replicates become individually
+  more expensive.  The count resets on every improvement, so a search that keeps
+  improving is never cut short.  0 (the default) disables it.
+
+- Implied-weights searches under `strategy = "sprint"` or `"default"` now run a
+  deeper ratchet paid for by that flat patience: `sprint` takes
+  `ratchetCycles = 12`, `ratchetPerturbProb = 0.25` and `stopPatience = 20`;
+  `default` takes `ratchetCycles = 20` and `stopPatience = 15`.  The two knobs
+  ship together because each fails on its own — the deeper ratchet improves the
+  score but costs wall-clock, and stopping earlier saves wall-clock but costs
+  score.  Measured over 68 training matrices (6 seeds, k = 10): on the median
+  matrix `sprint` is 26% faster and `default` 18% faster, `sprint` scores better
+  on 4 matrices and worse on none, and `default` better on 9 and worse on 3.
+  A sweep over `stopPatience` in {10, 15, 20, 25, 30} found score and wall-clock
+  both vary smoothly with the value, so these are operating points on a
+  trade-off rather than tuned constants: a larger `stopPatience` buys score back
+  and gives up the speed.  Not every matrix gets faster — 9 of the 44 `default`
+  training matrices were more than 10% slower, being those where the patience
+  rule does not fire and the deeper ratchet is not paid for.  Equal weights and
+  profile parsimony are unchanged, as is `thorough`/`large`, and setting any of
+  these fields yourself overrides all of it.
+
 - Fixed: a large `targetHits` combined with a large `perturbStopFactor` stopped the
   search after two replicates and silently returned a worse tree.  The
   no-improvement rule computes `(targetHits / hits) * nTip * perturbStopFactor`,

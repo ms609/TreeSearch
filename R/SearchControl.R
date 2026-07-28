@@ -147,6 +147,16 @@
 #'   Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 #'   \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
 #'   per-replicate granularity.
+#' @param stopPatience Integer; stop after this many consecutive replicates
+#'   fail to improve the best score.  Unlike `perturbStopFactor` this is a
+#'   flat count: it refers neither to the tip count nor to the number of hits,
+#'   so the replicate at which it fires does not stretch as replicates become
+#'   individually more expensive.  Deeper per-replicate search (a longer
+#'   ratchet, say) therefore buys quality without also extending the run.
+#'   Counts reset on every improvement, so a search that keeps improving is
+#'   never cut short: it stops at `lastImprovement + stopPatience` replicates.
+#'   0 (default) disables this criterion.  When several stopping criteria are
+#'   active the search stops as soon as any one of them is met.
 #' @param adaptiveLevel Logical; dynamically scale ratchet and drift effort
 #'   based on the observed hit rate?  When `TRUE`, easy landscapes
 #'   (high hit rate) trigger reduced effort per replicate, while hard
@@ -340,6 +350,7 @@ SearchControl <- function(
     # Stopping criteria
     consensusStableReps = 0L,
     perturbStopFactor = 2L,
+    stopPatience = 0L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
     # Taxon pruning-reinsertion (T-266)
@@ -380,6 +391,13 @@ SearchControl <- function(
     if (length(.v) != 1L || is.na(.v) || .v < 1L) {
       stop("`", .p, "` must be a single positive integer")
     }
+  }
+  # `stopPatience` is a replicate count, so a negative value is meaningless; the
+  # kernel treats anything <= 0 as "off", which would silently ignore a typo
+  # such as -20 rather than honouring the obvious intent.
+  .sp <- as.integer(stopPatience)
+  if (length(.sp) != 1L || is.na(.sp) || .sp < 0L) {
+    stop("`stopPatience` must be a single non-negative integer (0 disables it)")
   }
   # `stallEscalateFactor` multiplies the ratchet perturbation probability when a
   # run stalls; a value < 1 would *shrink* perturbation on stalling (the wrong
@@ -459,6 +477,7 @@ SearchControl <- function(
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
       perturbStopFactor = as.integer(perturbStopFactor),
+      stopPatience = as.integer(stopPatience),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
       pruneReinsertCycles = as.integer(pruneReinsertCycles),
@@ -506,7 +525,7 @@ print.SearchControl <- function(x, ...) {
                      "postRatchetSectorial"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
                      "poolMaxSize", "poolSuboptimal"),
-    "Stopping" = c("consensusStableReps", "perturbStopFactor",
+    "Stopping" = c("consensusStableReps", "perturbStopFactor", "stopPatience",
                     "adaptiveLevel",
                     "consensusConstrain", "adaptiveStart",
                     "enumTimeFraction")

@@ -1,19 +1,9 @@
-# TS_STOP_PATIENCE is an experimental, opt-in flat replicate patience: stop after N
-# consecutive replicates fail to improve, with no reference to the hit count.  It exists
-# because both shipped rules are indexed on replicates via hits, so a change that makes a
-# replicate individually better but slower delays the stop instead of improving the answer.
-# It must be inert unless set, and must never stop the search LATER than the shipped rules.
-
-withPatience <- function(value, code) {
-  old <- Sys.getenv("TS_STOP_PATIENCE", unset = NA)
-  if (is.na(old)) {
-    on.exit(Sys.unsetenv("TS_STOP_PATIENCE"), add = TRUE)
-  } else {
-    on.exit(Sys.setenv(TS_STOP_PATIENCE = old), add = TRUE)
-  }
-  Sys.setenv(TS_STOP_PATIENCE = value)
-  force(code)
-}
+# `stopPatience` is a flat replicate patience: stop after N consecutive replicates fail to
+# improve, with no reference to the hit count.  It exists because both other no-improvement
+# rules are indexed on replicates via hits, so a change that makes a replicate individually
+# better but slower delays the stop instead of improving the answer.  It must be inert at its
+# default of 0, must never stop the search LATER than the other rules, and -- since it is
+# shipped by `sprint`/`default` under implied weights only -- must leave equal weights alone.
 
 testDataset <- function() {
   TreeTools::MatrixToPhyDat(rbind(
@@ -23,46 +13,138 @@ testDataset <- function() {
   ))
 }
 
-test_that("TS_STOP_PATIENCE is inert when unset", {
-  skip_if(nzchar(Sys.getenv("TS_STOP_PATIENCE")),
-          "TS_STOP_PATIENCE is set in this environment")
+test_that("stopPatience is inert at its default", {
   dataset <- testDataset()
   reps <- 20L
   # Both count rules off, so only the replicate cap can end the search.
   r <- MaximizeParsimony(dataset, targetHits = 99999L, perturbStopFactor = 0L,
                          consensusStableReps = 0L, maxReplicates = reps, verbosity = 0L)
   expect_equal(attr(r, "replicates"), reps)
+  expect_equal(SearchControl()$stopPatience, 0L)
 })
 
-test_that("A flat patience stops the search early and keeps the best score", {
+test_that("stopPatience stops the search early and keeps the best score", {
   dataset <- testDataset()
   reps <- 200L
   args <- list(dataset = dataset, targetHits = 99999L, perturbStopFactor = 0L,
                consensusStableReps = 0L, maxReplicates = reps, verbosity = 0L)
   full <- do.call(MaximizeParsimony, args)
-  short <- withPatience("2", do.call(MaximizeParsimony, args))
+  short <- do.call(MaximizeParsimony, c(args, list(stopPatience = 2L)))
   expect_lt(attr(short, "replicates"), reps)
   # This dataset is tiny, so the optimum is found immediately: an early stop must not cost
   # score.  (A patience rule can only truncate; it cannot alter earlier replicates.)
   expect_equal(min(attr(short, "score")), min(attr(full, "score")))
+  expect_true(attr(short, "perturb_stop"))
 })
 
-test_that("A larger patience runs at least as long as a smaller one", {
+test_that("stopPatience fires at lastImprovement + patience", {
+  # The identity the campaign's terminator audit relies on, and the reason a pre-registered
+  # check of `replicates == patience + 1` was wrong: the counter RESETS on every improvement,
+  # so the stop replicate is measured from the last improvement, not from the start.
+  dataset <- testDataset()
+  patience <- 4L
+  r <- MaximizeParsimony(dataset, targetHits = 99999L, perturbStopFactor = 0L,
+                         consensusStableReps = 0L, maxReplicates = 200L,
+                         stopPatience = patience, verbosity = 0L)
+  expect_equal(attr(r, "replicates"),
+               attr(r, "last_improved_rep") + patience)
+})
+
+test_that("A larger stopPatience runs at least as long as a smaller one", {
   dataset <- testDataset()
   args <- list(dataset = dataset, targetHits = 99999L, perturbStopFactor = 0L,
                consensusStableReps = 0L, maxReplicates = 200L, verbosity = 0L)
-  tight <- withPatience("2", do.call(MaximizeParsimony, args))
-  loose <- withPatience("25", do.call(MaximizeParsimony, args))
+  tight <- do.call(MaximizeParsimony, c(args, list(stopPatience = 2L)))
+  loose <- do.call(MaximizeParsimony, c(args, list(stopPatience = 25L)))
   expect_lte(attr(tight, "replicates"), attr(loose, "replicates"))
 })
 
-test_that("A non-positive or unparseable patience is ignored", {
+test_that("stopPatience = 0 disables the rule, and a negative value errors", {
   dataset <- testDataset()
   reps <- 15L
-  args <- list(dataset = dataset, targetHits = 99999L, perturbStopFactor = 0L,
-               consensusStableReps = 0L, maxReplicates = reps, verbosity = 0L)
-  for (bad in c("0", "-5", "not-a-number", "")) {
-    r <- withPatience(bad, do.call(MaximizeParsimony, args))
-    expect_equal(attr(r, "replicates"), reps)
+  r <- MaximizeParsimony(dataset, targetHits = 99999L, perturbStopFactor = 0L,
+                         consensusStableReps = 0L, maxReplicates = reps,
+                         stopPatience = 0L, verbosity = 0L)
+  expect_equal(attr(r, "replicates"), reps)
+  # Silently treating -20 as "off" would swallow an obvious typo.
+  expect_error(SearchControl(stopPatience = -5L), "non-negative")
+  expect_error(SearchControl(stopPatience = c(1L, 2L)), "single")
+  expect_error(SearchControl(stopPatience = NA_integer_), "non-negative")
+  # A non-numeric value reaches the guard as NA via as.integer(), with a warning.
+  expect_error(suppressWarnings(SearchControl(stopPatience = "twenty")),
+               "non-negative")
+})
+
+test_that("stopPatience survives the SearchControl round trip", {
+  # The C++ side reads this field only `if (ctrl.containsElementNamed(...))`, so a field added
+  # to SearchControl() but dropped anywhere in the plumbing fails SILENTLY as "patience off"
+  # rather than erroring.  Assert the value arrives, not merely that it is accepted.
+  ctrl <- SearchControl(stopPatience = 7L)
+  expect_equal(ctrl$stopPatience, 7L)
+  expect_true("stopPatience" %in% attr(ctrl, "explicit"))
+  dataset <- testDataset()
+  r <- MaximizeParsimony(dataset, targetHits = 99999L, perturbStopFactor = 0L,
+                         consensusStableReps = 0L, maxReplicates = 200L,
+                         control = ctrl, verbosity = 0L)
+  expect_equal(attr(r, "replicates"), attr(r, "last_improved_rep") + 7L)
+})
+
+# ---- the shipped implied-weights operating point --------------------------------------------
+# `sprint`/`default` take a deeper ratchet paid for by this patience, under implied weights
+# ONLY (2026-07-28, 4624 cells).  Equal weights and profile parsimony were never measured, so
+# they must come through untouched -- these tests pin the SCOPE, which is the part a later
+# refactor is most likely to break silently.
+
+test_that(".IwStopPackage applies to sprint and default under implied weights", {
+  expect_equal(.IwStopPackage("sprint", 10),
+               list(ratchetCycles = 12L, ratchetPerturbProb = 0.25,
+                    stopPatience = 20L))
+  expect_equal(.IwStopPackage("default", 10),
+               list(ratchetCycles = 20L, stopPatience = 15L))
+})
+
+test_that(".IwStopPackage leaves equal weights and profile parsimony alone", {
+  expect_null(.IwStopPackage("sprint", Inf))
+  expect_null(.IwStopPackage("default", Inf))
+  expect_null(.IwStopPackage("sprint", "profile"))
+  expect_null(.IwStopPackage("default", "profile"))
+})
+
+test_that(".IwStopPackage does not fire for the strategies it never measured", {
+  # Disjoint from .IwRatchetDepth() by strategy, so the two can never both set ratchetCycles.
+  for (strategy in c("thorough", "large", "intensive", "none")) {
+    expect_null(.IwStopPackage(strategy, 10))
   }
+  expect_null(.IwStopPackage(character(0), 10))
+})
+
+test_that(".IwStopPackage never overrides a field the caller set", {
+  expect_equal(.IwStopPackage("sprint", 10, userSet = "ratchetCycles"),
+               list(ratchetPerturbProb = 0.25, stopPatience = 20L))
+  expect_equal(.IwStopPackage("default", 10, userSet = "stopPatience"),
+               list(ratchetCycles = 20L))
+  expect_null(.IwStopPackage("default", 10,
+                             userSet = c("ratchetCycles", "stopPatience")))
+})
+
+test_that("the implied-weights package reaches a real search, including via auto", {
+  dataset <- testDataset()                      # 8 tips -> auto resolves to sprint
+  expect_equal(.AutoStrategy(8L, 6L), "sprint")
+  # A user-set value must win over the package even when the strategy would impose one.
+  r <- MaximizeParsimony(dataset, strategy = "auto", concavity = 10,
+                         maxReplicates = 200L, targetHits = 99999L,
+                         perturbStopFactor = 0L, consensusStableReps = 0L,
+                         stopPatience = 3L, verbosity = 0L)
+  expect_equal(attr(r, "replicates"), attr(r, "last_improved_rep") + 3L)
+  # Left to itself, `auto` under implied weights takes sprint's patience of 20.
+  auto <- MaximizeParsimony(dataset, strategy = "auto", concavity = 10,
+                            maxReplicates = 500L, targetHits = 99999L,
+                            perturbStopFactor = 0L, consensusStableReps = 0L,
+                            verbosity = 0L)
+  expect_equal(attr(auto, "replicates"), attr(auto, "last_improved_rep") + 20L)
+  # Equal weights is out of scope, so nothing stops the search but the cap.
+  ew <- MaximizeParsimony(dataset, strategy = "auto", maxReplicates = 30L,
+                          targetHits = 99999L, perturbStopFactor = 0L,
+                          consensusStableReps = 0L, verbosity = 0L)
+  expect_equal(attr(ew, "replicates"), 30L)
 })

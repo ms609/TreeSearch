@@ -54,6 +54,7 @@ SearchControl(
   poolSuboptimal = 0,
   consensusStableReps = 0L,
   perturbStopFactor = 2L,
+  stopPatience = 0L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
   pruneReinsertCycles = 0L,
@@ -285,6 +286,17 @@ Default 2.
 Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
 per-replicate granularity.}
+
+\item{stopPatience}{Integer; stop after this many consecutive replicates
+fail to improve the best score.  Unlike \code{perturbStopFactor} this is a
+flat count: it refers neither to the tip count nor to the number of hits,
+so the replicate at which it fires does not stretch as replicates become
+individually more expensive.  Deeper per-replicate search (a longer
+ratchet, say) therefore buys quality without also extending the run.
+Counts reset on every improvement, so a search that keeps improving is
+never cut short: it stops at \code{lastImprovement + stopPatience} replicates.
+0 (default) disables this criterion.  When several stopping criteria are
+active the search stops as soon as any one of them is met.}
 
 \item{adaptiveLevel}{Logical; dynamically scale ratchet and drift effort
 based on the observed hit rate?  When \code{TRUE}, easy landscapes

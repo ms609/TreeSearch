@@ -1572,17 +1572,11 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   // Stopping / adaptive
   params.consensus_stable_reps = as<int>(ctrl["consensusStableReps"]);
   params.perturb_stop_factor   = as<int>(ctrl["perturbStopFactor"]);
-  // Experimental flat replicate patience (see ts_driven.h).  Read once per search --
-  // not in any loop -- and silently ignored unless it parses to a positive count.
-  {
-    const char* sp = std::getenv("TS_STOP_PATIENCE");
-    if (sp != nullptr && *sp != '\0') {
-      const long v = std::strtol(sp, nullptr, 10);
-      if (v > 0 && v <= std::numeric_limits<int>::max()) {
-        params.stop_patience = static_cast<int>(v);
-      }
-    }
-  }
+  // Flat replicate patience (see ts_driven.h).  Guarded on presence rather than
+  // read unconditionally: a hand-built control list from before this field
+  // existed then leaves the kernel default (0 = off) instead of throwing.
+  if (ctrl.containsElementNamed("stopPatience"))
+    params.stop_patience = as<int>(ctrl["stopPatience"]);
   params.adaptive_level        = as<bool>(ctrl["adaptiveLevel"]);
   params.consensus_constrain   = as<bool>(ctrl["consensusConstrain"]);
   params.adaptive_start        = as<bool>(ctrl["adaptiveStart"]);

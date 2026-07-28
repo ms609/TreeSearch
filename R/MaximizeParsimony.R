@@ -235,6 +235,39 @@
   min(.iwRatchetMaxCycles, as.integer(round(.iwRatchetCycles * escalation)))
 }
 
+# Implied-weights operating point for `sprint`/`default`: a deeper ratchet paid
+# for by a flat replicate patience.  Same scoping rules as .IwRatchetDepth()
+# above (implied weights only, never override the caller), and deliberately
+# disjoint from it by strategy so the two can never both fire.
+# See the call site in MaximizeParsimony() for the measurements.
+.iwStopPackage <- list(
+  sprint  = list(ratchetCycles = 12L, ratchetPerturbProb = 0.25,
+                 stopPatience = 20L),
+  # `ratchetPerturbProb` is already 0.25 in the preset, so it is absent here:
+  # this list names only what the implied-weights measurement actually moved.
+  default = list(ratchetCycles = 20L, stopPatience = 15L)
+)
+
+# Named list of control fields to impose for this call, or NULL for none.
+# `userSet` names the fields the caller set themselves; those are dropped from
+# the returned list rather than filtered at the call site, keeping the
+# never-override-the-user rule in one place.
+.IwStopPackage <- function(strategy, concavity, userSet = character(0)) {
+  if (!length(strategy) || !strategy %in% names(.iwStopPackage)) {
+    return(NULL)
+  }
+  # As in .IwRatchetDepth(): `concavity` may still be the "profile" sentinel, and
+  # equal weights is infinite.  Both are different objectives, and neither was
+  # measured here.
+  if (length(concavity) != 1L || !is.numeric(concavity) ||
+      !is.finite(concavity)) {
+    return(NULL)
+  }
+  out <- .iwStopPackage[[strategy]]
+  out <- out[setdiff(names(out), userSet)]
+  if (!length(out)) NULL else out
+}
+
 # Strategy presets for adaptive search (Phase 6E).
 # Wrapped in a function to avoid load-order dependency on SearchControl().
 .StrategyPresets <- function() {
@@ -576,6 +609,10 @@
 #'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement
 #'   rule; `consensusStableReps` (consensus-stability stopping) is off by default
 #'   and is not enabled by any preset.
+#'   Under implied weights only, `"sprint"` and `"default"` additionally stop on
+#'   a flat replicate patience (`stopPatience` 20 and 15 respectively) and deepen
+#'   the ratchet to match (`ratchetCycles` 12 and 20); the pair is a package,
+#'   since each half fails on its own.  Equal weights is unaffected.
 #'   Explicit `control` fields always override the preset; for example,
 #'   `strategy = "sprint", control = SearchControl(ratchetCycles = 10L)` uses
 #'   sprint defaults for everything except `ratchetCycles`.
@@ -703,9 +740,12 @@
 #'     \item{`consensus_stable`}{Logical: `TRUE` if the search stopped
 #'       because the strict consensus was unchanged for
 #'       `consensusStableReps` consecutive replicates.}
-#'     \item{`perturb_stop`}{Logical: `TRUE` if the search stopped because
-#'       `nTip * perturbStopFactor` consecutive replicates failed to improve
-#'       the best score (see [`SearchControl()`]).}
+#'     \item{`perturb_stop`}{Logical: `TRUE` if the search stopped because a
+#'       run of replicates failed to improve the best score -- either the
+#'       `nTip * perturbStopFactor` dry-spell limit or the flat `stopPatience`
+#'       count (see [`SearchControl()`]).  The flag does not distinguish which of
+#'       the two fired; compare `last_improved_rep + stopPatience` against
+#'       `replicates` if you need to know.}
 #'     \item{`timings`}{Named numeric vector of cumulative wall-clock time
 #'       (in milliseconds) spent in each search phase across all replicates:
 #'       `wagner_ms`, `tbr_ms`, `xss_ms`, `rss_ms`, `css_ms`, `ratchet_ms`,
@@ -909,6 +949,47 @@ MaximizeParsimony <- function(
       )
       if (!is.null(iwCycles)) {
         control[["ratchetCycles"]] <- iwCycles
+      }
+
+      # Implied-weights operating point for `sprint` and `default`: a deeper
+      # ratchet, paid for by a flat replicate patience (`stopPatience`).
+      #
+      # The two knobs are a package because each fails the other's gate alone.
+      # The ratchet is the quality lever: on `default` (44 training matrices,
+      # 65-385 tips, 6 seeds, k = 10) `ratchetCycles = 20` alone scored better on
+      # 11 matrices and worse on 0 (p = 0.001) and raised reach 0.78 -> 0.84, but
+      # cost +25 s of a 151 s mean (36 matrices slower, p = 2.5e-05).  Patience
+      # is the wall lever, and alone it degrades score (`sprint` 0/6; `default`
+      # 1 better/15 worse, p = 5e-04): stopping early without deepening the
+      # replicate simply searches less.  Together, at the values below:
+      #   sprint   median matrix -26% wall (19 faster/5 slower), score 4/0,
+      #            distinct MPTs unchanged, reach 0.847 -> 0.861
+      #   default  median matrix -18% wall (33/11, p = 0.001), score 9/3 --
+      #            a favourable direction only, NOT significant (p = 0.15)
+      # A 6-arm sweep over patience {10, 15, 20, 25, 30} (2448 cells) found score
+      # and wall both MONOTONE in the value with no spike at any of them, so
+      # these are operating points chosen on a smooth trade-off, not fitted
+      # constants: loosening patience buys score and gives back wall.  Values
+      # were selected against `auto`'s regression-averse objective, i.e. on the
+      # MEDIAN per-matrix wall change and its sign count, not the mean -- the
+      # mean is dominated by the largest matrices and reverses the choice.
+      # Residual cost, deliberately accepted and worth stating plainly: 9 of 44
+      # `default` matrices are still >10% slower (worst +110%), those where
+      # patience does not bite and the deeper ratchet is not paid for.
+      #
+      # `default` sets `adaptiveLevel = TRUE`, so 20 is a BASE that the hit-rate
+      # rescaler moves within ~10-30 at runtime; the measured arm had exactly
+      # that, so this matches its measurement -- do not "fix" it to a fixed 20.
+      #
+      # Equal weights and profile parsimony are excluded: neither was measured.
+      # `thorough`/`large` are excluded for the same reason, and take their own
+      # implied-weights depth from .IwRatchetDepth() above.
+      iwStop <- .IwStopPackage(
+        strategy, concavity,
+        userSet = union(names(controlDots), attr(control, "explicit"))
+      )
+      for (.f in names(iwStop)) {
+        control[[.f]] <- iwStop[[.f]]
       }
     } else if (!identical(strategy, "auto")) {
       warning("Unknown strategy '", strategy, "'; using default parameters.")

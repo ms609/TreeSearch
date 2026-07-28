@@ -468,15 +468,15 @@ DrivenResult parallel_driven_search(
         reps_at_last_improvement = done;
       }
       int dry_spell = done - reps_at_last_improvement;
-      // Flat replicate patience (experimental, TS_STOP_PATIENCE): no reference to the hit
-      // count, so its firing time does not stretch when replicates get more expensive.
+      // Flat replicate patience (`stopPatience`): no reference to the hit count, so its
+      // firing time does not stretch when replicates get more expensive.
       if (params.stop_patience > 0 && dry_spell >= params.stop_patience) {
         stop_flag.store(true, std::memory_order_relaxed);
         result.perturb_stop = true;
         if (params.verbosity >= 1) {
           if (progress_on_line) { Rprintf("\n"); progress_on_line = false; }
           Rprintf("Stopped: %d consecutive unsuccessful replicates "
-                  "(TS_STOP_PATIENCE %d)\n", dry_spell, params.stop_patience);
+                  "(stopPatience %d)\n", dry_spell, params.stop_patience);
         }
         break;
       }

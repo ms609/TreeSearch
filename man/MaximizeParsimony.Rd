@@ -157,6 +157,10 @@ identical.}
 Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
 rule; \code{consensusStableReps} (consensus-stability stopping) is off by default
 and is not enabled by any preset.
+Under implied weights only, \code{"sprint"} and \code{"default"} additionally stop on
+a flat replicate patience (\code{stopPatience} 20 and 15 respectively) and deepen
+the ratchet to match (\code{ratchetCycles} 12 and 20); the pair is a package,
+since each half fails on its own.  Equal weights is unaffected.
 Explicit \code{control} fields always override the preset; for example,
 \verb{strategy = "sprint", control = SearchControl(ratchetCycles = 10L)} uses
 sprint defaults for everything except \code{ratchetCycles}.}
@@ -294,9 +298,12 @@ improved the best score (0 if not tracked, e.g. parallel search).}
 \item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped
 because the strict consensus was unchanged for
 \code{consensusStableReps} consecutive replicates.}
-\item{\code{perturb_stop}}{Logical: \code{TRUE} if the search stopped because
-\code{nTip * perturbStopFactor} consecutive replicates failed to improve
-the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
+\item{\code{perturb_stop}}{Logical: \code{TRUE} if the search stopped because a
+run of replicates failed to improve the best score -- either the
+\code{nTip * perturbStopFactor} dry-spell limit or the flat \code{stopPatience}
+count (see \code{\link[=SearchControl]{SearchControl()}}).  The flag does not distinguish which of
+the two fired; compare \code{last_improved_rep + stopPatience} against
+\code{replicates} if you need to know.}
 \item{\code{timings}}{Named numeric vector of cumulative wall-clock time
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},

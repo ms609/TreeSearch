@@ -1240,14 +1240,14 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
-    // Flat replicate patience (experimental, TS_STOP_PATIENCE).  Deliberately makes no
-    // reference to the hit count, so its firing time does not stretch when replicates
-    // become individually more expensive.  Placed after the hits and dry-spell rules so
-    // it can only ever stop the search EARLIER than the shipped rules would.
+    // Flat replicate patience (`stopPatience`).  Deliberately makes no reference to the
+    // hit count, so its firing time does not stretch when replicates become individually
+    // more expensive.  Placed after the hits and dry-spell rules so it can only ever stop
+    // the search EARLIER than those would.
     if (params.stop_patience > 0 && unsuccessful_reps >= params.stop_patience) {
       if (params.verbosity >= 1 && !has_callback) {
         Rprintf("Stopped: %d consecutive unsuccessful replicates "
-                "(TS_STOP_PATIENCE %d)\n", unsuccessful_reps, params.stop_patience);
+                "(stopPatience %d)\n", unsuccessful_reps, params.stop_patience);
       }
       result.perturb_stop = true;
       break;

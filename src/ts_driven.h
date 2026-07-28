@@ -225,19 +225,23 @@ struct DrivenParams {
   // every improvement.
   int perturb_stop_factor = 0;
 
-  // EXPERIMENTAL, opt-in via TS_STOP_PATIENCE; 0 = disabled (the default).
+  // 0 = disabled (the kernel default; R's `stopPatience`).
   // Stop after this many consecutive replicates fail to improve the best score,
-  // as a FLAT count with no reference to the hit count.
+  // as a FLAT count with no reference to the hit count.  Resets on every
+  // improvement, so a run stops at last_improvement + stop_patience.
   //
-  // Why this exists.  Both shipped rules are indexed on replicates *via hits*:
-  // targetHits waits for N independent re-hits, and perturb_stop_factor scales
-  // its own dry-spell limit by targetHits/hits.  So any change that makes a
-  // replicate individually better but slower delays the stop rather than
-  // improving the answer -- measured three times (2026-07-27), and an offline
-  // replay over 1088 recorded trajectories found that a flat patience of 15-30
-  // replicates, paired with a deeper ratchet, beats the shipped stop on BOTH
-  // score and wall.  This knob exists to test that live; it is deliberately not
-  // a SearchControl field until it has been confirmed.
+  // Why this exists.  Both other no-improvement rules are indexed on replicates
+  // *via hits*: targetHits waits for N independent re-hits, and
+  // perturb_stop_factor scales its own dry-spell limit by targetHits/hits.  So
+  // any change that makes a replicate individually better but slower delays the
+  // stop instead of improving the answer.  A flat count breaks that coupling,
+  // which is what lets a deeper ratchet pay for itself.
+  //
+  // CONFIRMED LIVE, implied weights only (two arrays, 4624 cells, 2026-07-28):
+  // the score/wall relationship is monotone in this value with no knife edge, so
+  // it is an operating point rather than a fitted constant.  Shipped per preset
+  // by .IwStopPackage() in R/MaximizeParsimony.R -- see there for the values and
+  // the measurements behind them.  Equal weights is untested and left at 0.
   int stop_patience = 0;
 
   // Adaptive search level.
