@@ -57,6 +57,10 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
   // only (recombines nothing on the mission class). Opt-in TS_FUSE_PAIRWISE=1:
   // also fuse into a few genuinely suboptimal recipients (requires
   // poolSuboptimal>0), the configuration where recombination can strictly win.
+  // T-338: worker-thread-reachable getenv(). Safe today because nothing in
+  // src/ calls setenv/putenv concurrently (grep-confirmed); would need a
+  // main-thread hoist before parallel dispatch if C-level env mutation is
+  // ever added. See dev/red-team/findings.md T-338.
   const char* fp_env = std::getenv("TS_FUSE_PAIRWISE");
   const bool fuse_pairwise = fp_env && fp_env[0] == '1';
 
@@ -345,6 +349,8 @@ DrivenResult parallel_driven_search(
 
   // Cancel file: read path from environment variable (set by Shiny app).
   // If the file exists, the search should stop.
+  // T-338: worker-thread-reachable getenv(), safe today (no concurrent
+  // setenv/putenv in src/); see dev/red-team/findings.md T-338.
   std::string cancel_path;
   {
     const char* cancel_env = std::getenv("TREESEARCH_CANCEL_FILE");
