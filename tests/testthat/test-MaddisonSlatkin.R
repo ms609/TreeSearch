@@ -1,6 +1,3 @@
-# Tier 2: skipped on CRAN; see tests/testing-strategy.md
-skip_on_cran()
-
 library("TreeTools", quietly = TRUE)
 
 test_that("MaddisonSlatkin() recursion bottoms", {
@@ -152,7 +149,6 @@ test_that("MaddisonSlatkin with 5 states", {
 })
 
 test_that(".MSSplitCount is correct for known cases", {
-  skip_on_cran()
   sc <- TreeSearch:::.MSSplitCount
   thresh <- TreeSearch:::.MS_SC_THRESHOLD
 
