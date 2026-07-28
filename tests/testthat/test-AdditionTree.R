@@ -99,6 +99,29 @@ test_that("Addition tree obeys constraints", {
                TreeTools::UnrootTree(subtree))
 })
 
+test_that("AdditionTree() rooting is an arbitrary construction artefact", {
+  library("TreeTools", quietly = TRUE)
+  # 6-taxon dataset from a Fitch phylogeny; sequence[1] is NOT reliably
+  # the root -- documenting @return should not promise otherwise.
+  dataset <- MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 1,
+      0, 1, 1, 0, 0, 1,
+      1, 0, 0, 1, 1, 0), ncol = 3,
+    dimnames = list(letters[1:6], NULL)))
+
+  RootTipLabel <- function (tr) {
+    rootNode <- RootNode(tr)
+    kids <- tr$edge[tr$edge[, 1] == rootNode, 2]
+    tipKids <- kids[kids <= NTip(tr)]
+    if (length(tipKids)) tr$tip.label[tipKids] else NA_character_
+  }
+
+  set.seed(1)
+  tr <- AdditionTree(dataset, sequence = letters[1:6])
+  # sequence[1] ("a") should not be assumed to be the root tip
+  expect_false(identical(RootTipLabel(tr), "a"))
+})
+
 test_that("AdditionTree() handles edge cases", {
   library("TreeTools", quietly = TRUE)
   dataset <- MatrixToPhyDat(matrix(

@@ -10,8 +10,11 @@
 #' data("inapplicable.phyData", package = "TreeSearch")
 #' AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 #' @template MRS
-#' @return `AdditionTree()` returns a tree of class `phylo`, rooted on
-#' `sequence[1]`.
+#' @return `AdditionTree()` returns a tree of class `phylo`.  Its rooting is
+#' an arbitrary artefact of the tree construction algorithm, not necessarily
+#' `sequence[1]`; root it yourself with
+#' [`TreeTools::RootTree()`](https://ms609.github.io/TreeTools/reference/RootTree)
+#' if the position of the root matters to you.
 #' @importFrom TreeTools PectinateTree Renumber
 #' @family tree generation functions
 #' @seealso 

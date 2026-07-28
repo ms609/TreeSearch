@@ -33,8 +33,11 @@ are filtered to respect the constraint topology.}
 taxa. Randomized if not provided.}
 }
 \value{
-\code{AdditionTree()} returns a tree of class \code{phylo}, rooted on
-\code{sequence[1]}.
+\code{AdditionTree()} returns a tree of class \code{phylo}.  Its rooting is
+an arbitrary artefact of the tree construction algorithm, not necessarily
+\code{sequence[1]}; root it yourself with
+\href{https://ms609.github.io/TreeTools/reference/RootTree}{\code{TreeTools::RootTree()}}
+if the position of the root matters to you.
 }
 \description{
 Generates a starting tree by adding each taxon in turn to the most
