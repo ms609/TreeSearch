@@ -65,11 +65,22 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
 - **8 Test suite health — sonnet.** Reliably yields inline fixes (`set.seed`, vacuous
   asserts) and test-gap notes (T-304).
 - **9 Wagner & addition — opus.** Kernel code; WGN-01 (P1 OOB write via `AdditionTree(sequence=)`).
-- **10 Profile & IW — opus.** Numerical delta algebra; subtle conservative bugs (profile
-  delta capping). Secondary escalation candidate alongside area 1 — but its only dry rounds
-  (2026-05-19, 2026-05-26) are **pre-tier and version-unrecorded**, so it has *zero*
-  version-scoped dry verdicts: the next visit is a first-versioned **opus (Opus 5)**
-  measurement, not a fable escalation.
+- **10 Alternative scoring kernels — opus. THE HIGHEST-YIELDING AREA ON RECORD: 4 P1s in one
+  round** (2026-07-28, Opus 5 — T-373…T-376, all in HSJ/XFORM; T-376 shows the HSJ score is not
+  even a function of the data, and is wrong on a shipped dataset through the public API).
+  **Read the cautionary tale before trusting any tier state here.** The area looked mature —
+  "numerical delta algebra, subtle conservative bugs" — and its Profile/IW half genuinely is:
+  every static residual was re-derived clean in that same round. But `ts_hsj.*`/`ts_sankoff.*`
+  were added to the scope row on 2026-07-03 and **no finder had read them at any tier**, so
+  both of the area's dry rounds (2026-05-19, 2026-05-26 — themselves pre-tier and
+  version-unrecorded, hence *zero* version-scoped dry verdicts) were dry about a **different
+  half of the area than the row described**. Generalisable lesson: **a scope row that grows
+  does not inherit the dry verdicts earned before it grew** — when widening a row, reset its
+  measured maturity for the new files. Stays opus; next visit resumes on the HSJ/XFORM half
+  (`ts_sankoff.*` got materially less attention than `ts_hsj.*`), and carries T-374's open
+  design question — whether a rooted objective is *intended* for XFORM, and whether Hopkins &
+  St John's dissimilarity is defined on a single MPR or on marginal MPR sets, which is a
+  **literature** question, not a finder question.
 - **11 Zero-length collapse — opus, NEVER REVIEWED.** New + default-on; implementation hit
   three subtle traps in one sitting (conservative flags rooting-sensitive; aggressive flags
   need tip-rooting; tip-data alignment via `RenumberTips`). Cross-mode correctness
