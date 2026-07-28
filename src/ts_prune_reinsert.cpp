@@ -452,10 +452,12 @@ void expand_and_reinsert(
     // trees); mirrors the main Wagner builder.  prelim is current here, which
     // is all compute_insertion_edge_sets reads.
     //
-    // Do NOT extend this to final_: wagner_incremental_rescore only updates
-    // prelim (see its header comment); final_ is left stale — including
-    // freshly created internals, which init_wagner_state left at 0 — until the
-    // next full uppass/rescore.  Reading final_ here would be a wrong-cost
+    // Do NOT extend this to final_: wagner_incremental_rescore does NOT keep
+    // final_ current.  Its Phase-2 uppass stops descending as soon as a node's
+    // final_ is unchanged, but the changed-prelim region lies BELOW the point
+    // where Phase 1 broke out, so final_ for nodes under that break — including
+    // freshly created internals, which init_wagner_state left at 0 — can be
+    // stale.  Reading final_ here without a full uppass first is a wrong-cost
     // bug, and was one before this edge-set rewrite landed.
     if (have_words) {
       compute_insertion_edge_sets(tree, ds, pr_edge_set, pr_up, pr_pre);
