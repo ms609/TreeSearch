@@ -214,3 +214,124 @@ test_that("LengthAdded() qm-empty: no fully-ambiguous contrast row", {
   expect_length(resultEw, nTips)
   expect_false(anyNA(resultEw))
 })
+
+
+# Profile parsimony: regressions for T-365 ------------------------------------
+# `PrepareDataProfile()` replaces the contrast matrix wholesale with
+# `rbind(diag(k), rep(1, k))` and renumbers every token to `1:k`, with `k + 1`
+# denoting ambiguity.  `LengthAdded()` used to read `cont`, `qm`, `qmApp`,
+# `app` and `inapp` from the character the *user* supplied, so those row and
+# token indices named rows of a contrast that no longer existed.  Every
+# character whose raw and prepared token spaces differed in shape -- i.e.
+# everything but a plain {0, 1, ?} character -- errored out.
+
+# A single character with one token per leaf.
+ProfileChar <- function (tokens) {
+  TreeTools::MatrixToPhyDat(matrix(
+    tokens, ncol = 1,
+    dimnames = list(paste0("t", seq_along(tokens)), NULL)
+  ))
+}
+
+# Two trees that put the character in conflict, so an informative leaf has a
+# non-zero instability and the tests cannot pass on an all-zero result.
+ProfileTrees <- function (tipOrder) {
+  c(TreeTools::PectinateTree(tipOrder), TreeTools::BalancedTree(tipOrder))
+}
+
+# Recompute the expected instability independently of `LengthAdded()`, in the
+# token space of the *prepared* character: ambiguity is its last contrast row.
+ProfileExpectation <- function (trees, char) {
+  prepared <- suppressMessages(PrepareDataProfile(char))
+  ambiguous <- nrow(attr(prepared, "contrast"))
+  rooted <- RootTree(trees, 1)
+  start <- TreeLength(rooted, prepared, "profile")
+  vapply(names(char), function (leaf) {
+    ambiguated <- prepared
+    ambiguated[[leaf]] <- ambiguous
+    mean(start - TreeLength(rooted, ambiguated, "profile"))
+  }, double(1))
+}
+
+test_that("LengthAdded(concavity = 'profile') collapses singleton states", {
+  # Tokens 0,0,0,1,1,1,2,2,3,?: the raw contrast is 5x4, but `3` occurs once,
+  # so profile parsimony treats it as ambiguous and the prepared contrast is
+  # 4x3.  The raw `?` token (5) then indexes past the prepared contrast:
+  # pre-fix, "`tip_data` values must be in [1, nrow(contrast)] (4); found 5".
+  char <- ProfileChar(c("0", "0", "0", "1", "1", "1", "2", "2", "3", "?"))
+  trees <- ProfileTrees(c("t1", "t4", "t7", "t2", "t5", "t8", "t3", "t6",
+                          "t9", "t10"))
+
+  expect_no_error(added <- LengthAdded(trees, char, concavity = "profile"))
+  expect_named(added, names(char))
+  expect_false(anyNA(added))
+  expect_true(all(added >= 0))
+
+  # The singleton `3` and the `?` are ambiguous once prepared, so ambiguating
+  # them cannot change a tree length.
+  expect_equal(unname(added[c("t9", "t10")]), c(0, 0))
+  # Leaves that do carry profile information must move the score.
+  expect_gt(added[["t1"]], 0)
+
+  expect_equal(added, ProfileExpectation(trees, char))
+})
+
+test_that("LengthAdded(concavity = 'profile') handles inapplicable tokens", {
+  # Tokens 0,0,0,1,1,1,-,-: the raw contrast has three columns (-, 0, 1), the
+  # prepared one two.  `qmApp` was empty, so the fallback wrote the raw
+  # three-column contrast onto a two-level character: pre-fix,
+  # "`levels` length (2) must equal ncol(contrast) (3)".
+  char <- ProfileChar(c("0", "0", "0", "1", "1", "1", "-", "-"))
+  trees <- ProfileTrees(c("t1", "t4", "t2", "t5", "t3", "t6", "t7", "t8"))
+
+  messages <- testthat::capture_messages(
+    added <- LengthAdded(trees, char, concavity = "profile")
+  )
+  expect_true(any(grepl("Inapplicable tokens treated as ambiguous", messages,
+                        fixed = TRUE)))
+
+  expect_named(added, names(char))
+  expect_false(anyNA(added))
+  expect_true(all(added >= 0))
+
+  # Profile parsimony folds `-` into `?` before scoring, so an inapplicable
+  # leaf is ambiguous either way and adds no length -- the same zero the
+  # applicability-preserving equal-weights path reports for it.
+  expect_equal(unname(added[c("t7", "t8")]), c(0, 0))
+  expect_gt(added[["t1"]], 0)
+
+  expect_equal(added, ProfileExpectation(trees, char))
+})
+
+test_that("LengthAdded(concavity = 'profile') handles a missing `?` token", {
+  # With no fully ambiguous token in the raw character, both the `qmApp`
+  # fallback and the `qm` fallback `rbind()` a row onto the contrast.  Pre-fix
+  # that row was of raw width, widening the prepared contrast beyond its
+  # levels.  Tokens 0,0,0,1,1,1,2,2,3 (three informative states) gave
+  # "`levels` length (3) must equal ncol(contrast) (4)".
+  char <- ProfileChar(c("0", "0", "0", "1", "1", "1", "2", "2", "3"))
+  trees <- ProfileTrees(c("t1", "t4", "t7", "t2", "t5", "t8", "t3", "t6",
+                          "t9"))
+
+  expect_no_error(added <- LengthAdded(trees, char, concavity = "profile"))
+  expect_named(added, names(char))
+  expect_false(anyNA(added))
+  expect_true(all(added >= 0))
+  expect_equal(unname(added[["t9"]]), 0)
+  expect_gt(added[["t1"]], 0)
+  expect_equal(added, ProfileExpectation(trees, char))
+
+  # Two informative states and two singletons: the prepared contrast is 3x2,
+  # so the raw four-column fallback row gave
+  # "`levels` length (2) must equal ncol(contrast) (4)".
+  char2 <- ProfileChar(c("0", "0", "0", "1", "1", "1", "2", "3"))
+  trees2 <- ProfileTrees(c("t1", "t4", "t2", "t5", "t3", "t6", "t7", "t8"))
+
+  expect_no_error(added2 <- LengthAdded(trees2, char2, concavity = "profile"))
+  expect_named(added2, names(char2))
+  expect_false(anyNA(added2))
+  expect_true(all(added2 >= 0))
+  expect_equal(unname(added2[c("t7", "t8")]), c(0, 0))
+  expect_gt(added2[["t1"]], 0)
+  expect_equal(added2, ProfileExpectation(trees2, char2))
+})
