@@ -852,13 +852,15 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
   // Build initial 3-taxon tree
   build_three_taxon_tree(tree, order[0], order[1], order[2]);
 
-  // Track all edge children (every node except root)
+  // Track all edge children (every node except root). Root has degree 2
+  // (children int1 and t2), so root-int1 and root-t2 are the two halves of
+  // a single unrooted edge; only one of them may be listed here, or that
+  // edge would be sampled with double the probability of any other edge.
   std::vector<int> edge_children;
-  edge_children.reserve(2 * n_tip - 2);
+  edge_children.reserve(2 * n_tip - 3);
   edge_children.push_back(order[0]);
   edge_children.push_back(order[1]);
   edge_children.push_back(order[2]);
-  edge_children.push_back(n_tip + 1);  // first internal node below root
 
   // Insert remaining tips at random edges
   for (int k = 3; k < n_tip; ++k) {
@@ -1141,10 +1143,13 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
     tree.parent[root_items[0]] = root;
     tree.parent[root_items[1]] = root;
 
-    // Track edges for subsequent insertions
+    // Track edges for subsequent insertions. Root has degree 2 (children
+    // root_items[0] and root_items[1]), so those two children sit on the
+    // two halves of a single unrooted edge; only one may be listed here,
+    // or that edge would be sampled with double the probability of any
+    // other edge.
     std::vector<int> edge_children;
     edge_children.push_back(root_items[0]);
-    edge_children.push_back(root_items[1]);
 
     // Insert remaining root items at random edges
     for (size_t k = 2; k < root_items.size(); ++k) {
