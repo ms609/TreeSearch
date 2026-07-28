@@ -393,7 +393,20 @@ void expand_and_reinsert(
 
   // 3. Build postorder and score the backbone
   tree.build_postorder();
-  score_tree(tree, ds);  // sets prelim/final_ for all backbone nodes
+  // EW proxy, not score_tree(): wagner_incremental_rescore below (ts_wagner.cpp)
+  // only maintains prelim/final_ in the standard-Fitch regime, with no NA
+  // branch. On has_inapplicable datasets score_tree() would fall through to
+  // fitch_na_score and write NA-regime prelim for the backbone, while the
+  // insertion loop patches inserted-path entries in standard-Fitch regime --
+  // a mixed-regime tree.prelim that compute_insertion_edge_sets() then reads
+  // when choosing reinsertion edges (T-366). Matches the sibling call sites
+  // at ts_wagner.cpp:449 and ts_sector.cpp:917. Final score is unaffected
+  // (full_rescore() is authoritative); this only affects placement quality
+  // during prune-reinsert, which is opt-in / default-off (pruneReinsertCycles
+  // = 0L). Known follow-up out of scope here: fitch_na_score's local_cost is
+  // only written in the non-NA branch, which would still corrupt
+  // wagner_incremental_rescore's old_cost subtraction for NA blocks (T-366).
+  fitch_score(tree, ds);  // sets prelim/final_ for all backbone nodes
 
   // 4. Wagner-insert each dropped tip.
   // Internal nodes for new insertions: n_tip + (m-1), n_tip + m, ...
