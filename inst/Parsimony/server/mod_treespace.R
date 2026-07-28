@@ -74,6 +74,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
 
     FirstHit <- reactive({
       r$trees <- WhenFirstHit(r$trees)
+      r$treeHash <- rlang::hash(r$trees)
       attr(r$trees, "firstHit")
     })
 
