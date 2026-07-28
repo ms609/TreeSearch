@@ -343,7 +343,7 @@ List all_spr (const IntegerMatrix edge,
   ;
   // ASAN reports stack-use-after-scope (false positive?) if we fail here.
   // So we test for these exceptions in R.
-  // # nocov begin
+  // # nocov start
   if (n_edge < 5) {
     Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
   }
