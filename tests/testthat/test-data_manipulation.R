@@ -3,7 +3,7 @@ test_that("PrepareDataProfile() handles empty matrices", {
                                           dimnames = list(letters[1:7], NULL)))
   expect_message(PrepareDataProfile(dat), "No informative characters")
   result <- suppressMessages(PrepareDataProfile(dat))
-  expect_equal(attr(result, "info.amounts"), numeric(0))
+  expect_equal(attr(result, "info.amounts"), matrix(double(0), nrow = 1, ncol = 0))
   expect_equal(attr(result, "nr"), 0L)
 })
 

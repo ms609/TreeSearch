@@ -1,11 +1,17 @@
 # To integrate into 2.0.0 notes
 
+- Fix `TreeLength()` and `LengthAdded()` errors when scoring, under profile
+  parsimony, a character with no phylogenetic information.
+
 - New `SearchControl()` parameter `stopPatience`: stop after this many consecutive
   replicates fail to improve the best score.  Unlike `perturbStopFactor` it is a
   flat count, referring neither to the tip count nor to the number of hits, so the
   replicate at which it fires does not stretch as replicates become individually
   more expensive.  The count resets on every improvement, so a search that keeps
-  improving is never cut short.  0 (the default) disables it.
+  improving is never cut short.  0 (the default) disables it.  As with the other
+  no-improvement rules, it acts precisely only in a serial search: with
+  `nThreads > 1` it is evaluated when the coordinating thread polls, so it fires
+  later and less predictably.
 
 - Implied-weights searches under `strategy = "sprint"` or `"default"` now run a
   deeper ratchet paid for by that flat patience: `sprint` takes

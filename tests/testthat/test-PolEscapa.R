@@ -335,3 +335,19 @@ test_that("LengthAdded(concavity = 'profile') handles a missing `?` token", {
   expect_gt(added2[["t1"]], 0)
   expect_equal(added2, ProfileExpectation(trees2, char2))
 })
+
+test_that("LengthAdded(concavity = 'profile') handles an uninformative character", {
+  # State `1` is a singleton, so `maxInformative < 2` and `PrepareDataProfile()`
+  # returns a zero-character phyDat (T-372).  `QMScore()` then indexed
+  # `char[[leaf]]` expecting one token per taxon, which is now empty for every
+  # leaf -- pre-fix: "argument is of length zero" inside `if (!app[startToken])`.
+  # Ambiguating a leaf of an already-uninformative character cannot create
+  # information, so every delta must be exactly zero; `ProfileExpectation()`
+  # is not used here, as it assumes a retained character to overwrite.
+  char <- ProfileChar(c("0", "0", "0", "0", "1"))
+  trees <- ProfileTrees(paste0("t", 1:5))
+
+  expect_no_error(added <- LengthAdded(trees, char, concavity = "profile"))
+  expect_named(added, names(char))
+  expect_equal(unname(added), rep(0, length(char)))
+})

@@ -68,6 +68,11 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     char <- PrepareDataIW(char)
   } else if (.UseProfile(concavity)) {
     char <- PrepareDataProfile(char)
+    if (attr(char, "nr") == 0) {
+      # `char` carries no information: ambiguating any single leaf cannot
+      # create information, so every leaf's score is unchanged from `start`.
+      return(setNames(rep(0, length(char)), names(char)))
+    }
   }
 
   # Read the contrast from the dataset that will actually be scored, not from
