@@ -108,7 +108,11 @@ struct FlatBlock {
 struct DataSet {
   int n_tips;
   int n_blocks;
-  int total_words;          // sum of n_states across all blocks
+  int total_words;          // sum of n_states across all blocks, then rounded
+                            // UP to an even count (SIMD padding): the trailing
+                            // pad word is never owned by any block, so
+                            // block_word_offset[b] + blocks[b].n_states can be
+                            // < total_words for the last block.
 
   std::vector<CharBlock> blocks;
 

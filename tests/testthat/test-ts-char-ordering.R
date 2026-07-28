@@ -61,6 +61,83 @@ test_that("Scores are correct after block reordering", {
   }
 })
 
+# `TS_CHAR_ORDER` (ts_data.cpp `CharOrder`) reorders characters WITHIN each
+# block purely for speed: the bounded scorers reach `cutoff` in fewer blocks on
+# rejected candidates. Commit d8c59998 asserted "the score is order-invariant
+# (covered by the existing 'Scores are correct after block reordering' test)" --
+# but that test (above, kept as-is) never varies the ordering, and its loop
+# assertion `s >= score || s > 0` is satisfied by `s > 0` alone, so it cannot
+# fail on an informative matrix. Nothing pinned the invariance claim; before
+# these tests, no test in the package referenced `TS_CHAR_ORDER` at all.
+#
+# IW / XPIWE / profile are the modes that matter here. They index per-PATTERN
+# arrays -- `ds.min_steps` and `ds.info_amounts`, populated at ts_data.cpp:447+,
+# i.e. AFTER the sort at :190 -- so a block-slot-to-pattern mix-up would surface
+# in these modes and in no other.
+#
+# CAVEAT this test cannot check for itself: on binary data the MINORITY key
+# produces many ties, the sort is stable, and the permutation collapses toward
+# the identity -- a green run would then prove nothing. The matrix below is
+# multistate for exactly that reason. Red-team area 10 (2026-07-28) measured a
+# genuinely non-identity permutation on comparable 2-6-state data (180/180
+# positions moved, block-0 membership overlap 25/64). Keep this matrix
+# multistate, and do not swap it for a binary one.
+#
+# Why `with_envvar` is enough to switch the ordering: ts_data.cpp:95 reads
+# `TS_CHAR_ORDER` via a plain `std::getenv` into a local, inside build_dataset,
+# with no static caching (it is the only occurrence in src/), and every
+# ts_fitch_score call rebuilds the dataset -- so the value is re-read per call.
+# Note for anyone extending this: because TS_CHAR_ORDER is *itself* score-
+# invariant, it cannot serve as its own positive control for env propagation.
+# If that ever needs checking at runtime, use a knob that does move a score
+# (TS_DRIFT_EXACT is one).
+
+test_that("TS_CHAR_ORDER is score-invariant under EW, IW, XPIWE and profile", {
+  set.seed(6607)
+  nTip <- 12
+  orderMat <- matrix(sample(0:3, nTip * 60, replace = TRUE), nrow = nTip,
+                     dimnames = list(paste0("t", seq_len(nTip)), NULL))
+  # Guarantee a spread of state counts, so blocks differ in width.
+  orderMat[, 1:12] <- sample(0:1, nTip * 12, replace = TRUE)
+  orderMat[, 13:24] <- sample(0:2, nTip * 12, replace = TRUE)
+  orderDs <- MatrixToPhyDat(orderMat)
+  at <- attributes(orderDs)
+  expect_gt(length(at$levels), 3)     # fails loudly if the matrix goes binary
+
+  tsData <- make_ts_data(orderDs)
+  minSteps <- MinimumLength(orderDs, compress = TRUE)
+  # nTip = 12 at 4 states keeps MaddisonSlatkin's exact state cache within
+  # capacity, so info.amounts is exact and warning-free. At nTip = 14 it spills
+  # to the Monte Carlo fallback (6 warnings); the values stay finite, but don't
+  # grow this matrix without re-checking the expect_true(is.finite(...)) below.
+  infoAmounts <- attr(PrepareDataProfile(orderDs), "info.amounts")
+  expect_false(anyNA(infoAmounts))
+
+  # Score under each ordering; every mode must agree bit-for-bit with `none`.
+  ScoreAll <- function(tree) {
+    c(ew = ts_score(tree, tsData),
+      iw = ts_score(tree, tsData, concavity = 3, min_steps = minSteps),
+      profile = ts_score(tree, tsData, infoAmounts = infoAmounts))
+  }
+
+  for (treeSeed in c(101, 2749, 8123)) {
+    tree <- Preorder(RenumberTips(as.phylo(treeSeed, nTip), names(orderDs)))
+    reference <- with_envvar(c(TS_CHAR_ORDER = "none"), ScoreAll(tree))
+    # Both guards matter: a NaN profile score would make every comparison
+    # below trivially pass (waldo treats NaN as equal to NaN), which is the
+    # same vacuous-green failure mode this test replaced.
+    expect_true(all(is.finite(reference)))
+    expect_true(all(reference > 0))
+
+    for (ordering in c("min_steps", "minority", "entropy")) {
+      actual <- with_envvar(c(TS_CHAR_ORDER = ordering), ScoreAll(tree))
+      expect_equal(actual, reference,
+                   label = paste0("TS_CHAR_ORDER=", ordering,
+                                  " tree=", treeSeed))
+    }
+  }
+})
+
 test_that("EW driven search finds correct optimum", {
   set.seed(3341)
   result <- ts_driven(mixed_ds, maxReplicates = 3L, targetHits = 1L)

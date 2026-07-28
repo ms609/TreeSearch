@@ -21,6 +21,11 @@ double sankoff_score_char(
   const int n_node = n_tip + n_internal;
   const double INF = std::numeric_limits<double>::infinity();
 
+  // No internal nodes (degenerate 1-tip "tree"): there is no root to read from
+  // postorder, so `postorder[n_internal - 1]` below would index element -1.
+  // A single node always admits some state, so the score is 0.
+  if (n_internal <= 0) return 0.0;
+
   // Allocate per-node cost array (n_node * ns).
   // Use caller's buffer if provided, otherwise allocate locally.
   std::vector<double> local_buf;
@@ -126,6 +131,10 @@ void sankoff_uppass(
     int* optimal_states)
 {
   const int ns = sc.n_states;
+
+  // Mirror the sankoff_score_char guard: with no internal nodes there is no
+  // root entry in `postorder` to read (postorder[-1] would be out of bounds).
+  if (n_internal <= 0) return;
 
   // --- Root assignment ---
   int root = postorder[n_internal - 1];
