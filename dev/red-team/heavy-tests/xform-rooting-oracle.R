@@ -26,8 +26,16 @@
 #       rooting an unrooted tree SUBDIVIDES an edge, so the edge set - and
 #       hence sum_edges s - is not itself rooting-invariant.  The retained
 #       bound below is nSec.
-#  Q-C  Does forced_root_state = 0 ("absent") collapse the spread to zero?
+#  Q-C  Does forced_root_state = 0 ("absent") restore rooting-invariance?
 #       This is the candidate cheap fix, so it must be measured, not assumed.
+#       READ THE ANSWER CAREFULLY.  Pinning the root STATE defines a different,
+#       explicitly ROOTED criterion; its spread across rootings is the cost of
+#       leaving the root POSITION arbitrary, and is NOT commensurable with the
+#       free-root arm as "better or worse".  What the numbers do establish is
+#       that the one-line change does not remove root-sensitivity from a
+#       pipeline that keeps rerooting - it relocates it and enlarges it.  The
+#       pinned criterion is perfectly well-defined at any FIXED rooting, which
+#       this script also checks.
 #  Q-D  Do ambiguous tips (-1 fully ambiguous, -2 present-unknown) break the
 #       Sum_tips-f-is-constant step and so break the nSec bound?
 #
@@ -212,6 +220,21 @@ for (sc in scenarios) {
     if (isTRUE(spreadPinned[r] > 1e-9)) nDepPinned <- nDepPinned + 1L
     fracAtMin[r] <- mean(sFree <= min(sFree) + 1e-9)
     excessMean[r] <- mean(sFree) - min(sFree)
+
+    # Q-C control: the pinned-state criterion evaluated at ONE canonical
+    # rooting.  It must be perfectly reproducible - if it is not, the oracle is
+    # broken.  This is the check that keeps Q-C's interpretation honest: the
+    # pinned-state spread above is NOT evidence that the pinned criterion is
+    # ill-defined; it is a well-defined ROOTED criterion, and the spread is the
+    # cost of leaving its root POSITION arbitrary.
+    rtCanon <- ape::root(tr, outgroup = tr[["tip.label"]][1], resolve.root = TRUE)
+    pinTwice <- c(SankoffRooted(rtCanon, tc, cm, 0L),
+                  SankoffRooted(rtCanon, tc, cm, 0L))
+    if (diff(range(pinTwice)) > 1e-12) {
+      failures <- c(failures, sprintf(
+        "%s: pinned-state score at a FIXED rooting is not reproducible - oracle broken",
+        sc$name))
+    }
   }
 
   cat(sprintf("--- %s  (nStates = %d, gain = %d, loss = 1)\n",
@@ -220,9 +243,17 @@ for (sc in scenarios) {
               nDepFree, nRep))
   cat(sprintf("max spread %.3g (predicted bound nSec = %.3g)\n",
               max(spreadFree), bound))
-  cat(sprintf("  forced_root =  0 (absent) : rooting-dependent on %d/%d; ",
+  # NOTE ON READING THE PINNED ROW: forced_root = 0 defines a DIFFERENT,
+  # explicitly ROOTED criterion.  Its spread across rootings is therefore not
+  # comparable to the free-root row as "better or worse" - it measures how much
+  # the arbitrary CHOICE of root position costs once the root state is
+  # meaningful.  In particular the nSec = 0 row below is a valid asymmetry
+  # control for the FREE arm only; for the pinned arm a non-zero spread there is
+  # expected, not a contradiction.
+  cat(sprintf("  forced_root =  0 (absent) : root-POSITION-sensitive on %d/%d; ",
               nDepPinned, nRep))
-  cat(sprintf("max spread %.3g\n", max(spreadPinned)))
+  cat(sprintf("max spread %.3g  [different, rooted criterion - see note]\n",
+              max(spreadPinned)))
   cat(sprintf("  arbitrary rooting vs min-over-rootings: %.0f%% of rootings ",
               100 * mean(fracAtMin)))
   cat(sprintf("attain the min; mean overstatement %.3g\n", mean(excessMean)))

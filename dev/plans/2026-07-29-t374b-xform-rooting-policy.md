@@ -14,8 +14,8 @@
 
 Concretely, and in priority order:
 
-1. **Do not set `forced_root_state = 0`.** This was the attractive cheap fix. It is **empirically refuted**: pinning the root *state* without also pinning the root *position* makes rooting-dependence dramatically **worse**, not better — from 8–34/120 random 9-tip topologies affected up to **84–117/120**, with the spread rising from ≤ `nSec` to as much as 5, and it makes even the *symmetric* `nSec = 0` control rooting-dependent (0/120 → 84/120). See "Q-C" below. This is the single most decision-relevant number in this document.
-2. **Fix the reported-score/`TreeLength()` discrepancy, which is the actual P1 user-visible defect**, by making the report path and `TreeLength()` agree on one rooting — not by making the objective rooted. The scored quantity is *already* a valid upper bound on the well-defined unrooted objective (min over rootings), and it is tight for 87–98% of rootings, so agreement is cheap and the loss is bounded by `nSec` per hierarchy block.
+1. **Fix the reported-score/`TreeLength()` discrepancy, which is the actual P1 user-visible defect**, by making the report path and `TreeLength()` agree on one rooting — not by making the objective rooted. This is the lead evidence (Q-E): the quantity the search already optimises is a **valid upper bound** on the well-defined unrooted objective (min over rootings), it is **tight for 87–98% of rootings**, mean overstatement 0.02–0.17 steps, and the worst case is bounded by `nSec` per hierarchy block (Q-B). So agreement at the boundary is cheap and provably close, and nothing about the search needs to change to get it.
+2. **Do not set `forced_root_state = 0` as a standalone change.** This was the attractive cheap fix, and it is **incoherent on its own** — not merely suboptimal. Pinning the root *state* makes the root meaningful while leaving the root *position* arbitrary and, at four sites, actively moving (Q3). Measured: the pinned-state criterion's value varies across root positions on **84–117/120** random 9-tip topologies, with spread up to 5 — so the one-liner does not remove root-sensitivity from a rerooting pipeline, it relocates and enlarges it. **Read that number correctly** (Q-C): `forced_root_state = 0` defines a *different, explicitly rooted* criterion, perfectly well-defined at any fixed rooting, so this is not evidence that a rooted criterion is wrong. It is evidence that pinning the state is only meaningful **together with** pinning the position — i.e. it is Option 2, not a one-line fix.
 3. **Do not "rethink TBR", and do not run the rooting-pinned A/B.** See Q3 and §"The A/B" — TBR's fragment reroot is not in conflict with a pinned root, the whole-tree rerooting sites are a short enumerable list, and there is a **first-order** defect upstream that makes any second-order rooting measurement uninterpretable (see the "Blocker" section, which I consider the most important thing found here).
 4. **Document XFORM as rooting-sensitive** in `?MaximizeParsimony` and `?RecodeHierarchy`, stating the bound.
 
@@ -79,7 +79,7 @@ For completeness, since the answer is "don't":
 
 - `forced_root_state` is already plumbed end to end and needs no kernel work: `R/recode_hierarchy.R:176` → `src/ts_rcpp.cpp:1815` (`ds.sankoff_forced_root = fr_vec`) → `src/ts_data.h:185` → `src/ts_fitch.cpp:1600` → `src/ts_sankoff.cpp:79-82`. Setting it to `0L` in R is a one-line change.
 - `-1` currently means "take the min over root states" (`ts_sankoff.cpp:84-87`), i.e. free the root's own label.
-- **What breaks is that this is the wrong half of the problem.** `forced_root_state` pins the root *state*; the rooting-dependence comes from the root *position*. Pinning the state while the position keeps moving removes the min-over-states slack that was partly absorbing rooting differences, and the oracle shows this is strongly net-negative (Q-C). A pinned root state is coherent **only** in combination with a pinned root position, which requires the user to supply a rooted tree, requires every whole-tree reroot site to be disabled (Q3), and requires the root position itself to become a searched parameter or an outgroup-fixed one. That is a feature, not a bug fix.
+- **What breaks is that this is only half of the problem.** `forced_root_state` pins the root *state*; the rooting-dependence comes from the root *position*. Pinning the state while the position stays arbitrary makes the root meaningful exactly where the pipeline treats it as an artefact — so the criterion becomes well-defined only *relative to a root the user never chose*, and the oracle measures how much that unchosen choice is worth: up to 5 steps, on 84–117/120 topologies (Q-C). A pinned root state is therefore coherent **only** in combination with a pinned root position, which requires the user to supply a rooted tree, requires every whole-tree reroot site to be disabled (Q3), and requires the root position itself to become a searched parameter or an outgroup-fixed one. That is a feature, not a bug fix.
 
 ## Q3. What does pinning cost TBR?
 
@@ -124,14 +124,18 @@ Yes, and it is the recommendation. The **actual P1 defect** in T-374 is not "the
 
 Pure R; independent re-implementation of the cost matrix (`recode_hierarchy.R:101-118`) and the DP (`ts_sankoff.cpp`), so agreement with the kernel is informative rather than circular. 120 random unrooted 9-tip topologies per scenario, scored under every one of the `2n − 3` edge rootings. Exits 0 when every stated prediction holds; it currently does.
 
-| Scenario | dependent, `forced_root = -1` | max spread (bound `nSec`) | dependent, `forced_root = 0` | max spread | % rootings at min | mean overstatement |
+| Scenario | dependent, `forced_root = -1` | max spread (bound `nSec`) | root-*position*-sensitive, `forced_root = 0` † | max spread † | % rootings at min | mean overstatement |
 |---|---|---|---|---|---|---|
-| `nSec=1` (2 levels) | 16/120 | 1 (≤ 1) | **108/120** | **3** | 96% | 0.042 |
-| `nSec=2` (2×2) | 10/120 | 2 (≤ 2) | **117/120** | **4** | 98% | 0.022 |
-| `nSec=3` (2×2×2) | 17/120 | 2 (≤ 3) | **115/120** | **5** | 96% | 0.042 |
-| `nSec=2`, 20% ambiguous (`-1`) | 34/120 | 2 (≤ 2) | **97/120** | **4** | 87% | 0.167 |
-| `nSec=2`, 20% present-unknown (`-2`) | 8/120 | 2 (≤ 2) | **113/120** | **4** | 98% | 0.018 |
-| `nSec=0` control (symmetric) | **0/120** | 0 | **84/120** | **2** | 100% | 0 |
+| `nSec=1` (2 levels) | 16/120 | 1 (≤ 1) | 108/120 | 3 | 96% | 0.042 |
+| `nSec=2` (2×2) | 10/120 | 2 (≤ 2) | 117/120 | 4 | 98% | 0.022 |
+| `nSec=3` (2×2×2) | 17/120 | 2 (≤ 3) | 115/120 | 5 | 96% | 0.042 |
+| `nSec=2`, 20% ambiguous (`-1`) | 34/120 | 2 (≤ 2) | 97/120 | 4 | 87% | 0.167 |
+| `nSec=2`, 20% present-unknown (`-2`) | 8/120 | 2 (≤ 2) | 113/120 | 4 | 98% | 0.018 |
+| `nSec=0` control (symmetric) | **0/120** | 0 | 84/120 ‡ | 2 ‡ | 100% | 0 |
+
+† **The two arms are not commensurable as "better/worse".** `forced_root = 0` defines a *different, explicitly rooted* criterion; its spread measures the cost of leaving that criterion's root **position** arbitrary, not a degradation of the free-root objective. The script verifies the pinned criterion is perfectly reproducible at a fixed canonical rooting, i.e. it is well-defined — the spread is entirely the unchosen-root cost.
+
+‡ **The `nSec = 0` row is an asymmetry control for the FREE arm only** (0/120, spread 0 — see Q-A). Its pinned cell is *expected* to be non-zero and carries no information about asymmetry: constraining the root's label on a symmetric matrix necessarily makes the root position matter. Do not cite it as evidence that pinning is harmful.
 
 **Q-A — confirmed, and the mechanism is localised.** The `nSec = 0` row is the control: with gain = loss = 1 the matrix is symmetric and the score is invariant across all 120 topologies. Every asymmetric row is dependent on a subset of topologies. So the dependence is caused by the gain/loss asymmetry, exactly as expected, and nothing else in the DP contributes.
 
@@ -143,7 +147,13 @@ total  =  Σ_edges s(u,v)  −  Σ_{internal} f(u)  −  f(root)  +  Σ_tips f
 
 `Σ_tips f` is constant and `s` carries no orientation, so the root node — charged `f` twice, once inside `Σ_internal` and once as `−f(root)` — is the entire source of the dependence. **An earlier, tighter prediction of `nSec/2` was falsified by this script** (`nSec = 1` gives spread 1; `nSec = 2` gives spread 2): it overlooked that rooting an unrooted tree *subdivides* an edge, so the edge set, and hence `Σ_edges s`, is not itself rooting-invariant. The retained and tested bound is **`nSec`** — `2·f(present)` — and it held in every scenario. Per-block, so a dataset with `k` blocks has a worst case of `Σ nSec_b`.
 
-**Q-C — the cheap fix is refuted. This is the load-bearing result.** `forced_root_state = 0` ("absent at the root") does not collapse the spread; it *inflates* it, in every scenario, by a wide margin — 84–117/120 topologies dependent versus 0–34/120, and max spread up to 5 versus ≤ `nSec`. The mechanism is now obvious: pinning the root *state* does nothing about the root *position*, and it removes the min-over-states freedom that was previously absorbing much of the positional difference. The `nSec = 0` control is decisive: a matrix that is *symmetric*, and therefore provably invariant, becomes rooting-dependent on 84/120 topologies once the root state is pinned. **A pinned root state is only coherent alongside a pinned root position; on its own it is strictly harmful.** Had this been shipped as a one-line R change on semantic grounds it would have made the finding worse while appearing to address it.
+**Q-C — the cheap fix is incoherent on its own, and the numbers must be read carefully.** `forced_root_state = 0` ("absent at the root") does not restore rooting-invariance. Pinning the root *state* does nothing about the root *position*, and it removes the min-over-states freedom that was previously absorbing part of the positional difference: the pinned criterion's value then varies across root positions on 84–117/120 topologies, with spread up to 5.
+
+**What that does and does not establish.** It does *not* establish that a rooted criterion is wrong, and the earlier draft of this document over-claimed exactly that. `forced_root_state = 0` defines a **different, explicitly rooted** criterion, and the script confirms it is perfectly reproducible at a fixed canonical rooting — it is well-defined. Its spread across rootings is therefore the price of leaving *its* root position arbitrary, and it is not commensurable with the free-root arm's spread as "worse". Nor is the `nSec = 0` pinned cell (84/120) evidence about asymmetry: constraining the root's label on a *symmetric* matrix must make the root position matter, so a non-zero value there is a tautology, not a contradiction. That row is a control for the free arm only.
+
+**What it does establish, and it is enough to reject Option 1.** Shipping the one-liner into *today's* pipeline — which leaves `forced_root_state`'s root position unchosen, and actively moves it at the four sites in Q3 — would make the score depend on a root the user never selected, by up to 5 steps. The change is only meaningful **in combination with** pinning the position, i.e. it is Option 2 in disguise, not a one-line fix. Option 1 is rejected as incoherent, not as harmful.
+
+**Consequently the recommendation rests on Q-E and the blocker, not on this section.** Q-E shows the current score is a tight, sound upper bound on a well-defined unrooted objective; the blocker shows the search is not even using the Sankoff term to choose moves. Those two carry the decision independently of how Q-C is read.
 
 **Q-D — ambiguity is the aggravating factor, and does not break the bound.** Fully ambiguous tips (`-1`) roughly triple the dependence rate (34/120 vs 10/120 at `nSec = 2`) and raise the mean overstatement almost eightfold (0.167 vs 0.022), because a free tip lets the optimal labelling shift with the orientation. Present-but-unknown tips (`-2`) do not (8/120) — they still exclude "absent", which is where the asymmetry lives. The `nSec` bound survived both.
 
@@ -155,7 +165,7 @@ total  =  Σ_edges s(u,v)  −  Σ_{internal} f(u)  −  f(root)  +  Σ_tips f
 
 ## Options considered
 
-**Option 1 — pin `forced_root_state = 0` only.** *Rejected on evidence.* Q-C: strictly and substantially worse. Do not ship.
+**Option 1 — pin `forced_root_state = 0` only.** *Rejected as incoherent.* Q-C: it makes the root meaningful while leaving its position unchosen and, at four sites, moving — so the score comes to depend on a root the user never selected, by up to 5 steps on 84–117/120 topologies. Pinning the state is only meaningful together with pinning the position, which is Option 2. Do not ship it as a standalone one-liner.
 
 **Option 2 — full rooted criterion: require a rooted input tree, pin state and position, gate the four whole-tree reroot sites.** *Rejected on cost/benefit, not feasibility.* Q3 shows the mechanical cost is moderate. But it (i) asks users for a root the criterion does not need, (ii) makes the root position an unsearched nuisance parameter whose choice changes the answer by up to `Σ nSec_b`, (iii) shrinks the reachable move set at the four gated sites — including fusing, whose whole value is topological diversity, and `ts_collapse_pool`, whose canonicalisation the collapse logic depends on, and (iv) delivers no user-visible benefit over Option 3, because Option 3 already removes the reported discrepancy. Reconsider only if a user presents a hierarchy where the root state is genuinely known *and* the tree genuinely rooted.
 
@@ -171,7 +181,7 @@ The task asks whether a matched A/B against a rooting-pinned variant is worth ru
 
 Three reasons:
 
-1. **The only cheap pinned variant available is Option 1, which is refuted.** An A/B against `forced_root_state = 0` would compare the status quo against something measurably *more* rooting-dependent (Q-C). Its result would be uninterpretable as a test of the pinning hypothesis. Building a true pinned variant means Option 2, i.e. the kernel and reroot-site work this task explicitly forbids.
+1. **The only cheap pinned variant available is Option 1, and it is not the hypothesis you want to test.** An A/B against `forced_root_state = 0` would compare the status quo against a *different criterion* whose root position is itself unchosen and moving (Q-C) — so a score difference would not distinguish "pinning helps" from "the arm happened to draw a favourable root". Building a variant that actually tests the pinning hypothesis means pinning the position too, i.e. Option 2 — the kernel and reroot-site work this task explicitly forbids.
 2. **The effect being measured is second-order behind a first-order defect.** The Sankoff term is not in the candidate screen at all (blocker). Any measured difference would be confounded with, and probably swamped by, Fitch-only candidate selection.
 3. **The accept path is not actually incoherent in the way feared.** `actual = full_rescore` is authoritative at every accept (`ts_tbr.cpp:2717`, `:2761`, `:2787`), and the default path does not physically reroot mid-search (Q3), so accepted scores are consistent at a *stable* rooting within a TBR pass. Incoherence enters across the sites in the Q3 table — fusing, sector search, `ts_collapse_pool` — not within TBR's accept loop. That is a narrower and cheaper thing to reason about than a search-wide A/B.
 
