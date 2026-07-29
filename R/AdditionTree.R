@@ -71,7 +71,7 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
     # Reject non-positive, fractional, out-of-range or duplicated indices before
     # subsetting: R's `taxa[i]` would otherwise silently drop (`i <= 0`),
     # truncate (fractional) or recycle, yielding a tree that ignores the
-    # requested order rather than erroring.
+    # requested order rather than throwing an error.
     if (anyNA(sequence) || any(sequence != round(sequence)) ||
         any(sequence < 1L) || any(sequence > nTaxa) ||
         anyDuplicated(sequence)) {

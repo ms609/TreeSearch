@@ -609,7 +609,8 @@
 #'   Any unambiguous abbreviation is accepted: `"thoro"`, `"thor"` and `"t"` all
 #'   select `"thorough"`.  Every preset's initial differs, so a single letter is
 #'   always enough.  A value that matches nothing -- or matches ambiguously --
-#'   warns and falls back to the default parameters rather than erroring.
+#'   warns and falls back to the default parameters rather than throwing an
+#'   error.
 #'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement
 #'   rule; `consensusStableReps` (consensus-stability stopping) is off by default
 #'   and is not enabled by any preset.
@@ -870,7 +871,7 @@ MaximizeParsimony <- function(
   # `maxReplicates < 1` runs the search loop zero times: the pool stays
   # empty, `best_score` never leaves its C++ sentinel of -1, and the
   # empty-pool fallback below would silently return the random starting
-  # tree tagged with that bogus score instead of erroring.
+  # tree tagged with that bogus score instead of throwing an error.
   if (length(maxReplicates) != 1L || is.na(maxReplicates) ||
       as.integer(maxReplicates) < 1L) {
     stop("`maxReplicates` must be a single integer of at least 1.")

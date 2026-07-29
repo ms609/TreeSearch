@@ -157,7 +157,8 @@ identical.}
 Any unambiguous abbreviation is accepted: \code{"thoro"}, \code{"thor"} and \code{"t"} all
 select \code{"thorough"}.  Every preset's initial differs, so a single letter is
 always enough.  A value that matches nothing -- or matches ambiguously --
-warns and falls back to the default parameters rather than erroring.
+warns and falls back to the default parameters rather than throwing an
+error.
 Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
 rule; \code{consensusStableReps} (consensus-stability stopping) is off by default
 and is not enabled by any preset.
