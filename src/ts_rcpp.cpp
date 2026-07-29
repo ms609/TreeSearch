@@ -2005,6 +2005,25 @@ List ts_driven_search(
   NumericVector rep_scores(result.replicate_scores.begin(),
                            result.replicate_scores.end());
 
+  // NA certification diagnostics, on the PRODUCTION entry point.  ts_tbr_search
+  // and ts_ratchet_search already expose the TS_NA_TIMING brackets, but they run
+  // with TBRParams/RatchetParams defaults (tabu_size == 0), which is NOT the
+  // shipped recipe (tabuSize = 100 default / 200 thorough) -- and do_reroot, the
+  // gate on exact_verify_sweep, requires tabu_size == 0.  So a measurement taken
+  // there cannot say whether certification costs anything in production.  These
+  // fields answer that.  `n_skipped` is counted unconditionally (see ts_data.h),
+  // the timing fields only under TS_NA_TIMING.  Serial runs only: each parallel
+  // worker owns a private ds_local, so a threaded run reports its main-thread
+  // copy and undercounts.
+  List na_diag = List::create(
+    Named("n_evs") = static_cast<double>(ds.na_n_evs),
+    Named("n_evs_skipped") = static_cast<double>(ds.na_n_evs_skipped),
+    Named("n_evs_hits") = static_cast<double>(ds.na_n_evs_hits),
+    Named("n_evs_improved") = static_cast<double>(ds.na_n_evs_improved),
+    Named("t_evs_ms") = ds.na_t_evs_ns / 1e6,
+    Named("t_total_ms") = ds.na_t_total_ns / 1e6
+  );
+
   if (result.pool_size == 0) {
     return List::create(
       Named("trees") = List::create(),
@@ -2021,7 +2040,8 @@ List ts_driven_search(
       Named("timings") = timings,
       Named("strategy_diagnostics") = strategy_diag,
       Named("replicate_scores") = rep_scores,
-      Named("candidates_evaluated") = (double) result.candidates_evaluated
+      Named("candidates_evaluated") = (double) result.candidates_evaluated,
+      Named("na_diag") = na_diag
     );
   }
 
@@ -2049,7 +2069,8 @@ List ts_driven_search(
     Named("timings") = timings,
     Named("strategy_diagnostics") = strategy_diag,
     Named("replicate_scores") = rep_scores,
-    Named("candidates_evaluated") = (double) result.candidates_evaluated
+    Named("candidates_evaluated") = (double) result.candidates_evaluated,
+    Named("na_diag") = na_diag
   );
 }
 

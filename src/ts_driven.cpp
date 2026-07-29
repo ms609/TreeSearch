@@ -507,6 +507,8 @@ ReplicateResult run_single_replicate(
           TBRParams tp;
           tp.tabu_size = params.tabu_size;
           tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+          // Per-cycle reconverge, kept-if-improved: not a reported result.
+          tp.certify_unrooted = false;
           tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
         }
 
@@ -642,6 +644,30 @@ ReplicateResult run_single_replicate(
       }
     }
   } // end outer loop
+
+  // Optional final certification of the tree this replicate contributes to the
+  // pool (TS_NA_FINAL_CERTIFY, default off).
+  //
+  // Every whole-tree TBR above carries params.tabu_size, which the shipped
+  // presets set to 100 (default) / 200 (thorough), and do_reroot -- the gate on
+  // the NA certifier -- requires tabu_size == 0.  So on inapplicable data the
+  // tree a replicate reports has NEVER been certified as a true unrooted-TBR
+  // optimum, while the sector and fuse sub-searches (which leave tabu_size at 0)
+  // pay for certification repeatedly on trees nobody reports.  This pass is the
+  // other half of the TBRParams::certify_unrooted trade: spend ONE certification
+  // where it is worth something.  Env-gated so it is a measurable arm of the
+  // floor-attainment gate rather than a silent default change.  No-op unless the
+  // data carry inapplicables; skipped under constraints, where do_reroot is off
+  // regardless.
+  if (cd == nullptr && std::getenv("TS_NA_FINAL_CERTIFY") != nullptr) {
+    TBRParams tp;
+    tp.tabu_size = 0;                 // REQUIRED: do_reroot gates on this
+    tp.certify_unrooted = true;
+    tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+    tbr_search(result.tree, ds, tp, nullptr, nullptr, nullptr, check_timeout);
+    result.tree.build_postorder();
+    result.tree.reset_states(ds);
+  }
 
   result.score = score_tree(result.tree, ds);
   return result;

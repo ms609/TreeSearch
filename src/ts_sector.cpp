@@ -1234,6 +1234,15 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
       // there.  best_score is unchanged (equal moves never worsen it); only the
       // returned topology differs, so reinsert can take the lateral step.
       tp.accept_equal = accept_equal;
+      // Sector re-solve on the REDUCED dataset.  Only `solved_score` and the
+      // topology feed reinsert_sector(); the whole-tree score is recomputed
+      // after reinsertion, and a sector that does not improve is reverted.  So
+      // no caller needs a certified reduced optimum.  NB unlike the ratchet and
+      // drift, this site DOES reach the sweep under the shipped presets (it
+      // leaves tabu_size at 0, and do_reroot requires tabu_size == 0) -- it and
+      // the global polishes below are where native-NA production actually pays
+      // for certification.
+      tp.certify_unrooted = false;
       TBRResult tr = tbr_search(rd.subtree, rd.data, tp);
       solved_score = tr.best_score;
     }
@@ -1393,6 +1402,7 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
       TBRParams ftp;
       ftp.max_hits = max_hits;
       ftp.clip_order = static_cast<ClipOrder>(clip_order);
+      ftp.certify_unrooted = false;   // audit probe; only its score is read
       TBRResult ftr = tbr_search(ft, rd.data, ftp);
       if (ftr.best_score < free_min) free_min = ftr.best_score;
     }
@@ -1666,6 +1676,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     TBRParams tp;
     tp.max_hits = params.internal_max_hits;
     tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+    tp.certify_unrooted = false;   // intermediate: driven_search polishes after
     TBRResult tr = tbr_search(tree, ds, tp, nullptr, nullptr, nullptr,
                               check_timeout);
     result.best_score = tr.best_score;
@@ -1866,6 +1877,7 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
     TBRParams tp;
     tp.max_hits = params.internal_max_hits;
     tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+    tp.certify_unrooted = false;   // intermediate: driven_search polishes after
     TBRResult tr = tbr_search(tree, ds, tp, cd, nullptr, nullptr,
                               check_timeout);
     if (tr.best_score < result.best_score) {
@@ -1998,6 +2010,7 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
       tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+      tp.certify_unrooted = false;  // intermediate: driven_search polishes after
       TBRResult tr = tbr_search(tree, ds, tp, cd, nullptr, nullptr,
                                 check_timeout);
       if (tr.best_score < result.best_score) {
@@ -2094,6 +2107,7 @@ SectorResult css_search(TreeState& tree, DataSet& ds,
       TBRParams tp;
       tp.max_hits = params.internal_max_hits;
       tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+      tp.certify_unrooted = false;  // intermediate: driven_search polishes after
       TBRResult tr = tbr_search(tree, ds, tp, cd, nullptr, nullptr,
                                 check_timeout);
       if (tr.best_score < result.best_score) {

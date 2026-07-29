@@ -42,6 +42,20 @@ struct TBRParams {
   // sector_mask / cd / tabu / pool are active (state would be invalidated).
   // See dev/plans/2026-06-18-tbr-shared-start.md.
   bool unrooted = true;
+  // Does THIS caller need a *certified* optimum?  Only meaningful on data with
+  // inapplicables, where the indirect scan is approximate and certification
+  // means the exhaustive O(n^3) exact_verify_sweep -- 97.7% of native-NA
+  // tbr_search wall (dev/profiling/na-exact-verify-dominates.md).  EW/IW scans
+  // are exact, so the flag is inert for them.
+  //
+  // Cleared by internal callers whose result is NOT the tree reported to the
+  // user (ratchet / drift / sector / fuse / nni-perturb / prune-reinsert
+  // sub-searches): the next perturbation moves the tree anyway, so paying to
+  // *prove* that an intermediate tree is a true unrooted-TBR optimum buys
+  // nothing.  Default true, and honoured ONLY when TS_NA_NOCERTIFY is set, so
+  // the shipped default is byte-identical to certifying everywhere until the
+  // floor-attainment gate says otherwise.
+  bool certify_unrooted = true;
   // Progress-heartbeat label, e.g. "TBR".  Left null by default, which SILENCES
   // the heartbeat for this call.  Opt-in rather than opt-out because a caller is
   // the only thing that knows whether this search's running best is on the user's

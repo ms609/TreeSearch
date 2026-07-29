@@ -228,9 +228,20 @@ struct DataSet {
   // never aggregate these across a parallel run.
   mutable long long na_t_total_ns = 0;   // whole tbr_search
   mutable long long na_t_evs_ns = 0;     // exact_verify_sweep, all calls
+  // na_n_evs / na_n_evs_hits / na_n_evs_skipped are counted ALWAYS, not only
+  // under TS_NA_TIMING: they are one increment per convergence, and the
+  // executed/skipped pair is the only evidence that the certify_unrooted gate
+  // reached a live call site (see na_n_evs_skipped below).
   mutable long long na_n_evs = 0;        // calls
   mutable long long na_n_evs_hits = 0;   // served from evs_false_cache
   mutable long long na_n_evs_improved = 0;  // calls that found an improver
+  // Convergences where certification was SKIPPED because the caller cleared
+  // TBRParams::certify_unrooted (and TS_NA_NOCERTIFY enabled the gate).  A null
+  // wall result must not be confusable with "the flag never reached a live call
+  // site": do_reroot needs tabu_size == 0 and no mask/cd/pool, and the shipped
+  // presets set tabuSize = 100/200, so under the default recipe only the sector
+  // sub-searches and the fuse cleanup reach the certifier at all.
+  mutable long long na_n_evs_skipped = 0;
   mutable long long na_t_below_ns = 0;   // below_actives_cache build (NA-only)
   mutable long long na_n_below = 0;
   mutable long long na_t_vroot_ns = 0;   // vroot_cache build / compute_from_above
