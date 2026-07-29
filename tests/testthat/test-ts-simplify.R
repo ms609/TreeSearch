@@ -143,10 +143,8 @@ test_that("EW scores match on all-informative dataset (no simplification effect)
 # ===== IW scoring correctness =====
 
 test_that("IW scores are consistent across simplifiable datasets", {
-  # Verify that IW score is the same on multiple trees, compared against
-  # a non-simplifiable (all-informative) baseline approach.
+  # Verify that IW scoring works correctly with simplified datasets.
   # The key invariant: IW score uses extra = steps - min_steps,
-
   # and simplification reduces both by the same amount.
   set.seed(4418)
   k <- 3.0  # concavity constant
@@ -154,8 +152,8 @@ test_that("IW scores are consistent across simplifiable datasets", {
   for (i in seq_len(5)) {
     tree <- RandomTree(autap_dataset, root = TRUE)
     # IW score via the C++ engine (with simplification)
-    iw_score <- ts_score(tree, autap_ds, concavity = k,
-                         min_steps = autap_ds$weight * 0L)
+    # Do not pass min_steps; let the default handle simplification automatically
+    iw_score <- ts_score(tree, autap_ds, concavity = k)
     # IW score should be finite and non-negative
     expect_true(is.finite(iw_score), info = paste("Tree", i, "finite"))
     expect_gte(iw_score, 0, label = paste("Tree", i, "non-negative"))
