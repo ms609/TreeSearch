@@ -331,3 +331,80 @@ test_that("Asymmetric n+1:1 cost pattern matches expected score", {
 
   expect_equal(res$score, 7)
 })
+
+
+# ===== Dimension guards (T-380) ============================================
+
+test_that("T-380: cost_matrix dimension mismatch is caught", {
+  # Cost matrix with wrong dimensions should error, not silently mis-score
+  wrong_cm <- matrix(1, 2, 2)  # 2x2 instead of 3x3
+  diag(wrong_cm) <- 0
+
+  expect_error(
+    sankoff_test(
+      tree4,
+      n_states = 3L,
+      cost_matrices = list(wrong_cm),
+      tip_states = c(0, 0, 1, 1)
+    ),
+    "cost_matrices.*has dimensions.*expected"
+  )
+})
+
+test_that("T-380: cost_matrix too small (wrong rows)", {
+  wrong_cm <- matrix(1, 2, 3)  # 2x3 instead of 3x3
+  diag(wrong_cm) <- 0
+
+  expect_error(
+    sankoff_test(
+      tree4,
+      n_states = 3L,
+      cost_matrices = list(wrong_cm),
+      tip_states = c(0, 0, 1, 1)
+    ),
+    "cost_matrices.*has dimensions"
+  )
+})
+
+test_that("T-380: cost_matrix too small (wrong cols)", {
+  wrong_cm <- matrix(1, 3, 2)  # 3x2 instead of 3x3
+  diag(wrong_cm) <- 0
+
+  expect_error(
+    sankoff_test(
+      tree4,
+      n_states = 3L,
+      cost_matrices = list(wrong_cm),
+      tip_states = c(0, 0, 1, 1)
+    ),
+    "cost_matrices.*has dimensions"
+  )
+})
+
+test_that("T-380: tip_states_r too few rows", {
+  # tip_states_r with fewer rows than tips should error
+  # Call ts_sankoff_test directly to bypass the helper's reshaping
+  short_tips <- matrix(as.integer(c(0, 0, 1)), nrow = 3, ncol = 1)
+
+  expect_error(
+    TreeSearch:::ts_sankoff_test(
+      tree4$edge,
+      as.integer(2L),
+      list(fitch_cost(2)),
+      short_tips,  # Only 3 rows for 4-tip tree
+      as.integer(-1L)
+    ),
+    "tip_states_r has.*rows.*tree has.*tips"
+  )
+})
+
+test_that("T-380: tip_states_r correct size passes", {
+  # Sanity check: correct dimensions should work
+  res <- sankoff_test(
+    tree4,
+    n_states = 2L,
+    cost_matrices = list(fitch_cost(2)),
+    tip_states = matrix(as.integer(c(0, 0, 1, 1)), nrow = 4, ncol = 1)
+  )
+  expect_equal(res$score, 1)
+})

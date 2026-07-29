@@ -3120,10 +3120,23 @@ List ts_sankoff_test(
     if (ns > sd.max_states) sd.max_states = ns;
 
     NumericMatrix cm = as<NumericMatrix>(cost_matrices_r[ch]);
+    // Validate cost matrix dimensions match the character's state count
+    if (cm.nrow() != ns || cm.ncol() != ns) {
+      Rcpp::stop("cost_matrices[[%d]] has dimensions %d x %d, but character %d "
+                 "has %d states (expected %d x %d)",
+                 ch + 1, cm.nrow(), cm.ncol(), ch + 1, ns, ns, ns);
+    }
     sd.chars[ch].cost_matrix.resize(ns * ns);
     for (int r = 0; r < ns; ++r)
       for (int c = 0; c < ns; ++c)
         sd.chars[ch].cost_matrix[r * ns + c] = cm(r, c);
+  }
+
+  // Validate tip_states_r has enough rows for all tips
+  if (tip_states_r.nrow() < n_tip) {
+    Rcpp::stop("tip_states_r has %d rows, but tree has %d tips; "
+               "tip_states_r must have at least %d rows",
+               tip_states_r.nrow(), n_tip, n_tip);
   }
 
   // Build tip costs

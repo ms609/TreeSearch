@@ -452,7 +452,12 @@ DataSet build_dataset(
     ds.pattern_freq[p] = weight_r[p];
     if (min_steps_r) {
       ds.min_steps[p] = min_steps_r[p] - ds.precomputed_steps[p];
-      if (ds.min_steps[p] < 0) ds.min_steps[p] = 0;
+      if (ds.min_steps[p] < 0) {
+        Rf_error("Internal invariant violation: pattern %d has "
+                 "precomputed_steps (%d) > min_steps_r (%d). "
+                 "This should never happen; check simplify_patterns().",
+                 p, ds.precomputed_steps[p], min_steps_r[p]);
+      }
     }
   }
 
