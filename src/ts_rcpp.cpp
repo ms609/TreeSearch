@@ -997,6 +997,19 @@ List ts_drift_search(
   );
 }
 
+// Report a constraint that greedy addition could not honour.  Raised here, on
+// the R thread, rather than inside the Wagner kernel, which also runs on search
+// worker threads where Rf_warning() is not safe.
+static void warn_if_constraint_violated(const ts::WagnerResult& result) {
+  if (!result.constraint_violated) return;
+  Rf_warning(
+    "AdditionTree(): the returned tree does not display every constraint "
+    "split. Greedy addition never rearranges, so a taxon added early can "
+    "strand a constraint beyond repair. Consider supplying a `sequence` that "
+    "adds constrained taxa earlier, or use MaximizeParsimony(), whose "
+    "rearrangement phase enforces the constraint.");
+}
+
 // [[Rcpp::export]]
 List ts_wagner_tree(
     NumericMatrix contrast,
@@ -1035,6 +1048,7 @@ List ts_wagner_tree(
 
   ts::TreeState tree;
   ts::WagnerResult result = ts::wagner_tree(tree, ds, order, cd_ptr);
+  warn_if_constraint_violated(result);
 
   return List::create(
     Named("edge") = tree_to_edge(tree),
@@ -1069,6 +1083,7 @@ List ts_random_wagner_tree(
 
   ts::TreeState tree;
   ts::WagnerResult result = ts::random_wagner_tree(tree, ds, cd_ptr);
+  warn_if_constraint_violated(result);
 
   return List::create(
     Named("edge") = tree_to_edge(tree),

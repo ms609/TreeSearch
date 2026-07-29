@@ -578,6 +578,56 @@ static void wagner_collect_active_splits(
   }
 }
 
+// Does the finished tree display every constraint split?
+//
+// A bipartition is displayed iff some edge separates its two sides, i.e. iff
+// some node's subtree tip set equals one side exactly.  Only non-root nodes are
+// candidates: the root subtends every tip, and its two children already cover
+// the single edge the degree-two root sits on.  Tips are included so trivial
+// (single-taxon) splits are recognised.  Orientation-agnostic by construction,
+// so it stays correct however the tree happens to be rooted.
+static bool wagner_tree_displays_constraint(const TreeState& tree,
+                                            const ConstraintData& cd) {
+  const int n_tip = tree.n_tip;
+  const int nw = cd.n_words;
+
+  std::vector<uint64_t> node_tips(
+      static_cast<size_t>(tree.n_node) * nw, 0ULL);
+  for (int t = 0; t < n_tip; ++t) {
+    node_tips[static_cast<size_t>(t) * nw + t / 64] = (1ULL << (t % 64));
+  }
+  for (int node : tree.postorder) {
+    int ni = node - n_tip;
+    uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
+    const uint64_t* lt = &node_tips[static_cast<size_t>(tree.left[ni]) * nw];
+    const uint64_t* rt = &node_tips[static_cast<size_t>(tree.right[ni]) * nw];
+    for (int w = 0; w < nw; ++w) nd[w] = lt[w] | rt[w];
+  }
+
+  for (int s = 0; s < cd.n_splits; ++s) {
+    const uint64_t* split = &cd.split_tips[static_cast<size_t>(s) * nw];
+    bool found = false;
+    for (int node = 0; node < tree.n_node && !found; ++node) {
+      if (node == n_tip) continue;  // root subtends everything
+      const uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
+      bool eq = true, eqCompl = true;
+      for (int w = 0; w < nw; ++w) {
+        uint64_t tip_mask = ~0ULL;
+        if (w == nw - 1) {
+          int rem = n_tip % 64;
+          if (rem > 0) tip_mask = (1ULL << rem) - 1;
+        }
+        if (nd[w] != (split[w] & tip_mask)) eq = false;
+        if (nd[w] != (~split[w] & tip_mask)) eqCompl = false;
+        if (!eq && !eqCompl) break;
+      }
+      if (eq || eqCompl) found = true;
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
 // Check if an edge (above, below) is legal under the constraint splits that
 // wagner_collect_active_splits() found to bind the current tip:
 //   - If the new tip is "inside" the split, the insertion must be inside
@@ -805,15 +855,23 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   tree.build_postorder();
   double score = score_tree(tree, ds);
 
-  if (constraint_fallback) {
-    Rf_warning(
-      "AdditionTree(): constraint could not be honoured for at least one "
-      "taxon insertion; the returned tree may violate the constraint. "
-      "Consider supplying a `sequence` that adds constrained taxa earlier.");
-  }
-
   WagnerResult result;
   result.score = score;
+
+  // Verify the finished tree rather than trusting the placement logic to have
+  // been exhaustive.  `constraint_fallback` alone is not enough: it only fires
+  // when the filter rejected *every* edge, which the T-364/T-370 leak never did
+  // -- it returned violating trees mutely.  Nor is the caller's post-hoc check
+  // enough, because AdditionTree() never sets `has_posthoc` (it is built only
+  // at the search entry, ts_rcpp.cpp), so on that path there is no reshuffle to
+  // fall back on -- including for the both-sides-straddle case above.  This
+  // check holds for every cause, known or not.  The caller reports it:
+  // Rf_warning() is not safe from a search worker thread.
+  if (constrained) {
+    result.constraint_violated =
+        constraint_fallback || !wagner_tree_displays_constraint(tree, *cd);
+  }
+
   return result;
 }
 

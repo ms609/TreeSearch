@@ -235,3 +235,30 @@ test_that("AdditionTree() rejects duplicated `sequence` taxa", {
   expect_equal(NTip(AdditionTree(dataset, sequence = taxa)), 6L)
   expect_equal(NTip(AdditionTree(dataset, sequence = taxa[c(3, 1)])), 6L)
 })
+
+test_that("AdditionTree() verifies its own output against the constraint", {
+  # The placement filter is not trusted to have been exhaustive: the finished
+  # tree is checked against every constraint split and a warning raised if any
+  # is missing.  `constraint_fallback` alone never sufficed -- it only fires
+  # when the filter rejected *every* edge, which the T-364/T-370 leak never did,
+  # so violating trees came back mutely -- and AdditionTree() never sets
+  # `has_posthoc`, so unlike the search path it has no reshuffle to fall back
+  # on.  Disabling complement enforcement makes 425 of 1334 randomised cases
+  # violate; the check caught all 425 and warned on none of the other 909.
+  #
+  # The risk of adding a verifier is spurious warnings, so sweep for silence.
+  dataset <- TreeTools::MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 1,
+      0, 1, 1, 0, 0, 1), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  efConstraint <- TreeTools::MatrixToPhyDat(
+    c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+
+  warnings <- capture_warnings(
+    for (seed in seq_len(150)) {
+      set.seed(seed)
+      AdditionTree(dataset, constraint = efConstraint)
+    }
+  )
+  expect_equal(warnings, character(0))
+})
