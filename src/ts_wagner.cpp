@@ -258,11 +258,21 @@ static inline bool is_ancestor_or_equal(
 //   * internal rows are fully overwritten by the postorder union on every
 //     call, and the read set (tree.postorder) is exactly that write set, so
 //     no internal row is ever read before it is written.
-// `needed` is per-split scratch, hoisted out of the split loop that used to
-// heap-allocate it once per split per call.
+// `needed` and `needed_out` are per-split scratch, hoisted out of the split loop
+// that used to heap-allocate once per split per call.
+//
+// `outside_node` mirrors cd.constraint_node for the *complement* of each split,
+// and is filled only for the splits that need it (see
+// wagner_map_constraint_nodes).  It lives here rather than in ConstraintData
+// because it is meaningful only during Wagner construction: the search and TBR
+// paths share that struct and have no use for it.  Sized against cd.n_splits by
+// the mapper, not by ensure(), which is not told the split count.
 struct WagnerConstraintScratch {
   std::vector<uint64_t> mask;
   std::vector<uint64_t> needed;
+  std::vector<uint64_t> needed_out;
+  std::vector<int> outside_node;
+  std::vector<char> use_complement;
   int n_tip = -1;
   int n_words = -1;
 
@@ -274,10 +284,92 @@ struct WagnerConstraintScratch {
       mask[static_cast<size_t>(t) * nw + t / 64] = 1ULL << (t % 64);
     }
     needed.assign(nw, 0ULL);
+    needed_out.assign(nw, 0ULL);
     n_tip = tips;
     n_words = nw;
   }
 };
+
+// Smallest node (tip or internal) whose subtree contains every tip in `needed`,
+// or -1 when `needed` is empty.  `n_needed` and `lone_needed` are the caller's
+// popcount of `needed` and the index of its single set bit when there is one.
+//
+// The one-tip case returns that tip without scanning, which is what the per-tip
+// scan removed in T-368 was equivalent to: a tip's mask is the singleton {t}, so
+// `needed ⊆ {t}` with `needed` non-empty forces `needed == {t}` — at most one tip
+// can match, and only when exactly one needed tip has been added.  That tip is
+// necessarily in `added_tips` (`needed ⊆ added_tips`), so the not-yet-added guard
+// was redundant too.  The internal scan is then skipped outright: it only
+// replaces `best_node` when `sz < best_size == 1`, and any node whose mask covers
+// a non-empty `needed` has `sz >= 1`, so it could never fire.
+//
+// Factored out of wagner_map_constraint_nodes() so the complement of a split can
+// be mapped by the same rules as the split itself.
+static int wagner_smallest_containing_node(
+    const TreeState& tree, int nw,
+    const std::vector<uint64_t>& node_tips,
+    const uint64_t* needed, int n_needed, int lone_needed)
+{
+  if (n_needed == 0) return -1;
+  if (n_needed == 1) return lone_needed;
+
+  int best_node = -1;
+  int best_size = tree.n_node + 1;
+
+  for (int node : tree.postorder) {
+    const uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
+    bool superset = true;
+    for (int w = 0; w < nw; ++w) {
+      if ((nd[w] & needed[w]) != needed[w]) {
+        superset = false;
+        break;
+      }
+    }
+    if (superset) {
+      int sz = 0;
+      for (int w = 0; w < nw; ++w) {
+        sz += popcount64(nd[w]);
+      }
+      if (sz < best_size) {
+        best_size = sz;
+        best_node = node;
+      }
+    }
+  }
+  return best_node;
+}
+
+// LCA of the added tips on the *outside* of `split` — the mirror image of the
+// inside mapping below, by the same rules.  Returns -1 when no outside tip has
+// been added yet, and also when the outside tips span the root themselves: then
+// neither side is a clade, the partial tree does not display the split, and no
+// further insertion can make it.
+static int wagner_map_complement(
+    const TreeState& tree, int n_tip, int nw,
+    const std::vector<uint64_t>& node_tips, const uint64_t* split,
+    const std::vector<uint64_t>& added_tips,
+    WagnerConstraintScratch& scratch)
+{
+  uint64_t* needed_out = scratch.needed_out.data();
+  int n_out = 0;
+  int lone_out = -1;
+  for (int w = 0; w < nw; ++w) {
+    uint64_t outside_mask = ~split[w];
+    if (w == nw - 1) {
+      const int rem = n_tip % 64;
+      if (rem > 0) outside_mask &= (1ULL << rem) - 1;
+    }
+    const uint64_t owd = outside_mask & added_tips[w];
+    needed_out[w] = owd;
+    if (owd) {
+      n_out += popcount64(owd);
+      lone_out = w * 64 + ctz64(owd);
+    }
+  }
+  const int on = wagner_smallest_containing_node(
+      tree, nw, node_tips, needed_out, n_out, lone_out);
+  return (on == n_tip) ? -1 : on;
+}
 
 // Wagner-specific constraint node mapping.
 // During incremental construction, the full split may not be present yet.
@@ -285,6 +377,11 @@ struct WagnerConstraintScratch {
 // the smallest internal node whose subtree contains all added inside tips.
 // This correctly constrains placement even when only some inside tips
 // have been added so far.
+//
+// Also fills `scratch.outside_node` with the mirror-image mapping — the LCA of
+// the added *outside* tips — for the splits whose inside LCA is the construction
+// root, which are exactly the splits that have to be enforced through their
+// complement instead (T-364/T-370; see the comment at the assignment below).
 static void wagner_map_constraint_nodes(
     const TreeState& tree, ConstraintData& cd,
     const std::vector<uint64_t>& added_tips,
@@ -298,6 +395,16 @@ static void wagner_map_constraint_nodes(
   // Per-node subtree tip bitmasks; tip rows are already set (see ensure()).
   scratch.ensure(n_tip, tree.n_node, nw);
   std::vector<uint64_t>& node_tips = scratch.mask;
+
+  // `outside_node` has every entry written below on every call, so it only needs
+  // sizing.  `use_complement` is the opposite: it latches across the insertion
+  // loop, so it must start false and is sized once per Wagner build (the scratch
+  // is constructed fresh in wagner_tree(), so `size() != n_splits` is true on the
+  // first call of each build and false thereafter).
+  if (static_cast<int>(scratch.outside_node.size()) != cd.n_splits) {
+    scratch.outside_node.assign(cd.n_splits, -1);
+    scratch.use_complement.assign(cd.n_splits, 0);
+  }
 
   for (int node : tree.postorder) {
     int ni = node - n_tip;
@@ -319,6 +426,21 @@ static void wagner_map_constraint_nodes(
     const uint64_t* split =
         &cd.split_tips[static_cast<size_t>(s) * nw];
 
+    // Once the inside LCA has reached the root it can never come back down —
+    // grafting a leaf preserves ancestor relations among existing nodes, so the
+    // new LCA is LCA(old, new tip), an ancestor-or-equal of the old one.  This
+    // split is therefore enforced through its complement for the rest of the
+    // build, and searching for the inside LCA again would only re-derive the
+    // root.  Skipping it keeps the mapping at one postorder scan per split per
+    // step, which is what it cost before the complement was introduced; without
+    // the latch every latched split paid for two.
+    if (scratch.use_complement[s]) {
+      cd.constraint_node[s] = n_tip;
+      scratch.outside_node[s] = wagner_map_complement(
+          tree, n_tip, nw, node_tips, split, added_tips, scratch);
+      continue;
+    }
+
     // Compute which inside tips have been added.  `needed` is scratch, fully
     // overwritten here every split, so it carries nothing between iterations.
     uint64_t* needed = scratch.needed.data();
@@ -334,53 +456,30 @@ static void wagner_map_constraint_nodes(
         lone_needed = w * 64 + ctz64(nwd);
       }
     }
-    if (n_needed == 0) {
-      cd.constraint_node[s] = -1;
-      continue;
-    }
+    const int inside_node = wagner_smallest_containing_node(
+        tree, nw, node_tips, needed, n_needed, lone_needed);
+    cd.constraint_node[s] = inside_node;
 
-    // Check tips first: if exactly 1 inside tip is added, use it directly.
-    // (A tip's "subtree" is just itself — size 1.)
+    // A split is an *unrooted* bipartition, but a clade is a rooted subtree, so
+    // "inside is monophyletic" is only one of the two ways this tree can display
+    // the split.  When the added inside tips span both sides of the construction
+    // root their LCA *is* the root, and no further leaf addition can bring them
+    // back together: an LCA only ever moves up.  The split is not lost, though —
+    // making the *outside* set monophyletic displays exactly the same
+    // bipartition.  So map the complement here and let
+    // wagner_collect_active_splits() enforce through it.
     //
-    // The scan this replaces was equivalent to a popcount.  A tip's mask is the
-    // singleton {t}, so `needed ⊆ {t}` with `needed` non-empty forces
-    // `needed == {t}`: at most one tip can match, and only when exactly one
-    // inside tip has been added.  That tip is necessarily in `added_tips`
-    // (`needed ⊆ added_tips`), so the not-yet-added guard was redundant too.
-    // The internal scan is then skipped outright: it only replaces `best_node`
-    // when `sz < best_size == 1`, and any node whose mask covers a non-empty
-    // `needed` has `sz >= 1`, so it could never fire.
-    if (n_needed == 1) {
-      cd.constraint_node[s] = lone_needed;
-      continue;
+    // Only this one case pays for the second search; every other split leaves
+    // the entry at -1.  If the complement straddles the root too, the partial
+    // tree already fails to display the split and no insertion can repair it:
+    // -1 leaves the split unenforced for this build, and the post-hoc check in
+    // random_wagner_tree() rejects the finished tree and reshuffles.
+    scratch.outside_node[s] = -1;
+    if (inside_node == n_tip) {
+      scratch.use_complement[s] = 1;
+      scratch.outside_node[s] = wagner_map_complement(
+          tree, n_tip, nw, node_tips, split, added_tips, scratch);
     }
-
-    // Two or more inside tips added: no tip can hold them, so find the
-    // smallest internal clade that does.
-    int best_node = -1;
-    int best_size = tree.n_node + 1;
-
-    for (int node : tree.postorder) {
-      const uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
-      bool superset = true;
-      for (int w = 0; w < nw; ++w) {
-        if ((nd[w] & needed[w]) != needed[w]) {
-          superset = false;
-          break;
-        }
-      }
-      if (superset) {
-        int sz = 0;
-        for (int w = 0; w < nw; ++w) {
-          sz += popcount64(nd[w]);
-        }
-        if (sz < best_size) {
-          best_size = sz;
-          best_node = node;
-        }
-      }
-    }
-    cd.constraint_node[s] = best_node;
   }
 }
 
@@ -405,9 +504,10 @@ struct WagnerActiveSplit {
 // about each that the per-edge test needs.
 //
 // Everything gathered here — which side of the split the tip falls on, whether
-// the opposite side has an already-added tip, the constraint node, and the two
-// skips (unmapped, and LCA-is-root) — depends solely on (tip, added_tips, cd)
-// and the current topology.  All of those are fixed for the whole insertion
+// the opposite side has an already-added tip, the constraint node, and the choice
+// between enforcing a split directly and enforcing it through its complement —
+// depends solely on (tip, added_tips, cd) and the mapping the caller's scratch
+// already holds for the current topology.  All of those are fixed for the whole insertion
 // DFS, so this runs once per inserted tip rather than once per candidate edge,
 // which is what it used to cost inside wagner_edge_violates_constraint().
 // Splits are appended in index order, so the per-edge loop still tests them in
@@ -415,6 +515,7 @@ struct WagnerActiveSplit {
 static void wagner_collect_active_splits(
     const TreeState& tree, int tip, const ConstraintData& cd,
     const std::vector<uint64_t>& added_tips,
+    const WagnerConstraintScratch& scratch,
     std::vector<WagnerActiveSplit>& active)
 {
   active.clear();
@@ -451,10 +552,26 @@ static void wagner_collect_active_splits(
     int cn = cd.constraint_node[s];
     if (cn < 0) continue;
 
-    // If the LCA is the root, inside tips span both sides of the root.
-    // The inside/outside distinction is meaningless (every node is a
-    // "descendant" of root), so skip this constraint for this insertion.
-    if (cn == tree.n_tip) continue;
+    // If the LCA is the root, the added inside tips span both sides of the root,
+    // so no clade can hold exactly them and "inside" is not expressible as a
+    // rooted subtree.  This used to `continue`, which silently dropped the
+    // constraint — and because an LCA never moves back down, dropping it here
+    // dropped it for every later insertion too, so one unlucky base triple
+    // unconstrained the whole build (T-364/T-370).
+    //
+    // Enforce through the complement instead: the same unrooted bipartition is
+    // displayed by making the outside set monophyletic, and at most one side of
+    // a split can straddle the root.  Membership flips with the side, so the new
+    // tip's relation to the complement clade is `!tip_inside`.
+    if (cn == tree.n_tip) {
+      const int on = scratch.outside_node[s];
+      // Both sides straddling means the partial tree already fails to display
+      // this split and no insertion can repair it; leave it to the post-hoc
+      // check, which rejects the finished tree and reshuffles.
+      if (on < 0 || on == tree.n_tip) continue;
+      active.push_back(WagnerActiveSplit{on, !tip_inside});
+      continue;
+    }
 
     active.push_back(WagnerActiveSplit{cn, tip_inside});
   }
@@ -579,7 +696,8 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
     // on the candidate edge.  Must be rebuilt here, per inserted tip: it reads
     // `tip`, `added_tips` and cd's constraint nodes, all of which move on.
     if (constrained) {
-      wagner_collect_active_splits(tree, tip, *cd, added_tips, active_splits);
+      wagner_collect_active_splits(tree, tip, *cd, added_tips, cons_scratch,
+                                   active_splits);
     }
 
     // Find best insertion edge via DFS from root

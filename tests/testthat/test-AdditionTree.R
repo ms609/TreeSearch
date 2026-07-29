@@ -72,22 +72,10 @@ test_that("Addition tree obeys constraints", {
   expected_split <- as.Splits(c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE),
                                letters[1:6])
 
-  # Seeded deliberately: these two assertions are NOT robust to the addition
-  # order, because of open finding T-364 (dev/red-team/findings.md).  When the
-  # random 3-taxon base tree happens to straddle the constraint with respect to
-  # the root, `wagner_map_constraint_nodes` sets the split's LCA to the root and
-  # `ts_wagner.cpp:410` then skips that constraint for every later insertion, so
-  # `AdditionTree()` silently returns a tree in which e and f are not sisters.
-  # Measured over 400 seeds, this assertion fails in 35 of them (8.75%); seed 23
-  # is the first, returning ((a,(d,(b,(c,f)))),e);.
-  #
-  # Until T-364 is fixed the test was passing only because these calls inherited
-  # a benign RNG state from set.seed(1) at the top of this file -- an accident
-  # that any edit to a preceding test could have flipped, turning this into an
-  # intermittent CI failure with a very confusing signal.  Pinning the seed makes
-  # the pass intentional rather than lucky.  WHEN T-364 IS FIXED: drop the seed
-  # and loop the assertion over many seeds instead, since a single unseeded call
-  # has a ~91% chance of passing even with the bug fully present.
+  # `sequence` defaults to a random addition order, so seed for a reproducible
+  # tree shape rather than for a lucky one: under T-364 these two assertions were
+  # order-dependent and this seed was load-bearing, which is why the sweep in the
+  # next test -- not this seed -- is now the guard.
   set.seed(1)
   # as phyDat
   expect_true(expected_split %in%
@@ -114,6 +102,73 @@ test_that("Addition tree obeys constraints", {
     cdef)
   expect_equal_tree(ape::read.tree(text = "(c, d, (e, f));"),
                TreeTools::UnrootTree(subtree))
+})
+
+test_that("Addition tree obeys constraints for every addition order", {
+  # T-364/T-370.  AdditionTree() seeds its search with a three-taxon tree built
+  # from the first three taxa of the addition order, before any constraint is
+  # consulted.  When that seed puts a constrained group's taxa on both sides of
+  # its root, the group's LCA is the root itself; the constraint used to be
+  # skipped from that point on -- and an LCA never moves back down, so it stayed
+  # skipped for every remaining insertion and the tree came back violating the
+  # constraint with no warning.  Enforcing through the split's complement fixes
+  # it, since the same unrooted bipartition is displayed either way.
+  #
+  # Sweeps rather than single calls, because the failure was order-dependent: on
+  # the code before the fix these three assertions report 35/400 seeds, 16/120
+  # base triples and 42/120 base triples respectively, so a single unseeded call
+  # passed ~91% of the time and a pinned seed proved nothing about any other
+  # platform.
+  dataset <- TreeTools::MatrixToPhyDat(matrix(
+    c(0, 1, 1, 1, 0, 1,
+      0, 1, 1, 0, 0, 1), ncol = 2,
+    dimnames = list(letters[1:6], NULL)))
+  taxa <- letters[1:6]
+  efSplit <- as.Splits(c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE), taxa)
+  efConstraint <- TreeTools::MatrixToPhyDat(
+    c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
+
+  # Random addition orders: seeds 23, 25, 29, 43 and 91 were the first that put
+  # e and f in the base tree astride its root.
+  broken <- which(vapply(seq_len(400), function(seed) {
+    set.seed(seed)
+    !(efSplit %in% as.Splits(AdditionTree(dataset, constraint = efConstraint),
+                             taxa))
+  }, logical(1)))
+  expect_equal(broken, integer(0))
+
+  # Every arrangement of the base triple, via `sequence`.  A group of three
+  # covers the case where the triple falls entirely inside the constrained
+  # group, which no rearrangement of those three taxa can rescue: whichever of
+  # them the base tree puts opposite the root is itself inside the group, so the
+  # group can only be enforced through its complement.
+  defConstraint <- TreeTools::MatrixToPhyDat(
+    c(a = 0, b = 0, c = 0, d = 1, e = 1, f = 1))
+  defSplit <- as.Splits(c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), taxa)
+  triples <- expand.grid(taxa, taxa, taxa, stringsAsFactors = FALSE)
+  triples <- triples[apply(triples, 1, anyDuplicated) == 0L, ]
+  BadOrders <- function(cons, split) {
+    bad <- vapply(seq_len(nrow(triples)), function(i) {
+      triple <- unlist(triples[i, ], use.names = FALSE)
+      order <- c(triple, setdiff(taxa, triple))
+      tree <- AdditionTree(dataset, constraint = cons, sequence = order)
+      if (split %in% as.Splits(tree, taxa)) "" else paste(order, collapse = "")
+    }, character(1))
+    bad[nzchar(bad)]
+  }
+  expect_equal(BadOrders(efConstraint, efSplit), character(0))
+  expect_equal(BadOrders(defConstraint, defSplit), character(0))
+
+  # Honouring the constraint must not cost a taxon every legal insertion edge:
+  # exhausting them falls back to an unchecked edge, which warns.  (This passed
+  # before the fix too -- the old failure was silent -- so it guards against the
+  # fix over-constraining, not against T-364 itself.)
+  set.seed(23)
+  expect_no_warning(AdditionTree(dataset, constraint = efConstraint))
+  expect_no_warning(
+    AdditionTree(dataset, constraint = defConstraint,
+                 sequence = c("d", "e", "f", "a", "b", "c"))
+  )
 })
 
 test_that("AdditionTree() rooting is an arbitrary construction artefact", {

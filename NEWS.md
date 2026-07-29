@@ -1,5 +1,18 @@
 # To integrate into 2.0.0 notes
 
+- Fixed: `AdditionTree(constraint = )` silently returned a constraint-violating
+  tree for around one addition order in eleven.  Taxa are added to a tree seeded
+  from the first three of them, which is built before the constraint is
+  consulted; whenever that seed put a constrained group's taxa on both sides of
+  its root, the group's ancestor was the root itself and the constraint was then
+  ignored for every subsequent insertion -- without a warning, and irrecoverably,
+  since an ancestor never moves back down.  A group in that position cannot be
+  made monophyletic by adding leaves, so the constraint is now enforced through
+  its complement, which displays the same unrooted split.  Measured on the
+  previous code, a randomized `sequence` hit this in 35 of 400 seeds, and an
+  explicit `sequence` whose first three taxa fall inside the constrained group
+  hit it in 42 of the 120 base triples.
+
 - Fix `TreeLength()` and `LengthAdded()` errors when scoring, under profile
   parsimony, a character with no phylogenetic information.
 
