@@ -152,6 +152,36 @@ Note `C_final` is not a strict improvement on `B_gate` at fixed replicates
 changes the pool and every later replicate's trajectory. It is a different
 trajectory, not a superset.
 
+### Reading the results — four things not to get wrong
+
+1. **The pre-read's shape is least likely to hold where the lever matters.** These
+   are 43–55 tips; the fixed-replicate gap was 5 steps on Zanol2014 (74t) against
+   1–2 here. Certification cost is O(n³) while the replicates a wall win buys
+   scale inversely, so on 74–88 tips arm B gets *fewer* extra replicates and has
+   *more* reach to recover. Read the large-matrix rows first. If `B_gate_mw` fails
+   to recover on Zanol2014 / Zhu2013 / Dikow2009 / Giles2015, that is the verdict
+   whatever the 20–40-tip matrices say, and the honest conclusion is a
+   size-conditioned default, not a global flip.
+2. **`tabuSize = 0` is a different search, not "default plus certification".** It
+   also disables the tabu list, changing plateau exploration for *every* arm.
+   That is fine for the A-vs-B contrast within a tabu level, which is why the
+   analyser segments by it — but the `tabu = 0` rows bound the lever's size, they
+   are not evidence about `default`-preset behaviour.
+3. **`nEvsImproved` is not "improvers the gate cost you".** For gated arms it
+   counts only the final-certify improvers (arm C) or driven-polish improvers
+   (arm B at `tabu = 0`). What certification *would* have found in a run that
+   never ran it is unobservable by construction.
+4. **Check the matched-wall budget audit before the verdict.** `maxSeconds` is
+   polled at replicate boundaries, so a `*_mw` arm can overshoot; an arm handed
+   more wall than arm A is not comparable to it. The analyser prints per-matrix
+   overshoot and warns above 1.25x. The `run_single_replicate` budget-spent guard
+   that prevents a certification starting past the deadline landed *after* the
+   panel array was built, so the panel's `C_final_mw` rows are the unguarded
+   behaviour — the audit is how that gets caught rather than assumed away.
+
+The panel build is the pre-rebase tree (`b9bc14d6`); the mechanism is unchanged by
+the rebase onto `12a5866d`, which pulled in unrelated T-373/T-378 commits.
+
 ## What this does not do
 
 Pruning the sweep remains the larger, separate project.

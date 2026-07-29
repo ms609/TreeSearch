@@ -75,6 +75,32 @@ for (tb in sort(unique(dat$tabu))) {
   print(data.frame(matrix = rownames(repsMed), repsMed, check.names = FALSE),
         row.names = FALSE)
 
+  # ---- is the matched-wall comparison actually matched? ----
+  # maxSeconds is polled at replicate boundaries only, and (before the
+  # budget-spent guard in run_single_replicate) a final certification could start
+  # just inside the budget and run a whole O(n^3) sweep past it.  If a *_mw arm
+  # overshoots arm A's wall materially, it was handed more wall than the arm it is
+  # compared against and its floor attainment is not interpretable.  Check this
+  # BEFORE reading the verdict, and read the large matrices first: certification
+  # is O(n^3), so the overshoot grows exactly where the lever matters most.
+  mwArms <- grep("_mw$", levels(droplevels(sub$arm)), value = TRUE)
+  if (length(mwArms)) {
+    cat("\n-- Matched-wall budget audit (wall / mwBudget; >1 = overshoot) --\n")
+    mw <- sub[sub$arm %in% mwArms, ]
+    mw$over <- mw$wall / mw$mwBudget
+    ov <- tapply(mw$over, list(mw$dataset, droplevels(mw$arm)), max)
+    print(data.frame(matrix = rownames(ov), round(ov, 3), check.names = FALSE),
+          row.names = FALSE)
+    worst <- suppressWarnings(max(ov, na.rm = TRUE))
+    if (is.finite(worst) && worst > 1.25) {
+      cat(sprintf(
+        "  ** WARNING: worst overshoot %.2fx. Matched-wall arms exceeding arm A's\n  ** wall are NOT comparable to it; discount those rows.\n",
+        worst))
+    } else {
+      cat("  Overshoot within one replicate throughout; matched-wall arms comparable.\n")
+    }
+  }
+
   cat("\n-- Certifier firing (summed over the whole arm) --\n")
   fire <- aggregate(cbind(nEvs, nEvsSkipped, nEvsImproved) ~ arm, sub, sum)
   print(fire, row.names = FALSE)

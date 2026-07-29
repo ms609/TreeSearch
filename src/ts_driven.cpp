@@ -659,7 +659,18 @@ ReplicateResult run_single_replicate(
   // floor-attainment gate rather than a silent default change.  No-op unless the
   // data carry inapplicables; skipped under constraints, where do_reroot is off
   // regardless.
-  if (cd == nullptr && std::getenv("TS_NA_FINAL_CERTIFY") != nullptr) {
+  //
+  // Skipped outright once the budget is spent.  `tbr_search` polls
+  // `check_timeout` only every n_tip clips, and this pass runs AFTER the
+  // outer-cycle loop's own timeout checks, so a replicate that reaches here with
+  // the clock already expired would still pay a whole O(n^3) certification --
+  // seconds to minutes on an 88-tip matrix.  That breaks the `maxSeconds`
+  // contract for the user, and in a matched-wall A/B it silently hands this arm
+  // more wall than the arm it is being compared against.
+  const bool budgetSpent = ts::check_interrupt()
+      || (check_timeout && check_timeout());
+  if (cd == nullptr && !budgetSpent
+      && std::getenv("TS_NA_FINAL_CERTIFY") != nullptr) {
     TBRParams tp;
     tp.tabu_size = 0;                 // REQUIRED: do_reroot gates on this
     tp.certify_unrooted = true;
