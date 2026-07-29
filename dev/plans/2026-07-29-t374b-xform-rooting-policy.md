@@ -3,7 +3,7 @@
 **Date:** 2026-07-29
 **Finding:** T-374 (P1, red-team area 10), XFORM half
 **Scope:** investigation and recommendation only. No `src/` change was made.
-**Branch:** `claude/t374b-xform-rooting-policy` (worktree from local `cpp-search` @ `8c439031`)
+**Branch:** `claude/t374b-xform-rooting-policy` (worktree from local `cpp-search`; rebased onto `45a3a038` before landing)
 **Evidence script:** [`dev/red-team/heavy-tests/xform-rooting-oracle.R`](../red-team/heavy-tests/xform-rooting-oracle.R) — pure R, no build, independent re-implementation of the Sankoff DP and the x-transformation cost matrix.
 
 ---
@@ -16,16 +16,18 @@ Concretely, and in priority order:
 
 1. **Fix the reported-score/`TreeLength()` discrepancy, which is the actual P1 user-visible defect**, by making the report path and `TreeLength()` agree on one rooting — not by making the objective rooted. This is the lead evidence (Q-E): the quantity the search already optimises is a **valid upper bound** on the well-defined unrooted objective (min over rootings), it is **tight for 87–98% of rootings**, mean overstatement 0.02–0.17 steps, and the worst case is bounded by `nSec` per hierarchy block (Q-B). So agreement at the boundary is cheap and provably close, and nothing about the search needs to change to get it.
 2. **Do not set `forced_root_state = 0` as a standalone change.** This was the attractive cheap fix, and it is **incoherent on its own** — not merely suboptimal. Pinning the root *state* makes the root meaningful while leaving the root *position* arbitrary and, at four sites, actively moving (Q3). Measured: the pinned-state criterion's value varies across root positions on **84–117/120** random 9-tip topologies, with spread up to 5 — so the one-liner does not remove root-sensitivity from a rerooting pipeline, it relocates and enlarges it. **Read that number correctly** (Q-C): `forced_root_state = 0` defines a *different, explicitly rooted* criterion, perfectly well-defined at any fixed rooting, so this is not evidence that a rooted criterion is wrong. It is evidence that pinning the state is only meaningful **together with** pinning the position — i.e. it is Option 2, not a one-line fix.
-3. **Do not "rethink TBR", and do not run the rooting-pinned A/B.** See Q3 and §"The A/B" — TBR's fragment reroot is not in conflict with a pinned root, the whole-tree rerooting sites are a short enumerable list, and there is a **first-order** defect upstream that makes any second-order rooting measurement uninterpretable (see the "Blocker" section, which I consider the most important thing found here).
+3. **Do not "rethink TBR", and do not run the rooting-pinned A/B.** See Q3 and §"The A/B" — TBR's fragment reroot is not in conflict with a pinned root, the whole-tree rerooting sites are a short enumerable list, and the already-filed **T-377** is a first-order defect upstream that makes any second-order rooting measurement uninterpretable (see the "Blocker" section).
 4. **Document XFORM as rooting-sensitive** in `?MaximizeParsimony` and `?RecodeHierarchy`, stating the bound.
 
-The rest of this document answers questions 1–5 and records the blocker.
+The rest of this document answers questions 1–5 and records the blocker (which turns out to be the already-filed T-377).
 
 ---
 
 ## Blocker found during this investigation: the Sankoff term is absent from XFORM's candidate screen
 
-This is upstream of, and larger than, the rooting question. It is **not** part of T-374 and should be filed as its own row.
+This is upstream of, and larger than, the rooting question. It is **not** part of T-374 — **it is the already-filed T-377**, "TBR's candidate scan is hierarchy-blind, so moves that improve the HSJ DP or Sankoff term at a cost in Fitch steps are never *proposed*" (P2, verified, `ts_tbr.cpp:2206`). I re-derived it independently from code below before finding that row, and briefly mis-filed it as a new T-383; that duplicate is deleted and T-377 now carries the three refinements this section adds. **T-377 is being worked on concurrently** (worktree `claude/t377-hierarchy-screen`), so coordinate rather than duplicate.
+
+What this section adds beyond T-377's existing row: (a) the convergence sweep's blindness is **`has_na`-conditional**, and `has_na` is data-dependent under XFORM; (b) the `dominated` test is systematically **over-permissive**, a wall-clock cost T-377 does not record; (c) T-377 **gates** T-374's XFORM A/B.
 
 In `src/ts_tbr.cpp`:
 
@@ -153,7 +155,7 @@ total  =  Σ_edges s(u,v)  −  Σ_{internal} f(u)  −  f(root)  +  Σ_tips f
 
 **What it does establish, and it is enough to reject Option 1.** Shipping the one-liner into *today's* pipeline — which leaves `forced_root_state`'s root position unchosen, and actively moves it at the four sites in Q3 — would make the score depend on a root the user never selected, by up to 5 steps. The change is only meaningful **in combination with** pinning the position, i.e. it is Option 2 in disguise, not a one-line fix. Option 1 is rejected as incoherent, not as harmful.
 
-**Consequently the recommendation rests on Q-E and the blocker, not on this section.** Q-E shows the current score is a tight, sound upper bound on a well-defined unrooted objective; the blocker shows the search is not even using the Sankoff term to choose moves. Those two carry the decision independently of how Q-C is read.
+**Consequently the recommendation rests on Q-E and the T-377 blocker, not on this section.** Q-E shows the current score is a tight, sound upper bound on a well-defined unrooted objective; the blocker shows the search is not even using the Sankoff term to choose moves. Those two carry the decision independently of how Q-C is read.
 
 **Q-D — ambiguity is the aggravating factor, and does not break the bound.** Fully ambiguous tips (`-1`) roughly triple the dependence rate (34/120 vs 10/120 at `nSec = 2`) and raise the mean overstatement almost eightfold (0.167 vs 0.022), because a free tip lets the optimal labelling shift with the orientation. Present-but-unknown tips (`-2`) do not (8/120) — they still exclude "absent", which is where the asymmetry lives. The `nSec` bound survived both.
 
@@ -182,16 +184,16 @@ The task asks whether a matched A/B against a rooting-pinned variant is worth ru
 Three reasons:
 
 1. **The only cheap pinned variant available is Option 1, and it is not the hypothesis you want to test.** An A/B against `forced_root_state = 0` would compare the status quo against a *different criterion* whose root position is itself unchosen and moving (Q-C) — so a score difference would not distinguish "pinning helps" from "the arm happened to draw a favourable root". Building a variant that actually tests the pinning hypothesis means pinning the position too, i.e. Option 2 — the kernel and reroot-site work this task explicitly forbids.
-2. **The effect being measured is second-order behind a first-order defect.** The Sankoff term is not in the candidate screen at all (blocker). Any measured difference would be confounded with, and probably swamped by, Fitch-only candidate selection.
+2. **The effect being measured is second-order behind a first-order defect.** The Sankoff term is not in the candidate screen at all (T-377). Any measured difference would be confounded with, and probably swamped by, Fitch-only candidate selection.
 3. **The accept path is not actually incoherent in the way feared.** `actual = full_rescore` is authoritative at every accept (`ts_tbr.cpp:2717`, `:2761`, `:2787`), and the default path does not physically reroot mid-search (Q3), so accepted scores are consistent at a *stable* rooting within a TBR pass. Incoherence enters across the sites in the Q3 table — fusing, sector search, `ts_collapse_pool` — not within TBR's accept loop. That is a narrower and cheaper thing to reason about than a search-wide A/B.
 
-If the blocker is fixed and a measurement is still wanted, the informative one is different: **the Sankoff-in-screen A/B** (Fitch-only screen vs Sankoff-aware screen), which is first-order, and which should be Hamilton-class. No local heavy compute either way.
+If T-377 is fixed and a measurement is still wanted, the informative one is different: **the Sankoff-in-screen A/B** (Fitch-only screen vs Sankoff-aware screen), which is first-order, and which should be Hamilton-class. No local heavy compute either way.
 
 ---
 
 ## Follow-ups this document generates
 
-- **New finding row (not T-374):** XFORM's TBR candidate screen omits the Sankoff term; `has_na` decides whether the convergence sweep sees it. `ts_tbr.cpp:1503-1508`, `:1739`, `:2640-2642`, `:2717`.
+- **Refinements folded into the existing T-377 row** (not a new finding — see the blocker section): the convergence sweep's blindness is `has_na`-conditional and `has_na` is data-dependent under XFORM; the `dominated` test is systematically over-permissive; and T-377 gates T-374's XFORM A/B. `ts_tbr.cpp:1503-1508`, `:1739`, `:2640-2642`, `:2717`. Coordinate with the concurrent `claude/t377-hierarchy-screen` worktree.
 - **T-374 row:** point to this document for the XFORM half.
 - **Annotate-on-fix:** false root-invariance comments at `ts_tbr.cpp:123-124` and `ts_tbr.cpp:2999`, alongside the already-recorded `ts_collapse_pool` one.
 - **Docs:** `?MaximizeParsimony` and `?RecodeHierarchy` should state that XFORM scores are rooting-sensitive, bounded by `nSec` per block, and that the reported score is an upper bound on the min-over-rootings objective.
