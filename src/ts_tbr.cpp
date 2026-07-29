@@ -3115,10 +3115,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       const auto _t_evs = na_timing ? std::chrono::steady_clock::now()
                                     : std::chrono::steady_clock::time_point{};
       improved = exact_verify_sweep(tree, ds, best_score);
-      if (na_timing) {
-        ds.na_t_evs_ns += ns_since(_t_evs);
-        if (improved) ++ds.na_n_evs_improved;
-      }
+      // na_n_evs_improved is counted ALWAYS (only the ns bracket is
+      // TS_NA_TIMING-gated): it says how often certification found a real
+      // improving move rather than merely proving optimality, which is the
+      // mechanistic explanation of any quality difference the gate causes.  A
+      // panel that cannot see it can only report that reach dropped, not why.
+      if (improved) ++ds.na_n_evs_improved;
+      if (na_timing) ds.na_t_evs_ns += ns_since(_t_evs);
     } else {
       improved = try_root_edge_moves(tree, ds, best_score, ew_directional);
     }
