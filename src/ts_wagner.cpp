@@ -1,5 +1,6 @@
 #include "ts_wagner.h"
 #include "ts_constraint.h"
+#include "ts_fuse.h"  // reroot_at_tip0()
 #include "ts_fitch.h"
 #include "ts_rng.h"
 #include <algorithm>
@@ -777,6 +778,25 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
       tree.build_postorder();
       wagner_update_constraint(tree, *cd, added_tips, cons_scratch);
     }
+  }
+
+  // Hand the tree on in the rooting the rest of the constraint machinery
+  // assumes.  build_constraint() canonicalises every split mask so that tip 0 is
+  // *outside* it, and map_constraint_nodes() then looks for a node whose subtree
+  // is exactly that mask.  Rooting on tip 0 makes the non-tip-0 side of every
+  // displayed split a clade, so that search always succeeds when the tree really
+  // does display the split.
+  //
+  // Without this, enforcing a split through its complement (above) can leave the
+  // complement as the rooted clade.  The tree displays the constraint, but
+  // map_constraint_nodes() returns -1 and regraft_violates_constraint()
+  // (ts_constraint.cpp) reads that as "already violating" and rejects *every*
+  // move -- so the search still reaches the same score, taking several times
+  // longer to do it.  Parsimony scores are rooting-invariant, and the returned
+  // rooting is documented as an arbitrary construction artefact, so this costs
+  // nothing but a pointer shuffle once per build.
+  if (constrained) {
+    reroot_at_tip0(tree);
   }
 
   // Build postorder (needed by subsequent TBR search) and compute final score.

@@ -387,11 +387,19 @@ test_that("constrained sequential Wagner boundary edge: outside tip adjacent to 
   )
   expect_equal(result$score, fitch_check)
 
-  # R tips 1 and 2 must be sisters
-  ec <- result$edge
-  p1 <- ec[ec[, 2] == 1L, 1L]
-  p2 <- ec[ec[, 2] == 2L, 1L]
-  expect_equal(p1, p2)
+  # The constraint is the unrooted split {1,2} | {3,4,5,6}, so test for the
+  # split and not for sisterhood.  Sisterhood of tips 1 and 2 was equivalent only
+  # in the rooting the constrained build used to return; it now re-roots on tip 1
+  # (see reroot_at_tip0() in ts_fuse.h for why), which puts tip 1 next to the
+  # root and so separates the two without touching the topology.
+  tree <- structure(list(edge = result$edge, Nnode = n_tip - 1L,
+                         tip.label = paste0("t", seq_len(n_tip))),
+                    class = "phylo")
+  expect_true(
+    TreeTools::as.Splits(c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
+                         tipLabels = tree$tip.label) %in%
+      TreeTools::as.Splits(tree)
+  )
 
   # All tips present exactly once
   child_tips <- sort(result$edge[result$edge[, 2] <= n_tip, 2L])

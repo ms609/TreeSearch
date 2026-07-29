@@ -13,6 +13,13 @@
   explicit `sequence` whose first three taxa fall inside the constrained group
   hit it in 42 of the 120 base triples.
 
+  A constrained Wagner tree is now also re-rooted on its first taxon before being
+  returned or searched from.  The topology and score are unchanged -- the rooting
+  of an addition tree is an arbitrary artefact of the order taxa were added in,
+  as `?AdditionTree` notes -- but it is the rooting in which the rest of the
+  constraint machinery can recognise every split the tree displays.  Without it,
+  a constrained search took several times longer to reach the same score.
+
 - Fix `TreeLength()` and `LengthAdded()` errors when scoring, under profile
   parsimony, a character with no phylogenetic information.
 

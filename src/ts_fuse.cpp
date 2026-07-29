@@ -17,7 +17,8 @@ namespace ts {
 // never inside any non-root subtree), making split matching between
 // differently-rooted trees consistent.
 // Parsimony scores are rooting-invariant, so this is safe.
-static void reroot_at_tip0(TreeState& tree) {
+// Declared in ts_fuse.h: the constrained Wagner build needs the same invariant.
+void reroot_at_tip0(TreeState& tree) {
   int n_tip = tree.n_tip;
   int root = n_tip;
 
