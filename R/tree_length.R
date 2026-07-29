@@ -200,7 +200,8 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
                                  adj_weight, at$levels)
     res <- ts_sankoff_test(tree[["edge"]], xform$n_states,
                            xform$cost_matrices, xform$tip_states,
-                           xform$forced_root)
+                           xform$forced_root, xform$combo_grids,
+                           xform$tip_sec_known)
     fitch_part + res$score
   } else {
     tree <- RenumberTips(Renumber(tree), names(dataset))
@@ -350,7 +351,8 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
                                    adj_weight, levels)
       res <- ts_sankoff_test(tr[["edge"]], xform$n_states,
                              xform$cost_matrices, xform$tip_states,
-                             xform$forced_root)
+                             xform$forced_root, xform$combo_grids,
+                             xform$tip_sec_known)
       fitch_part + res$score
     }, double(1))
   } else {
@@ -390,8 +392,11 @@ TreeLength.NULL <- function(tree, dataset, concavity = Inf,
   for (i in seq_len(n_chars)) {
     tip_states[, i] <- chars[[i]]$tip_states
   }
+  combo_grids <- lapply(chars, function(ch) ch$combo_grid)
+  tip_sec_known <- lapply(chars, function(ch) ch$tip_sec_known)
   list(n_states = n_states, cost_matrices = cost_matrices,
-       tip_states = tip_states, forced_root = forced_root)
+       tip_states = tip_states, forced_root = forced_root,
+       combo_grids = combo_grids, tip_sec_known = tip_sec_known)
 }
 
 #' @rdname TreeLength

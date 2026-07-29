@@ -39,6 +39,14 @@
 #'       \item{`forced_root_state`}{Integer: -1 (unconstrained).}
 #'       \item{`block_chars`}{Integer vector of original character indices
 #'         (1-based) belonging to this block.}
+#'       \item{`combo_grid`}{Integer matrix (\code{n_present × n_secondary}),
+#'         row \code{i} giving the 1-based level index of each secondary for
+#'         present-state \code{i + 1}.}
+#'       \item{`tip_sec_known`}{Integer matrix (\code{n_tip × n_secondary}).
+#'         For tips with \code{tip_states == -2}, column \code{s} holds the
+#'         1-based level index of secondary \code{s} if it was observed, or
+#'         0 if it was unknown; used to constrain the admissible states of a
+#'         partially-known combination.}
 #'     }
 #'   }
 #'   \item{`non_hierarchy_indices`}{Integer vector of original character
@@ -119,7 +127,15 @@ RecodeHierarchy <- function(dataset, hierarchy) {
     }
 
     # --- Tip states ---
+    # `tipSecKnown[t, s]` records, per tip and per secondary, the 1-based
+    # level index of that secondary IF it was observed for this tip, or 0 if
+    # it was unknown ("-"/"?"/unrecognised token). Only consulted when
+    # `tipStates[t] == -2` (present, but not every secondary was resolvable):
+    # it lets the admissible-state set be restricted to combinations
+    # consistent with whichever secondaries WERE observed, rather than
+    # freeing every present state (T-379).
     tipStates <- integer(nTip)
+    tipSecKnown <- matrix(0L, nrow = nTip, ncol = nSec)
     for (t in seq_len(nTip)) {
       pri <- origMat[t, ctrl]
 
@@ -140,22 +156,25 @@ RecodeHierarchy <- function(dataset, hierarchy) {
       secVals <- origMat[t, deps]
       anyUnknown <- FALSE
       levelIndices <- integer(nSec)
+      known <- logical(nSec)
 
       for (s in seq_len(nSec)) {
         if (secVals[s] %in% c("-", "?")) {
           anyUnknown <- TRUE
-          break
+          next
         }
         mi <- match(secVals[s], secLevels[[s]])
         if (is.na(mi)) {
           anyUnknown <- TRUE
-          break
+          next
         }
         levelIndices[s] <- mi
+        known[s] <- TRUE
       }
 
       if (anyUnknown) {
-        tipStates[t] <- -2L  # present, unknown combination
+        tipStates[t] <- -2L  # present, one or more secondaries unknown
+        tipSecKnown[t, known] <- levelIndices[known]
         next
       }
 
@@ -174,7 +193,11 @@ RecodeHierarchy <- function(dataset, hierarchy) {
       cost_matrix = cm,
       tip_states = tipStates,
       forced_root_state = -1L,
-      block_chars = c(ctrl, deps)
+      block_chars = c(ctrl, deps),
+      # 1-based level index of each secondary for each present-state combo
+      # (row i = state i + 1), used to resolve `tip_states == -2` sentinels.
+      combo_grid = comboGrid,
+      tip_sec_known = tipSecKnown
     )
   }
 

@@ -1871,6 +1871,12 @@ static void unpack_xform(Nullable<List> xformConfig,
                    "(%d)", static_cast<int>(ts_r.size()), n_t);
       }
       int ns = ns_vec[ch];
+      // Only needed to resolve state == -2 (present, secondaries partially
+      // unknown); combo_grid is n_present x n_sec, tip_sec_known is
+      // n_tip x n_sec (see RecodeHierarchy()).
+      IntegerMatrix combo_grid = as<IntegerMatrix>(rc["combo_grid"]);
+      IntegerMatrix tip_sec = as<IntegerMatrix>(rc["tip_sec_known"]);
+      int n_sec = combo_grid.ncol();
       for (int t = 0; t < n_t; ++t) {
         int state = ts_r[t];
         double* tip_ptr = ds.sankoff_tip_costs.data() +
@@ -1878,7 +1884,21 @@ static void unpack_xform(Nullable<List> xformConfig,
         if (state == -1) {
           for (int s = 0; s < ns; ++s) tip_ptr[s] = 0.0;
         } else if (state == -2) {
-          for (int s = 1; s < ns; ++s) tip_ptr[s] = 0.0;
+          // Present, but one or more secondaries were unknown for this tip.
+          // Restrict admissible present-states to those consistent with the
+          // secondaries that WERE observed (T-379); previously this freed
+          // every present state regardless of any known secondaries.
+          for (int s = 1; s < ns; ++s) {
+            bool admissible = true;
+            for (int d = 0; d < n_sec; ++d) {
+              int known = tip_sec(t, d);
+              if (known != 0 && combo_grid(s - 1, d) != known) {
+                admissible = false;
+                break;
+              }
+            }
+            if (admissible) tip_ptr[s] = 0.0;
+          }
         } else if (state >= 0 && state < ns) {
           tip_ptr[state] = 0.0;
         }
@@ -3122,7 +3142,9 @@ List ts_sankoff_test(
     IntegerVector n_states_r,
     List cost_matrices_r,
     IntegerMatrix tip_states_r,
-    IntegerVector forced_root_r)
+    IntegerVector forced_root_r,
+    Nullable<List> combo_grids_r = R_NilValue,
+    Nullable<List> tip_sec_known_r = R_NilValue)
 {
   int n_edge = edge.nrow();
   int n_tip  = (n_edge / 2) + 1;
@@ -3169,6 +3191,17 @@ List ts_sankoff_test(
                tip_states_r.nrow(), n_tip, n_tip);
   }
 
+  // combo_grids_r[ch] (n_present x n_sec) and tip_sec_known_r[ch]
+  // (n_tip x n_sec) resolve state == -2 to the states consistent with
+  // whichever secondaries WERE observed (T-379); absent (NULL), -2 falls
+  // back to freeing every present state, as before.
+  bool have_combo = combo_grids_r.isNotNull() && tip_sec_known_r.isNotNull();
+  List combo_grids, tip_sec_knowns;
+  if (have_combo) {
+    combo_grids = List(combo_grids_r.get());
+    tip_sec_knowns = List(tip_sec_known_r.get());
+  }
+
   // Build tip costs
   int stride = sd.stride();
   sd.tip_costs.assign(static_cast<size_t>(n_tip) * stride, INF);
@@ -3180,11 +3213,25 @@ List ts_sankoff_test(
           static_cast<size_t>(t) * stride + static_cast<size_t>(ch) * sd.max_states;
       // Mirror the live xform path (ts_driven_search): -1 = fully ambiguous
       // ("?" in a controlling character), -2 = present but in an unknown
-      // secondary combination (any present state). Previously these sentinels
-      // were skipped, leaving every state at INF, so any "?" inflated the
-      // hierarchy score to Inf.
+      // secondary combination. Previously any -2 freed every present state,
+      // discarding information carried by any secondary that WAS known.
       if (state == -1) {
         for (int s = 0; s < ns_ch; ++s) tip_ptr[s] = 0.0;
+      } else if (state == -2 && have_combo) {
+        IntegerMatrix combo_grid = as<IntegerMatrix>(combo_grids[ch]);
+        IntegerMatrix tip_sec = as<IntegerMatrix>(tip_sec_knowns[ch]);
+        int n_sec = combo_grid.ncol();
+        for (int s = 1; s < ns_ch; ++s) {
+          bool admissible = true;
+          for (int d = 0; d < n_sec; ++d) {
+            int known = tip_sec(t, d);
+            if (known != 0 && combo_grid(s - 1, d) != known) {
+              admissible = false;
+              break;
+            }
+          }
+          if (admissible) tip_ptr[s] = 0.0;
+        }
       } else if (state == -2) {
         for (int s = 1; s < ns_ch; ++s) tip_ptr[s] = 0.0;
       } else if (state >= 0 && state < ns_ch) {

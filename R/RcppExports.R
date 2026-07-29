@@ -226,8 +226,8 @@ ts_hsj_score <- function(edge, contrast, tip_data, weight, levels, hierarchy_blo
     .Call(`_TreeSearch_ts_hsj_score`, edge, contrast, tip_data, weight, levels, hierarchy_blocks_r, alpha, tip_labels_r, absent_state)
 }
 
-ts_sankoff_test <- function(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r) {
-    .Call(`_TreeSearch_ts_sankoff_test`, edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r)
+ts_sankoff_test <- function(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r, combo_grids_r = NULL, tip_sec_known_r = NULL) {
+    .Call(`_TreeSearch_ts_sankoff_test`, edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r, combo_grids_r, tip_sec_known_r)
 }
 
 ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr) {

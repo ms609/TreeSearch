@@ -317,6 +317,71 @@ test_that("Xform scores heterogeneous-n_states blocks consistently (SK-01)", {
 # tree from the Sankoff term alone.  This test exercises that path so the
 # hardened/ASAN CI covers it.
 
+# ===== T-379: partial secondaries must constrain, not free, -2 tips =========
+# A tip coded -2 ("present, secondary combination unknown") previously freed
+# EVERY present state regardless of any secondary that WAS actually observed,
+# discarding real information and undercounting cost. With one secondary
+# unknown but two known, and those two knowns conflicting with a comparison
+# tip's fully-resolved combination, the admissible set should now exclude
+# that comparison tip's exact state -- forcing a strictly positive
+# present-present Hamming cost instead of the old free-ride of 0.
+
+test_that("Xform -2 tip is constrained by its known secondaries (T-379)", {
+  # Tip A: primary present, secondaries all "1" -> fully resolved combo (2,2,2).
+  # Tip B: primary present, secondaries "0","0","?" -> two secondaries KNOWN
+  #   (both conflicting with A's "1","1"), one unknown.
+  # Tip C: primary present, secondaries all "0" -> supplies the "0" level for
+  #   secondary 3 so that character has 2 informative levels (otherwise it
+  #   would trivially degenerate to 1, and B's "unknown" would be moot). C is
+  #   excluded from the scored tree below so it cannot mask the effect.
+  mat <- matrix(c(
+    "1", "1", "1", "1",
+    "1", "0", "0", "?",
+    "1", "0", "0", "0"
+  ), nrow = 3, byrow = TRUE,
+  dimnames = list(c("A", "B", "C"), NULL))
+  ds <- make_dat(mat)
+  h <- CharacterHierarchy("1" = 2:4)
+
+  rec <- RecodeHierarchy(ds, h)
+  blk <- rec$sankoff_chars[[1]]
+  expect_equal(blk$n_states, 9L)  # 2^3 present combos + absent
+
+  # Score A and B alone, as a 2-tip cherry: with a single sister pair, the
+  # Sankoff minimum reduces to A's fixed state plus the cheapest transition
+  # to any state B's tip cost allows -- i.e. exactly the quantity T-379
+  # changes. (Tip C only exists to register the "0" level above; it plays no
+  # further part here.)
+  abIdx <- match(c("A", "B"), names(ds))
+  tipStatesMat <- matrix(as.integer(blk$tip_states[abIdx]), ncol = 1)
+  expect_equal(tipStatesMat[2, 1], -2L)  # B: present, secondary 3 unknown
+
+  tree <- ape::read.tree(text = "(A,B);")
+
+  # Score WITHOUT combo info -- mirrors the pre-fix behaviour: -2 frees every
+  # present state, so B can "become" A's exact state at zero cost.
+  score_old <- TreeSearch:::ts_sankoff_test(
+    tree$edge, as.integer(blk$n_states), list(blk$cost_matrix),
+    tipStatesMat, as.integer(blk$forced_root_state)
+  )$score
+  expect_equal(score_old, 0)
+
+  # Score WITH combo info -- B is now constrained to states consistent with
+  # its two known (and, here, A-conflicting) secondaries, so it can no longer
+  # reach A's exact state.
+  combo_grids <- list(blk$combo_grid)
+  tip_sec_known <- list(matrix(as.integer(blk$tip_sec_known[abIdx, ]),
+                                nrow = 2))
+  score_new <- TreeSearch:::ts_sankoff_test(
+    tree$edge, as.integer(blk$n_states), list(blk$cost_matrix),
+    tipStatesMat, as.integer(blk$forced_root_state),
+    combo_grids, tip_sec_known
+  )$score
+
+  expect_gt(score_new, score_old)
+})
+
+
 test_that("Xform search handles all-hierarchy data (zero Fitch words)", {
   mat <- matrix(c(
     "1", "0", "0", "-", "-",
