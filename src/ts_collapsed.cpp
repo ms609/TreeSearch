@@ -59,8 +59,14 @@ void compute_collapsed_flags(
     // --- Condition 1: zero standard-block cost at parent ---
     bool zero_std = true;
     for (int b = 0; b < nb && zero_std; ++b) {
-      if (ds.blocks[b].has_inapplicable) continue;
-      if (tree.local_cost[static_cast<size_t>(p) * nb + b])
+      const CharBlock& blk = ds.blocks[b];
+      if (blk.has_inapplicable) continue;
+      // Ratchet-zeroed blocks (active_mask == 0) are skipped by
+      // fitch_downpass (ts_fitch.cpp), so local_cost for them is stale and
+      // must not be read; those chars contribute 0 to the score regardless.
+      // See red-team T-382.
+      if (blk.active_mask == 0) continue;
+      if (tree.local_cost[static_cast<size_t>(p) * nb + b] & blk.active_mask)
         zero_std = false;
     }
     if (!zero_std) continue;
@@ -107,6 +113,13 @@ void compute_collapsed_flags(
     }
 
     // --- Condition 3: prelim[sibling] == prelim[parent] ---
+    // This full-row memcmp also reads words belonging to ratchet-zeroed
+    // blocks (active_mask == 0), which fitch_downpass leaves stale rather
+    // than updating. That staleness only ever makes equality *harder* to
+    // reach (a stale word is unlikely to coincidentally match), so its only
+    // effect is to under-flag collapsible edges — a lost optimisation, never
+    // a false collapse. One-sided safe; not worth a masked per-word compare.
+    // See red-team T-382.
     size_t sb = static_cast<size_t>(s) * tw;
     size_t pb = static_cast<size_t>(p) * tw;
     if (std::memcmp(&tree.prelim[sb], &tree.prelim[pb], word_bytes) != 0)
