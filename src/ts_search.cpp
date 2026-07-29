@@ -39,8 +39,11 @@ static void compute_subtree_sizes(const TreeState& tree,
 SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
                         std::function<bool()> check_timeout) {
   double best_score = score_tree(tree, ds);
-  // No informative characters: all trees have the same score.
-  if (ds.total_words == 0) return {best_score, 0, 0};
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): total_words == 0 alone does not imply this for HSJ/XFORM, whose
+  // hierarchy DP / Sankoff term stays topology-dependent after the Fitch
+  // blocks are gone -- see DataSet::topology_independent().
+  if (ds.topology_independent()) return {best_score, 0, 0};
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -198,8 +201,10 @@ static void collect_destination_edges(
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
                         std::function<bool()> check_timeout) {
   double best_score = full_rescore(tree, ds);
-  // No informative characters: all trees have the same score.
-  if (ds.total_words == 0) return {best_score, 0, 0};
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
+  // when total_words == 0.
+  if (ds.topology_independent()) return {best_score, 0, 0};
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -332,8 +337,14 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
                                     edge_set_up, edge_set_pre);
       }
 
-      const uint64_t* clip_prelim =
-          &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words];
+      // T-373 (HSJ/XFORM, total_words == 0): tree.prelim is then EMPTY, so
+      // &tree.prelim[0] is UB (aborts under _GLIBCXX_ASSERTIONS). The value is
+      // never dereferenced in that case -- every consumer below indexes it
+      // only inside loops bounded by ds.n_blocks (== 0 here) -- so a null
+      // placeholder is behaviourally identical and avoids constructing it.
+      const uint64_t* clip_prelim = tree.total_words > 0
+          ? &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words]
+          : nullptr;
 
       // IW: precompute base score and marginal deltas
       double base_iw = 0.0;
@@ -388,10 +399,15 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
           int cutoff = (best_candidate < HUGE_VAL)
               ? static_cast<int>(best_candidate - divided_length + 1)
               : INT_MAX;
+          // T-373: with tw == 0, compute_insertion_edge_sets() left
+          // edge_set_buf empty (need_edge_set was true, but there was
+          // nothing to compute) -- pass null, matching clip_prelim above;
+          // unused inside fitch_indirect_length_cached's ds.n_blocks-bounded
+          // loop (== 0 here).
+          const uint64_t* vroot = (ew_exact && tw > 0)
+              ? &edge_set_buf[static_cast<size_t>(below) * tw] : nullptr;
           int extra = ew_exact
-              ? fitch_indirect_length_cached(
-                    clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
-                    ds, cutoff)
+              ? fitch_indirect_length_cached(clip_prelim, vroot, ds, cutoff)
               : fitch_indirect_length_bounded(
                     clip_prelim, tree, ds, above, below, cutoff);
           candidate_score = divided_length + extra;

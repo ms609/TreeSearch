@@ -140,8 +140,12 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                              std::function<bool()> check_timeout) {
   const bool use_iw = std::isfinite(ds.concavity);
 
-  // No informative characters: nothing to perturb.
-  if (ds.total_words == 0) return {score_tree(tree, ds), 0, 0, 0, 0.0};
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
+  // when total_words == 0 (the initial/per-cycle tbr_search() calls below
+  // still search exactly; only the Fitch-block perturbation is inert then --
+  // T-378, out of scope here).
+  if (ds.topology_independent()) return {score_tree(tree, ds), 0, 0, 0, 0.0};
 
   // Initial TBR to get a baseline
   TBRParams search_params;

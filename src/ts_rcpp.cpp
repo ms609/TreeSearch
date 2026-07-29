@@ -1942,6 +1942,25 @@ List ts_driven_search(
   unpack_search_control(searchControl, params);
   int nThreads = unpack_runtime(runtimeConfig, params);
 
+  // T-373: total_words == 0 with HSJ/XFORM active (hierarchy_blocks /
+  // sankoff_n_chars non-empty) means the Fitch blocks carried no signal but
+  // the hierarchy DP / Sankoff term is still topology-dependent. Every other
+  // search component below (NNI/SPR/TBR/ratchet/drift) still searches
+  // correctly in that state, but the annealing phase (stochastic_tbr_phase,
+  // ts_temper.cpp) has no HSJ/XFORM-aware fallback and stays a guarded
+  // no-op there. Warn here -- once, on the R thread, before any worker
+  // spawns -- rather than inside the kernels (which run on worker threads
+  // under nThreads >= 2, where Rcpp::warning is not safe).
+  if (params.anneal_cycles > 0 && ds.total_words == 0 &&
+      !ds.topology_independent()) {
+    Rcpp::warning(
+        "Simulated-annealing perturbation (annealCycles > 0) has no effect "
+        "on this dataset: every Fitch character has been simplified away "
+        "(total_words == 0), and the HSJ/XFORM hierarchy scoring term has no "
+        "annealing-phase implementation. The rest of the search (NNI, SPR, "
+        "TBR, ratchet, drift) still runs and remains exact.");
+  }
+
   ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
   ts::DrivenResult result;
   if (nThreads != 1) {

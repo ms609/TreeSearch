@@ -556,19 +556,6 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
   const int tw    = tree.total_words;
   const int root  = n_tip;
 
-  // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
-  // monotonically across calls, so after the first call no zero-fill happens
-  // (resize value-inits only NEW elements).  Every slot a downstream reader
-  // touches is edge_set[D] for a non-root in-tree node D, and the two combine
-  // loops below overwrite exactly those slots before any read; the stale
-  // contents of grown-but-unwritten slots (the root slot, and slots for
-  // clipped-out nodes that are not edges of the current tree) are never
-  // observed.  This removes the per-call assign() zero-fill and the per-call
-  // up/pre heap allocations that VTune flagged as ~27% of EW Fitch CPU.
-  const size_t N = static_cast<size_t>(tree.n_node) * tw;
-  if (edge_set.size() < N) edge_set.resize(N);
-  if (up.size() < N) up.resize(N);
-
   // Preorder over current in-tree nodes (parents before children).
   pre.clear();
   {
@@ -584,6 +571,27 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
       }
     }
   }
+
+  // T-373 (HSJ/XFORM with total_words == 0): there are no words to combine,
+  // and every `edge_set`/`up` slot a caller reads is indexed by tw, so with
+  // tw == 0 there is nothing to compute here -- and constructing
+  // `&tree.prelim[node * tw]` etc. below would take the address of element 0
+  // of an EMPTY vector (UB, aborts under _GLIBCXX_ASSERTIONS). `pre` above is
+  // unaffected by tw, so it is still returned correctly.
+  if (tw == 0) return;
+
+  // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
+  // monotonically across calls, so after the first call no zero-fill happens
+  // (resize value-inits only NEW elements).  Every slot a downstream reader
+  // touches is edge_set[D] for a non-root in-tree node D, and the two combine
+  // loops below overwrite exactly those slots before any read; the stale
+  // contents of grown-but-unwritten slots (the root slot, and slots for
+  // clipped-out nodes that are not edges of the current tree) are never
+  // observed.  This removes the per-call assign() zero-fill and the per-call
+  // up/pre heap allocations that VTune flagged as ~27% of EW Fitch CPU.
+  const size_t N = static_cast<size_t>(tree.n_node) * tw;
+  if (edge_set.size() < N) edge_set.resize(N);
+  if (up.size() < N) up.resize(N);
 
   // Fitch combine (per character intersect-else-union) of a & b into dst.
   auto combine = [&](uint64_t* dst, const uint64_t* a, const uint64_t* b) {
@@ -673,6 +681,12 @@ void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
 
   changed.clear();
   worklist.clear();
+
+  // T-373: as compute_insertion_edge_sets -- with tw == 0 there is nothing to
+  // patch (no words, no edge_set content), and `&tree.prelim[Sib * tw]` etc.
+  // below would take the address of element 0 of an EMPTY vector. An empty
+  // `changed` correctly tells the caller there is nothing to undo.
+  if (tw == 0) return;
 
   // Recompute up[D] (divided) in place from the CURRENT (divided) topology and
   // prelim, reading up[parent] from the working buffer (patched for ancestors

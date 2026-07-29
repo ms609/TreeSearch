@@ -711,6 +711,14 @@ static bool try_root_edge_moves(TreeState& tree, const DataSet& ds,
   // Refresh states so prelim[] is current for cL/cR and every fragment node.
   best_score = full_rescore(tree, ds);
 
+  // T-373 (HSJ/XFORM, total_words == 0): this additive root-edge scan is
+  // Fitch-only (rootjoin/base_split bookkeeping via tree.prelim), with no
+  // HSJ/XFORM fallback, so with tw == 0 it would index the EMPTY tree.prelim
+  // (UB). best_score above already holds the authoritative (full_rescore)
+  // HSJ/XFORM score; skip the root-edge scan itself -- same "screening
+  // degraded, accept exact" trade as the TBR reroot-candidate skip above.
+  if (tw == 0) return false;
+
   const uint64_t* pL = &tree.prelim[static_cast<size_t>(cL) * tw];
   const uint64_t* pR = &tree.prelim[static_cast<size_t>(cR) * tw];
   const int rootjoin = fitch_indirect_length_cached(pL, pR, ds, INT_MAX);
@@ -1486,8 +1494,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // skipping a redundant O(n_node x n_char) pass when states are coherent.
   bool score_fresh = true;
 
-  // No informative characters: all trees have the same score.
-  if (ds.total_words == 0) {
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
+  // when total_words == 0.
+  if (ds.topology_independent()) {
     return {best_score, 0, 0, 0, true};
   }
 
@@ -1792,7 +1802,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // (final[a]|final[d]) that mis-counts and hides improving moves -- the same
   // bug the EW directional fix cured, now extended to IW.  NA keeps its own
   // 3-pass scorers.
-  const bool use_directional = !has_na;
+  // T-373: also requires total_words > 0 -- has_na can only be true when at
+  // least one Fitch block exists (so has_na == false is guaranteed whenever
+  // total_words == 0, HSJ/XFORM included), but the directional edge-set
+  // machinery indexes tree.prelim/edge_set_buf by total_words, so without
+  // this guard it would run over EMPTY buffers (UB) whenever an HSJ/XFORM
+  // dataset simplifies away every Fitch block.
+  const bool use_directional = !has_na && tree.total_words > 0;
   std::vector<uint64_t> edge_set_buf;
   // Caller-owned scratch for compute_insertion_edge_sets, reused across clips
   // (size-ensured, non-zeroing) so the up-message buffer and preorder list are
@@ -2141,8 +2157,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       int best_reroot_parent = -1, best_reroot_child = -1;
 
       // SPR candidates — with early termination (optimization #1)
+      // T-373 (HSJ/XFORM, total_words == 0): `tree.prelim` is then EMPTY, so
+      // `&tree.prelim[0]` is UB (aborts under _GLIBCXX_ASSERTIONS). The value
+      // is never dereferenced in that case -- every consumer below indexes it
+      // only inside loops bounded by ds.n_blocks (== 0 here) -- so a null
+      // placeholder is behaviourally identical and avoids constructing it.
       size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
-      const uint64_t* clip_prelim = &tree.prelim[clip_base];
+      const uint64_t* clip_prelim =
+          tree.total_words > 0 ? &tree.prelim[clip_base] : nullptr;
 
       // EW/NA bail cutoff, maintained across this clip's SPR + reroot loops.
       // Recomputed ONLY inside an accept block (when best_candidate improves) —
@@ -2163,7 +2185,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // once by criterion flavour — EW (with the flat-kernel weight-class split)
       // or IW/XPIWE (strip-only, no flat variant). Byte-identical; ew_mono
       // default ON, TS_EW_MONO_OFF reverts to the general loop for BOTH.
-      const bool mono_plain = ew_mono && !has_na
+      // T-373: also requires use_directional (== total_words > 0 here, since
+      // has_na is already excluded above) -- both monomorphized scans below
+      // index clip_prelim/edge_set_buf unconditionally by total_words, which
+      // is only valid once compute_insertion_edge_sets() has actually
+      // populated edge_set_buf (skipped when total_words == 0, T-373).
+      const bool mono_plain = ew_mono && !has_na && use_directional
           && sector_mask == nullptr && !constrained && collapsed_all_zero
           && !b2_ceiling;
       const bool ew_mono_plain = mono_plain && !use_iw;
@@ -2247,15 +2274,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           // Exact directional cost (mirrors the EW path): the edge set above
           // `below` is edge_set_buf[below], replacing the union-of-finals
           // approximation that hid improving IW moves.
+          // T-373: with tw == 0, edge_set_buf was never populated
+          // (use_directional is false, compute_insertion_edge_sets skipped)
+          // -- pass null, matching clip_prelim above; unused inside the
+          // scorer's ds.n_blocks-bounded loop (== 0 here).
+          const uint64_t* vroot = tw > 0
+              ? &edge_set_buf[static_cast<size_t>(below) * tw] : nullptr;
           candidate = indirect_iw_length_cached(
-              clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
-              ds, base_iw, iw_delta, best_candidate);
+              clip_prelim, vroot, ds, base_iw, iw_delta, best_candidate);
         } else {
           // Exact directional cost: the edge set above `below` (= node_d) is
           // edge_set_buf[below], replacing the union-of-finals approximation.
-          int extra = fitch_indirect_length_cached(
-              clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
-              ds, cutoff);
+          // T-373: see the use_iw branch above.
+          const uint64_t* vroot = tw > 0
+              ? &edge_set_buf[static_cast<size_t>(below) * tw] : nullptr;
+          int extra = fitch_indirect_length_cached(clip_prelim, vroot, ds, cutoff);
           candidate = divided_length + extra;
         }
         ++n_evaluated;
@@ -2287,7 +2320,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       // TBR candidates (rerooting) — with vroot cache (optimization #4)
-      if (clip_node >= tree.n_tip) {
+      // T-373: this whole block is Fitch-only, indexing tree.prelim/from_above
+      // /vroot_cache unconditionally by total_words (compute_from_above,
+      // fitch_join_states, the flat batch-4 kernels, etc. -- none of it is
+      // HSJ/XFORM-aware), so with total_words == 0 it would run over EMPTY
+      // buffers (UB). Skipping it there leaves the SPR-candidate scan above
+      // (now mode-safe) plus the exact accept-time full_rescore below as the
+      // search mechanism for that case -- reroot candidates are not screened,
+      // but nothing is scored incorrectly (same "screening degraded, accept
+      // exact" shape as T-377).
+      if (clip_node >= tree.n_tip && tree.total_words > 0) {
         const auto _t_vroot = na_timing ? std::chrono::steady_clock::now()
                                     : std::chrono::steady_clock::time_point{};
         compute_from_above(tree, ds, clip_node, from_above);

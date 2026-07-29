@@ -247,6 +247,19 @@ struct DataSet {
   // same per-thread, cross-call capacity persistence the thread_local had.
   // `mutable` because the scorer takes `const DataSet&`; single-writer per copy.
   mutable std::vector<int> char_steps_scratch;
+
+  // True when NO scoring kernel can possibly distinguish between two
+  // topologies, i.e. it is safe for a search kernel to bail out entirely.
+  // total_words == 0 alone is NOT sufficient: HSJ's hierarchy a(n)/p(n) DP
+  // (hierarchy_blocks) and XFORM's Sankoff term (sankoff_n_chars) remain
+  // topology-dependent even after every Fitch block has been simplified away
+  // (T-373) -- .NonHierarchyWeights() zero-weights hierarchy-only patterns,
+  // and build_dataset() drops weight-0 patterns, so an all-hierarchy or
+  // all-Sankoff dataset reaches total_words == 0 while its objective still
+  // varies with topology.
+  bool topology_independent() const {
+    return total_words == 0 && hierarchy_blocks.empty() && sankoff_n_chars == 0;
+  }
 };
 
 // Build a DataSet from R-side data.
