@@ -182,6 +182,27 @@ trajectory, not a superset.
 The panel build is the pre-rebase tree (`b9bc14d6`); the mechanism is unchanged by
 the rebase onto `12a5866d`, which pulled in unrelated T-373/T-378 commits.
 
+### Harvesting the panel
+
+Build `18080527` (COMPLETED, gate smoke `n_evs_skipped = 8`); array `18080528`
+(300 tasks), submitted 2026-07-29.
+
+```bash
+ssh hamilton8.dur.ac.uk 'ls /nobackup/$USER/TreeSearch/na_certify_partials | wc -l'
+```
+
+When complete (300 files), pull and analyse:
+
+```bash
+scp -r hamilton8.dur.ac.uk:/nobackup/pjjg18/TreeSearch/na_certify_partials dev/benchmarks/
+Rscript dev/benchmarks/na_certify_analyze.R dev/benchmarks/na_certify_partials
+```
+
+Read in this order: (1) the matched-wall budget audit — a warning there
+invalidates the `*_mw` rows; (2) `nEvsSkipped` per arm — zero means the flag never
+fired and the arm says nothing; (3) the large-matrix rows of the floor-attainment
+table; (4) only then the paired summary.
+
 ## What this does not do
 
 Pruning the sweep remains the larger, separate project.
