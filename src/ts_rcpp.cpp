@@ -872,13 +872,28 @@ List ts_tbr_search(
 
   ts::TBRResult result = ts::tbr_search(tree, ds, params);
 
+  // NA cost decomposition: all zero unless TS_NA_TIMING is set, and the
+  // NA-specific components are structurally zero on data without inapplicables
+  // (exact_verify_sweep and below_actives_cache are both has_na-gated) -- that is
+  // the control arm, not a measurement of "small".
   return List::create(
     Named("edge") = tree_to_edge(tree),
     Named("score") = result.best_score,
     Named("n_accepted") = result.n_accepted,
     Named("n_evaluated") = result.n_evaluated,
     Named("n_zero_skipped") = result.n_zero_skipped,
-    Named("converged") = result.converged
+    Named("converged") = result.converged,
+    Named("na_t_total_ms") = ds.na_t_total_ns / 1e6,
+    Named("na_t_evs_ms") = ds.na_t_evs_ns / 1e6,
+    Named("na_n_evs") = static_cast<double>(ds.na_n_evs),
+    Named("na_n_evs_hits") = static_cast<double>(ds.na_n_evs_hits),
+    Named("na_n_evs_improved") = static_cast<double>(ds.na_n_evs_improved),
+    Named("na_t_below_ms") = ds.na_t_below_ns / 1e6,
+    Named("na_n_below") = static_cast<double>(ds.na_n_below),
+    Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
+    Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
+    Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
   );
 }
 
@@ -924,7 +939,22 @@ List ts_ratchet_search(
     Named("n_cycles") = result.n_cycles_completed,
     Named("total_tbr_moves") = result.total_tbr_moves,
     Named("n_escapes") = result.n_escapes,
-    Named("final_perturb_prob") = result.final_perturb_prob
+    Named("final_perturb_prob") = result.final_perturb_prob,
+    // Same NA decomposition as ts_tbr_search, but accumulated over EVERY
+    // tbr_search call in the ratchet against ONE DataSet -- which is the only way
+    // to see the production evs_false_cache hit rate.  A single ts_tbr_search call
+    // always starts with an empty cache and so understates it.
+    Named("na_t_total_ms") = ds.na_t_total_ns / 1e6,
+    Named("na_t_evs_ms") = ds.na_t_evs_ns / 1e6,
+    Named("na_n_evs") = static_cast<double>(ds.na_n_evs),
+    Named("na_n_evs_hits") = static_cast<double>(ds.na_n_evs_hits),
+    Named("na_n_evs_improved") = static_cast<double>(ds.na_n_evs_improved),
+    Named("na_t_below_ms") = ds.na_t_below_ns / 1e6,
+    Named("na_n_below") = static_cast<double>(ds.na_n_below),
+    Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
+    Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
+    Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
   );
 }
 

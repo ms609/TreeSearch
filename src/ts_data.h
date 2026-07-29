@@ -215,6 +215,28 @@ struct DataSet {
   mutable std::unordered_set<uint64_t> evs_false_cache;
   mutable uint64_t evs_last_fp = 0;
 
+  // --- NA cost decomposition (diagnostic; populated only when TS_NA_TIMING) ---
+  //
+  // Native inapplicable data costs 74-151x more per ratchet re-opt cycle than the
+  // same matrix recoded `-`->`?` (identical pattern and character counts), while
+  // evaluating only ~1.9x the candidates.  So most of that wall is NOT candidate
+  // scoring -- and none of it is visible to a candidate-based metric, because
+  // exact_verify_sweep's O(n^2) rescoring never touches n_candidates_evaluated.
+  // These brackets name the NA-only suspects so the remainder is small enough to
+  // be honest about.  `mutable` and single-thread-valid for the same reason as
+  // n_candidates_evaluated: each parallel worker owns a private ds_local copy, so
+  // never aggregate these across a parallel run.
+  mutable long long na_t_total_ns = 0;   // whole tbr_search
+  mutable long long na_t_evs_ns = 0;     // exact_verify_sweep, all calls
+  mutable long long na_n_evs = 0;        // calls
+  mutable long long na_n_evs_hits = 0;   // served from evs_false_cache
+  mutable long long na_n_evs_improved = 0;  // calls that found an improver
+  mutable long long na_t_below_ns = 0;   // below_actives_cache build (NA-only)
+  mutable long long na_n_below = 0;
+  mutable long long na_t_vroot_ns = 0;   // vroot_cache build / compute_from_above
+  mutable long long na_t_accept_ns = 0;  // accept-path NA dirty rescores
+  mutable long long na_n_accept = 0;
+
   // Per-pattern step scratch for the weighted (IW/profile) full-rescore path
   // (fitch_score_ew).  Lives on DataSet for the SAME reason as evs_false_cache
   // above, NOT a function-local `static thread_local`: MinGW tears a

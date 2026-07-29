@@ -831,6 +831,25 @@ static inline uint64_t tree_topo_hash(const TreeState& tree) {
 // Dataset fingerprint: mix n_tips, n_blocks, and every tip_states word so that
 // any dataset change (adding a char, changing a tip state) produces a new key.
 // The cache is cleared whenever the fingerprint changes.
+// TS_NA_TIMING: enable the NA cost-decomposition counters on DataSet.
+//
+// Read ONCE per process via a function-local static.  That is correct here and
+// deliberately unlike the per-call kill-switch reads elsewhere in this file
+// (TS_IW_NOX4 etc., which must stay per-call so an in-process A/B can toggle
+// arms): these counters are pure diagnostics that never change behaviour, so
+// freezing the flag at first use costs nothing and keeps getenv out of the
+// convergence path (see the ucrt getenv cost note).
+static bool na_timing_enabled() {
+  static const bool on = std::getenv("TS_NA_TIMING") != nullptr;
+  return on;
+}
+
+static inline long long ns_since(
+    const std::chrono::steady_clock::time_point& t0) {
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+             std::chrono::steady_clock::now() - t0).count();
+}
+
 static inline uint64_t ds_fingerprint(const DataSet& ds) {
   uint64_t h = (uint64_t)ds.n_tips * 2654435761ULL
              ^ (uint64_t)ds.n_blocks * 2246822519ULL;
@@ -844,8 +863,17 @@ static inline uint64_t ds_fingerprint(const DataSet& ds) {
 // fields ARE the "scoring state that varies mid-search"), and NA scoring reads
 // all three (ts_fitch_na*.h).  exact_verify therefore scores a topology
 // differently in the perturbed vs base regime, so the regime must be part of
-// the cache key.  Mixing the same three fields here covers the regime by
-// construction.
+// the cache key.
+//
+// `concavity` and `scoring_mode` are mixed in for the same reason.  Keying on the
+// three mask/freq fields alone was sufficient only while they were the ONLY
+// scoring state that varied for a given DataSet.  They are not the only candidate:
+// anything that rescores one DataSet under two weighting regimes -- a concavity
+// sweep, or a phase that swaps in a cheaper surrogate scorer -- leaves all three
+// untouched while changing what "is this topology a TBR optimum" MEANS.  Without
+// these terms a FALSE memoized under one regime is served to the other and a real
+// improving move is silently suppressed.  Verified reachable: before this change
+// k=10 and k=40 hashed identically (test-ts-na-evcache.R now pins both terms).
 static inline uint64_t weight_fingerprint(const DataSet& ds) {
   uint64_t h = 14695981039346656037ULL;
   for (const auto& blk : ds.blocks) {
@@ -853,6 +881,11 @@ static inline uint64_t weight_fingerprint(const DataSet& ds) {
     h ^= blk.upweight_mask; h *= 1099511628211ULL;
   }
   for (int f : ds.pattern_freq) { h ^= (uint64_t)(uint32_t)f; h *= 1099511628211ULL; }
+  static_assert(sizeof(uint64_t) == sizeof(double), "double is not 64-bit");
+  uint64_t kbits = 0;
+  std::memcpy(&kbits, &ds.concavity, sizeof(kbits));   // HUGE_VAL when EW
+  h ^= kbits;                                        h *= 1099511628211ULL;
+  h ^= (uint64_t)static_cast<int>(ds.scoring_mode);  h *= 1099511628211ULL;
   return h;
 }
 
@@ -956,6 +989,10 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   // the inner loop) and not cached, so the env var toggles reliably.  The
   // deterministic guard is test-ts-na-evcache.R.
   const bool cache_hit = evs_false_cache.count(cache_key) != 0;
+  if (na_timing_enabled()) {
+    ++ds.na_n_evs;
+    if (cache_hit) ++ds.na_n_evs_hits;
+  }
   if (cache_hit && !std::getenv("TS_EV_AUDIT")) return false;
 
   save_topology(tree, snap);
@@ -1428,6 +1465,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const std::vector<bool>* sector_mask,
                      TreePool* collect_pool,
                      std::function<bool()> check_timeout) {
+  // TS_NA_TIMING: decompose this call's wall into the NA-only per-clip
+  // scaffolding, the accept-path rescores, and the exact_verify certification,
+  // accumulating onto the DataSet so one R-level call yields whole-search totals.
+  // A scope guard, so the total is charged on EVERY return path -- including the
+  // entry full_rescore and the no-informative-characters early exit below, both
+  // of which sit before the flag block further down.
+  const bool na_timing = na_timing_enabled();
+  struct NaTotalTimer {
+    const DataSet* ds; std::chrono::steady_clock::time_point t0; bool on;
+    ~NaTotalTimer() { if (on) ds->na_t_total_ns += ns_since(t0); }
+  } _na_total{&ds, std::chrono::steady_clock::now(), na_timing};
+
   double best_score = full_rescore(tree, ds);
   // Tracks whether `best_score` is the authoritative score of the current
   // (tree, state arrays). Each accepted move and each state_snap.restore
@@ -2239,6 +2288,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       // TBR candidates (rerooting) — with vroot cache (optimization #4)
       if (clip_node >= tree.n_tip) {
+        const auto _t_vroot = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
         compute_from_above(tree, ds, clip_node, from_above);
         collect_subtree_edges(tree, clip_node, sub_edges);
 
@@ -2257,10 +2308,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         } else {
           precompute_vroot_cache(tree, main_edges, vroot_cache);
         }
+        // compute_from_above + vroot build, per clip.  Charged together because
+        // both are per-clip scaffolding that exists to serve the candidate scan
+        // rather than to score any single candidate.
+        if (na_timing) ds.na_t_vroot_ns += ns_since(_t_vroot);
 
         // For NA: precompute per-edge below_actives (OR of applicable
         // subtree_actives words for node_d of each edge)
         if (has_na) {
+          const auto _t_below = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
           below_actives_cache.resize(
               static_cast<size_t>(n_main) * ds.n_blocks);
           for (int ei = 0; ei < n_main; ++ei) {
@@ -2281,6 +2338,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               below_actives_cache[
                   static_cast<size_t>(ei) * ds.n_blocks + b_i] = ba;
             }
+          }
+          if (na_timing) {
+            ds.na_t_below_ns += ns_since(_t_below);
+            ++ds.na_n_below;
           }
         }
 
@@ -2678,6 +2739,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // datasets fall back to full_rescore.
         bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
         double actual;
+        const auto _t_acc = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
         if (is_spr && !has_na && incremental_ok) {
           int delta = fitch_dirty_downpass(tree, ds, nz, nx);
           fitch_dirty_uppass(tree, ds, nz, nx);
@@ -2713,6 +2776,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           // delta is not exact (HSJ/XFORM, see incremental_ok): recompute the
           // authoritative score via score_tree().
           actual = full_rescore(tree, ds);
+        }
+        // Accept-path rescore: the price of ACCEPTING a move, as distinct from
+        // scanning candidates.  On NA this is the dirty down/uppass plus a
+        // full-tree Pass 3, or an outright full_rescore for a TBR rerooting.
+        if (na_timing) {
+          ds.na_t_accept_ns += ns_since(_t_acc);
+          ++ds.na_n_accept;
         }
 
         // DIAGNOSTIC (env TS_IW_SCANCHK): compare the scan's predicted
@@ -2969,9 +3039,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // fast additive for EW / apply+rescore for IW).  NA: the indirect scan is
     // only approximate, so an EXACT full-neighbourhood sweep is required to
     // certify a true unrooted-TBR optimum (see exact_verify_sweep).
-    bool improved = has_na
-        ? exact_verify_sweep(tree, ds, best_score)
-        : try_root_edge_moves(tree, ds, best_score, ew_directional);
+    bool improved;
+    if (has_na) {
+      // Timed separately: this O(n^2) certification is the single largest
+      // unmeasured item on the native-NA path, and it is invisible to every
+      // candidate-based metric because it never bumps n_candidates_evaluated.
+      const auto _t_evs = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
+      improved = exact_verify_sweep(tree, ds, best_score);
+      if (na_timing) {
+        ds.na_t_evs_ns += ns_since(_t_evs);
+        if (improved) ++ds.na_n_evs_improved;
+      }
+    } else {
+      improved = try_root_edge_moves(tree, ds, best_score, ew_directional);
+    }
     if (!improved) break;
     score_fresh = true;
     if (!collapsed.empty()) {
