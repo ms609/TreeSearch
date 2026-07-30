@@ -437,6 +437,11 @@ static void wagner_map_constraint_nodes(
     // the latch every latched split paid for two.
     if (scratch.use_complement[s]) {
       cd.constraint_node[s] = n_tip;
+      // Wagner's own polarity lives in scratch.use_complement / outside_node;
+      // keep ConstraintData's T-384 flag at its "names the split itself"
+      // default so a value left over from an earlier map_constraint_nodes()
+      // cannot reach regraft_violates_constraint() before the next full remap.
+      cd.constraint_complement[s] = 0;
       scratch.outside_node[s] = wagner_map_complement(
           tree, n_tip, nw, node_tips, split, added_tips, scratch);
       continue;
@@ -460,6 +465,7 @@ static void wagner_map_constraint_nodes(
     const int inside_node = wagner_smallest_containing_node(
         tree, nw, node_tips, needed, n_needed, lone_needed);
     cd.constraint_node[s] = inside_node;
+    cd.constraint_complement[s] = 0;  // see the latched branch above
 
     // A split is an *unrooted* bipartition, but a clade is a rooted subtree, so
     // "inside is monophyletic" is only one of the two ways this tree can display
