@@ -182,6 +182,84 @@ trajectory, not a superset.
 The panel build is the pre-rebase tree (`b9bc14d6`); the mechanism is unchanged by
 the rebase onto `12a5866d`, which pulled in unrelated T-373/T-378 commits.
 
+## PANEL RESULT (2026-07-30, array 18080528, 300/300 COMPLETED)
+
+30 native matrices x 5 seeds x tabuSize {100, 0}; unit of replication = MATRIX
+(n = 30); wall = per-matrix median; two-sided exact sign test.
+
+**Budget audit passed, in the conservative direction.** Every matched-wall arm
+came in at **0.90-0.97x** arm A's wall — an *under*-spend, because `maxSeconds`
+is polled at replicate boundaries so a replicate that would overrun never starts.
+The `*_mw` arms were therefore given ~9% **less** wall than the arm they beat, so
+their wins are floors, not artefacts. No overshoot anywhere.
+
+**The gate fired everywhere it was supposed to.** At `tabuSize = 100`, `B_gate`
+executed **0** sweeps against 5 526 skipped — under the shipped preset the gate
+removes *all* certification. `A_certify` ran 6 957 sweeps of which **1 087 (16%)
+found a real improver** (`nEvsImproved`), which is why removing them costs reach.
+
+### tabuSize = 100 — the shipped `default` preset
+
+| arm | attain Δ | better / worse | p | wall (median ratio) |
+|---|---|---|---|---|
+| `B_gate` | −0.100 | 3 / 12 | **0.035** | 0.052 (**19x faster**) |
+| `C_final` | −0.033 | 5 / 8 | 0.581 | 0.294 (3.4x) |
+| `B_gate_mw` | **+0.167** | **10 / 1** | **0.012** | 0.904 |
+| `C_final_mw` | +0.087 | 8 / 1 | 0.039 | 0.923 |
+
+### tabuSize = 0 — `sprint`, and the configuration the 97.7% was profiled in
+
+| arm | attain Δ | better / worse | p | wall (median ratio) |
+|---|---|---|---|---|
+| `B_gate` | −0.140 | 0 / 12 | **0.00049** | 0.160 |
+| `C_final` | −0.107 | 0 / 10 | **0.0020** | 0.165 |
+| `B_gate_mw` | +0.013 | 4 / 2 | 0.687 | 0.906 |
+| `C_final_mw` | +0.033 | **5 / 0** | 0.063 | 0.907 |
+
+### Verdict: certification is OVER-SEARCH — do not flip the default
+
+**At equal replicates the gate regresses reach, significantly, at both tabu
+levels.** By the stated rule (`ships only if floor attainment does not regress`)
+`B_gate` does not ship as a default. `C_final` is not significant either way, but
+its point estimate is also negative, so it is "not shown to regress" rather than
+"shown not to regress" — not enough for a regression-averse default
+(`auto-vs-thorough-objective`).
+
+**At equal wall the same gate wins decisively.** Under the production preset
+`B_gate_mw` improves floor attainment on 10 of 30 matrices and loses on 1, while
+spending 10% less wall than the arm it beats. The gains land exactly where the
+engine is weakest:
+
+| matrix | A_certify | B_gate_mw |
+|---|---|---|
+| Aguado2009 | 0.0 | **1.0** |
+| Geisler2001 | 0.2 | **1.0** |
+| Zhu2013 | 0.2 | **1.0** |
+| Dikow2009 | 0.4 | **1.0** |
+| Liljeblad2008 | 0.4 | **1.0** |
+| Aria2015 | 0.6 | **1.0** |
+| Wortley2006 | 0.2 | 0.6 |
+
+So the finding is not "certification is wasteful" — it demonstrably finds
+improvers 16% of the time. It is that **certification is over-search**: the wall
+it consumes buys more reach when spent on replicates instead. That is
+`lever-b-oversearch` reappearing on the NA path.
+
+**Which regime production is in decides the default.** `MaximizeParsimony`
+defaults to `maxSeconds = 0` with `maxReplicates = 96` and `targetHits` stopping
+— a *replicate*-bounded budget, i.e. the regime where the gate loses. Hence: keep
+the opt-in default; recommend `TS_NA_NOCERTIFY=1` for wall-bounded runs
+(`maxSeconds` set). Capturing the matched-wall win by default means gating *and*
+raising the NA replicate budget together, which is a recipe change belonging to
+`campaign-recipes`, gated on its own panel — not a flag flip here.
+
+**The one honest counter-example is Zanol2014**, the hardest matrix in the corpus:
+`B_gate_mw` is −0.2 at both tabu levels (0.2 → 0.0), i.e. certification pays there
+even at matched wall. `C_final_mw` recovers it (+0.2 at `tabu = 0`, level at 100)
+and is the only arm in the whole panel with **zero** regressions anywhere
+(5 better / 0 worse at `tabu = 0`). If a size- or difficulty-conditioned default
+is ever built, `C_final` is the arm for the hard tail.
+
 ### Harvesting the panel
 
 Build `18080527` (COMPLETED, gate smoke `n_evs_skipped = 8`); array `18080528`
