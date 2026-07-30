@@ -171,7 +171,9 @@ ReplicateResult run_single_replicate(
   // NNI-optimized, and SPR is skipped (NNI→TBR outperforms NNI→SPR→TBR).
   // When constrained, NNI was skipped above; fall back to SPR warmup.
   if (!nni_wagner && params.spr_first) {
-    spr_search(result.tree, ds, 1, check_timeout);
+    // T-390: pass `cd` so a constrained search cannot warm up into a
+    // constraint-violating tree that TBR afterwards cannot repair.
+    spr_search(result.tree, ds, 1, check_timeout, cd);
   }
   {
     TBRParams tp;
