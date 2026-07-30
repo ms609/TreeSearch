@@ -218,12 +218,21 @@ found a real improver** (`nEvsImproved`), which is why removing them costs reach
 
 ### Verdict: certification is OVER-SEARCH — do not flip the default
 
-**At equal replicates the gate regresses reach, significantly, at both tabu
-levels.** By the stated rule (`ships only if floor attainment does not regress`)
-`B_gate` does not ship as a default. `C_final` is not significant either way, but
-its point estimate is also negative, so it is "not shown to regress" rather than
-"shown not to regress" — not enough for a regression-averse default
-(`auto-vs-thorough-objective`).
+**At equal replicates the gate regresses reach at both tabu levels** — but the
+two levels differ in kind, and the distinction matters. At `tabu = 0` the
+regression is **uniform**: 0 matrices better, 12 worse. At `tabu = 100` it is a
+**net, not a direction**: 3 matrices *improved* with certification removed
+(Aguado2009, Aria2015, Conrad2008, all +0.2) against 12 that lost. So under the
+shipped preset the gate already trades in both directions at fixed replicates,
+and the sign test is reporting a balance rather than a one-way mechanism. 12 > 3
+at p = 0.035, so the rule (`ships only if floor attainment does not regress`)
+still says `B_gate` does not ship as a default — but do not narrate it as
+"removing improvers costs reach everywhere", because at `tabu = 100` that is not
+what the data show.
+
+`C_final` is not significant either way, but its point estimate is also negative,
+so it is "not shown to regress" rather than "shown not to regress" — not enough
+for a regression-averse default (`auto-vs-thorough-objective`).
 
 **At equal wall the same gate wins decisively.** Under the production preset
 `B_gate_mw` improves floor attainment on 10 of 30 matrices and loses on 1, while
@@ -247,18 +256,35 @@ it consumes buys more reach when spent on replicates instead. That is
 
 **Which regime production is in decides the default.** `MaximizeParsimony`
 defaults to `maxSeconds = 0` with `maxReplicates = 96` and `targetHits` stopping
-— a *replicate*-bounded budget, i.e. the regime where the gate loses. Hence: keep
-the opt-in default; recommend `TS_NA_NOCERTIFY=1` for wall-bounded runs
-(`maxSeconds` set). Capturing the matched-wall win by default means gating *and*
-raising the NA replicate budget together, which is a recipe change belonging to
-`campaign-recipes`, gated on its own panel — not a flag flip here.
+— a *replicate*-bounded budget, i.e. the regime where the gate loses. So the
+opt-in default stays.
+
+**And "set `maxSeconds` and gate" is NOT the arm that won.** `B_gate_mw` ran with
+`maxReplicates = 1000`; at arm A's wall it completed a median of **101–226
+replicates on 23 of the 30 matrices** (Zhu2013 226, Wills2012 222, Zanol2014 173,
+Dikow2009 147). Today's default cap of 96 would bind on all 23, leaving the freed
+wall unspent, so a user who merely sets `maxSeconds` gets a replicate-capped run
+rather than the arm measured here. The recommendation is therefore
+**`TS_NA_NOCERTIFY=1` *together with* a raised `maxReplicates`**, for wall-bounded
+runs. Making that the default is a recipe change belonging to `campaign-recipes`,
+gated on its own panel — not a flag flip here.
+
+`C_final_mw` is the exception: it never exceeded **33** replicates on any matrix,
+so the 96 cap never binds for it. It buys less (+0.087 vs +0.167) but it works
+with the shipped budget unchanged.
 
 **The one honest counter-example is Zanol2014**, the hardest matrix in the corpus:
-`B_gate_mw` is −0.2 at both tabu levels (0.2 → 0.0), i.e. certification pays there
-even at matched wall. `C_final_mw` recovers it (+0.2 at `tabu = 0`, level at 100)
-and is the only arm in the whole panel with **zero** regressions anywhere
-(5 better / 0 worse at `tabu = 0`). If a size- or difficulty-conditioned default
-is ever built, `C_final` is the arm for the hard tail.
+`B_gate_mw` is −0.2 at both tabu levels, i.e. certification pays there even at
+matched wall. `C_final_mw` recovers it (+0.2 at `tabu = 0`, level at 100) and is
+the only arm in the panel with **no regression observed anywhere** (5 better /
+0 worse at `tabu = 0` — p = 0.063 on 5 discordant matrices, so suggestive rather
+than established). If a size- or difficulty-conditioned default is ever built,
+`C_final` is the arm for the hard tail.
+
+*Scale caveat:* the per-block floor is "best any arm found **in that block**", and
+Zanol2014's differs between them — 1311 at `tabu = 0`, 1312 at `tabu = 100`. Its
+0.2 in the two blocks is therefore not the same achievement, and the blocks'
+attainment numbers for that matrix are not directly comparable to each other.
 
 ### Harvesting the panel
 
