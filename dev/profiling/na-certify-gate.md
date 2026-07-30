@@ -286,6 +286,62 @@ Zanol2014's differs between them — 1311 at `tabu = 0`, 1312 at `tabu = 100`. I
 0.2 in the two blocks is therefore not the same achievement, and the blocks'
 attainment numbers for that matrix are not directly comparable to each other.
 
+## What to switch on, in practical terms
+
+**Presets today: nothing changes.** Certification stays on in `default` and
+`thorough`. Neither panel-1 budget is the shipped one, and a preset default may
+not be flipped on a regime that was not measured.
+
+**`thorough`: keep certification on, permanently.** Not "pending panel 2" — its
+objective is reaching the global optimum, not wall (`auto-vs-thorough-objective`),
+and Zanol2014, the hard tail, is precisely where certification still pays at
+matched wall.
+
+**`default` / `auto`: the candidate is a PAIR, not a flag.** Gating alone is the
+arm that *loses*. The shipped `maxReplicates = 96` is what stops the freed wall
+being spendable, so any flip must be `TS_NA_NOCERTIFY` **plus** a raised replicate
+cap. Panel 2 (`bench_na_certify_stop_cell.R`, array 18096945) decides it under the
+real stopping rules.
+
+For a user on inapplicable data **today**:
+
+```r
+# Wall-limited, want the best tree within a fixed time: the +0.167 arm.
+Sys.setenv(TS_NA_NOCERTIFY = "1")
+MaximizeParsimony(dat, maxSeconds = 600, maxReplicates = 500)
+```
+
+Want the best tree regardless of time: change nothing. **Do not set
+`TS_NA_NOCERTIFY=1` on its own** — without the raised cap that is the arm that
+regressed.
+
+## Does anything need adjusting when `targetHits` rises?
+
+**No compensating adjustment, and raising it helps rather than hurts** — but it is
+not the knob that pays for gating.
+
+`targetHits` defaults to `max(10, ntax/5)` and stops the run once the best score
+has been hit that many times. Raising it means more replicates, which moves the
+run toward the many-replicate regime where the gate won. It is already the shipped
+idiom for "this matrix is hard": `.IwRatchetDepth()` reads `targetHits /
+defaultHits` as a user escalation signal and deepens the IW ratchet by it.
+
+Two cautions:
+
+* **`targetHits` counts hits against the CURRENT best, not the true optimum.** So
+  it cannot rescue a uniformly weaker search that plateaus one step high: raising
+  it just buys more confirmations of the same wrong score. What protects against
+  that is more *independent* replicates. **`maxReplicates` is the knob that pays
+  for gating; `targetHits` is not.**
+* **Raising `targetHits` without raising `maxReplicates` makes the run bump the
+  96 cap instead of reaching its hit target** — and the more expensive the
+  replicate, the sooner that happens. This is the concrete reason the two knobs
+  are coupled on NA data: certification is what makes the replicate budget
+  unusable.
+
+Panel 2's `A_hits3` / `B_gate_hits3` arms measure exactly this at 3x the default
+hit target.
+
 ### Harvesting the panel
 
 Build `18080527` (COMPLETED, gate smoke `n_evs_skipped = 8`); array `18080528`
