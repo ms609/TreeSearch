@@ -51,6 +51,25 @@
   profile parsimony are unchanged, as is `thorough`/`large`, and setting any of
   these fields yourself overrides all of it.
 
+- Doubling `targetHits` or more, under `strategy = "thorough"` or `"large"`, now
+  also deepens the per-replicate perturbation itself, extending the existing
+  `targetHits` escalation beyond ratchet depth: more drifting, a larger
+  reweighting kick, a second sectorial pass after the ratchet, and internal
+  retention of near-optimal trees to fuse against.  Unlike the ratchet deepening
+  this applies under any scoring regime, though it was measured only under equal
+  weights.  It targets datasets big or difficult enough that an ordinary search
+  stops short of the optimum: across 25 datasets spanning 20 to 4062 tips it
+  found shorter trees only on the 4062-tip matrix (on all five seeds tried, by
+  1–9 steps), while from 20 to 173 tips it found trees of the same length and
+  simply took about 3.5× as long — a cost incurred as extra work per replicate,
+  not as slower convergence.  Because most searches would pay for depth they do
+  not need, it is offered only on that explicit signal and only on those two
+  presets; `sprint` and `default` keep the implied-weights operating point
+  described above, `ratchetCycles` remains governed by the implied-weights
+  ratchet deepening, and any control field you set yourself is preserved.  Note
+  that the documented large-`targetHits` idiom for collecting the full set of
+  most-parsimonious trees also engages this on those two presets.
+
 - Fixed: a large `targetHits` combined with a large `perturbStopFactor` stopped the
   search after two replicates and silently returned a worse tree.  The
   no-improvement rule computes `(targetHits / hits) * nTip * perturbStopFactor`,

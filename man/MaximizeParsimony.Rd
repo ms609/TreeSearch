@@ -224,7 +224,25 @@ much character reweighting a matrix needs, so a raised \code{targetHits} is take
 as the user's own signal that this one needs more.  Lowering \code{targetHits}
 does not make the ratchet shallower than its default depth (fewer cycles
 were slower to the optimum on every matrix tested), and setting
-\code{ratchetCycles} yourself overrides this entirely.}
+\code{ratchetCycles} yourself overrides this entirely.
+
+Doubling \code{targetHits} or more goes one step further and, under
+\code{strategy = "thorough"} or \code{"large"}, also deepens the per-replicate
+perturbation itself: more drifting, a larger reweighting kick, a second
+sectorial pass after the ratchet, and (internally) retention of near-optimal
+trees to fuse against.  Unlike the ratchet deepening above this applies under
+any scoring regime, though it was measured only under equal weights.  It is
+aimed at datasets big or difficult enough that an ordinary search stops short
+of the optimum: in testing it found shorter trees only on a 4062-tip matrix
+(on all five seeds tried), while from 20 to 173 tips it found trees of the
+same length and simply took around 3.5 times as long -- so it is offered on
+this explicit signal rather than enabled by default.  Any of these values you
+set yourself is left untouched, and the trees returned are still only the
+best found.
+Note that the large-\code{targetHits} idiom for collecting the full set of
+most-parsimonious trees, above, therefore also engages this deeper search on
+those two presets; set \code{driftCycles}, \code{intraFuse} and so on yourself if you
+want the wider sampling without the extra per-replicate cost.}
 
 \item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
 search. When reached, the current replicate finishes and the search

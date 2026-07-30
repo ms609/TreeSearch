@@ -208,6 +208,20 @@
 # the two in step if this changes.
 .iwRatchetMaxCycles <- 115L
 
+# How far the caller has raised `targetHits` above its size-scaled default -- the
+# single "search harder" signal, shared by every escalation below so that they
+# read one quantity rather than each deriving its own.  1 means "not raised";
+# never less, so lowering `targetHits` (e.g. the documented `targetHits = 4`
+# idiom) only stops the search sooner and never weakens the search itself.
+.TargetHitsEscalation <- function(targetHits, defaultHits) {
+  if (length(defaultHits) == 1L && is.finite(defaultHits) && defaultHits > 0 &&
+      length(targetHits) == 1L && is.finite(targetHits)) {
+    max(1, targetHits / defaultHits)
+  } else {
+    1
+  }
+}
+
 # Ratchet depth to impose for this call, or NULL to leave the preset's value.
 # `userSet` names the fields the caller set themselves (never overridden).
 # See the call site in MaximizeParsimony() for the calibration behind it.
@@ -225,13 +239,7 @@
   if ("ratchetCycles" %in% userSet) {
     return(NULL)
   }
-  escalation <- if (length(defaultHits) == 1L && is.finite(defaultHits) &&
-                    defaultHits > 0 && length(targetHits) == 1L &&
-                    is.finite(targetHits)) {
-    max(1, targetHits / defaultHits)
-  } else {
-    1
-  }
+  escalation <- .TargetHitsEscalation(targetHits, defaultHits)
   min(.iwRatchetMaxCycles, as.integer(round(.iwRatchetCycles * escalation)))
 }
 
@@ -266,6 +274,88 @@
   out <- .iwStopPackage[[strategy]]
   out <- out[setdiff(names(out), userSet)]
   if (!length(out)) NULL else out
+}
+
+# Escalation ratio at or above which the deeper-perturbation bundle below
+# engages.  The ratchet depth above scales continuously because cycle counts
+# interpolate; this bundle is mostly switches, which cannot, so it needs one
+# trigger point -- and 2 is the ratio that was actually measured (see the
+# evidence in `.ReachEscalationDeltas`).
+.reachEscalationMinRatio <- 2
+
+# Deeper per-replicate perturbation for a caller who has at least doubled
+# `targetHits` -- i.e. asked to keep searching well past ordinary convergence.
+#
+# EVIDENCE (general-pool A/B, 2026-07-28; 25 training matrices x 5 seeds = 125
+# cells; both arms ran at the SAME raised `targetHits`, so only these levers
+# differ; no cell in either arm hit its wall cap, so the comparison is not a
+# budget artefact).  Strict paired final-score wins, by size tier:
+#   small  (n=35): 0 better, 0 worse, 35 tie
+#   medium (n=35): 0 better, 0 worse, 35 tie
+#   large  (n=35): 1 better, 1 worse, 33 tie   (a wash)
+#   xlarge (n=20): 5 better, 0 worse, 15 tie
+# Read that last row carefully: ALL FIVE wins are the SAME matrix, project4284
+# at 4062 tips, which improved on every one of its five seeds (by 1-9 steps).
+# The other three xlarge matrices (125, 131 and 173 tips) all tied.  So the
+# demonstrated benefit is NOT "datasets over 120 tips" -- it is datasets far too
+# large to converge within an ordinary budget, plus the hard-reach tail (on the
+# 482-tip project5432 these move paired seeds 1946->1945 and 1946->1944, though
+# a single call still floors one step above the best known tree).
+# Cost: median total wall x3.56 and time-to-best x2.49, but replicates-to-best
+# x1.00 -- the wall gap is entirely cost-PER-replicate (~15x candidates
+# evaluated), not slower convergence.
+# So over the tested 20-173 tip range these buy no reach and cost ~3.5x the wall
+# (the sample jumps from 173 tips straight to 4062, so the range in between is
+# untested), which is exactly why they are kept OUT of `.StrategyPresets()`: as
+# blanket defaults drift especially is per-replicate overhead that, at a fixed
+# budget, completes fewer replicates and so reaches the optimum LESS reliably.
+# Gating them on a raised `targetHits` puts that cost only where the caller asked
+# for it.  Note the A/B ran under EQUAL weights, so applying these under implied
+# weights and profile parsimony is an extrapolation -- deliberate (the levers are
+# scorer-agnostic search machinery) but unmeasured there.
+#
+# NB `ratchetCycles` is deliberately NOT here.  It was part of the tested bundle,
+# but ratchet depth is owned by `.IwRatchetDepth` above, which scales it
+# continuously against a 36-matrix calibration; a flat value here would clobber
+# that under implied weights.  Equal weights loses nothing by the omission -- a
+# 68-matrix comparison found ratchet depth gives no equal-weights reach gain
+# (0.970 vs 0.965), so it is not what the A/B above was measuring.
+.ReachEscalationDeltas <- function() {
+  list(
+    ratchetPerturbMaxMoves = 0L,   # 0 => auto/deep kick
+    driftCycles = 25L,
+    postRatchetSectorial = TRUE,
+    stallEscalateFactor = 1.5,
+    intraFuse = TRUE,
+    poolSuboptimal = 3
+  )
+}
+
+# Apply the deeper-perturbation bundle, preserving every field the caller set.
+# `userSet` names those fields, exactly as for `.IwRatchetDepth`.
+#
+# Scoped to `thorough`/`large`, matching `.IwRatchetDepth`: those are the presets
+# the A/B's benefit came from (auto selects `large` for the 4062-tip matrix and
+# `thorough` for project5432), and on smaller data the same A/B measured 0 better
+# / 0 worse across 70 small- and medium-tier cells -- pure wall cost.  Escalating
+# `sprint`/`default` would also contradict their documented character ("Fast
+# search: 3 ratchet cycles, no drift"), so they are left alone.
+.ApplyReachEscalation <- function(control, strategy, escalation,
+                                  userSet = character(0)) {
+  if (!length(strategy) || !strategy %in% c("thorough", "large")) {
+    return(control)
+  }
+  if (!length(escalation) || !is.finite(escalation) ||
+      escalation < .reachEscalationMinRatio) {
+    return(control)
+  }
+  deltas <- .ReachEscalationDeltas()
+  for (nm in names(deltas)) {
+    if (!(nm %in% userSet)) {
+      control[[nm]] <- deltas[[nm]]
+    }
+  }
+  control
 }
 
 # Strategy presets for adaptive search (Phase 6E).
@@ -675,6 +765,24 @@
 #'   does not make the ratchet shallower than its default depth (fewer cycles
 #'   were slower to the optimum on every matrix tested), and setting
 #'   `ratchetCycles` yourself overrides this entirely.
+#'
+#'   Doubling `targetHits` or more goes one step further and, under
+#'   `strategy = "thorough"` or `"large"`, also deepens the per-replicate
+#'   perturbation itself: more drifting, a larger reweighting kick, a second
+#'   sectorial pass after the ratchet, and (internally) retention of near-optimal
+#'   trees to fuse against.  Unlike the ratchet deepening above this applies under
+#'   any scoring regime, though it was measured only under equal weights.  It is
+#'   aimed at datasets big or difficult enough that an ordinary search stops short
+#'   of the optimum: in testing it found shorter trees only on a 4062-tip matrix
+#'   (on all five seeds tried), while from 20 to 173 tips it found trees of the
+#'   same length and simply took around 3.5 times as long -- so it is offered on
+#'   this explicit signal rather than enabled by default.  Any of these values you
+#'   set yourself is left untouched, and the trees returned are still only the
+#'   best found.
+#'   Note that the large-`targetHits` idiom for collecting the full set of
+#'   most-parsimonious trees, above, therefore also engages this deeper search on
+#'   those two presets; set `driftCycles`, `intraFuse` and so on yourself if you
+#'   want the wider sampling without the extra per-replicate cost.
 #' @param maxSeconds Numeric: maximum wall-clock time in seconds for the
 #'   search. When reached, the current replicate finishes and the search
 #'   stops. `0` (default) means no time limit.
@@ -951,6 +1059,8 @@ MaximizeParsimony <- function(
       }
     }
   }
+  # Set when the reach escalation below raises `poolSuboptimal` itself; see there.
+  escalatedPool <- FALSE
 
   # --- Apply strategy preset ---
   if (!is.null(strategy) && !identical(strategy, "none")) {
@@ -1011,9 +1121,9 @@ MaximizeParsimony <- function(
       # Scoped to `thorough`/`large`, whose other knobs match the grid; `default`
       # and `sprint` co-tuned their ratchet with different sectorial settings and
       # are untouched.
+      userSet <- union(names(controlDots), attr(control, "explicit"))
       iwCycles <- .IwRatchetDepth(
-        strategy, concavity, targetHits, defaultHits,
-        userSet = union(names(controlDots), attr(control, "explicit"))
+        strategy, concavity, targetHits, defaultHits, userSet = userSet
       )
       if (!is.null(iwCycles)) {
         control[["ratchetCycles"]] <- iwCycles
@@ -1063,6 +1173,39 @@ MaximizeParsimony <- function(
       )
       for (.f in names(iwStop)) {
         control[[.f]] <- iwStop[[.f]]
+      }
+
+      # The same `targetHits` signal, one step further: a caller who has at least
+      # DOUBLED it has asked to keep searching well past ordinary convergence, so
+      # also deepen the per-replicate perturbation itself (drift, the auto kick,
+      # a post-ratchet sectorial re-search, near-optimal pool retention).  Unlike
+      # the ratchet depth above this applies under any scorer, but it is not
+      # scaled continuously -- it is mostly switches, and 2x is the ratio that was
+      # measured.  See `.ReachEscalationDeltas` for the evidence and the reason
+      # `ratchetCycles` is left to `.IwRatchetDepth` alone.
+      #
+      # Three escalations now read `strategy`, and they are pairwise disjoint by
+      # design: `.IwRatchetDepth` (ratchet depth, thorough/large, implied weights)
+      # and `.IwStopPackage` (sprint/default, implied weights) never both fire,
+      # and this bundle is scoped to thorough/large so it cannot disturb the
+      # sprint/default operating point measured above.
+      escalation <- .TargetHitsEscalation(targetHits, defaultHits)
+      poolBefore <- control[["poolSuboptimal"]]
+      control <- .ApplyReachEscalation(control, strategy, escalation,
+                                       userSet = userSet)
+      # `poolSuboptimal` is raised here only as an internal aid: `intraFuse` needs
+      # suboptimal recipients to fuse against. It must not leak into the RESULT --
+      # `collapse = FALSE` returns the pool verbatim, so without this the caller
+      # would silently receive trees up to 3 steps worse than `attr(, "score")`
+      # from a result documented as the best trees found. Recorded here (rather
+      # than compared later) so a caller's own `poolSuboptimal` is untouched: they
+      # asked for those trees and still get them.
+      escalatedPool <- !identical(control[["poolSuboptimal"]], poolBefore)
+      if (verbosity >= 1L && escalation >= .reachEscalationMinRatio &&
+          strategy %in% c("thorough", "large")) {
+        cli::cli_alert_info(
+          "Deep search: {.field targetHits} raised {round(escalation, 1)}x"
+        )
       }
     } else if (!identical(strategy, "auto")) {
       warning("Unknown strategy '", strategy, "'; using default parameters.")
@@ -1497,7 +1640,17 @@ MaximizeParsimony <- function(
     })
     nTopologies <- collapsed$n_topologies
   } else {
-    outTrees <- lapply(resultTrees, function(edgeMat) {
+    # The pool is returned verbatim here, suboptimal entries included -- which is
+    # what a caller who set `poolSuboptimal` themselves asked for.  But when the
+    # reach escalation raised it on their behalf (an internal aid for `intraFuse`,
+    # see .ApplyReachEscalation), they did not: drop back to the best score so the
+    # result matches its documentation, "the best tree(s) found".
+    keepTrees <- if (escalatedPool) {
+      resultTrees[result$scores == result$best_score]
+    } else {
+      resultTrees
+    }
+    outTrees <- lapply(keepTrees, function(edgeMat) {
       tr <- treeTpl
       tr[["edge"]] <- edgeMat
       # C++ edge order may differ from template; renumber to valid preorder
