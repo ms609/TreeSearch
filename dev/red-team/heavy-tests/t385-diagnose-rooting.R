@@ -12,6 +12,9 @@ suppressPackageStartupMessages({
   library("TreeTools")
 })
 
+if (!file.exists("dev/red-team/heavy-tests/t385-make-xform-data.R")) {
+  stop("Run this from the package root: the source() path below is relative.")
+}
 source("dev/red-team/heavy-tests/t385-make-xform-data.R")
 
 dat <- MakeXformData()

@@ -397,8 +397,19 @@ test_that("Xform search handles all-hierarchy data (zero Fitch words)", {
   expect_length(setdiff(seq_len(5L), HierarchyChars(h)), 0L)
 
   set.seed(42)
-  res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "xform",
-                           maxReplicates = 4L, targetHits = 3L, verbosity = 0L)
+  # This all-hierarchy matrix provably triggers T-374's open residue: pool
+  # membership is decided on search-time scores taken at differing rootings, so
+  # the returned trees do not share a length at the common rooting they are
+  # reported at (measured: 7 to 9), and MaximizeParsimony() warns and reports the
+  # smallest.  Pinned as an expectation rather than left as ambient noise in a
+  # green suite -- if this warning ever STOPS firing, the residue has been fixed
+  # (or masked) and that deserves to be noticed here.
+  res <- NULL
+  expect_warning(
+    res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "xform",
+                             maxReplicates = 4L, targetHits = 3L,
+                             verbosity = 0L),
+    "do not share a length")
   expect_s3_class(res[[1]], "phylo")
   expect_equal(length(res[[1]]$tip.label), 6L)
   for (tr in res) {

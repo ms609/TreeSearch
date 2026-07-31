@@ -24,6 +24,9 @@ cat("TreeSearch:", as.character(packageVersion("TreeSearch")), "\n")
 
 # ---- A synthetic XFORM dataset -----------------------------------------------
 # Generator shared with t385-diagnose-rooting.R so the two cannot drift apart.
+if (!file.exists("dev/red-team/heavy-tests/t385-make-xform-data.R")) {
+  stop("Run this from the package root: the source() path below is relative.")
+}
 source("dev/red-team/heavy-tests/t385-make-xform-data.R")
 
 dat <- MakeXformData()

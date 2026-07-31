@@ -1685,8 +1685,14 @@ MaximizeParsimony <- function(
   # value stays a rooting-dependent upper bound on the min-over-rootings
   # objective, exceeding it by at most the sum of `nSec` over hierarchy blocks
   # (measured: attained by 87-98% of rootings, mean overstatement 0.02-0.17
-  # steps).  Implementing min-over-rootings instead would report a quantity the
-  # search never compared, and costs (2 * nTip - 3) x on the Sankoff term.
+  # steps).
+  #
+  # Min-over-rootings reporting -- the variant the plan calls better -- is NOT used.
+  # It reports a quantity the search never compared, but the deciding objection is
+  # cost: evaluated naively it is (2 * nTip - 3) x on the Sankoff term, so a
+  # 4000-tip pool of 100 trees would need ~800k evaluations at the boundary.
+  # Doing it affordably needs an all-rootings up-down DP, which is its own piece
+  # of work (Option 4), not a line in a reporting fix.
   # See dev/plans/2026-07-29-t374b-xform-rooting-policy.md (Option 3).
   bestScore <- result$best_score
   if (useXform && length(outTrees) > 0L) {
