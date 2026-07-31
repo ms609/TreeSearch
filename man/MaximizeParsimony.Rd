@@ -317,6 +317,14 @@ collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 visible (a constraint encodes external evidence the matrix does not
 capture); unsupported non-constraint branches still collapse.}
 
+\item{.rung}{Internal.  Pins a named entry of the effort ladder
+(\code{"sprint"}, \code{"default"}, \code{"thorough"}, \code{"large"}), or \code{"none"} to apply no
+preset at all; \code{NULL} (default) selects the rung from \code{effort} and the
+dataset's size, which is what every ordinary call should do.  Exists for
+controlled experiments and the preset smoke tests, which need to name a rung
+absolutely rather than relative to the automatic choice.  Not part of the
+stable interface: prefer \code{effort}.}
+
 \item{...}{Backward compatibility.}
 }
 \value{
