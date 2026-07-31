@@ -42,7 +42,12 @@ self-referential: if one arm alone attains a score, the other "misses" by constr
 the reach fractions restate the paired counts rather than measuring absolute optimality.
 The paired win counts below are the honest statistic.
 
-**Result.**  No cell in either arm hit its wall cap, so nothing is a budget artefact.
+**Result.**  Budget regime (re-derived 2026-07-31 with the *fixed* deadline detector — the
+original write-up said "no cell in either arm hit its wall cap", which was **wrong**, an
+artefact of the `0.95 × cap_s` bug): 36 base and 40 deltas cells stopped at the deadline, 85
+cells converged in both arms, and **4 cells are asymmetric** (project2184 seeds 5821/5823/
+5824/5825 — deltas at the deadline, base not).  All four tied at 563, so no score comparison
+here rests on an asymmetric budget, but the clean-sweep claim does not stand.
 
 Strict paired final-score wins (deltas vs base):
 
@@ -57,6 +62,12 @@ Strict paired final-score wins (deltas vs base):
 tips, which improved on every one of its five seeds (by 1–9 steps).  The other three xlarge
 matrices (125, 131, 173 tips) all tied.  So the demonstrated benefit is *datasets far too
 large to converge within an ordinary budget*, **not** a property of "over 120 tips".
+
+Per-matrix concentration for this run (added 2026-07-31): only **2 of the 25 matrices changed
+at all** — `project4284` 5 win / 0 loss / 0 tie, and `project2771` **1 win / 1 loss / 3 tie**.
+So the `large` row's "1 better, 1 worse" is *both* project2771, i.e. the one matrix that is
+demonstrably high-variance in both runs.  **project4284 is the only matrix with a clean win in
+either A/B.**
 
 Cost, median over cells: total wall ×3.56, time-to-best ×2.49, but **replicates-to-best
 ×1.00**.  The wall gap is entirely work per replicate (~15× candidates evaluated against a
