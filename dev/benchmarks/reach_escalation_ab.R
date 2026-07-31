@@ -1,6 +1,13 @@
 #!/usr/bin/env Rscript
 # v1 REACH-ESCALATION GATE -- general-pool anytime A/B (the SHIP/NO-SHIP gate).
 #
+# POST-HOC EDIT, 2026-07-31: `enumTimeFraction = ENUM_TIME_FRACTION` was ADDED to the argument
+# list and `enum_time_fraction` to the output columns, so the analyzer can compute the engine's
+# real deadline instead of guessing. The value equals the engine default, so search behaviour
+# is unchanged -- but this file is no longer textually identical to the script that produced
+# the 125-cell result, and those CSVs therefore lack the column (the analyzer says so, and
+# falls back to the 0.1 default; that note is correct, not a defect to "fix").
+#
 # WHAT IS BEING DECIDED: `MaximizeParsimony()` gains a gate that, when the user raises
 # `targetHits` to >= 2 * max(10, nTip/5), applies 7 deeper per-replicate perturbation
 # deltas (ratchetCycles 40, kick 0/auto-deep, driftCycles 25, postRatchetSectorial,

@@ -105,9 +105,16 @@ converged, **0 asymmetric**.
 So the analyzer's `xlarge = 20/20 vs 15/20` is *one matrix*, exactly as in the ship gate.
 Do not restate reach fractions as evidence: the union-best target is self-referential, so
 base "misses" on 8 cells only because deltas6 got there.  **The paired counts are the
-statistic.**  `project2771` is the *high-variance matrix of this battery* — it produced both
-this run's single loss (911→912) and the ship gate's single loss, while deltas6 reached 911 on
-4 of 5 seeds; treat any single 2771 cell as noise rather than signal.
+statistic.**
+
+**`project2771` is noise, not a second winning matrix.**  Pooled across both A/Bs it is
+**4 win / 2 loss / 4 tie** over 10 seeds — a coin flip, and it supplied the single loss in each
+run.  Read the two-row table above as *one* winning matrix plus one high-variance matrix, and
+treat any single 2771 cell as noise.
+
+**The claim that survives both runs:** `project4284` is **10 win / 0 loss over 10 seeds**, and
+**no matrix regresses net** in either A/B.  That is the whole of the positive evidence, and it
+is enough — but it is one matrix, and it is the largest one in the battery.
 
 **project4284 won with ZERO completed replicates.**  base completed 1–2 replicates in ~1330 s;
 deltas6 completed **0** and still returned a tree 2–9 steps better on every seed.  At 4062
