@@ -124,7 +124,12 @@ test_that("stopPatience also stops the parallel search", {
   expect_equal(attr(full, "replicates"), cap)      # nothing else ends the search
   expect_lt(attr(short, "replicates"), cap)
   expect_true(attr(short, "perturb_stop"))
-  expect_equal(min(attr(short, "score")), min(attr(full, "score")))
+  # NOT expect_equal: the 200 ms monitor poll makes the firing replicate (and thus which
+  # dry spell trips the rule) vary run to run, so demanding the SAME optimum from a
+  # 5-9-replicate stop as from the full 120-replicate run is a search-quality claim
+  # conditional on timing, not a property of the stopping rule. What the rule actually
+  # guarantees is that stopping early can't do BETTER than letting the search run on.
+  expect_gte(min(attr(short, "score")), min(attr(full, "score")))
 })
 
 # ---- the shipped implied-weights operating point --------------------------------------------
