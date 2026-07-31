@@ -189,6 +189,16 @@ recipe improves the odds, it does not guarantee the floor.**
 - **Union-best-across-arms targets make reach self-referential.**  If one arm alone attains a
   score the other misses *by construction*, so reach fractions inflate the loss count.
   Report paired win/loss/tie; use reach only as a secondary description.
+- **You cannot `TreeLength()` a tree that `MaximizeParsimony()` returned by default.**
+  `collapse = TRUE` (the default) contracts zero-length branches, and `TreeLength` errors with
+  "`tree` must be binary".  To re-score a returned tree, ask for `collapse = FALSE`.  This
+  killed the first tree-recovery run (job 18128376) after 22 minutes of search, in the
+  *verification* step — so **persist the deliverable before verifying it**: write the trees
+  out first, then check them, or a failed check throws away the search too.
+- **A `collapse = FALSE` return is the pool verbatim.**  That makes it the natural place to
+  test whether `poolSuboptimal` leaks suboptimal trees to the caller: re-score every returned
+  tree and compare max against min.  Under a gate-free harness `escalatedPool` is FALSE, so
+  the filter is inert and the leak (if real) is visible.
 - **Whole-suite test runs need `test_local()`/`devtools::test()`**, not `test_dir()` +
   `library()`: several test files call internals unqualified and error otherwise.
 - **A top-level `skip_on_cran()` makes a file report "0 pass 0 fail"** — that is *not* a
@@ -220,8 +230,14 @@ Also not measured:
   recorded `attr(res, "score")` only, so ~353 could not be independently re-scored at the
   time of writing.  A degenerate partial tree would score *worse*, so the win is very
   unlikely to be an artefact, but "unlikely" is what the record says.  Recovery run
-  (`recover4284.R`, job 18128376) re-runs the identical config and re-scores by label with
-  `TreeLength`; see the result note below.
+  `reach_recover4284.R` re-runs the identical config, writes the trees and re-scores by label
+  with `TreeLength` (job 18128376 died in the check — see the `collapse` trap above; job
+  **18128526** is the corrected `collapse = FALSE` run).
+- **The `escalatedPool` filter is only needed on the `collapse = FALSE` path** — verified by
+  reading, not benchmark: the `collapse = TRUE` branch already restricts to
+  `scores == best_score` before collapsing (`R/MaximizeParsimony.R`), which the `collapse`
+  roxygen also documents.  So the default path never leaked; the fix sits on the one branch
+  that did.
 - **`poolReseed` (v2) cannot help where v1 helped most.**  It reseeds *replicates* from a
   pool needing `size >= 2`; project4284's winning arm completed zero replicates.  Any v2
   validation must therefore use matrices on which enough replicates complete for a pool to
