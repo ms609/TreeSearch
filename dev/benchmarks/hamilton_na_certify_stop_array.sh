@@ -41,6 +41,13 @@ export TS_CONCAVITY=Inf
 
 mkdir -p "$PARTIAL_DIR" /nobackup/$USER/TreeSearch/logs
 cd "$REPO" || exit 1
-git fetch origin cpp-search && git reset --hard origin/cpp-search
+# NO git operations here.  The first submission ran `git fetch && git reset --hard`
+# inside the array task, so 150 concurrent tasks raced on one index and 114 died
+# on `.git/index.lock`.  Worse than the failure: `reset --hard` mutates the
+# checkout that the surviving tasks are reading, so a "successful" cell could have
+# run a half-rewritten script.  Sync the repo ONCE from the login node (or the
+# build job) before submitting, and keep it PINNED for the life of the panel so
+# every cell provably runs the same code -- the `Git HEAD:` line below is the
+# evidence, and it must be identical across all cells before they are pooled.
 echo "Git HEAD: $(git log --oneline -1)"
 Rscript dev/benchmarks/bench_na_certify_stop_cell.R "$SLURM_ARRAY_TASK_ID"
