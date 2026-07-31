@@ -58,6 +58,7 @@ Suggests:
   future,
   highs,
   knitr,
+  MaxMin,
   phangorn (>= 2.2.1),
   PlotTools,
   promises,
@@ -74,6 +75,8 @@ Suggests:
   vdiffr (>= 1.0.0),
   withr,
   zip,
+Remotes:
+  ms609/MaxMin,
 Config/Needs/check:
   callr,
   pkgbuild,
