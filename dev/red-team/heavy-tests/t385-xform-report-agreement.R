@@ -23,47 +23,8 @@ suppressPackageStartupMessages({
 cat("TreeSearch:", as.character(packageVersion("TreeSearch")), "\n")
 
 # ---- A synthetic XFORM dataset -----------------------------------------------
-# nBlock hierarchy blocks, each a controlling primary + nSec secondaries, plus
-# some free (non-hierarchy) characters.  The gain/loss asymmetry that makes
-# XFORM rooting-sensitive needs nSec >= 1.
-
-MakeXformData <- function(nTip = 36L, nBlock = 6L, nSec = 2L, nFree = 10L,
-                          seed = 1L) {
-  set.seed(seed)
-  tipNames <- paste0("t", seq_len(nTip))
-  blockCols <- vector("list", nBlock)
-  cols <- list()
-  hierArgs <- list()
-
-  for (b in seq_len(nBlock)) {
-    primary <- sample(c("0", "1"), nTip, replace = TRUE)
-    priIdx <- length(cols) + 1L
-    cols[[length(cols) + 1L]] <- primary
-    secIdx <- integer(nSec)
-    for (s in seq_len(nSec)) {
-      # Secondary is inapplicable exactly where the primary is absent.
-      sec <- ifelse(primary == "0", "-", sample(c("0", "1"), nTip,
-                                                replace = TRUE))
-      cols[[length(cols) + 1L]] <- sec
-      secIdx[s] <- length(cols)
-    }
-    hierArgs[[as.character(priIdx)]] <- secIdx
-    blockCols[[b]] <- c(priIdx, secIdx)
-  }
-
-  # Free characters: ordinary binary, no gaps (keeps has_na driven only by the
-  # hierarchy blocks, which is the has_na = FALSE branch of the T-374b analysis).
-  for (f in seq_len(nFree)) {
-    cols[[length(cols) + 1L]] <- sample(c("0", "1"), nTip, replace = TRUE)
-  }
-
-  mat <- do.call(cbind, cols)
-  dimnames(mat) <- list(tipNames, NULL)
-  ds <- phangorn::phyDat(mat, type = "USER", levels = c("-", "0", "1"),
-                         ambiguity = "?")
-  list(dataset = ds, hierarchy = do.call(CharacterHierarchy, hierArgs),
-       nSec = nSec, nBlock = nBlock)
-}
+# Generator shared with t385-diagnose-rooting.R so the two cannot drift apart.
+source("dev/red-team/heavy-tests/t385-make-xform-data.R")
 
 dat <- MakeXformData()
 ds <- dat$dataset
