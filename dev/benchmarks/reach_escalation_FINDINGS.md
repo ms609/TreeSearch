@@ -126,8 +126,25 @@ re-scored every returned tree by label with `TreeLength`.
 the reported `attr(res, "score")`, across 100 returned trees per seed (500 trees, all scored,
 all fully resolved: 8122 edges = 2n−2, the *rooted* binary count).  So the ab6 headline is not
 an artefact of a degenerate partial tree, and the trees now exist in Hamilton `floors/`.
-Best tree **held** = **354** (seed 7732).  Best score ever *observed* = 353 (ab6 seed 7731) —
-**that tree is lost**, so 354 is the best recoverable tree for this matrix.
+Best tree **held** = **354** (seed 7732), independently confirmed by *five* scorers (current
+`TreeLength`, the archived March `TreeLength`, phangorn Fitch, phangorn Sankoff, and a
+hand-rolled Fitch).  Best score ever *observed* = 353 (ab6 seed 7731) — **that tree is lost**, so
+354 is the best recoverable tree and **353 should not be quoted as an attained score**: no
+artefact on disk realises it.
+
+**Normalise the gap treatment before any cross-harness comparison.**  These harnesses map
+`"-" → "?"` (plain Fitch) via `to_fitch()`; the older `t252` sweeps keep `"-"` as a sixth level
+(BGS three-pass).  On the *same tree* that is worth **+61** — 415 under BGS versus 354 under
+Fitch — localised to 7 of the 27 characters.  Two numbers for this matrix are therefore not
+comparable unless the gap handling matches.
+
+**Do not compare against the `t252` CSVs at all.**  Their project4284 values (1040–1411) came
+from an engine whose bare Wagner addition was several-fold worse: same data and seed, no search,
+`AdditionTree` scores **1590** under the archived March library
+(`/nobackup/pjjg18/TreeSearch/lib-t252`) against **409** under the current one — worse *and*
+five times faster, the signature of the since-fixed union-of-finals insertion-cost bug.  Budget
+is not the explanation: the current engine returns the same score at `maxSeconds` 1, 5, 25 and
+45, and the whole 30 s → 1440 s span is only ×1.068.
 
 **Bad news — the per-seed scores did not reproduce.**
 
@@ -172,6 +189,45 @@ tips) that cost nothing in final score.  The 16 tied cells that converged early 
 at 5–9 s of a 720 s cap, project4359 stopping on `targetHits` at 28 replicates) carry **no**
 cost information and must not be counted as evidence of cost-neutrality.  The ×3.56 wall
 figure belongs to the ship-gate run, which was not deadline-bound.
+
+## 🚨 The upstream API change breaks the gate's premise (2026-07-31, `419168d4`)
+
+`origin/cpp-search` **removed `strategy`** and replaced it with `effort = 0L`, a *relative*
+offset on an internal ladder (`.effortLadder = sprint, default, thorough, large`, then rungs
+that double the replicate cap).  This is not a rename — it invalidates the gate's trigger.
+
+Traced on the tip:
+
+    .AutoRung(nTip >= 120, nChar >= 100)  ->  4          # `large`
+    effort = +1                           ->  rung 5
+    spec$hitMultiplier at rung 5          =   2^(5-4) = 2
+    line ~1124:  if (!userSetHits && hitMultiplier > 1)
+                   targetHits <- targetHits * hitMultiplier
+
+So on **any dataset of ≥120 tips, `effort = +1` makes `targetHits / defaultHits` exactly 2.0**,
+and `.reachEscalationMinRatio = 2` tests `>=` — **the bundle fires**.  Note the multiplication is
+applied only when `!userSetHits`, i.e. precisely when the user did *not* raise the hit target.
+The gate's entire justification is "the user's own signal that this dataset needs more"; under
+the new API it would fire on a **mechanical ladder artefact** instead.
+
+The cost of getting this wrong is concrete.  Rung 5 has already doubled `maxReplicates`
+(500 → 1000); layering a bundle measured at ~3.5× wall per replicate on top makes one notch of
+`effort` cost roughly **7× the work**, against documentation promising about twice.  And the
+bundle's only positive evidence is a single 4062-tip matrix that completes zero replicates —
+the 125-, 131- and 173-tip cells all tied.  **At 120–200 tips this is pure cost.**
+
+Options, with the recommendation:
+
+- **(a) leave it** — rejected: pure cost across the tier where it would newly fire.
+- **(b) raise `.reachEscalationMinRatio` above 2** — only postpones the misfire; `effort = +2`
+  gives a multiplier of 4 and trips any threshold below that.
+- **(c) gate on `userSetHits` (recommended)** — the tip already computes exactly that flag, and
+  its own roxygen states the doctrine ("a raised `targetHits` is taken as the user's own
+  signal").  This restores the premise precisely and is immune to future ladder changes.
+
+Open question for the maintainer: at high `effort` (say ≥ +3) the user arguably *does* want the
+bundle.  If so, the trigger becomes `userSetHits && ratio >= 2` **or** an explicit `effort`
+threshold — a deliberate second door rather than an accident of the multiplier.
 
 ## Why it is gated, and gated to `thorough`/`large`
 
