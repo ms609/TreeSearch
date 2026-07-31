@@ -488,9 +488,9 @@ result <- MaximizeParsimony(
 result
 attr(result, "score")
 
-# Ask for one notch less search than this dataset would get by default,
+# Ask for one notch more search than this dataset would get by default,
 # whatever its size:
-sprint <- MaximizeParsimony(dataset, effort = -1, maxReplicates = 12)
+harder <- MaximizeParsimony(dataset, effort = 1L, maxReplicates = 12L)
 
 }
 \references{
