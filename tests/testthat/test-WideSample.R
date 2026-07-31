@@ -33,8 +33,7 @@ test_that("n = 1 returns the medoid deterministically", {
 
 test_that("n = 1 medoid falls back to a matrix-free seed past the ceiling", {
   skip_if_not_installed("TreeDist")
-  old <- options(TreeSearch.WideSample.buildCeiling = 5L)
-  on.exit(options(old))
+  withr::local_options(TreeSearch.WideSample.buildCeiling = 5L)
   trees <- as.phylo(0:9, nTip = 8)  # 10 > the (lowered) build ceiling of 5
   names(trees) <- paste0("t", seq_along(trees))
   result <- WideSample(trees, 1)    # function path, no matrix built
