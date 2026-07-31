@@ -256,7 +256,7 @@ test_that("Heartbeat reports inside a long phase, and honours its interval", {
   HeartbeatLines <- function(seconds) {
     out <- withr::with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), capture.output({
       set.seed(3)
-      invisible(MaximizeParsimony(ds, strategy = "thorough",
+      invisible(MaximizeParsimony(ds, .rung = "thorough",
                                   maxReplicates = 1L, verbosity = 2L))
     }, type = "output"))
     grep("in phase", out, value = TRUE)
@@ -287,7 +287,7 @@ test_that("Heartbeat never reports a score below the true optimum", {
   best <- NULL
   out <- withr::with_envvar(c(TS_HEARTBEAT_SECONDS = "0.001"), capture.output({
     set.seed(3)
-    best <- MaximizeParsimony(ds, strategy = "thorough", maxReplicates = 1L,
+    best <- MaximizeParsimony(ds, .rung = "thorough", maxReplicates = 1L,
                               verbosity = 2L)
   }, type = "output"))
   optimum <- attr(best, "score")
@@ -305,7 +305,7 @@ test_that("Heartbeat does not change the search result", {
   Search <- function(seconds) {
     withr::with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), {
       set.seed(42)
-      MaximizeParsimony(ds, strategy = "sprint", maxReplicates = 3L,
+      MaximizeParsimony(ds, effort = -9L, maxReplicates = 3L,
                         verbosity = 0L)
     })
   }

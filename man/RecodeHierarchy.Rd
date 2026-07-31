@@ -26,6 +26,14 @@ row-major: \code{cost_matrix[from, to]}.}
 \item{\code{forced_root_state}}{Integer: -1 (unconstrained).}
 \item{\code{block_chars}}{Integer vector of original character indices
 (1-based) belonging to this block.}
+\item{\code{combo_grid}}{Integer matrix (\code{n_present × n_secondary}),
+row \code{i} giving the 1-based level index of each secondary for
+present-state \code{i + 1}.}
+\item{\code{tip_sec_known}}{Integer matrix (\code{n_tip × n_secondary}).
+For tips with \code{tip_states == -2}, column \code{s} holds the
+1-based level index of secondary \code{s} if it was observed, or
+0 if it was unknown; used to constrain the admissible states of a
+partially-known combination.}
 }
 }
 \item{\code{non_hierarchy_indices}}{Integer vector of original character

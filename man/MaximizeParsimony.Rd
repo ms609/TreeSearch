@@ -16,7 +16,7 @@ MaximizeParsimony(
   inapplicable = "bgs",
   hsj_alpha = 1,
   constraint,
-  strategy = "auto",
+  effort = 0L,
   maxReplicates = 96L,
   targetHits = NULL,
   maxSeconds = 0,
@@ -25,6 +25,7 @@ MaximizeParsimony(
   progressCallback = NULL,
   control = SearchControl(),
   collapse = TRUE,
+  .rung = NULL,
   ...
 )
 }
@@ -128,54 +129,63 @@ in any output tree.
 Constraint searches are supported natively: all tree rearrangements
 are filtered to respect the constraint topology.}
 
-\item{strategy}{Character: named strategy preset controlling the search
-heuristic parameters. Presets:
+\item{effort}{Integer: how much search effort to spend, \strong{relative to the
+amount chosen automatically} for this dataset.  \code{0} (the default) accepts
+the automatic choice; \code{1} asks for one notch more, \code{-1} one notch less.
+
+The automatic choice is made from dataset size and character count, since
+those predict how much search a matrix repays: \code{sprint} for <=30 taxa;
+\code{large} for >=120 taxa with >=100 character patterns; \code{thorough} for
+65-119 taxa with >=100 character patterns; \code{default} otherwise.  Because
+\code{effort} is an offset rather than an absolute level, \code{effort = 0} gives a
+30-taxon and a 300-taxon matrix quite different searches -- which is the
+intent.
+
+The rungs, in order:
 \describe{
-\item{\code{"auto"} (default)}{Selects automatically based on dataset size
-and character count:
-\code{"sprint"} for <=30 taxa; \code{"large"} for >=120 taxa with >=100
-character patterns; \code{"thorough"} for 65-119 taxa with >=100
-character patterns; \code{"default"} otherwise.}
-\item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
-sectorial. Good for small datasets or quick surveys.}
-\item{\code{"default"}}{Balanced: 6 ratchet cycles, sectorial search and
+\item{1, \code{sprint}}{Fast: 3 ratchet cycles, no drift, minimal sectorial.
+Small datasets and quick surveys.}
+\item{2, \code{default}}{Balanced: 6 ratchet cycles, sectorial search and
 fusing.}
-\item{\code{"thorough"}}{Intensive: 20 ratchet cycles, adaptive
-perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
-starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
-character patterns; the drift cycles also recover equal-score trees on
+\item{3, \code{thorough}}{Intensive: 20 ratchet cycles, adaptive perturbation,
+extra sectorial rounds, drift (2 cycles), 5 Wagner starts and an outer
+cycle loop.  The drift cycles also recover equal-score trees on
 TBR-disconnected islands that random restarts alone miss.}
-\item{\code{"large"}}{Large-tree search (>=120 tips): the \code{"thorough"}
-settings with \code{maxReplicates} raised to 500 to suit the higher
-per-replicate cost.}
-\item{\code{"intensive"}}{Deprecated alias of \code{"thorough"}, retained for
-backward compatibility.  The extra Wagner starts (5) that once
-distinguished it are now folded into \code{"thorough"}, so the two are
-identical.}
-\item{\code{"none"}}{Use only the explicitly supplied parameter values.}
+\item{4, \code{large}}{\code{thorough}'s provisioning with \code{maxReplicates} raised
+to 500, to suit the higher per-replicate cost of big trees.}
+\item{5 and up}{\code{thorough}'s provisioning with the budget doubling each
+notch (1000, 2000, 4000, 8000 replicates), and the hit target raised in
+step.  Capped at rung 8; beyond that, set \code{maxReplicates} yourself
+rather than have the package extrapolate for you.}
 }
-Any unambiguous abbreviation is accepted: \code{"thoro"}, \code{"thor"} and \code{"t"} all
-select \code{"thorough"}.  Every preset's initial differs, so a single letter is
-always enough.  A value that matches nothing -- or matches ambiguously --
-warns and falls back to the default parameters rather than throwing an
-error.
-Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
-rule; \code{consensusStableReps} (consensus-stability stopping) is off by default
-and is not enabled by any preset.
-Under implied weights only, \code{"sprint"} and \code{"default"} additionally stop on
-a flat replicate patience (\code{stopPatience} 20 and 15 respectively) and deepen
-the ratchet to match (\code{ratchetCycles} 12 and 20); the pair is a package,
-since each half fails on its own.  Equal weights is unaffected.
-Explicit \code{control} fields always override the preset; for example,
-\verb{strategy = "sprint", control = SearchControl(ratchetCycles = 10L)} uses
-sprint defaults for everything except \code{ratchetCycles}.}
+
+Above rung 4 it is the \strong{replicate budget} that climbs, because that is
+the knob that buys reach on hard datasets.  Raising \code{targetHits} alone does
+not: it ends a run early on easy datasets, but on hard ones it is never
+reached and \code{maxReplicates} binds first.  (Under implied weights a raised
+hit target additionally deepens the ratchet -- see \code{targetHits} -- so it is
+raised alongside the budget from rung 5, not instead of it.)
+
+Anything you set yourself wins: \code{maxReplicates} and \code{targetHits} you supply
+are never rescaled by \code{effort}, and explicit \code{control} fields always
+override the rung's preset -- for example
+\verb{effort = -2, control = SearchControl(ratchetCycles = 10L)} uses the lower
+rung's settings for everything except \code{ratchetCycles}.
+
+Every rung stops on \code{targetHits} and the \code{perturbStopFactor}
+no-improvement rule; \code{consensusStableReps} (consensus-stability stopping) is
+off by default and no rung enables it.  Under implied weights only, rungs 1
+and 2 additionally stop on a flat replicate patience (\code{stopPatience} 20 and
+15 respectively) and deepen the ratchet to match (\code{ratchetCycles} 12 and
+20); the pair is a package, since each half fails on its own.  Equal weights
+is unaffected.}
 
 \item{maxReplicates}{Integer: maximum number of independent search
 replicates (default: 96).
 The default is a multiple of 48 (= LCM(12, 16)) so that replicates
 divide evenly across common 12- or 16-core machines when running in
 parallel.
-When \code{strategy} resolves to \code{"large"} (automatically selected for
+When \code{effort} resolves to rung 4 (\code{large} -- chosen automatically for
 datasets of \eqn{\ge}{>=} 120 tips and \eqn{\ge}{>=} 100 characters) and
 \code{maxReplicates} is left at its default, the
 cap is raised to 500: a 120--180-tip sweep showed the fraction of runs
@@ -194,9 +204,9 @@ for datasets with 30 or more taxa.}
 \item{targetHits}{Integer: stop a replicate series once the best score has
 been re-found this many times without further improvement
 (default: \code{max(10, NTip / 5)}).  This is the main control over \emph{how hard the
-search tries to be sure it is finished}, and it is shared by every
-\code{strategy} preset -- the presets differ in per-replicate effort, not in when
-they stop.  It sets the balance between the two goals a user may bring to a
+search tries to be sure it is finished}, and rungs 1-4 of \code{effort} all
+share it -- they differ in per-replicate effort, not in when they stop.
+(Rung 5 and above raise it, alongside the replicate budget.)  It sets the balance between the two goals a user may bring to a
 search:
 \describe{
 \item{A single tree one can be reasonably confident is
@@ -217,8 +227,8 @@ No stopping rule can \emph{detect} that every island has been found: a long
 run with no new topology is not proof that none remain, so completeness
 is bought with search effort, never inferred.}
 }
-Under implied weights (finite \code{concavity}) with \code{strategy = "thorough"} or
-\code{"large"}, raising \code{targetHits} above its default also deepens the ratchet
+Under implied weights (finite \code{concavity}) at \code{effort} rung 3 (\code{thorough})
+or above, raising \code{targetHits} above its default also deepens the ratchet
 in proportion, up to 115 cycles: no dataset property reliably predicts how
 much character reweighting a matrix needs, so a raised \code{targetHits} is taken
 as the user's own signal that this one needs more.  Lowering \code{targetHits}
@@ -272,7 +282,7 @@ nothing arrives until the first one finishes.  The heartbeat described under
 \code{verbosity} is independent of the callback and reports throughout.}
 
 \item{control}{A \code{\link{SearchControl}} object (or a named list) of low-level
-search parameters.  Most users can rely on the \code{strategy} presets and
+search parameters.  Most users can rely on \code{effort} and
 ignore this argument; see \code{\link[=SearchControl]{SearchControl()}} for full documentation
 of individual fields.}
 
@@ -448,6 +458,10 @@ result <- MaximizeParsimony(
 )
 result
 attr(result, "score")
+
+# Ask for one notch more search than this dataset would get by default,
+# whatever its size:
+harder <- MaximizeParsimony(dataset, effort = 1L, maxReplicates = 12L)
 
 }
 \references{

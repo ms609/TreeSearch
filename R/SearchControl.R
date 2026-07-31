@@ -2,7 +2,7 @@
 #'
 #' Construct a list of low-level search parameters for
 #' [`MaximizeParsimony()`].  Most users can ignore these and rely on the
-#' `strategy` presets (`"sprint"`, `"default"`, `"thorough"`); `SearchControl`
+#' `effort` rungs (`sprint`, `default`, `thorough`, `large`); `SearchControl`
 #' is provided for expert tuning.
 #'
 #' The parameters correspond to heuristics described by

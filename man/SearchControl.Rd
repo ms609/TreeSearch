@@ -400,7 +400,7 @@ A named list of class \code{"SearchControl"}.
 \description{
 Construct a list of low-level search parameters for
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.  Most users can ignore these and rely on the
-\code{strategy} presets (\code{"sprint"}, \code{"default"}, \code{"thorough"}); \code{SearchControl}
+\code{effort} rungs (\code{sprint}, \code{default}, \code{thorough}, \code{large}); \code{SearchControl}
 is provided for expert tuning.
 }
 \details{

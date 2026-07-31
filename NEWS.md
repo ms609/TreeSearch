@@ -1,5 +1,35 @@
 # To integrate into 2.0.0 notes
 
+- `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
+  was never released).  `effort` is a **relative** offset, not an absolute
+  level: `0` (the default) accepts the amount of search the dataset's size and
+  character count warrant, `1` asks for one notch more, `-1` one less.  So a
+  single call means "try harder than usual" whether the matrix has 20 taxa or
+  200, and a user never has to know which preset it would otherwise have got.
+  `effort = 0` reproduces the previous `strategy = "auto"` behaviour exactly on
+  every size band.
+
+  The rungs are the former presets — `sprint`, `default`, `thorough`, and
+  `large` (which was only ever `thorough` with `maxReplicates = 500`) — so the
+  ladder generalises an axis the package already had.  Beyond `large`, each
+  further notch doubles the replicate budget (1000, 2000, 4000, 8000) and
+  raises the hit target with it, capped at rung 8; past that, set
+  `maxReplicates` yourself rather than have the package extrapolate.
+
+  The replicate budget leads and `targetHits` follows, because the two bite on
+  disjoint populations: `targetHits` ends a run early on easy datasets, but on
+  hard ones it is never reached and `maxReplicates` binds first.  Measured on
+  Zanol2014 (equal weights), a run used its full 96 replicates at hits-to-best
+  = 1 against a target of 14, and tripling `targetHits` to 42 changed score,
+  replicate count and wall not at all.  A rung raising `targetHits` alone would
+  therefore do nothing on precisely the datasets someone turns effort up for.
+  (Under implied weights a raised hit target additionally deepens the ratchet,
+  so it is raised alongside the budget, not instead of it.)
+
+  Anything set explicitly still wins: a `maxReplicates` or `targetHits` you
+  supply is never rescaled by `effort`, and explicit `control` fields continue
+  to override the rung's preset.
+
 - Fixed: `AdditionTree(constraint = )` silently returned a constraint-violating
   tree for around one addition order in eleven.  Taxa are added to a tree seeded
   from the first three of them, which is built before the constraint is

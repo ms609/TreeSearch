@@ -444,7 +444,7 @@ fresh sectorial pass can exploit structural improvements available in
 that basin before final TBR polish.
 This approximates the pattern used by TNT's `xmult` command, which
 interleaves sectorial search throughout each replicate [@Goloboff1999].
-This option is disabled by default; no current strategy preset enables it.
+This option is disabled by default; no effort rung enables it.
 
 
 ## Tree fusing
@@ -533,12 +533,12 @@ Constraints are cleared and rebuilt whenever a new best score is
 discovered, preventing premature lock-in.
 
 
-## Strategy presets
+## Search effort
 
-`MaximizeParsimony()` automatically selects a strategy preset based on
-dataset size:
+`MaximizeParsimony()` automatically selects an effort rung based on
+dataset size; `effort` shifts the choice by that many notches:
 
-| Preset      | Condition                                   | Character                         |
+| Rung        | Condition                                   | Character                         |
 |-------------|---------------------------------------------|-----------------------------------|
 | `sprint`    | $\leq$ 30 tips                              | Minimal ratchet, no drift         |
 | `default`   | 31--64 tips, or $\geq$ 65 with < 100 patterns | Balanced; adaptive search level   |
