@@ -77,10 +77,15 @@ ape::write.tree(trees, file = allf)
 cat(sprintf("  wrote all %d returned tree(s) -> %s\n", length(trees), basename(allf)))
 
 # Now verify: resolution first (TreeLength demands binary), then re-score BY LABEL.
+# MaximizeParsimony returns trees ROOTED (the engine roots at tip 0), so fully resolved means
+# 2n-2 edges, NOT the unrooted 2n-3. Testing 2n-3 reported "0/100 binary" on trees that
+# TreeLength -- which itself refuses non-binary input -- had just scored without complaint;
+# the observed count was 8122 = 2*4062-2. Accept either, and print the counts so a future
+# mismatch is diagnosable instead of mysterious.
 nEdge <- vapply(trees, function(tr) nrow(tr$edge), integer(1))
-binaryOK <- nEdge == 2L * nTip - 3L
-cat(sprintf("  fully resolved (unrooted binary, %d edges): %d/%d   edge counts seen: %s\n",
-            2L * nTip - 3L, sum(binaryOK), length(trees),
+binaryOK <- nEdge %in% c(2L * nTip - 2L, 2L * nTip - 3L)
+cat(sprintf("  fully resolved (%d rooted / %d unrooted edges): %d/%d   edge counts seen: %s\n",
+            2L * nTip - 2L, 2L * nTip - 3L, sum(binaryOK), length(trees),
             paste(sort(unique(nEdge)), collapse = ",")))
 lengths_ <- rep(NA_real_, length(trees))
 for (i in seq_along(trees)) {

@@ -114,7 +114,49 @@ treat any single 2771 cell as noise.
 
 **The claim that survives both runs:** `project4284` is **10 win / 0 loss over 10 seeds**, and
 **no matrix regresses net** in either A/B.  That is the whole of the positive evidence, and it
-is enough — but it is one matrix, and it is the largest one in the battery.
+is enough — but it is one matrix, and it is the largest one in the battery.  Read the
+reproducibility note below before quoting the *size* of that win.
+
+### project4284 tree recovery, and what it says about the margin (job 18128526)
+
+Re-ran the identical deltas6 config on all 5 seeds with `collapse = FALSE`, wrote the trees and
+re-scored every returned tree by label with `TreeLength`.
+
+**Good news — the result is real.**  On all five seeds the re-scored minimum **exactly equals**
+the reported `attr(res, "score")`, across 100 returned trees per seed (500 trees, all scored,
+all fully resolved: 8122 edges = 2n−2, the *rooted* binary count).  So the ab6 headline is not
+an artefact of a degenerate partial tree, and the trees now exist in Hamilton `floors/`.
+Best tree **held** = **354** (seed 7732).  Best score ever *observed* = 353 (ab6 seed 7731) —
+**that tree is lost**, so 354 is the best recoverable tree for this matrix.
+
+**Bad news — the per-seed scores did not reproduce.**
+
+| seed | 7731 | 7732 | 7733 | 7734 | 7735 | mean |
+|------|------|------|------|------|------|------|
+| ab6 deltas6 | 353 | 354 | 356 | 357 | 355 | 355.0 |
+| re-run deltas6 | 355 | 354 | **360** | **363** | 356 | 357.6 |
+| ab6 base | 361 | 360 | 361 | 359 | 364 | 361.0 |
+
+Only seed 7732 matched.  **This is not a determinism bug**: these cells complete *zero*
+replicates and stop on the wall clock, so the search halts wherever the clock happened to be
+and node speed and load move the answer.  (Contrast the 46 exact ties elsewhere in the battery
+— on matrices that actually converge, the score is stable.  The instability is confined to the
+matrix that never converges.)
+
+What this does and does not change:
+
+- **The 10/0 count stands.**  Both A/Bs ran base and deltas6 sequentially *in one R session on
+  one node*, so the pairing controls node speed.  The re-run had no base arm and so cannot add
+  or remove wins.
+- **Do not quote the 2–9 step margin as an effect size.**  The cross-run spread on this matrix
+  is up to 6 steps — comparable to the effect — and the re-run's seed 7734 (363) would have
+  *lost* to four of the five original base cells.  The paired within-task design is
+  load-bearing: the effect is only cleanly visible because of it.
+- **The `poolSuboptimal` leak was not observed here, and this was the wrong cell to test it
+  on.**  All 100 returned trees shared one score (the pool sits at `poolMaxSize` = 100), but
+  with zero completed replicates the suboptimal-retention path plausibly never engaged — the
+  same structural reason `poolReseed` cannot work on this matrix.  Treat the leak as still
+  unmeasured, not as disproved.
 
 **project4284 won with ZERO completed replicates.**  base completed 1–2 replicates in ~1330 s;
 deltas6 completed **0** and still returned a tree 2–9 steps better on every seed.  At 4062
@@ -226,13 +268,12 @@ Also not measured:
 
 - **Equal weights only.**  Implied weights and profile parsimony are a deliberate but
   unmeasured extrapolation; ratchet depth there is governed separately by `.IwRatchetDepth`.
-- **No tree was retained for the project4284 result** the confirmation rests on — the harness
-  recorded `attr(res, "score")` only, so ~353 could not be independently re-scored at the
-  time of writing.  A degenerate partial tree would score *worse*, so the win is very
-  unlikely to be an artefact, but "unlikely" is what the record says.  Recovery run
-  `reach_recover4284.R` re-runs the identical config, writes the trees and re-scores by label
-  with `TreeLength` (job 18128376 died in the check — see the `collapse` trap above; job
-  **18128526** is the corrected `collapse = FALSE` run).
+- ~~No tree was retained for the project4284 result.~~ **RESOLVED** by job 18128526 — see the
+  recovery section above.  Trees are in Hamilton `floors/`; the reported score is exactly
+  reproduced by `TreeLength` on the returned tree.  What the recovery *added* to the
+  "not measured" list is that **the per-seed score on this matrix is not reproducible across
+  nodes** (deadline-truncated, zero completed replicates), so the margin is not a stable
+  effect size.
 - **The `escalatedPool` filter is only needed on the `collapse = FALSE` path** — verified by
   reading, not benchmark: the `collapse = TRUE` branch already restricts to
   `scores == best_score` before collapsing (`R/MaximizeParsimony.R`), which the `collapse`
