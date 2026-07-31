@@ -284,8 +284,14 @@ rung it started on.
 Negative values search less; a large negative value reliably gives the quickest
 rung.
 
-Past `large`, further notches double the replicate budget (1000, 2000, 4000,
-8000) and raise the hit target with it.
+Past `large`, further notches double both the replicate budget (1000, 2000,
+4000 ...) and the hit target, so one notch always means roughly twice the work.
+The rung-4 budget of 500 is measured — on 120–180-tip matrices the fraction of
+runs reaching the best score was still climbing at 500 with no knee — but the
+doubling above it is an operating point, not a calibrated level: nothing
+measures where that curve flattens.
+There is no policy ceiling, since extra replicates cost wall but cannot cost
+reach.
 Replicates are what buy reach on hard datasets: raising `targetHits` alone does
 not help there, because a hard search never accumulates that many hits before
 the replicate cap stops it.

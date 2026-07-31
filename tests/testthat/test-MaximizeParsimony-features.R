@@ -187,10 +187,31 @@ test_that("`effort` clamps at both ends of the ladder", {
   # negative offset and reliably get `sprint` whatever the dataset.
   expect_equal(ER(AR(200L, 200L), -99L, 0L), 1L)
   expect_equal(ER(AR(20L, 100L), -1L, 0L), 1L)
-  # Top clamp is documented, and announces itself rather than silently
-  # pretending a bigger number meant something.
+  # The only top limit is representability, and it announces itself rather than
+  # silently pretending a bigger number meant something.  There is deliberately
+  # no policy ceiling below it: extra replicates cost wall but cannot cost
+  # reach, so refusing to go further would just obstruct the request.
   expect_equal(ER(1L, 99L, 0L), TreeSearch:::.effortMaxRung)
-  expect_message(ER(1L, 99L, 1L), "capped at rung")
+  expect_message(ER(1L, 99L, 1L), "clamped to rung")
+  # The ceiling must be exactly where the budget stops being an integer: one
+  # rung lower would be arbitrary, one higher would overflow.
+  RS <- TreeSearch:::.RungSpec
+  expect_true(RS(TreeSearch:::.effortMaxRung)[["maxReplicates"]] > 0L)
+  expect_true(is.na(suppressWarnings(
+    as.integer(500 * 2^(TreeSearch:::.effortMaxRung + 1L - 4L)))))
+})
+
+test_that("both budget knobs double, so a notch is the same size either way", {
+  # Mixed rates would make one notch 2x the work on hard datasets (where
+  # maxReplicates binds) but only (k+1)/k on easy ones (where targetHits does),
+  # so notches would shrink as you climb on the easy population.
+  RS <- TreeSearch:::.RungSpec
+  for (r in 5:9) {
+    expect_equal(RS(r)[["maxReplicates"]] / RS(r - 1L)[["maxReplicates"]], 2)
+    expect_equal(RS(r)[["hitMultiplier"]] / RS(r - 1L)[["hitMultiplier"]], 2)
+  }
+  # Rungs 1-4 leave both alone: they differ in provisioning, not budget.
+  for (r in 1:4) expect_equal(RS(r)[["hitMultiplier"]], 1L)
 })
 
 test_that("effort = 0 reproduces the automatic choice on every size band", {

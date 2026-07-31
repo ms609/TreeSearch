@@ -153,18 +153,28 @@ cycle loop.  The drift cycles also recover equal-score trees on
 TBR-disconnected islands that random restarts alone miss.}
 \item{4, \code{large}}{\code{thorough}'s provisioning with \code{maxReplicates} raised
 to 500, to suit the higher per-replicate cost of big trees.}
-\item{5 and up}{\code{thorough}'s provisioning with the budget doubling each
-notch (1000, 2000, 4000, 8000 replicates), and the hit target raised in
-step.  Capped at rung 8; beyond that, set \code{maxReplicates} yourself
-rather than have the package extrapolate for you.}
+\item{5 and up}{\code{thorough}'s provisioning, with both the replicate budget
+and the hit target doubling each notch (1000, 2000, 4000 ...
+replicates), so that one notch always means roughly twice the work.
+There is no policy ceiling: extra replicates cannot cost reach, only
+wall, which is what you asked to spend.  The ladder stops only at rung
+26, where the replicate budget outgrows R's integer type.}
 }
 
-Above rung 4 it is the \strong{replicate budget} that climbs, because that is
-the knob that buys reach on hard datasets.  Raising \code{targetHits} alone does
-not: it ends a run early on easy datasets, but on hard ones it is never
-reached and \code{maxReplicates} binds first.  (Under implied weights a raised
-hit target additionally deepens the ratchet -- see \code{targetHits} -- so it is
-raised alongside the budget from rung 5, not instead of it.)
+Above rung 4 the \strong{replicate budget} is what buys reach on hard datasets.
+Raising \code{targetHits} alone does not: it ends a run early on easy datasets,
+but on hard ones it is never reached and \code{maxReplicates} binds first.  It
+is raised in step all the same, because it governs when \emph{easy} runs stop --
+and under implied weights it additionally deepens the ratchet (see
+\code{targetHits}).
+
+The rung-4 budget of 500 is measured: a 34-matrix, 120--180-tip sweep found
+the fraction of runs reaching the best score climbing from 0.68 at 96
+replicates to 0.79 at 250, with the hard-matrix subset \strong{still climbing at
+500 and no knee}.  The doubling \emph{above} that is an operating point rather
+than a fitted constant: nothing measures where the reach curve flattens, so
+the ladder simply keeps offering more in even steps.  Treat rungs 5+ as
+"spend about twice as long again", not as calibrated levels.
 
 Anything you set yourself wins: \code{maxReplicates} and \code{targetHits} you supply
 are never rescaled by \code{effort}, and explicit \code{control} fields always

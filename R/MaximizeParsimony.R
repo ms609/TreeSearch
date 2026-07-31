@@ -427,14 +427,21 @@
 # its tests) name a rung, via the internal `.rung` argument.
 .effortLadder <- c("sprint", "default", "thorough", "large")
 
-# Documented ceiling, not an overflow guard.  `500 * 2^(rung - 4)` overflows
-# R's integer type around rung 26, and clamping there would make `effort = 40`
-# silently mean `effort = 26`.  Rung 8 is 8000 replicates, ~80x the default cap
-# and far beyond anything measured; past that a user should set `maxReplicates`
-# themselves rather than have the package extrapolate on their behalf.  Requests
-# above it are clamped WITH A MESSAGE -- the same posture as
-# `.iwRatchetMaxCycles`, which caps at the largest depth actually tested.
-.effortMaxRung <- 8L
+# A REPRESENTABILITY limit, not a policy one -- and the distinction matters.
+# `.iwRatchetMaxCycles = 115` caps at the largest ratchet depth actually tested,
+# because extra ratchet depth is not known to be free.  Extra replicates ARE:
+# raising the cap only appends later replicates and never delays an earlier
+# improvement, so reach is monotone non-decreasing in `maxReplicates` and the
+# only cost is wall -- which is exactly what someone raising `effort` is asking
+# to spend.  There is therefore no measured or principled level at which the
+# ladder should refuse to go further, and an arbitrary ceiling would just
+# obstruct the request.
+#
+# Rung 26 is where `500 * 2^(rung - 4)` stops fitting in R's integer type
+# (500 * 2^22 = 2 097 152 000; one more doubling overflows).  Requests beyond it
+# are clamped WITH A MESSAGE, so `effort = 40` announces that it means the same
+# as `effort = 26` rather than silently pretending otherwise.
+.effortMaxRung <- 26L
 
 # Everything a rung means, in ONE place.  `maxReplicates = NA` means "leave the
 # SearchControl default alone".
@@ -451,7 +458,20 @@
     # ratchet depth may not be extrapolated.
     maxReplicates = if (rung <= 3L) NA_integer_ else
       as.integer(500 * 2^(rung - 4L)),
-    # `targetHits` multiplier: 1 through rung 4, then rung - 3.
+    # `targetHits` multiplier: 1 through rung 4, then doubling in step with the
+    # replicate budget.
+    #
+    # BOTH knobs double, so that one notch means the same thing -- roughly twice
+    # the work -- whichever population a dataset falls in.  They govern disjoint
+    # populations (see below), so mixing rates would make a notch 2x the work on
+    # hard matrices but only (k+1)/k on easy ones, i.e. notches would shrink as
+    # you climb on precisely the population `targetHits` controls.  That is the
+    # only argument for the shape; it is an OPERATING POINT, not a fitted
+    # constant.  What is measured is that reach was still climbing at 500
+    # replicates with no knee (34-matrix 120-180t sweep, reach@96 = 0.68 ->
+    # reach@250 = 0.79) -- so more is better, and nothing measures where that
+    # stops or what shape the approach has.  A doubling grid over rungs 4-8 on
+    # the hard tail is what would replace this guess with a measurement.
     #
     # `maxReplicates` deliberately leads and `targetHits` follows, because the
     # two bite on DISJOINT populations.  `targetHits` ends a run early on easy
@@ -468,7 +488,7 @@
     # through .IwRatchetDepth()'s targetHits/defaultHits escalation (capped at
     # .iwRatchetMaxCycles), which is a genuine reach lever the equal-weights
     # measurement above cannot see.
-    hitMultiplier = if (rung <= 4L) 1L else as.integer(rung - 3L)
+    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
   )
 }
 
@@ -504,9 +524,11 @@
   wanted <- autoRung + as.integer(effort)
   rung <- max(1L, min(.effortMaxRung, wanted))
   if (wanted > .effortMaxRung && verbosity >= 1L) {
-    message("`effort` capped at rung ", .effortMaxRung, " (",
+    message("`effort` clamped to rung ", .effortMaxRung, " (",
             .RungSpec(.effortMaxRung)[["maxReplicates"]],
-            " replicates); set `maxReplicates` directly to search harder.")
+            " replicates): the largest replicate budget representable as an ",
+            "integer. Set `maxReplicates` and `targetHits` directly if you ",
+            "need more.")
   }
   rung
 }
@@ -687,18 +709,28 @@
 #'       TBR-disconnected islands that random restarts alone miss.}
 #'     \item{4, `large`}{`thorough`'s provisioning with `maxReplicates` raised
 #'       to 500, to suit the higher per-replicate cost of big trees.}
-#'     \item{5 and up}{`thorough`'s provisioning with the budget doubling each
-#'       notch (1000, 2000, 4000, 8000 replicates), and the hit target raised in
-#'       step.  Capped at rung 8; beyond that, set `maxReplicates` yourself
-#'       rather than have the package extrapolate for you.}
+#'     \item{5 and up}{`thorough`'s provisioning, with both the replicate budget
+#'       and the hit target doubling each notch (1000, 2000, 4000 ...
+#'       replicates), so that one notch always means roughly twice the work.
+#'       There is no policy ceiling: extra replicates cannot cost reach, only
+#'       wall, which is what you asked to spend.  The ladder stops only at rung
+#'       26, where the replicate budget outgrows R's integer type.}
 #'   }
 #'
-#'   Above rung 4 it is the **replicate budget** that climbs, because that is
-#'   the knob that buys reach on hard datasets.  Raising `targetHits` alone does
-#'   not: it ends a run early on easy datasets, but on hard ones it is never
-#'   reached and `maxReplicates` binds first.  (Under implied weights a raised
-#'   hit target additionally deepens the ratchet -- see `targetHits` -- so it is
-#'   raised alongside the budget from rung 5, not instead of it.)
+#'   Above rung 4 the **replicate budget** is what buys reach on hard datasets.
+#'   Raising `targetHits` alone does not: it ends a run early on easy datasets,
+#'   but on hard ones it is never reached and `maxReplicates` binds first.  It
+#'   is raised in step all the same, because it governs when *easy* runs stop --
+#'   and under implied weights it additionally deepens the ratchet (see
+#'   `targetHits`).
+#'
+#'   The rung-4 budget of 500 is measured: a 34-matrix, 120--180-tip sweep found
+#'   the fraction of runs reaching the best score climbing from 0.68 at 96
+#'   replicates to 0.79 at 250, with the hard-matrix subset **still climbing at
+#'   500 and no knee**.  The doubling *above* that is an operating point rather
+#'   than a fitted constant: nothing measures where the reach curve flattens, so
+#'   the ladder simply keeps offering more in even steps.  Treat rungs 5+ as
+#'   "spend about twice as long again", not as calibrated levels.
 #'
 #'   Anything you set yourself wins: `maxReplicates` and `targetHits` you supply
 #'   are never rescaled by `effort`, and explicit `control` fields always

@@ -12,9 +12,18 @@
   The rungs are the former presets — `sprint`, `default`, `thorough`, and
   `large` (which was only ever `thorough` with `maxReplicates = 500`) — so the
   ladder generalises an axis the package already had.  Beyond `large`, each
-  further notch doubles the replicate budget (1000, 2000, 4000, 8000) and
-  raises the hit target with it, capped at rung 8; past that, set
-  `maxReplicates` yourself rather than have the package extrapolate.
+  further notch doubles BOTH the replicate budget (1000, 2000, 4000 ...) and
+  the hit target, so one notch always means roughly twice the work whichever
+  bound a dataset is under.  There is no policy ceiling: extra replicates cost
+  wall but cannot cost reach, so the ladder stops only at rung 26, where the
+  budget outgrows R's integer type.
+
+  The rung-4 budget of 500 is measured (a 34-matrix 120--180-tip sweep found
+  reach climbing from 0.68 at 96 replicates to 0.79 at 250, with the hard subset
+  still climbing at 500 and no knee).  The doubling above it is an operating
+  point, not a fitted constant -- nothing measures where the reach curve
+  flattens, and a doubling grid over rungs 4--8 on the hard tail is what would
+  replace the guess with a measurement.
 
   The replicate budget leads and `targetHits` follows, because the two bite on
   disjoint populations: `targetHits` ends a run early on easy datasets, but on
