@@ -81,13 +81,22 @@ for (a in sort(unique(P$arm)))
               fmt(P$wall_total[P$arm == a]), fmt(P$reps[P$arm == a])))
 
 # Paired per-cell comparison (repo convention: counts + median ratios, not p-values).
-b <- P[P$arm == "base", ];   d <- P[P$arm == "deltas", ]
+# Arm names are READ FROM THE DATA rather than hard-coded, so a variant harness (e.g. a
+# `deltas6` arm confirming the shipped six-lever form) analyses without an edit -- with
+# fixed names the paired table silently comes back empty instead of erroring.
+armNames <- sort(unique(P$arm))
+baseArm <- if ("base" %in% armNames) "base" else armNames[[1]]
+testArm <- setdiff(armNames, baseArm)[[1]]
+b <- P[P$arm == baseArm, ];   d <- P[P$arm == testArm, ]
 k <- intersect(paste(b$dataset, b$seed), paste(d$dataset, d$seed))
 b <- b[match(k, paste(b$dataset, b$seed)), ]; d <- d[match(k, paste(d$dataset, d$seed)), ]
-cat(sprintf("\n=== PAIRED (n = %d cells) ===\n", length(k)))
-cat(sprintf("  final score : %d better, %d worse, %d tie  (deltas vs base)\n",
-            sum(d$final < b$final), sum(d$final > b$final), sum(d$final == b$final)))
-cat(sprintf("  reach       : base %d, deltas %d\n", sum(b$reached), sum(d$reached)))
+cat(sprintf("\n=== PAIRED (n = %d cells; baseline '%s' vs test '%s') ===\n",
+            length(k), baseArm, testArm))
+cat(sprintf("  final score : %d better, %d worse, %d tie  (%s vs %s)\n",
+            sum(d$final < b$final), sum(d$final > b$final), sum(d$final == b$final),
+            testArm, baseArm))
+cat(sprintf("  reach       : %s %d, %s %d\n", baseArm, sum(b$reached),
+            testArm, sum(d$reached)))
 ok <- !is.na(b$tt_hit) & !is.na(d$tt_hit)
 if (any(ok)) {
   cat(sprintf("  tt_hit  ratio (deltas/base), median = %.3f  [%d better, %d worse]\n",
