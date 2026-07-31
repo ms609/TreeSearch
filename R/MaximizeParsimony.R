@@ -1539,6 +1539,14 @@ MaximizeParsimony <- function(
     strategy_diagnostics = result$strategy_diagnostics,
     replicate_scores = result$replicate_scores,
     candidates_evaluated = result$candidates_evaluated,
+    # NA-certification counters (`exact_verify_sweep` calls executed vs skipped
+    # by `TBRParams::certify_unrooted`).  Diagnostic: `naDiag$n_evs_skipped` is
+    # the only way an A/B can prove the certification gate reached a live call
+    # site, since `do_reroot` needs `tabuSize == 0` -- which the shipped presets
+    # do not set.  Timing fields are populated only under `TS_NA_TIMING`, and a
+    # threaded run reports the main thread's copy only (each worker owns a
+    # private dataset), so read them from serial runs.
+    naDiag = result$na_diag,
     class = "multiPhylo"
   )
 }

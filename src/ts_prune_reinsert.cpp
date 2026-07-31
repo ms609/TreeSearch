@@ -638,6 +638,7 @@ PruneReinsertResult prune_reinsert_search(
       tp.max_accepted_changes = params.tbr_max_moves;
       tp.max_hits = params.tbr_max_hits;
       tp.tabu_size = params.tabu_size;
+      tp.certify_unrooted = false;   // reduced sub-tree; reinserted, then judged
       tbr_search(red_tree, red_ds, tp, nullptr, nullptr, nullptr,
                  check_timeout);
     }
@@ -670,6 +671,7 @@ PruneReinsertResult prune_reinsert_search(
       tp.max_accepted_changes = params.tbr_full_max_moves;  // 0 = converge
       tp.max_hits = params.tbr_max_hits;
       tp.tabu_size = params.tabu_size;
+      tp.certify_unrooted = false;   // candidate for step 7's accept-or-revert
       tbr_search(tree, ds, tp, cd, nullptr, nullptr, check_timeout);
     }
 

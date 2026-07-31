@@ -159,6 +159,13 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   // user's objective and is safe to report.  ratchet_search() is only ever called
   // on the whole tree -- never on a sector -- so this cannot leak a subtree score.
   search_params.heartbeat_label = "Ratchet";
+  // No caller of ratchet_search reads an intermediate cycle's tree: a cycle that
+  // improves is superseded by the next perturbation, and one that does not is
+  // discarded outright (copy_topology(tree, best_tree) below).  So certifying
+  // that a cycle's tree is a true unrooted-TBR optimum buys nothing.  NB this
+  // params set is shared with the baseline TBR above the cycle loop -- also
+  // cleared, deliberately: 6-20 perturbation cycles follow it.
+  search_params.certify_unrooted = false;
 
   TBRResult initial = tbr_search(tree, ds, search_params, cd,
                                    nullptr, nullptr, check_timeout);
@@ -181,6 +188,7 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   perturb_params.max_hits = 1;
   perturb_params.tabu_size = params.tabu_size;
   perturb_params.clip_order = static_cast<ClipOrder>(params.clip_order);
+  perturb_params.certify_unrooted = false;   // reweighted landscape; discarded
 
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();

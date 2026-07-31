@@ -935,6 +935,8 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       eq_params.max_accepted_changes = tree.n_tip / 8;
       eq_params.max_hits = 100;  // generous for equal-score exploration
       eq_params.tabu_size = params.tabu_size;
+      // Perturbation phase: this tree is a departure point, never a result.
+      eq_params.certify_unrooted = false;
 
       TBRResult eq_result = tbr_search(tree, ds, eq_params, cd,
                                         sector_mask, nullptr, check_timeout);
@@ -947,6 +949,9 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
     search_params.max_accepted_changes = 0;  // run to convergence
     search_params.max_hits = params.max_hits;
     search_params.tabu_size = params.tabu_size;
+    // Same argument as the ratchet: a cycle that improves is re-perturbed next
+    // round, one that does not is restored away (drift_restore_topology below).
+    search_params.certify_unrooted = false;
 
     TBRResult search_result = tbr_search(tree, ds, search_params, cd,
                                           sector_mask, nullptr, check_timeout);

@@ -997,10 +997,13 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   // the inner loop) and not cached, so the env var toggles reliably.  The
   // deterministic guard is test-ts-na-evcache.R.
   const bool cache_hit = evs_false_cache.count(cache_key) != 0;
-  if (na_timing_enabled()) {
-    ++ds.na_n_evs;
-    if (cache_hit) ++ds.na_n_evs_hits;
-  }
+  // Counted unconditionally (NOT under TS_NA_TIMING, unlike the ns brackets):
+  // one increment per convergence, and na_n_evs paired with na_n_evs_skipped is
+  // what lets an A/B prove the certify_unrooted gate reached a live call site.
+  // A gate that never fires and a gate that fires and buys nothing look
+  // identical without both halves of that pair.
+  ++ds.na_n_evs;
+  if (cache_hit) ++ds.na_n_evs_hits;
   if (cache_hit && !std::getenv("TS_EV_AUDIT")) return false;
 
   save_topology(tree, snap);
@@ -1654,6 +1657,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // TS_PHYS_REROOT selects the legacy physical-reroot reference path; it is read
   // once per outer reroot-loop iteration below (>=1/call), so hoist it too.
   const bool phys_reroot = std::getenv("TS_PHYS_REROOT") != nullptr;
+  // NA certification gating (params.certify_unrooted).  The gate is OPT-IN via
+  // TS_NA_NOCERTIFY: unset => certify at every caller exactly as before, so the
+  // shipped default is byte-identical to the parent commit and the
+  // floor-attainment gate (not this commit) decides whether to flip it.  Read
+  // once per call, not per outer iteration, per the getenv-cost lesson.
+  const bool certify_na = params.certify_unrooted
+      || std::getenv("TS_NA_NOCERTIFY") == nullptr;
   // B2 ceiling probe (measurement only, env-gated => production byte-identical):
   // count SPR-regraft candidates that pass collapse Condition 1 (zero parent
   // cost) but are NOT conservatively collapsed (Condition 3 fails) — the set an
@@ -3082,17 +3092,36 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // only approximate, so an EXACT full-neighbourhood sweep is required to
     // certify a true unrooted-TBR optimum (see exact_verify_sweep).
     bool improved;
-    if (has_na) {
+    if (has_na && !certify_na) {
+      // This caller does not need a certified optimum (see
+      // TBRParams::certify_unrooted): accept the approximate scan's apparent
+      // convergence instead of paying the exhaustive sweep to prove it.
+      //
+      // exact_verify_sweep re-synced best_score to the tree on BOTH its exits
+      // (entry, and again before returning false).  Skipping it removes that
+      // sync, so do it here explicitly -- a best_score that drifts from the
+      // returned topology is the ts_tbr.cpp:660 bug class, and it would surface
+      // in a floor-attainment panel as a quality regression that is really a
+      // reporting bug.  One rescore per convergence: not measurable.
+      ++ds.na_n_evs_skipped;
+      tree.build_postorder();
+      best_score = full_rescore(tree, ds);
+      score_fresh = true;
+      improved = false;
+    } else if (has_na) {
       // Timed separately: this O(n^2) certification is the single largest
       // unmeasured item on the native-NA path, and it is invisible to every
       // candidate-based metric because it never bumps n_candidates_evaluated.
       const auto _t_evs = na_timing ? std::chrono::steady_clock::now()
                                     : std::chrono::steady_clock::time_point{};
       improved = exact_verify_sweep(tree, ds, best_score);
-      if (na_timing) {
-        ds.na_t_evs_ns += ns_since(_t_evs);
-        if (improved) ++ds.na_n_evs_improved;
-      }
+      // na_n_evs_improved is counted ALWAYS (only the ns bracket is
+      // TS_NA_TIMING-gated): it says how often certification found a real
+      // improving move rather than merely proving optimality, which is the
+      // mechanistic explanation of any quality difference the gate causes.  A
+      // panel that cannot see it can only report that reach dropped, not why.
+      if (improved) ++ds.na_n_evs_improved;
+      if (na_timing) ds.na_t_evs_ns += ns_since(_t_evs);
     } else {
       improved = try_root_edge_moves(tree, ds, best_score, ew_directional);
     }

@@ -533,6 +533,11 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
       TBRParams tbr_params;
       tbr_params.accept_equal = false;
       tbr_params.max_hits = 1;
+      // Post-fuse cleanup inside the fuse round loop; another fuse round or the
+      // driven pipeline's own polish follows.  Like the sector polishes, this
+      // site leaves tabu_size at 0, so on native-NA data it DOES reach
+      // exact_verify_sweep under the shipped presets.
+      tbr_params.certify_unrooted = false;
       TBRResult tbr_res = tbr_search(recipient, ds, tbr_params);
       score = tbr_res.best_score;
     }
