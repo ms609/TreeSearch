@@ -25,6 +25,18 @@ if (!length(files)) stop("no cell_*.csv in ", dir)
 D <- do.call(rbind, lapply(files, read.csv, stringsAsFactors = FALSE))
 cat(sprintf("Loaded %d rows from %d cell files\n", nrow(D), length(files)))
 
+# The engine's real stopping deadline, not the nominal cap (see the at_deadline comment).
+ENUM_TIME_FRACTION_DEFAULT <- 0.1
+deadline_of <- function(sa) {
+  etf <- if ("enum_time_fraction" %in% names(sa) && !is.na(sa$enum_time_fraction[1])) {
+    sa$enum_time_fraction[1]
+  } else ENUM_TIME_FRACTION_DEFAULT
+  sa$cap_s[1] * (1 - etf)
+}
+if (!"enum_time_fraction" %in% names(D))
+  cat(sprintf("NOTE: no enum_time_fraction column; assuming the %.2f default for deadlines\n",
+              ENUM_TIME_FRACTION_DEFAULT))
+
 cells <- unique(D[, c("dataset", "nTip", "tier", "seed")])
 out <- list()
 for (i in seq_len(nrow(cells))) {
@@ -43,13 +55,21 @@ for (i in seq_len(nrow(cells))) {
       rep2hit = if (length(hit)) sa$replicate[hit[1]] else NA_integer_,
       wall_total = sa$wall_total_s[1], reps = sa$reps_done[1],
       cap_s = sa$cap_s[1],
-      # TRUNCATION FLAG. The deltas arm costs ~15x the candidates per replicate, so at a
-      # fixed wall it completes far fewer reps. If an arm stopped AT the cap it did not
-      # converge -- its "reach" is a budget artefact, not a property of the config. This
-      # is exactly the error that made 5432 arm B look replicate-capped when it was
-      # time-truncated. A reach comparison is only honest on non-truncated cells.
-      truncated = as.integer(!is.na(sa$wall_total_s[1]) &&
-                             sa$wall_total_s[1] >= 0.95 * sa$cap_s[1]),
+      # DEADLINE FLAG. The deltas arm costs ~2.3x the wall per replicate, so at a fixed
+      # budget it completes far fewer reps. An arm that stopped at the budget did not
+      # converge -- reading its "reach" as a property of the config is exactly the error
+      # that made 5432 arm B look replicate-capped when it was time-truncated.
+      #
+      # The budget is NOT maxSeconds. The engine stops the main search at
+      #   main_deadline = maxSeconds * (1 - enumTimeFraction)         [src/ts_driven.cpp]
+      # with enumTimeFraction defaulting to 0.1, so a deadline-bound cell lands at ~0.90 *
+      # cap_s and NOT at cap_s. This flag originally tested `>= 0.95 * cap_s` and therefore
+      # scored 59 of 110 genuinely deadline-bound ab6 cells as "converged" -- it missed the
+      # very trap documented in reach_escalation_FINDINGS.md. Read enumTimeFraction from the
+      # data when the harness records it, else assume the 0.1 default.
+      deadline_s = deadline_of(sa),
+      at_deadline = as.integer(!is.na(sa$wall_total_s[1]) &&
+                               sa$wall_total_s[1] >= 0.98 * deadline_of(sa)),
       stringsAsFactors = FALSE)
   }
 }
@@ -117,30 +137,70 @@ if (any(worse)) {
                    base = b$final[worse], deltas = d$final[worse]), row.names = FALSE)
 } else cat("\nNo cell where deltas found a worse tree.\n")
 
-cat(sprintf("\n=== TRUNCATION (stopped at the wall cap => did NOT converge) ===\n"))
-cat(sprintf("  base   %d/%d cells truncated\n  deltas %d/%d cells truncated\n",
-            sum(b$truncated), nrow(b), sum(d$truncated), nrow(d)))
-clean <- b$truncated == 0L & d$truncated == 0L
-cat(sprintf("  cells where NEITHER arm truncated (the honest reach comparison): %d/%d\n",
-            sum(clean), length(clean)))
-if (sum(d$truncated) > sum(b$truncated))
-  cat("  NOTE: deltas truncated more often than base -- on those cells a reach gap is a\n",
-      "        BUDGET artefact (deltas cost ~15x candidates/rep), not a config failure.\n")
+# BUDGET REGIME. Being deadline-bound is not automatically a spoiled cell: when BOTH arms
+# stop at the same deadline the cell is a valid EQUAL-WALL comparison, which is the stronger
+# test (the cheaper-per-rep arm gets more replicates and still has to win). What invalidates
+# a cell is ASYMMETRY -- one arm converged and the other was cut off -- because then the
+# score gap may be purely budget. So classify cells three ways instead of dropping them.
+cat(sprintf("\n=== BUDGET REGIME (deadline = cap_s x (1 - enumTimeFraction)) ===\n"))
+cat(sprintf("  base   %d/%d cells stopped at the deadline\n", sum(b$at_deadline), nrow(b)))
+cat(sprintf("  %-6s %d/%d cells stopped at the deadline\n", testArm,
+            sum(d$at_deadline), nrow(d)))
+bothDL <- b$at_deadline == 1L & d$at_deadline == 1L
+neither <- b$at_deadline == 0L & d$at_deadline == 0L
+asym <- !bothDL & !neither
+cat(sprintf("  both at deadline (valid, EQUAL-WALL) : %d\n", sum(bothDL)))
+cat(sprintf("  neither (both converged, valid)      : %d\n", sum(neither)))
+cat(sprintf("  exactly one (ASYMMETRIC, suspect)    : %d\n", sum(asym)))
+if (any(asym))
+  print(data.frame(dataset = d$dataset[asym], seed = d$seed[asym],
+                   baseAtDL = b$at_deadline[asym], testAtDL = d$at_deadline[asym],
+                   base = b$final[asym], test = d$final[asym]), row.names = FALSE)
+if (any(bothDL)) {
+  rr <- b$reps[bothDL] / d$reps[bothDL]
+  rr <- rr[is.finite(rr)]
+  if (length(rr))
+    cat(sprintf("  work per replicate on equal-wall cells: %s does %.2fx the replicates\n",
+                baseArm, median(rr)))
+}
 
-# The verdict is computed on NON-TRUNCATED cells only: a truncated arm never converged,
-# so scoring its reach would repeat the arm-B error of reading a budget cut as a result.
-reachB <- mean(b$reached[clean]); reachD <- mean(d$reached[clean])
+# The verdict is computed on the VALID cells (both-at-deadline plus both-converged) and is
+# driven by PAIRED SCORE COUNTS, not by reach. Reach here is measured against the union-best
+# across arms, which is self-referential -- if one arm alone attains a score the other
+# "misses" by construction -- so a reach fraction restates the paired counts with the losses
+# inflated. Both are printed; the counts are the statistic.
+valid <- bothDL | neither
+nBetter <- sum(d$final[valid] < b$final[valid])
+nWorse  <- sum(d$final[valid] > b$final[valid])
+reachB <- mean(b$reached[valid]); reachD <- mean(d$reached[valid])
 tierBad <- character(0)
 for (tr in unique(P$tier)) {
-  ib <- clean & b$tier == tr; id <- clean & d$tier == tr
-  if (sum(ib) && mean(d$reached[id]) < mean(b$reached[ib])) tierBad <- c(tierBad, tr)
+  iv <- valid & b$tier == tr
+  if (sum(iv) && sum(d$final[iv] > b$final[iv]) > sum(d$final[iv] < b$final[iv]))
+    tierBad <- c(tierBad, tr)
 }
-cat(sprintf("\n=== PRE-REGISTERED VERDICT (non-truncated cells, n = %d) ===\n", sum(clean)))
-cat(sprintf("  reach base=%.3f deltas=%.3f; tier regressions: %s\n  --> %s\n",
-            reachB, reachD, if (length(tierBad)) paste(tierBad, collapse = ",") else "none",
-            if (sum(clean) < 0.5 * length(clean))
-              "INCONCLUSIVE -- too few non-truncated cells; re-run with larger caps"
-            else if (reachD >= reachB && !length(tierBad)) "SHIP v1"
+cat(sprintf("\n=== PRE-REGISTERED VERDICT (valid cells, n = %d of %d) ===\n",
+            sum(valid), length(valid)))
+cat(sprintf("  paired score: %d better, %d worse; tier regressions: %s\n",
+            nBetter, nWorse, if (length(tierBad)) paste(tierBad, collapse = ",") else "none"))
+cat(sprintf("  reach (union-best, self-referential): base=%.3f %s=%.3f\n",
+            reachB, testArm, reachD))
+cat(sprintf("  --> %s\n",
+            if (!sum(valid)) "INCONCLUSIVE -- no valid cells"
+            else if (nBetter >= nWorse && !length(tierBad)) "SHIP"
             else "NO-SHIP (restrict or drop)"))
-cat("\n(All-cells reach, for reference only -- confounded by truncation: ")
-cat(sprintf("base=%.3f deltas=%.3f)\n", mean(b$reached), mean(d$reached)))
+
+# How concentrated is the effect? A tier-level win can be a single matrix repeated across
+# seeds -- that happened here (project4284) and was briefly written up as a tier property.
+chg <- valid & d$final != b$final
+if (any(chg)) {
+  cat("\n=== WHERE THE EFFECT LIVES (per matrix; a 1-matrix effect is NOT a tier property) ===\n")
+  for (ds in unique(P$dataset[P$dataset %in% b$dataset[chg]])) {
+    i <- valid & b$dataset == ds
+    cat(sprintf("  %-18s %5dt  win %d  loss %d  tie %d\n", ds, b$nTip[i][1],
+                sum(d$final[i] < b$final[i]), sum(d$final[i] > b$final[i]),
+                sum(d$final[i] == b$final[i])))
+  }
+  cat(sprintf("  matrices with any change: %d of %d in the battery\n",
+              length(unique(b$dataset[chg])), length(unique(b$dataset))))
+}

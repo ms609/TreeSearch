@@ -137,12 +137,20 @@ make_tracer <- function(t0) {
   list(cb = cb, env = env)
 }
 
+# The engine reserves a fraction of maxSeconds for MPT enumeration and stops the main search
+# at maxSeconds * (1 - ENUM_TIME_FRACTION). Passed EXPLICITLY (at the engine default, so
+# behaviour is unchanged) and recorded per row, so the analyzer can compute the real deadline
+# instead of guessing at the nominal cap -- guessing is what let 59/110 deadline-bound ab6
+# cells be scored as "converged".
+ENUM_TIME_FRACTION <- 0.1
+
 run_arm <- function(pd, nTip, arm, seed, maxrep, cap_s) {
   set.seed(seed)
   t0 <- proc.time()["elapsed"]
   tr <- make_tracer(t0)
   args <- list(pd, strategy = "auto",
                maxReplicates = maxrep, maxSeconds = cap_s,
+               enumTimeFraction = ENUM_TIME_FRACTION,
                targetHits = reach_threshold(nTip),   # SAME in both arms
                nThreads = 1L, verbosity = 0L,
                progressCallback = tr$cb)
@@ -213,7 +221,8 @@ for (arm in ARMS) {
     event = "improve", replicate = tr$replicate, elapsed_s = tr$elapsed_s,
     engine_elapsed = tr$engine_elapsed, best_score = tr$best_score,
     final_score = r$final_score, reps_done = r$reps, wall_total_s = r$wall,
-    candidates = r$cand, cap_s = cap_s, stringsAsFactors = FALSE)
+    candidates = r$cand, cap_s = cap_s,
+    enum_time_fraction = ENUM_TIME_FRACTION, stringsAsFactors = FALSE)
 }
 
 D <- do.call(rbind, all_rows)
