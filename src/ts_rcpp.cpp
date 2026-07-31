@@ -2188,8 +2188,13 @@ List ts_collapse_pool(
     ts::TreeState tree;
     tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
 
-    // Root on tip 0 so root-adjacent edges are trivial (rooting-invariant
-    // collapse), then refresh state arrays for the flag computation.
+    // Root on tip 0 so root-adjacent edges are trivial, then refresh state
+    // arrays for the flag computation.  This makes the CONTRACTION
+    // rooting-invariant, and it is also what fixes the rooting the returned
+    // trees are handed back at — which matters because HSJ/XFORM lengths are
+    // NOT rooting-invariant (T-374).  MaximizeParsimony() rescores the XFORM
+    // pool at this same tip-0 rooting before reporting, so that the reported
+    // score is the score of the tree returned (T-385).
     ts::reroot_at_tip(tree, 0);
     tree.reset_states(ds);
     ts::score_tree(tree, ds);

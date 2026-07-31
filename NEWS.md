@@ -1,5 +1,33 @@
 # To integrate into 2.0.0 notes
 
+- `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
+  reported score is reproducible.  The x-transformation's step matrix is
+  asymmetric -- a gain costs one more than the number of secondary characters it
+  brings into existence, against 1 for a loss -- which makes a tree's length
+  depend on where it is rooted, unlike parsimony under the symmetric criteria.
+  `MaximizeParsimony()` recorded its best score mid-search at whatever rooting
+  the replicate held, while returning trees re-rooted on the first taxon, so
+  `attr(result, "score")` did not match `TreeLength()` of the very tree returned
+  (measured: 178 reported against 183 returned on a 36-taxon matrix), and
+  re-rooting a returned tree changed its length again.  Both boundaries now
+  canonicalise on the first taxon of `dataset`, so one topology has one length
+  and the two agree by construction.
+
+  **X-transformation scores may therefore differ slightly from previous
+  versions**, and will not decrease: the reported value is the length of the tree
+  you are handed rather than of a rooting discarded during search.  It is an
+  upper bound on the rooting-free minimum, exceeding it by at most the total
+  number of secondary characters across hierarchy blocks (attained exactly by
+  87--98% of rootings in simulation).  This changes reporting only -- what the
+  search optimises is untouched.
+
+  `MaximizeParsimony()` now also warns when the trees it returns do not share a
+  length at that common rooting, which can happen because pool membership is
+  still decided on scores taken at differing rootings.  Only the x-transformation
+  is affected; HSJ reporting is deliberately unchanged, since there
+  rooting-invariance is a property the method requires rather than a convention
+  to pick.
+
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute
   level: `0` (the default) accepts the amount of search the dataset's size and

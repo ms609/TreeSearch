@@ -114,8 +114,13 @@ cat(sprintf("spread across %d rootings = %g (documented bound = %d)\n",
 # ---- Symptom 3: is the returned MPT set internally consistent? -------------
 cat("\n--- symptom 3: MPT-set self-consistency ---\n")
 if (length(res) > 1L) {
+  # Root every tree at the SAME NAMED taxon.  Do NOT use res[[i]]$tip.label[1]:
+  # after Renumber() that is a different taxon for different trees, so it scores
+  # each tree at a different rooting and manufactures a spurious disagreement.
+  # (That error produced a retracted "2 distinct scores" claim on 2026-07-31.)
+  rootTaxon <- names(ds)[1]
   canon <- vapply(seq_along(res), function(i) {
-    TreeLength(RootTree(res[[i]], res[[i]]$tip.label[1]), ds,
+    TreeLength(RootTree(res[[i]], rootTaxon), ds,
                inapplicable = "xform", hierarchy = h)
   }, numeric(1))
   cat("scores at a common (tip-1) rooting:",

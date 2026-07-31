@@ -22,6 +22,24 @@
 #' - **Present → present:** Hamming distance (number of secondaries with
 #'   different states).
 #'
+#' ## Rooting
+#'
+#' Because gain and loss cost differently, this cost matrix is **asymmetric**
+#' whenever a block has at least one secondary character -- and the length of a
+#' tree under an asymmetric step matrix depends on where the tree is rooted,
+#' unlike ordinary parsimony.  The asymmetry is the point of the recoding (the
+#' first gain of the controlling character pays for the secondaries it brings
+#' into existence), so this is intrinsic rather than a defect.
+#'
+#' `TreeSearch` treats topologies as unrooted, so [`TreeLength()`] and
+#' [`MaximizeParsimony()`] both evaluate x-transformation lengths at a canonical
+#' rooting -- on the first taxon of `dataset` -- giving one length per topology
+#' and making a reported score reproducible.  That length is an upper bound on
+#' the rooting-free minimum, exceeding it by at most the total number of
+#' secondary characters across blocks.  If a rooting is biologically meaningful
+#' to you, score the tree yourself with the block's `cost_matrix` rather than
+#' relying on the canonical value.
+#'
 #' @param dataset A [`phyDat`][phangorn::phyDat] object.
 #' @param hierarchy A [`CharacterHierarchy`] object.
 #'

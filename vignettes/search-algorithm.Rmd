@@ -269,6 +269,34 @@ program or Sankoff contribution) that an incremental Fitch delta cannot
 capture; for these modes an accepted move is therefore re-scored in full
 before the best score is updated.
 
+### Reporting an x-transformation score
+
+The x-transformation's step matrix is asymmetric: gaining the controlling
+character costs one more than the number of secondary characters it brings
+into existence, whereas losing it costs one.
+A tree's length under an asymmetric step matrix depends on where the tree is
+rooted, whereas parsimony under the symmetric criteria does not -- and the
+search moves the root freely, since Wagner addition, tree fusing, sector search
+and the output collapse all re-root.
+
+The score the search compares is therefore the length at whichever rooting a
+replicate happens to hold.
+That is a sound quantity to search on: it is an upper bound on the rooting-free
+minimum, and in simulation 87--98% of rootings attain that minimum exactly, with
+the excess never exceeding the total number of secondary characters across
+hierarchy blocks.
+It is not, however, reproducible from the returned tree, whose rooting the
+output stage has since canonicalised.
+`MaximizeParsimony()` therefore re-scores the returned trees at that same
+canonical rooting -- the first taxon of the dataset -- before reporting, and
+`TreeLength()` canonicalises identically, so a reported x-transformation score
+is the length of the tree in hand, and one topology has one length.
+This affects reporting only: the quantity the search optimises is unchanged.
+
+Because pool membership is still decided on scores taken at differing rootings,
+the returned trees need not all share that canonical length;
+`MaximizeParsimony()` warns when they do not.
+
 ### Zero-length edge skipping
 
 Following @Goloboff1996, TBR, SPR, and drift skip provably unproductive
