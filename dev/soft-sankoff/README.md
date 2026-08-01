@@ -75,11 +75,29 @@ script runs locally and on Hamilton with no cluster-specific fork.
   **Consequence: Steps 4 and 5 are dead on cost.**
 - **Gate A: RETIRED, not answered.** It protected Step 4. See the plan doc for
   why two of its first-read observations change meaning rather than standing.
-- **Step 3a: running.** Hamilton job **18146187**,
-  `/nobackup/pjjg18/soft-sankoff/`. A 3-matrix pilot showed an interior optimum
-  near `T = 0.25`–`0.5` beating hard parsimony on distance to truth (0.235 vs
-  0.262), with the Mk arm agreeing rather than disagreeing. `n = 3`; the full
-  run is what counts.
+- **Step 3a: DONE**, 100 matrices, Hamilton job `18146187`. Results in
+  `04-dial-study.csv` / `04-dial-study-per-matrix.csv`.
+  - **Genuine interior optimum at `T = 0.5`**: median normalised CID to the
+    generating tree 0.2349 vs hard parsimony's 0.2472. Fixed `T = 0.5`, per
+    matrix: **65 better / 2 tied / 33 worse, sign p = 0.0016**. Real,
+    significant, modest (~5% relative). Both `T >= 1` columns are *worse* on
+    both CID and Mk, so the dial is not "more integration is better".
+  - **The mechanism is principled tie-breaking, not better trees.** At
+    `T <= 0.1` the criterion never leaves the MPT set (0/100 suboptimal
+    selections) yet still beats it 56/33. Ties at `T = 0` are median 11, up to
+    106; only 8 of 100 matrices have a unique MPT. `T = 0.5` adds mild tolerance
+    of suboptimality (23/100, mean +0.34 steps) and that is where the effect
+    peaks.
+  - **Gate B does not kill this application.** Ranking an MPT set is `O(pool)`
+    rescores of ~10² trees, not `O(candidates)`; x1147 per score is affordable
+    once. Needs no annealing, no incremental kernel, no search change.
+  - **Homoplasy tracking: not supported.** `rho = -0.133` over 85 matrices —
+    predicted sign, far too weak to claim.
+  - The per-matrix *best*-`T` figure the script prints (85/1/14, p = 1.4e-13) is
+    a **ceiling, not a result**: `bestT` is chosen using the answer. Quote the
+    fixed-`T` row instead.
+  - The earlier Gate-A CID/Mk **disagreement at `n = 1` does not reproduce**:
+    the two measures agree throughout at `n = 100`.
 
 ### Gotchas worth not rediscovering
 

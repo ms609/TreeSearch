@@ -302,10 +302,76 @@ a Hamilton job. Submitted 2026-08-01 as job **18146187**
 a project-local library first, because `tsLib`'s TreeSearch 2.0.0 predates the
 soft kernel.
 
-A three-matrix pilot is suggestive and nothing more: an interior optimum near
-`T = 0.25`–`0.5` beat hard parsimony on the median distance to truth (0.235 vs
-0.262), and here the Mk arm **agreed** rather than disagreeing (−630.6 vs
-−631.3). `n = 3`.
+#### RESULT — 100 matrices, job 18146187, 2026-08-01
+
+Median normalised `ClusteringInfoDist` to the generating tree, lower better;
+800/800 Mk fits succeeded.
+
+| `T` | median CID | median Mk logLik |
+|---|---|---|
+| 0 (hard parsimony) | 0.2472 | −649.45 |
+| 0.02 / 0.05 | 0.2446 | −649.01 |
+| 0.10 | 0.2446 | −648.96 |
+| 0.25 | 0.2427 | −648.96 |
+| **0.50** | **0.2349** | −649.02 |
+| 1.00 | 0.2604 | −651.13 |
+| 2.00 | 0.3055 | −651.90 |
+
+**There is a genuine interior optimum at `T = 0.5`, and both axes agree that
+`T >= 1` is worse.** The dial is therefore not "more integration is better" —
+which also disposes of the Gate-A worry in its own terms: had the criterion been
+tracking MPT density, pushing `T` up should have kept helping.
+
+**The honest fixed-`T` test.** The per-matrix best-`T` figure the script also
+prints (85 better / 1 tied / 14 worse, `p = 1.4e-13`) is a **ceiling, not a
+result** — `bestT` is chosen using the answer. One fixed `T`, per matrix:
+
+| `T` | better | tied | worse | sign `p` | median Δ CID |
+|---|---|---|---|---|---|
+| 0.02 / 0.05 / 0.10 | 56 | 11 | 33 | 0.019 | −0.0058 |
+| 0.25 | 56 | 8 | 36 | 0.047 | −0.0058 |
+| **0.50** | **65** | 2 | 33 | **0.0016** | **−0.0118** |
+| 1.00 | 40 | 0 | 60 | 0.057 | +0.0115 |
+
+Real, significant, and **modest**: ~0.012 normalised CID, about 5% relative, and
+33 of 100 matrices still get worse.
+
+**The mechanism, which is the actual finding.** `hardScoreChosen > optimum` means
+the criterion selected a tree that is suboptimal under parsimony — i.e. it left
+the MPT set:
+
+| `T` | suboptimal selections | mean extra steps |
+|---|---|---|
+| 0.02 / 0.05 / 0.10 | **0 / 100** | 0.00 |
+| 0.25 | 7 / 100 | 0.08 |
+| 0.50 | 23 / 100 | 0.34 |
+| 1.00 | 76 / 100 | 2.31 |
+| 2.00 | 94 / 100 | 3.95 |
+
+At `T <= 0.1` the criterion **never leaves the MPT set** and still beats it
+56 / 33. So low-temperature soft-Sankoff is not finding better trees — it is
+**choosing a better-than-average member of a set hard parsimony cannot
+separate**. Ties at `T = 0` are median 11 and run to 106; only 8 of 100 matrices
+have a unique MPT. `T = 0.5` then adds mild willingness to accept a
+slightly-suboptimal tree (mean +0.34 steps), and that is where the effect is
+strongest.
+
+**This is a live application that Gate B does not kill.** Tie-breaking rescores a
+pool of ~10² trees *once*; the x1147 per-score penalty is priced against
+`O(pool)` evaluations, not the `O(candidates)` of a search. A post-hoc
+soft-Sankoff ranking of an MPT set is affordable today, needs no annealing, no
+incremental kernel, and no change to any search path.
+
+**Homoplasy tracking: NOT supported.** Spearman(consistency index, best `T`) over
+the 85 matrices where a warm `T` helped is `rho = -0.133` — the predicted sign
+(more homoplasy favours higher `T`) but far too weak to claim. The plan's
+"does the answer track homoplasy?" question is answered no, on this dataset.
+
+**Caveats.** The pool is hard-parsimony-derived, so the criterion can only be
+credited with recovering trees the pool contains; these are 22-tip simulated
+binary matrices, and nothing here has been checked on empirical data or on
+`OReillyEtAl2016`; and the earlier Gate-A CID/Mk *disagreement* at `n = 1` does
+not reproduce at `n = 100` — the two measures agree throughout.
 
 **Original framing.** `CongreveLamsdell2016`,
 `OReillyEtAl2016` and `Mk-prime-model` are all on disk. The standing

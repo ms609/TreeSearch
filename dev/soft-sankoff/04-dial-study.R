@@ -344,6 +344,46 @@ if (wins + losses > 0) {
               stats::binom.test(wins, wins + losses)[["p.value"]]))
 }
 
+# --- The two diagnostics that decide what the headline above actually means ---
+#
+# The per-matrix figure above is a CEILING, not a result: bestT is chosen using
+# the answer.  The honest question is whether ONE FIXED T beats hard parsimony.
+cat("\n=== FIXED T vs hard parsimony, per matrix (the honest test) ===\n")
+hardRows <- result[result[["temperature"]] == 0,
+                   c("matrix", "cidTiedMean", "nTied")]
+fixedT <- do.call(rbind, lapply(TEMPERATURES[TEMPERATURES > 0], function(tt) {
+  sub <- result[result[["temperature"]] == tt, c("matrix", "cidTiedMean")]
+  m <- merge(hardRows, sub, by = "matrix", suffixes = c(".hard", ".warm"))
+  w <- sum(m[["cidTiedMean.warm"]] < m[["cidTiedMean.hard"]] - 1e-9)
+  l <- sum(m[["cidTiedMean.warm"]] > m[["cidTiedMean.hard"]] + 1e-9)
+  data.frame(temperature = tt, better = w, tied = nrow(m) - w - l, worse = l,
+             signP = if (w + l > 0) stats::binom.test(w, w + l)[["p.value"]]
+                     else NA_real_,
+             medianDelta = stats::median(m[["cidTiedMean.warm"]] -
+                                           m[["cidTiedMean.hard"]]))
+}))
+print(fixedT, row.names = FALSE)
+
+# Is the gain a different TREE, or a principled tie-break inside the MPT set?
+# `hardScoreChosen > optimum` means the selection is suboptimal under parsimony,
+# i.e. the criterion left the MPT set.  If that count is ~0 while the criterion
+# still wins, then soft-Sankoff is not finding better trees -- it is choosing a
+# better-than-average member of a set hard parsimony cannot separate.  Those are
+# different claims and only one of them is about the dial.
+cat("\n=== Tie-break, or a genuinely different tree? ===\n")
+escape <- do.call(rbind, lapply(TEMPERATURES[TEMPERATURES > 0], function(tt) {
+  sub <- result[result[["temperature"]] == tt, ]
+  data.frame(temperature = tt,
+             suboptimalSelections = sum(sub[["hardScoreChosen"]] >
+                                          sub[["optimum"]] + 1e-9),
+             meanExtraSteps = mean(sub[["hardScoreChosen"]] -
+                                     sub[["optimum"]]))
+}))
+print(escape, row.names = FALSE)
+cat(sprintf("Ties at T = 0: median %g, range %g-%g; %d matrices have a unique MPT.\n",
+            stats::median(hardRows[["nTied"]]), min(hardRows[["nTied"]]),
+            max(hardRows[["nTied"]]), sum(hardRows[["nTied"]] == 1)))
+
 cat("\n=== Does the best temperature track homoplasy? ===\n")
 warmOnly <- perMatrix[perMatrix[["bestCid"]] < perMatrix[["hardCid"]] - 1e-9, ]
 if (nrow(warmOnly) >= 5) {
