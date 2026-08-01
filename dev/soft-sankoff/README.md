@@ -75,37 +75,39 @@ script runs locally and on Hamilton with no cluster-specific fork.
   **Consequence: Steps 4 and 5 are dead on cost.**
 - **Gate A: RETIRED, not answered.** It protected Step 4. See the plan doc for
   why two of its first-read observations change meaning rather than standing.
-- **Step 3a: DONE**, 100 matrices, Hamilton job `18146187`. Results in
-  `04-dial-study.csv` / `04-dial-study-per-matrix.csv`.
-  - **Genuine interior optimum at `T = 0.5`**: median normalised CID to the
-    generating tree 0.2349 vs hard parsimony's 0.2472. Fixed `T = 0.5`, per
-    matrix: **65 better / 2 tied / 33 worse, sign p = 0.0016**. Real,
-    significant, modest (~5% relative). Both `T >= 1` columns are *worse* on
-    both CID and Mk, so the dial is not "more integration is better".
-  - **Mechanism: UNDER TEST (job 18146295), do not quote yet.** The tie-breaking
-    reading below rests on comparing one selected tree against the *mean* of the
-    tied set, which a random draw wins ~half the time; and on a
-    `suboptimalSelections == 0` diagnostic that is near-tautological. The re-run
-    adds a random-MPT null and the winner's quantile rank among MPT CIDs. If the
-    null fails, only the `T = 0.5` result survives and the application becomes
-    "rank a near-optimal pool" instead of "rank an MPT set" — the affordability
-    argument is unaffected either way.
-  - **The mechanism is principled tie-breaking, not better trees.** At
-    `T <= 0.1` the criterion never leaves the MPT set (0/100 suboptimal
-    selections) yet still beats it 56/33. Ties at `T = 0` are median 11, up to
-    106; only 8 of 100 matrices have a unique MPT. `T = 0.5` adds mild tolerance
-    of suboptimality (23/100, mean +0.34 steps) and that is where the effect
-    peaks.
-  - **Gate B does not kill this application.** Ranking an MPT set is `O(pool)`
-    rescores of ~10² trees, not `O(candidates)`; x1147 per score is affordable
-    once. Needs no annealing, no incremental kernel, no search change.
-  - **Homoplasy tracking: not supported.** `rho = -0.133` over 85 matrices —
-    predicted sign, far too weak to claim.
-  - The per-matrix *best*-`T` figure the script prints (85/1/14, p = 1.4e-13) is
-    a **ceiling, not a result**: `bestT` is chosen using the answer. Quote the
-    fixed-`T` row instead.
-  - The earlier Gate-A CID/Mk **disagreement at `n = 1` does not reproduce**:
-    the two measures agree throughout at `n = 100`.
+- **Step 3a: DONE**, 100 matrices, **two independent runs** (Hamilton `18146187`
+  then `18146295`, which adds a random-MPT null). Results in `04-dial-study.csv`
+  (run 2, authoritative), `04-dial-study-run1.csv`, `04-dial-study-per-matrix.csv`.
+  Run 2 perturbs the RNG stream, so **where the runs disagree the effect was never
+  stable** — that disagreement is part of the evidence.
+  - **Robust: `T = 0.5` beats hard parsimony.** Median normalised CID to the
+    generating tree 0.2363 vs 0.2481. Fixed `T = 0.5`, per matrix: 65/33
+    (p = 0.002) in run 1 and 63/32 (p = 0.002) in run 2. Modest — ~4% relative,
+    ~32 of 100 matrices still worse.
+  - **NOT robust: the low-`T` sign test.** `T <= 0.25` swung from p = 0.019 to
+    p = 0.289 on nothing but an RNG perturbation. Do not quote it.
+  - **`T >= 1` is worse on both axes**, `T = 2` badly (20/80, p = 1e-9). The dial
+    has a genuine interior optimum — which also disposes of the Gate-A density
+    worry in its own terms, since a density tilt should have kept helping as `T`
+    rose.
+  - **Tie-breaking is real, but the first evidence for it was wrong.** The
+    random-MPT null shows a random MPT beats its own set's mean 47/42 (p = 0.67,
+    rate 0.53), so the ~0.56 low-`T` win rates were near-indistinguishable from
+    chance; and `suboptimalSelections == 0` is near-tautological. What settles it
+    is the winner's **quantile rank among its own MPT set's CIDs**: mean 0.328–0.338
+    against a null of 0.5, **p ~ 1e-6 across 92 matrices**. Soft-Sankoff's pick
+    sits near the 33rd percentile of the set's distance-to-truth distribution.
+    Ranking is real; its CID payoff is just small enough that a sign test against
+    a mean cannot reliably see it.
+  - **Gate B does not kill this application.** Ranking a retained set is
+    `O(pool)` rescores of ~10² trees paid once, not the `O(candidates)` the x1147
+    penalty was priced against. No annealing, no incremental kernel, no search
+    change.
+  - **Homoplasy tracking: definitively not supported.** rho = −0.133 in run 1,
+    **+0.106** in run 2 — the sign is not even stable.
+  - The per-matrix *best*-`T` figure the script prints (83/4/13, p = 1.2e-13) is a
+    **ceiling, not a result**: `bestT` is chosen using the answer.
+  - The Gate-A CID/Mk **disagreement at `n = 1` does not reproduce** at n = 100.
 
 ### Gotchas worth not rediscovering
 

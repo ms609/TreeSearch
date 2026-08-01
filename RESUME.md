@@ -67,13 +67,18 @@ the gates.
 pushed is stale: `origin/feature/soft-sankoff` exists at `a1c3ec50`, and three
 further commits (`e8f9de7c`, `8f5b7480`, `ce8ae11a`) are local-only.
 
-| Type | ID / ref | Status | On completion |
-|---|---|---|---|
-| Hamilton | `18146187` | running (`soft-sankoff-dial`, ~15 min) | Collect `/nobackup/pjjg18/soft-sankoff/out/04-dial-study{,-per-matrix}.csv` into `dev/soft-sankoff/`; read the recovery-by-`T` table, the per-matrix sign test, and the homoplasy correlation; write the verdict into the Step 3a section of `dev/plans/2026-08-01-soft-sankoff-temperature-dial.md` and the README status list; commit |
+**Both Hamilton jobs are COMPLETE and collected.** Nothing pending.
 
-Job `18146150` was the same job and **FAILED** at matrix 11 of 100
-(`MaximizeParsimony()` returns polytomies by default). Fixed and superseded by
-`18146187`; nothing to collect from it.
+| Type | ID / ref | Status | Outcome |
+|---|---|---|---|
+| Hamilton | `18146150` | FAILED at matrix 11/100 | `MaximizeParsimony()` returns polytomies by default; fixed, nothing to collect |
+| Hamilton | `18146187` | COMPLETED, collected | run 1 of the dial study → `dev/soft-sankoff/04-dial-study-run1.csv` |
+| Hamilton | `18146295` | COMPLETED, collected | run 2, adds the random-MPT null → `dev/soft-sankoff/04-dial-study.csv` (authoritative) |
+
+Results are written up in the Step 3a section of
+`dev/plans/2026-08-01-soft-sankoff-temperature-dial.md` and the README status
+list, and committed. Cluster scratch at `/nobackup/pjjg18/soft-sankoff/`
+(`out/` = run 2, `out-run1/` = run 1) if a re-read is ever needed.
 
 No GHA dispatched by this session, no `to-do.md` task claimed, no issue labelled
 `in-progress`, no dispatch agents active.
@@ -100,25 +105,27 @@ window. Factor that into any dispatch on arrival.
    `C:\Users\pjjg18\GitHub\TreeSearch` (mints the stable project key; 41
    existing TreeSearch keys are all worktree-scoped orphans), then reach this
    branch with `git -C` or `EnterWorktree`.
-2. **Widen Gate A and run it on Hamilton.** Score trees within a few steps of
-   optimal rather than only the tied MPTs, across all **100** bundled
-   `congreveLamsdellMatrices` (6 used so far). Edit
-   `dev/soft-sankoff/02-tilt-direction.R`. **This is a `/hamilton` job** — see
-   Technical pointers.
-3. **Stage the O'Reilly matrices.** Fetched to
+2. ~~**Widen Gate A.**~~ **RETIRED, not done.** Gate A existed to protect Step 4,
+   which Gate B killed on cost. `02-tilt-direction.R` is left untouched as the
+   record of its first read; do not widen it.
+3. **Stage the O'Reilly matrices.** Still outstanding. Fetched to
    `~/Downloads/doi_10_5061_dryad_10qf3__v20160322.zip` (19,061,436 bytes).
    **Nested — unzip twice**; the wrapper holds one member,
    `oreilly2016matrices.zip` (19,061,276 bytes). Suggested home
    `OReillyEtAl2016/data-raw/Matrices/` (already gitignored there); recipe in
-   that directory's `README-FETCH.md`.
-4. **Build the C++ soft-scorer prototype.** This *is* Gate B proper, including
-   the incremental-rescore question the op count cannot capture. It also makes
-   every downstream experiment ~100x cheaper, so it is on the critical path
-   even if Step 4 of the plan dies.
-5. **Steps 3a / 3b of the plan** — the parsimony/likelihood dial study and
-   graded ancestral-state reconstruction. Both need only the scorer, which now
-   exists and is verified. These survive whatever the gates say, and 3a is the
-   paper.
+   that directory's `README-FETCH.md`. This is now the main thing blocking a
+   check of the Step 3a result on anything other than 22-tip simulated data.
+4. ~~**Build the C++ soft-scorer.**~~ **DONE** (`e8f9de7c`).
+   `src/ts_soft_sankoff.{h,cpp}` + bridge, 411 assertions, ~x100 faster than the
+   R reference. It closed Gate B: median x1147 vs Fitch at k = 2, so Steps 4 and
+   5 are dead on cost.
+5. **Step 3a DONE** (`be2f0873`, `1d2ef570`); **3b still open.** 3a found a
+   robust interior optimum at `T = 0.5` and showed soft-Sankoff ranks within the
+   MPT set (quantile 0.33 vs null 0.5, p ~ 1e-6). The live follow-ups are:
+   (a) 3b, graded ancestral-state reconstruction, which needs only the up-pass
+   already in the R reference; (b) exposing MPT-set ranking as something a user
+   can actually call, since that is the application Gate B does *not* kill;
+   (c) checking 3a on empirical data once the O'Reilly matrices are staged.
 6. **File the 0-based `ts_sankoff_test()` trap** into
    `.AGENTS/memory/feature-inapplicable.md` (the x-transform/Sankoff memory).
    Left undone because `.AGENTS/` sits in the grey zone of the

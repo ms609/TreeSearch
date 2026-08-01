@@ -3,8 +3,12 @@
 **Date:** 2026-08-01
 **Status:** exploration. **Gate B CLOSED and FAILED (2026-08-01): Steps 4 and 5
 are dead on cost.** Gate A retired rather than answered, since it existed only to
-protect Step 4. Steps 3a and 3b were placed off the gates and are live; 3a is
-running. A prototype scorer now exists in `src/ts_soft_sankoff.{h,cpp}` — new
+protect Step 4. Steps 3a and 3b were placed off the gates and are live. **3a is
+DONE** over 100 matrices in two independent runs: a genuine interior optimum at
+`T = 0.5` (robust, p = 0.002 in both), soft-Sankoff demonstrably ranks *within*
+the MPT set (mean quantile 0.33 vs a null of 0.5, p ~ 1e-6, n = 92), homoplasy
+tracking **not** supported. A prototype scorer now exists in
+`src/ts_soft_sankoff.{h,cpp}` — new
 files only, reachable from no default scoring path, and deliberately not sharing
 a struct with `ts_sankoff.{h,cpp}`, which sits on the live x-transformation
 pathway with its open T-374/T-385 rooting defects.
@@ -302,97 +306,107 @@ a Hamilton job. Submitted 2026-08-01 as job **18146187**
 a project-local library first, because `tsLib`'s TreeSearch 2.0.0 predates the
 soft kernel.
 
-#### RESULT — 100 matrices, job 18146187, 2026-08-01
+#### RESULT — 100 matrices, two independent runs, 2026-08-01
 
-Median normalised `ClusteringInfoDist` to the generating tree, lower better;
-800/800 Mk fits succeeded.
+Jobs **18146187** (run 1) and **18146295** (run 2, which adds a random-MPT null).
+Run 2 is authoritative; run 1 is retained as
+`dev/soft-sankoff/04-dial-study-run1.csv` because **the disagreement between the
+two runs is itself part of the evidence.** Run 2 perturbs the RNG stream (one
+extra `sample.int` for the null), which reshuffles pool construction — so where
+the two runs disagree, the effect was never stable to begin with. 800/800 Mk fits
+in both.
+
+**Recovery by temperature** (median normalised `ClusteringInfoDist` to the
+generating tree, lower better; run 2):
 
 | `T` | median CID | median Mk logLik |
 |---|---|---|
-| 0 (hard parsimony) | 0.2472 | −649.45 |
-| 0.02 / 0.05 | 0.2446 | −649.01 |
-| 0.10 | 0.2446 | −648.96 |
-| 0.25 | 0.2427 | −648.96 |
-| **0.50** | **0.2349** | −649.02 |
-| 1.00 | 0.2604 | −651.13 |
-| 2.00 | 0.3055 | −651.90 |
+| 0 (hard parsimony) | 0.2481 | −649.38 |
+| 0.02 / 0.05 / 0.10 | 0.2463 | −649.38 |
+| 0.25 | 0.2474 | −649.38 |
+| **0.50** | **0.2363** | **−648.81** |
+| 1.00 | worse | −651.1 |
+| 2.00 | worse | −651.9 |
 
-**There is a genuine interior optimum at `T = 0.5`, and both axes agree that
-`T >= 1` is worse.** The dial is therefore not "more integration is better" —
-which also disposes of the Gate-A worry in its own terms: had the criterion been
-tracking MPT density, pushing `T` up should have kept helping.
+**What is robust: `T = 0.5`.** Fixed-`T` per-matrix sign test against the MPT-set
+mean, both runs:
 
-**The honest fixed-`T` test.** The per-matrix best-`T` figure the script also
-prints (85 better / 1 tied / 14 worse, `p = 1.4e-13`) is a **ceiling, not a
-result** — `bestT` is chosen using the answer. One fixed `T`, per matrix:
+| `T` | run 1 | run 2 | verdict |
+|---|---|---|---|
+| 0.02 | 56/33, p = 0.019 | 50/39, p = 0.289 | **not stable** |
+| 0.10 | 56/33, p = 0.019 | 51/38, p = 0.203 | **not stable** |
+| 0.25 | 56/36, p = 0.047 | 51/39, p = 0.246 | **not stable** |
+| **0.50** | **65/33, p = 0.002** | **63/32, p = 0.002** | **STABLE** |
+| 1.00 | 40/60, p = 0.057 | 41/59, p = 0.089 | consistently worse |
 
-| `T` | better | tied | worse | sign `p` | median Δ CID |
-|---|---|---|---|---|---|
-| 0.02 / 0.05 / 0.10 | 56 | 11 | 33 | 0.019 | −0.0058 |
-| 0.25 | 56 | 8 | 36 | 0.047 | −0.0058 |
-| **0.50** | **65** | 2 | 33 | **0.0016** | **−0.0118** |
-| 1.00 | 40 | 0 | 60 | 0.057 | +0.0115 |
+The low-`T` sign test moved from `p = 0.019` to `p = 0.289` under nothing but an
+RNG perturbation. **Do not quote it.** Only `T = 0.5` survives: median CID gain
+≈ 0.010, about 4% relative, with ~32 of 100 matrices still worse.
 
-Real, significant, and **modest**: ~0.012 normalised CID, about 5% relative, and
-33 of 100 matrices still get worse.
+Also robust: `T >= 1` is worse on **both** axes, and `T = 2` badly so (20/80,
+`p = 1e-9`). The dial has a genuine interior optimum, which also disposes of the
+Gate-A density worry in its own terms — a density tilt should have kept helping as
+`T` rose.
 
-**The mechanism — UNDER TEST, do not quote yet (job 18146295).** The reading
-below is provisional and its supporting diagnostic is weaker than it looks.
-`suboptimalSelections == 0` at low `T` says only that the winner is an MPT, which
-is close to tautological: the MPT set is by definition where the optimal-scoring
-pool members are. And the 56/33 result compares **one selected tree against the
-MEAN over the tied set**, which a random draw wins roughly half the time by
-construction. A 63% win rate against a mean is not yet evidence of ranking.
+**The mechanism: tie-breaking IS real, but the earlier evidence for it was
+wrong.** Two corrections to what was first written here:
 
-The re-run adds the null that settles it: a uniformly random MPT scored the same
-way, plus the winner's quantile rank among MPT CIDs (uniform at 0.5 under the
-null, below 0.5 if the criterion genuinely ranks). A 6-matrix smoke gave
-`meanRank = 0.15` against the null's 0.5, which is encouraging at `n = 5` and
-nothing more.
+- `suboptimalSelections == 0` at low `T` is near-tautological. The MPT set is by
+  definition where the optimal-scoring pool members are, so "the winner is an
+  MPT" says nothing about how it was chosen.
+- comparing one selected tree against the **mean** of the tied set is a weak test.
+  The random-MPT null confirms it directly: a uniformly random MPT beats its own
+  set's mean **47/42, `p = 0.67`, win rate 0.53**. So the ~0.56 win rates at low
+  `T` were barely distinguishable from drawing at random.
 
-If the null holds up, the paragraph below stands. If it does not, the surviving
-result is `T = 0.5` alone — which *does* leave the MPT set 23% of the time, so the
-application becomes "rank a near-optimal pool" rather than "rank an MPT set".
-**Either way the affordability argument below is unaffected**; only the
-description of the input changes.
+The statistic that does settle it is the winner's **quantile rank among its own
+MPT set's CIDs** — uniform at 0.5 under the null, and `NA` when the winner is not
+itself an MPT:
 
-`hardScoreChosen > optimum` means
-the criterion selected a tree that is suboptimal under parsimony — i.e. it left
-the MPT set:
+| `T` | n | mean rank | `p` (Wilcoxon vs 0.5) |
+|---|---|---|---|
+| 0.02 | 92 | 0.338 | 2.8e−06 |
+| 0.10 | 92 | **0.328** | **8.5e−07** |
+| 0.25 | 86 | 0.337 | 4.8e−06 |
+| 0.50 | 64 | 0.336 | 4.6e−05 |
 
-| `T` | suboptimal selections | mean extra steps |
+**Soft-Sankoff genuinely ranks within the MPT set**: its pick sits around the
+33rd percentile of the set's distance-to-truth distribution, not the 50th, at
+`p ~ 1e-6` across 92 matrices. Ties at `T = 0` are a median of 11 trees and run to
+104; only 8 of 100 matrices have a unique MPT, so this applies to 92% of them.
+
+The two findings reconcile cleanly: **ranking is real but its CID payoff is small**
+— small enough that a sign test against a mean cannot reliably see it, which is
+exactly why the low-`T` sign test was unstable. `T = 0.5` wins more decisively
+because it adds mild tolerance of suboptimality (33/100 selections leave the MPT
+set, mean +0.50 steps) on top of the ranking.
+
+| `T` | selections leaving the MPT set | mean extra steps |
 |---|---|---|
-| 0.02 / 0.05 / 0.10 | **0 / 100** | 0.00 |
+| 0.02 / 0.05 / 0.10 | 0 / 100 | 0.00 |
 | 0.25 | 7 / 100 | 0.08 |
-| 0.50 | 23 / 100 | 0.34 |
-| 1.00 | 76 / 100 | 2.31 |
-| 2.00 | 94 / 100 | 3.95 |
+| 0.50 | 33 / 100 | 0.50 |
+| 1.00 | 84 / 100 | 2.39 |
+| 2.00 | 100 / 100 | 4.03 |
 
-At `T <= 0.1` the criterion **never leaves the MPT set** and still beats it
-56 / 33. So low-temperature soft-Sankoff is not finding better trees — it is
-**choosing a better-than-average member of a set hard parsimony cannot
-separate**. Ties at `T = 0` are median 11 and run to 106; only 8 of 100 matrices
-have a unique MPT. `T = 0.5` then adds mild willingness to accept a
-slightly-suboptimal tree (mean +0.34 steps), and that is where the effect is
-strongest.
-
-**This is a live application that Gate B does not kill.** Tie-breaking rescores a
-pool of ~10² trees *once*; the x1147 per-score penalty is priced against
-`O(pool)` evaluations, not the `O(candidates)` of a search. A post-hoc
-soft-Sankoff ranking of an MPT set is affordable today, needs no annealing, no
+**This is a live application that Gate B does not kill.** Ranking a retained tree
+set is `O(pool)` rescores of ~10² trees, paid once — not the `O(candidates)` of a
+search, which is what the x1147 penalty was priced against. A post-hoc
+soft-Sankoff ranking of an MPT set is affordable today, and needs no annealing, no
 incremental kernel, and no change to any search path.
 
-**Homoplasy tracking: NOT supported.** Spearman(consistency index, best `T`) over
-the 85 matrices where a warm `T` helped is `rho = -0.133` — the predicted sign
-(more homoplasy favours higher `T`) but far too weak to claim. The plan's
-"does the answer track homoplasy?" question is answered no, on this dataset.
+**Homoplasy tracking: NOT supported, and now definitively so.**
+Spearman(consistency index, best `T`) was `rho = -0.133` in run 1 and
+`rho = +0.106` in run 2 — **the sign is not even stable**. The plan's "does the
+answer track homoplasy?" question is answered no on this dataset.
 
-**Caveats.** The pool is hard-parsimony-derived, so the criterion can only be
-credited with recovering trees the pool contains; these are 22-tip simulated
-binary matrices, and nothing here has been checked on empirical data or on
-`OReillyEtAl2016`; and the earlier Gate-A CID/Mk *disagreement* at `n = 1` does
-not reproduce at `n = 100` — the two measures agree throughout.
-
+**Caveats.** The pool is hard-parsimony-derived, so the criterion is only ever
+credited with trees the pool contains. These are 22-tip simulated binary matrices;
+nothing has been checked on empirical data or on `OReillyEtAl2016`. The per-matrix
+*best*-`T` figure the script also prints (83/4/13, `p = 1.2e-13`) is a **ceiling,
+not a result** — `bestT` is chosen using the answer. And the Gate-A CID/Mk
+*disagreement* at `n = 1` does not reproduce: at `n = 100` the two measures agree
+throughout.
 **Original framing.** `CongreveLamsdell2016`,
 `OReillyEtAl2016` and `Mk-prime-model` are all on disk. The standing
 methodological weakness of that literature is that every parsimony-vs-likelihood
