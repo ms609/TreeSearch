@@ -28,6 +28,26 @@
   rooting-invariance is a property the method requires rather than a convention
   to pick.
 
+- `inapplicable = "hsj"` scoring fixed an index-space confusion that could
+  under- or over-count the controlling primary's gains and losses, and could
+  score an ambiguous (`"?"`) secondary character as though it were a specific,
+  conflicting state.  Internally, a tip's data value was read as an index into
+  the dataset's character *states*, but it is actually an index into the
+  dataset's observed *tokens* (a distinct, dataset-specific ordering that only
+  sometimes coincides with state order) -- so, depending on a dataset's
+  internal token ordering, an absent or inapplicable primary could be scored
+  as present, a present primary as absent, and a genuinely ambiguous secondary
+  character as a forced, arbitrary state.  This was independent of tree
+  topology, so no search or comparison using `inapplicable = "hsj"` was
+  reliable: the same dataset and tree could report different scores merely by
+  virtue of the order characters happened to appear in.
+
+  **HSJ scores may therefore differ from previous versions** (generally
+  increasing, since a genuinely present or absent controlling primary is now
+  always counted).  This is a correctness fix; the method's design --
+  including its intentional rooting-sensitivity, not addressed here -- is
+  unchanged.
+
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute
   level: `0` (the default) accepts the amount of search the dataset's size and
