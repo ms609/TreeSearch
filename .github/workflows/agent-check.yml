@@ -53,6 +53,10 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: R CMD check
         uses: r-lib/actions/check-r-package@v2
@@ -97,6 +101,10 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: R CMD check (with vignettes)
         uses: r-lib/actions/check-r-package@v2
