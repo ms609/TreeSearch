@@ -120,10 +120,13 @@ window. Factor that into any dispatch on arrival.
      these matrices at both 100 and 300, i.e. a truncated set — so
      `cidRankInMpt` there is computed inside a search-retained sample, not a
      complete MPT set. Pilot `18146497` tests whether that matters.
-     A 2-matrix local smoke was stable across caps (0.010 vs 0.003; 0.919 vs
-     0.957) but **bimodal**, mean ≈ 0.5 rather than C-L's 0.33 — so the headline
-     finding may not generalise to 75 tips. Read the pilot before building
-     `05-oreilly-dial.R`.
+     **Pilot verdict (jobs `18146497`, `18146627`): the rank finding does NOT
+     generalise.** Chance-level at every temperature on 75-tip O'Reilly matrices
+     (mean 0.442–0.475, min p across all ten cells = 0.118, n = 39), versus 0.328
+     at p ~ 1e-6 on 22 tips. Not a cap artifact (stable 100 vs 300, paired
+     p = 0.31). The distribution is U-shaped, i.e. decisive-but-not-truth-
+     correlated — Gate A's density prediction resurfacing. **The ~18 core-hour
+     full sweep was NOT run and should not be.**
 4. ~~**Build the C++ soft-scorer.**~~ **DONE** (`e8f9de7c`).
    `src/ts_soft_sankoff.{h,cpp}` + bridge, 411 assertions, ~x100 faster than the
    R reference. It closed Gate B: median x1147 vs Fitch at k = 2, so Steps 4 and

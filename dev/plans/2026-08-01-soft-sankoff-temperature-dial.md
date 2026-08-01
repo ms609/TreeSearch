@@ -5,9 +5,13 @@
 are dead on cost.** Gate A retired rather than answered, since it existed only to
 protect Step 4. Steps 3a and 3b were placed off the gates and are live. **3a is
 DONE** over 100 matrices in two independent runs: a genuine interior optimum at
-`T = 0.5` (robust, p = 0.002 in both), soft-Sankoff demonstrably ranks *within*
-the MPT set (mean quantile 0.33 vs a null of 0.5, p ~ 1e-6, n = 92), homoplasy
-tracking **not** supported. A prototype scorer now exists in
+`T = 0.5` (robust, p = 0.002 in both) and soft-Sankoff ranking *within* the MPT
+set (quantile 0.33 vs a null of 0.5, p ~ 1e-6, n = 92); homoplasy tracking **not**
+supported. **But NEITHER result transfers to 75-tip O'Reilly matrices** — the rank
+statistic is chance-level there at every temperature (min p = 0.118, n = 39), with
+a U-shaped distribution that looks like the density tilt Gate A predicted. Treat
+the Step 3a findings as properties of `congreveLamsdellMatrices`, not of the
+criterion. A prototype scorer now exists in
 `src/ts_soft_sankoff.{h,cpp}` — new
 files only, reachable from no default scoring path, and deliberately not sharing
 a struct with `ts_sankoff.{h,cpp}`, which sits on the live x-transformation
@@ -344,9 +348,12 @@ RNG perturbation. **Do not quote it.** Only `T = 0.5` survives: median CID gain
 ≈ 0.010, about 4% relative, with ~32 of 100 matrices still worse.
 
 Also robust: `T >= 1` is worse on **both** axes, and `T = 2` badly so (20/80,
-`p = 1e-9`). The dial has a genuine interior optimum, which also disposes of the
-Gate-A density worry in its own terms — a density tilt should have kept helping as
-`T` rose.
+`p = 1e-9`). The dial has a genuine interior optimum. That was read here as
+disposing of the Gate-A density worry in its own terms — a density tilt should
+have kept helping as `T` rose. **That argument is too weak**; see the
+generalisation test below, where the density signature reappears at 75 tips. An
+interior optimum in mean CID is compatible with a criterion that chooses
+decisively and is uncorrelated with truth.
 
 **The mechanism: tie-breaking IS real, but the earlier evidence for it was
 wrong.** Two corrections to what was first written here:
@@ -407,6 +414,75 @@ nothing has been checked on empirical data or on `OReillyEtAl2016`. The per-matr
 not a result** — `bestT` is chosen using the answer. And the Gate-A CID/Mk
 *disagreement* at `n = 1` does not reproduce: at `n = 100` the two measures agree
 throughout.
+#### GENERALISATION TEST — it does NOT transfer to 75 tips (jobs 18146497, 18146627)
+
+The Step 3a result above is measured entirely on `congreveLamsdellMatrices`: 22
+tips, 54 patterns, binary, low homoplasy. `dev/soft-sankoff/05-poolsize-pilot.R`
+retests its headline statistic on O'Reilly et al. (2016) matrices — **75 tips**,
+100 characters, 1000 available — before any full sweep was run.
+
+**The rank statistic does not replicate.** Winner's quantile rank among its own
+MPT set, `poolMaxSize = 100`, n = 39 per cell:
+
+| `T` | mean rank | median | Wilcoxon vs 0.5 | chosen beats set mean |
+|---|---|---|---|---|
+| 0.02 | 0.442 | 0.515 | 0.210 | 19/39 |
+| 0.10 | 0.445 | 0.535 | 0.215 | 19/39 |
+| 0.25 | 0.469 | 0.535 | 0.424 | 18/39 |
+| **0.50** | **0.475** | 0.535 | **0.597** | 18/39 |
+| 1.00 | 0.386 | 0.273 | 0.118 | 25/39 |
+
+Against the Congreve–Lamsdell reference of **0.328 at p ~ 1e-6 over 92
+matrices**. **No cell is significant: the minimum `p` across all ten (cap, `T`)
+combinations is 0.118.** `T = 0.5`, the cell where the C-L result was
+*strongest*, lands at `p = 0.597` — indistinguishable from chance. The random-MPT
+null beats its set mean 16/39, and the criterion manages 18–19/39.
+
+**It is not a pool-truncation artifact.** `MaximizeParsimony()` returns *exactly*
+`SearchControl()$poolMaxSize` on these matrices at both 100 and 300, so the MPT
+sets genuinely exceed 300 and are search-truncated rather than exhausted. But
+ranks are stable across the two caps (mean 0.445 vs 0.470, paired Wilcoxon
+`p = 0.31`), so the statistic is measuring the criterion, not retention. The cap
+was the obvious confound and it is ruled out.
+
+**The failure has a shape, and it is the Gate-A shape.** The rank distribution is
+**U-shaped** at every temperature (quintile counts ~11 / 4 / 6 / 5 / 10):
+
+```
+T=0.02  11  4  7  4 10
+T=0.10  11  4  6  5 10
+T=0.25  10  4  6  5 11
+T=0.50   9  6  5  4 12
+T=1.00  12  6  6  0 10
+```
+
+The criterion is **not** choosing at random — it chooses *decisively*, and is
+near-best about as often as near-worst. That is a different failure from noise,
+and it is precisely what a criterion tracking **reconstruction density** looks
+like on data where density and distance-to-truth have come apart. In other words
+**Gate A's original signed prediction was right, and it resurfaces here.** The
+argument offered above — that a density tilt should have kept helping as `T` rose,
+so the interior optimum disposes of the worry — was weaker than it read: an
+interior optimum in mean CID is compatible with a criterion that is decisive and
+uncorrelated with truth.
+
+**Consequences.**
+
+- The `T = 0.5` recovery advantage and the rank-0.33 result stand **on
+  `congreveLamsdellMatrices` only**. They should not be described as properties
+  of the criterion.
+- The claim that post-hoc MPT ranking is "a live application Gate B does not
+  kill" is **withdrawn as a general claim.** It holds where the ranking holds,
+  which so far is one 22-tip low-homoplasy simulated dataset.
+- The planned full O'Reilly sweep (~18 core-hours over 3 character counts) was
+  **not run**, and should not be on this evidence. A pilot at n = 39 answered it.
+- What would change the picture: identifying *what* the criterion is decisively
+  tracking. The U-shape says there is signal there, just not truth-correlated
+  signal. Testing rank against reconstruction ambiguity (MPR-set size per node,
+  or the `T`-gap `(min − softmin)/T` = log #minima, which this kernel already
+  computes) would say whether density is the thing — and that is a cheap test on
+  data already staged.
+
 **Original framing.** `CongreveLamsdell2016`,
 `OReillyEtAl2016` and `Mk-prime-model` are all on disk. The standing
 methodological weakness of that literature is that every parsimony-vs-likelihood

@@ -109,6 +109,27 @@ script runs locally and on Hamilton with no cluster-specific fork.
     **ceiling, not a result**: `bestT` is chosen using the answer.
   - The Gate-A CID/Mk **disagreement at `n = 1` does not reproduce** at n = 100.
 
+- **GENERALISATION: the Step 3a findings do NOT transfer.** Pilot
+  `05-poolsize-pilot.R` (jobs `18146497`, `18146627`) retested the rank statistic
+  on O'Reilly 2016 matrices — 75 tips, 100 characters, n = 39.
+  - Chance-level at **every** temperature: mean rank 0.442–0.475, and the
+    minimum `p` across all ten (cap, `T`) cells is **0.118**. `T = 0.5`, the
+    strongest Congreve–Lamsdell cell, gives `p = 0.597`. Reference: 0.328 at
+    p ~ 1e-6 on 22 tips.
+  - **Not** a pool-truncation artifact. `MaximizeParsimony()` returns exactly
+    `poolMaxSize` at both 100 and 300 (so the sets are truncated), yet ranks are
+    stable across the two caps (paired `p = 0.31`).
+  - The distribution is **U-shaped** (~11/4/6/5/10) at every `T`: the criterion
+    chooses *decisively* and is near-best about as often as near-worst — the
+    signature of a density-tracking criterion where density and truth diverge,
+    i.e. **Gate A's original prediction resurfacing**.
+  - So the MPT-ranking application is **withdrawn as a general claim**; it holds
+    on one 22-tip low-homoplasy simulated dataset. The planned ~18 core-hour
+    O'Reilly sweep was **not run** and should not be.
+  - Cheap next test if anyone picks this up: regress rank against reconstruction
+    ambiguity — `(min − softmin)/T` = log #minima, which this kernel already
+    computes — to find out what the criterion *is* decisively tracking.
+
 ### Gotchas worth not rediscovering
 
 - **A new `// [[Rcpp::export]]` is not enough.** `Rcpp::compileAttributes()`
