@@ -1,0 +1,74 @@
+# THROWAWAY PROBE -- delete once the question is answered.
+#
+# Question: is pulling a container image with R (and possibly all dependencies)
+# preinstalled faster than `r-lib/actions/setup-r` + `setup-r-dependencies`?
+#
+# Reference numbers to beat, measured on ubuntu-24.04-arm, R 4.6.1
+# (ms609/TreeSearch runs 30697330564 and 30697789759):
+#
+#   Set up R                 38-73 s   (of which ~52 s is setup-r's hard-coded
+#                                       `apt-get install gdebi-core qpdf
+#                                       devscripts ghostscript`, and ~10 s is R)
+#   Set up R dependencies    133-174 s (6 s to download 108 Posit PM binaries,
+#                                       ~10 s to install them, ~75 s of pak
+#                                       system-requirements apt, 67 s MaxMin)
+#
+# So the bar for "R preinstalled" is ~40-70 s, and for "R + all dependencies
+# preinstalled" it is ~3 minutes.
+#
+# `pull-times` measures raw `docker pull` wall-clock and image size, to get a
+# size-vs-time rate we can extrapolate to a hypothetical TreeSearch-deps image.
+# `container-job` measures what actually matters: the runner's own
+# "Initialize containers" step, i.e. pull + create + start, before step 1 runs.
+
+name: dev-probe-container
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pull-times:
+    runs-on: ubuntu-24.04-arm
+    name: docker pull timings (arm64)
+    steps:
+      - name: Time pulls
+        shell: bash
+        run: |
+          for img in \
+            rocker/r-ver:latest \
+            rocker/r-ver:4.6.1 \
+            rocker/tidyverse:latest \
+            ghcr.io/rocker-org/r-ver:latest
+          do
+            echo "::group::$img"
+            docker image rm -f "$img" >/dev/null 2>&1 || true
+            s=$(date +%s)
+            if docker pull -q "$img" >/dev/null 2>&1; then
+              e=$(date +%s)
+              bytes=$(docker image inspect "$img" --format '{{.Size}}')
+              printf 'RESULT\t%s\tpull=%ss\tunpacked=%sMB\n' \
+                "$img" "$((e - s))" "$((bytes / 1024 / 1024))"
+            else
+              printf 'RESULT\t%s\tFAILED (likely no arm64 manifest)\n' "$img"
+            fi
+            echo "::endgroup::"
+          done
+
+      - name: Runner disk + network context
+        shell: bash
+        run: |
+          nproc && free -m | head -2 && df -h / | tail -1
+
+  container-job:
+    runs-on: ubuntu-24.04-arm
+    name: container job startup (arm64)
+    # The duration of the implicit "Initialize containers" step IS the answer:
+    # it is the whole cost a container-based sense-check would pay up front.
+    container: rocker/r-ver:latest
+    steps:
+      - name: What did we get for free?
+        shell: bash
+        run: |
+          R --version | head -1
+          Rscript -e 'cat("repos:", getOption("repos"), "\n");
+                      cat("installed:", nrow(installed.packages()), "packages\n")'
