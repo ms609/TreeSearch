@@ -68,10 +68,12 @@ jobs:
           extra-packages: |
             shinytest2=?ignore
             MaxMin=?ignore
-          # cache-version bumped to 2: the v1 caches were built while a
-          # project-level .Rprofile shadowed ~/.Rprofile, so every package
-          # in them was compiled from source.  Retire them once.
-          cache-version: 2
+          # cache-version bumped to 3 (THROWAWAY bump -- revert to 2 after
+          # verifying MaxMin=?ignore against a cold cache): the previous
+          # cache-2 entry was built before MaxMin=?ignore existed, so its
+          # restored library still had MaxMin installed and masked the
+          # "no build" evidence this change is supposed to produce.
+          cache-version: 3
 
       - name: R CMD check
         uses: r-lib/actions/check-r-package@v2
