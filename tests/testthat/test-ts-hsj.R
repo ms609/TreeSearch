@@ -824,6 +824,41 @@ test_that("HSJ handles a MatrixToPhyDat token/state misalignment (T-376)", {
   }
 })
 
+test_that("HSJ secondary '?' obeys the resolution invariant (T-375)", {
+  # T-375's own acceptance criterion: score("?") <= min over concrete
+  # resolutions. The tests above (contrast-row permutation, alpha=0 on a
+  # misaligned layout) only exercise the T-376 primary_present term -- alpha=0
+  # never calls count_mismatches(), so none of them can see whether
+  # fitch_label_char() resolves a "?" secondary correctly. This one isolates
+  # T-375 by keeping every primary "1" (present, so the primary DP is
+  # loss-free throughout and contributes nothing but a floor of 0), which
+  # collapses the whole score to the secondary's ordinary Fitch step count.
+  #
+  # Tree ((t1,t2),(t3,t4)); primaries all "1"; secondary t1=t2=t3="0", t4
+  # varies. Hand-derived: t4="0" ties all four -> 0 steps. t4="1" or t4="-"
+  # each disagree with the (t3,t4) clade's neighbour -> 1 step (the downpass
+  # intersect((t3=0),(t4=1 or -)) is empty, forcing a union). t4="?" must
+  # resolve to whichever concrete state is compatible AND cheapest -- here
+  # that's "0" (matching t1/t2/t3), giving 0 steps, so score("?") == 0 ==
+  # min(0, 1, 1). Before the fix, fitch_label_char() bit-encoded the "?"
+  # TOKEN index as its own concrete state bit, indistinguishable from a
+  # genuine mismatch, and scored 1 -- violating the invariant (1 > 0).
+  h <- CharacterHierarchy("1" = 2L)
+  tree <- Renumber(RenumberTips(
+    ape::read.tree(text = "((t1,t2),(t3,t4));"), paste0("t", 1:4)))
+
+  score_for <- function(t4sec) {
+    mat <- matrix(c("1", "0", "1", "0", "1", "0", "1", t4sec),
+                  nrow = 4, byrow = TRUE,
+                  dimnames = list(paste0("t", 1:4), NULL))
+    hsj_score(tree, make_hsj_dat(mat), h, alpha = 1)
+  }
+
+  scores <- vapply(c("0", "1", "-", "?"), score_for, double(1))
+  expect_equal(unname(scores), c(0, 1, 1, 0))
+  expect_lte(scores[["?"]], min(scores[c("0", "1", "-")]))
+})
+
 
 # =========================================================================
 # Test: HSJ + sectorial search (T-303 guard)
