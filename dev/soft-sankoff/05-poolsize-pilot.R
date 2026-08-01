@@ -38,7 +38,12 @@ suppressPackageStartupMessages({
 dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 source(file.path(OR_ROOT, "data", "orReferenceTree.R"))
 
-TEMPERATURE <- 0.1        # inside the MPT set on C-L: 0/100 selections escaped
+# A grid, not one T.  The first pass used T = 0.1 alone and answered only the
+# low-temperature question; T = 0.5 is where the congreveLamsdellMatrices result
+# was strongest, so the generalisation test has to cover it.  Pool construction
+# dominates the cost and is shared across temperatures, so the grid is nearly
+# free.
+TEMPERATURES <- c(0.02, 0.1, 0.25, 0.5, 1)
 SEED <- 20260801L
 MATRIX_DIR <- file.path(OR_ROOT, "data-raw", "Matrices", "100_char_matrices")
 
@@ -103,21 +108,30 @@ for (fi in seq_along(files)) {
     cid <- as.numeric(TreeDist::ClusteringInfoDist(
       structure(mpt[keep], class = "multiPhylo"), orReferenceTree,
       normalize = TRUE))
-    soft <- vapply(mpt[keep], function(tr) {
-      e <- tr[["edge"]]; storage.mode(e) <- "integer"
-      SoftScore(e, patterns, TEMPERATURE)
-    }, numeric(1))
+    randomMpt <- cid[sample.int(length(keep), 1)]
+    edges <- lapply(mpt[keep], function(tr) {
+      e <- tr[["edge"]]; storage.mode(e) <- "integer"; e
+    })
 
-    chosen <- which.min(soft)
-    rows[[length(rows) + 1]] <- data.frame(
-      matrix = basename(files[fi]), cap = cap, seconds = elapsed,
-      nReturned = length(mpt), nMpt = length(keep), optimum = min(scores),
-      cidRankInMpt = mean(cid[keep != keep[chosen]] < cid[chosen]),
-      cidChosen = cid[chosen], cidMptMean = mean(cid),
-      cidRandomMpt = cid[sample.int(length(keep), 1)])
-    cat(sprintf("%s cap=%-4d %5.1fs  returned %3d  MPTs %3d  rank %.3f\n",
-                basename(files[fi]), cap, elapsed, length(mpt), length(keep),
-                rows[[length(rows)]][["cidRankInMpt"]]))
+    ranks <- numeric(0)
+    for (temperature in TEMPERATURES) {
+      soft <- vapply(edges, function(e) SoftScore(e, patterns, temperature),
+                     numeric(1))
+      chosen <- which.min(soft)
+      # Rank of the winner among the OTHER MPTs, so a set of size n gives a
+      # rank in [0, 1] that is uniform under the null.
+      rank <- mean(cid[-chosen] < cid[chosen])
+      ranks <- c(ranks, rank)
+      rows[[length(rows) + 1]] <- data.frame(
+        matrix = basename(files[fi]), cap = cap, temperature = temperature,
+        seconds = elapsed, nReturned = length(mpt), nMpt = length(keep),
+        optimum = min(scores), cidRankInMpt = rank,
+        cidChosen = cid[chosen], cidMptMean = mean(cid),
+        cidRandomMpt = randomMpt)
+    }
+    cat(sprintf("%s cap=%-4d %5.1fs  MPTs %3d  ranks %s\n",
+                basename(files[fi]), cap, elapsed, length(keep),
+                paste(sprintf("%.2f", ranks), collapse = " ")))
     utils::flush.console()
   }
 }
@@ -126,6 +140,38 @@ result <- do.call(rbind, rows)
 utils::write.csv(result, file.path(OUT_DIR, "05-poolsize-pilot.csv"),
                  row.names = FALSE)
 
+# QUESTION 1: does the rank statistic replicate at 75 tips at all?
+cat("\n=== Does cidRankInMpt replicate at 75 tips? ===\n")
+cat("congreveLamsdellMatrices (22 tips, 54 patterns): mean rank 0.328,\n")
+cat("Wilcoxon vs 0.5 p ~ 1e-6, n = 92.  Below, per temperature, at each cap:\n\n")
+byT <- do.call(rbind, lapply(CAPS, function(cp) {
+  do.call(rbind, lapply(TEMPERATURES, function(tt) {
+    s <- result[result[["cap"]] == cp & result[["temperature"]] == tt, ]
+    rk <- s[["cidRankInMpt"]]
+    data.frame(cap = cp, temperature = tt, n = length(rk),
+               meanRank = mean(rk), medianRank = stats::median(rk),
+               rankP = if (length(rk) > 2) {
+                 stats::wilcox.test(rk - 0.5)[["p.value"]]
+               } else NA_real_,
+               chosenBeatsMean = sum(s[["cidChosen"]] < s[["cidMptMean"]]),
+               randomBeatsMean = sum(s[["cidRandomMpt"]] < s[["cidMptMean"]]))
+  }))
+}))
+print(byT, row.names = FALSE)
+cat("\nRank distribution at the lowest cap (0-.2 .2-.4 .4-.6 .6-.8 .8-1):\n")
+for (tt in TEMPERATURES) {
+  rk <- result[result[["cap"]] == CAPS[1] & result[["temperature"]] == tt,
+               "cidRankInMpt"]
+  cat(sprintf("  T=%-5g %s\n", tt,
+              paste(table(cut(rk, seq(0, 1, 0.2))), collapse = " ")))
+}
+cat("A U-shaped distribution means the criterion is choosing DECISIVELY but not\n")
+cat("in a truth-correlated way -- near-best about as often as near-worst.  That\n")
+cat("is a different failure from choosing at random, and it is what a\n")
+cat("density-tracking criterion would look like where density and truth have\n")
+cat("come apart.\n")
+
+# QUESTION 2: is the statistic an artifact of the truncated pool?
 cat("\n=== Is cidRankInMpt stable against the pool cap? ===\n")
 byCap <- do.call(rbind, lapply(CAPS, function(cp) {
   s <- result[result[["cap"]] == cp, ]
@@ -137,9 +183,14 @@ byCap <- do.call(rbind, lapply(CAPS, function(cp) {
 }))
 print(byCap, row.names = FALSE)
 
-# Paired across caps on the same matrices: the honest comparison.
-wide <- merge(result[result[["cap"]] == CAPS[1], c("matrix", "cidRankInMpt")],
-              result[result[["cap"]] == CAPS[length(CAPS)],
+# Paired across caps on the same matrices, at one temperature so the pairing is
+# one-to-one.
+PAIR_T <- TEMPERATURES[which.min(abs(TEMPERATURES - 0.1))]
+wide <- merge(result[result[["cap"]] == CAPS[1] &
+                       result[["temperature"]] == PAIR_T,
+                     c("matrix", "cidRankInMpt")],
+              result[result[["cap"]] == CAPS[length(CAPS)] &
+                       result[["temperature"]] == PAIR_T,
                      c("matrix", "cidRankInMpt")],
               by = "matrix", suffixes = c(".lo", ".hi"))
 if (nrow(wide) > 2) {
