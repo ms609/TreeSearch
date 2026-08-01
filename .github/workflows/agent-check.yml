@@ -56,6 +56,11 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # shinytest2=?ignore: its chromote/chromium system requirement makes
+          # pak add the ppa:xtradeb/apps PPA and install Chromium on every run
+          # (~70 s, not cached).  No Linux leg needs it -- see R-CMD-check.yml.
+          extra-packages: |
+            shinytest2=?ignore
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
