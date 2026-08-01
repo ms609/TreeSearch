@@ -23,8 +23,14 @@
 
 name: dev-probe-container
 
+# `workflow_dispatch` only registers for workflows that exist on the DEFAULT
+# branch, and this probe deliberately never touches main -- so it self-triggers
+# on any push that edits this file.
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/dev-probe-container.yml"
 
 jobs:
   pull-times:
