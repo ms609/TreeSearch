@@ -73,7 +73,7 @@ struct HierarchyBlock {
   // tip's label must be translated via DataSet::token_states before it can be
   // compared to this field or to DataSet::inapp_state (T-375/T-376: the two
   // index spaces were previously compared directly via `==`).
-  int absent_state;
+  int absent_state = -1;
 };
 
 struct CharBlock {
