@@ -59,8 +59,15 @@ jobs:
           # shinytest2=?ignore: its chromote/chromium system requirement makes
           # pak add the ppa:xtradeb/apps PPA and install Chromium on every run
           # (~70 s, not cached).  No Linux leg needs it -- see R-CMD-check.yml.
+          # MaxMin=?ignore: MaxMin isn't on CRAN (Remotes: ms609/MaxMin), so pak
+          # packages+builds it from source here every cache miss (~67 s). It's
+          # pure Rcpp numerics with no OS-conditional path, so this agent leg
+          # doesn't need real Linux coverage of it -- the windows job (below)
+          # keeps it installed, and test-WideSample.R already
+          # skip_if_not_installed("MaxMin").
           extra-packages: |
             shinytest2=?ignore
+            MaxMin=?ignore
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
