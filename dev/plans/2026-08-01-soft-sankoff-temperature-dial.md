@@ -1,7 +1,13 @@
 # Soft-Sankoff: a temperature dial between parsimony and likelihood
 
 **Date:** 2026-08-01
-**Status:** exploration. No `src/` change proposed yet; two gates must pass first.
+**Status:** exploration. **Gate B CLOSED and FAILED (2026-08-01): Steps 4 and 5
+are dead on cost.** Gate A retired rather than answered, since it existed only to
+protect Step 4. Steps 3a and 3b were placed off the gates and are live; 3a is
+running. A prototype scorer now exists in `src/ts_soft_sankoff.{h,cpp}` — new
+files only, reachable from no default scoring path, and deliberately not sharing
+a struct with `ts_sankoff.{h,cpp}`, which sits on the live x-transformation
+pathway with its open T-374/T-385 rooting defects.
 **Branch:** `feature/soft-sankoff` (worktree `../worktrees/TS-softsankoff`, from `cpp-search` @ `f13f0c31`)
 **Origin:** discussion of Siepel, Hassett & Staklinski, *VINE: Variational inference for scalable Bayesian reconstruction of species and cell-lineage phylogenies*, bioRxiv `10.64898/2025.12.24.696405`. Vine's chain rule terminates at the branch-length gradient, which parsimony does not have; softening the Sankoff `min` is the construction that supplies one.
 **Reference implementation:** [`tests/testthat/helper-soft-sankoff.R`](../../tests/testthat/helper-soft-sankoff.R) — pure R, no build required.
@@ -109,6 +115,28 @@ The script's verdict logic now refuses to declare a pass on fewer than 5 usable
 matrices, and reports a SPLIT rather than a PASS when the topology and
 likelihood measures disagree.
 
+#### GATE A: RETIRED, NOT ANSWERED — 2026-08-01
+
+Gate A asked whether a soft-guided **search** tilts toward truth or toward MPT
+density. That question existed solely to protect Step 4, and Gate B killed Step 4
+on cost. Widening Gate A across the remaining 94 matrices would spend the compute
+to inform nothing, so it was **not** widened. `02-tilt-direction.R` is left
+untouched as the record of what the gate said; its pass/fail/SPLIT verdict logic
+encodes Step 4 semantics and should not be carried forward.
+
+Two of its first-read observations change meaning rather than standing:
+
+- The **`T`-invariance across 0.02–0.5** was read as a defect ("almost no
+  tuneable range for a search control"). With search out of the picture that is
+  simply a *result about the criterion*, not a problem.
+- The **`ρ(CID)` / `ρ(Mk)` disagreement** at `n = 1` was a warning sign for a
+  search. For the criterion question the honest primary axis is distance to the
+  **generating tree**, which is known for these matrices; Mk likelihood drops to
+  a secondary descriptive rather than a pass/fail arm.
+
+The criterion question that survives is Step 3a, now implemented separately as
+`dev/soft-sankoff/04-dial-study.R`.
+
 ### Gate B — what is the per-score cost against SIMD Fitch?
 
 No number is guessed here on purpose; it must be measured. Two distinct costs,
@@ -139,11 +167,57 @@ orientation threshold before any of the following are counted:
 Pure-R wall ratio was x253–x1015, which is an upper bound only (pure R against
 compiled SIMD) and is not the gate.
 
-**Provisional consequence:** Step 4 (annealed search) is in serious doubt, and
-Step 5 inherits that doubt. Steps 3a and 3b do not, which is why they were
-placed off the gate. Anyone reviving Step 4 needs a mitigation — SIMD over the
-character axis, a `k = 2` special case, or restricting soft scoring to a coarse
-outer loop — not just a better `exp`.
+#### GATE B: CLOSED, FAILED — compiled, 2026-08-01
+
+The C++ prototype (`src/ts_soft_sankoff.{h,cpp}`, Step 4 of the open items) was
+built and Gate B re-measured with a compiled kernel on both sides. **The
+constant term is now measured, and it is ~3x worse than the op count predicted
+— exactly the direction the `exp` caveat above anticipated.**
+
+| Comparison | Median | Range |
+|---|---|---|
+| compiled soft / Fitch full rescore, **k = 2** | **x1147** | x886–x1232 |
+| compiled soft / Fitch full rescore, k = 4 | x2981 | x2500–x3889 |
+| prior op-count estimate | x879 | x438–x1313 |
+| pure R / compiled soft (speedup the prototype bought) | x100 | x43–x243 |
+
+All 8 cells clear the x50 orientation threshold, by 20–70x. **The k = 2 number
+is the headline** for real morphological data: Fitch's cost is in words and so
+near-flat in `k`, while the soft kernel pays `k^2`, so the k = 4 rows say
+"multistate is worse", not "this is what a matrix costs".
+
+**The complexity term remains OPEN, but is now bounded.** A full-rescore
+prototype cannot measure an incremental soft kernel that does not exist. What it
+can measure is how much Fitch gains from incrementality — full-rescore cost
+against per-candidate incremental cost, both reported from inside C++ by
+`ts_bench_tbr_phases()`. That is a **median x386**, and it is the multiplier a
+full-rescore soft kernel forfeits *on top of* the constant above. This bounds
+the term's size; it does not measure an incremental soft implementation. It is
+also moot: the constant alone already fails.
+
+Measurement corrections worth keeping, because each was an error in the
+direction that would have flattered the soft kernel:
+
+- The Fitch baseline must be `time_full_rescore_us` from
+  `ts_bench_tbr_phases()`, clocked inside C++ with dataset construction
+  excluded. Timing `TreeLength()` — or even `ts_fitch_score()` — from R folds
+  per-call marshalling of the contrast and tip-data matrices into the
+  denominator, inflating it and so understating the ratio.
+- That clock counts **whole microseconds**, and a Fitch rescore of 100 patterns
+  is 1–7 of them. One run reported `0 us` and an infinite ratio. Both kernels
+  are linear in pattern count, so the comparison moved to 2000 patterns, where
+  the denominator is 10–94 ticks.
+- The soft side is timed by differencing the binding's own `n_rep`, chosen per
+  cell from a pilot pass, so R-side marshalling drops out rather than being
+  assumed small. Its residual quantisation (`system.time`, ~15 ms, at the low
+  `n_rep` the expensive cells need) is 10–20% — immaterial against a conclusion
+  clearing its threshold by 20–70x.
+
+**Consequence: Step 4 (annealed search) is DEAD on cost, and Step 5 inherits
+that.** Steps 3a and 3b were placed off the gates and survive. Anyone reviving
+Step 4 needs a mitigation — SIMD over the character axis, a `k = 2` special
+case, or restricting soft scoring to a coarse outer loop — not just a better
+`exp`, and would need to find roughly three orders of magnitude, not one.
 
 ---
 
@@ -207,7 +281,33 @@ score, over a size ladder. **Blocks Step 4; informs Step 5.**
 
 These need only the scorer, and are worth doing even if both gates fail.
 
-**3a. The parsimony/likelihood dial study.** `CongreveLamsdell2016`,
+**3a. The parsimony/likelihood dial study — IMPLEMENTED, running.**
+`dev/soft-sankoff/04-dial-study.R`. Search is held constant on purpose: the
+candidate pool comes from ordinary hard-parsimony search (MPTs plus TBR
+neighbours within 5 steps of optimal), and `T` only chooses among its members.
+That is what dissolves the implementation confound. It also bounds the claim —
+it measures which tree the criterion at `T` **prefers out of a common pool**,
+not what a soft-objective search would find, and a criterion can only be
+credited with recovering a tree the pool contains.
+
+Reported per matrix per `T`: normalised `ClusteringInfoDist` to the generating
+tree (averaged over trees the criterion cannot separate, since ties at `T = 0`
+*are* the MPT set and are real), the hard parsimony score of the selection, a
+consistency index as the homoplasy axis, and the Mk log-likelihood of the
+selection as a secondary descriptive.
+
+Sized at 3 matrices: ~4.5 s each with the Mk oracle, so ~7.5 min for 100 —
+a Hamilton job. Submitted 2026-08-01 as job **18146187**
+(`/nobackup/pjjg18/soft-sankoff/`), which installs the branch's TreeSearch into
+a project-local library first, because `tsLib`'s TreeSearch 2.0.0 predates the
+soft kernel.
+
+A three-matrix pilot is suggestive and nothing more: an interior optimum near
+`T = 0.25`–`0.5` beat hard parsimony on the median distance to truth (0.235 vs
+0.262), and here the Mk arm **agreed** rather than disagreeing (−630.6 vs
+−631.3). `n = 3`.
+
+**Original framing.** `CongreveLamsdell2016`,
 `OReillyEtAl2016` and `Mk-prime-model` are all on disk. The standing
 methodological weakness of that literature is that every parsimony-vs-likelihood
 comparison confounds criterion with implementation — different programs,
@@ -224,7 +324,14 @@ all-or-nothing; a temperature-parameterised version shows graded reconstructions
 with an explicit statement of how much integration is being done. Does not touch
 search.
 
-### Step 4 — Annealed search *(gated on A and B)*
+### Step 4 — Annealed search *(DEAD: Gate B failed, 2026-08-01)*
+
+**Do not build this.** A compiled soft score costs a median x1147 of a Fitch
+score for binary characters against a x50 orientation threshold, plus a bounded
+x386 incrementality forfeit on top. The propose/arbitrate architecture below
+means scoring twice, so it pays that cost on every candidate. Reviving it needs
+roughly three orders of magnitude from a mitigation, not one. The design is kept
+below for the record, and because Step 5 references it.
 
 Temper the **objective**, not the acceptance rule. `ts_drift.cpp` and
 `ts_temper.cpp` already do the latter; this is a different mechanism (graduated
@@ -238,7 +345,7 @@ Numerical requirements: shifted log-sum-exp throughout; as `T -> 0` the softmax
 concentrates and gradients vanish, the classic continuation-method failure, so
 the annealing schedule needs its own small study.
 
-### Step 5 — Gradients, and only then the embedding *(gated on B)*
+### Step 5 — Gradients, and only then the embedding *(DEAD: inherits Gate B)*
 
 With per-branch cost scalars — which soft-Sankoff has natively, since at `T = 1`
 they *are* branch lengths — `d(score)/d(b)` exists and Vine's four-Jacobian chain
@@ -277,8 +384,21 @@ size the run to the question and submit it.
 **Hamilton libraries** are documented in the `/hamilton` skill's
 `r-infrastructure.md`: `tsLib = /nobackup/pjjg18/TreeSearch/lib` already carries
 TreeSearch 2.0.0, TreeTools, TreeDist and Quartet, and must precede `baseLib`.
-**`phangorn` is not in that listing** and is needed for the Mk oracle in Gate A
-and Step 3a — expect to install it into a project-local lib.
+
+**Correction, 2026-08-01: `phangorn` IS present in `tsLib`**
+(`/nobackup/pjjg18/TreeSearch/lib/phangorn`), so the Mk oracle needs no
+project-local install. The earlier claim that it was absent came from reading
+`r-infrastructure.md`'s summary table rather than listing the directory; that
+table is a partial listing, not an inventory.
+
+What *does* need a project-local install is **TreeSearch itself**. `tsLib`'s
+TreeSearch 2.0.0 predates the soft kernel, so a job using
+`ts_soft_sankoff_test()` must install this branch's build into a library ahead of
+`tsLib` on `R_LIBS`. The job script at `/nobackup/pjjg18/soft-sankoff/` does
+that, and then smoke-tests that the symbol is actually registered before running
+anything — a missing entry in `TreeSearch-init.c` makes the binding fail at
+*call* time, not at load time, so a job would otherwise get most of the way in
+before dying.
 
 ## Costs and known limitations
 

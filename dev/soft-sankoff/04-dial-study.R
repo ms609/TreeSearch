@@ -45,10 +45,18 @@ N_MATRICES <- if (length(args) >= 1) as.integer(args[1]) else 100L
 POOL_SIZE <- if (length(args) >= 2) as.integer(args[2]) else 200L
 MK_ORACLE <- if (length(args) >= 3) !identical(args[3], "no") else TRUE
 
+# Library and output locations are overridable so the same script runs against
+# the local isolated build and against a Hamilton project library, with no
+# cluster-specific fork to drift out of step.
+TS_LIB <- Sys.getenv("SOFT_SANKOFF_LIB", ".agent-softsankoff")
+OUT_DIR <- Sys.getenv("SOFT_SANKOFF_OUT", "dev/soft-sankoff")
+
+if (nzchar(TS_LIB)) .libPaths(c(TS_LIB, .libPaths()))
 suppressPackageStartupMessages({
-  library("TreeSearch", lib.loc = ".agent-softsankoff")
+  library("TreeSearch", lib.loc = if (nzchar(TS_LIB)) TS_LIB else NULL)
   library("TreeTools")
 })
+dir.create(OUT_DIR, showWarnings = FALSE, recursive = TRUE)
 
 TEMPERATURES <- c(0, 0.02, 0.05, 0.1, 0.25, 0.5, 1, 2)
 MAX_EXTRA_STEPS <- 5      # pool admits trees within this many steps of optimal
@@ -109,14 +117,28 @@ SoftScore <- function(edge, patterns, temperature) {
 # Optimal trees plus near-optimal neighbours, all renumbered to one tip order
 # so a single set of tip-cost matrices serves every member.
 BuildPool <- function(dataset, tipLabels, poolSize, maxExtra) {
-  optimal <- MaximizeParsimony(dataset, verbosity = 0)
+  # collapse = FALSE is REQUIRED, not a preference.  The default contracts
+  # zero-length (unsupported) branches before returning, so MaximizeParsimony
+  # hands back polytomies on any matrix with an unsupported node -- and both
+  # TreeLength() and the soft kernel refuse a non-binary tree.  With the default
+  # this script dies partway through the sweep ("`tree` must be binary"), which
+  # on 100 matrices means discovering it a quarter of an hour in.
+  optimal <- MaximizeParsimony(dataset, verbosity = 0, collapse = FALSE)
   if (inherits(optimal, "phylo")) optimal <- structure(list(optimal),
                                                        class = "multiPhylo")
+
+  # Belt and braces: resolve anything still polytomous rather than trusting the
+  # argument to keep meaning what it means.  An arbitrary resolution of an
+  # unsupported node is exactly what collapse = FALSE returns anyway, so this
+  # changes nothing when the argument works -- it just refuses to fail late.
+  Binary <- function(tr) if (ape::is.binary(tr)) tr else ape::multi2di(tr)
+  optimal <- lapply(optimal, Binary)
+
   optimum <- min(vapply(optimal, function(tr) {
     as.numeric(TreeLength(tr, dataset, concavity = Inf))
   }, numeric(1)))
 
-  Canonical <- function(tr) Preorder(RenumberTips(tr, tipLabels))
+  Canonical <- function(tr) Preorder(RenumberTips(Binary(tr), tipLabels))
   pool <- lapply(optimal, Canonical)
   scores <- rep(optimum, length(pool))
   seen <- vapply(pool, function(tr) paste(as.character(TreeTools::as.Splits(tr)),
@@ -260,7 +282,7 @@ for (m in seq_len(nUse)) {
 }
 
 result <- do.call(rbind, rows)
-utils::write.csv(result, "dev/soft-sankoff/04-dial-study.csv", row.names = FALSE)
+utils::write.csv(result, file.path(OUT_DIR, "04-dial-study.csv"), row.names = FALSE)
 
 # ---------------------------------------------------------------------------
 # Summary
@@ -307,7 +329,7 @@ perMatrix <- do.call(rbind, lapply(unique(result[["matrix"]]), function(m) {
              hardCid = hard, bestT = bestRow[["temperature"]],
              bestCid = bestRow[["cidTiedMean"]])
 }))
-utils::write.csv(perMatrix, "dev/soft-sankoff/04-dial-study-per-matrix.csv",
+utils::write.csv(perMatrix, file.path(OUT_DIR, "04-dial-study-per-matrix.csv"),
                  row.names = FALSE)
 
 wins <- sum(perMatrix[["bestCid"]] < perMatrix[["hardCid"]] - 1e-9)
