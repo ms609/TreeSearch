@@ -855,3 +855,21 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_soft_sankoff_test
+List ts_soft_sankoff_test(IntegerMatrix edge, int n_tip, List tip_costs, List cost_matrices, double temperature, Nullable<List> root_costs, Nullable<List> branch_costs, int n_rep);
+RcppExport SEXP _TreeSearch_ts_soft_sankoff_test(SEXP edgeSEXP, SEXP n_tipSEXP, SEXP tip_costsSEXP, SEXP cost_matricesSEXP, SEXP temperatureSEXP, SEXP root_costsSEXP, SEXP branch_costsSEXP, SEXP n_repSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerMatrix >::type edge(edgeSEXP);
+    Rcpp::traits::input_parameter< int >::type n_tip(n_tipSEXP);
+    Rcpp::traits::input_parameter< List >::type tip_costs(tip_costsSEXP);
+    Rcpp::traits::input_parameter< List >::type cost_matrices(cost_matricesSEXP);
+    Rcpp::traits::input_parameter< double >::type temperature(temperatureSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type root_costs(root_costsSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type branch_costs(branch_costsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_rep(n_repSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_soft_sankoff_test(edge, n_tip, tip_costs, cost_matrices, temperature, root_costs, branch_costs, n_rep));
+    return rcpp_result_gen;
+END_RCPP
+}

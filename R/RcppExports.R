@@ -246,3 +246,33 @@ ts_ev_cache_key_probe <- function(edge, contrast, tip_data, weight, levels, conc
     .Call(`_TreeSearch_ts_ev_cache_key_probe`, edge, contrast, tip_data, weight, levels, concavity, zero_active, set_upweight, bump_pattern_freq)
 }
 
+#' Soft-Sankoff score (exploration prototype)
+#'
+#' Sankoff's dynamic program with `min` replaced by a soft-minimum at
+#' temperature `temperature`.  Not part of any exported scoring path.
+#'
+#' @param edge Two-column integer edge matrix, `ape` convention, rooted binary.
+#' @param n_tip Number of tips.
+#' @param tip_costs List of length `n_chars`; element `ch` is an
+#'   `n_tip x n_states[ch]` numeric matrix of per-state tip costs (0 for an
+#'   observed state, `Inf` otherwise).
+#' @param cost_matrices List of length `n_chars`; element `ch` is an
+#'   `n_states x n_states` matrix, `cost[from, to]`, applied to every edge.
+#'   Ignored for a character that supplies `branch_costs`.
+#' @param temperature Soft-min temperature; `0` gives hard weighted parsimony.
+#' @param root_costs Optional list of length `n_chars` of additive per-state
+#'   root costs (supply `-log(pi)` for root frequencies `pi`), or `NULL`.
+#' @param branch_costs Optional list of length `n_chars`; element `ch` is
+#'   either `NULL` or a list indexed by *child node* (`1..n_node`) of
+#'   per-branch cost matrices, matching the R reference's `cost[[child]]`
+#'   convention.  The root's element is never read.
+#' @param n_rep Number of times to repeat the whole scoring pass.  Only the
+#'   last pass's result is returned; the repetition exists so that timing
+#'   measures the kernel rather than R-side marshalling.
+#'
+#' @return List with `score` (total) and `per_char`.
+#' @keywords internal
+ts_soft_sankoff_test <- function(edge, n_tip, tip_costs, cost_matrices, temperature, root_costs = NULL, branch_costs = NULL, n_rep = 1L) {
+    .Call(`_TreeSearch_ts_soft_sankoff_test`, edge, n_tip, tip_costs, cost_matrices, temperature, root_costs, branch_costs, n_rep)
+}
+
