@@ -67,7 +67,16 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       R_REALLY_FORCE_SYMBOLS: true # Until R4.3
       _R_CHECK_CRAN_INCOMING_USE_ASPELL_: false
-      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/latest"
+      # PINNED Posit PM snapshot, not `latest`.  The dependency cache key is a
+      # function of the resolved dependency versions, so `latest` misses the
+      # cache whenever any of ~110 dependencies gets a new CRAN release -- i.e.
+      # most days -- forcing a full re-download every time.  A fixed snapshot
+      # makes the cache stable for weeks, turning dependency setup into a
+      # restore.  Bleeding-edge dependencies are the R-devel leg's job (see
+      # `core`, which deliberately keeps `latest`); this leg exists to answer
+      # "did this commit build?" as fast as possible.  Bump the date when you
+      # want to pick up newer dependencies.
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-30"
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -88,15 +97,42 @@ jobs:
         with:
           r-version: release
 
-      - name: Install apt packages
-        run: |
-          sudo apt-get install texlive-latex-base texlive-fonts-recommended
+      # No apt step: this leg needs no LaTeX.  `check-r-package@v2` defaults to
+      # args = c("--no-manual", "--as-cran") and build_args = "--no-manual", so
+      # the PDF manual is never built, and every vignette is
+      # `rmarkdown::html_vignette` (pandoc, already on the runner).  Installing
+      # texlive-latex-base + texlive-fonts-recommended cost ~45 s per run for
+      # nothing.  The `core` and `full` legs still install it, so a genuine
+      # LaTeX dependency would still be caught downstream.
 
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: |
             check
+          # shinytest2 pulls chromote, whose declared system requirement is
+          # `chromium`.  On Linux that makes pak add the ppa:xtradeb/apps PPA,
+          # re-run `apt-get update`, and install Chromium and its GTK/X11
+          # dependency tree -- ~70 s on EVERY run, including cache hits, since
+          # the sysreqs pass is not cached.  Nothing here needs it: shinytest2
+          # is used only by inst/Parsimony/tests, which is .Rbuildignore'd and
+          # so absent from the tarball R CMD check sees, and those tests run in
+          # the dedicated `shiny` job on Windows.
+          # MaxMin isn't on CRAN, so without this pak fetches and compiles it
+          # from source on every cache miss -- ~67 s of the ~174 s dependency
+          # step (measured on this exact leg, run 30697330564). This URL is a
+          # prebuilt binary for this exact platform/R combo (aarch64,
+          # release), published by ms609/packages' build-maxmin workflow.
+          # The URL has no version/commit in it -- it always points at
+          # whatever MaxMin build is current -- so it never needs updating
+          # here when MaxMin changes.
+          extra-packages: |
+            shinytest2=?ignore
+            url::https://ms609.github.io/packages/bin/linux/aarch64-release/MaxMin_latest.tar.gz
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
@@ -201,6 +237,10 @@ jobs:
           needs: |
             check
             coverage
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -213,9 +253,20 @@ jobs:
           # "could not find function '%||%'". Pin the last good version there
           # until upstream fixes its declared R dependency (already done on
           # their dev branch). Remove once a fixed highs reaches CRAN.
+          # shinytest2=?ignore: see the note on the sense-check leg -- its
+          # chromium sysreq costs ~70 s of apt per run and no Linux leg needs it.
+          # MaxMin url:: -- see the note on the sense-check leg: a prebuilt
+          # binary from ms609/packages' build-maxmin workflow, picked per
+          # this matrix's (arch, R version) combo (x86_64+4.1 vs aarch64+devel).
           extra-packages: |
             phangorn=?ignore-before-r=4.1.0
+            shinytest2=?ignore
+            ${{ matrix.config.r == '4.1' && 'url::https://ms609.github.io/packages/bin/linux/x86_64-4.1/MaxMin_latest.tar.gz' || 'url::https://ms609.github.io/packages/bin/linux/aarch64-devel/MaxMin_latest.tar.gz' }}
             ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
@@ -278,6 +329,10 @@ jobs:
             check
           extra-packages: |
             local::.
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: Run EasyTrees shinytest2 suite
         run: |
@@ -355,6 +410,10 @@ jobs:
         with:
           needs: |
             check
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
