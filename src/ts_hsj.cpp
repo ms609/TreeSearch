@@ -32,29 +32,34 @@ std::vector<int> partition_weights(
 // single state so that parent–child mismatches can be detected for HSJ
 // secondary dissimilarity.
 // Returns number of Fitch steps (union operations in the downpass).
+//
+// tip_labels holds 0-based TOKEN (allLevels/contrast-row) indices, not state
+// indices (T-375): a token like "?" is its own row in the contrast matrix,
+// generally with several columns set, so treating the token index itself as
+// a bit position (as this function formerly did) is a category error --
+// `label > 30` can never fire on a valid token index, so "?" silently scored
+// as one concrete, arbitrary state instead of the wildcard it denotes.
+// token_states[label] gives the actual bitmask of states the token is
+// compatible with (populated by build_dataset() from the contrast matrix),
+// which is what state_sets must hold to make the Fitch downpass/uppass below
+// correct for ambiguous tokens. inapp_state needs no special handling here --
+// per this module's design (see feature-inapplicable.md), the inapplicable
+// state is deliberately just another concrete state in the secondary pass.
 static int fitch_label_char(
     const TreeState& tree,
     const std::vector<int>& tip_labels,
     int char_idx,
     int n_orig_chars,
-    int inapp_state,
+    const std::vector<uint32_t>& token_states,
+    int n_levels,
     std::vector<uint32_t>& state_sets)
 {
   int n_tip = tree.n_tip;
   int n_node = tree.n_node;
 
-  // Initialize tips; track the number of distinct states (highest concrete
-  // token index + 1) so the order-invariant tie-break arrays can be sized.
-  int n_states = 1;
   for (int t = 0; t < n_tip; ++t) {
     int label = tip_labels[t * n_orig_chars + char_idx];
-    if (label < 0 || label > 30) {
-      // Ambiguous: all states
-      state_sets[t] = 0xFFFFFFFFu;
-    } else {
-      state_sets[t] = 1u << label;
-      if (label + 1 > n_states) n_states = label + 1;
-    }
+    state_sets[t] = token_states[label];
   }
 
   // --- Downpass ---
@@ -77,27 +82,36 @@ static int fitch_label_char(
   // --- Order-invariant tie-break support -------------------------------
   // The uppass below must resolve ambiguous nodes to a single state so that
   // parent-child mismatches (the HSJ secondary dissimilarity) can be counted.
-  // Resolving by bit index (the old "lowest set bit") makes the result depend
-  // on the arbitrary phyDat `levels` ordering, because which token maps to the
-  // lowest bit is determined by `levels`.  Instead we resolve toward the token
-  // with the most support in the node's own subtree, breaking ties by the
-  // smallest supporting tip index.  Both keys are properties of the *tokens*
-  // and the tree, not of the bit encoding, so the resolution — and hence the
-  // mismatch count — is invariant to level ordering.  This still yields a valid
-  // most-parsimonious reconstruction, so the dissimilarity stays non-zero (the
-  // concern that motivated adding the uppass in the first place).
+  // Resolving by bit index (the old "lowest set bit") would make the result
+  // depend on the arbitrary phyDat `levels` ordering, since which state
+  // occupies the lowest bit is determined by `levels`.  Instead we resolve
+  // toward the state with the most support in the node's own subtree,
+  // breaking ties by the smallest supporting tip index.  Both keys are
+  // properties of the *states* and the tree, not of the bit encoding, so the
+  // resolution — and hence the mismatch count — is invariant to level
+  // ordering.  This still yields a valid most-parsimonious reconstruction, so
+  // the dissimilarity stays non-zero (the concern that motivated adding the
+  // uppass in the first place).
   //
-  // tb_cnt[node * K + s]    = # tips in subtree(node) carrying concrete token s
-  // tb_mintip[node * K + s] = smallest tip index in subtree(node) with token s
-  const int K = n_states;
+  // tb_cnt[node * K + s]    = # tips in subtree(node) carrying concrete state s
+  // tb_mintip[node * K + s] = smallest tip index in subtree(node) with state s
+  const int K = n_levels;
   const int INF_TIP = std::numeric_limits<int>::max();
   std::vector<int> tb_cnt(static_cast<size_t>(n_node) * K, 0);
   std::vector<int> tb_mintip(static_cast<size_t>(n_node) * K, INF_TIP);
   for (int t = 0; t < n_tip; ++t) {
-    int label = tip_labels[t * n_orig_chars + char_idx];
-    if (label >= 0 && label < K) {   // concrete (ambiguous tips favour nothing)
-      tb_cnt[static_cast<size_t>(t) * K + label] = 1;
-      tb_mintip[static_cast<size_t>(t) * K + label] = t;
+    uint32_t set = state_sets[t];
+    // Only a tip resolved to exactly one concrete state contributes tie-break
+    // support -- an ambiguous tip (e.g. "?", now correctly multi-bit) must
+    // not bias which state the uppass prefers, same as before this fix.
+    if (set != 0 && (set & (set - 1)) == 0) {
+      for (int s = 0; s < K; ++s) {
+        if (set & (1u << s)) {
+          tb_cnt[static_cast<size_t>(t) * K + s] = 1;
+          tb_mintip[static_cast<size_t>(t) * K + s] = t;
+          break;
+        }
+      }
     }
   }
   for (int i = 0; i < static_cast<int>(tree.postorder.size()); ++i) {
@@ -115,9 +129,9 @@ static int fitch_label_char(
   }
 
   // Resolve `state_sets[node]` to a single state, preferring the best-supported
-  // token (max subtree count; ties broken by smallest supporting tip index —
-  // a strict order, since distinct tokens never share a supporting tip).  When
-  // no token in the set has concrete support (the whole subtree is ambiguous
+  // state (max subtree count; ties broken by smallest supporting tip index —
+  // a strict order, since distinct states never share a supporting tip).  When
+  // no state in the set has concrete support (the whole subtree is ambiguous
   // for this character), fall back to the lowest set bit: every node then
   // inherits it and no mismatch is affected, so the choice is score-neutral.
   auto pick_state = [&](int node) -> uint32_t {
@@ -186,7 +200,9 @@ static double score_hierarchy_block(
     double alpha,
     const std::vector<int>& tip_labels,
     int n_orig_chars,
-    int inapp_state)
+    int inapp_state,
+    const std::vector<uint32_t>& token_states,
+    int n_levels)
 {
   const int n_tip = tree.n_tip;
   const int n_node = tree.n_node;
@@ -200,25 +216,35 @@ static double score_hierarchy_block(
     std::vector<uint32_t> buf(n_node);
     for (int j = 0; j < m; ++j) {
       fitch_label_char(tree, tip_labels, block.secondary_chars[j],
-                       n_orig_chars, inapp_state, buf);
+                       n_orig_chars, token_states, n_levels, buf);
       for (int nd = 0; nd < n_node; ++nd) {
         sec_states[j * n_node + nd] = buf[nd];
       }
     }
   }
 
-  // Step 2: Determine primary state at each tip
-  // primary_present[tip] = true unless the primary codes the structure as
-  // absent.  The structure is absent when the primary token is the explicit
-  // "absent" state (block.absent_state, e.g. "0") OR the inapplicable token
-  // ("-").  This mirrors the x-transform recoding (recode_hierarchy.R), which
-  // treats `pri == "0" || pri == "-"` as absent, and is required for nested
-  // hierarchies where a controlling primary may itself be inapplicable.
-  std::vector<bool> primary_present(n_tip, false);
-  for (int t = 0; t < n_tip; ++t) {
-    int label = tip_labels[t * n_orig_chars + block.primary_char];
-    primary_present[t] = (label != block.absent_state) && (label != inapp_state);
-  }
+  // Step 2: Determine primary feasibility at each tip via SET MEMBERSHIP.
+  // `label` is a TOKEN (allLevels/contrast-row) index, but block.absent_state
+  // and inapp_state are STATE (levels) indices -- comparing them directly via
+  // `==` (the former code) was T-375/T-376's bug: it happened to work only
+  // when `levels` and `allLevels` coincide, which is common but not
+  // guaranteed, and it always mis-scored "?" (whose token index is never
+  // itself a valid comparison target for either state index). token_states
+  // translates the token into the state-space bitmask it actually denotes, so
+  // both sides of the test are in the same index space.
+  //
+  // The structure is absent when the primary's state set includes the
+  // explicit "absent" state (block.absent_state, e.g. "0") OR the
+  // inapplicable state ("-"). This mirrors the x-transform recoding
+  // (recode_hierarchy.R), which treats `pri == "0" || pri == "-"` as absent,
+  // and is required for nested hierarchies where a controlling primary may
+  // itself be inapplicable. a(leaf) = 0 iff the token's state set meets the
+  // absent-coding states; p(leaf) = 0 iff it meets the present-coding states
+  // (anything else). A fully ambiguous token (e.g. "?") meets both, so
+  // a = p = 0 there: genuinely unconstrained, not "present" (the old code's
+  // effective classification of "?").
+  const uint32_t inapp_bit = (inapp_state >= 0) ? (1u << inapp_state) : 0u;
+  const uint32_t absent_bits = (1u << block.absent_state) | inapp_bit;
 
   // Step 3: a(n)/p(n) DP
   // a[node], p[node]
@@ -227,13 +253,10 @@ static double score_hierarchy_block(
 
   // Initialize leaves
   for (int t = 0; t < n_tip; ++t) {
-    if (primary_present[t]) {
-      a[t] = INF;
-      p[t] = 0.0;
-    } else {
-      a[t] = 0.0;
-      p[t] = INF;
-    }
+    int label = tip_labels[t * n_orig_chars + block.primary_char];
+    uint32_t set = token_states[label];
+    a[t] = (set & absent_bits) ? 0.0 : INF;
+    p[t] = (set & ~absent_bits) ? 0.0 : INF;
   }
 
   // Helper: count secondary mismatches between two nodes
@@ -317,7 +340,8 @@ double hsj_score(
   double hsj_total = 0.0;
   for (const auto& block : hierarchy_blocks) {
     hsj_total += score_hierarchy_block(
-        tree, block, alpha, tip_labels, n_orig_chars, ds.inapp_state);
+        tree, block, alpha, tip_labels, n_orig_chars, ds.inapp_state,
+        ds.token_states, ds.n_levels);
   }
 
   return fitch_total + hsj_total;

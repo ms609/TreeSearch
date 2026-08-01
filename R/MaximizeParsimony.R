@@ -1536,8 +1536,9 @@ MaximizeParsimony <- function(
     hsjArgs$hierarchyBlocks <- .HierarchyToBlocks(hierarchy)
     hsjArgs$hsjTipLabels <- .BuildTipLabels(dataset)
     hsjArgs$hsjAlpha <- as.double(hsj_alpha)
-    # 0-based token index of the primary's "absent" state (depends on level
-    # ordering, so computed from the data rather than hard-coded).
+    # 0-based STATE (levels) index of the primary's "absent" state (depends on
+    # level ordering, so computed from the data rather than hard-coded; the
+    # C++ kernel translates tip token labels into this same index space).
     hsjArgs$hsjAbsentState <- .HSJAbsentState(dataset)
 
     # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy

@@ -577,7 +577,7 @@ test_that("HSJ handles extreme absent/present ratios", {
 # (Driven pipeline previously hard-coded 0L = index of "-", so primaries
 #  coded "0" were treated as present and gain/loss was never counted.)
 # =========================================================================
-test_that(".HSJAbsentState() tracks the '0' token across level orderings", {
+test_that(".HSJAbsentState() tracks the '0' state (levels index) across level orderings", {
   expect_equal(.HSJAbsentState(make_hsj_dat(
     matrix(c("0", "1", "0", "1"), 2, dimnames = list(c("a", "b"), NULL)),
     levels = c("-", "0", "1"))), 1L)

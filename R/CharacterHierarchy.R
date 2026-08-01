@@ -415,8 +415,12 @@ HierarchyControlling <- function(hierarchy) {
 
 # Identify the primary "absent" state for HSJ scoring.
 #
-# Returns the 0-based token index of the controlling primary character's
-# *absent* state, for the C++ HSJ scorer's `absent_state` argument.
+# Returns the 0-based STATE (`levels`) index of the controlling primary
+# character's *absent* state, for the C++ HSJ scorer's `absent_state`
+# argument -- NOT a token/`allLevels` index (T-375/T-376: `tip_labels`, built
+# by .BuildTipLabels() below, holds token indices, a different index space;
+# the C++ kernel translates a tip's token into this state space via
+# `DataSet::token_states` before comparing it to this value).
 #
 # Under reductive coding (Hopkins & St John 2021) the primary codes a
 # structure's presence/absence, conventionally "0" = absent, "1" = present.
