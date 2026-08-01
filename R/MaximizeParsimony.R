@@ -965,9 +965,9 @@
 #' result
 #' attr(result, "score")
 #'
-#' # Ask for one notch more search than this dataset would get by default,
+#' # Ask for one notch less search than this dataset would get by default,
 #' # whatever its size:
-#' harder <- MaximizeParsimony(dataset, effort = 1L, maxReplicates = 12L)
+#' sprint <- MaximizeParsimony(dataset, effort = -1, maxReplicates = 12)
 #'
 #' @template MRS
 #' @family tree scoring

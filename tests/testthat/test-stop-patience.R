@@ -135,8 +135,11 @@ test_that("stopPatience also stops the parallel search", {
   # stops before the cap, and it stops for the no-improvement reason.  The score is only
   # checked for being a valid, finite improvement over a random start, which holds at any
   # speed.  See [[parallel-stop-rules-poll-granularity]].
+  # What the rule actually
+  # guarantees is that stopping early can't do BETTER than letting the search run on.
   expect_true(is.finite(min(attr(short, "score"))))
   expect_lt(min(attr(short, "score")), min(attr(full, "score")) * 1.5)
+  expect_gte(min(attr(short, "score")), min(attr(full, "score")))
 })
 
 # ---- the shipped implied-weights operating point --------------------------------------------
