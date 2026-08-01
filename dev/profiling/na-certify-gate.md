@@ -301,25 +301,41 @@ stopping rule left exactly as shipped: `maxSeconds = 0`, `maxReplicates = 96`,
 | **`A_hits3`** | **0.000** | **0 / 0** | — | **2.582 (2.6x SLOWER)** |
 | `B_gate_hits3` | −0.040 | 0 / 4 | 0.125 | 0.128 |
 
-### `targetHits` escalation is pure cost — 0 of 30 matrices improved
+### `targetHits` escalation: the arm could not act where it mattered
 
-Tripling the hit target changed floor attainment on **not one matrix**, while
-costing **2.58x the wall** (26 of 30 slower, 22 of them by >10%, p = 6e-05).
+**RETRACTED, 2026-08-01: the first reading of this arm was "0 of 30 matrices
+improved at 2.58x the wall — targetHits is pure cost".** That is true and
+useless. 24 of the 30 matrices are saturated at 1.0 in every arm, so "no
+improvement" there is the expected result, not a finding; and floor attainment
+is binary, so it cannot see an arm getting *closer* without arriving.
 
-It is not that the runs ignored it: only 33 of 150 cells were identical in score
-*and* replicate count, so runs genuinely went longer — they just never found
-anything better. The mechanism is the disjoint-population argument, now measured
-at corpus scale rather than on one cell:
+Restricting to the 6 matrices with any headroom, and counting what the arm
+actually bought:
 
-* on **hard** matrices the replicate cap binds before the hit target is reached,
-  so raising it changes nothing (`hitCapBound` rises 22% → 47% between
-  `A_default` and `A_hits3` — the extra demand just pushes more runs into the
-  cap);
-* on **easy** matrices it does add replicates, but those matrices already attain
-  1.0, so there is nothing left to find.
+| | extra replicates bought by `targetHits` x3 |
+|---|---|
+| all 30 matrices | 4409 (4.2 CPU-hours) |
+| the 6 with headroom | **243** |
+| Zanol2014 / Zhu2013 / Geisler2001 | **0** |
 
-The extra work therefore lands exactly where it cannot help. **`targetHits` is
-not an effort knob for reach on inapplicable data.**
+On the three hardest matrices the 96-replicate cap bound **both** arms on every
+seed (21 of 30 headroom cells), so `A_hits3` performed byte-identical work to
+`A_default` — identical scores, identical replicate counts. 94% of the extra
+work went to matrices that were already solved.
+
+So the correct statement is not "raising `targetHits` does not help", it is
+**`targetHits` is structurally unable to act once `maxReplicates` binds** — and
+on hard data it always binds first. The 2.58x wall is the cost of re-confirming
+answers the easy matrices already had. Only 9 cells anywhere got extra
+replicates at all (0 of them improved), which is far too few to say anything
+about the hard tail.
+
+This vindicates the ordering in the `effort` ladder (budget leads, hit target
+follows) for a sharper reason than the one recorded there: not that `targetHits`
+buys less reach, but that it buys *nothing* once the cap is reached. It does not
+test whether more effort recovers a better score on tough matrices — that
+question needs the **cap** raised, which no arm in this panel does with
+certification left on. See `na-certify-hardtail.md`.
 
 ### Gating still costs reach here, so the default still does not flip
 

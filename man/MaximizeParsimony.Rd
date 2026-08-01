@@ -172,14 +172,14 @@ wall, which is what you asked to spend.  The ladder stops only at rung
 26, where the replicate budget outgrows R's integer type.}
 }
 
-Above rung 4 the \strong{replicate budget} is what buys reach.  Raising
-\code{targetHits} does not, and this is measured rather than argued: on 30
-inapplicable-bearing matrices under equal weights, tripling the hit target
-changed the score reached on \strong{none of them}, while costing 2.6x the wall
-(26 of 30 slower).  The runs did go longer -- they simply never found
-anything better, because on hard datasets the replicate cap binds before
-the hit target is reached, and on easy ones the optimum was already in
-hand.
+Above rung 4 the \strong{replicate budget} is what climbs first, because
+\code{targetHits} cannot act once that budget is reached -- and on hard datasets
+it always is.  Measured on 30 inapplicable-bearing matrices: tripling the
+hit target bought 4409 extra replicates in total, but only 243 of them on
+the six matrices that had anything left to find, and \strong{none at all} on the
+three hardest, where the replicate cap bound every run of both arms.  A
+ladder that raised the hit target first would spend its effort almost
+entirely on datasets that were already solved.
 
 \code{targetHits} is raised in step all the same, for two reasons that are not
 reach: it governs when \emph{easy} runs stop, so without it a notch would be
@@ -498,9 +498,9 @@ result <- MaximizeParsimony(
 result
 attr(result, "score")
 
-# Ask for one notch more search than this dataset would get by default,
+# Ask for one notch less search than this dataset would get by default,
 # whatever its size:
-harder <- MaximizeParsimony(dataset, effort = 1L, maxReplicates = 12L)
+sprint <- MaximizeParsimony(dataset, effort = -1, maxReplicates = 12)
 
 }
 \references{

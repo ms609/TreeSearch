@@ -53,14 +53,13 @@
   flattens, and a doubling grid over rungs 4--8 on the hard tail is what would
   replace the guess with a measurement.
 
-  The replicate budget is what buys reach; `targetHits` does not.  Across 30
-  inapplicable-bearing matrices under equal weights, tripling the hit target
-  changed the score reached on NONE of them, while costing 2.6x the wall (26 of
-  30 slower, 22 by >10%).  The runs did go longer -- they just never found
-  anything better, because the two knobs bite on disjoint populations: on hard
-  datasets the replicate cap binds before the hit target is reached, and on easy
-  ones the optimum is already in hand, so the extra work lands exactly where it
-  cannot help.
+  The replicate budget climbs first, because `targetHits` cannot act once that
+  budget is reached -- and on hard datasets it always is.  Measured on 30
+  inapplicable-bearing matrices: tripling the hit target bought 4409 extra
+  replicates in total, but only 243 of them on the six matrices with anything
+  left to find, and NONE on the three hardest, where the replicate cap bound
+  every run of both arms.  A ladder raising the hit target first would spend its
+  effort almost entirely on datasets that were already solved.
 
   `targetHits` is raised in step regardless, for reasons that are not reach: it
   governs when easy runs stop, so without it a notch would be inert on every
