@@ -478,7 +478,7 @@ size the run to the question and submit it.
 |---|---|
 | `congreveLamsdellMatrices` | **100 available**, bundled in `data/`. Only 6 used so far. 22 tips, 55 sites. |
 | `referenceTree` | bundled; the generating tree for the above |
-| O'Reilly 2016 result trees | on disk, `OReillyEtAl2016/data-raw/Trees/` — `eq`/`k2`/`k10`/`k20`/`k200` x 100/350/1000 characters, 1000 replicates each. A ready-made pool of near-optimal topologies, which is the input the widened Gate A design needs. |
+| O'Reilly 2016 result trees | on disk, `OReillyEtAl2016/data-raw/Trees/` — **NOT usable as a candidate pool.** Each `.sym` is ONE support-tagged tree per matrix, and `SupportSuboptimal()` in that repo's `GenerateData.Rmd` builds its "suboptimal" set by progressively *collapsing low-support nodes* (`ReduceTreesBySupport` -> `CollapseNode`) — a resolution series, not a score-based near-optimal set. The trees are non-binary, so both `TreeLength()` and the soft kernel reject them. Pools must be built from the matrices instead. |
 | O'Reilly 2016 **matrices** | **Fetched by the maintainer 2026-08-01** to `~/Downloads/doi_10_5061_dryad_10qf3__v20160322.zip` (19,061,436 bytes). **Nested archive** — the Dryad wrapper contains a single member, `oreilly2016matrices.zip` (19,061,276 bytes); unzip twice. Not yet unpacked or staged. Suggested home: `OReillyEtAl2016/data-raw/Matrices/`, which that repo already gitignores. |
 
 **Hamilton libraries** are documented in the `/hamilton` skill's
