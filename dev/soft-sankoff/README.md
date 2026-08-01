@@ -82,6 +82,14 @@ script runs locally and on Hamilton with no cluster-specific fork.
     matrix: **65 better / 2 tied / 33 worse, sign p = 0.0016**. Real,
     significant, modest (~5% relative). Both `T >= 1` columns are *worse* on
     both CID and Mk, so the dial is not "more integration is better".
+  - **Mechanism: UNDER TEST (job 18146295), do not quote yet.** The tie-breaking
+    reading below rests on comparing one selected tree against the *mean* of the
+    tied set, which a random draw wins ~half the time; and on a
+    `suboptimalSelections == 0` diagnostic that is near-tautological. The re-run
+    adds a random-MPT null and the winner's quantile rank among MPT CIDs. If the
+    null fails, only the `T = 0.5` result survives and the application becomes
+    "rank a near-optimal pool" instead of "rank an MPT set" — the affordability
+    argument is unaffected either way.
   - **The mechanism is principled tie-breaking, not better trees.** At
     `T <= 0.1` the criterion never leaves the MPT set (0/100 suboptimal
     selections) yet still beats it 56/33. Ties at `T = 0` are median 11, up to

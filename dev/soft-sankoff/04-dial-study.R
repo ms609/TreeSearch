@@ -91,20 +91,22 @@ PatternCosts <- function(dataset, tipLabels) {
     }
     out
   })
-  list(costs = costs, weight = as.numeric(at[["weight"]]), nStates = nStates)
+  # Equal-cost matrices, built once rather than per score: the sweep makes
+  # ~10^5 SoftScore() calls and each was rebuilding a list of nPattern copies.
+  cost <- matrix(1, nStates, nStates)
+  diag(cost) <- 0
+  list(costs = costs, weight = as.numeric(at[["weight"]]), nStates = nStates,
+       costMatrices = rep(list(cost), length(costs)))
 }
 
 # Weighted soft score of one tree.  One binding call per tree per temperature;
 # per_char is dotted with the pattern weights.
 SoftScore <- function(edge, patterns, temperature) {
-  nStates <- patterns[["nStates"]]
-  cost <- matrix(1, nStates, nStates)
-  diag(cost) <- 0
   result <- TreeSearch:::ts_soft_sankoff_test(
     edge = edge,
     n_tip = nrow(patterns[["costs"]][[1]]),
     tip_costs = patterns[["costs"]],
-    cost_matrices = rep(list(cost), length(patterns[["costs"]])),
+    cost_matrices = patterns[["costMatrices"]],
     temperature = temperature
   )
   sum(result[["per_char"]] * patterns[["weight"]])
@@ -245,6 +247,25 @@ for (m in seq_len(nUse)) {
     structure(pool[["trees"]], class = "multiPhylo"), referenceTree,
     normalize = TRUE))
 
+  # The MPT set within the pool, and a uniformly random member of it.
+  #
+  # THE NULL THIS EXISTS FOR.  At low T the criterion picks a unique winner from
+  # inside the MPT set, and we compare that winner's CID against `cidTiedMean`,
+  # the MEAN over the T = 0 tied set.  One draw beats a mean about half the time
+  # by construction, so "the winner beats the tied mean 56/33" is not on its own
+  # evidence of anything.  A separate diagnostic -- that the winner is never
+  # suboptimal under parsimony -- is near-tautological and does NOT rescue it:
+  # the MPT set is by definition where the optimal-scoring pool members are.
+  #
+  # Two honest statistics instead:
+  #   cidRandomMpt      a uniformly random MPT, for the same sign test as a null
+  #   cidRankInMpt      the winner's quantile rank among MPT CIDs (uniform under
+  #                     the null, below 0.5 if the criterion really ranks)
+  # The rank is the more powerful of the two, and is only defined when the winner
+  # is itself an MPT.
+  mptIdx <- which(pool[["scores"]] <= pool[["optimum"]] + 1e-9)
+  cidRandomMpt <- cid[mptIdx[sample.int(length(mptIdx), 1)]]
+
   for (temperature in TEMPERATURES) {
     soft <- vapply(edges, function(e) SoftScore(e, patterns, temperature),
                    numeric(1))
@@ -269,6 +290,14 @@ for (m in seq_len(nUse)) {
       nTied = length(best),
       cidChosen = cid[chosen],
       cidTiedMean = mean(cid[best]),
+      nMpt = length(mptIdx),
+      cidRandomMpt = cidRandomMpt,
+      cidMptMean = mean(cid[mptIdx]),
+      # NA when the selection is not itself an MPT, so the rank is never computed
+      # against a set the winner does not belong to.
+      cidRankInMpt = if (chosen %in% mptIdx && length(mptIdx) > 1) {
+        mean(cid[mptIdx] < cid[chosen])
+      } else NA_real_,
       cidPoolBest = min(cid),
       cidPoolMean = mean(cid),
       hardScoreChosen = pool[["scores"]][chosen],
@@ -363,6 +392,46 @@ fixedT <- do.call(rbind, lapply(TEMPERATURES[TEMPERATURES > 0], function(tt) {
                                            m[["cidTiedMean.hard"]]))
 }))
 print(fixedT, row.names = FALSE)
+
+# --- Is the low-T gain real, or one draw flattering itself against a mean? ---
+cat("\n=== Tie-breaking against a random-MPT null ===\n")
+cat("A single selection beats the MPT-set MEAN about half the time by\n")
+cat("construction.  The criterion has to beat a RANDOM MPT's win rate, and its\n")
+cat("winner's rank among MPT CIDs has to sit below 0.5.\n\n")
+multi <- result[result[["temperature"]] == 0 & result[["nMpt"]] > 1, "matrix"]
+SignVs <- function(x, y) {
+  w <- sum(x < y - 1e-9)
+  l <- sum(x > y + 1e-9)
+  c(better = w, worse = l,
+    p = if (w + l > 0) stats::binom.test(w, w + l)[["p.value"]] else NA_real_)
+}
+nullRow <- result[result[["temperature"]] == 0 &
+                    result[["matrix"]] %in% multi, ]
+nullSign <- SignVs(nullRow[["cidRandomMpt"]], nullRow[["cidMptMean"]])
+cat(sprintf("NULL  random MPT vs MPT-set mean: %2d better, %2d worse, p = %.4g\n",
+            nullSign[["better"]], nullSign[["worse"]], nullSign[["p"]]))
+nullRate <- nullSign[["better"]] / max(1, nullSign[["better"]] + nullSign[["worse"]])
+
+rankTable <- do.call(rbind, lapply(TEMPERATURES[TEMPERATURES > 0], function(tt) {
+  sub <- result[result[["temperature"]] == tt & result[["matrix"]] %in% multi, ]
+  s <- SignVs(sub[["cidChosen"]], sub[["cidMptMean"]])
+  rk <- sub[["cidRankInMpt"]][!is.na(sub[["cidRankInMpt"]])]
+  data.frame(
+    temperature = tt, better = s[["better"]], worse = s[["worse"]],
+    winRate = s[["better"]] / max(1, s[["better"]] + s[["worse"]]),
+    nRanked = length(rk),
+    meanRank = if (length(rk)) mean(rk) else NA_real_,
+    # Under the null the rank is uniform on [0, 1] with mean 0.5.
+    rankP = if (length(rk) > 2) {
+      stats::wilcox.test(rk - 0.5)[["p.value"]]
+    } else NA_real_)
+}))
+print(rankTable, row.names = FALSE)
+cat(sprintf("\nNull win rate to beat: %.2f.  A meanRank below 0.5 with a small\n",
+            nullRate))
+cat("rankP is the claim that soft-Sankoff genuinely ranks within the MPT set;\n")
+cat("a meanRank near 0.5 means the low-T effect is a mean-vs-draw artifact and\n")
+cat("only the T where selections actually leave the MPT set survives.\n")
 
 # Is the gain a different TREE, or a principled tie-break inside the MPT set?
 # `hardScoreChosen > optimum` means the selection is suboptimal under parsimony,

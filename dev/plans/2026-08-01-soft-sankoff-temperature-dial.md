@@ -336,7 +336,27 @@ result** — `bestT` is chosen using the answer. One fixed `T`, per matrix:
 Real, significant, and **modest**: ~0.012 normalised CID, about 5% relative, and
 33 of 100 matrices still get worse.
 
-**The mechanism, which is the actual finding.** `hardScoreChosen > optimum` means
+**The mechanism — UNDER TEST, do not quote yet (job 18146295).** The reading
+below is provisional and its supporting diagnostic is weaker than it looks.
+`suboptimalSelections == 0` at low `T` says only that the winner is an MPT, which
+is close to tautological: the MPT set is by definition where the optimal-scoring
+pool members are. And the 56/33 result compares **one selected tree against the
+MEAN over the tied set**, which a random draw wins roughly half the time by
+construction. A 63% win rate against a mean is not yet evidence of ranking.
+
+The re-run adds the null that settles it: a uniformly random MPT scored the same
+way, plus the winner's quantile rank among MPT CIDs (uniform at 0.5 under the
+null, below 0.5 if the criterion genuinely ranks). A 6-matrix smoke gave
+`meanRank = 0.15` against the null's 0.5, which is encouraging at `n = 5` and
+nothing more.
+
+If the null holds up, the paragraph below stands. If it does not, the surviving
+result is `T = 0.5` alone — which *does* leave the MPT set 23% of the time, so the
+application becomes "rank a near-optimal pool" rather than "rank an MPT set".
+**Either way the affordability argument below is unaffected**; only the
+description of the input changes.
+
+`hardScoreChosen > optimum` means
 the criterion selected a tree that is suboptimal under parsimony — i.e. it left
 the MPT set:
 
