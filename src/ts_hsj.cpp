@@ -57,9 +57,11 @@ static int fitch_label_char(
   int n_tip = tree.n_tip;
   int n_node = tree.n_node;
 
+  uint32_t used_mask = 0;
   for (int t = 0; t < n_tip; ++t) {
     int label = tip_labels[t * n_orig_chars + char_idx];
     state_sets[t] = token_states[label];
+    used_mask |= state_sets[t];
   }
 
   // --- Downpass ---
@@ -95,7 +97,18 @@ static int fitch_label_char(
   //
   // tb_cnt[node * K + s]    = # tips in subtree(node) carrying concrete state s
   // tb_mintip[node * K + s] = smallest tip index in subtree(node) with state s
-  const int K = n_levels;
+  //
+  // K only needs to cover states this CHARACTER actually uses -- the downpass
+  // above only ever intersects/unions existing tip bits, so no bit outside
+  // `used_mask` (accumulated while initializing state_sets) can appear at any
+  // node. Bounding K by `used_mask`'s highest set bit (rather than the
+  // dataset-global n_levels) keeps these arrays as small as the old
+  // per-character sizing did, even when other characters in the dataset use
+  // many more states than this one.
+  int K = 0;
+  for (uint32_t m = used_mask; m; m >>= 1) ++K;
+  if (K == 0) K = 1;
+  if (K > n_levels) K = n_levels;  // defensive: never exceed the real state space
   const int INF_TIP = std::numeric_limits<int>::max();
   std::vector<int> tb_cnt(static_cast<size_t>(n_node) * K, 0);
   std::vector<int> tb_mintip(static_cast<size_t>(n_node) * K, INF_TIP);
@@ -105,13 +118,9 @@ static int fitch_label_char(
     // support -- an ambiguous tip (e.g. "?", now correctly multi-bit) must
     // not bias which state the uppass prefers, same as before this fix.
     if (set != 0 && (set & (set - 1)) == 0) {
-      for (int s = 0; s < K; ++s) {
-        if (set & (1u << s)) {
-          tb_cnt[static_cast<size_t>(t) * K + s] = 1;
-          tb_mintip[static_cast<size_t>(t) * K + s] = t;
-          break;
-        }
-      }
+      int s = ctz64(set);
+      tb_cnt[static_cast<size_t>(t) * K + s] = 1;
+      tb_mintip[static_cast<size_t>(t) * K + s] = t;
     }
   }
   for (int i = 0; i < static_cast<int>(tree.postorder.size()); ++i) {
