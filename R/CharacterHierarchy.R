@@ -395,7 +395,9 @@ HierarchyControlling <- function(hierarchy) {
 # Build the tip-labels matrix for HSJ scoring.
 #
 # Converts a phyDat dataset into an integer matrix of per-tip, per-character
-# state labels (0-based) for the C++ HSJ scorer: length(dataset) rows (tips) by
+# TOKEN labels (0-based indices into `attr(dataset, "allLevels")`, NOT state
+# indices into `attr(dataset, "levels")`; the two only sometimes coincide --
+# see T-375/T-376) for the C++ HSJ scorer: length(dataset) rows (tips) by
 # length(attr(dataset, "index")) columns (original characters).
 .BuildTipLabels <- function(dataset) {
   idx <- attr(dataset, "index")

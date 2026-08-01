@@ -80,6 +80,12 @@ The HSJ and x-transformation methods require a character hierarchy
 specification via the `CharacterHierarchy` class;
 see `vignette("inapplicable")` for details.
 
+HSJ scoring correctly identifies the controlling primary's absence,
+presence, and any partial ambiguity (e.g. `?`), regardless of the arbitrary
+internal order in which a dataset's observed character-state tokens happen
+to be stored -- that internal order need not match, and often does not
+match, the order of the character states themselves.
+
 ## Starting trees
 
 ### Wagner tree construction

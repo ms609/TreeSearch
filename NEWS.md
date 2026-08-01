@@ -42,11 +42,12 @@
   reliable: the same dataset and tree could report different scores merely by
   virtue of the order characters happened to appear in.
 
-  **HSJ scores may therefore differ from previous versions** (generally
-  increasing, since a genuinely present or absent controlling primary is now
-  always counted).  This is a correctness fix; the method's design --
-  including its intentional rooting-sensitivity, not addressed here -- is
-  unchanged.
+  **HSJ scores may therefore differ from previous versions**, in either
+  direction: scores typically rise where a genuinely present or absent
+  controlling primary is now always counted, but can also fall where an
+  ambiguous secondary is no longer forced into a spurious mismatch.  This is
+  a correctness fix to how a tip's data is looked up; it does not touch HSJ's
+  known rooting-sensitivity, which remains a separate, open issue.
 
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute

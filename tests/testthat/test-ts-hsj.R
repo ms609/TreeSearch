@@ -26,8 +26,8 @@ hsj_score <- function(tree, dataset, hierarchy, alpha = 1.0) {
                      nrow = length(dataset), byrow = TRUE)
   blocks <- .HierarchyToBlocks(hierarchy)
   tl <- .BuildTipLabels(dataset)
-  # absent_state = 0-based token index of "0" (= 1 for levels c("-","0","1")),
-  # computed the same way the driven pipeline does.
+  # absent_state = 0-based STATE (levels) index of "0" (= 1 for levels
+  # c("-","0","1")), computed the same way the driven pipeline does.
   ts_hsj_score(
     edge = tree$edge,
     contrast = at$contrast,
@@ -733,44 +733,43 @@ test_that("HSJ secondary dissimilarity is level-order invariant (multistate)", {
   out
 }
 
+# HSJ score of `d` under every contrast-row permutation of its token
+# alphabet, asserting each permuted dataset is byte-identical to `d` via
+# PhyDatToMatrix() (the load-bearing confound-free check: only the arbitrary
+# token order moves, nothing else).
+.AllTokenOrderingScores <- function(d, tips, tree, h, alpha = 1) {
+  ref <- PhyDatToMatrix(d)[tips, , drop = FALSE]
+  nTok <- length(attr(d, "allLevels"))
+  perms <- as.matrix(expand.grid(rep(list(seq_len(nTok)), nTok)))
+  perms <- perms[apply(perms, 1, function(r) !anyDuplicated(r)), , drop = FALSE]
+  apply(perms, 1, function(perm) {
+    dp <- .PermuteTokens(d, perm)
+    stopifnot(identical(PhyDatToMatrix(dp)[tips, , drop = FALSE], ref))
+    hsj_score(tree, dp, h, alpha = alpha)
+  })
+}
+
 test_that("HSJ score is invariant to contrast-row (token) order", {
   tips <- paste0("t", 1:4)
   tree <- Renumber(RenumberTips(
     ape::read.tree(text = "((t1,t2),(t3,t4));"), tips))
 
-  # (1) Zero secondaries: isolates the primary_present set-membership test
-  # (ts_hsj.cpp:220) alone, with fitch_label_char() (T-375) never entered.
+  # (1) Zero secondaries: isolates the primary-feasibility set-membership
+  # test in score_hierarchy_block() alone, with fitch_label_char() (T-375)
+  # never entered.
   b1 <- rbind(t1 = c("-", "1"), t2 = c("0", "0"),
               t3 = c("1", "?"), t4 = c("?", "-"))
-  d1 <- make_hsj_dat(b1)
-  ref1 <- PhyDatToMatrix(d1)[tips, , drop = FALSE]
-  h1 <- CharacterHierarchy(`2` = integer(0))
-  nTok1 <- length(attr(d1, "allLevels"))
-  perms1 <- as.matrix(expand.grid(rep(list(seq_len(nTok1)), nTok1)))
-  perms1 <- perms1[apply(perms1, 1, function(r) !anyDuplicated(r)), , drop = FALSE]
-  scores1 <- apply(perms1, 1, function(perm) {
-    d <- .PermuteTokens(d1, perm)
-    stopifnot(identical(PhyDatToMatrix(d)[tips, , drop = FALSE], ref1))
-    hsj_score(tree, d, h1, alpha = 1)
-  })
+  scores1 <- .AllTokenOrderingScores(
+    make_hsj_dat(b1), tips, tree, CharacterHierarchy(`2` = integer(0)))
   expect_equal(scores1, rep(scores1[[1]], length(scores1)),
-               info = "zero secondaries: isolates primary_present (ts_hsj.cpp:220)")
+               info = "zero secondaries: isolates primary feasibility in score_hierarchy_block()")
 
   # (2) One secondary: adds fitch_label_char()'s token-to-state translation
   # (T-375) on top of (1).
   b2 <- rbind(t1 = c("-", "1", "0"), t2 = c("0", "1", "1"),
               t3 = c("1", "0", "-"), t4 = c("?", "1", "?"))
-  d2 <- make_hsj_dat(b2)
-  ref2 <- PhyDatToMatrix(d2)[tips, , drop = FALSE]
-  h2 <- CharacterHierarchy(`2` = 3L)
-  nTok2 <- length(attr(d2, "allLevels"))
-  perms2 <- as.matrix(expand.grid(rep(list(seq_len(nTok2)), nTok2)))
-  perms2 <- perms2[apply(perms2, 1, function(r) !anyDuplicated(r)), , drop = FALSE]
-  scores2 <- apply(perms2, 1, function(perm) {
-    d <- .PermuteTokens(d2, perm)
-    stopifnot(identical(PhyDatToMatrix(d)[tips, , drop = FALSE], ref2))
-    hsj_score(tree, d, h2, alpha = 1)
-  })
+  scores2 <- .AllTokenOrderingScores(
+    make_hsj_dat(b2), tips, tree, CharacterHierarchy(`2` = 3L))
   expect_equal(scores2, rep(scores2[[1]], length(scores2)),
                info = "one secondary: adds fitch_label_char() (T-375)")
 })
