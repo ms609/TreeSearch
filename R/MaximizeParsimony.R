@@ -728,12 +728,22 @@
 #'       26, where the replicate budget outgrows R's integer type.}
 #'   }
 #'
-#'   Above rung 4 the **replicate budget** is what buys reach on hard datasets.
-#'   Raising `targetHits` alone does not: it ends a run early on easy datasets,
-#'   but on hard ones it is never reached and `maxReplicates` binds first.  It
-#'   is raised in step all the same, because it governs when *easy* runs stop --
-#'   and under implied weights it additionally deepens the ratchet (see
-#'   `targetHits`).
+#'   Above rung 4 the **replicate budget** is what buys reach.  Raising
+#'   `targetHits` does not, and this is measured rather than argued: on 30
+#'   inapplicable-bearing matrices under equal weights, tripling the hit target
+#'   changed the score reached on **none of them**, while costing 2.6x the wall
+#'   (26 of 30 slower).  The runs did go longer -- they simply never found
+#'   anything better, because on hard datasets the replicate cap binds before
+#'   the hit target is reached, and on easy ones the optimum was already in
+#'   hand.
+#'
+#'   `targetHits` is raised in step all the same, for two reasons that are not
+#'   reach: it governs when *easy* runs stop, so without it a notch would be
+#'   inert on every dataset that finishes early; and under implied weights it
+#'   additionally deepens the ratchet (see `targetHits`), which the equal-weights
+#'   measurement above cannot see.  Read rungs 5+ as buying **confidence and
+#'   distinct trees on easy data, and reach on hard data** -- not as buying reach
+#'   uniformly.
 #'
 #'   The rung-4 budget of 500 is measured: a 34-matrix, 120--180-tip sweep found
 #'   the fraction of runs reaching the best score climbing from 0.68 at 96

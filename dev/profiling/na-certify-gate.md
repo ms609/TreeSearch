@@ -286,6 +286,74 @@ Zanol2014's differs between them — 1311 at `tabu = 0`, 1312 at `tabu = 100`. I
 0.2 in the two blocks is therefore not the same achievement, and the blocks'
 attainment numbers for that matrix are not directly comparable to each other.
 
+## PANEL 2 RESULT — the shipped stopping rules (2026-08-01, array 18126933)
+
+150/150 cells (30 matrices x 5 seeds x 6 arms), all at pin `644b5b10`. Every
+stopping rule left exactly as shipped: `maxSeconds = 0`, `maxReplicates = 96`,
+`targetHits = max(10, ntax/5)`. Raw cells in
+`dev/profiling/na-certify-stop-hamilton.csv`.
+
+| arm | attain Δ | better / worse | p | wall (median ratio) |
+|---|---|---|---|---|
+| `B_gate` | −0.047 | 0 / 4 | 0.125 | 0.060 (**17x faster**) |
+| `C_final` | −0.013 | 1 / 2 | **1.000** | 0.322 (3.1x) |
+| `B_gate_reps` | −0.033 | 1 / 3 | 0.625 | 0.074 |
+| **`A_hits3`** | **0.000** | **0 / 0** | — | **2.582 (2.6x SLOWER)** |
+| `B_gate_hits3` | −0.040 | 0 / 4 | 0.125 | 0.128 |
+
+### `targetHits` escalation is pure cost — 0 of 30 matrices improved
+
+Tripling the hit target changed floor attainment on **not one matrix**, while
+costing **2.58x the wall** (26 of 30 slower, 22 of them by >10%, p = 6e-05).
+
+It is not that the runs ignored it: only 33 of 150 cells were identical in score
+*and* replicate count, so runs genuinely went longer — they just never found
+anything better. The mechanism is the disjoint-population argument, now measured
+at corpus scale rather than on one cell:
+
+* on **hard** matrices the replicate cap binds before the hit target is reached,
+  so raising it changes nothing (`hitCapBound` rises 22% → 47% between
+  `A_default` and `A_hits3` — the extra demand just pushes more runs into the
+  cap);
+* on **easy** matrices it does add replicates, but those matrices already attain
+  1.0, so there is nothing left to find.
+
+The extra work therefore lands exactly where it cannot help. **`targetHits` is
+not an effort knob for reach on inapplicable data.**
+
+### Gating still costs reach here, so the default still does not flip
+
+`B_gate` is 0 better / 4 worse — not significant at n = 30 (p = 0.125) but
+uniformly negative, and the losses are concentrated on the hard tail:
+Zanol2014 −0.6, Wortley2006 −0.4, Aria2015 −0.2, Zhu2013 −0.2. Panel 1's verdict
+survives contact with the real stopping rules.
+
+### `C_final` is the arm worth pursuing
+
+Statistically indistinguishable from baseline (−0.013, 1 better / 2 worse,
+p = 1.000) at **a third of the wall**, and it *gains* on Aguado2009 (+0.4). Its
+certifications are also the productive ones: 11 000 sweeps of which **4 349
+(40%) found a real improver**, against `A_default`'s 9 555 of 44 889 (21%) —
+certifying the tree a replicate actually reports is four times cheaper and twice
+as likely to pay.
+
+Wall on the hard matrices, median seconds:
+
+| matrix | `A_default` | `C_final` | `B_gate` |
+|---|---|---|---|
+| Zanol2014 | 1947 | 628 | 86 |
+| Dikow2009 | 1437 | 365 | 69 |
+| Giles2015 | 1294 | 351 | 46 |
+| Zhu2013 | 1256 | 330 | 37 |
+| Aguado2009 | 1008 | 245 | 39 |
+
+**But it regresses on Zanol2014 (0.6 → 0.0)**, the hardest matrix in the corpus
+and the same one panel 1 flagged. By the stated rule that is a regression, so
+`C_final` is a candidate for a future default and not a change to make now. What
+would settle it is the hard tail specifically — Zanol2014, Zhu2013, Wortley2006,
+Aguado2009 at more seeds — rather than another corpus-wide sweep, since 24 of the
+30 matrices are saturated at 1.0 in every arm and can only dilute the signal.
+
 ## What to switch on, in practical terms
 
 **Presets today: nothing changes.** Certification stays on in `default` and

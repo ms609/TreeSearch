@@ -53,15 +53,20 @@
   flattens, and a doubling grid over rungs 4--8 on the hard tail is what would
   replace the guess with a measurement.
 
-  The replicate budget leads and `targetHits` follows, because the two bite on
-  disjoint populations: `targetHits` ends a run early on easy datasets, but on
-  hard ones it is never reached and `maxReplicates` binds first.  Measured on
-  Zanol2014 (equal weights), a run used its full 96 replicates at hits-to-best
-  = 1 against a target of 14, and tripling `targetHits` to 42 changed score,
-  replicate count and wall not at all.  A rung raising `targetHits` alone would
-  therefore do nothing on precisely the datasets someone turns effort up for.
-  (Under implied weights a raised hit target additionally deepens the ratchet,
-  so it is raised alongside the budget, not instead of it.)
+  The replicate budget is what buys reach; `targetHits` does not.  Across 30
+  inapplicable-bearing matrices under equal weights, tripling the hit target
+  changed the score reached on NONE of them, while costing 2.6x the wall (26 of
+  30 slower, 22 by >10%).  The runs did go longer -- they just never found
+  anything better, because the two knobs bite on disjoint populations: on hard
+  datasets the replicate cap binds before the hit target is reached, and on easy
+  ones the optimum is already in hand, so the extra work lands exactly where it
+  cannot help.
+
+  `targetHits` is raised in step regardless, for reasons that are not reach: it
+  governs when easy runs stop, so without it a notch would be inert on every
+  dataset that finishes early, and under implied weights it additionally deepens
+  the ratchet.  Higher rungs therefore buy confidence and distinct trees on easy
+  data, and reach on hard data -- not reach uniformly.
 
   Anything set explicitly still wins: a `maxReplicates` or `targetHits` you
   supply is never rescaled by `effort`, and explicit `control` fields continue

@@ -292,9 +292,16 @@ doubling above it is an operating point, not a calibrated level: nothing
 measures where that curve flattens.
 There is no policy ceiling, since extra replicates cost wall but cannot cost
 reach.
-Replicates are what buy reach on hard datasets: raising `targetHits` alone does
-not help there, because a hard search never accumulates that many hits before
-the replicate cap stops it.
+Replicates are what buy reach; `targetHits` does not.
+On 30 inapplicable-bearing matrices, tripling the hit target changed the score
+reached on none of them while costing 2.6× the wall — on hard datasets the
+replicate cap binds before the hit target is reached, and on easy ones the
+optimum is already in hand.
+It is raised in step anyway because it governs when *easy* runs stop (without it
+a notch would do nothing on any dataset that finishes early), and because under
+implied weights it also deepens the ratchet.
+So read the higher rungs as buying confidence and distinct trees on easy data,
+and reach on hard data.
 
 Any explicit parameter always overrides the rung.
 For example, `MaximizeParsimony(vinther, effort = -9, ratchetCycles = 10L)`
