@@ -108,13 +108,22 @@ window. Factor that into any dispatch on arrival.
 2. ~~**Widen Gate A.**~~ **RETIRED, not done.** Gate A existed to protect Step 4,
    which Gate B killed on cost. `02-tilt-direction.R` is left untouched as the
    record of its first read; do not widen it.
-3. **Stage the O'Reilly matrices.** Still outstanding. Fetched to
-   `~/Downloads/doi_10_5061_dryad_10qf3__v20160322.zip` (19,061,436 bytes).
-   **Nested — unzip twice**; the wrapper holds one member,
-   `oreilly2016matrices.zip` (19,061,276 bytes). Suggested home
-   `OReillyEtAl2016/data-raw/Matrices/` (already gitignored there); recipe in
-   that directory's `README-FETCH.md`. This is now the main thing blocking a
-   check of the Step 3a result on anything other than 22-tip simulated data.
+3. ~~**Stage the O'Reilly matrices.**~~ **DONE 2026-08-01.** 3000 `.NEX` in
+   `OReillyEtAl2016/data-raw/Matrices/{100,350,1000}_char_matrices` (1000 each,
+   NTAX=75, binary, gitignored there); the 100-char set is also on Hamilton at
+   `/nobackup/pjjg18/soft-sankoff/or/`. **The blocker has moved** — it is now
+   pool-build cost, not data. Two facts to not rediscover:
+   - `data-raw/Trees/` is **NOT** a candidate pool. One support-tagged,
+     non-binary tree per matrix; its "suboptimal" set is a *resolution* series
+     built by collapsing low-support nodes.
+   - `MaximizeParsimony()` returns **exactly** `SearchControl()$poolMaxSize` on
+     these matrices at both 100 and 300, i.e. a truncated set — so
+     `cidRankInMpt` there is computed inside a search-retained sample, not a
+     complete MPT set. Pilot `18146497` tests whether that matters.
+     A 2-matrix local smoke was stable across caps (0.010 vs 0.003; 0.919 vs
+     0.957) but **bimodal**, mean ≈ 0.5 rather than C-L's 0.33 — so the headline
+     finding may not generalise to 75 tips. Read the pilot before building
+     `05-oreilly-dial.R`.
 4. ~~**Build the C++ soft-scorer.**~~ **DONE** (`e8f9de7c`).
    `src/ts_soft_sankoff.{h,cpp}` + bridge, 411 assertions, ~x100 faster than the
    R reference. It closed Gate B: median x1147 vs Fitch at k = 2, so Steps 4 and
