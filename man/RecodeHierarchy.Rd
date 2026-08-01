@@ -65,6 +65,25 @@ number of secondary characters.
 different states).
 }
 }
+
+\subsection{Rooting}{
+
+Because gain and loss cost differently, this cost matrix is \strong{asymmetric}
+whenever a block has at least one secondary character -- and the length of a
+tree under an asymmetric step matrix depends on where the tree is rooted,
+unlike ordinary parsimony.  The asymmetry is the point of the recoding (the
+first gain of the controlling character pays for the secondaries it brings
+into existence), so this is intrinsic rather than a defect.
+
+\code{TreeSearch} treats topologies as unrooted, so \code{\link[=TreeLength]{TreeLength()}} and
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}} both evaluate x-transformation lengths at a canonical
+rooting -- on the first taxon of \code{dataset} -- giving one length per topology
+and making a reported score reproducible.  That length is an upper bound on
+the rooting-free minimum, exceeding it by at most the total number of
+secondary characters across blocks.  If a rooting is biologically meaningful
+to you, score the tree yourself with the block's \code{cost_matrix} rather than
+relying on the canonical value.
+}
 }
 \references{
 \insertAllCited{}

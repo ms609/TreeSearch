@@ -124,11 +124,21 @@ test_that("stopPatience also stops the parallel search", {
   expect_equal(attr(full, "replicates"), cap)      # nothing else ends the search
   expect_lt(attr(short, "replicates"), cap)
   expect_true(attr(short, "perturb_stop"))
-  # NOT expect_equal: the 200 ms monitor poll makes the firing replicate (and thus which
-  # dry spell trips the rule) vary run to run, so demanding the SAME optimum from a
-  # 5-9-replicate stop as from the full 120-replicate run is a search-quality claim
-  # conditional on timing, not a property of the stopping rule. What the rule actually
+  # Deliberately NOT `expect_equal(short score, full score)`.  That assertion held on
+  # this matrix but is not a property the rule guarantees, and it broke under covr:
+  # instrumentation slows every replicate, the parallel path evaluates the dry spell on a
+  # 200 ms monitor poll over replicates completed into the shared pool, so far fewer
+  # replicates land per poll and patience 3 fires genuinely earlier in the search
+  # (13.063 against 12.988).  Stopping sooner is *allowed* to cost score -- that is the
+  # trade-off the parameter exists to offer -- so equality was asserting a coincidence of
+  # this machine's timing.  What the rule does guarantee is asserted above: the search
+  # stops before the cap, and it stops for the no-improvement reason.  The score is only
+  # checked for being a valid, finite improvement over a random start, which holds at any
+  # speed.  See [[parallel-stop-rules-poll-granularity]].
+  # What the rule actually
   # guarantees is that stopping early can't do BETTER than letting the search run on.
+  expect_true(is.finite(min(attr(short, "score"))))
+  expect_lt(min(attr(short, "score")), min(attr(full, "score")) * 1.5)
   expect_gte(min(attr(short, "score")), min(attr(full, "score")))
 })
 

@@ -35,9 +35,6 @@ the hypergeometric distribution of cell overlaps, and is returned in bits
 # Expected MI between a 3|4 split and a 2|5 split of 7 items:
 expected_mi(c(3L, 4L), c(2L, 5L))
 }
-\references{
-\insertAllCited{}
-}
 \seealso{
 \code{\link{SiteConcordance}}
 }

@@ -673,7 +673,18 @@
 #'     \item{`"xform"`}{Step-matrix recoding approximating maximum homology
 #'       via x-transformations
 #'       \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-#'       `hierarchy`.}
+#'       `hierarchy`.  **Scores are rooting-sensitive**: the step matrix of
+#'       this recoding is asymmetric -- gaining the controlling character costs one more
+#'       than the number of secondaries it brings into existence, against 1 to
+#'       lose it -- so a tree's length depends on where its root sits, whereas
+#'       parsimony under the other methods does not.  Lengths are therefore
+#'       reported at a canonical rooting, on the first taxon of `dataset`, which
+#'       is the rooting the returned trees carry; `TreeLength()` canonicalises
+#'       identically, so it reproduces the reported score and one topology has
+#'       one length.  That value is an upper bound on the rooting-free minimum,
+#'       exceeding it by at most the total number of secondary characters across
+#'       hierarchy blocks, and attaining it for 87-98% of rootings in
+#'       simulation.}
 #'   }
 #' @param hsj_alpha Numeric in \[0, 1\]: scaling parameter for secondary-
 #'   character contributions under the HSJ method.  0 = secondaries ignored;
@@ -867,6 +878,13 @@
 #' the true optimum, so reporting them would look like erratic progress.  Any
 #' score the heartbeat prints is therefore directly comparable with the final
 #' tree score.
+#' @param .rung Internal.  Pins a named entry of the effort ladder
+#'   (`"sprint"`, `"default"`, `"thorough"`, `"large"`), or `"none"` to apply no
+#'   preset at all; `NULL` (default) selects the rung from `effort` and the
+#'   dataset's size, which is what every ordinary call should do.  Exists for
+#'   controlled experiments and the preset smoke tests, which need to name a rung
+#'   absolutely rather than relative to the automatic choice.  Not part of the
+#'   stable interface: prefer `effort`.
 #' @param control A [`SearchControl`] object (or a named list) of low-level
 #'   search parameters.  Most users can rely on `effort` and
 #'   ignore this argument; see [`SearchControl()`] for full documentation
@@ -1601,7 +1619,9 @@ MaximizeParsimony <- function(
     # Contract zero-length (unsupported) branches into polytomies, à la TNT's
     # "collapse zero-length branches" -- done entirely in C++ (ts_collapse_pool)
     # to avoid a per-tree R surgery quagmire.  The kernel re-roots each tree on
-    # tip 0 (so root-adjacent edges are trivial -> rooting-invariant collapse),
+    # tip 0 (so root-adjacent edges are trivial -> rooting-invariant *contraction*;
+    # note the LENGTH is not rooting-invariant under HSJ/XFORM, T-374, which is
+    # why the XFORM pool is rescored at this rooting below),
     # flags aggressive (min-length-0) internal edges in the *search's* scoring
     # mode, contracts them, and deduplicates on the collapsed topology.
     #
@@ -1650,6 +1670,50 @@ MaximizeParsimony <- function(
     outTrees <- list(treeTpl)
   }
 
+  # --- XFORM: report the score of the tree we are actually returning ---
+  # `result$best_score` is recorded mid-search at whatever rooting the replicate
+  # held.  XFORM's step matrix is asymmetric, so the score is rooting-dependent,
+  # and `ts_collapse_pool()` above hands back every tree re-rooted on tip 0.
+  # Reporting `best_score` therefore gives the user a number that `TreeLength()`
+  # of the returned tree does not reproduce -- measured at 178 reported against
+  # 183 returned (T-385; repro in dev/red-team/heavy-tests/).  Rescore the
+  # returned pool at the canonical rooting instead: |pool| evaluations, negligible
+  # against a search, and `TreeLength()` canonicalises identically, so the two
+  # agree by construction.
+  #
+  # This deliberately does NOT change what the search optimises.  The reported
+  # value stays a rooting-dependent upper bound on the min-over-rootings
+  # objective, exceeding it by at most the sum of `nSec` over hierarchy blocks
+  # (measured: attained by 87-98% of rootings, mean overstatement 0.02-0.17
+  # steps).
+  #
+  # Min-over-rootings reporting -- the variant the plan calls better -- is NOT used.
+  # It reports a quantity the search never compared, but the deciding objection is
+  # cost: evaluated naively it is (2 * nTip - 3) x on the Sankoff term, so a
+  # 4000-tip pool of 100 trees would need ~800k evaluations at the boundary.
+  # Doing it affordably needs an all-rootings up-down DP, which is its own piece
+  # of work (Option 4), not a line in a reporting fix.
+  # See dev/plans/2026-07-29-t374b-xform-rooting-policy.md (Option 3).
+  bestScore <- result$best_score
+  if (useXform && length(outTrees) > 0L) {
+    canonicalScores <- TreeLength(
+      structure(outTrees, class = "multiPhylo"),
+      dataset, inapplicable = "xform", hierarchy = hierarchy
+    )
+    bestScore <- min(canonicalScores)
+    if (diff(range(canonicalScores)) > sqrt(.Machine$double.eps)) {
+      # Pool membership is chosen on search-time scores taken at differing
+      # rootings (`result$scores` above), so trees held to be equally
+      # parsimonious can differ once scored at one rooting.  Not silently
+      # averaged away: this is the open residue of T-374, and staying quiet about
+      # it is what let the reporting gap survive this long.
+      warning("Returned trees do not share a length at a common rooting (",
+              paste(signif(range(canonicalScores), 8), collapse = " to "),
+              "); reporting the smallest.  The x-transformation's score is ",
+              "rooting-dependent -- see ?MaximizeParsimony.")
+    }
+  }
+
   # --- Output ---
   if (verbosity > 0L) {
     total_s <- round(sum(unlist(result$timings), na.rm = TRUE) / 1000, 1)
@@ -1658,7 +1722,7 @@ MaximizeParsimony <- function(
                    else if (isTRUE(result$perturb_stop)) "perturbation limit"
                    else "replicate limit"
     cli_alert_success(paste0(
-      "Search complete: score {.strong {signif(result$best_score, 7)}}, ",
+      "Search complete: score {.strong {signif(bestScore, 7)}}, ",
       "{result$replicates} replicate{?s} ",
       "(last improved: #{result$last_improved_rep}), ",
       "{result$hits_to_best} hit{?s} to best, ",
@@ -1669,7 +1733,7 @@ MaximizeParsimony <- function(
 
   structure(
     outTrees,
-    score = result$best_score,
+    score = bestScore,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
     n_topologies = nTopologies,

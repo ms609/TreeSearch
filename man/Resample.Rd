@@ -124,7 +124,18 @@ hierarchy required.}
 \item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
 via x-transformations
 \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-\code{hierarchy}.}
+\code{hierarchy}.  \strong{Scores are rooting-sensitive}: the step matrix of
+this recoding is asymmetric -- gaining the controlling character costs one more
+than the number of secondaries it brings into existence, against 1 to
+lose it -- so a tree's length depends on where its root sits, whereas
+parsimony under the other methods does not.  Lengths are therefore
+reported at a canonical rooting, on the first taxon of \code{dataset}, which
+is the rooting the returned trees carry; \code{TreeLength()} canonicalises
+identically, so it reproduces the reported score and one topology has
+one length.  That value is an upper bound on the rooting-free minimum,
+exceeding it by at most the total number of secondary characters across
+hierarchy blocks, and attaining it for 87-98\% of rootings in
+simulation.}
 }}
 
 \item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-

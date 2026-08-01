@@ -114,7 +114,18 @@ hierarchy required.}
 \item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
 via x-transformations
 \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-\code{hierarchy}.}
+\code{hierarchy}.  \strong{Scores are rooting-sensitive}: the step matrix of
+this recoding is asymmetric -- gaining the controlling character costs one more
+than the number of secondaries it brings into existence, against 1 to
+lose it -- so a tree's length depends on where its root sits, whereas
+parsimony under the other methods does not.  Lengths are therefore
+reported at a canonical rooting, on the first taxon of \code{dataset}, which
+is the rooting the returned trees carry; \code{TreeLength()} canonicalises
+identically, so it reproduces the reported score and one topology has
+one length.  That value is an upper bound on the rooting-free minimum,
+exceeding it by at most the total number of secondary characters across
+hierarchy blocks, and attaining it for 87-98\% of rootings in
+simulation.}
 }}
 
 \item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
@@ -316,6 +327,14 @@ When a \code{constraint} is supplied, its enforced splits are protected from
 collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 visible (a constraint encodes external evidence the matrix does not
 capture); unsupported non-constraint branches still collapse.}
+
+\item{.rung}{Internal.  Pins a named entry of the effort ladder
+(\code{"sprint"}, \code{"default"}, \code{"thorough"}, \code{"large"}), or \code{"none"} to apply no
+preset at all; \code{NULL} (default) selects the rung from \code{effort} and the
+dataset's size, which is what every ordinary call should do.  Exists for
+controlled experiments and the preset smoke tests, which need to name a rung
+absolutely rather than relative to the automatic choice.  Not part of the
+stable interface: prefer \code{effort}.}
 
 \item{...}{Backward compatibility.}
 }
