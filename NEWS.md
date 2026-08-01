@@ -46,8 +46,9 @@
   direction: scores typically rise where a genuinely present or absent
   controlling primary is now always counted, but can also fall where an
   ambiguous secondary is no longer forced into a spurious mismatch.  This is
-  a correctness fix to how a tip's data is looked up; it does not touch HSJ's
-  known rooting-sensitivity, which remains a separate, open issue.
+  a correctness fix to how a tip's data is looked up; it does not touch the
+  known rooting-sensitivity of HSJ scoring, which remains a separate, open
+  issue.
 
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute
