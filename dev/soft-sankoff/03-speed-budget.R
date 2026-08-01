@@ -130,14 +130,27 @@ SoftKernelCpp <- function(edge, tipCostList, costList, temperature,
 
 # Pure-R reference time per whole-tree score over all patterns, extrapolated
 # from a capped subset of patterns.
-SoftKernelR <- function(edge, tipCostList, costList, temperature, cap) {
+#
+# The subset is repeated until the measurement clears system.time()'s own
+# resolution.  A fixed cap let the smallest cell round to 0 elapsed, which
+# reported as an r_over_cpp of 0 and dragged the distribution whose median is
+# quoted as a planning input for the widened Gate A.
+SoftKernelR <- function(edge, tipCostList, costList, temperature, cap,
+                        minSeconds = 0.1) {
   use <- seq_len(min(cap, length(tipCostList)))
-  elapsed <- system.time(
-    for (ch in use) {
-      SoftSankoffScore(edge, tipCostList[[ch]], costList[[ch]], temperature)
-    }
-  )[["elapsed"]]
-  elapsed / length(use) * length(tipCostList) * 1e6
+  passes <- 1L
+  repeat {
+    elapsed <- system.time(
+      for (p in seq_len(passes)) {
+        for (ch in use) {
+          SoftSankoffScore(edge, tipCostList[[ch]], costList[[ch]], temperature)
+        }
+      }
+    )[["elapsed"]]
+    if (elapsed >= minSeconds || passes >= 64L) break
+    passes <- passes * 4L
+  }
+  elapsed / (passes * length(use)) * length(tipCostList) * 1e6
 }
 
 rows <- list()
@@ -235,6 +248,12 @@ cat(sprintf("\nCells over the x%d orientation threshold: %d of %d\n",
             THRESHOLD, sum(result[["cpp_ratio"]] > THRESHOLD), nrow(result)))
 Report("operation-count ratio (prior estimate)", result[["op_ratio"]])
 Report("pure R / compiled soft (speedup gained)", result[["r_over_cpp"]])
+cat("The k=2 ratio is the headline for real morphological data.  Fitch's cost\n")
+cat("is in words and so is near-flat in k, while the soft kernel pays k^2, so\n")
+cat("the k=4 rows say 'multistate is worse', not 'this is what a matrix costs'.\n")
+cat("Soft-side wall is quantised by system.time (~15 ms) at the low n_rep the\n")
+cat("expensive cells use; that is 10-20% on a conclusion clearing its\n")
+cat("threshold by 20-70x.\n")
 
 cat("\n=== The COMPLEXITY term: still open, but bounded ===\n")
 Report("Fitch full rescore / incremental candidate",
