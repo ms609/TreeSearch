@@ -259,6 +259,27 @@ the move is a random restart in costume.
 
 ---
 
+## Data and compute
+
+**All of Gate A and Step 3a are Hamilton jobs, not local runs.** Anything over
+~45 s of compute goes through the `/hamilton` skill. The 2026-08-01 first read
+used 6 of the 100 available Congreve & Lamsdell matrices *because* it was sized
+to run locally, and produced exactly one usable data point. Do not repeat that:
+size the run to the question and submit it.
+
+| Input | State |
+|---|---|
+| `congreveLamsdellMatrices` | **100 available**, bundled in `data/`. Only 6 used so far. 22 tips, 55 sites. |
+| `referenceTree` | bundled; the generating tree for the above |
+| O'Reilly 2016 result trees | on disk, `OReillyEtAl2016/data-raw/Trees/` — `eq`/`k2`/`k10`/`k20`/`k200` x 100/350/1000 characters, 1000 replicates each. A ready-made pool of near-optimal topologies, which is the input the widened Gate A design needs. |
+| O'Reilly 2016 **matrices** | **NOT on disk.** Dryad `doi:10.5061/dryad.10qf3`, `oreilly2016matrices.zip`, 19,061,276 bytes. Programmatic download is blocked (API 401 without a bearer token; `file_stream` routes 403). See `OReillyEtAl2016/data-raw/Matrices/README-FETCH.md`. Without these, the result trees cannot be scored. |
+
+**Hamilton libraries** are documented in the `/hamilton` skill's
+`r-infrastructure.md`: `tsLib = /nobackup/pjjg18/TreeSearch/lib` already carries
+TreeSearch 2.0.0, TreeTools, TreeDist and Quartet, and must precede `baseLib`.
+**`phangorn` is not in that listing** and is needed for the Mk oracle in Gate A
+and Step 3a — expect to install it into a project-local lib.
+
 ## Costs and known limitations
 
 - **Speed** — Gate B. The dominant risk.
