@@ -67,7 +67,16 @@ jobs:
       R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
       R_REALLY_FORCE_SYMBOLS: true # Until R4.3
       _R_CHECK_CRAN_INCOMING_USE_ASPELL_: false
-      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/latest"
+      # PINNED Posit PM snapshot, not `latest`.  The dependency cache key is a
+      # function of the resolved dependency versions, so `latest` misses the
+      # cache whenever any of ~110 dependencies gets a new CRAN release -- i.e.
+      # most days -- forcing a full re-download every time.  A fixed snapshot
+      # makes the cache stable for weeks, turning dependency setup into a
+      # restore.  Bleeding-edge dependencies are the R-devel leg's job (see
+      # `core`, which deliberately keeps `latest`); this leg exists to answer
+      # "did this commit build?" as fast as possible.  Bump the date when you
+      # want to pick up newer dependencies.
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-30"
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
@@ -88,9 +97,13 @@ jobs:
         with:
           r-version: release
 
-      - name: Install apt packages
-        run: |
-          sudo apt-get install texlive-latex-base texlive-fonts-recommended
+      # No apt step: this leg needs no LaTeX.  `check-r-package@v2` defaults to
+      # args = c("--no-manual", "--as-cran") and build_args = "--no-manual", so
+      # the PDF manual is never built, and every vignette is
+      # `rmarkdown::html_vignette` (pandoc, already on the runner).  Installing
+      # texlive-latex-base + texlive-fonts-recommended cost ~45 s per run for
+      # nothing.  The `core` and `full` legs still install it, so a genuine
+      # LaTeX dependency would still be caught downstream.
 
       - name: Set up R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2

@@ -34,7 +34,10 @@ jobs:
       NOT_CRAN: "true"
       TREESEARCH_EXTENDED_TESTS: ${{ inputs.extended }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/latest"
+      # PINNED snapshot, not `latest` -- see the note on R-CMD-check.yml's
+      # sense-check leg.  Agents dispatch this workflow constantly, so a stable
+      # dependency cache matters more here than fresh dependencies.
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-30"
 
     steps:
       - name: Checkout git repo
