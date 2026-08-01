@@ -118,16 +118,17 @@ jobs:
           # is used only by inst/Parsimony/tests, which is .Rbuildignore'd and
           # so absent from the tarball R CMD check sees, and those tests run in
           # the dedicated `shiny` job on Windows.
-          # MaxMin=?ignore: MaxMin isn't on CRAN (Remotes: ms609/MaxMin), so pak
-          # packages+builds it from source on every cache miss -- ~67 s of the
-          # ~174 s dependency step (measured on this exact leg, run 30697330564).
-          # It's pure Rcpp numerics with no OS-conditional code path, so Linux
-          # coverage of it buys nothing over the Windows/macOS legs, which keep
-          # it installed for real. test-WideSample.R already
-          # skip_if_not_installed("MaxMin") for exactly this situation.
+          # MaxMin isn't on CRAN, so without this pak fetches and compiles it
+          # from source on every cache miss -- ~67 s of the ~174 s dependency
+          # step (measured on this exact leg, run 30697330564). This URL is a
+          # prebuilt binary for this exact platform/R combo (aarch64,
+          # release), published by ms609/packages' build-maxmin workflow.
+          # The URL has no version/commit in it -- it always points at
+          # whatever MaxMin build is current -- so it never needs updating
+          # here when MaxMin changes.
           extra-packages: |
             shinytest2=?ignore
-            MaxMin=?ignore
+            url::https://ms609.github.io/packages/bin/linux/aarch64-release/MaxMin_latest.tar.gz
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -254,13 +255,13 @@ jobs:
           # their dev branch). Remove once a fixed highs reaches CRAN.
           # shinytest2=?ignore: see the note on the sense-check leg -- its
           # chromium sysreq costs ~70 s of apt per run and no Linux leg needs it.
-          # MaxMin=?ignore: see the note on the sense-check leg -- ~67 s to
-          # package+build from source with no OS-conditional code to miss;
-          # Windows (this job, above) and macOS (`full`) keep it installed.
+          # MaxMin url:: -- see the note on the sense-check leg: a prebuilt
+          # binary from ms609/packages' build-maxmin workflow, picked per
+          # this matrix's (arch, R version) combo (x86_64+4.1 vs aarch64+devel).
           extra-packages: |
             phangorn=?ignore-before-r=4.1.0
             shinytest2=?ignore
-            MaxMin=?ignore
+            ${{ matrix.config.r == '4.1' && 'url::https://ms609.github.io/packages/bin/linux/x86_64-4.1/MaxMin_latest.tar.gz' || 'url::https://ms609.github.io/packages/bin/linux/aarch64-devel/MaxMin_latest.tar.gz' }}
             ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
