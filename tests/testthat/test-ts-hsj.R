@@ -704,6 +704,128 @@ test_that("HSJ secondary dissimilarity is level-order invariant (multistate)", {
 
 
 # =========================================================================
+# Regression: T-375/T-376 -- tip_labels holds TOKEN (allLevels/contrast-row)
+# indices, but the primary's absent_state/inapp_state (and the bitmask built
+# by fitch_label_char() for secondaries) are STATE (levels) indices.
+# `make_hsj_dat()`'s construction (phyDat(type = "USER", levels =, ambiguity
+# = "?")) keeps allLevels and levels in the SAME relative order, so it cannot
+# expose this bug -- every absolute-value test above using it would pass
+# whether or not the two index spaces were confused. These tests instead
+# permute the contrast-ROW order directly (holding levels/taxa/tree fixed),
+# which is the only thing that moves tip_labels, and separately use
+# MatrixToPhyDat(), whose allLevels is ordered by first appearance and so
+# routinely disagrees with levels -- the same shape of misalignment as the
+# shipped Vinther2008.nex dataset (see dev/red-team/findings.md T-376).
+# =========================================================================
+
+# Relabel the (arbitrary) contrast row order ONLY, exactly as in
+# dev/red-team/heavy-tests/hsj-token-permutation.R. Taxa, tip numbering, tree,
+# levels and every token's state set are untouched, so the dataset is
+# identical -- any score change is not explicable by anything but the T-376
+# index-space bug.
+.PermuteTokens <- function(d, perm) {
+  at <- attributes(d)
+  inv <- order(perm)
+  out <- lapply(unclass(d), function(x) inv[x])
+  at$allLevels <- at$allLevels[perm]
+  at$contrast <- at$contrast[perm, , drop = FALSE]
+  attributes(out) <- at
+  out
+}
+
+test_that("HSJ score is invariant to contrast-row (token) order", {
+  tips <- paste0("t", 1:4)
+  tree <- Renumber(RenumberTips(
+    ape::read.tree(text = "((t1,t2),(t3,t4));"), tips))
+
+  # (1) Zero secondaries: isolates the primary_present set-membership test
+  # (ts_hsj.cpp:220) alone, with fitch_label_char() (T-375) never entered.
+  b1 <- rbind(t1 = c("-", "1"), t2 = c("0", "0"),
+              t3 = c("1", "?"), t4 = c("?", "-"))
+  d1 <- make_hsj_dat(b1)
+  ref1 <- PhyDatToMatrix(d1)[tips, , drop = FALSE]
+  h1 <- CharacterHierarchy(`2` = integer(0))
+  nTok1 <- length(attr(d1, "allLevels"))
+  perms1 <- as.matrix(expand.grid(rep(list(seq_len(nTok1)), nTok1)))
+  perms1 <- perms1[apply(perms1, 1, function(r) !anyDuplicated(r)), , drop = FALSE]
+  scores1 <- apply(perms1, 1, function(perm) {
+    d <- .PermuteTokens(d1, perm)
+    stopifnot(identical(PhyDatToMatrix(d)[tips, , drop = FALSE], ref1))
+    hsj_score(tree, d, h1, alpha = 1)
+  })
+  expect_equal(scores1, rep(scores1[[1]], length(scores1)),
+               info = "zero secondaries: isolates primary_present (ts_hsj.cpp:220)")
+
+  # (2) One secondary: adds fitch_label_char()'s token-to-state translation
+  # (T-375) on top of (1).
+  b2 <- rbind(t1 = c("-", "1", "0"), t2 = c("0", "1", "1"),
+              t3 = c("1", "0", "-"), t4 = c("?", "1", "?"))
+  d2 <- make_hsj_dat(b2)
+  ref2 <- PhyDatToMatrix(d2)[tips, , drop = FALSE]
+  h2 <- CharacterHierarchy(`2` = 3L)
+  nTok2 <- length(attr(d2, "allLevels"))
+  perms2 <- as.matrix(expand.grid(rep(list(seq_len(nTok2)), nTok2)))
+  perms2 <- perms2[apply(perms2, 1, function(r) !anyDuplicated(r)), , drop = FALSE]
+  scores2 <- apply(perms2, 1, function(perm) {
+    d <- .PermuteTokens(d2, perm)
+    stopifnot(identical(PhyDatToMatrix(d)[tips, , drop = FALSE], ref2))
+    hsj_score(tree, d, h2, alpha = 1)
+  })
+  expect_equal(scores2, rep(scores2[[1]], length(scores2)),
+               info = "one secondary: adds fitch_label_char() (T-375)")
+})
+
+test_that("HSJ handles a MatrixToPhyDat token/state misalignment (T-376)", {
+  # MatrixToPhyDat() orders allLevels by first appearance, which routinely
+  # disagrees with `levels` -- unlike make_hsj_dat() above. This specific
+  # matrix reproduces exactly the shape of misalignment found on the
+  # package's own shipped Vinther2008.nex dataset: levels = "- 0 1", but
+  # allLevels = "1 0 -" (confirmed by inspection below), so token("0") = 1
+  # coincides with the STATE index of "0" only by luck of levels' order, and
+  # more importantly token("1") = 0 sits where inapp_state would be checked
+  # against under the old buggy code.
+  mat <- rbind(
+    t1 = c("1", "0"), t2 = c("1", "1"), t3 = c("1", "1"),
+    t4 = c("0", "-"), t5 = c("1", "0")
+  )
+  ds <- MatrixToPhyDat(mat)
+  expect_equal(attr(ds, "levels"), c("-", "0", "1"))
+  expect_equal(attr(ds, "allLevels"), c("1", "0", "-"))
+
+  h <- CharacterHierarchy("1" = 2L)
+
+  # Hand-derived expected value: exactly one tip (t4) is absent among five
+  # present tips. Under the absent/present DP's symmetric branch costs
+  # (absent<->present = 1, absent<->absent = present<->present = 0), a binary
+  # character with a single differing tip always costs exactly 1 step,
+  # regardless of tree topology (there is always one branch, somewhere, that
+  # can carry the single change) -- so this is topology-invariant, checked
+  # across three unrelated topologies. Before the T-375/T-376 fix, the
+  # token/state confusion misclassified every one of these five tips as
+  # ABSENT (all read the same, wrongly), so the block cost 0 instead of 1:
+  # the controlling primary silently contributed nothing, exactly the T-376
+  # escalation ("HSJ(alpha=0) == Fitch(non-controlling primaries only)").
+  for (topo_txt in c("((t1,t2),(t3,(t4,t5)));", "(((t1,t4),t2),(t3,t5));",
+                     "(t4,(t1,(t2,(t3,t5))));")) {
+    tree <- Renumber(RenumberTips(ape::read.tree(text = topo_txt), names(ds)))
+    expect_equal(
+      TreeLength(tree, ds, hierarchy = h, inapplicable = "hsj", hsj_alpha = 0),
+      1,
+      info = topo_txt
+    )
+    # The paper's alpha=0 identity (Hopkins & St John 2021, p.6): HSJ(alpha=0)
+    # must equal plain Fitch scoring of the primary character alone,
+    # controlling primary included.
+    expect_equal(
+      TreeLength(tree, ds, hierarchy = h, inapplicable = "hsj", hsj_alpha = 0),
+      TreeLength(tree, MatrixToPhyDat(mat[, 1, drop = FALSE])),
+      info = topo_txt
+    )
+  }
+})
+
+
+# =========================================================================
 # Test: HSJ + sectorial search (T-303 guard)
 # =========================================================================
 # build_reduced_dataset() does not copy hierarchy_blocks/tip_labels/hsj_alpha,
