@@ -63,17 +63,30 @@ the gates.
 
 ## Pending jobs
 
-**None owned by this session.** Nothing was pushed, no GHA dispatched, no
-Hamilton job submitted, no `to-do.md` task claimed, no issue labelled
+**Updated 2026-08-01, later session.** The original claim that nothing was
+pushed is stale: `origin/feature/soft-sankoff` exists at `a1c3ec50`, and three
+further commits (`e8f9de7c`, `8f5b7480`, `ce8ae11a`) are local-only.
+
+| Type | ID / ref | Status | On completion |
+|---|---|---|---|
+| Hamilton | `18146187` | running (`soft-sankoff-dial`, ~15 min) | Collect `/nobackup/pjjg18/soft-sankoff/out/04-dial-study{,-per-matrix}.csv` into `dev/soft-sankoff/`; read the recovery-by-`T` table, the per-matrix sign test, and the homoplasy correlation; write the verdict into the Step 3a section of `dev/plans/2026-08-01-soft-sankoff-temperature-dial.md` and the README status list; commit |
+
+Job `18146150` was the same job and **FAILED** at matrix 11 of 100
+(`MaximizeParsimony()` returns polytomies by default). Fixed and superseded by
+`18146187`; nothing to collect from it.
+
+No GHA dispatched by this session, no `to-do.md` task claimed, no issue labelled
 `in-progress`, no dispatch agents active.
 
-Other agents' work in flight at hand-off, for context only — do not collect:
+Other agents' GHA work, from the original hand-off — context only, do not
+collect. `30698449302` has since completed successfully; the other two were
+still in progress when this session started:
 
 | Run | Branch | Started |
 |---|---|---|
 | `30701531266` | `feature/hsj-token-index-fix` | 13:20 |
 | `30700854197` | `gha-ccache` | 13:00 |
-| `30698449302` | `cpp-search` | 11:49 |
+| `30698449302` | `cpp-search` | 11:49 — ✅ success |
 
 `.dispatch/state.json` records `5h_pct_committed: 122` — over the 5-hour budget
 window. Factor that into any dispatch on arrival.
