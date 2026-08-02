@@ -26,7 +26,37 @@
   still decided on scores taken at differing rootings.  Only the x-transformation
   is affected; HSJ reporting is deliberately unchanged, since there
   rooting-invariance is a property the method requires rather than a convention
-  to pick.
+  to pick -- and it is now delivered, as the next entry describes.
+
+- `inapplicable = "hsj"` scores no longer depend on where the tree is rooted.
+  Hopkins & St John (2021) define the score as a minimum over internal-node
+  labellings of a sum of *symmetric* dissimilarities across the branches of an
+  *unrooted* tree, so rooting-invariance is required by the method rather than
+  merely desirable.  Two defects broke it, both in how the secondary characters
+  were labelled; the underlying present/absent dynamic programme was correct
+  throughout.
+
+  First, the inapplicable token was treated as an ordinary state of a secondary
+  character.  Where a controlling primary codes a structure absent, its
+  secondaries do not exist, so `"-"` there is not a state the character takes;
+  admitting it let a node in the middle of a region where the structure *is*
+  present be labelled "inapplicable", mismatching every secondary at once and
+  charging that branch the full weight of the scaling parameter.  Secondaries
+  are now unconstrained at tips whose primary may code the structure absent.
+  Second, the remaining ambiguity was resolved by a pass whose direction was a
+  property of the input rooting; that pass is now rooted canonically on the
+  first taxon, inside the scoring kernel, so the labelling depends only on the
+  unrooted topology.
+
+  **HSJ scores on data with a mix of present and absent primaries may therefore
+  differ from previous versions**, and will generally decrease, the old value
+  having included spurious inapplicable mismatches.  Scores are unchanged where
+  every taxon shares the controlling primary's presence, and Figure 1 of the
+  paper still scores 7 and 5.  Unlike the x-transformation change above, this
+  one alters what the search optimises: the criterion is now a function of the
+  unrooted tree, so `MaximizeParsimony()`'s reported score matches
+  `TreeLength()` of the trees it returns without any re-scoring, and every tree
+  in a returned set shares that length.
 
 - `inapplicable = "hsj"` scoring fixed an index-space confusion that could
   under- or over-count the controlling primary's gains and losses, and could
