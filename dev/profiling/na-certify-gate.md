@@ -385,59 +385,35 @@ is, and `TS_NA_NOCERTIFY` is a diagnostic rather than a recommendation.
 
 ## What to switch on, in practical terms
 
-**Presets today: nothing changes.** Certification stays on in `default` and
-`thorough`. Neither panel-1 budget is the shipped one, and a preset default may
-not be flipped on a regime that was not measured.
+**SUPERSEDED BY PANEL 3.** This section previously recommended
+`TS_NA_NOCERTIFY = "1"` plus a raised `maxReplicates` for wall-bounded runs, on
+the strength of panel 1's matched-wall result. `dev/profiling/na-hardtail-effort.md`
+refutes that: on the hard tail, certification at `effort = 0` beats gating at
+`effort = +2` at a fifth of the wall, and gating never exceeds 0.3 attainment on
+Zanol2014 at any effort. **Do not recommend gating to anyone.**
 
-**`thorough`: keep certification on, permanently.** Not "pending panel 2" — its
-objective is reaching the global optimum, not wall (`auto-vs-thorough-objective`),
-and Zanol2014, the hard tail, is precisely where certification still pays at
-matched wall.
+What stands:
 
-**`default` / `auto`: the candidate is a PAIR, not a flag.** Gating alone is the
-arm that *loses*. The shipped `maxReplicates = 96` is what stops the freed wall
-being spendable, so any flip must be `TS_NA_NOCERTIFY` **plus** a raised replicate
-cap. Panel 2 (`bench_na_certify_stop_cell.R`, array 18096945) decides it under the
-real stopping rules.
-
-For a user on inapplicable data **today**:
-
-```r
-# Wall-limited, want the best tree within a fixed time: the +0.167 arm.
-Sys.setenv(TS_NA_NOCERTIFY = "1")
-MaximizeParsimony(dat, maxSeconds = 600, maxReplicates = 500)
-```
-
-Want the best tree regardless of time: change nothing. **Do not set
-`TS_NA_NOCERTIFY=1` on its own** — without the raised cap that is the arm that
-regressed.
+* **Presets: nothing changes.** Certification stays on at every rung.
+* **Turn `effort` up, not certification off.** On the one matrix in the bundled
+  corpus that is still hard, `effort = +1` takes attainment 0.5 → 0.9 for ~4.9x
+  the wall. `effort = +2` adds nothing.
+* `TS_NA_NOCERTIFY` and `TS_NA_FINAL_CERTIFY` remain **diagnostics**, for
+  measuring this path, not knobs to advise users to set.
 
 ## Does anything need adjusting when `targetHits` rises?
 
-**No compensating adjustment, and raising it helps rather than hurts** — but it is
-not the knob that pays for gating.
+**No — and it is not an effort knob at all.** `targetHits` cannot act once
+`maxReplicates` binds, and on hard data it always binds first: panel 2's x3 arm
+bought 4409 extra replicates corpus-wide but **zero** on the three hardest
+matrices, where the 96-cap bound both arms on every seed. Raising it lengthens
+runs on datasets that are already solved.
 
-`targetHits` defaults to `max(10, ntax/5)` and stops the run once the best score
-has been hit that many times. Raising it means more replicates, which moves the
-run toward the many-replicate regime where the gate won. It is already the shipped
-idiom for "this matrix is hard": `.IwRatchetDepth()` reads `targetHits /
-defaultHits` as a user escalation signal and deepens the IW ratchet by it.
-
-Two cautions:
-
-* **`targetHits` counts hits against the CURRENT best, not the true optimum.** So
-  it cannot rescue a uniformly weaker search that plateaus one step high: raising
-  it just buys more confirmations of the same wrong score. What protects against
-  that is more *independent* replicates. **`maxReplicates` is the knob that pays
-  for gating; `targetHits` is not.**
-* **Raising `targetHits` without raising `maxReplicates` makes the run bump the
-  96 cap instead of reaching its hit target** — and the more expensive the
-  replicate, the sooner that happens. This is the concrete reason the two knobs
-  are coupled on NA data: certification is what makes the replicate budget
-  unusable.
-
-Panel 2's `A_hits3` / `B_gate_hits3` arms measure exactly this at 3x the default
-hit target.
+It is still the shipped idiom for "this matrix is hard" (`.IwRatchetDepth()`
+reads `targetHits / defaultHits` and deepens the implied-weights ratchet by it),
+and the `effort` ladder raises it in step with the budget from rung 5 so that a
+notch is not inert on datasets that stop early. But the knob that buys reach is
+the **replicate budget**, and the knob a user should turn is **`effort`**.
 
 ### Harvesting the panel
 
