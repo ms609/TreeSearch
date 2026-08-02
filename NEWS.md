@@ -49,14 +49,22 @@
   unrooted topology.
 
   **HSJ scores on data with a mix of present and absent primaries may therefore
-  differ from previous versions**, and will generally decrease, the old value
-  having included spurious inapplicable mismatches.  Scores are unchanged where
-  every taxon shares the controlling primary's presence, and Figure 1 of the
-  paper still scores 7 and 5.  Unlike the x-transformation change above, this
-  one alters what the search optimises: the criterion is now a function of the
-  unrooted tree, so `MaximizeParsimony()`'s reported score matches
-  `TreeLength()` of the trees it returns without any re-scoring, and every tree
-  in a returned set shares that length.
+  differ from previous versions.**  Most do not: across 180 simulated
+  tree--matrix pairs, 152 were unchanged, 27 fell (by up to 1) and one rose (by
+  0.25).  Falls are the removal of spurious inapplicable mismatches; a rise is
+  possible because a score is now taken at a fixed canonical rooting rather
+  than at whichever rooting the tree happened to arrive in, and that rooting
+  was sometimes the flattering one.  Scores are unchanged wherever every taxon
+  shares the controlling primary's presence, and Figure 1 of the paper still
+  scores 7 and 5.
+
+  Unlike the x-transformation change above, this one alters what the search
+  optimises: the criterion is now a function of the unrooted tree, so
+  `MaximizeParsimony()`'s reported score matches `TreeLength()` of the trees it
+  returns without any re-scoring, and every tree in a returned set shares that
+  length.  A secondary character is treated as unconstrained only at taxa whose
+  controlling primary cannot code the structure present; where the primary is
+  ambiguous but a secondary was observed, that observation still counts.
 
 - `inapplicable = "hsj"` scoring fixed an index-space confusion that could
   under- or over-count the controlling primary's gains and losses, and could

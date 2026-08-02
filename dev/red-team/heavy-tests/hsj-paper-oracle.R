@@ -224,34 +224,65 @@ cat("      2. The residual resolution was a DELTRAN uppass whose direction, and\
 cat("         tie-break counts whose subtrees, were properties of the rooting.\n")
 cat("    Measured at 93c81a9a over every edge-rooting of 30 random 9-tip trees,\n")
 cat("    alpha = 1: 21/30 dependent at m = 2 and 26/30 at m = 4, spread 1.00.\n")
+cat("    Crossed over an ambiguous ('?') primary, 18/30 dependent pre-fix, and\n")
+cat("    over multistate secondaries, which exercise pick_state()'s tie-break.\n")
 set.seed(374)
-mixedDep <- 0L
-mixedWorst <- 0
-for (rep in 1:12) {
-  nTip <- 9L
-  pri <- rep("1", nTip)
-  pri[sample.int(nTip, 3L)] <- "0"
-  live <- pri != "0"
-  sec <- matrix("-", nTip, 3L)
-  for (j in 1:3) sec[live, j] <- sample(c("0", "1"), sum(live), TRUE)
-  nh <- matrix(sample(c("0", "1"), nTip * 3L, TRUE), nTip, 3L)
-  mm <- cbind(pri, sec, nh)
-  rownames(mm) <- paste0("t", seq_len(nTip))
-  colnames(mm) <- NULL
-  mDs <- MatrixToPhyDat(mm)
-  mH <- CharacterHierarchy("1" = 2:4)
-  tr <- Preorder(as.phylo(rep, nTip, tipLabels = rownames(mm)))
-  sc <- vapply(AllRootings(tr), function(rt)
-    TreeLength(rt, mDs, hierarchy = mH, inapplicable = "hsj", hsj_alpha = 1),
-    double(1))
-  if (diff(range(sc)) > 1e-9) {
-    mixedDep <- mixedDep + 1L
-    mixedWorst <- max(mixedWorst, diff(range(sc)))
+for (secStates in list(c("0", "1"), c("0", "1", "2"))) {
+  for (ambiguous in c(FALSE, TRUE)) {
+    mixedDep <- 0L
+    mixedWorst <- 0
+    for (rep in 1:8) {
+      nTip <- 9L
+      pri <- rep("1", nTip)
+      pri[sample.int(nTip, 3L)] <- "0"
+      if (ambiguous) pri[sample(which(pri == "1"), 2L)] <- "?"
+      live <- pri != "0"
+      sec <- matrix("-", nTip, 3L)
+      for (j in 1:3) sec[live, j] <- sample(secStates, sum(live), TRUE)
+      nh <- matrix(sample(c("0", "1"), nTip * 3L, TRUE), nTip, 3L)
+      mm <- cbind(pri, sec, nh)
+      rownames(mm) <- paste0("t", seq_len(nTip))
+      colnames(mm) <- NULL
+      mDs <- MatrixToPhyDat(mm)
+      mH <- CharacterHierarchy("1" = 2:4)
+      tr <- Preorder(as.phylo(rep, nTip, tipLabels = rownames(mm)))
+      sc <- vapply(AllRootings(tr), function(rt)
+        TreeLength(rt, mDs, hierarchy = mH, inapplicable = "hsj", hsj_alpha = 1),
+        double(1))
+      if (diff(range(sc)) > 1e-9) {
+        mixedDep <- mixedDep + 1L
+        mixedWorst <- max(mixedWorst, diff(range(sc)))
+      }
+    }
+    Check(sprintf("mixed, %d secondary states, '?' primary %-5s: %d/8 dependent, worst %.4f",
+                  length(secStates), ambiguous, mixedDep, mixedWorst),
+          mixedDep == 0L)
   }
 }
-Check(sprintf("mixed blocks invariant over all edge-rootings (%d/12 dependent, worst spread %.4f)",
-              mixedDep, mixedWorst),
-      mixedDep == 0L)
+
+# A secondary is freed only where the primary CANNOT be present, not merely
+# where it MAY be absent: observing a secondary is evidence the structure is
+# present, and freeing it at every "?" primary would discard that and leave a
+# block of all-"?" primaries with an empty domain and a silently zero alpha
+# term.  Mirrors recode_hierarchy.R's tipSecKnown path (T-379).
+qBase <- matrix(c(
+  "1",  "0",  "0",  "1",  "1",
+  "1",  "0",  "0",  "1",  "0",
+  "?",  "0",  "0",  "1",  "0",
+  "0",  "-",  "-",  "0",  "0",
+  "1",  "1",  "1",  "1",  "1",
+  "1",  "1",  "1",  "0",  "1"
+), nrow = 6, byrow = TRUE, dimnames = list(paste0("t", 1:6), NULL))
+qH <- CharacterHierarchy("1" = 2:3)
+qTr <- Preorder(ape::read.tree(text = "(t1,((t2,t3),(t4,(t5,t6))));"))
+qSc <- vapply(c("0", "1"), function(v) {
+  mq <- qBase; mq[3, 2:3] <- v
+  TreeLength(qTr, MatrixToPhyDat(mq), hierarchy = qH, inapplicable = "hsj",
+             hsj_alpha = 1)
+}, double(1))
+Check(sprintf("an OBSERVED secondary at a '?' primary still counts (%s vs %s)",
+              format(qSc[[1]]), format(qSc[[2]])),
+      !isTRUE(all.equal(qSc[[1]], qSc[[2]])))
 
 # =========================================================================
 cat("\n[5] All-present closed form -- the regression FLOOR\n")

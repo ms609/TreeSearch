@@ -378,13 +378,25 @@ static double score_hierarchy_block(
   const uint32_t inapp_bit = (inapp_state >= 0) ? (1u << inapp_state) : 0u;
   const uint32_t absent_bits = (1u << block.absent_state) | inapp_bit;
 
-  // Tips where the primary can code the structure absent are exactly the tips
-  // at which the secondaries do not (or may not) apply, so they must not
-  // constrain the secondary reconstruction -- see fitch_label_char() (T-374).
+  // Tips where the primary CANNOT code the structure present are exactly the
+  // tips at which the secondaries cannot apply, so they must not constrain the
+  // secondary reconstruction -- see fitch_label_char() (T-374).
+  //
+  // The test is deliberately strict ("cannot be present"), not the laxer "may
+  // be absent".  Under the lax test a tip whose primary is "?" would be freed
+  // too, discarding an OBSERVED secondary -- but observing a secondary is
+  // itself evidence the structure is present, and that is real information the
+  // alpha term should keep.  It would also be silently self-erasing: `domain`
+  // in fitch_label_char() unions only the non-free tips, so a block with no
+  // unambiguously present primary would collapse the whole alpha term to zero.
+  // ValidateHierarchy whitelists "?" primaries, so that is reachable data.
+  // This matches recode_hierarchy.R's `tipStates == -2L` / `tipSecKnown` path,
+  // added under T-379 for exactly this reason: an ambiguous primary must not
+  // free the secondaries that WERE observed.
   std::vector<char> pri_free(n_tip, 0);
   for (int t = 0; t < n_tip; ++t) {
     uint32_t set = token_states[tip_labels[t * n_orig_chars + block.primary_char]];
-    pri_free[t] = (set & absent_bits) ? 1 : 0;
+    pri_free[t] = ((set & ~absent_bits) == 0) ? 1 : 0;
   }
 
   // Step 2: Run Fitch downpass/uppass on each secondary character, over a
