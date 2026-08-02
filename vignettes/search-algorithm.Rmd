@@ -86,6 +86,17 @@ internal order in which a dataset's observed character-state tokens happen
 to be stored -- that internal order need not match, and often does not
 match, the order of the character states themselves.
 
+An HSJ score is a property of the unrooted tree.
+The criterion sums a symmetric dissimilarity over the branches and
+minimizes over the labellings of the internal nodes, so where the tree is
+rooted cannot affect it; a score reported by `MaximizeParsimony()` is
+therefore reproduced exactly by `TreeLength()` of the tree returned.
+Secondary characters place no constraint on taxa whose controlling primary
+codes the structure absent, since there the secondary does not exist.
+The x-transformation differs on both counts: its step matrix is asymmetric,
+so its scores *are* rooting-sensitive, and they are reported at a
+canonical rooting rather than being rooting-free.
+
 ## Starting trees
 
 ### Wagner tree construction

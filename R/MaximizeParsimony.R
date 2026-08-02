@@ -1631,8 +1631,10 @@ MaximizeParsimony <- function(
     # "collapse zero-length branches" -- done entirely in C++ (ts_collapse_pool)
     # to avoid a per-tree R surgery quagmire.  The kernel re-roots each tree on
     # tip 0 (so root-adjacent edges are trivial -> rooting-invariant *contraction*;
-    # note the LENGTH is not rooting-invariant under HSJ/XFORM, T-374, which is
-    # why the XFORM pool is rescored at this rooting below),
+    # note the LENGTH is not rooting-invariant under XFORM, T-374, which is why
+    # the XFORM pool is rescored at this rooting below.  HSJ needs no rescore:
+    # since T-374 its secondary labelling is rooted canonically inside the
+    # kernel, so its length is a function of the unrooted topology),
     # flags aggressive (min-length-0) internal edges in the *search's* scoring
     # mode, contracts them, and deduplicates on the collapsed topology.
     #

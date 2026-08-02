@@ -34,11 +34,21 @@
 # over labelings introduces no orientation. Hence the objective is
 # ROOTING-INVARIANT by construction, and any rooting-dependence is a bug.
 #
-# Corollary for the implementation: the paper prescribes a two-state DP that
-# carries both present/absent possibilities and minimises. A single directional
-# DELTRAN-style uppass that commits to ONE resolution (what `fitch_label_char`
-# does) is neither the paper's algorithm nor guaranteed minimal, and it is the
-# source of the alpha-term rooting-dependence measured in T-374.
+# CORRECTION, 2026-08-02, from reading Algorithm 1 (p.15) against the code.
+# The corollary this header used to draw -- "the paper prescribes a two-state DP
+# and the code does not implement it" -- was wrong, and cost a round of work.
+# `score_hierarchy_block()`'s a(n)/p(n) recurrences ARE Algorithm 1 lines 6-7,
+# term for term. The two-state DP was already there and was already
+# rooting-invariant: its branch costs are symmetric and it minimises over the
+# root's own state. The defect was never in the DP; it was that `d(u, v)` was
+# read off `fitch_label_char()`'s directional resolution.
+#
+# Note also that copying Algorithm 1 literally would NOT have fixed this: its
+# line 2 sets L(n) to the first-pass Fitch labelling, which is a downpass and so
+# root-dependent, and its line 8 updates L(n) in postorder. Algorithm 1 takes
+# "Tree, T, with root r" as input. Theorem 2 claims it returns the minimal
+# score, which would make it rooting-invariant; the measurements below are
+# evidence against that claim as stated.
 # ---------------------------------------------------------------------------
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -92,6 +102,24 @@ primOnly <- MatrixToPhyDat(figOne[, c(1, 6, 7, 8)])
 Check("left  primaries-only == 6", isTRUE(all.equal(TreeLength(figOneLeft,  primOnly), 6)))
 Check("right primaries-only == 3", isTRUE(all.equal(TreeLength(figOneRight, primOnly), 3)))
 
+# Fig. 1's ABSOLUTE HSJ scores: 7 (left) and 5 (right) at alpha = 1.  Re-derived
+# as 6 + alpha and 3 + 2 * alpha -- two equations satisfied by one consistent
+# alpha, obtained without choosing a root.  Column 9 is the inapplicable-token
+# carrier ValidateHierarchy demands; its only non-"1" cell is a lone "-", which
+# the Fitch pass scores as costing nothing, so it shifts neither expectation.
+figOneExt <- cbind(figOne, c("-", "1", "1", "1"))
+figOneDs <- MatrixToPhyDat(figOneExt)
+for (alpha in c(0, 0.5, 1)) {
+  l <- TreeLength(figOneLeft, figOneDs, hierarchy = hierarchy,
+                  inapplicable = "hsj", hsj_alpha = alpha)
+  r <- TreeLength(figOneRight, figOneDs, hierarchy = hierarchy,
+                  inapplicable = "hsj", hsj_alpha = alpha)
+  Check(sprintf("alpha = %.1f: left == %.1f and right == %.1f",
+                alpha, 6 + alpha, 3 + 2 * alpha),
+        isTRUE(all.equal(l, 6 + alpha)) && isTRUE(all.equal(r, 3 + 2 * alpha)),
+        sprintf("got left %s, right %s", format(l), format(r)))
+}
+
 # =========================================================================
 cat("\n[2] The alpha = 0 identity  (p.6)\n")
 cat("    \"the HSJ approach is equivalent to the Fitch approaches when\n")
@@ -130,6 +158,16 @@ cat("    SYMMETRIC dissimilarities over the branches of an UNROOTED tree, so\n")
 cat("    it cannot depend on where the tree is rooted.\n")
 base <- Preorder(as.phylo(7, 6, tipLabels = rownames(extended)))
 
+# Root on the edge above every non-root node; that covers all 2n-3 edges.
+AllRootings <- function(tr) {
+  out <- list()
+  for (v in seq_len(max(tr[["edge"]]))) {
+    r <- try(RootOnNode(tr, v, resolveRoot = TRUE), silent = TRUE)
+    if (!inherits(r, "try-error")) out[[length(out) + 1L]] <- Preorder(r)
+  }
+  out
+}
+
 # GUARD AGAINST A VACUOUS PASS. T-374's rooting-dependence lives ENTIRELY in
 # the alpha*d/m secondary term (at alpha = 0 the DP contribution is invariant --
 # measured 20 x 10 rootings). So an invariance check is only meaningful on a
@@ -154,23 +192,136 @@ if (isTRUE(all.equal(alphaLive, 0))) {
   cat("        across its 10 tip-rootings while alpha=0 gives 20 ten times, and\n")
   cat("        XFORM is rooting-dependent on 165/300 random topologies (T-374).\n")
 } else {
-  cat("  NOTE  a PASS below is NOT evidence that T-374 is fixed -- it only means\n")
-  cat("        this small, Fig.1-derived matrix/topology doesn't happen to trigger\n")
-  cat("        fitch_label_char()'s rooting-sensitivity. T-374's rooting bug is\n")
-  cat("        data/topology-dependent (measured 165-197/300 random cases) and can\n")
-  cat("        remain OPEN and readily reproducible on OTHER matrices even when every\n")
-  cat("        check below is green. T-374's fix is the paper's two-state DP (or\n")
-  cat("        marginal-MPR resolution) -- do not close T-374 on this check alone.\n")
+  cat("  NOTE  the Fig.1-derived matrix below is small and its block is ALL-PRESENT,\n")
+  cat("        which is the one regime that was ALREADY invariant before T-374 was\n")
+  cat("        fixed (see check [5]). Passing here is therefore necessary but not\n")
+  cat("        sufficient -- section [3b] carries the discriminating cases, on\n")
+  cat("        blocks with MIXED present/absent primaries, which is where T-374\n")
+  cat("        actually lived.\n")
   for (alpha in c(0, 0.5, 1)) {
-    scores <- vapply(rownames(extended), function(tip) {
-      TreeLength(RootTree(base, tip), extDs, hierarchy = hierarchy,
+    scores <- vapply(AllRootings(base), function(rt) {
+      TreeLength(rt, extDs, hierarchy = hierarchy,
                  inapplicable = "hsj", hsj_alpha = alpha)
     }, double(1))
-    Check(sprintf("alpha = %.1f invariant across 6 tip-rootings", alpha),
+    Check(sprintf("alpha = %.1f invariant across all %d edge-rootings",
+                  alpha, length(AllRootings(base))),
           length(unique(round(scores, 10))) == 1L,
           paste("scores:", paste(unique(round(scores, 6)), collapse = " / ")))
   }
 }
+
+# =========================================================================
+cat("\n[3b] Rooting invariance on MIXED blocks -- the discriminating check\n")
+cat("    T-374's dependence was confined to blocks with mixed present/absent\n")
+cat("    primaries. Two mechanisms, both in the SECONDARY labelling and not in\n")
+cat("    the a(n)/p(n) DP (which is already Algorithm 1 lines 6-7, and which\n")
+cat("    check [5] shows was already invariant):\n")
+cat("      1. '-' was admitted as an ordinary state of a secondary, so a node\n")
+cat("         INSIDE the present region could be resolved to it, where it is\n")
+cat("         disjoint from every present neighbour in every secondary at once\n")
+cat("         and the branch was charged d = m, the full alpha.\n")
+cat("      2. The residual resolution was a DELTRAN uppass whose direction, and\n")
+cat("         tie-break counts whose subtrees, were properties of the rooting.\n")
+cat("    Measured at 93c81a9a over every edge-rooting of 30 random 9-tip trees,\n")
+cat("    alpha = 1: 21/30 dependent at m = 2 and 26/30 at m = 4, spread 1.00.\n")
+cat("    Crossed over an ambiguous ('?') primary, 18/30 dependent pre-fix, and\n")
+cat("    over multistate secondaries, which exercise pick_state()'s tie-break.\n")
+set.seed(374)
+for (secStates in list(c("0", "1"), c("0", "1", "2"))) {
+  for (ambiguous in c(FALSE, TRUE)) {
+    mixedDep <- 0L
+    mixedWorst <- 0
+    for (rep in 1:8) {
+      nTip <- 9L
+      pri <- rep("1", nTip)
+      pri[sample.int(nTip, 3L)] <- "0"
+      if (ambiguous) pri[sample(which(pri == "1"), 2L)] <- "?"
+      live <- pri != "0"
+      sec <- matrix("-", nTip, 3L)
+      for (j in 1:3) sec[live, j] <- sample(secStates, sum(live), TRUE)
+      nh <- matrix(sample(c("0", "1"), nTip * 3L, TRUE), nTip, 3L)
+      mm <- cbind(pri, sec, nh)
+      rownames(mm) <- paste0("t", seq_len(nTip))
+      colnames(mm) <- NULL
+      mDs <- MatrixToPhyDat(mm)
+      mH <- CharacterHierarchy("1" = 2:4)
+      tr <- Preorder(as.phylo(rep, nTip, tipLabels = rownames(mm)))
+      sc <- vapply(AllRootings(tr), function(rt)
+        TreeLength(rt, mDs, hierarchy = mH, inapplicable = "hsj", hsj_alpha = 1),
+        double(1))
+      if (diff(range(sc)) > 1e-9) {
+        mixedDep <- mixedDep + 1L
+        mixedWorst <- max(mixedWorst, diff(range(sc)))
+      }
+    }
+    Check(sprintf("mixed, %d secondary states, '?' primary %-5s: %d/8 dependent, worst %.4f",
+                  length(secStates), ambiguous, mixedDep, mixedWorst),
+          mixedDep == 0L)
+  }
+}
+
+# A secondary is freed only where the primary CANNOT be present, not merely
+# where it MAY be absent: observing a secondary is evidence the structure is
+# present, and freeing it at every "?" primary would discard that and leave a
+# block of all-"?" primaries with an empty domain and a silently zero alpha
+# term.  Mirrors recode_hierarchy.R's tipSecKnown path (T-379).
+qBase <- matrix(c(
+  "1",  "0",  "0",  "1",  "1",
+  "1",  "0",  "0",  "1",  "0",
+  "?",  "0",  "0",  "1",  "0",
+  "0",  "-",  "-",  "0",  "0",
+  "1",  "1",  "1",  "1",  "1",
+  "1",  "1",  "1",  "0",  "1"
+), nrow = 6, byrow = TRUE, dimnames = list(paste0("t", 1:6), NULL))
+qH <- CharacterHierarchy("1" = 2:3)
+qTr <- Preorder(ape::read.tree(text = "(t1,((t2,t3),(t4,(t5,t6))));"))
+qSc <- vapply(c("0", "1"), function(v) {
+  mq <- qBase; mq[3, 2:3] <- v
+  TreeLength(qTr, MatrixToPhyDat(mq), hierarchy = qH, inapplicable = "hsj",
+             hsj_alpha = 1)
+}, double(1))
+Check(sprintf("an OBSERVED secondary at a '?' primary still counts (%s vs %s)",
+              format(qSc[[1]]), format(qSc[[2]])),
+      !isTRUE(all.equal(qSc[[1]], qSc[[2]])))
+
+# =========================================================================
+cat("\n[5] All-present closed form -- the regression FLOOR\n")
+cat("    Under ANY most-parsimonious reconstruction of secondary j, the number\n")
+cat("    of branches on which j changes is FitchLen_j. So when every node in\n")
+cat("    the block is present the alpha term is (alpha/m) * sum_j FitchLen_j\n")
+cat("    EXACTLY, whichever labelling the uppass picks -- which is why that\n")
+cat("    regime was already rooting-invariant, and why T-374 could only ever\n")
+cat("    surface on mixed blocks. A fix that breaks this is wrong regardless\n")
+cat("    of what it does to the rooting spread.\n")
+set.seed(3741)
+cfBad <- 0L
+cfWorst <- 0
+for (rep in 1:8) {
+  nTip <- 9L
+  nSec <- 4L
+  sec <- matrix(sample(c("0", "1"), nTip * nSec, TRUE), nTip, nSec)
+  nh <- matrix(sample(c("0", "1"), nTip * 3L, TRUE), nTip, 3L)
+  nh[1, 1] <- "-"   # inapplicable-token carrier ValidateHierarchy demands
+  pm <- cbind(rep("1", nTip), sec, nh)
+  rownames(pm) <- paste0("t", seq_len(nTip))
+  colnames(pm) <- NULL
+  pDs <- MatrixToPhyDat(pm)
+  pH <- CharacterHierarchy("1" = 2:(nSec + 1L))
+  tr <- Preorder(as.phylo(rep, nTip, tipLabels = rownames(pm)))
+  fitchPri <- TreeLength(tr, MatrixToPhyDat(
+    pm[, c(1L, (nSec + 2L):ncol(pm)), drop = FALSE]))
+  secLen <- sum(vapply(2:(nSec + 1L), function(j)
+    TreeLength(tr, MatrixToPhyDat(pm[, j, drop = FALSE])), double(1)))
+  for (alpha in c(0.5, 1)) {
+    got <- TreeLength(tr, pDs, hierarchy = pH, inapplicable = "hsj",
+                      hsj_alpha = alpha)
+    dev <- abs(got - (fitchPri + alpha * secLen / nSec))
+    if (dev > 1e-9) { cfBad <- cfBad + 1L; cfWorst <- max(cfWorst, dev) }
+  }
+}
+Check(sprintf("closed form holds on all-present blocks (%d/16 violations, worst %.4f)",
+              cfBad, cfWorst),
+      cfBad == 0L)
 
 # =========================================================================
 cat("\n[4] Per-branch contribution bound  (p.5)\n")
