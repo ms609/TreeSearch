@@ -370,6 +370,19 @@ would settle it is the hard tail specifically — Zanol2014, Zhu2013, Wortley200
 Aguado2009 at more seeds — rather than another corpus-wide sweep, since 24 of the
 30 matrices are saturated at 1.0 in every arm and can only dilute the signal.
 
+## SETTLED BY PANEL 3: do not gate
+
+`dev/profiling/na-hardtail-effort.md` (array 18143234) closes this on the hard
+tail. On Zanol2014, `certify` at `effort = 0` reaches the best known score on 5
+of 10 seeds in 1795 s; `gate` at `effort = +2` reaches it on 3 of 10 in 8235 s,
+and gating never exceeds 0.3 at any effort. Certification at the LOWEST effort
+beats gating at the HIGHEST, at a fifth of the wall.
+
+Panel 1's matched-wall win for gating (+0.167, p = 0.012) was real but does not
+survive on the hard tail: the wall gating frees cannot be spent to buy back what
+certification finds, even at ten times the replicates. The default stays as it
+is, and `TS_NA_NOCERTIFY` is a diagnostic rather than a recommendation.
+
 ## What to switch on, in practical terms
 
 **Presets today: nothing changes.** Certification stays on in `default` and
