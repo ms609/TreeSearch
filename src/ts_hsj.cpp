@@ -42,9 +42,28 @@ std::vector<int> partition_weights(
 // token_states[label] gives the actual bitmask of states the token is
 // compatible with (populated by build_dataset() from the contrast matrix),
 // which is what state_sets must hold to make the Fitch downpass/uppass below
-// correct for ambiguous tokens. inapp_state needs no special handling here --
-// per this module's design (see feature-inapplicable.md), the inapplicable
-// state is deliberately just another concrete state in the secondary pass.
+// correct for ambiguous tokens.
+//
+// A secondary carries NO constraint at a tip whose controlling primary can
+// code the structure absent (T-374).  Where the primary is absent the
+// secondary does not exist, so its "-" is not a state the character takes --
+// it is the statement that the character does not apply there.  Admitting it
+// as an ordinary concrete state (as this function formerly did, and as the
+// comment here formerly asserted was deliberate) let the uppass propagate "-"
+// INWARDS and resolve a node in the middle of the PRESENT region to it, where
+// it is disjoint from every present neighbour in every secondary at once.
+// score_hierarchy_block() then charged that branch d = m -- the full alpha --
+// for a node that by construction has no inapplicable secondaries.  That
+// over-charge is wrong under any rooting (the paper's d is "the number of
+// nonmatching secondary characters", p.5, among characters that APPLY), and
+// because whether it happened depended on the DELTRAN direction, it was also
+// the dominant source of T-374's rooting-dependence.
+//
+// `pri_free[t]` marks the tips to wildcard: those whose primary token can mean
+// absent.  It deliberately does NOT key off the secondary's own token, because
+// a "-" secondary at a tip whose primary is unambiguously PRESENT is
+// contradictory data that ValidateHierarchy rejects upstream; the kernel keeps
+// scoring it as a concrete state rather than silently reinterpreting it.
 static int fitch_label_char(
     const TreeState& tree,
     const std::vector<int>& tip_labels,
@@ -52,15 +71,29 @@ static int fitch_label_char(
     int n_orig_chars,
     const std::vector<uint32_t>& token_states,
     int n_levels,
+    const std::vector<char>& pri_free,
     std::vector<uint32_t>& state_sets)
 {
   int n_tip = tree.n_tip;
   int n_node = tree.n_node;
 
+  // The applicable domain: the states this character is observed in at tips
+  // where it actually applies.  Wildcarding to this rather than to all
+  // n_levels bits keeps the tie-break arrays below as small as they were.
+  uint32_t domain = 0;
+  for (int t = 0; t < n_tip; ++t) {
+    if (!pri_free[t]) {
+      domain |= token_states[tip_labels[t * n_orig_chars + char_idx]];
+    }
+  }
+  // The character applies nowhere: it constrains nothing.  Give every node one
+  // shared state so no branch can ever register a mismatch.
+  if (domain == 0) domain = 1u;
+
   uint32_t used_mask = 0;
   for (int t = 0; t < n_tip; ++t) {
     int label = tip_labels[t * n_orig_chars + char_idx];
-    state_sets[t] = token_states[label];
+    state_sets[t] = pri_free[t] ? domain : token_states[label];
     used_mask |= state_sets[t];
   }
 
@@ -218,21 +251,7 @@ static double score_hierarchy_block(
   const int m = block.n_secondaries;
   const double INF = std::numeric_limits<double>::infinity();
 
-  // Step 1: Run Fitch downpass on each secondary character
-  // sec_states[j * n_node + node] = bitmask of possible states
-  std::vector<uint32_t> sec_states(m * n_node, 0);
-  {
-    std::vector<uint32_t> buf(n_node);
-    for (int j = 0; j < m; ++j) {
-      fitch_label_char(tree, tip_labels, block.secondary_chars[j],
-                       n_orig_chars, token_states, n_levels, buf);
-      for (int nd = 0; nd < n_node; ++nd) {
-        sec_states[j * n_node + nd] = buf[nd];
-      }
-    }
-  }
-
-  // Step 2: Determine primary feasibility at each tip via SET MEMBERSHIP.
+  // Step 1: Determine primary feasibility at each tip via SET MEMBERSHIP.
   // `label` is a TOKEN (allLevels/contrast-row) index, but block.absent_state
   // and inapp_state are STATE (levels) indices -- comparing them directly via
   // `==` (the former code) was T-375/T-376's bug: it happened to work only
@@ -254,6 +273,29 @@ static double score_hierarchy_block(
   // effective classification of "?").
   const uint32_t inapp_bit = (inapp_state >= 0) ? (1u << inapp_state) : 0u;
   const uint32_t absent_bits = (1u << block.absent_state) | inapp_bit;
+
+  // Tips where the primary can code the structure absent are exactly the tips
+  // at which the secondaries do not (or may not) apply, so they must not
+  // constrain the secondary reconstruction -- see fitch_label_char() (T-374).
+  std::vector<char> pri_free(n_tip, 0);
+  for (int t = 0; t < n_tip; ++t) {
+    uint32_t set = token_states[tip_labels[t * n_orig_chars + block.primary_char]];
+    pri_free[t] = (set & absent_bits) ? 1 : 0;
+  }
+
+  // Step 2: Run Fitch downpass/uppass on each secondary character
+  // sec_states[j * n_node + node] = bitmask of possible states
+  std::vector<uint32_t> sec_states(m * n_node, 0);
+  {
+    std::vector<uint32_t> buf(n_node);
+    for (int j = 0; j < m; ++j) {
+      fitch_label_char(tree, tip_labels, block.secondary_chars[j],
+                       n_orig_chars, token_states, n_levels, pri_free, buf);
+      for (int nd = 0; nd < n_node; ++nd) {
+        sec_states[j * n_node + nd] = buf[nd];
+      }
+    }
+  }
 
   // Step 3: a(n)/p(n) DP
   // a[node], p[node]
