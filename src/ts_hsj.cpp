@@ -26,24 +26,6 @@ std::vector<int> partition_weights(
   return adjusted;
 }
 
-// Fitch downpass + uppass for a single character represented as integer state
-// labels.  After the downpass, state sets at internal nodes are ambiguous
-// (intersection or union of children).  The uppass resolves each node to a
-// single state so that parent–child mismatches can be detected for HSJ
-// secondary dissimilarity.
-// Returns number of Fitch steps (union operations in the downpass).
-//
-// tip_labels holds 0-based TOKEN (allLevels/contrast-row) indices, not state
-// indices (T-375): a token like "?" is its own row in the contrast matrix,
-// generally with several columns set, so treating the token index itself as
-// a bit position (as this function formerly did) is a category error --
-// `label > 30` can never fire on a valid token index, so "?" silently scored
-// as one concrete, arbitrary state instead of the wildcard it denotes.
-// token_states[label] gives the actual bitmask of states the token is
-// compatible with (populated by build_dataset() from the contrast matrix),
-// which is what state_sets must hold to make the Fitch downpass/uppass below
-// correct for ambiguous tokens.
-//
 // A traversal of the tree rooted at tip 0, used for the secondary labelling
 // only (T-374).
 //
@@ -69,7 +51,6 @@ std::vector<int> partition_weights(
 // on the numbering, never on the incoming parent/child orientation.
 struct CanonOrder {
   std::vector<int> post;     // postorder; canonical root (tip 0) last
-  std::vector<int> parent;   // canonical parent; -1 at the root
   std::vector<int> kids;     // children, flattened
   std::vector<int> kidOff;   // kids[kidOff[n] .. kidOff[n] + kidNum[n])
   std::vector<int> kidNum;
@@ -99,7 +80,6 @@ static CanonOrder build_canon_order(const TreeState& tree) {
   }
 
   CanonOrder co;
-  co.parent.assign(n_node, -1);
   co.kidOff.assign(n_node, 0);
   co.kidNum.assign(n_node, 0);
   co.post.reserve(n_node);
@@ -121,7 +101,6 @@ static CanonOrder build_canon_order(const TreeState& tree) {
       int nb = adj[static_cast<size_t>(n) * 3 + k];
       if (nb < 0 || seen[nb]) continue;
       seen[nb] = 1;
-      co.parent[nb] = n;
       co.kids.push_back(nb);
       ++co.kidNum[n];
       stack.push_back(nb);
@@ -131,26 +110,39 @@ static CanonOrder build_canon_order(const TreeState& tree) {
   return co;
 }
 
-// A secondary carries NO constraint at a tip whose controlling primary can
-// code the structure absent (T-374).  Where the primary is absent the
-// secondary does not exist, so its "-" is not a state the character takes --
-// it is the statement that the character does not apply there.  Admitting it
-// as an ordinary concrete state (as this function formerly did, and as the
-// comment here formerly asserted was deliberate) let the uppass propagate "-"
-// INWARDS and resolve a node in the middle of the PRESENT region to it, where
-// it is disjoint from every present neighbour in every secondary at once.
-// score_hierarchy_block() then charged that branch d = m -- the full alpha --
-// for a node that by construction has no inapplicable secondaries.  That
-// over-charge is wrong under any rooting (the paper's d is "the number of
-// nonmatching secondary characters", p.5, among characters that APPLY), and
-// because whether it happened depended on the DELTRAN direction, it was also
-// the dominant source of T-374's rooting-dependence.
+// Fitch downpass + uppass for a single character represented as integer state
+// labels.  After the downpass, state sets at internal nodes are ambiguous
+// (intersection or union of children).  The uppass resolves each node to a
+// single state so that parent–child mismatches can be detected for HSJ
+// secondary dissimilarity.
+// Returns number of Fitch steps (union operations in the downpass).
 //
-// `pri_free[t]` marks the tips to wildcard: those whose primary token can mean
-// absent.  It deliberately does NOT key off the secondary's own token, because
-// a "-" secondary at a tip whose primary is unambiguously PRESENT is
-// contradictory data that ValidateHierarchy rejects upstream; the kernel keeps
-// scoring it as a concrete state rather than silently reinterpreting it.
+// tip_labels holds 0-based TOKEN (allLevels/contrast-row) indices, not state
+// indices (T-375): a token like "?" is its own row in the contrast matrix,
+// generally with several columns set, so treating the token index itself as
+// a bit position (as this function formerly did) is a category error --
+// `label > 30` can never fire on a valid token index, so "?" silently scored
+// as one concrete, arbitrary state instead of the wildcard it denotes.
+// token_states[label] gives the actual bitmask of states the token is
+// compatible with (populated by build_dataset() from the contrast matrix),
+// which is what state_sets must hold to make the Fitch downpass/uppass below
+// correct for ambiguous tokens.
+//
+// `pri_free[t]` marks the tips at which this secondary carries no constraint:
+// those whose controlling primary CANNOT code the structure present, so the
+// character does not exist there and its "-" is not a state it takes (T-374).
+// score_hierarchy_block() computes it and documents why the test is that
+// strict one rather than "may be absent".  Admitting "-" as an ordinary
+// concrete state -- as this function formerly did, and as the comment here
+// formerly asserted was deliberate -- let the uppass propagate it INWARDS and
+// resolve a node in the middle of the PRESENT region to it, where it is
+// disjoint from every present neighbour in every secondary at once, and
+// score_hierarchy_block() charged that branch d = m, the full alpha, for a
+// node that by construction has no inapplicable secondaries.  That over-charge
+// is wrong under any rooting (the paper's d counts "nonmatching secondary
+// characters", p.5, among characters that APPLY), and because whether it fired
+// depended on the DELTRAN direction it was also the dominant source of
+// T-374's rooting-dependence.
 static int fitch_label_char(
     const TreeState& tree,
     const std::vector<int>& tip_labels,
