@@ -44,6 +44,93 @@ std::vector<int> partition_weights(
 // which is what state_sets must hold to make the Fitch downpass/uppass below
 // correct for ambiguous tokens.
 //
+// A traversal of the tree rooted at tip 0, used for the secondary labelling
+// only (T-374).
+//
+// The HSJ score is defined as a minimum over internal-node labelings of a sum
+// of SYMMETRIC dissimilarities over the branches of an UNROOTED tree (Hopkins
+// & St John 2021, p.3, p.6), so it may not depend on where the tree happens to
+// be rooted.  The a(n)/p(n) DP below satisfies that already -- its branch
+// costs are symmetric and it minimises over the root's own state.  The
+// secondary labelling did not: fitch_label_char() resolves ambiguous nodes
+// with a DELTRAN-style uppass whose direction, and with subtree support counts
+// whose subtrees, are both properties of the INPUT rooting.  Two rootings of
+// one topology therefore disagreed about d(u, v) and so about the score.
+//
+// Rooting the labelling pass at tip 0 makes it a function of the unrooted
+// topology and the data alone.  Tip indices come from the dataset, not from
+// the rooting, so this is canonical.  Note this is NOT the reporting-boundary
+// canonicalisation PR #278 applied to XFORM: this sits inside the kernel, so
+// the objective the SEARCH optimises is itself rooting-invariant, and
+// MaximizeParsimony()'s reported score agrees with TreeLength() of the trees
+// it returns by construction rather than by re-scoring at the boundary.
+//
+// Neighbour lists are sorted by node index so the traversal order depends only
+// on the numbering, never on the incoming parent/child orientation.
+struct CanonOrder {
+  std::vector<int> post;     // postorder; canonical root (tip 0) last
+  std::vector<int> parent;   // canonical parent; -1 at the root
+  std::vector<int> kids;     // children, flattened
+  std::vector<int> kidOff;   // kids[kidOff[n] .. kidOff[n] + kidNum[n])
+  std::vector<int> kidNum;
+};
+
+static CanonOrder build_canon_order(const TreeState& tree) {
+  const int n_tip = tree.n_tip;
+  const int n_node = tree.n_node;
+
+  // Undirected adjacency.  Every node has degree <= 3: the kernel's root is a
+  // degree-2 subdivision point of an unrooted edge, and Fitch passes such a
+  // node through transparently, so its position cannot bias the labelling.
+  std::vector<int> adj(static_cast<size_t>(n_node) * 3, -1);
+  std::vector<int> deg(n_node, 0);
+  auto link = [&](int u, int v) {
+    if (deg[u] < 3) adj[static_cast<size_t>(u) * 3 + deg[u]++] = v;
+    if (deg[v] < 3) adj[static_cast<size_t>(v) * 3 + deg[v]++] = u;
+  };
+  for (int node : tree.postorder) {
+    int ni = node - n_tip;
+    link(node, tree.left[ni]);
+    link(node, tree.right[ni]);
+  }
+  for (int n = 0; n < n_node; ++n) {
+    std::sort(adj.begin() + static_cast<size_t>(n) * 3,
+              adj.begin() + static_cast<size_t>(n) * 3 + deg[n]);
+  }
+
+  CanonOrder co;
+  co.parent.assign(n_node, -1);
+  co.kidOff.assign(n_node, 0);
+  co.kidNum.assign(n_node, 0);
+  co.post.reserve(n_node);
+  co.kids.reserve(n_node);
+
+  // Iterative DFS from tip 0, emitting a preorder we then reverse.
+  std::vector<int> pre;
+  pre.reserve(n_node);
+  std::vector<char> seen(n_node, 0);
+  std::vector<int> stack;
+  stack.push_back(0);
+  seen[0] = 1;
+  while (!stack.empty()) {
+    int n = stack.back();
+    stack.pop_back();
+    pre.push_back(n);
+    co.kidOff[n] = static_cast<int>(co.kids.size());
+    for (int k = 0; k < deg[n]; ++k) {
+      int nb = adj[static_cast<size_t>(n) * 3 + k];
+      if (nb < 0 || seen[nb]) continue;
+      seen[nb] = 1;
+      co.parent[nb] = n;
+      co.kids.push_back(nb);
+      ++co.kidNum[n];
+      stack.push_back(nb);
+    }
+  }
+  co.post.assign(pre.rbegin(), pre.rend());
+  return co;
+}
+
 // A secondary carries NO constraint at a tip whose controlling primary can
 // code the structure absent (T-374).  Where the primary is absent the
 // secondary does not exist, so its "-" is not a state the character takes --
@@ -72,6 +159,7 @@ static int fitch_label_char(
     const std::vector<uint32_t>& token_states,
     int n_levels,
     const std::vector<char>& pri_free,
+    const CanonOrder& co,
     std::vector<uint32_t>& state_sets)
 {
   int n_tip = tree.n_tip;
@@ -91,25 +179,38 @@ static int fitch_label_char(
   if (domain == 0) domain = 1u;
 
   uint32_t used_mask = 0;
+  std::vector<uint32_t> observed(n_tip);
   for (int t = 0; t < n_tip; ++t) {
     int label = tip_labels[t * n_orig_chars + char_idx];
-    state_sets[t] = pri_free[t] ? domain : token_states[label];
-    used_mask |= state_sets[t];
+    observed[t] = pri_free[t] ? domain : token_states[label];
+    state_sets[t] = observed[t];
+    used_mask |= observed[t];
   }
 
-  // --- Downpass ---
+  // --- Downpass, in the canonical (tip-0-rooted) postorder ---
+  // Generalised over arity: the kernel's own root becomes an ordinary degree-2
+  // node here, which Fitch passes through unchanged, and the canonical root is
+  // tip 0, which has one child AND an observation of its own to honour.
   int steps = 0;
-  for (int i = 0; i < static_cast<int>(tree.postorder.size()); ++i) {
-    int node = tree.postorder[i];
-    int ni = node - n_tip;
-    int lc = tree.left[ni];
-    int rc = tree.right[ni];
-
-    uint32_t inter = state_sets[lc] & state_sets[rc];
+  for (int node : co.post) {
+    int nk = co.kidNum[node];
+    if (nk == 0) continue;                       // canonical leaf: tip state
+    const int* kid = &co.kids[co.kidOff[node]];
+    bool have = false;
+    uint32_t inter = 0, uni = 0;
+    if (node < n_tip) {                          // the canonical root
+      inter = uni = observed[node];
+      have = true;
+    }
+    for (int k = 0; k < nk; ++k) {
+      uint32_t s = state_sets[kid[k]];
+      if (!have) { inter = uni = s; have = true; }
+      else { inter &= s; uni |= s; }
+    }
     if (inter != 0) {
       state_sets[node] = inter;
     } else {
-      state_sets[node] = state_sets[lc] | state_sets[rc];
+      state_sets[node] = uni;
       ++steps;
     }
   }
@@ -146,27 +247,29 @@ static int fitch_label_char(
   std::vector<int> tb_cnt(static_cast<size_t>(n_node) * K, 0);
   std::vector<int> tb_mintip(static_cast<size_t>(n_node) * K, INF_TIP);
   for (int t = 0; t < n_tip; ++t) {
-    uint32_t set = state_sets[t];
-    // Only a tip resolved to exactly one concrete state contributes tie-break
-    // support -- an ambiguous tip (e.g. "?", now correctly multi-bit) must
-    // not bias which state the uppass prefers, same as before this fix.
+    uint32_t set = observed[t];
+    // Only a tip observed as exactly one concrete state contributes tie-break
+    // support -- an ambiguous tip (e.g. "?", or one the primary codes absent)
+    // must not bias which state the uppass prefers.
     if (set != 0 && (set & (set - 1)) == 0) {
       int s = ctz64(set);
       tb_cnt[static_cast<size_t>(t) * K + s] = 1;
       tb_mintip[static_cast<size_t>(t) * K + s] = t;
     }
   }
-  for (int i = 0; i < static_cast<int>(tree.postorder.size()); ++i) {
-    int node = tree.postorder[i];
-    int ni = node - n_tip;
-    int lc = tree.left[ni];
-    int rc = tree.right[ni];
+  // Accumulate over CANONICAL subtrees, so the support counts are a property of
+  // the unrooted tree rather than of the incoming rooting (T-374).
+  for (int node : co.post) {
+    int nk = co.kidNum[node];
+    if (nk == 0) continue;
+    const int* kid = &co.kids[co.kidOff[node]];
     size_t nb = static_cast<size_t>(node) * K;
-    size_t lb = static_cast<size_t>(lc) * K;
-    size_t rb = static_cast<size_t>(rc) * K;
-    for (int s = 0; s < K; ++s) {
-      tb_cnt[nb + s] = tb_cnt[lb + s] + tb_cnt[rb + s];
-      tb_mintip[nb + s] = std::min(tb_mintip[lb + s], tb_mintip[rb + s]);
+    for (int k = 0; k < nk; ++k) {
+      size_t cb = static_cast<size_t>(kid[k]) * K;
+      for (int s = 0; s < K; ++s) {
+        tb_cnt[nb + s] += tb_cnt[cb + s];
+        tb_mintip[nb + s] = std::min(tb_mintip[nb + s], tb_mintip[cb + s]);
+      }
     }
   }
 
@@ -193,22 +296,23 @@ static int fitch_label_char(
     return 1u << best;
   };
 
-  // --- Uppass: resolve each node to a single state ---
-  int root = tree.postorder.back();
+  // --- Uppass: resolve each node to a single state, canonical preorder ---
+  // The canonical root is tip 0, whose label is observed, not inferred, so it
+  // resolves within its own observation rather than within the downpass set.
+  const int root = co.post.back();
+  state_sets[root] &= observed[root];
+  if (state_sets[root] == 0) state_sets[root] = observed[root];
   state_sets[root] = pick_state(root);
 
-  // Traverse preorder (reverse postorder) to resolve internal nodes and tips.
-  for (int i = static_cast<int>(tree.postorder.size()) - 1; i >= 0; --i) {
-    int node = tree.postorder[i];
-    int ni = node - n_tip;
-    int lc = tree.left[ni];
-    int rc = tree.right[ni];
-
+  for (int i = static_cast<int>(co.post.size()) - 1; i >= 0; --i) {
+    int node = co.post[i];
+    int nk = co.kidNum[node];
+    const int* kid = &co.kids[co.kidOff[node]];
     // Resolve each child: prefer parent's (already-resolved) state if it lies
     // in the child's set (DELTRAN-style); otherwise pick order-invariantly.
-    for (int child : {lc, rc}) {
-      uint32_t overlap = state_sets[child] & state_sets[node];
-      if (overlap != 0) {
+    for (int k = 0; k < nk; ++k) {
+      int child = kid[k];
+      if (state_sets[child] & state_sets[node]) {
         state_sets[child] = state_sets[node]; // inherit parent's state
       } else {
         state_sets[child] = pick_state(child);
@@ -283,14 +387,17 @@ static double score_hierarchy_block(
     pri_free[t] = (set & absent_bits) ? 1 : 0;
   }
 
-  // Step 2: Run Fitch downpass/uppass on each secondary character
-  // sec_states[j * n_node + node] = bitmask of possible states
+  // Step 2: Run Fitch downpass/uppass on each secondary character, over a
+  // traversal rooted canonically at tip 0 so the labelling -- and hence
+  // d(u, v) -- depends only on the unrooted topology (T-374).  Built once and
+  // shared by every secondary in the block.
   std::vector<uint32_t> sec_states(m * n_node, 0);
-  {
+  if (m > 0) {
+    const CanonOrder co = build_canon_order(tree);
     std::vector<uint32_t> buf(n_node);
     for (int j = 0; j < m; ++j) {
       fitch_label_char(tree, tip_labels, block.secondary_chars[j],
-                       n_orig_chars, token_states, n_levels, pri_free, buf);
+                       n_orig_chars, token_states, n_levels, pri_free, co, buf);
       for (int nd = 0; nd < n_node; ++nd) {
         sec_states[j * n_node + nd] = buf[nd];
       }
