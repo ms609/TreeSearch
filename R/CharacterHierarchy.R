@@ -395,7 +395,9 @@ HierarchyControlling <- function(hierarchy) {
 # Build the tip-labels matrix for HSJ scoring.
 #
 # Converts a phyDat dataset into an integer matrix of per-tip, per-character
-# state labels (0-based) for the C++ HSJ scorer: length(dataset) rows (tips) by
+# TOKEN labels (0-based indices into `attr(dataset, "allLevels")`, NOT state
+# indices into `attr(dataset, "levels")`; the two only sometimes coincide --
+# see T-375/T-376) for the C++ HSJ scorer: length(dataset) rows (tips) by
 # length(attr(dataset, "index")) columns (original characters).
 .BuildTipLabels <- function(dataset) {
   idx <- attr(dataset, "index")
@@ -415,8 +417,12 @@ HierarchyControlling <- function(hierarchy) {
 
 # Identify the primary "absent" state for HSJ scoring.
 #
-# Returns the 0-based token index of the controlling primary character's
-# *absent* state, for the C++ HSJ scorer's `absent_state` argument.
+# Returns the 0-based STATE (`levels`) index of the controlling primary
+# character's *absent* state, for the C++ HSJ scorer's `absent_state`
+# argument -- NOT a token/`allLevels` index (T-375/T-376: `tip_labels`, built
+# by .BuildTipLabels() below, holds token indices, a different index space;
+# the C++ kernel translates a tip's token into this state space via
+# `DataSet::token_states` before comparing it to this value).
 #
 # Under reductive coding (Hopkins & St John 2021) the primary codes a
 # structure's presence/absence, conventionally "0" = absent, "1" = present.

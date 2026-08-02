@@ -154,6 +154,13 @@ if (isTRUE(all.equal(alphaLive, 0))) {
   cat("        across its 10 tip-rootings while alpha=0 gives 20 ten times, and\n")
   cat("        XFORM is rooting-dependent on 165/300 random topologies (T-374).\n")
 } else {
+  cat("  NOTE  a PASS below is NOT evidence that T-374 is fixed -- it only means\n")
+  cat("        this small, Fig.1-derived matrix/topology doesn't happen to trigger\n")
+  cat("        fitch_label_char()'s rooting-sensitivity. T-374's rooting bug is\n")
+  cat("        data/topology-dependent (measured 165-197/300 random cases) and can\n")
+  cat("        remain OPEN and readily reproducible on OTHER matrices even when every\n")
+  cat("        check below is green. T-374's fix is the paper's two-state DP (or\n")
+  cat("        marginal-MPR resolution) -- do not close T-374 on this check alone.\n")
   for (alpha in c(0, 0.5, 1)) {
     scores <- vapply(rownames(extended), function(tip) {
       TreeLength(RootTree(base, tip), extDs, hierarchy = hierarchy,
