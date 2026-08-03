@@ -1,5 +1,51 @@
 # To integrate into 2.0.0 notes
 
+- `inapplicable = "hsj"` no longer charges for an inapplicable secondary
+  character.  Where a secondary was coded `"-"` but its controlling primary did
+  not certainly code the structure absent -- because the primary was `"?"`, or
+  because the matrix codes the structure present and the secondary inapplicable
+  anyway -- the `"-"` was treated as an ordinary state of that secondary.  Being
+  disjoint from every other state, it could then be propagated inwards and used
+  to label an internal node in the middle of a region where the structure *is*
+  present, mismatching every secondary of the block at once and charging that
+  branch the full weight of the scaling parameter.
+
+  This was the behaviour the method exists to avoid.  Hopkins & St John (2021)
+  count only the secondary characters that apply, and note that treating
+  inapplicable cells as a separate state "increases the dissimilarity of all
+  pairwise comparisons", overweighting the controlling primary and favouring
+  clades that separate taxa possessing the structure from those lacking it.  An
+  inapplicable secondary now contributes nothing to the dissimilarity, whatever
+  its controlling primary codes.
+
+  **HSJ scores may therefore fall on matrices that code a secondary
+  inapplicable where its primary does not code absence**, by the scaling
+  parameter divided by the number of secondary characters in the block, for each
+  affected branch.  Scores are unchanged wherever the matrix is coded
+  consistently, and remain independent of where the tree is rooted.
+
+- Nested hierarchies now validate, so a `CharacterHierarchy()` describing
+  tertiary characters can be scored under `inapplicable = "hsj"`.  A
+  sub-controlling character is deliberately recorded both as a dependent of the
+  character above it and as the controlling character of the one below -- that
+  dual role is what nesting means -- but validation counted the second
+  occurrence as one character appearing in two blocks, and so rejected every
+  nested hierarchy that could be written, including the one documented in
+  `?CharacterHierarchy`.  Genuine double claims are still rejected.
+
+  `HierarchyFromNames()` now detects nesting as its documentation describes.  A
+  controlling character whose tag extends another's, as `sup_tail_tip` extends
+  `sup_tail`, is nested beneath it, and each dependent attaches to the longest
+  tag it extends, so `sub_tail_tip_gloss` belongs to `sup_tail_tip` rather than
+  to `sup_tail`.  Previously a tag was matched only as far as its first
+  underscore, which collapsed every depth onto the outermost tag; nesting was
+  silently dropped and could not be expressed at all.  A shared prefix without
+  an underscore boundary does not nest, so `sup_tailfin` remains independent of
+  `sup_tail`.
+
+  The x-transformation still does not implement nesting, and now says so
+  directly instead of failing validation first.
+
 - `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
   reported score is reproducible.  The x-transformation's step matrix is
   asymmetric -- a gain costs one more than the number of secondary characters it

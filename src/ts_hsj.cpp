@@ -128,21 +128,44 @@ static CanonOrder build_canon_order(const TreeState& tree) {
 // which is what state_sets must hold to make the Fitch downpass/uppass below
 // correct for ambiguous tokens.
 //
-// `pri_free[t]` marks the tips at which this secondary carries no constraint:
-// those whose controlling primary CANNOT code the structure present, so the
-// character does not exist there and its "-" is not a state it takes (T-374).
-// score_hierarchy_block() computes it and documents why the test is that
-// strict one rather than "may be absent".  Admitting "-" as an ordinary
-// concrete state -- as this function formerly did, and as the comment here
-// formerly asserted was deliberate -- let the uppass propagate it INWARDS and
-// resolve a node in the middle of the PRESENT region to it, where it is
-// disjoint from every present neighbour in every secondary at once, and
-// score_hierarchy_block() charged that branch d = m, the full alpha, for a
-// node that by construction has no inapplicable secondaries.  That over-charge
-// is wrong under any rooting (the paper's d counts "nonmatching secondary
-// characters", p.5, among characters that APPLY), and because whether it fired
-// depended on the DELTRAN direction it was also the dominant source of
-// T-374's rooting-dependence.
+// THE INAPPLICABLE TOKEN IS NOT A STATE OF A SECONDARY CHARACTER.  This is the
+// paper's central claim, not a convention we are free to pick: Hopkins & St John
+// (2021) define d as "the number of nonmatching secondary characters dependent
+// on that primary" (p.5) among the characters that APPLY, and state plainly that
+// where secondaries are inapplicable to a taxon "they have no influence on the
+// estimated dissimilarity" (p.5).  The paper introduces HSJ precisely to avoid
+// the alternative: "Treating inapplicable characters as a new, separate state
+// will ... skew the analysis, because having a new separate state increases the
+// dissimilarity of all pairwise comparisons ... This results in overweighting
+// the [controlling] primary character and favors clades that separate taxa with
+// secondary characters from those without" (p.5).  Admitting "-" as a concrete
+// state is therefore not a stricter reading of HSJ; it is the FitchS behaviour
+// HSJ exists to replace.
+//
+// So `inapp_bit` is stripped from every secondary's observed set, at every tip,
+// regardless of what the controlling primary codes.  Two distinct routes reach a
+// non-constraining tip and both must be handled here:
+//   * `pri_free[t]` -- the controlling primary CANNOT code the structure present,
+//     so the character does not exist at t (T-374).  score_hierarchy_block()
+//     computes this and documents why the test is that strict one rather than
+//     the laxer "may be absent".
+//   * the secondary's own token carries no applicable state once "-" is removed
+//     -- i.e. the cell is coded "-" (or an ambiguity resolving only to "-")
+//     while the primary does NOT certainly code absence.  That combination is
+//     contradictory coding -- ValidateHierarchy() enforces the converse
+//     direction (no applicable secondary where the primary codes absence) but
+//     not this one -- and whatever a validator decides to do about it, the score
+//     must not invent a state for it (T-396).  Before this, such a tip
+//     kept a single concrete inapp state that contributed tie-break support and
+//     that the uppass could propagate INWARDS, resolving a node in the middle of
+//     the PRESENT region to it -- disjoint from every present neighbour in every
+//     secondary at once, so score_hierarchy_block() charged that branch d = m,
+//     the full alpha, for a node that by construction has no inapplicable
+//     secondaries.  Measured over-charge was exactly alpha/m per affected
+//     branch, and it exceeded every concrete resolution as well as the missing
+//     treatment, so no reading of the data made it right.
+// Because whether the old over-charge fired depended on the DELTRAN direction,
+// it was also the dominant source of T-374's rooting-dependence.
 static int fitch_label_char(
     const TreeState& tree,
     const std::vector<int>& tip_labels,
@@ -150,6 +173,7 @@ static int fitch_label_char(
     int n_orig_chars,
     const std::vector<uint32_t>& token_states,
     int n_levels,
+    uint32_t inapp_bit,
     const std::vector<char>& pri_free,
     const CanonOrder& co,
     std::vector<uint32_t>& state_sets)
@@ -157,13 +181,20 @@ static int fitch_label_char(
   int n_tip = tree.n_tip;
   int n_node = tree.n_node;
 
+  // Applicable state set of this secondary at tip t: the states its token
+  // denotes, minus the inapplicable state, which is not one of them (above).
+  // Zero means the cell constrains nothing.
+  auto applicable_at = [&](int t) -> uint32_t {
+    return token_states[tip_labels[t * n_orig_chars + char_idx]] & ~inapp_bit;
+  };
+
   // The applicable domain: the states this character is observed in at tips
   // where it actually applies.  Wildcarding to this rather than to all
   // n_levels bits keeps the tie-break arrays below as small as they were.
   uint32_t domain = 0;
   for (int t = 0; t < n_tip; ++t) {
     if (!pri_free[t]) {
-      domain |= token_states[tip_labels[t * n_orig_chars + char_idx]];
+      domain |= applicable_at(t);
     }
   }
   // The character applies nowhere: it constrains nothing.  Give every node one
@@ -173,8 +204,8 @@ static int fitch_label_char(
   uint32_t used_mask = 0;
   std::vector<uint32_t> observed(n_tip);
   for (int t = 0; t < n_tip; ++t) {
-    int label = tip_labels[t * n_orig_chars + char_idx];
-    observed[t] = pri_free[t] ? domain : token_states[label];
+    const uint32_t applicable = applicable_at(t);
+    observed[t] = (pri_free[t] || applicable == 0) ? domain : applicable;
     state_sets[t] = observed[t];
     used_mask |= observed[t];
   }
@@ -401,7 +432,8 @@ static double score_hierarchy_block(
     std::vector<uint32_t> buf(n_node);
     for (int j = 0; j < m; ++j) {
       fitch_label_char(tree, tip_labels, block.secondary_chars[j],
-                       n_orig_chars, token_states, n_levels, pri_free, co, buf);
+                       n_orig_chars, token_states, n_levels, inapp_bit,
+                       pri_free, co, buf);
       for (int nd = 0; nd < n_node; ++nd) {
         sec_states[j * n_node + nd] = buf[nd];
       }
