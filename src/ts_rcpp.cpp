@@ -2002,8 +2002,12 @@ List ts_driven_search(
         "Simulated-annealing perturbation (annealCycles > 0) has no effect "
         "on this dataset: every Fitch character has been simplified away "
         "(total_words == 0), and the HSJ/XFORM hierarchy scoring term has no "
-        "annealing-phase implementation. The rest of the search (NNI, SPR, "
-        "TBR, ratchet, drift) still runs and remains exact.");
+        "annealing-phase implementation. NNI, SPR and TBR still run and "
+        "remain exact, and the ratchet and drift phases still call them -- "
+        "but their own perturbation steps are inert in this state (the "
+        "ratchet's Fitch-block reweighting, ts_ratchet.cpp; drift's "
+        "incremental phase, ts_drift.cpp), so those two reduce to repeated "
+        "TBR rather than perturbed search.");
   }
 
   ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);

@@ -121,10 +121,6 @@ print.CharacterHierarchy <- function(x, ...) {
   cat("CharacterHierarchy\n")
   .PrintBlock <- function(node, indent = 1L) {
     pad <- strrep("  ", indent)
-    leafDeps <- setdiff(
-      node$dependents,
-      vapply(node$children, `[[`, integer(1), "controlling")
-    )
     cat(sprintf("%sChar %d controls: {%s}\n",
                 pad, node$controlling,
                 paste(node$dependents, collapse = ", ")))
