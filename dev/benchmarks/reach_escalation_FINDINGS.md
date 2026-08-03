@@ -190,7 +190,28 @@ at 5–9 s of a 720 s cap, project4359 stopping on `targetHits` at 28 replicates
 cost information and must not be counted as evidence of cost-neutrality.  The ×3.56 wall
 figure belongs to the ship-gate run, which was not deadline-bound.
 
-## 🚨 The upstream API change breaks the gate's premise (2026-07-31, `419168d4`)
+## ✅ RESOLVED — the upstream API change broke the gate's premise (`419168d4`)
+
+**Fixed 2026-08-03 in `34cfc07a`: option (c), `userSetHits`, with no `effort` door.**
+`.ApplyReachEscalation()` now takes `userSetHits` and returns `control` untouched unless it is
+`TRUE`.  The open question below — whether high `effort` should open a second door — is
+**answered NO**, and by evidence rather than taste: notch +2 is measured INERT (NA
+certify/effort panel, `1958f211`, 60 cells: +2 matched +1 on every matrix while spending 798
+replicates against 500; *"further tuning above rung 4 is measured flat"*), which corroborates
+this study's own 125-/131-/173-tip ties from a different regime.  Two independent lines now say
+the returns die after the first notch, so an `effort` trigger would buy nothing at ~3.5× wall.
+
+Guarded by a provenance test that holds every *value* equal: rung 5 reaching `targetHits = 20`
+via the ladder, against a caller naming 20.  Same preset, same seed, same replicate cap, same
+hit target — only the *source* of the number differs.  The ladder run must match the rung below
+it; the caller's must deepen.  Reading the ratio alone makes the two identical — the bug exactly.
+
+`.IwRatchetDepth()` deliberately still follows the ladder-raised value: upstream's own comment
+states that coupling is the point of the multiplier.  Only this bundle changed.
+
+The analysis that found it, kept because the mechanism is the reusable part:
+
+### 🚨 The mechanism (2026-07-31)
 
 `origin/cpp-search` **removed `strategy`** and replaced it with `effort = 0L`, a *relative*
 offset on an internal ladder (`.effortLadder = sprint, default, thorough, large`, then rungs
@@ -228,6 +249,7 @@ Options, with the recommendation:
 Open question for the maintainer: at high `effort` (say ≥ +3) the user arguably *does* want the
 bundle.  If so, the trigger becomes `userSetHits && ratio >= 2` **or** an explicit `effort`
 threshold — a deliberate second door rather than an accident of the multiplier.
+**Answered NO, 2026-08-03 — see the resolution at the head of this section.**
 
 ## Why it is gated, and gated to `thorough`/`large`
 
