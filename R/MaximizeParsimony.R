@@ -288,14 +288,24 @@
 #
 # EVIDENCE (general-pool A/B, 2026-07-28; 25 training matrices x 5 seeds = 125
 # cells; both arms ran at the SAME raised `targetHits`, so only these levers
-# differ; no cell in either arm hit its wall cap, so the comparison is not a
-# budget artefact).  Strict paired final-score wins, by size tier:
+# differ).  Budget regime, re-derived once the deadline detector was fixed (the
+# engine stops at `maxSeconds * (1 - enumTimeFraction)`, i.e. 0.9x by default,
+# NOT at `maxSeconds`): 85 cells converged in both arms, 36 base and 40 deltas
+# cells stopped at that deadline, and 4 cells are ASYMMETRIC (project2184,
+# deltas at the deadline and base not).  Both arms stopping at one shared
+# deadline is a valid equal-wall comparison; only the asymmetric cells are
+# suspect, and all four of those tied at 563, so no claim below rests on one.
+# Strict paired final-score wins, by size tier:
 #   small  (n=35): 0 better, 0 worse, 35 tie
 #   medium (n=35): 0 better, 0 worse, 35 tie
 #   large  (n=35): 1 better, 1 worse, 33 tie   (a wash)
 #   xlarge (n=20): 5 better, 0 worse, 15 tie
 # Read that last row carefully: ALL FIVE wins are the SAME matrix, project4284
-# at 4062 tips, which improved on every one of its five seeds (by 1-9 steps).
+# at 4062 tips, which improved on every one of its five seeds.  The MARGIN is
+# not a quotable effect size: re-running those cells moved scores by several
+# steps in both directions, because a deadline-truncated run that completes zero
+# replicates stops wherever the clock lands.  The win/loss COUNT replicates; the
+# gap does not.
 # The other three xlarge matrices (125, 131 and 173 tips) all tied.  So the
 # demonstrated benefit is NOT "datasets over 120 tips" -- it is datasets far too
 # large to converge within an ordinary budget, plus the hard-reach tail (on the
@@ -304,6 +314,16 @@
 # Cost: median total wall x3.56 and time-to-best x2.49, but replicates-to-best
 # x1.00 -- the wall gap is entirely cost-PER-replicate (~15x candidates
 # evaluated), not slower convergence.
+#
+# CONFIRMED in exactly the form shipped here (2026-07-30; 11 large/xlarge
+# matrices x 5 seeds = 55 cells, the six levers below and nothing else, 0
+# asymmetric cells): paired 8 better / 1 worse / 46 tie, no tier regression.
+# The effect is still ONE matrix, though.  Pooling both runs: project4284 is
+# 10 win / 0 loss over 10 seeds, project2771 is 4 win / 2 loss / 4 tie (noise),
+# and the other nine matrices are 0 win / 0 loss / 45 tie.  Note too that
+# project4284 won having completed ZERO replicates, so what pays there is depth
+# WITHIN one replicate -- the opposite lever to the restart volume that a raised
+# `maxReplicates` buys, and a reason not to expect these to compose.
 # So over the tested 20-173 tip range these buy no reach and cost ~3.5x the wall
 # (the sample jumps from 173 tips straight to 4062, so the range in between is
 # untested), which is exactly why they are kept OUT of `.StrategyPresets()`: as
@@ -334,14 +354,33 @@
 # Apply the deeper-perturbation bundle, preserving every field the caller set.
 # `userSet` names those fields, exactly as for `.IwRatchetDepth`.
 #
+# `userSetHits` must be TRUE: this fires only where the CALLER named
+# `targetHits`, never where the effort ladder raised it.  The ratio alone will
+# not do, because .RungSpec()'s `hitMultiplier` doubles `targetHits` at rung 5
+# precisely WHEN THE USER DID NOT SET IT -- landing the ratio on exactly 2 and
+# tripping the `>=` below on a mechanical ladder artefact, on any dataset over
+# 120 tips, where `effort = 1` reaches rung 5 unaided.  That is not what the A/B
+# measured; it measured a caller asking for a deeper search than the defaults.
+#
+# Riding the ladder would also mean riding a signal that is measured FLAT.  Two
+# independent lines say the returns die above rung 4: the A/B above ties on every
+# 125-, 131- and 173-tip cell, and the NA certify/effort panel (60 cells) found
+# notch +2 matching notch +1 on every matrix while burning 798 replicates against
+# 500.  Rung 5 has already doubled `maxReplicates`; layering ~3.5x the
+# per-replicate cost on top would make one notch roughly 7x the work for no
+# measured gain, against documentation that promises about 2x.
+#
 # Scoped to `thorough`/`large`, matching `.IwRatchetDepth`: those are the presets
 # the A/B's benefit came from (auto selects `large` for the 4062-tip matrix and
 # `thorough` for project5432), and on smaller data the same A/B measured 0 better
 # / 0 worse across 70 small- and medium-tier cells -- pure wall cost.  Escalating
 # `sprint`/`default` would also contradict their documented character ("Fast
 # search: 3 ratchet cycles, no drift"), so they are left alone.
-.ApplyReachEscalation <- function(control, strategy, escalation,
+.ApplyReachEscalation <- function(control, strategy, escalation, userSetHits,
                                   userSet = character(0)) {
+  if (!isTRUE(userSetHits)) {
+    return(control)
+  }
   if (!length(strategy) || !strategy %in% c("thorough", "large")) {
     return(control)
   }
@@ -911,23 +950,27 @@
 #'   were slower to the optimum on every matrix tested), and setting
 #'   `ratchetCycles` yourself overrides this entirely.
 #'
-#'   Doubling `targetHits` or more goes one step further and, under
-#'   `strategy = "thorough"` or `"large"`, also deepens the per-replicate
-#'   perturbation itself: more drifting, a larger reweighting kick, a second
-#'   sectorial pass after the ratchet, and (internally) retention of near-optimal
-#'   trees to fuse against.  Unlike the ratchet deepening above this applies under
-#'   any scoring regime, though it was measured only under equal weights.  It is
-#'   aimed at datasets big or difficult enough that an ordinary search stops short
-#'   of the optimum: in testing it found shorter trees only on a 4062-tip matrix
-#'   (on all five seeds tried), while from 20 to 173 tips it found trees of the
-#'   same length and simply took around 3.5 times as long -- so it is offered on
-#'   this explicit signal rather than enabled by default.  Any of these values you
-#'   set yourself is left untouched, and the trees returned are still only the
-#'   best found.
+#'   Setting `targetHits` yourself to at least twice its default goes one step
+#'   further and, at `effort` rung 3 (`thorough`) or above, also deepens the
+#'   per-replicate perturbation itself: more drifting, a larger reweighting kick,
+#'   a second sectorial pass after the ratchet, and (internally) retention of
+#'   near-optimal trees to fuse against.  Unlike the ratchet deepening above, this
+#'   applies under any scoring regime, though it was measured only under equal
+#'   weights.  It is aimed at datasets big or difficult enough that an ordinary
+#'   search stops short of the optimum: in testing it found shorter trees on one
+#'   4062-tip matrix, on all ten seeds tried across two runs, while from 20 to 173
+#'   tips it found trees of the same length and simply took around 3.5 times as
+#'   long -- so it is offered on this explicit signal rather than enabled by
+#'   default.  It follows a `targetHits` that *you* set, and only that: raising
+#'   `effort` also raises `targetHits` from rung 5, but that is a change of budget
+#'   rather than a statement about the dataset, and deepening the perturbation on
+#'   top of it was measured to buy nothing.  Any of these values you set yourself
+#'   is left untouched, and the trees returned are still only the best found.
+#'
 #'   Note that the large-`targetHits` idiom for collecting the full set of
-#'   most-parsimonious trees, above, therefore also engages this deeper search on
-#'   those two presets; set `driftCycles`, `intraFuse` and so on yourself if you
-#'   want the wider sampling without the extra per-replicate cost.
+#'   most-parsimonious trees, above, therefore also engages this deeper search at
+#'   those rungs; set `driftCycles`, `intraFuse` and so on yourself if you want
+#'   the wider sampling without the extra per-replicate cost.
 #' @param maxSeconds Numeric: maximum wall-clock time in seconds for the
 #'   search. When reached, the current replicate finishes and the search
 #'   stops. `0` (default) means no time limit.
@@ -1347,8 +1390,8 @@ MaximizeParsimony <- function(
         control[[.f]] <- iwStop[[.f]]
       }
 
-      # The same `targetHits` signal, one step further: a caller who has at least
-      # DOUBLED it has asked to keep searching well past ordinary convergence, so
+      # The same `targetHits` signal, one step further: a caller who has THEMSELVES
+      # at least doubled it has asked to keep searching past ordinary convergence, so
       # also deepen the per-replicate perturbation itself (drift, the auto kick,
       # a post-ratchet sectorial re-search, near-optimal pool retention).  Unlike
       # the ratchet depth above this applies under any scorer, but it is not
@@ -1361,9 +1404,15 @@ MaximizeParsimony <- function(
       # implied weights) and `.IwStopPackage` (sprint/default, implied weights)
       # never both fire, and this bundle is scoped to thorough/large so it
       # cannot disturb the sprint/default operating point measured above.
+      # `userSetHits` is passed on deliberately: the rung's `hitMultiplier` above
+      # raised `targetHits` only when the caller did NOT set it, so the ratio on
+      # its own cannot distinguish "search harder, please" from a rung change.
+      # .IwRatchetDepth() above *should* follow the ladder-raised value -- that is
+      # stated to be the point of the multiplier -- and this bundle should not.
       escalation <- .TargetHitsEscalation(targetHits, defaultHits)
       poolBefore <- control[["poolSuboptimal"]]
       control <- .ApplyReachEscalation(control, strategy, escalation,
+                                       userSetHits = userSetHits,
                                        userSet = userSet)
       # `poolSuboptimal` is raised here only as an internal aid: `intraFuse` needs
       # suboptimal recipients to fuse against. It must not leak into the RESULT --
@@ -1373,7 +1422,8 @@ MaximizeParsimony <- function(
       # than compared later) so a caller's own `poolSuboptimal` is untouched: they
       # asked for those trees and still get them.
       escalatedPool <- !identical(control[["poolSuboptimal"]], poolBefore)
-      if (verbosity >= 1L && escalation >= .reachEscalationMinRatio &&
+      if (verbosity >= 1L && userSetHits &&
+          escalation >= .reachEscalationMinRatio &&
           strategy %in% c("thorough", "large")) {
         cli::cli_alert_info(
           "Deep search: {.field targetHits} raised {round(escalation, 1)}x"

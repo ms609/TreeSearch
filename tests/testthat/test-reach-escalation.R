@@ -1,4 +1,6 @@
-# Deep-search escalation: raising `targetHits` deepens per-replicate perturbation.
+# Deep-search escalation: a CALLER-SET `targetHits` at 2x its default deepens
+# per-replicate perturbation.  Caller-set is half the contract: the effort ladder
+# raises `targetHits` itself from rung 5, and that must NOT engage the bundle.
 library("TreeTools", quietly = TRUE)
 data("inapplicable.phyData", package = "TreeSearch")
 ds <- inapplicable.phyData[["Vinther2008"]]  # 23 tips
@@ -43,7 +45,8 @@ test_that("escalation does NOT touch ratchetCycles", {
   # carry ratchetCycles.
   expect_false("ratchetCycles" %in% names(TreeSearch:::.ReachEscalationDeltas()))
   ctrl <- TreeSearch:::.ApplyReachEscalation(SearchControl(ratchetCycles = 48L),
-                                            "thorough", escalation = 10)
+                                            "thorough", escalation = 10,
+                                            userSetHits = TRUE)
   expect_identical(ctrl[["ratchetCycles"]], 48L)
 })
 
@@ -57,7 +60,8 @@ test_that("the two escalations compose without fighting over ratchetCycles", {
                                      targetHits = 20L, defaultHits = 10L)
   expect_equal(iw, 96L)                    # 48 * escalation(2), under the 115 cap
   ctrl[["ratchetCycles"]] <- iw
-  ctrl <- TreeSearch:::.ApplyReachEscalation(ctrl, "thorough", escalation = 2)
+  ctrl <- TreeSearch:::.ApplyReachEscalation(ctrl, "thorough", escalation = 2,
+                                             userSetHits = TRUE)
   expect_identical(ctrl[["ratchetCycles"]], 96L)   # NOT clobbered by the bundle
   expect_identical(ctrl[["driftCycles"]], 25L)     # bundle still applied
 })
@@ -67,7 +71,8 @@ test_that(".ApplyReachEscalation applies all deltas at or above the ratio", {
   for (strat in c("thorough", "large")) {
     for (esc in c(2, 2.5, 20)) {
       ctrl <- TreeSearch:::.ApplyReachEscalation(SearchControl(), strat,
-                                                escalation = esc)
+                                                escalation = esc,
+                                                userSetHits = TRUE)
       for (nm in names(deltas)) {
         expect_identical(ctrl[[nm]], deltas[[nm]], info = paste(strat, nm))
       }
@@ -79,15 +84,39 @@ test_that(".ApplyReachEscalation is inert below the ratio", {
   stock <- SearchControl()
   for (esc in c(1, 1.5, 1.99)) {
     expect_identical(TreeSearch:::.ApplyReachEscalation(stock, "thorough",
-                                                        escalation = esc),
+                                                        escalation = esc,
+                                                        userSetHits = TRUE),
                      stock)
   }
   # Degenerate escalation must not escalate.
   for (esc in list(NA_real_, numeric(0), Inf)) {
     expect_identical(TreeSearch:::.ApplyReachEscalation(stock, "thorough",
-                                                        escalation = esc),
+                                                        escalation = esc,
+                                                        userSetHits = TRUE),
                      stock)
   }
+})
+
+test_that(".ApplyReachEscalation requires the CALLER to have set targetHits", {
+  # The ratio alone cannot distinguish "search harder" from a rung change:
+  # .RungSpec()'s hitMultiplier doubles `targetHits` at rung 5 exactly when the
+  # user did NOT set it, landing the ratio on 2.0 and tripping the `>=` gate.
+  # Two independent lines measure that axis flat (see .ApplyReachEscalation), so
+  # the bundle must stay shut unless the caller named the number themselves.
+  stock <- SearchControl()
+  for (notSet in list(FALSE, NA, NULL, logical(0))) {
+    expect_identical(
+      TreeSearch:::.ApplyReachEscalation(stock, "thorough", escalation = 10,
+                                         userSetHits = notSet),
+      stock, info = paste("userSetHits", format(notSet))
+    )
+  }
+  # ... and open when they did, at the same ratio.
+  expect_identical(
+    TreeSearch:::.ApplyReachEscalation(stock, "thorough", escalation = 10,
+                                       userSetHits = TRUE)[["driftCycles"]],
+    25L
+  )
 })
 
 test_that(".ApplyReachEscalation is scoped to thorough/large", {
@@ -97,7 +126,8 @@ test_that(".ApplyReachEscalation is scoped to thorough/large", {
   stock <- SearchControl()
   for (strat in c("sprint", "default", "none", NA_character_, character(0))) {
     expect_identical(
-      TreeSearch:::.ApplyReachEscalation(stock, strat, escalation = 10),
+      TreeSearch:::.ApplyReachEscalation(stock, strat, escalation = 10,
+                                         userSetHits = TRUE),
       stock, info = paste("strategy", strat)
     )
   }
@@ -105,7 +135,7 @@ test_that(".ApplyReachEscalation is scoped to thorough/large", {
 
 test_that(".ApplyReachEscalation preserves caller-set fields", {
   ctrl <- TreeSearch:::.ApplyReachEscalation(
-    SearchControl(), "thorough", escalation = 4,
+    SearchControl(), "thorough", escalation = 4, userSetHits = TRUE,
     userSet = c("driftCycles", "intraFuse")
   )
   expect_identical(ctrl[["driftCycles"]], SearchControl()[["driftCycles"]])
@@ -130,9 +160,11 @@ test_that("escalation measurably deepens the search end to end", {
   # sectorial pass), so at matched replicates the escalated run must evaluate
   # substantially more candidates. Vinther2008 (23 tips): default targetHits = 10,
   # so 20 is exactly 2x.
+  # Vinther2008 is 23 tips, so .AutoRung() gives rung 1 (`sprint`); `effort = 2`
+  # is rung 3 (`thorough`), which is in scope and below the rung-5 hitMultiplier.
   runCand <- function(hits) {
     set.seed(4242)
-    r <- MaximizeParsimony(ds, strategy = "thorough", maxReplicates = 2L,
+    r <- MaximizeParsimony(ds, effort = 2L, maxReplicates = 2L,
                            targetHits = hits, maxSeconds = 0, verbosity = 0L)
     list(cand = as.double(attr(r, "candidates_evaluated")), res = r)
   }
@@ -157,7 +189,7 @@ test_that("sprint is NOT escalated end to end", {
   # EXACTLY. This fails the moment the strategy gate is loosened.
   runCand <- function(hits) {
     set.seed(99L)
-    r <- MaximizeParsimony(ds, strategy = "sprint", maxReplicates = 2L,
+    r <- MaximizeParsimony(ds, effort = 0L, maxReplicates = 2L,
                            targetHits = hits, maxSeconds = 0, verbosity = 0L)
     as.double(attr(r, "candidates_evaluated"))
   }
@@ -170,7 +202,7 @@ test_that("an escalated search still returns only best-score trees", {
   # verbatim, so without the guard the caller would silently get trees up to 3
   # steps worse than attr(, "score") from a result documented as the best found.
   set.seed(31L)
-  r <- MaximizeParsimony(ds, strategy = "thorough", maxReplicates = 3L,
+  r <- MaximizeParsimony(ds, effort = 2L, maxReplicates = 3L,
                          targetHits = 20L, collapse = FALSE, verbosity = 0L)
   best <- attr(r, "score")
   expect_true(is.finite(best))
@@ -178,11 +210,41 @@ test_that("an escalated search still returns only best-score trees", {
   expect_true(all(scores == best))
 })
 
+test_that("the effort ladder's own targetHits rise does NOT deepen the search", {
+  # The provenance test, with every VALUE held equal.  At rung 5 the ladder
+  # doubles the 23-tip default of 10 to 20 by itself; the second run names 20,
+  # so the ladder skips its multiplier and leaves it at 20.  Both runs therefore
+  # search with targetHits = 20, the same preset (`large`), the same replicate
+  # cap and the same seed -- the ONLY difference is who set the number.  Only the
+  # caller's version may deepen the perturbation.  With the gate reading the
+  # ratio alone (as it first did) both runs escalate and the counts match, which
+  # would fire this bundle on every dataset over 120 tips at `effort = 1`.
+  runCand <- function(...) {
+    set.seed(808L)
+    r <- MaximizeParsimony(ds, effort = 4L, maxReplicates = 2L,
+                           maxSeconds = 0, verbosity = 0L, ...)
+    as.double(attr(r, "candidates_evaluated"))
+  }
+  ladder <- runCand()
+  asked <- runCand(targetHits = 20L)
+  expect_true(is.finite(ladder) && ladder > 0)
+  expect_gt(asked, 1.2 * ladder)
+  # And the ladder run is indistinguishable from the rung below it, whose ratio
+  # is 1: rung 5 with a user-set `maxReplicates` differs only in the hit target.
+  set.seed(808L)
+  rung4 <- as.double(attr(
+    MaximizeParsimony(ds, effort = 3L, maxReplicates = 2L, maxSeconds = 0,
+                      verbosity = 0L),
+    "candidates_evaluated"
+  ))
+  expect_identical(ladder, rung4)
+})
+
 test_that("a caller's own poolSuboptimal is still honoured", {
   # The guard above must not steal the documented behaviour from someone who
   # asked for suboptimal trees themselves.
   set.seed(31L)
-  r <- MaximizeParsimony(ds, strategy = "thorough", maxReplicates = 3L,
+  r <- MaximizeParsimony(ds, effort = 2L, maxReplicates = 3L,
                          targetHits = 20L, poolSuboptimal = 3,
                          collapse = FALSE, verbosity = 0L)
   expect_s3_class(r, "multiPhylo")

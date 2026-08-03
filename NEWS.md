@@ -164,8 +164,8 @@
   `nThreads > 1` it is evaluated when the coordinating thread polls, so it fires
   later and less predictably.
 
-- Implied-weights searches under `strategy = "sprint"` or `"default"` now run a
-  deeper ratchet paid for by that flat patience: `sprint` takes
+- Implied-weights searches at `effort` rung 1 (`sprint`) or 2 (`default`) now run
+  a deeper ratchet paid for by that flat patience: `sprint` takes
   `ratchetCycles = 12`, `ratchetPerturbProb = 0.25` and `stopPatience = 20`;
   `default` takes `ratchetCycles = 20` and `stopPatience = 15`.  The two knobs
   ship together because each fails on its own — the deeper ratchet improves the
@@ -182,24 +182,31 @@
   profile parsimony are unchanged, as is `thorough`/`large`, and setting any of
   these fields yourself overrides all of it.
 
-- Doubling `targetHits` or more, under `strategy = "thorough"` or `"large"`, now
-  also deepens the per-replicate perturbation itself, extending the existing
-  `targetHits` escalation beyond ratchet depth: more drifting, a larger
-  reweighting kick, a second sectorial pass after the ratchet, and internal
-  retention of near-optimal trees to fuse against.  Unlike the ratchet deepening
-  this applies under any scoring regime, though it was measured only under equal
-  weights.  It targets datasets big or difficult enough that an ordinary search
-  stops short of the optimum: across 25 datasets spanning 20 to 4062 tips it
-  found shorter trees only on the 4062-tip matrix (on all five seeds tried),
-  while from 20 to 173 tips it found trees of the same length and
-  simply took about 3.5× as long — a cost incurred as extra work per replicate,
-  not as slower convergence.  Because most searches would pay for depth they do
-  not need, it is offered only on that explicit signal and only on those two
-  presets; `sprint` and `default` keep the implied-weights operating point
-  described above, `ratchetCycles` remains governed by the implied-weights
-  ratchet deepening, and any control field you set yourself is preserved.  Note
-  that the documented large-`targetHits` idiom for collecting the full set of
-  most-parsimonious trees also engages this on those two presets.
+- Setting `targetHits` yourself to at least twice its default, at `effort` rung 3
+  (`thorough`) or above, now also deepens the per-replicate perturbation itself,
+  extending the existing `targetHits` escalation beyond ratchet depth: more
+  drifting, a larger reweighting kick, a second sectorial pass after the ratchet,
+  and internal retention of near-optimal trees to fuse against.  Unlike the
+  ratchet deepening this applies under any scoring regime, though it was measured
+  only under equal weights.  It targets datasets big or difficult enough that an
+  ordinary search stops short of the optimum: across 25 datasets spanning 20 to
+  4062 tips it found shorter trees only on the 4062-tip matrix — there on all ten
+  seeds tried across two runs — while from 20 to 173 tips it found trees of the
+  same length and simply took about 3.5× as long, a cost incurred as extra work
+  per replicate rather than as slower convergence.  Because most searches would
+  pay for depth they do not need, it is offered only on that explicit signal and
+  only at those rungs; `sprint` and `default` keep the implied-weights operating
+  point described above, `ratchetCycles` remains governed by the implied-weights
+  ratchet deepening, and any control field you set yourself is preserved.
+
+  It follows a `targetHits` that *you* set, and only that.  Raising `effort` also
+  raises `targetHits` from rung 5, but that is a change of budget rather than a
+  statement about the dataset, and deepening the perturbation on top of it was
+  measured to buy nothing: every 125-, 131- and 173-tip cell tied, and a separate
+  60-cell panel found `effort = 2` matching `effort = 1` on every matrix while
+  spending 798 replicates against 500.  Note that the documented
+  large-`targetHits` idiom for collecting the full set of most-parsimonious trees
+  does engage this, since you set the number.
 
 - Fixed: a large `targetHits` combined with a large `perturbStopFactor` stopped the
   search after two replicates and silently returned a worse tree.  The
