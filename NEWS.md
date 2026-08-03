@@ -59,8 +59,8 @@
   this applies under any scoring regime, though it was measured only under equal
   weights.  It targets datasets big or difficult enough that an ordinary search
   stops short of the optimum: across 25 datasets spanning 20 to 4062 tips it
-  found shorter trees only on the 4062-tip matrix (on all five seeds tried, by
-  1–9 steps), while from 20 to 173 tips it found trees of the same length and
+  found shorter trees only on the 4062-tip matrix (on all five seeds tried),
+  while from 20 to 173 tips it found trees of the same length and
   simply took about 3.5× as long — a cost incurred as extra work per replicate,
   not as slower convergence.  Because most searches would pay for depth they do
   not need, it is offered only on that explicit signal and only on those two
