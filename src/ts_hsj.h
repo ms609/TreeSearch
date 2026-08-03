@@ -51,7 +51,10 @@ std::vector<int> partition_weights(
 // ds: dataset (used for non-hierarchy characters AND hierarchy data)
 // hierarchy_blocks: hierarchy specification
 // alpha: HSJ scaling parameter in [0, 1]
-// tip_labels: per-tip, per-original-char state labels (0-based token index).
+// tip_labels: per-tip, per-original-char labels (0-based TOKEN/allLevels
+//   index -- NOT a state index; translate via ds.token_states before
+//   comparing to a HierarchyBlock's absent_state or to ds.inapp_state, both
+//   of which are state indices; see T-375/T-376 and DataSet::token_states).
 //   Layout: tip_labels[tip * n_orig_chars + char]. This is the full
 //   (uncompressed) original matrix needed for secondary character matching.
 // n_orig_chars: number of original characters (before compression)

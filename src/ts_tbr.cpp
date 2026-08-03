@@ -120,9 +120,18 @@ static double full_rescore(TreeState& tree, const DataSet& ds) {
 }
 
 // Re-root the tree so tip `t` is a direct child of the root pseudo-node n_tip.
-// Parsimony length is root-invariant, so this only changes the representation
-// (which edges are clippable and where the root edge sits) — it lets the search
-// reach moves the current rooting hides.  Rebuilds postorder; does NOT refresh
+// Parsimony length is root-invariant for the SYMMETRIC criteria (EW / IW / NA /
+// profile, and since T-374 also HSJ), so for those this only changes the
+// representation (which edges are clippable and where the root edge sits) — it
+// lets the search reach moves the current rooting hides.  It is NOT
+// root-invariant under XFORM: the x-transformation's step matrix is asymmetric
+// (gain = nSec + 1 against loss = 1), so a reroot can change the score by up to
+// sum(nSec) over blocks (T-374; measured in
+// dev/plans/2026-07-29-t374b-xform-rooting-policy.md).  Callers under XFORM must
+// treat the score as rooting-relative.  HSJ used to belong in that list because
+// its alpha.d/m term was read off a directional pick; the secondary labelling is
+// now rooted canonically at tip 0 inside the kernel (ts_hsj.cpp), so HSJ scores
+// are a function of the unrooted topology.  Rebuilds postorder; does NOT refresh
 // Fitch state arrays, so the caller must full_rescore() afterwards.
 // Generalises reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
 // Declared in ts_tbr.h (used by the output-collapse kernel in ts_rcpp.cpp).
@@ -3149,7 +3158,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   reroot_prev = best_score;
   reroot_at_tip(tree, reroot_tip);
   reroot_tip = (reroot_tip + 1) % tree.n_tip;
-  best_score = full_rescore(tree, ds);   // root-invariant; refreshes states
+  // Refreshes states.  Root-invariant for EW / IW / NA / profile and, since
+  // T-374, HSJ — under XFORM alone the score is rooting-relative, so there this
+  // value is the length at the rooting the tree currently carries, not an
+  // absolute.
+  best_score = full_rescore(tree, ds);
   score_fresh = true;
   if (!collapsed.empty()) {
     if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);

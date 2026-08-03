@@ -129,11 +129,7 @@ test_that("TS_EV_AUDIT re-verifies cache hits without false alarms on a clean ca
   ds   <- make_na_ds()
   edge <- as.phylo(42, 8)$edge
 
-  old <- Sys.getenv("TS_EV_AUDIT", unset = NA)
-  Sys.setenv(TS_EV_AUDIT = "1")
-  on.exit({
-    if (is.na(old)) Sys.unsetenv("TS_EV_AUDIT") else Sys.setenv(TS_EV_AUDIT = old)
-  }, add = TRUE)
+  withr::local_envvar(TS_EV_AUDIT = "1")
 
   r1 <- TreeSearch:::ts_tbr_diagnostics(
     edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,

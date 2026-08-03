@@ -103,7 +103,7 @@ test_that("Strategy preset overrides SearchControl defaults", {
   set.seed(8472)
   # sprint preset sets driftCycles=0, ratchetCycles=3
   r1 <- MaximizeParsimony(
-    ds, strategy = "sprint",
+    ds, effort = -9L,
     maxReplicates = 2L, targetHits = 1L, verbosity = 0L
   )
   expect_s3_class(r1, "multiPhylo")
@@ -113,7 +113,7 @@ test_that("Explicit control overrides strategy preset", {
   set.seed(8472)
   # sprint preset sets ratchetCycles=3; override to 1
   r1 <- MaximizeParsimony(
-    ds, strategy = "sprint",
+    ds, effort = -9L,
     maxReplicates = 2L, targetHits = 1L, verbosity = 0L,
     control = SearchControl(ratchetCycles = 1L)
   )

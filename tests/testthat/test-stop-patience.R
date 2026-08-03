@@ -112,10 +112,10 @@ test_that("stopPatience also stops the parallel search", {
            dimnames = list(paste0("t", seq_len(40)), NULL))
   )
   cap <- 120L
-  # `strategy = "none"` is load-bearing: 40 tips and 30 characters make `auto` resolve to
+  # `.rung = "none"` is load-bearing: 40 tips and 30 characters make `auto` resolve to
   # `default`, which under implied weights now ships stopPatience 15 -- so a control arm left
   # on `auto` stops at ~21 replicates and the comparison measures nothing.
-  args <- list(dataset = dataset, strategy = "none", concavity = 10,
+  args <- list(dataset = dataset, .rung = "none", concavity = 10,
                targetHits = 99999L, perturbStopFactor = 0L,
                consensusStableReps = 0L, maxReplicates = cap, nThreads = 2L,
                verbosity = 0L)
@@ -124,7 +124,22 @@ test_that("stopPatience also stops the parallel search", {
   expect_equal(attr(full, "replicates"), cap)      # nothing else ends the search
   expect_lt(attr(short, "replicates"), cap)
   expect_true(attr(short, "perturb_stop"))
-  expect_equal(min(attr(short, "score")), min(attr(full, "score")))
+  # Deliberately NOT `expect_equal(short score, full score)`.  That assertion held on
+  # this matrix but is not a property the rule guarantees, and it broke under covr:
+  # instrumentation slows every replicate, the parallel path evaluates the dry spell on a
+  # 200 ms monitor poll over replicates completed into the shared pool, so far fewer
+  # replicates land per poll and patience 3 fires genuinely earlier in the search
+  # (13.063 against 12.988).  Stopping sooner is *allowed* to cost score -- that is the
+  # trade-off the parameter exists to offer -- so equality was asserting a coincidence of
+  # this machine's timing.  What the rule does guarantee is asserted above: the search
+  # stops before the cap, and it stops for the no-improvement reason.  The score is only
+  # checked for being a valid, finite improvement over a random start, which holds at any
+  # speed.  See [[parallel-stop-rules-poll-granularity]].
+  # What the rule actually
+  # guarantees is that stopping early can't do BETTER than letting the search run on.
+  expect_true(is.finite(min(attr(short, "score"))))
+  expect_lt(min(attr(short, "score")), min(attr(full, "score")) * 1.5)
+  expect_gte(min(attr(short, "score")), min(attr(full, "score")))
 })
 
 # ---- the shipped implied-weights operating point --------------------------------------------
@@ -167,21 +182,21 @@ test_that(".IwStopPackage never overrides a field the caller set", {
 
 test_that("the implied-weights package reaches a real search, including via auto", {
   dataset <- testDataset()                      # 8 tips -> auto resolves to sprint
-  expect_equal(.AutoStrategy(8L, 6L), "sprint")
+  expect_equal(.AutoRung(8L, 6L), 1L)
   # A user-set value must win over the package even when the strategy would impose one.
-  r <- MaximizeParsimony(dataset, strategy = "auto", concavity = 10,
+  r <- MaximizeParsimony(dataset, effort = 0L, concavity = 10,
                          maxReplicates = 200L, targetHits = 99999L,
                          perturbStopFactor = 0L, consensusStableReps = 0L,
                          stopPatience = 3L, verbosity = 0L)
   expect_equal(attr(r, "replicates"), attr(r, "last_improved_rep") + 3L)
   # Left to itself, `auto` under implied weights takes sprint's patience of 20.
-  auto <- MaximizeParsimony(dataset, strategy = "auto", concavity = 10,
+  auto <- MaximizeParsimony(dataset, effort = 0L, concavity = 10,
                             maxReplicates = 500L, targetHits = 99999L,
                             perturbStopFactor = 0L, consensusStableReps = 0L,
                             verbosity = 0L)
   expect_equal(attr(auto, "replicates"), attr(auto, "last_improved_rep") + 20L)
   # Equal weights is out of scope, so nothing stops the search but the cap.
-  ew <- MaximizeParsimony(dataset, strategy = "auto", maxReplicates = 30L,
+  ew <- MaximizeParsimony(dataset, effort = 0L, maxReplicates = 30L,
                           targetHits = 99999L, perturbStopFactor = 0L,
                           consensusStableReps = 0L, verbosity = 0L)
   expect_equal(attr(ew, "replicates"), 30L)

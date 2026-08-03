@@ -26,6 +26,7 @@ ConstraintData build_constraint(
   cd.split_tips.resize(
       static_cast<size_t>(n_splits) * cd.n_words, 0ULL);
   cd.constraint_node.assign(n_splits, -1);
+  cd.constraint_complement.assign(n_splits, 0);
 
   // Pack split_matrix rows into bitmasks.
   // split_matrix is column-major (from R): element [s, t] is at
@@ -83,6 +84,7 @@ ConstraintData build_constraint_from_bitsets(
   size_t total = static_cast<size_t>(n_splits) * words_per_split;
   cd.split_tips.assign(split_bits, split_bits + total);
   cd.constraint_node.assign(n_splits, -1);
+  cd.constraint_complement.assign(n_splits, 0);
 
   int n_node = 2 * n_tips - 1;
   cd.dfs_entry.assign(n_node, 0);
@@ -153,26 +155,70 @@ std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words)
 // Map constraint nodes: find which internal node holds each split
 // =========================================================================
 
+// Width mask for the highest word of a tip bitmask: node tip sets carry zeros
+// above tip n_tip - 1, so a *complemented* split mask has to be trimmed to the
+// same width before it can be compared with one.
+static inline uint64_t tip_mask_top_word(int n_tip) {
+  const int rem = n_tip % 64;
+  return rem ? ((1ULL << rem) - 1ULL) : ~0ULL;
+}
+
+// Does node `node`'s descendant tip set equal `split` (complement = false) or
+// the complement of `split` over tips 0..n_tip-1 (complement = true)?
+static inline bool node_matches_split(
+    const uint64_t* nd, const uint64_t* split, int n_words,
+    uint64_t top_word, bool complement)
+{
+  for (int w = 0; w < n_words; ++w) {
+    uint64_t want = complement ? ~split[w] : split[w];
+    if (complement && w == n_words - 1) want &= top_word;
+    if (nd[w] != want) return false;
+  }
+  return true;
+}
+
 void map_constraint_nodes(const TreeState& tree, ConstraintData& cd)
 {
   if (!cd.active) return;
 
   auto node_tips = compute_node_tips(tree, cd.n_words);
+  const uint64_t top_word = tip_mask_top_word(tree.n_tip);
 
-  // For each constraint split, find the internal node whose subtree
-  // tip mask matches (after canonicalization with tip 0 outside).
+  // For each constraint split, find the node that displays it.
+  //
+  // T-384: a constraint split is an *unrooted* bipartition A|B, but a clade is
+  // a rooted subtree, so the split is displayed whenever EITHER side is a
+  // clade.  Exactly one of the two is, except when the split is the root's own
+  // bipartition (then both are): for an edge (parent(v), v) with v != root the
+  // two sides are desc(v) and its complement, so a tree displays A|B iff some
+  // node's tip set equals A or equals B.  build_constraint() canonicalises A so
+  // that tip 0 is outside it, which makes A the clade side only when tip 0 sits
+  // on the root's own edge -- true of a tip-0-rooted tree and of nothing else.
+  // Testing the complement as well is what makes this mapping rooting-agnostic,
+  // and it costs one extra scan only for splits that used to map to -1 (which
+  // regraft_violates_constraint reads as "tree already violates", rejecting
+  // every move).  Phase 1 is run to completion first so that every tree which
+  // mapped successfully before maps to exactly the same node now.
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split = &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
     cd.constraint_node[s] = -1;
+    cd.constraint_complement[s] = 0;
 
     for (int node : tree.postorder) {
       const uint64_t* nd = &node_tips[static_cast<size_t>(node) * cd.n_words];
-      bool match = true;
-      for (int w = 0; w < cd.n_words; ++w) {
-        if (nd[w] != split[w]) { match = false; break; }
-      }
-      if (match) {
+      if (node_matches_split(nd, split, cd.n_words, top_word, false)) {
         cd.constraint_node[s] = node;
+        break;
+      }
+    }
+    if (cd.constraint_node[s] >= 0) continue;
+
+    // Phase 2: the tip-0 side is the clade in this rooting.
+    for (int node : tree.postorder) {
+      const uint64_t* nd = &node_tips[static_cast<size_t>(node) * cd.n_words];
+      if (node_matches_split(nd, split, cd.n_words, top_word, true)) {
+        cd.constraint_node[s] = node;
+        cd.constraint_complement[s] = 1;
         break;
       }
     }
@@ -352,25 +398,34 @@ bool regraft_violates_constraint(int below,
 
     int cn = cd.constraint_node[s];
     if (cn < 0) {
-      // Constraint not currently displayed — tree already violates.
-      // Reject all moves to avoid entrenching a bad state.
-      // (This shouldn't happen if the starting tree is valid and
-      // we only accept valid moves.)
+      // Constraint genuinely not displayed by the current tree (both sides
+      // tested — see map_constraint_nodes).  Reject all moves to avoid
+      // entrenching a bad state.
       return true;
     }
 
-    // Is `below` a descendant of cn (= inside the constraint clade)?
+    // Which side of the split does cn's subtree hold?  Under the canonical
+    // orientation it is the split itself; in a rooting where only the tip-0
+    // side is a clade, map_constraint_nodes() maps that side instead (T-384)
+    // and the two zones swap: a clip whose tips are all OUTSIDE the split then
+    // has to land INSIDE cn's subtree, and vice versa.
+    const ClipZone zone_in  = cd.constraint_complement[s]
+                            ? ClipZone::MUST_OUTSIDE : ClipZone::MUST_INSIDE;
+    const ClipZone zone_out = cd.constraint_complement[s]
+                            ? ClipZone::MUST_INSIDE : ClipZone::MUST_OUTSIDE;
+
+    // Is `below` a descendant of cn (= inside the mapped clade)?
     bool inside = is_ancestor_or_equal(cn, below,
                                         cd.dfs_entry, cd.dfs_exit);
 
-    if (cd.clip_zones[s] == ClipZone::MUST_INSIDE && !inside) {
+    if (cd.clip_zones[s] == zone_in && !inside) {
       return true;
     }
     // Exclude the boundary edge (above_cn, cn): regrafting an outside-only
     // clade just above the constraint clade makes it a sibling of that clade,
     // preserving monophyly.  Only reject if the clade would land *strictly
     // inside* the constraint clade.
-    if (cd.clip_zones[s] == ClipZone::MUST_OUTSIDE && inside && below != cn) {
+    if (cd.clip_zones[s] == zone_out && inside && below != cn) {
       return true;
     }
   }
@@ -655,6 +710,14 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
   auto node_tips = compute_node_tips(tree, n_words);
 
   // --- Identify violated splits ---
+  // A split is violated only when NEITHER side of the bipartition is a clade
+  // (T-384): testing the canonical side alone made this "repair" a tree that
+  // already displayed every constraint, spending up to n_tip / 4 + 2 arbitrary
+  // SPR moves on it.  That mattered most at ts_nni_perturb.cpp's unconditional
+  // impose_constraint() call, which runs after every perturbation cycle.
+  // The repair below still aims at making the canonical side the clade, which
+  // displays the split either way.
+  const uint64_t top_word = tip_mask_top_word(tree.n_tip);
   std::vector<int> violated;
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
@@ -663,11 +726,11 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
     for (int node : tree.postorder) {
       const uint64_t* nd =
           &node_tips[static_cast<size_t>(node) * n_words];
-      bool match = true;
-      for (int w = 0; w < n_words; ++w) {
-        if (nd[w] != split[w]) { match = false; break; }
+      if (node_matches_split(nd, split, n_words, top_word, false) ||
+          node_matches_split(nd, split, n_words, top_word, true)) {
+        found = true;
+        break;
       }
-      if (match) { found = true; break; }
     }
     if (!found) violated.push_back(s);
   }

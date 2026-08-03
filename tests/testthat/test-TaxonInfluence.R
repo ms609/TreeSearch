@@ -32,8 +32,7 @@ test_that("TaxonInfluence() saves intermediate trees", {
   dataset <- congreveLamsdellMatrices[[42]][1:5, ]
   tree <- BalancedTree(dataset)
   
-  testDir <- tempdir()
-  on.exit(unlink(testDir))
+  testDir <- withr::local_tempdir()
   inf <- TaxonInfluence(
     dataset, tree, maxReplicates = 2L, targetHits = 1L, verbosity = 0L,
     savePath = paste0(testDir, "/tmp-")

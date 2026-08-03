@@ -32,8 +32,8 @@ test_that("PlotCharacter.phylo()", {
         FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, TRUE,
         TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
         FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-        TRUE, FALSE, FALSE, FALSE, TRUE, TRUE), .Dim = c(23L, 5L),
-      .Dimnames = list(NULL, c("-", "0", "1", "2", "3"))))
+        TRUE, FALSE, FALSE, FALSE, TRUE, TRUE), dim = c(23L, 5L),
+      dimnames = list(NULL, c("-", "0", "1", "2", "3"))))
   
   skip_if_not_installed("vdiffr")
 

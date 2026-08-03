@@ -254,9 +254,9 @@ test_that("Heartbeat reports inside a long phase, and honours its interval", {
   ds <- inapplicable.phyData[["Vinther2008"]]
 
   HeartbeatLines <- function(seconds) {
-    out <- with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), capture.output({
+    out <- withr::with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), capture.output({
       set.seed(3)
-      invisible(MaximizeParsimony(ds, strategy = "thorough",
+      invisible(MaximizeParsimony(ds, .rung = "thorough",
                                   maxReplicates = 1L, verbosity = 2L))
     }, type = "output"))
     grep("in phase", out, value = TRUE)
@@ -285,9 +285,9 @@ test_that("Heartbeat never reports a score below the true optimum", {
   data("inapplicable.phyData", package = "TreeSearch")
   ds <- inapplicable.phyData[["Vinther2008"]]
   best <- NULL
-  out <- with_envvar(c(TS_HEARTBEAT_SECONDS = "0.001"), capture.output({
+  out <- withr::with_envvar(c(TS_HEARTBEAT_SECONDS = "0.001"), capture.output({
     set.seed(3)
-    best <- MaximizeParsimony(ds, strategy = "thorough", maxReplicates = 1L,
+    best <- MaximizeParsimony(ds, .rung = "thorough", maxReplicates = 1L,
                               verbosity = 2L)
   }, type = "output"))
   optimum <- attr(best, "score")
@@ -303,9 +303,9 @@ test_that("Heartbeat does not change the search result", {
   ds <- inapplicable.phyData[["Vinther2008"]]
 
   Search <- function(seconds) {
-    with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), {
+    withr::with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), {
       set.seed(42)
-      MaximizeParsimony(ds, strategy = "sprint", maxReplicates = 3L,
+      MaximizeParsimony(ds, effort = -9L, maxReplicates = 3L,
                         verbosity = 0L)
     })
   }

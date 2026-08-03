@@ -1540,8 +1540,9 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
   result.total_steps_saved = 0;
 
   // build_reduced_dataset() does not copy hierarchy_blocks, tip_labels,
-  // n_orig_chars, hsj_alpha, or sankoff_* fields (T-303).  Sector-internal
-  // scoring would silently degrade to Fitch-only.  Same class as T-275 guard.
+  // n_orig_chars, hsj_alpha, token_states, n_levels, or sankoff_* fields
+  // (T-303).  Sector-internal scoring would silently degrade to Fitch-only.
+  // Same class as T-275 guard.
   if (ds.scoring_mode == ScoringMode::HSJ ||
       ds.scoring_mode == ScoringMode::XFORM) {
     return result;
@@ -1908,8 +1909,9 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
   result.total_steps_saved = 0;
 
   // build_reduced_dataset() does not copy hierarchy_blocks, tip_labels,
-  // n_orig_chars, hsj_alpha, or sankoff_* fields (T-303).  Sector-internal
-  // scoring would silently degrade to Fitch-only.  Same class as T-275 guard.
+  // n_orig_chars, hsj_alpha, token_states, n_levels, or sankoff_* fields
+  // (T-303).  Sector-internal scoring would silently degrade to Fitch-only.
+  // Same class as T-275 guard.
   if (ds.scoring_mode == ScoringMode::HSJ ||
       ds.scoring_mode == ScoringMode::XFORM) {
     return result;

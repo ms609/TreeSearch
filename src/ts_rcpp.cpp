@@ -54,6 +54,33 @@ void validate_tip_data_values(const int* tip_data_r, int n_tips,
   }
 }
 
+// Validate `tip_labels`/`absent_state` VALUES at the Rcpp boundary: the HSJ
+// kernel treats each tip_labels entry as a 0-based index into
+// `DataSet::token_states` (size n_tokens) and `absent_state` as a bit
+// position within an `n_levels`-bit state-space mask, with no further
+// checking (T-375/T-376: before that fix, a bad value was merely a wrong
+// scalar comparison; now it is an out-of-bounds read / undefined shift).
+// Public wrappers always derive both from a validated phyDat via
+// `.BuildTipLabels()`/`.HSJAbsentState()`, so this only guards a direct
+// internal call (`TreeSearch:::`) with hand-crafted values -- but that
+// includes both `ts_hsj_score()` (the test bridge, below) and
+// `ts_driven_search()`/`ts_collapse_pool()` via their `hsjConfig` argument
+// (see `unpack_hsj()`), since `R/ts-driven-compat.R`'s legacy wrapper exposes
+// `hsjTipLabels`/`hsjAbsentState` as independent, hand-settable arguments.
+void validate_hsj_tip_labels(const IntegerMatrix& tip_labels_r,
+                              int absent_state, int n_tokens, int n_levels) {
+  if (absent_state < 0 || absent_state >= n_levels) {
+    Rcpp::stop("`absent_state` must be in [0, %d); found %d",
+               n_levels, absent_state);
+  }
+  for (int v : tip_labels_r) {
+    if (v < 0 || v >= n_tokens) {
+      Rcpp::stop("`tip_labels` values must be in [0, nrow(contrast)) (%d); "
+                 "found %d", n_tokens, v);
+    }
+  }
+}
+
 // Validate an `addition_order` VALUE vector at the Rcpp boundary:
 // wagner_tree() treats a non-empty `order` as a length-n_tips permutation of
 // 0..n_tips-1 and reads order[0..2] / order[i] for i in [3, n_tips) with no
@@ -1822,6 +1849,9 @@ static void unpack_hsj(Nullable<List> hsjConfig, ts::DataSet& ds) {
     if (hc.containsElementNamed("hsjTipLabels") &&
         !Rf_isNull(hc["hsjTipLabels"])) {
       IntegerMatrix tl = as<IntegerMatrix>(hc["hsjTipLabels"]);
+      validate_hsj_tip_labels(tl, hsjAbsentState,
+                              static_cast<int>(ds.token_states.size()),
+                              ds.n_levels);
       int n_t = tl.nrow();
       int n_c = tl.ncol();
       ds.n_orig_chars = n_c;
@@ -2188,8 +2218,15 @@ List ts_collapse_pool(
     ts::TreeState tree;
     tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
 
-    // Root on tip 0 so root-adjacent edges are trivial (rooting-invariant
-    // collapse), then refresh state arrays for the flag computation.
+    // Root on tip 0 so root-adjacent edges are trivial, then refresh state
+    // arrays for the flag computation.  This makes the CONTRACTION
+    // rooting-invariant, and it is also what fixes the rooting the returned
+    // trees are handed back at — which matters because XFORM lengths are NOT
+    // rooting-invariant (T-374).  MaximizeParsimony() rescores the XFORM pool
+    // at this same tip-0 rooting before reporting, so that the reported score
+    // is the score of the tree returned (T-385).  HSJ needs no such rescore:
+    // since T-374 its secondary labelling is itself rooted canonically at tip 0
+    // inside the kernel, so its length does not depend on the rooting at all.
     ts::reroot_at_tip(tree, 0);
     tree.reset_states(ds);
     ts::score_tree(tree, ds);
@@ -3117,6 +3154,9 @@ double ts_hsj_score(
     IntegerMatrix tip_labels_r,
     int absent_state)
 {
+  validate_hsj_tip_labels(tip_labels_r, absent_state, contrast.nrow(),
+                           contrast.ncol());
+
   // Build DataSet for non-hierarchy characters (weight already adjusted)
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
 

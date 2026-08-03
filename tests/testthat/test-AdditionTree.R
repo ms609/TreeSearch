@@ -1,3 +1,29 @@
+# Does `tree` display the bipartition given by the logical vector `target`,
+# whose entries correspond to `taxa` in order?
+#
+# Do NOT use `%in%` on Splits objects here.  TreeTools' `%in%` is an S4 method
+# (`.__T__%in%:base`) shadowing a base function that is not generic, so it
+# dispatches only when TreeTools sits on the search path.  Test code runs in an
+# environment whose parent is the TreeSearch *namespace*, which consults its
+# imports and then base -- never the search path -- so the method is invisible
+# even after `library("TreeTools")` and the comparison silently falls through
+# to `base::%in%`, which compares raw encoded bytes and can answer FALSE for a
+# tree that does display the split (or TRUE by encoding coincidence).
+#
+# `FirstMatchingSplit()` is a plain namespace-qualified function -- not an
+# operator -- so it isn't subject to the same dispatch trap, and it is
+# complement-aware (an unrooted bipartition is the same split either way round)
+# and returns 0/not-found rather than a vacuous match when `tree` has no
+# non-trivial splits to compare (e.g. <= 3 resolved tips).
+#
+# `taxa` must be supplied explicitly (not read from `tree$tip.label`):
+# AdditionTree() returns tips in an arbitrary order, so `target`'s positions
+# only line up with a fixed taxon order, not with the tree's own tip order.
+displays_split <- function(tree, target, taxa) {
+  TreeTools::FirstMatchingSplit(
+    TreeTools::as.Splits(tree, tipLabels = taxa), target) != 0
+}
+
 test_that("Addition tree produces valid trees", {
   data("Lobo", package = "TreeTools")
   L10 <- Lobo.phy[1:10]
@@ -69,8 +95,7 @@ test_that("Addition tree obeys constraints", {
       0, 1, 1, 0, 0, 1), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
   constraint <- c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1)
-  expected_split <- as.Splits(c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE),
-                               letters[1:6])
+  expected_split <- c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE)
 
   # `sequence` defaults to a random addition order, so seed for a reproducible
   # tree shape rather than for a lucky one: under T-364 these two assertions were
@@ -78,14 +103,13 @@ test_that("Addition tree obeys constraints", {
   # next test -- not this seed -- is now the guard.
   set.seed(1)
   # as phyDat
-  expect_true(expected_split %in%
-              as.Splits(AdditionTree(dataset,
-                constraint = TreeTools::MatrixToPhyDat(constraint)),
-                letters[1:6]))
+  expect_true(displays_split(
+    AdditionTree(dataset, constraint = TreeTools::MatrixToPhyDat(constraint)),
+    expected_split, letters[1:6]))
   # as matrix
-  expect_true(expected_split %in%
-              as.Splits(AdditionTree(dataset, constraint = cbind(constraint)),
-                letters[1:6]))
+  expect_true(displays_split(
+    AdditionTree(dataset, constraint = cbind(constraint)),
+    expected_split, letters[1:6]))
 
   # Trivial constraints should not affect tree
   set.seed(0)
@@ -124,7 +148,7 @@ test_that("Addition tree obeys constraints for every addition order", {
       0, 1, 1, 0, 0, 1), ncol = 2,
     dimnames = list(letters[1:6], NULL)))
   taxa <- letters[1:6]
-  efSplit <- as.Splits(c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE), taxa)
+  efSplit <- c(FALSE, FALSE, FALSE, FALSE, TRUE, TRUE)
   efConstraint <- TreeTools::MatrixToPhyDat(
     c(a = 0, b = 0, c = 0, d = 0, e = 1, f = 1))
 
@@ -132,8 +156,8 @@ test_that("Addition tree obeys constraints for every addition order", {
   # e and f in the base tree astride its root.
   broken <- which(vapply(seq_len(400), function(seed) {
     set.seed(seed)
-    !(efSplit %in% as.Splits(AdditionTree(dataset, constraint = efConstraint),
-                             taxa))
+    !displays_split(AdditionTree(dataset, constraint = efConstraint), efSplit,
+                    taxa)
   }, logical(1)))
   expect_equal(broken, integer(0))
 
@@ -144,7 +168,7 @@ test_that("Addition tree obeys constraints for every addition order", {
   # group can only be enforced through its complement.
   defConstraint <- TreeTools::MatrixToPhyDat(
     c(a = 0, b = 0, c = 0, d = 1, e = 1, f = 1))
-  defSplit <- as.Splits(c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE), taxa)
+  defSplit <- c(FALSE, FALSE, FALSE, TRUE, TRUE, TRUE)
   triples <- expand.grid(taxa, taxa, taxa, stringsAsFactors = FALSE)
   triples <- triples[apply(triples, 1, anyDuplicated) == 0L, ]
   BadOrders <- function(cons, split) {
@@ -152,7 +176,7 @@ test_that("Addition tree obeys constraints for every addition order", {
       triple <- unlist(triples[i, ], use.names = FALSE)
       order <- c(triple, setdiff(taxa, triple))
       tree <- AdditionTree(dataset, constraint = cons, sequence = order)
-      if (split %in% as.Splits(tree, taxa)) "" else paste(order, collapse = "")
+      if (displays_split(tree, split, taxa)) "" else paste(order, collapse = "")
     }, character(1))
     bad[nzchar(bad)]
   }

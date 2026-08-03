@@ -1,5 +1,25 @@
 # Tier 2: skipped on CRAN; see tests/testing-strategy.md
 skip_on_cran()
+
+# Does `tree` display the bipartition given by the logical vector `target`?
+#
+# Do NOT use `%in%` on Splits objects here.  TreeTools' `%in%` is an S4 method
+# (`.__T__%in%:base`) shadowing a base function that is not generic, so it
+# dispatches only when TreeTools sits on the search path.  Test code runs in an
+# environment whose parent is the TreeSearch *namespace*, which consults its
+# imports and then base — never the search path — so the method is invisible
+# even after `library("TreeTools")` and the comparison silently falls through to
+# `base::%in%`, which answers FALSE for a tree that does display the split.
+# The sibling constraint test files (`test-ts-constraint-multi.R`,
+# `test-ts-impose-constraint.R`) all spell the comparison out for this reason.
+displays_split <- function(tree, target) {
+  splits <- as.logical(TreeTools::as.Splits(tree, tipLabels = tree[["tip.label"]]))
+  if (!is.matrix(splits)) splits <- matrix(splits, nrow = 1)
+  any(apply(splits, 1, function(row) {
+    all(row == target) || all(row == !target)
+  }))
+}
+
 # Helper to prepare phyDat for C++ engine
 prep_pd <- function(pd) {
   list(
@@ -395,11 +415,7 @@ test_that("constrained sequential Wagner boundary edge: outside tip adjacent to 
   tree <- structure(list(edge = result$edge, Nnode = n_tip - 1L,
                          tip.label = paste0("t", seq_len(n_tip))),
                     class = "phylo")
-  expect_true(
-    TreeTools::as.Splits(c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE),
-                         tipLabels = tree$tip.label) %in%
-      TreeTools::as.Splits(tree)
-  )
+  expect_true(displays_split(tree, c(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE)))
 
   # All tips present exactly once
   child_tips <- sort(result$edge[result$edge[, 2] <= n_tip, 2L])

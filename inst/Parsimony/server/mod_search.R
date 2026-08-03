@@ -3,7 +3,7 @@
 # Owns: searchTask (ExtendedTask), StartSearch(), result observer, search
 # config modal, scoring, and weighting logic.
 #
-# Owns inputs: go, modalGo, searchConfig, strategy, maxReplicates,
+# Owns inputs: go, modalGo, searchConfig, effort, maxReplicates,
 #   targetHits, timeout, epsilon, searchWithout, implied.weights, concavity,
 #   nThreads, inapplicable, hsjAlpha.
 #
@@ -602,7 +602,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
     })
 
     searchTask <- ExtendedTask$new(
-      function(dataset, tree, concavity, extendedIw, strategy,
+      function(dataset, tree, concavity, extendedIw, effort,
                maxReplicates, targetHits, maxSeconds, poolSuboptimal,
                nThreads, cancelPath, progressPath,
                hierarchy, inapplicable, hsjAlpha) {
@@ -622,14 +622,14 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             tree = tree,
             concavity = concavity,
             extended_iw = extendedIw,
-            strategy = strategy,
+            effort = effort,
             maxReplicates = maxReplicates,
             targetHits = targetHits,
             maxSeconds = maxSeconds,
             nThreads = nThreads,
             verbosity = 0L
           )
-          # Only pass control when non-default, so strategy presets apply
+          # Only pass control when non-default, so the effort rung applies
           if (poolSuboptimal > 0) {
             args$control <- TreeSearch::SearchControl(
               poolSuboptimal = poolSuboptimal
@@ -676,7 +676,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       }
 
       # Read search parameters early (before any slow prep)
-      searchStrategy  <- if (length(input$strategy)) input$strategy else "auto"
+      searchEffort    <- if (length(input$effort)) as.integer(input$effort) else 0L
       searchMaxRep    <- if (length(input$maxReplicates)) {
         as.integer(input$maxReplicates)
       } else {
@@ -819,7 +819,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         paste0("  concavity = ", Enquote(concavity()), ","),
         if (!searchExtendedIw && is.finite(searchConcavity))
           "  extended_iw = FALSE,",
-        paste0("  strategy = \"", searchStrategy, "\","),
+        paste0("  effort = ", searchEffort, ","),
         paste0("  maxReplicates = ", searchMaxRep, ","),
         paste0("  targetHits = ", searchTargetHits, ","),
         if (searchMaxSeconds > 0)
@@ -838,7 +838,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
 
       searchTask$invoke(
         searchDataset, startTree, searchConcavity, searchExtendedIw,
-        searchStrategy, searchMaxRep, searchTargetHits,
+        searchEffort, searchMaxRep, searchTargetHits,
         searchMaxSeconds, searchPoolSub, searchNThreads,
         cancelPath, progressPath,
         searchHierarchy, searchInapplicable, searchHsjAlpha
@@ -920,7 +920,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
                         selected = input$implied.weights)
       updateSliderInput(session, "concavity", value = input$concavity)
       updateNumericInput(session, "epsilon", value = input$epsilon)
-      updateSelectInput(session, "strategy", selected = input$strategy)
+      updateSliderInput(session, "effort", value = input$effort)
       updateSliderInput(session, "maxReplicates", value = input$maxReplicates)
       updateSliderInput(session, "targetHits", value = input$targetHits)
       updateSliderInput(session, "timeout", value = input$timeout)
@@ -938,7 +938,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
       # observeEvent(input$implied.weights), which reset the run counters.
       cur_weights   <- if (length(input$implied.weights)) input$implied.weights else "xpiwe"
       cur_concavity <- if (length(input$concavity))       input$concavity       else 1L
-      cur_strategy  <- if (length(input$strategy))        input$strategy        else "auto"
+      cur_effort    <- if (length(input$effort))          input$effort          else 0L
       cur_maxRep    <- if (length(input$maxReplicates))   input$maxReplicates   else 96L
       cur_hits      <- if (length(input$targetHits))      input$targetHits      else 10L
       cur_timeout   <- if (length(input$timeout))         input$timeout         else 5
@@ -979,10 +979,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
           numericInput(ns("epsilon"), "Keep if suboptimal by \u2264", min = 0,
                       value = cur_epsilon)
         ), column(6,
-          selectInput(ns("strategy"), "Search strategy",
-                     list("Auto" = "auto", "Sprint" = "sprint",
-                          "Default" = "default", "Thorough" = "thorough"),
-                     cur_strategy),
+          # Relative, not absolute: 0 is "however hard this dataset warrants",
+          # so the control means the same thing on a 20-taxon and a 200-taxon
+          # matrix and the user never has to know which rung it started on.
+          sliderInput(ns("effort"), "Search effort (0 = auto)",
+                      min = -3L, max = 4L, value = cur_effort, step = 1L),
           sliderInput(ns("maxReplicates"), "Maximum independent runs",
                       min = 48L, max = 960L, value = cur_maxRep, step = 48L),
           sliderInput(ns("targetHits"),

@@ -170,64 +170,9 @@ test_that("Warm-started replicates report no strategy at verbosity 2", {
   expect_true(grepl(armPattern, coldOut))
 })
 
-# ===== Strategy-name partial matching =====
-
-test_that("Abbreviated strategy names resolve to their canonical preset", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  ds <- inapplicable.phyData[["Vinther2008"]]
-
-  ReportedStrategy <- function(strategy) {
-    msg <- capture.output(
-      invisible(MaximizeParsimony(ds, strategy = strategy, maxReplicates = 1L,
-                                  verbosity = 1L)),
-      type = "message"
-    )
-    line <- grep("Strategy", msg, value = TRUE)[[1]]
-    sub(".*Strategy: *", "", line)
-  }
-
-  # Unique prefixes of every preset resolve; first letters are unambiguous
-  # because sprint/default/thorough/intensive/large/auto/none all differ.
-  expect_equal(ReportedStrategy("thoro"), "thorough")
-  expect_equal(ReportedStrategy("thor"), "thorough")
-  expect_equal(ReportedStrategy("t"), "thorough")
-  expect_equal(ReportedStrategy("spr"), "sprint")
-  expect_equal(ReportedStrategy("def"), "default")
-  expect_equal(ReportedStrategy("int"), "intensive")
-  expect_equal(ReportedStrategy("larg"), "large")
-
-  # Exact names keep working
-  expect_equal(ReportedStrategy("thorough"), "thorough")
-  expect_equal(ReportedStrategy("sprint"), "sprint")
-})
-
-test_that("An unmatched strategy still warns rather than resolving silently", {
-  data("inapplicable.phyData", package = "TreeSearch")
-  ds <- inapplicable.phyData[["Vinther2008"]]
-  warns <- testthat::capture_warnings(
-    invisible(MaximizeParsimony(ds, strategy = "nonsense", maxReplicates = 1L,
-                                verbosity = 0L))
-  )
-  expect_match(paste(warns, collapse = " "), "Unknown strategy 'nonsense'")
-})
-
-test_that("Abbreviation reaches the implied-weights ratchet package, not just the preset", {
-  # Regression: resolving the name AFTER .IwRatchetDepth()/.IwStopPackage() (which
-  # test `strategy %in% c("thorough", "large")` by exact string) would apply
-  # thorough's preset while silently skipping its IW ratchet depth -- a worse
-  # failure than not matching, because it looks like it worked.
-  Depth <- function(strategy) {
-    choices <- c(names(TreeSearch:::.StrategyPresets()), "auto", "none")
-    resolved <- if (strategy %in% choices) {
-      strategy
-    } else {
-      matched <- pmatch(strategy, choices)
-      if (is.na(matched)) strategy else choices[[matched]]
-    }
-    TreeSearch:::.IwRatchetDepth(resolved, concavity = 10, targetHits = 91,
-                                 defaultHits = 36L, userSet = character(0))
-  }
-  expect_equal(Depth("thoro"), Depth("thorough"))
-  expect_equal(Depth("larg"), Depth("large"))
-  expect_false(is.null(Depth("thoro")))
-})
+# NB the preset-name tests that used to live here (abbreviation resolution, and
+# the "Unknown strategy" warning) are gone with the `strategy` argument itself:
+# `effort` is a numeric offset, so there are no names to abbreviate and nothing
+# to mistype.  Its validation lives in test-MaximizeParsimony-features.R.
+# Everything above concerns the adaptive STARTING-TREE bandit, a different
+# concept that kept its name.

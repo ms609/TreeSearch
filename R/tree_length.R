@@ -188,7 +188,20 @@ TreeLength.phylo <- function(tree, dataset, concavity = Inf,
                  .BuildTipLabels(dataset),
                  .HSJAbsentState(dataset))
   } else if (useXform) {
-    tree <- RenumberTips(Renumber(tree), names(dataset))
+    # The x-transformation's step matrix is asymmetric -- a gain costs `nSec + 1`
+    # against 1 for a loss -- so the Sankoff term below is rooting-dependent,
+    # while the rest of the pipeline treats topologies as unrooted and moves the
+    # root freely (Wagner addition, fusing, sector search and `ts_collapse_pool`
+    # all reroot).  Score at a canonical rooting: the dataset's first taxon, which
+    # is the tip-0 rooting `ts_collapse_pool()` already imposes on the trees
+    # `MaximizeParsimony()` returns.  One unrooted topology then has one length
+    # whatever rooting the user's `phylo` happens to carry, and this agrees with
+    # the score `MaximizeParsimony()` reports (T-374 / T-385).  Root by NAME and
+    # re-align afterwards, so tip i still indexes `tip_data` row i.
+    # Decision and the measured `nSec`-per-block bound:
+    # dev/plans/2026-07-29-t374b-xform-rooting-policy.md.
+    tree <- RenumberTips(Renumber(RootTree(tree, names(dataset)[[1]])),
+                         names(dataset))
     at <- attributes(dataset)
     contrast <- at$contrast
     tip_data <- matrix(unlist(dataset, use.names = FALSE),
@@ -296,6 +309,18 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   needRoot <- !vapply(tree, TreeIsRooted, logical(1L))
   if (any(needRoot)) warning("Unrooted tree rooted on tip 1.")
   tree[] <- lapply(tree, function(tr) if (TreeIsRooted(tr)) tr else RootTree(tr, 1))
+  if (useXform) {
+    # XFORM's score is rooting-dependent (asymmetric step matrix), so an
+    # *already*-rooted tree must be canonicalised too, not just an unrooted one:
+    # otherwise the same topology gets different lengths from different rootings
+    # and no length agrees with what `MaximizeParsimony()` reports.  See the
+    # single-tree method above for the full rationale.  No warning here -- unlike
+    # the unrooted case, nothing is being assumed about the user's intent; the
+    # rooting simply is not part of this criterion's input.
+    rootTaxon <- names(dataset)[[1]]
+    tree[] <- lapply(tree, function(tr) RootTree(tr, rootTaxon))
+    tree[] <- RenumberTips(tree, dataset)
+  }
 
   nEdge <- unique(vapply(tree, function(tr) dim(tr[["edge"]])[1], integer(1)))
   if (length(nEdge) > 1L) {

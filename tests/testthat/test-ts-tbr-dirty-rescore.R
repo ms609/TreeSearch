@@ -150,7 +150,7 @@ test_that("XPIWE x4 + dirty-region opts are byte-identical to opts-off (port gua
       verbosity = 0L, control = ctrl))
     min(attr(r, "score"))
   }
-  on.exit({ Sys.unsetenv("TS_IW_NOX4"); Sys.unsetenv("TS_IW_NODIRTY") }, add = TRUE)
+  withr::defer({ Sys.unsetenv("TS_IW_NOX4"); Sys.unsetenv("TS_IW_NODIRTY") })
   score_on  <- run(TRUE)
   score_off <- run(FALSE)
   expect_equal(score_on, score_off, tolerance = 0)
@@ -178,7 +178,7 @@ test_that("NA-IW x4 reroot batch is byte-identical to scalar (NA port guard)", {
       verbosity = 0L, control = ctrl))
     min(attr(r, "score"))
   }
-  on.exit(Sys.unsetenv("TS_IW_NOX4"), add = TRUE)
+  withr::defer(Sys.unsetenv("TS_IW_NOX4"))
   score_x4  <- run(TRUE)
   score_scalar <- run(FALSE)
   expect_equal(score_x4, score_scalar, tolerance = 0)

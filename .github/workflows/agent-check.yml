@@ -34,7 +34,10 @@ jobs:
       NOT_CRAN: "true"
       TREESEARCH_EXTENDED_TESTS: ${{ inputs.extended }}
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/latest"
+      # PINNED snapshot, not `latest` -- see the note on R-CMD-check.yml's
+      # sense-check leg.  Agents dispatch this workflow constantly, so a stable
+      # dependency cache matters more here than fresh dependencies.
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-30"
 
     steps:
       - name: Checkout git repo
@@ -53,6 +56,21 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # shinytest2=?ignore: its chromote/chromium system requirement makes
+          # pak add the ppa:xtradeb/apps PPA and install Chromium on every run
+          # (~70 s, not cached).  No Linux leg needs it -- see R-CMD-check.yml.
+          # MaxMin isn't on CRAN, so without this pak fetches and compiles it
+          # from source on every cache miss (~67 s). This URL is a prebuilt
+          # binary for this exact platform/R combo (aarch64, release),
+          # published by ms609/packages' build-maxmin workflow -- see the
+          # note on R-CMD-check.yml's sense-check leg.
+          extra-packages: |
+            shinytest2=?ignore
+            url::https://ms609.github.io/packages/bin/linux/aarch64-release/MaxMin_latest.tar.gz
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: R CMD check
         uses: r-lib/actions/check-r-package@v2
@@ -97,6 +115,10 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # cache-version bumped to 2: the v1 caches were built while a
+          # project-level .Rprofile shadowed ~/.Rprofile, so every package
+          # in them was compiled from source.  Retire them once.
+          cache-version: 2
 
       - name: R CMD check (with vignettes)
         uses: r-lib/actions/check-r-package@v2

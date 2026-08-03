@@ -286,61 +286,134 @@ Zanol2014's differs between them — 1311 at `tabu = 0`, 1312 at `tabu = 100`. I
 0.2 in the two blocks is therefore not the same achievement, and the blocks'
 attainment numbers for that matrix are not directly comparable to each other.
 
+## PANEL 2 RESULT — the shipped stopping rules (2026-08-01, array 18126933)
+
+150/150 cells (30 matrices x 5 seeds x 6 arms), all at pin `644b5b10`. Every
+stopping rule left exactly as shipped: `maxSeconds = 0`, `maxReplicates = 96`,
+`targetHits = max(10, ntax/5)`. Raw cells in
+`dev/profiling/na-certify-stop-hamilton.csv`.
+
+| arm | attain Δ | better / worse | p | wall (median ratio) |
+|---|---|---|---|---|
+| `B_gate` | −0.047 | 0 / 4 | 0.125 | 0.060 (**17x faster**) |
+| `C_final` | −0.013 | 1 / 2 | **1.000** | 0.322 (3.1x) |
+| `B_gate_reps` | −0.033 | 1 / 3 | 0.625 | 0.074 |
+| **`A_hits3`** | **0.000** | **0 / 0** | — | **2.582 (2.6x SLOWER)** |
+| `B_gate_hits3` | −0.040 | 0 / 4 | 0.125 | 0.128 |
+
+### `targetHits` escalation: the arm could not act where it mattered
+
+**RETRACTED, 2026-08-01: the first reading of this arm was "0 of 30 matrices
+improved at 2.58x the wall — targetHits is pure cost".** That is true and
+useless. 24 of the 30 matrices are saturated at 1.0 in every arm, so "no
+improvement" there is the expected result, not a finding; and floor attainment
+is binary, so it cannot see an arm getting *closer* without arriving.
+
+Restricting to the 6 matrices with any headroom, and counting what the arm
+actually bought:
+
+| | extra replicates bought by `targetHits` x3 |
+|---|---|
+| all 30 matrices | 4409 (4.2 CPU-hours) |
+| the 6 with headroom | **243** |
+| Zanol2014 / Zhu2013 / Geisler2001 | **0** |
+
+On the three hardest matrices the 96-replicate cap bound **both** arms on every
+seed (21 of 30 headroom cells), so `A_hits3` performed byte-identical work to
+`A_default` — identical scores, identical replicate counts. 94% of the extra
+work went to matrices that were already solved.
+
+So the correct statement is not "raising `targetHits` does not help", it is
+**`targetHits` is structurally unable to act once `maxReplicates` binds** — and
+on hard data it always binds first. The 2.58x wall is the cost of re-confirming
+answers the easy matrices already had. Only 9 cells anywhere got extra
+replicates at all (0 of them improved), which is far too few to say anything
+about the hard tail.
+
+This vindicates the ordering in the `effort` ladder (budget leads, hit target
+follows) for a sharper reason than the one recorded there: not that `targetHits`
+buys less reach, but that it buys *nothing* once the cap is reached. It does not
+test whether more effort recovers a better score on tough matrices — that
+question needs the **cap** raised, which no arm in this panel does with
+certification left on. See `na-certify-hardtail.md`.
+
+### Gating still costs reach here, so the default still does not flip
+
+`B_gate` is 0 better / 4 worse — not significant at n = 30 (p = 0.125) but
+uniformly negative, and the losses are concentrated on the hard tail:
+Zanol2014 −0.6, Wortley2006 −0.4, Aria2015 −0.2, Zhu2013 −0.2. Panel 1's verdict
+survives contact with the real stopping rules.
+
+### `C_final` is the arm worth pursuing
+
+Statistically indistinguishable from baseline (−0.013, 1 better / 2 worse,
+p = 1.000) at **a third of the wall**, and it *gains* on Aguado2009 (+0.4). Its
+certifications are also the productive ones: 11 000 sweeps of which **4 349
+(40%) found a real improver**, against `A_default`'s 9 555 of 44 889 (21%) —
+certifying the tree a replicate actually reports is four times cheaper and twice
+as likely to pay.
+
+Wall on the hard matrices, median seconds:
+
+| matrix | `A_default` | `C_final` | `B_gate` |
+|---|---|---|---|
+| Zanol2014 | 1947 | 628 | 86 |
+| Dikow2009 | 1437 | 365 | 69 |
+| Giles2015 | 1294 | 351 | 46 |
+| Zhu2013 | 1256 | 330 | 37 |
+| Aguado2009 | 1008 | 245 | 39 |
+
+**But it regresses on Zanol2014 (0.6 → 0.0)**, the hardest matrix in the corpus
+and the same one panel 1 flagged. By the stated rule that is a regression, so
+`C_final` is a candidate for a future default and not a change to make now. What
+would settle it is the hard tail specifically — Zanol2014, Zhu2013, Wortley2006,
+Aguado2009 at more seeds — rather than another corpus-wide sweep, since 24 of the
+30 matrices are saturated at 1.0 in every arm and can only dilute the signal.
+
+## SETTLED BY PANEL 3: do not gate
+
+`dev/profiling/na-hardtail-effort.md` (array 18143234) closes this on the hard
+tail. On Zanol2014, `certify` at `effort = 0` reaches the best known score on 5
+of 10 seeds in 1795 s; `gate` at `effort = +2` reaches it on 3 of 10 in 8235 s,
+and gating never exceeds 0.3 at any effort. Certification at the LOWEST effort
+beats gating at the HIGHEST, at a fifth of the wall.
+
+Panel 1's matched-wall win for gating (+0.167, p = 0.012) was real but does not
+survive on the hard tail: the wall gating frees cannot be spent to buy back what
+certification finds, even at ten times the replicates. The default stays as it
+is, and `TS_NA_NOCERTIFY` is a diagnostic rather than a recommendation.
+
 ## What to switch on, in practical terms
 
-**Presets today: nothing changes.** Certification stays on in `default` and
-`thorough`. Neither panel-1 budget is the shipped one, and a preset default may
-not be flipped on a regime that was not measured.
+**SUPERSEDED BY PANEL 3.** This section previously recommended
+`TS_NA_NOCERTIFY = "1"` plus a raised `maxReplicates` for wall-bounded runs, on
+the strength of panel 1's matched-wall result. `dev/profiling/na-hardtail-effort.md`
+refutes that: on the hard tail, certification at `effort = 0` beats gating at
+`effort = +2` at a fifth of the wall, and gating never exceeds 0.3 attainment on
+Zanol2014 at any effort. **Do not recommend gating to anyone.**
 
-**`thorough`: keep certification on, permanently.** Not "pending panel 2" — its
-objective is reaching the global optimum, not wall (`auto-vs-thorough-objective`),
-and Zanol2014, the hard tail, is precisely where certification still pays at
-matched wall.
+What stands:
 
-**`default` / `auto`: the candidate is a PAIR, not a flag.** Gating alone is the
-arm that *loses*. The shipped `maxReplicates = 96` is what stops the freed wall
-being spendable, so any flip must be `TS_NA_NOCERTIFY` **plus** a raised replicate
-cap. Panel 2 (`bench_na_certify_stop_cell.R`, array 18096945) decides it under the
-real stopping rules.
-
-For a user on inapplicable data **today**:
-
-```r
-# Wall-limited, want the best tree within a fixed time: the +0.167 arm.
-Sys.setenv(TS_NA_NOCERTIFY = "1")
-MaximizeParsimony(dat, maxSeconds = 600, maxReplicates = 500)
-```
-
-Want the best tree regardless of time: change nothing. **Do not set
-`TS_NA_NOCERTIFY=1` on its own** — without the raised cap that is the arm that
-regressed.
+* **Presets: nothing changes.** Certification stays on at every rung.
+* **Turn `effort` up, not certification off.** On the one matrix in the bundled
+  corpus that is still hard, `effort = +1` takes attainment 0.5 → 0.9 for ~4.9x
+  the wall. `effort = +2` adds nothing.
+* `TS_NA_NOCERTIFY` and `TS_NA_FINAL_CERTIFY` remain **diagnostics**, for
+  measuring this path, not knobs to advise users to set.
 
 ## Does anything need adjusting when `targetHits` rises?
 
-**No compensating adjustment, and raising it helps rather than hurts** — but it is
-not the knob that pays for gating.
+**No — and it is not an effort knob at all.** `targetHits` cannot act once
+`maxReplicates` binds, and on hard data it always binds first: panel 2's x3 arm
+bought 4409 extra replicates corpus-wide but **zero** on the three hardest
+matrices, where the 96-cap bound both arms on every seed. Raising it lengthens
+runs on datasets that are already solved.
 
-`targetHits` defaults to `max(10, ntax/5)` and stops the run once the best score
-has been hit that many times. Raising it means more replicates, which moves the
-run toward the many-replicate regime where the gate won. It is already the shipped
-idiom for "this matrix is hard": `.IwRatchetDepth()` reads `targetHits /
-defaultHits` as a user escalation signal and deepens the IW ratchet by it.
-
-Two cautions:
-
-* **`targetHits` counts hits against the CURRENT best, not the true optimum.** So
-  it cannot rescue a uniformly weaker search that plateaus one step high: raising
-  it just buys more confirmations of the same wrong score. What protects against
-  that is more *independent* replicates. **`maxReplicates` is the knob that pays
-  for gating; `targetHits` is not.**
-* **Raising `targetHits` without raising `maxReplicates` makes the run bump the
-  96 cap instead of reaching its hit target** — and the more expensive the
-  replicate, the sooner that happens. This is the concrete reason the two knobs
-  are coupled on NA data: certification is what makes the replicate budget
-  unusable.
-
-Panel 2's `A_hits3` / `B_gate_hits3` arms measure exactly this at 3x the default
-hit target.
+It is still the shipped idiom for "this matrix is hard" (`.IwRatchetDepth()`
+reads `targetHits / defaultHits` and deepens the implied-weights ratchet by it),
+and the `effort` ladder raises it in step with the budget from rung 5 so that a
+notch is not inert on datasets that stop early. But the knob that buys reach is
+the **replicate budget**, and the knob a user should turn is **`effort`**.
 
 ### Harvesting the panel
 

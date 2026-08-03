@@ -68,7 +68,12 @@ struct HierarchyBlock {
   int primary_char;               // original character index (0-based)
   std::vector<int> secondary_chars; // original character indices (0-based)
   int n_secondaries;              // = secondary_chars.size()
-  int absent_state;               // state index meaning "absent" in primary
+  // State (levels) index meaning "absent" in primary -- NOT a token/allLevels
+  // index. tip_labels (see DataSet::tip_labels) holds token indices, so a
+  // tip's label must be translated via DataSet::token_states before it can be
+  // compared to this field or to DataSet::inapp_state (T-375/T-376: the two
+  // index spaces were previously compared directly via `==`).
+  int absent_state = -1;
 };
 
 struct CharBlock {
@@ -166,10 +171,26 @@ struct DataSet {
   // Populated by build_dataset(); used by HSJ scoring.
   int inapp_state = -1;
 
+  // Per-token (contrast-row / allLevels) state-set bitmask: bit s of
+  // token_states[t] is set iff the phyDat contrast matrix has contrast[t, s]
+  // > 0.5 (token t is compatible with state s). Populated by build_dataset()
+  // directly from the ORIGINAL, pre-simplification contrast matrix (T-375/
+  // T-376) -- do not apply state_remap to it. This is the translation HSJ
+  // scoring needs: tip_labels (below) holds TOKEN indices, but absent_state/
+  // inapp_state are STATE indices, so a tip's label must be looked up here
+  // before it can be compared to either. n_levels is the number of columns
+  // (states) these bitmasks range over -- deliberately not named n_states,
+  // which on CharBlock means something different (per-block, post-
+  // simplification).
+  std::vector<uint32_t> token_states;
+  int n_levels = 0;
+
   // HSJ scoring data (populated when scoring_mode == HSJ).
   // These are set by the Rcpp bridge after build_dataset().
   std::vector<HierarchyBlock> hierarchy_blocks;
-  // tip_labels: per-tip per-original-char state labels (0-based).
+  // tip_labels: per-tip per-original-char state labels (0-based TOKEN index,
+  //   i.e. an index into token_states above -- NOT directly comparable to
+  //   absent_state/inapp_state; see token_states' comment).
   //   Layout: tip_labels[tip * n_orig_chars + char]
   std::vector<int> tip_labels;
   int n_orig_chars = 0;

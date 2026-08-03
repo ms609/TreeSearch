@@ -68,7 +68,7 @@ searchNa <- function(dat, noCertify, seed = 1L, ...) {
     withr::local_envvar(c(TS_NA_NOCERTIFY = NA))
   }
   set.seed(seed)
-  MaximizeParsimony(dat, strategy = "default", verbosity = 0L,
+  MaximizeParsimony(dat, .rung = "default", verbosity = 0L,
                     nThreads = 1L, maxReplicates = 2L, tabuSize = 0L, ...)
 }
 

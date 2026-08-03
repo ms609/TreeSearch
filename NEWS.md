@@ -1,5 +1,136 @@
 # To integrate into 2.0.0 notes
 
+- `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
+  reported score is reproducible.  The x-transformation's step matrix is
+  asymmetric -- a gain costs one more than the number of secondary characters it
+  brings into existence, against 1 for a loss -- which makes a tree's length
+  depend on where it is rooted, unlike parsimony under the symmetric criteria.
+  `MaximizeParsimony()` recorded its best score mid-search at whatever rooting
+  the replicate held, while returning trees re-rooted on the first taxon, so
+  `attr(result, "score")` did not match `TreeLength()` of the very tree returned
+  (measured: 178 reported against 183 returned on a 36-taxon matrix), and
+  re-rooting a returned tree changed its length again.  Both boundaries now
+  canonicalise on the first taxon of `dataset`, so one topology has one length
+  and the two agree by construction.
+
+  **X-transformation scores may therefore differ slightly from previous
+  versions**, and will not decrease: the reported value is the length of the tree
+  you are handed rather than of a rooting discarded during search.  It is an
+  upper bound on the rooting-free minimum, exceeding it by at most the total
+  number of secondary characters across hierarchy blocks (attained exactly by
+  87--98% of rootings in simulation).  This changes reporting only -- what the
+  search optimises is untouched.
+
+  `MaximizeParsimony()` now also warns when the trees it returns do not share a
+  length at that common rooting, which can happen because pool membership is
+  still decided on scores taken at differing rootings.  Only the x-transformation
+  is affected; HSJ reporting is deliberately unchanged, since there
+  rooting-invariance is a property the method requires rather than a convention
+  to pick -- and it is now delivered, as the next entry describes.
+
+- `inapplicable = "hsj"` scores no longer depend on where the tree is rooted.
+  Hopkins & St John (2021) define the score as a minimum over internal-node
+  labellings of a sum of *symmetric* dissimilarities across the branches of an
+  *unrooted* tree, so rooting-invariance is required by the method rather than
+  merely desirable.  Two defects broke it, both in how the secondary characters
+  were labelled; the underlying present/absent dynamic programme was correct
+  throughout.
+
+  First, the inapplicable token was treated as an ordinary state of a secondary
+  character.  Where a controlling primary codes a structure absent, its
+  secondaries do not exist, so `"-"` there is not a state the character takes;
+  admitting it let a node in the middle of a region where the structure *is*
+  present be labelled "inapplicable", mismatching every secondary at once and
+  charging that branch the full weight of the scaling parameter.  Secondaries
+  are now unconstrained at tips whose primary may code the structure absent.
+  Second, the remaining ambiguity was resolved by a pass whose direction was a
+  property of the input rooting; that pass is now rooted canonically on the
+  first taxon, inside the scoring kernel, so the labelling depends only on the
+  unrooted topology.
+
+  **HSJ scores on data with a mix of present and absent primaries may therefore
+  differ from previous versions.**  Most do not: across 180 simulated
+  tree--matrix pairs, 152 were unchanged, 27 fell (by up to 1) and one rose (by
+  0.25).  Falls are the removal of spurious inapplicable mismatches; a rise is
+  possible because a score is now taken at a fixed canonical rooting rather
+  than at whichever rooting the tree happened to arrive in, and that rooting
+  was sometimes the flattering one.  Scores are unchanged wherever every taxon
+  shares the controlling primary's presence, and Figure 1 of the paper still
+  scores 7 and 5.
+
+  Unlike the x-transformation change above, this one alters what the search
+  optimises: the criterion is now a function of the unrooted tree, so
+  `MaximizeParsimony()`'s reported score matches `TreeLength()` of the trees it
+  returns without any re-scoring, and every tree in a returned set shares that
+  length.  A secondary character is treated as unconstrained only at taxa whose
+  controlling primary cannot code the structure present; where the primary is
+  ambiguous but a secondary was observed, that observation still counts.
+
+- `inapplicable = "hsj"` scoring fixed an index-space confusion that could
+  under- or over-count the controlling primary's gains and losses, and could
+  score an ambiguous (`"?"`) secondary character as though it were a specific,
+  conflicting state.  Internally, a tip's data value was read as an index into
+  the dataset's character *states*, but it is actually an index into the
+  dataset's observed *tokens* (a distinct, dataset-specific ordering that only
+  sometimes coincides with state order) -- so, depending on a dataset's
+  internal token ordering, an absent or inapplicable primary could be scored
+  as present, a present primary as absent, and a genuinely ambiguous secondary
+  character as a forced, arbitrary state.  This was independent of tree
+  topology, so no search or comparison using `inapplicable = "hsj"` was
+  reliable: the same dataset and tree could report different scores merely by
+  virtue of the order characters happened to appear in.
+
+  **HSJ scores may therefore differ from previous versions**, in either
+  direction: scores typically rise where a genuinely present or absent
+  controlling primary is now always counted, but can also fall where an
+  ambiguous secondary is no longer forced into a spurious mismatch.  This is
+  a correctness fix to how a tip's data is looked up; it does not touch the
+  known rooting-sensitivity of HSJ scoring, which remains a separate, open
+  issue.
+
+- `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
+  was never released).  `effort` is a **relative** offset, not an absolute
+  level: `0` (the default) accepts the amount of search the dataset's size and
+  character count warrant, `1` asks for one notch more, `-1` one less.  So a
+  single call means "try harder than usual" whether the matrix has 20 taxa or
+  200, and a user never has to know which preset it would otherwise have got.
+  `effort = 0` reproduces the previous `strategy = "auto"` behaviour exactly on
+  every size band.
+
+  The rungs are the former presets — `sprint`, `default`, `thorough`, and
+  `large` (which was only ever `thorough` with `maxReplicates = 500`) — so the
+  ladder generalises an axis the package already had.  Beyond `large`, each
+  further notch doubles BOTH the replicate budget (1000, 2000, 4000 ...) and
+  the hit target, so one notch always means roughly twice the work whichever
+  bound a dataset is under.  There is no policy ceiling: extra replicates cost
+  wall but cannot cost reach, so the ladder stops only at rung 26, where the
+  budget outgrows R's integer type.
+
+  The rung-4 budget of 500 is measured (a 34-matrix 120--180-tip sweep found
+  reach climbing from 0.68 at 96 replicates to 0.79 at 250, with the hard subset
+  still climbing at 500 and no knee).  The doubling above it is an operating
+  point, not a fitted constant -- nothing measures where the reach curve
+  flattens, and a doubling grid over rungs 4--8 on the hard tail is what would
+  replace the guess with a measurement.
+
+  The replicate budget climbs first, because `targetHits` cannot act once that
+  budget is reached -- and on hard datasets it always is.  Measured on 30
+  inapplicable-bearing matrices: tripling the hit target bought 4409 extra
+  replicates in total, but only 243 of them on the six matrices with anything
+  left to find, and NONE on the three hardest, where the replicate cap bound
+  every run of both arms.  A ladder raising the hit target first would spend its
+  effort almost entirely on datasets that were already solved.
+
+  `targetHits` is raised in step regardless, for reasons that are not reach: it
+  governs when easy runs stop, so without it a notch would be inert on every
+  dataset that finishes early, and under implied weights it additionally deepens
+  the ratchet.  Higher rungs therefore buy confidence and distinct trees on easy
+  data, and reach on hard data -- not reach uniformly.
+
+  Anything set explicitly still wins: a `maxReplicates` or `targetHits` you
+  supply is never rescaled by `effort`, and explicit `control` fields continue
+  to override the rung's preset.
+
 - Fixed: `AdditionTree(constraint = )` silently returned a constraint-violating
   tree for around one addition order in eleven.  Taxa are added to a tree seeded
   from the first three of them, which is built before the constraint is

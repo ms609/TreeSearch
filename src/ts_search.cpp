@@ -199,7 +199,9 @@ static void collect_destination_edges(
 }
 
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
-                        std::function<bool()> check_timeout) {
+                        std::function<bool()> check_timeout,
+                        ConstraintData* cd) {
+  const bool constrained = cd && cd->active;
   double best_score = full_rescore(tree, ds);
   // No informative characters: all trees have the same score. Mode-aware
   // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
@@ -433,15 +435,31 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
         tree.build_postorder();
         double actual = full_rescore(tree, ds);
 
-        if (actual < best_score - eps) {
-          best_score = actual;
-          ++n_moves;
-          hits = 1;
-          accepted = true;
-          keep_going = true;
-        } else if (std::fabs(actual - best_score) <= eps
-                   && hits <= maxHits) {
-          ++hits;
+        bool would_accept = (actual < best_score - eps) ||
+            (std::fabs(actual - best_score) <= eps && hits <= maxHits);
+
+        // T-390: verify-and-reject, mirroring the post-hoc check in
+        // tbr_search and ts_nni_perturb.cpp (search "accept before
+        // capturing"). spr_search's own regraft candidates are screened
+        // against the pre-move constraint mapping only, so a regraft can
+        // still land a clip on the wrong side of a split; TBR afterwards
+        // cannot repair it (regraft_violates_constraint rejects all moves
+        // once a split is unmapped), so an unverified accept here would
+        // carry a constraint violation through to the final tree.
+        if (would_accept && constrained) {
+          map_constraint_nodes(tree, *cd);
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) { would_accept = false; break; }
+          }
+        }
+
+        if (would_accept) {
+          if (actual < best_score - eps) {
+            best_score = actual;
+            hits = 1;
+          } else {
+            ++hits;
+          }
           ++n_moves;
           accepted = true;
           keep_going = true;
