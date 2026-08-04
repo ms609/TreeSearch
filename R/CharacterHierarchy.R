@@ -183,7 +183,15 @@ ValidateHierarchy <- function(hierarchy, dataset) {
 
   claimed <- integer(0)
 
-  .ValidateBlock <- function(node, depth = 1L) {
+  # `ctrlClaimedByParent` is TRUE for a nested block, whose controlling
+  # character is *deliberately* also a dependent of its parent: .ParseOneBlock()
+  # records a sub-controller in both places, because it is simultaneously a
+  # secondary of the character above it and the primary of the one below.  That
+  # dual role is the whole content of "nested", so counting it as a second claim
+  # rejected every nested hierarchy that could be written -- including this
+  # file's own documented example.  The double-claim check still applies in full
+  # to the block's own dependents, and to a controlling character at top level.
+  .ValidateBlock <- function(node, depth = 1L, ctrlClaimedByParent = FALSE) {
     ctrl <- node$controlling
     deps <- node$dependents
 
@@ -198,14 +206,15 @@ ValidateHierarchy <- function(hierarchy, dataset) {
     }
 
     # Check no double-claiming
-    overlap <- intersect(allIdx, claimed)
+    newIdx <- if (ctrlClaimedByParent) deps else allIdx
+    overlap <- intersect(newIdx, claimed)
     if (length(overlap) > 0L) {
       stop(sprintf(
         "Character(s) %s appear in multiple hierarchy blocks.",
         paste(overlap, collapse = ", ")
       ))
     }
-    claimed <<- c(claimed, allIdx)
+    claimed <<- c(claimed, newIdx)
 
     # Check controlling character is binary (has exactly states "0" and "1",
     # possibly with inapplicable/missing)
@@ -236,9 +245,10 @@ ValidateHierarchy <- function(hierarchy, dataset) {
       }
     }
 
-    # Recurse into children
+    # Recurse into children.  A child's controlling character was already
+    # claimed just above, as one of this block's dependents.
     for (child in node$children) {
-      .ValidateBlock(child, depth + 1L)
+      .ValidateBlock(child, depth + 1L, ctrlClaimedByParent = TRUE)
     }
   }
 
@@ -254,9 +264,16 @@ ValidateHierarchy <- function(hierarchy, dataset) {
 #'
 #' Parse character names following the TNT convention where controlling
 #' characters are named `sup_<tag>` and their dependent characters are
-#' named `sub_<tag>[_suffix]`.  Tags must match between a controlling
-#' character and its dependents.  Nested hierarchies are detected when a
-#' `sub_` character is also a `sup_` for further characters.
+#' named `sub_<tag>[_suffix]`.  Each dependent is attached to the longest
+#' `sup_` tag that its own tag extends, at an underscore boundary.
+#'
+#' Nested hierarchies are written by giving a controlling character a tag that
+#' itself extends another controlling character's tag: `sup_tail_tip` controls
+#' the tag `tail_tip`, and because `tail_tip` extends `tail` it is also a
+#' dependent of `sup_tail`.  Longest-match is what keeps `sub_tail_tip_gloss`
+#' with `sup_tail_tip` rather than with `sup_tail`.  A shared prefix alone does
+#' not nest: `sup_tailfin` is independent of `sup_tail`, since `tailfin` does
+#' not extend `tail` at an underscore boundary.
 #'
 #' @param charNames Character vector of names, one per original character.
 #'
@@ -267,6 +284,11 @@ ValidateHierarchy <- function(hierarchy, dataset) {
 #' names <- c("sup_tail", "sub_tail_colour", "sub_tail_shape",
 #'             "sup_wing", "sub_wing_venation", "eyes")
 #' HierarchyFromNames(names)
+#'
+#' # Nesting: `tail_tip` extends `tail`, so character 3 is both a dependent of
+#' # character 1 and the controlling character of character 4.
+#' HierarchyFromNames(c("sup_tail", "sub_tail_colour",
+#'                      "sup_tail_tip", "sub_tail_tip_gloss"))
 #'
 #' @family tree scoring
 #' @seealso [CharacterHierarchy()]
@@ -284,72 +306,79 @@ HierarchyFromNames <- function(charNames) {
     return(NULL)
   }
 
-  # Extract tags
+  # Extract tags.  A tag may itself contain underscores, and that is what makes
+  # nesting expressible: `sup_tail_tip` controls the tag "tail_tip", and because
+  # "tail_tip" extends the existing tag "tail" it is simultaneously a dependent
+  # of `sup_tail`.  This is the only way one character can play both roles, since
+  # a single name cannot carry both the `sup_` and `sub_` prefix -- which is why
+  # the previous `intersect(subIdx, supIdx)` test could never fire, leaving the
+  # documented nesting support unreachable.
+  #
+  # Every sub_/sup_ character attaches to the LONGEST sup_ tag its own tag
+  # extends.  Longest-wins is what keeps `sub_tail_tip_gloss` with `sup_tail_tip`
+  # instead of with `sup_tail`; matching only the first underscore-delimited
+  # component (as this function used to) collapsed every depth onto the outermost
+  # tag, so no dependent could ever reach a nested controller.
   supTags <- sub("^sup_", "", charNames[supIdx])
   subTagsFull <- sub("^sub_", "", charNames[subIdx])
-  # The tag is the first component before any additional underscore-suffix
-  # e.g. "sub_tail_colour" → tag = "tail"
-  subTags <- sub("_.*", "", subTagsFull)
 
-  # Build mapping: tag → controlling index, tag → dependent indices
+  # Build mapping: tag → controlling index
   tagToSup <- setNames(supIdx, supTags)
 
-  # Group sub characters by tag
-  tagToSubs <- split(subIdx, subTags)
+  # The longest sup_ tag that `tag` sits under: an exact match, or an extension
+  # at an underscore boundary (so "tailfin" does NOT sit under "tail").
+  # `exclude` stops a sup_ tag being its own parent.
+  .ParentTag <- function(tag, exclude = "") {
+    eligible <- supTags[supTags != exclude]
+    if (!length(eligible)) return(NA_character_)
+    under <- tag == eligible | startsWith(tag, paste0(eligible, "_"))
+    if (!any(under)) return(NA_character_)
+    cand <- eligible[under]
+    cand[[which.max(nchar(cand))]]
+  }
 
-  # Check for sub_ characters referencing nonexistent sup_ tags
-  orphanTags <- setdiff(names(tagToSubs), supTags)
-  if (length(orphanTags) > 0L) {
+  subParent <- vapply(subTagsFull, .ParentTag, character(1), USE.NAMES = FALSE)
+  orphan <- is.na(subParent)
+  if (any(orphan)) {
     warning(sprintf(
       "sub_ characters reference tags with no corresponding sup_: %s",
-      paste(orphanTags, collapse = ", ")
+      paste(unique(subTagsFull[orphan]), collapse = ", ")
     ))
   }
 
-  # Detect nested hierarchies: a sub_ character that is also a sup_
-  # Find sub_ chars that are also in supIdx
-  subAlsoSup <- intersect(subIdx, supIdx)
+  # A sup_ tag that extends another sup_ tag is a nested controller.
+  supParent <- vapply(supTags, function(s) .ParentTag(s, exclude = s),
+                      character(1), USE.NAMES = FALSE)
 
-  # Build hierarchy
-  # First pass: create flat blocks for all sup_ tags
-  args <- list()
-  for (tag in supTags) {
-    ctrl <- tagToSup[[tag]]
-    subs <- tagToSubs[[tag]]
-    if (is.null(subs)) subs <- integer(0)
-
-    # Check which subs are themselves controlling (nested hierarchy)
-    nestedSubs <- intersect(subs, supIdx)
-    flatSubs <- setdiff(subs, supIdx)
-
-    if (length(nestedSubs) == 0L) {
-      # Simple block
-      args[[as.character(ctrl)]] <- as.integer(subs)
-    } else {
-      # Nested: build list with named sub-hierarchies
-      block <- as.list(as.integer(flatSubs))
-      for (ns in nestedSubs) {
-        nsTag <- supTags[supIdx == ns]
-        nsSubs <- tagToSubs[[nsTag]]
-        if (is.null(nsSubs)) nsSubs <- integer(0)
-        block[[as.character(ns)]] <- as.integer(nsSubs)
-      }
-      args[[as.character(ctrl)]] <- block
+  # Dependents of one tag: its own sub_ characters, plus a named sub-hierarchy
+  # for each sup_ tag nested directly beneath it.  Recursive, so nesting works
+  # to arbitrary depth.  A nested controller is NOT added to the flat dependents
+  # here -- .ParseOneBlock() records a named sub-controller as a dependent of the
+  # enclosing block itself.
+  .BuildTag <- function(tag) {
+    flat <- as.integer(subIdx[!orphan & subParent == tag])
+    kidTags <- supTags[!is.na(supParent) & supParent == tag]
+    if (!length(kidTags)) {
+      return(flat)
     }
+    block <- as.list(flat)
+    for (k in kidTags) {
+      block[[as.character(tagToSup[[k]])]] <- .BuildTag(k)
+    }
+    block
   }
 
-  # Filter out sup_ chars whose index also appears in subIdx
-  # (they'll be included as children of their parent)
-  topLevelSup <- setdiff(supIdx, subIdx)
-  if (length(topLevelSup) == 0L) {
-    # All sup_ characters are also sub_ — circular or all nested.
-    # Fall back to treating all as top-level with a warning.
-    warning("All sup_ characters are also sub_ characters. ",
+  topTags <- supTags[is.na(supParent)]
+  if (!length(topTags)) {
+    # Every sup_ tag extends another, which needs a cycle and so cannot arise
+    # from prefix matching; kept as a guard rather than a reachable branch.
+    warning("Every sup_ tag extends another sup_ tag. ",
             "Treating all as top-level.")
-    topLevelSup <- supIdx
+    topTags <- supTags
   }
-  topLevelCtrls <- as.character(topLevelSup)
-  args <- args[topLevelCtrls]
+
+  args <- lapply(topTags, .BuildTag)
+  names(args) <- as.character(tagToSup[topTags])
 
   do.call(CharacterHierarchy, args)
 }

@@ -834,14 +834,32 @@ test_that("HSJ secondary '?' obeys the resolution invariant (T-375)", {
   # collapses the whole score to the secondary's ordinary Fitch step count.
   #
   # Tree ((t1,t2),(t3,t4)); primaries all "1"; secondary t1=t2=t3="0", t4
-  # varies. Hand-derived: t4="0" ties all four -> 0 steps. t4="1" or t4="-"
-  # each disagree with the (t3,t4) clade's neighbour -> 1 step (the downpass
-  # intersect((t3=0),(t4=1 or -)) is empty, forcing a union). t4="?" must
-  # resolve to whichever concrete state is compatible AND cheapest -- here
-  # that's "0" (matching t1/t2/t3), giving 0 steps, so score("?") == 0 ==
-  # min(0, 1, 1). Before the fix, fitch_label_char() bit-encoded the "?"
-  # TOKEN index as its own concrete state bit, indistinguishable from a
-  # genuine mismatch, and scored 1 -- violating the invariant (1 > 0).
+  # varies. Hand-derived: t4="0" ties all four -> 0 steps. t4="1" disagrees with
+  # the (t3,t4) clade's neighbour -> 1 step (the downpass intersect((t3=0),
+  # (t4=1)) is empty, forcing a union). t4="?" must resolve to whichever concrete
+  # state is compatible AND cheapest -- here that's "0" (matching t1/t2/t3),
+  # giving 0 steps. Before the fix, fitch_label_char() bit-encoded the "?" TOKEN
+  # index as its own concrete state bit, indistinguishable from a genuine
+  # mismatch, and scored 1 -- violating the invariant (1 > 0).
+  #
+  # t4="-" MUST ALSO SCORE 0, and this expectation CHANGED on 2026-08-03 (T-396):
+  # it previously asserted 1, reasoning that "-" disagrees with its neighbour
+  # just as "1" does. That reasoning treats the inapplicable token as an ordinary
+  # third state, which is precisely the behaviour Hopkins & St John (2021)
+  # introduce HSJ to avoid -- "Treating inapplicable characters as a new,
+  # separate state[] will ... skew the analysis, because having a new separate
+  # state increases the dissimilarity of all pairwise comparisons" (p.5). The
+  # paper's d counts "nonmatching secondary characters" among those that APPLY,
+  # and where secondaries are inapplicable to a taxon "they have no influence on
+  # the estimated dissimilarity" (p.5). An inapplicable secondary therefore
+  # contributes nothing to d whatever its controlling primary codes.
+  #
+  # Note every primary here is "1" (present), so this is the CONTRADICTORY coding
+  # case: "-" in a secondary whose controlling primary says the structure exists.
+  # The old value was not a defensible alternative reading -- it exceeded every
+  # concrete resolution AND the missing-data treatment, so no resolution of the
+  # cell produced it. Whether such a matrix should be rejected by
+  # ValidateHierarchy() is a separate question; the score must not invent a state.
   h <- CharacterHierarchy("1" = 2L)
   tree <- Renumber(RenumberTips(
     ape::read.tree(text = "((t1,t2),(t3,t4));"), paste0("t", 1:4)))
@@ -854,8 +872,13 @@ test_that("HSJ secondary '?' obeys the resolution invariant (T-375)", {
   }
 
   scores <- vapply(c("0", "1", "-", "?"), score_for, double(1))
-  expect_equal(unname(scores), c(0, 1, 1, 0))
+  expect_equal(unname(scores), c(0, 1, 0, 0))
   expect_lte(scores[["?"]], min(scores[c("0", "1", "-")]))
+  # An inapplicable secondary must cost no more than the cheapest concrete
+  # resolution of that cell -- the paper's "no influence" property. Asserted
+  # separately from the exact vector so a future change to the matrix still
+  # checks the property rather than only the number.
+  expect_lte(scores[["-"]], min(scores[c("0", "1")]))
 })
 
 

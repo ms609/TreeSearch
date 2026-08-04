@@ -16,14 +16,27 @@ detected.
 \description{
 Parse character names following the TNT convention where controlling
 characters are named \verb{sup_<tag>} and their dependent characters are
-named \verb{sub_<tag>[_suffix]}.  Tags must match between a controlling
-character and its dependents.  Nested hierarchies are detected when a
-\code{sub_} character is also a \code{sup_} for further characters.
+named \verb{sub_<tag>[_suffix]}.  Each dependent is attached to the longest
+\code{sup_} tag that its own tag extends, at an underscore boundary.
+}
+\details{
+Nested hierarchies are written by giving a controlling character a tag that
+itself extends another controlling character's tag: \code{sup_tail_tip} controls
+the tag \code{tail_tip}, and because \code{tail_tip} extends \code{tail} it is also a
+dependent of \code{sup_tail}.  Longest-match is what keeps \code{sub_tail_tip_gloss}
+with \code{sup_tail_tip} rather than with \code{sup_tail}.  A shared prefix alone does
+not nest: \code{sup_tailfin} is independent of \code{sup_tail}, since \code{tailfin} does
+not extend \code{tail} at an underscore boundary.
 }
 \examples{
 names <- c("sup_tail", "sub_tail_colour", "sub_tail_shape",
             "sup_wing", "sub_wing_venation", "eyes")
 HierarchyFromNames(names)
+
+# Nesting: `tail_tip` extends `tail`, so character 3 is both a dependent of
+# character 1 and the controlling character of character 4.
+HierarchyFromNames(c("sup_tail", "sub_tail_colour",
+                     "sup_tail_tip", "sub_tail_tip_gloss"))
 
 }
 \seealso{
