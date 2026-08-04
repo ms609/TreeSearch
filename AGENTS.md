@@ -61,10 +61,10 @@ The scripts live at `C:/Users/pjjg18/GitHub/gha-dispatch.sh` and
 ```bash
 # Push your branch and dispatch checks — run these FROM the repo, not from ../
 git push -u origin feature/<name>
-bash /c/Users/pjjg18/GitHub/gha-dispatch.sh agent-check.yml feature/<name>
+bash C:/Users/pjjg18/GitHub/gha-dispatch.sh agent-check.yml feature/<name>
 
 # Poll for results
-bash /c/Users/pjjg18/GitHub/gha-poll.sh <run_id>
+bash C:/Users/pjjg18/GitHub/gha-poll.sh <run_id>
 ```
 
 Both scripts resolve the target repo with `gh repo view --json nameWithOwner`, so they pick
