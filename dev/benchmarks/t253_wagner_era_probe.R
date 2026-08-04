@@ -136,7 +136,7 @@ if (identical(step, "addition")) {
       if (inherits(tr, "error")) {
         cat(sprintf("FAIL %-18s seed=%d: %s\n", key, sd, conditionMessage(tr)))
         rows[[length(rows) + 1L]] <- data.frame(
-          key = key, engine = engine, tsVersion = tsVer, seed = sd,
+          key = key, engine = engine, tsVersion = tsVer, tsLib = tsLib, seed = sd,
           wallS = wall, ok = FALSE, stringsAsFactors = FALSE
         )
         next
@@ -146,7 +146,7 @@ if (identical(step, "addition")) {
       saveRDS(tr, file.path(treeDir, sprintf("%s__%s__s%d.rds",
                                              safeKey(key), engine, sd)))
       rows[[length(rows) + 1L]] <- data.frame(
-        key = key, engine = engine, tsVersion = tsVer, seed = sd,
+        key = key, engine = engine, tsVersion = tsVer, tsLib = tsLib, seed = sd,
         wallS = wall, ok = TRUE, stringsAsFactors = FALSE
       )
       cat(sprintf("add  %-18s %-6s seed=%d  %.2fs\n", key, engine, sd, wall))
@@ -164,6 +164,27 @@ if (identical(step, "score")) {
   cat("scorer: TreeSearch ", as.character(utils::packageVersion("TreeSearch")),
       "\n", sep = "")
   manifest <- read.csv(file.path(outDir, "manifest.csv"), stringsAsFactors = FALSE)
+
+  # ---- PROVENANCE ASSERTION: both engines report Version 2.0.0, so the version
+  # string CANNOT distinguish them.  If R_LIBS failed to take, both arms would run
+  # the SAME library and every ratio would be 1.000 -- which reads exactly like the
+  # "annotate, not retract" answer.  A null result must not be obtainable from a
+  # broken arm, so refuse to report unless the two arms provably used different
+  # library paths.
+  addFiles <- list.files(outDir, pattern = "^addition_.*\\.csv$", full.names = TRUE)
+  if (length(addFiles) >= 2L) {
+    prov <- do.call(rbind, lapply(addFiles, read.csv, stringsAsFactors = FALSE))
+    byEngine <- unique(prov[, c("engine", "tsVersion", "tsLib")])
+    cat("\n---- provenance ----\n")
+    print(byEngine, row.names = FALSE)
+    if (anyDuplicated(byEngine$tsLib)) {
+      stop("PROVENANCE FAILURE: two engine labels resolved to the SAME library ",
+           "path, so the arms are not independent. R_LIBS did not take. Any ratio ",
+           "of 1.000 here would be an artefact, not a finding.")
+    }
+    cat("provenance OK: arms used distinct libraries\n")
+  }
+
   files <- list.files(treeDir, pattern = "\\.rds$", full.names = TRUE)
   rows <- list()
   for (f in files) {
