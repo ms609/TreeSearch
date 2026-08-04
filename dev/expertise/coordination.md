@@ -1,5 +1,13 @@
 # Coordination Expertise — TreeSearch
 
+> **The S-COORD standing role was retired 2026-08-04.** Its mechanism — update
+> `coordination.md`, propose rows in `to-do.md`, resolve blockers by editing files — no longer
+> exists: task state lives in `agent-issues/TreeSearch` issues, and the triage half of the role
+> is now **`/next-issue`** (group open issues into conflict-safe tranches, brief, dispatch).
+>
+> This file is kept for its *methodology*: how to judge whether the project is working on the
+> right thing, which is not something the tracker answers. Ignore its file-editing mechanics.
+
 ## Purpose
 
 Review the overall state of multi-agent work. Update `coordination.md`,
