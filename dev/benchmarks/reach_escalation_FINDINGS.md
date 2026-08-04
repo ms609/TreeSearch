@@ -146,6 +146,16 @@ five times faster, the signature of the since-fixed union-of-finals insertion-co
 is not the explanation: the current engine returns the same score at `maxSeconds` 1, 5, 25 and
 45, and the whole 30 s → 1440 s span is only ×1.068.
 
+**And it is not project4284's peculiarity either — it is EVERY matrix** (job 18183151,
+`t253_wagner_era_probe.R`, `t253_wagner_era_decision.csv`).  Extending the same bare-`AdditionTree`
+comparison to all 25 MBANK_FIXED_SAMPLE matrices, with one shared preprocessing, 3 seeds each and
+every tree re-scored by a single scorer: the March engine built a **longer tree on 25 of 25**,
+**23 of 25 by more than 10%**, median ratio **1.365**, range 1.050 → 3.232.  project4284 (3.23×)
+is the extreme of a universal effect.  This is what retired the last hope that one row needed a
+footnote: **`t253_gap_characterization.md`'s MorphoBank half is now retracted**, since a "did it
+converge in 30 s" proxy cannot be built on start trees 5–223% too long.  Its `t265` half is
+independent of that engine and stands.
+
 **Bad news — the per-seed scores did not reproduce.**
 
 | seed | 7731 | 7732 | 7733 | 7734 | 7735 | mean |
