@@ -45,6 +45,78 @@ test_that("Addition tree produces valid trees", {
   expect_equal(TreeTools::NTip(pr), 10L)
 })
 
+test_that("AdditionTree() scores against real min_steps, not zero (#5, T-369)", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Vinther2008"]]
+  taxa <- names(ds)
+  concavity <- 10
+
+  # Mirror AdditionTree()'s internal call (R/AdditionTree.R) so `result$score`
+  # -- which AdditionTree() itself discards -- can be inspected directly.
+  at <- attributes(ds)
+  tipData <- matrix(unlist(ds, use.names = FALSE), nrow = length(taxa),
+                     byrow = TRUE)
+  weight <- TreeSearch:::.ScaleWeight(at$weight)
+  order <- seq_along(taxa)
+  realMinSteps <- as.integer(MinimumLength(ds, compress = TRUE))
+
+  withRealMinSteps <- TreeSearch:::ts_wagner_tree(
+    contrast = at$contrast, tip_data = tipData, weight = weight,
+    levels = at$levels, addition_order = order,
+    min_steps = realMinSteps, concavity = as.double(concavity))
+  withZeroMinSteps <- TreeSearch:::ts_wagner_tree(
+    contrast = at$contrast, tip_data = tipData, weight = weight,
+    levels = at$levels, addition_order = order,
+    min_steps = integer(0), concavity = as.double(concavity))
+
+  # A finite `concavity` must score against the dataset's real min_steps, not
+  # against min_steps = 0 (which previously corrupted only `result$score`).
+  expect_false(isTRUE(all.equal(
+    withRealMinSteps$score, withZeroMinSteps$score)))
+
+  # Placement uses an equal-weights proxy regardless of `min_steps` /
+  # `concavity` (documented contract, @param concavity in AdditionTree.R):
+  # the returned topology must not move.
+  expect_identical(withRealMinSteps$edge, withZeroMinSteps$edge)
+})
+
+test_that("AdditionTree() forwards real min_steps to ts_wagner_tree (#5, T-369)", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Vinther2008"]]
+  taxa <- names(ds)
+  realMinSteps <- as.integer(MinimumLength(ds, compress = TRUE))
+
+  # Record the args AdditionTree() builds, then forward them unmodified to
+  # the real implementation -- the mock exists to observe `min_steps`, not
+  # to change what gets computed.
+  captured <- NULL
+  realTsWagnerTree <- TreeSearch:::ts_wagner_tree
+  testthat::local_mocked_bindings(
+    ts_wagner_tree = function(...) {
+      captured <<- list(...)
+      do.call(realTsWagnerTree, list(...))
+    },
+    .package = "TreeSearch"
+  )
+
+  AdditionTree(ds, sequence = taxa, concavity = 10)
+  expect_identical(captured$min_steps, realMinSteps)
+})
+
+test_that("AdditionTree()'s numeric `concavity` doesn't affect topology (#5, T-369)", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Longrich2010"]]
+  taxa <- names(ds)
+
+  # Locks in the documented contract (@param concavity, AdditionTree.R): a
+  # future weighted-placement change has to update this test deliberately.
+  set.seed(42)
+  ewTree <- AdditionTree(ds, sequence = taxa, concavity = Inf)
+  set.seed(42)
+  iwTree <- AdditionTree(ds, sequence = taxa, concavity = 10)
+  expect_identical(ewTree$edge, iwTree$edge)
+})
+
 test_that(".ConstraintConstrains() succeeds", {
   expect_false(TreeSearch:::.ConstraintConstrains(NULL))
 

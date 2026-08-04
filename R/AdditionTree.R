@@ -127,6 +127,15 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
   weight <- .ScaleWeight(at$weight)
   levels <- at$levels
 
+  # IW: minimum step counts per character, needed so `result$score` (an IW
+  # score when `concavity` is finite) isn't computed against min_steps = 0.
+  # Placement itself ignores this: see @param concavity above.
+  minSteps <- if (is.finite(concavity)) {
+    as.integer(MinimumLength(dataset, compress = TRUE))
+  } else {
+    integer(0)
+  }
+
   # Constraint
   consArgs <- list()
   if (!missing(constraint)) {
@@ -140,6 +149,7 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
     weight = weight,
     levels = levels,
     addition_order = addition_order,
+    min_steps = minSteps,
     concavity = as.double(concavity)
   )
   result <- do.call(ts_wagner_tree, c(searchArgs, consArgs, profileArgs))
