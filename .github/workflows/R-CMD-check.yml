@@ -237,6 +237,17 @@ jobs:
           needs: |
             check
             coverage
+          # MaxMin url:: -- confirmed empirically (2026-08-03) that
+          # Additional_repositories in DESCRIPTION is NOT read by
+          # pak::pkg_deps("deps::.") (what this action calls), on ANY OS --
+          # it's not a GitHub-Pages/Linux-UA-negotiation issue, pak just
+          # never consults that DESCRIPTION field for a local package's own
+          # deps. Windows therefore needs the same direct url:: reference
+          # Linux already uses. Stable, unversioned filename (mirrors the
+          # Linux pattern) so this line never needs updating when MaxMin
+          # changes; ms609/packages' build-maxmin workflow keeps it current.
+          extra-packages: |
+            url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -327,8 +338,12 @@ jobs:
         with:
           needs: |
             check
+          # MaxMin url:: -- see the note on the covr leg above: pak never
+          # reads Additional_repositories for a local package's own deps, on
+          # any OS, so this leg needs the direct reference too.
           extra-packages: |
             local::.
+            url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -410,6 +425,12 @@ jobs:
         with:
           needs: |
             check
+          # MaxMin url:: -- see the note on the Windows covr leg: pak never
+          # reads Additional_repositories for a local package's own deps, on
+          # any OS. Picked per this matrix's arch (macOS-latest is arm64;
+          # macos-15-intel is x86_64).
+          extra-packages: |
+            ${{ matrix.config.os == 'macOS-latest' && 'url::https://ms609.github.io/packages/bin/macosx/big-sur-arm64/MaxMin_latest.tgz' || 'url::https://ms609.github.io/packages/bin/macosx/big-sur-x86_64/MaxMin_latest.tgz' }}
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.

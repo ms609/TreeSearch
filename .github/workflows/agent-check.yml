@@ -115,6 +115,14 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # MaxMin url:: -- confirmed empirically (2026-08-03, see
+          # ms609/TreeSearch R-CMD-check.yml) that pak never reads
+          # Additional_repositories for a local package's own deps, on any
+          # OS -- not a GitHub-Pages/Linux-UA-negotiation issue specifically.
+          # Stable, unversioned filename so this line never needs updating
+          # when MaxMin changes.
+          extra-packages: |
+            url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
