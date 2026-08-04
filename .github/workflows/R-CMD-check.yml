@@ -20,7 +20,7 @@ on:
       - "**.R[dD]ata"
       - "**.Rpro*"
   pull_request:
-    branches: ["*"]
+    branches: ["**"]
     paths-ignore:
       - "Meta**"
       - "memcheck**"
