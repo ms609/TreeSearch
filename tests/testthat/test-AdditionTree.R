@@ -45,34 +45,37 @@ test_that("Addition tree produces valid trees", {
   expect_equal(TreeTools::NTip(pr), 10L)
 })
 
-test_that("AdditionTree() scores against real min_steps, not zero (#5, T-369)", {
+test_that("ts_wagner_tree: real min_steps changes score, not topology (#5, T-369)", {
   data("inapplicable.phyData", package = "TreeSearch")
   ds <- inapplicable.phyData[["Vinther2008"]]
   taxa <- names(ds)
   concavity <- 10
 
-  # Mirror AdditionTree()'s internal call (R/AdditionTree.R) so `result$score`
-  # -- which AdditionTree() itself discards -- can be inspected directly.
+  # Exercises the C++ engine directly (not AdditionTree(), which discards
+  # `result$score`) to characterise what a `min_steps` of 0 versus the
+  # dataset's real per-character minimum corrupts.
   at <- attributes(ds)
   tipData <- matrix(unlist(ds, use.names = FALSE), nrow = length(taxa),
                      byrow = TRUE)
   weight <- TreeSearch:::.ScaleWeight(at$weight)
-  order <- seq_along(taxa)
+  additionOrder <- seq_along(taxa)
   realMinSteps <- as.integer(MinimumLength(ds, compress = TRUE))
 
   withRealMinSteps <- TreeSearch:::ts_wagner_tree(
     contrast = at$contrast, tip_data = tipData, weight = weight,
-    levels = at$levels, addition_order = order,
+    levels = at$levels, addition_order = additionOrder,
     min_steps = realMinSteps, concavity = as.double(concavity))
   withZeroMinSteps <- TreeSearch:::ts_wagner_tree(
     contrast = at$contrast, tip_data = tipData, weight = weight,
-    levels = at$levels, addition_order = order,
+    levels = at$levels, addition_order = additionOrder,
     min_steps = integer(0), concavity = as.double(concavity))
 
-  # A finite `concavity` must score against the dataset's real min_steps, not
-  # against min_steps = 0 (which previously corrupted only `result$score`).
-  expect_false(isTRUE(all.equal(
-    withRealMinSteps$score, withZeroMinSteps$score)))
+  # Understating min_steps overstates every character's homoplasy (extra
+  # steps beyond the true minimum), so the min_steps = 0 score must be
+  # strictly higher, not merely "different" (which a NaN or sign error
+  # would also satisfy).
+  expect_true(withZeroMinSteps$score > withRealMinSteps$score)
+  expect_true(is.finite(withRealMinSteps$score))
 
   # Placement uses an equal-weights proxy regardless of `min_steps` /
   # `concavity` (documented contract, @param concavity in AdditionTree.R):
@@ -101,6 +104,27 @@ test_that("AdditionTree() forwards real min_steps to ts_wagner_tree (#5, T-369)"
 
   AdditionTree(ds, sequence = taxa, concavity = 10)
   expect_identical(captured$min_steps, realMinSteps)
+
+  # concavity = Inf (equal weights) must still forward min_steps = integer(0):
+  # there is no "real" minimum to score against once weighting is disabled.
+  captured <- NULL
+  AdditionTree(ds, sequence = taxa, concavity = Inf)
+  expect_identical(captured$min_steps, integer(0))
+})
+
+test_that("AdditionTree() still handles concavity = \"profile\" (#5, T-369)", {
+  # concavity = \"profile\" is forced to Inf internally (R/AdditionTree.R),
+  # so min_steps is integer(0) and MinimumLength() is never called on the
+  # profile-recoded data -- but if that ever changes, MinimumLength() would
+  # need to run on the *recoded* dataset, whose pattern count differs from
+  # the original, or make_dataset()'s length guard would trip. Guards
+  # against a regression on that ordering.
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Longrich2010"]]
+  taxa <- names(ds)
+  expect_no_error(
+    suppressMessages(AdditionTree(ds, sequence = taxa, concavity = "profile"))
+  )
 })
 
 test_that("AdditionTree()'s numeric `concavity` doesn't affect topology (#5, T-369)", {

@@ -19,17 +19,19 @@
 #' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
 #' Specify `"profile"` to employ an approximation of profile parsimony
 #' \insertCite{Faith2001}{TreeSearch}.
-#' Note that a numeric `concavity` value affects only the reported
-#' `$score` of the tree returned by `AdditionTree()`: the tree topology
-#' has been observed to be identical whatever numeric value of `concavity`
-#' is specified (including `Inf`, i.e. equal weights).
+#' Note that tips are always placed using an equal-weights proxy, so a
+#' numeric `concavity` value has no effect on the tree topology returned
+#' by `AdditionTree()`: the topology has been observed to be identical
+#' whatever numeric value of `concavity` is specified (including `Inf`,
+#' i.e. equal weights). `AdditionTree()` does not return a score, so this
+#' has no user-visible effect at all.
 #' Specifying `concavity = "profile"` _does_ affect the returned topology,
 #' because the underlying character data are recoded before tree
 #' construction begins.
 #' @examples
 #' data("inapplicable.phyData", package = "TreeSearch")
-#' # concavity = 10 affects the reported $score, but (empirically) not the
-#' # tree topology returned.
+#' # concavity = 10 has (empirically) no effect on the tree topology
+#' # returned: placement always uses an equal-weights proxy.
 #' AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 #' @template MRS
 #' @return `AdditionTree()` returns a tree of class `phylo`. The tree carries a
