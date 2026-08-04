@@ -53,18 +53,25 @@ to `inst/WORDLIST`.
 
 Once confirmed, dispatch GHA with:
 
+The scripts live at `C:/Users/pjjg18/GitHub/gha-dispatch.sh` and
+`C:/Users/pjjg18/GitHub/gha-poll.sh` — a fixed location, not `../` relative to your checkout.
+`../` only resolves from the main checkout; from a `../worktrees/TreeSearch/<name>` worktree
+(where feature work happens) it doesn't exist. Use the absolute path from either location:
+
 ```bash
 # Push your branch and dispatch checks — run these FROM the repo, not from ../
 git push -u origin feature/<name>
-bash ../gha-dispatch.sh agent-check.yml feature/<name>
+bash /c/Users/pjjg18/GitHub/gha-dispatch.sh agent-check.yml feature/<name>
 
 # Poll for results
-bash ../gha-poll.sh <run_id>
+bash /c/Users/pjjg18/GitHub/gha-poll.sh <run_id>
 ```
 
 Both scripts resolve the target repo with `gh repo view --json nameWithOwner`, so they pick
 up whatever `gh repo set-default` points at — the fork. **Do not `cd ..` first** (as this
 recipe used to say): outside a git repo that lookup fails and the dispatch targets nothing.
+"Run these FROM the repo" means your `cwd` must be the git checkout/worktree doing the
+`gh repo view` lookup — it does not mean the scripts themselves must be found relatively.
 
 ### Local builds (targeted iteration only)
 
