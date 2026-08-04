@@ -246,6 +246,12 @@ jobs:
           # this purpose.
           extra-packages: |
             url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          # install-pandoc must stay explicit -- see the long note in
+          # agent-check.yml's windows leg. Auto-detect runs a second, fresh
+          # `pak::pkg_deps(".")` solve that cannot see extra-packages, so it
+          # fails on MaxMin by name; the branch only fires when pandoc is off
+          # PATH, which is why only the non-Linux legs hit it.
+          install-pandoc: true
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -344,6 +350,10 @@ jobs:
           extra-packages: |
             local::.
             url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          # install-pandoc explicit for the same reason as the core Windows leg
+          # (auto-detect's `pak::pkg_deps(".")` solve cannot see extra-packages).
+          # `false` here: this job runs shinytest2, not vignettes.
+          install-pandoc: false
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -434,6 +444,10 @@ jobs:
           # does not help, since it governs R CMD check, not pak's solve.
           extra-packages: |
             ${{ matrix.config.os == 'macos-15-intel' && 'url::https://ms609.github.io/packages/bin/macosx/big-sur-x86_64/MaxMin_latest.tgz' || 'url::https://ms609.github.io/packages/bin/macosx/big-sur-arm64/MaxMin_latest.tgz' }}
+          # install-pandoc explicit for the same reason as the Windows legs; also
+          # pre-emptive, since whether a macOS runner ships pandoc on PATH is
+          # exactly the condition that decides whether the bad branch fires.
+          install-pandoc: true
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
