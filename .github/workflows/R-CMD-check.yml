@@ -237,17 +237,33 @@ jobs:
           needs: |
             check
             coverage
-          # MaxMin url:: -- confirmed empirically (2026-08-03) that
-          # Additional_repositories in DESCRIPTION is NOT read by
-          # pak::pkg_deps("deps::.") (what this action calls), on ANY OS --
-          # it's not a GitHub-Pages/Linux-UA-negotiation issue, pak just
-          # never consults that DESCRIPTION field for a local package's own
-          # deps. Windows therefore needs the same direct url:: reference
-          # Linux already uses. Stable, unversioned filename (mirrors the
-          # Linux pattern) so this line never needs updating when MaxMin
-          # changes; ms609/packages' build-maxmin workflow keeps it current.
+          # MaxMin url:: -- a direct reference to a prebuilt binary, same
+          # shape Linux already uses, and needed for the same underlying
+          # reason: pak::lockfile_create("local::.", ...) -- what this action
+          # calls -- does not reliably resolve a Suggests-only, non-CRAN
+          # package via DESCRIPTION's `Additional_repositories`. Confirmed
+          # on CI (2026-08-04): with only this url:: line added, the log
+          # shows MaxMin successfully downloaded and installed via the url::
+          # reference, yet the SAME dependency-setup step still hard-fails
+          # with "Can't find package called MaxMin" -- local::.'s own
+          # Suggests-driven requirement for MaxMin is evaluated as a SEPARATE,
+          # unsatisfied need, even though the package is right there. Not
+          # reproduced locally despite matching pak version (0.11.1), the
+          # exact `dependencies` argument the action passes, and a cold
+          # cache -- so the precise mechanism is unconfirmed, but the
+          # `dependencies:` override below (excluding Suggests from what's
+          # hard-required for the LOCAL package specifically) removes the
+          # conflicting second path entirely rather than chasing it further.
           extra-packages: |
             url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          # Exclude Suggests from what's hard-required for THIS package's own
+          # dependency graph -- see the note above. Config/Needs/check and
+          # Config/Needs/coverage (from `needs:` above) are a separate
+          # mechanism, unaffected: those are read directly, not treated as
+          # ordinary Suggests. Consistent with `_R_CHECK_FORCE_SUGGESTS_:
+          # false`, already set globally in this workflow -- pak's own setup
+          # step was the only place still treating a missing Suggests as fatal.
+          dependencies: 'c("Depends", "Imports", "LinkingTo")'
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -338,12 +354,14 @@ jobs:
         with:
           needs: |
             check
-          # MaxMin url:: -- see the note on the covr leg above: pak never
-          # reads Additional_repositories for a local package's own deps, on
-          # any OS, so this leg needs the direct reference too.
+          # MaxMin url:: -- see the note on the covr leg above: same direct
+          # reference, and the same `dependencies:` override below, for the
+          # same reason (local::.'s own Suggests-driven MaxMin requirement
+          # conflicts with this explicit one rather than being satisfied by it).
           extra-packages: |
             local::.
             url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          dependencies: 'c("Depends", "Imports", "LinkingTo")'
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -425,12 +443,12 @@ jobs:
         with:
           needs: |
             check
-          # MaxMin url:: -- see the note on the Windows covr leg: pak never
-          # reads Additional_repositories for a local package's own deps, on
-          # any OS. Picked per this matrix's arch (macOS-latest is arm64;
-          # macos-15-intel is x86_64).
+          # MaxMin url:: -- see the note on the Windows covr leg for why this
+          # AND the dependencies: override below are both needed. Picked per
+          # this matrix's arch (macOS-latest is arm64; macos-15-intel is x86_64).
           extra-packages: |
             ${{ matrix.config.os == 'macOS-latest' && 'url::https://ms609.github.io/packages/bin/macosx/big-sur-arm64/MaxMin_latest.tgz' || 'url::https://ms609.github.io/packages/bin/macosx/big-sur-x86_64/MaxMin_latest.tgz' }}
+          dependencies: 'c("Depends", "Imports", "LinkingTo")'
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.

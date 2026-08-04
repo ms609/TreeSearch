@@ -115,14 +115,25 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
-          # MaxMin url:: -- confirmed empirically (2026-08-03, see
-          # ms609/TreeSearch R-CMD-check.yml) that pak never reads
-          # Additional_repositories for a local package's own deps, on any
-          # OS -- not a GitHub-Pages/Linux-UA-negotiation issue specifically.
-          # Stable, unversioned filename so this line never needs updating
-          # when MaxMin changes.
+          # MaxMin url:: -- a direct reference to a prebuilt binary; see
+          # ms609/TreeSearch R-CMD-check.yml's covr leg for the full story.
+          # Short version: pak::lockfile_create("local::.", ...) does not
+          # reliably resolve a Suggests-only, non-CRAN package via
+          # Additional_repositories -- confirmed on CI (2026-08-04) by adding
+          # just this url:: line: the log shows MaxMin successfully installed
+          # via it, yet the SAME step still hard-fails with "Can't find
+          # package called MaxMin", attributed to local::.'s own Suggests-
+          # driven requirement for the same package. Not reproduced locally
+          # despite matching pak version, dependencies argument, and a cold
+          # cache. The dependencies: override below removes the conflicting
+          # second path rather than chasing the exact mechanism further.
           extra-packages: |
             url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          # Exclude Suggests from what's hard-required for THIS package's own
+          # graph -- see the note above. Consistent with NOT_CRAN semantics;
+          # nothing else in this job's `needs: check` relies on Suggests
+          # being hard (Config/Needs/check packages are a separate mechanism).
+          dependencies: 'c("Depends", "Imports", "LinkingTo")'
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
