@@ -1663,6 +1663,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   refresh_collapsed_all_zero();
   const bool revert_check = std::getenv("TS_REVERT_CHECK") != nullptr;
   const bool iw_scanchk = std::getenv("TS_IW_SCANCHK") != nullptr;
+  // Oracle for the dirty-set accept path (see TS_TBR_ACCEPTCHK below).
+  const bool acceptchk = std::getenv("TS_TBR_ACCEPTCHK") != nullptr;
   // TS_PHYS_REROOT selects the legacy physical-reroot reference path; it is read
   // once per outer reroot-loop iteration below (>=1/call), so hoist it too.
   const bool phys_reroot = std::getenv("TS_PHYS_REROOT") != nullptr;
@@ -2790,21 +2792,28 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
         tree.build_postorder_prealloc(work_stack);
 
-        // T-300: dirty-set incremental rescore for SPR moves.  The two
-        // affected nodes after apply_tbr_move are nz (clip grandparent,
-        // children changed: nx -> ns) and nx (regraft point, children
-        // changed to {clip_node, below}).  fitch_dirty_downpass updates
-        // every node on the union of paths nz->root and nx->root exactly
-        // once in postorder; sums correctly with no shared-ancestor
-        // ambiguity.  TBR moves with non-trivial rerooting and NA
-        // datasets fall back to full_rescore.
+        // T-300: dirty-set incremental rescore.  The affected nodes after
+        // apply_tbr_move are nz (clip grandparent, children changed:
+        // nx -> ns), nx (regraft point, children changed to
+        // {new_subtree_root, below}) and — for a TBR rerooting only — every
+        // node on clip_node..reroot_parent, whose parent/child links the move
+        // reverses.  After that reversal the path IS clip_node's rootward
+        // chain, so a third seed at clip_node marks exactly those nodes;
+        // `third` stays -1 for SPR, leaving the two-seed set untouched.
+        // fitch_dirty_downpass updates every node on the union of the seeds'
+        // rootward paths exactly once in postorder; sums correctly with no
+        // shared-ancestor ambiguity.  Only scoring modes whose total equals
+        // the Fitch/IW result (see incremental_ok) take this path; HSJ and
+        // XFORM still fall back to full_rescore.
         bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
+        const int third = (!is_spr && clip_node >= tree.n_tip) ? clip_node : -1;
+        if (!is_spr) ++ds.n_reroot_accepts;
         double actual;
         const auto _t_acc = na_timing ? std::chrono::steady_clock::now()
                                     : std::chrono::steady_clock::time_point{};
-        if (is_spr && !has_na && incremental_ok) {
-          int delta = fitch_dirty_downpass(tree, ds, nz, nx);
-          fitch_dirty_uppass(tree, ds, nz, nx);
+        if (!has_na && incremental_ok) {
+          int delta = fitch_dirty_downpass(tree, ds, nz, nx, third);
+          fitch_dirty_uppass(tree, ds, nz, nx, third);
           if (use_iw) {
             std::fill(divided_steps.begin(), divided_steps.end(), 0);
             extract_char_steps(tree, ds, divided_steps);
@@ -2812,14 +2821,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           } else {
             actual = best_score + static_cast<double>(delta);
           }
-        } else if (is_spr && has_na && incremental_ok) {
+        } else if (has_na && incremental_ok) {
           // T-300 NA variant: dirty-set Pass 1 + Pass 2 instead of full
           // rescore.  Pass 3 still runs over the full tree because it
           // populates internal down2 (read by extract_char_steps) and
           // counts NA-block steps directly.  Savings come from skipping
-          // Pass 1 + Pass 2 on off-dirty nodes.
-          fitch_na_dirty_downpass(tree, ds, nz, nx);
-          fitch_na_dirty_uppass(tree, ds, nz, nx);
+          // Pass 1 + Pass 2 on off-dirty nodes.  The same three-seed dirty
+          // region already backs the exact_verify_sweep incremental path.
+          fitch_na_dirty_downpass(tree, ds, nz, nx, third);
+          fitch_na_dirty_uppass(tree, ds, nz, nx, third);
           int ew_total = fitch_na_pass3_score(tree, ds);
           if (use_iw) {
             std::fill(divided_steps.begin(), divided_steps.end(), 0);
@@ -2833,17 +2843,36 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             actual = static_cast<double>(ew_total) + ds.ew_offset;
           }
         } else {
-          // Non-trivial TBR rerooting, or a scoring mode whose incremental
-          // delta is not exact (HSJ/XFORM, see incremental_ok): recompute the
-          // authoritative score via score_tree().
+          // A scoring mode whose incremental delta is not exact (HSJ/XFORM,
+          // see incremental_ok): recompute the authoritative score via
+          // score_tree().
           actual = full_rescore(tree, ds);
         }
         // Accept-path rescore: the price of ACCEPTING a move, as distinct from
         // scanning candidates.  On NA this is the dirty down/uppass plus a
-        // full-tree Pass 3, or an outright full_rescore for a TBR rerooting.
+        // full-tree Pass 3; HSJ/XFORM still pay an outright full_rescore.
         if (na_timing) {
           ds.na_t_accept_ns += ns_since(_t_acc);
           ++ds.na_n_accept;
+        }
+
+        // AUDIT (env TS_TBR_ACCEPTCHK): cross-check the incremental accept
+        // score against full_rescore and abort on any drift.  This is the
+        // oracle for the dirty-set accept path — an earlier incremental
+        // attempt shipped a systematic delta of -3 (b7303ee5) precisely
+        // because no such check existed.  full_rescore leaves prelim/final_
+        // coherent for the whole tree, so running it here is state-neutral.
+        // No-op unless the env var is set.
+        if (acceptchk && incremental_ok) {
+          const double audit = full_rescore(tree, ds);
+          if (std::fabs(actual - audit) > 1e-6) {
+            Rcpp::stop("TS_TBR_ACCEPTCHK mismatch mode=%s reroot=%d clip=%d "
+                       "incr=%.6f full=%.6f diff=%.6f",
+                       has_na ? (use_iw ? "NA+IW" : "NA+EW")
+                              : (use_iw ? "IW" : "EW"),
+                       is_spr ? 0 : 1, clip_node, actual, audit,
+                       actual - audit);
+          }
         }
 
         // DIAGNOSTIC (env TS_IW_SCANCHK): compare the scan's predicted

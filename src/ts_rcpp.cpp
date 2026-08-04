@@ -924,7 +924,8 @@ List ts_tbr_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -985,7 +986,8 @@ List ts_ratchet_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 

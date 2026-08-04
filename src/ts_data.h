@@ -268,6 +268,12 @@ struct DataSet {
   mutable long long na_t_vroot_ns = 0;   // vroot_cache build / compute_from_above
   mutable long long na_t_accept_ns = 0;  // accept-path NA dirty rescores
   mutable long long na_n_accept = 0;
+  // Accepted moves that rerooted the clipped fragment, counted ALWAYS (not only
+  // under TS_NA_TIMING) for the same reason as na_n_evs above: it is one
+  // increment per accept, and it is the only evidence that the reroot arm of
+  // the dirty-set accept path was reached at all.  Without it the regression
+  // test for that arm cannot tell a correct rescore from an unexercised one.
+  mutable long long n_reroot_accepts = 0;
 
   // Per-pattern step scratch for the weighted (IW/profile) full-rescore path
   // (fitch_score_ew).  Lives on DataSet for the SAME reason as evs_false_cache
