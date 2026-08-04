@@ -95,7 +95,7 @@ nobody.
 `src/ts_prune_reinsert.cpp:353` — `expand_and_reinsert(…, ts::ConstraintData* cd)` takes a
 constraint pointer and **never references it**, which is why it shows up as a pre-existing
 `-Wunused-parameter` under `g++ -Wall -Wextra`. If that function genuinely re-inserts tips
-without consulting the constraint, it is a [`T-324`](findings.md)-shaped gap on a different
+without consulting the constraint, it is a [`T-324` = agent-issues/TreeSearch#1](https://github.com/agent-issues/TreeSearch/issues/1)-shaped gap on a different
 path — reinsertion producing a violating tree that only the downstream posthoc check might
 catch.
 
@@ -108,7 +108,8 @@ the fix, and the warning goes away).
 Two reasons it is worth someone's time rather than a shrug. It surfaced from a **compiler
 warning, not from reading** — nobody has read this function's constraint handling, so its
 silence is not evidence. And the same function is already the subject of
-[`T-366`](findings.md) (mixed-regime `prelim`), so a reader is going in there anyway; settling
+[`T-366`](findings-archive.md) (mixed-regime `prelim`, since **fixed** `d94d76b0` and archived),
+so a reader is going in there anyway; settling
 both in one pass costs barely more than settling one.
 
 ### Item 7 — area 13 gets two filed constraint findings from an area-11 round, one of them P1
@@ -120,10 +121,10 @@ Receiving-area check done as this file requires: area 13's most recent round is 
 and nothing later in `log.md` touches either finding. So this is genuinely open, not a re-queue
 of resolved work.
 
-**The two findings.** [`T-402`](findings.md) (**P1**) — a `constraint` is silently ignored when
+**The two findings.** [`T-402` = #18](https://github.com/agent-issues/TreeSearch/issues/18) (**P1**) — a `constraint` is silently ignored when
 the caller supplies a violating start via `tree =`; the search freezes on it, reports a
 better-than-constrained score, and *evicts* every compliant tree other replicates find.
-[`T-403`](findings.md) (P2) — the "enforced splits are protected from collapse" promise is an
+[`T-403` = #19](https://github.com/agent-issues/TreeSearch/issues/19) (P2) — the "enforced splits are protected from collapse" promise is an
 exact-match test with no access to `consZero`, so under the **default** `collapse = TRUE` the
 returned trees can violate the constraint outright (20/20 seeds).
 

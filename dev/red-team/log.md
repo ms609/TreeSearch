@@ -16,7 +16,9 @@ tier system and are tagged `tier: n/a (pre-tier)`; the historical `reviewed_by` 
 This log was migrated 2026-06-16 from `.positai/expertise/red-team.md` (the superset that
 carried the full 2026-05-26 rotation) and extended with the 2026-06-15 CRAN run and the
 2026-06-16 Shiny round. Durable lessons live in `../expertise/red-team.md`; open findings
-in `findings.md`; version-bump re-eligible seams in `escalation-backlog.md`.
+as **GitHub issues** in [`agent-issues/TreeSearch`](https://github.com/agent-issues/TreeSearch/issues?q=label%3Ared-team)
+(since 2026-08-04 — `findings.md` is deleted, `findings-archive.md` frozen, `migration-map.tsv`
+maps every historical `T-nnn`); version-bump re-eligible seams in `escalation-backlog.md`.
 
 ---
 
