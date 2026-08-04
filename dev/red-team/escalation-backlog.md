@@ -95,7 +95,7 @@ nobody.
 `src/ts_prune_reinsert.cpp:353` — `expand_and_reinsert(…, ts::ConstraintData* cd)` takes a
 constraint pointer and **never references it**, which is why it shows up as a pre-existing
 `-Wunused-parameter` under `g++ -Wall -Wextra`. If that function genuinely re-inserts tips
-without consulting the constraint, it is a [`T-324`](findings.md)-shaped gap on a different
+without consulting the constraint, it is a [`T-324` = agent-issues/TreeSearch#1](https://github.com/agent-issues/TreeSearch/issues/1)-shaped gap on a different
 path — reinsertion producing a violating tree that only the downstream posthoc check might
 catch.
 
@@ -108,8 +108,50 @@ the fix, and the warning goes away).
 Two reasons it is worth someone's time rather than a shrug. It surfaced from a **compiler
 warning, not from reading** — nobody has read this function's constraint handling, so its
 silence is not evidence. And the same function is already the subject of
-[`T-366`](findings.md) (mixed-regime `prelim`), so a reader is going in there anyway; settling
+[`T-366`](findings-archive.md) (mixed-regime `prelim`, since **fixed** `d94d76b0` and archived),
+so a reader is going in there anyway; settling
 both in one pass costs barely more than settling one.
+
+### Item 7 — area 13 gets two filed constraint findings from an area-11 round, one of them P1
+
+Recorded 2026-08-04 by the area-11 round. **Cross-area class** (the second one this file admits):
+area 11 found them, area 13 owns them, and area 13's *recorded next-visit plan predates them*.
+
+Receiving-area check done as this file requires: area 13's most recent round is **2026-07-03**,
+and nothing later in `log.md` touches either finding. So this is genuinely open, not a re-queue
+of resolved work.
+
+**The two findings.** [`T-402` = #18](https://github.com/agent-issues/TreeSearch/issues/18) (**P1**) — a `constraint` is silently ignored when
+the caller supplies a violating start via `tree =`; the search freezes on it, reports a
+better-than-constrained score, and *evicts* every compliant tree other replicates find.
+[`T-403` = #19](https://github.com/agent-issues/TreeSearch/issues/19) (P2) — the "enforced splits are protected from collapse" promise is an
+exact-match test with no access to `consZero`, so under the **default** `collapse = TRUE` the
+returned trees can violate the constraint outright (20/20 seeds).
+
+**The ask is a sequencing decision, not a review.** Area 13's next visit was recorded as *"a
+bounded exhaustive harness, not a finder"* (the `topology_spr` / `build_postorder`-guard
+equivalence). That plan is orthogonal to these two and still stands on its merits — but it was
+set when area 13 had no filed P1. Whoever takes area 13 next should decide explicitly which
+comes first and record the reason, rather than defaulting to the older note.
+
+**Two things to read before patching anything in this class**, both already in the rows:
+
+1. **A verify-and-revert gate of the T-390/T-391 shape does not fix T-402.** `nni_perturb`
+   snapshots the violating start *before* repair and then rejects the repaired legal tree for
+   scoring worse, so the illegal score is an unbeatable baseline. Gating the pool capture alone
+   is worse than useless: the pool empties at `maxReplicates = 1` and
+   `R/MaximizeParsimony.R:1682-1684` returns the user's violating start anyway. The fix has to
+   act at the `startEdge` boundary.
+2. **T-324's row was amended on 2026-08-04** because its repair claim was over-optimistic in
+   exactly this regime. T-402 and T-324 share T-324's downstream half verbatim (ungated pool
+   capture, no downstream filter), so they should be fixed together — with T-402's deterministic
+   8-taxon repro as the standing regression test for the shared half. **T-402 does not settle
+   T-324's own reachability question**, and neither row should be read as if it does.
+
+**One part is a maintainer adjudication, not a fixer's call** (same shape as T-396): whether the
+`startEdge` boundary should *repair* a violating start, or *reject* it with an error/warning.
+Both satisfy the contract; they differ in whether `tree =` stays usable as a warm start under a
+constraint, which is a user-facing design choice.
 
 ### Not in this backlog (deliberately)
 

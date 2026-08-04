@@ -1,18 +1,37 @@
 # Red-team findings — TreeSearch (ARCHIVE)
 
+> **FROZEN 2026-08-04 — this file records the file-tracker era and stops growing.**
+> Findings now live as GitHub issues in
+> [`agent-issues/TreeSearch`](https://github.com/agent-issues/TreeSearch/issues?q=label%3Ared-team),
+> where status is GitHub state and cannot drift from merge state. A closed issue *is* the
+> archive; this file remains as **offline, grep-able anti-duplication memory** for everything
+> resolved before the move — which is the one property the tracker does not give us.
+>
+> The migration also discharged an overdue `tidy`: **23 rows appended below were still sitting
+> in `findings.md` reading as open when their fixes had already landed**, only four of them
+> carrying the "awaiting `tidy` archive" marker. That drift is precisely what moving to issues
+> eliminates.
+>
+> `findings.md` was deleted in the same change. Its full final content is recoverable with
+> `git show findings-md-final:dev/red-team/findings.md`, and `migration-map.tsv` maps every historical
+> `T-nnn` to its issue number, archive entry, or open-PR reference. Pre-tracker `T-nnn` ids are
+> **frozen, not retired** — they persist in shipped source comments (e.g.
+> `src/ts_collapsed.cpp`, `src/ts_rcpp.cpp`) and throughout `log.md`.
+
 Terminal-state findings (`fixed` / `closed` / `wontfix`), one line each, newest ID last within
 each block. **Archive, never delete.** A row here is not dead paperwork: it is
 anti-duplication memory. An archived row still stops a future finder re-hunting a bug that is
 already fixed, and the `closed — no longer reproducible` rows are the highest-value records of
 all, because they are what stops an expensive Opus/Fable pass chasing a ghost.
 
-Open findings live in [`findings.md`](findings.md). Full context for every row lives in the
-round entry in [`log.md`](log.md); this file carries only the one-line claim and the
-resolution.
+Open findings live as [GitHub issues](https://github.com/agent-issues/TreeSearch/issues?q=label%3Ared-team)
+(see the frozen notice above). Full context for every row lives in the round entry in
+[`log.md`](log.md); this file carries only the one-line claim and the resolution.
 
 **What "landed" means in this project.** The `/red-team` skill's lifecycle says
 `fixed (PR #N)` = "merged to `main`". That is *not* the convention here: development happens
-on **`cpp-search`**, which is 179 commits ahead of `main`, and nothing archived below has
+on **`cpp-search`**, which is **1108 commits ahead of `main`** (measured 2026-08-04; earlier
+figures of ~179/~180 in this directory were stale), and nothing archived below has
 merged to `main`. In this file, **landed = present in `cpp-search` HEAD**, and the resolution
 column cites a **commit SHA** (a PR number too, where the fix arrived through one). Every row
 below was confirmed by inspecting the code at `cpp-search` HEAD on the date of the `tidy` pass
@@ -68,3 +87,27 @@ moment of filing. This is expected for a directed pre-commit round; it is not st
 Archive row template (one line, compressed from the findings.md row):
 | T-NNN | P1/P2/P3 | <area #> | One-sentence claim. | **fixed `<sha>`** (PR #N) / **closed (Round <date>)** — how it was confirmed at cpp-search HEAD. |
 -->
+| T-344 | P3 | 6 (R↔C++ interface) | `unpack_xform` reads `tip_states[t]` with no length guard — internal-boundary-only, same class as T-323/T-328/T-332 | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-355 | P3 | 7 (Shiny) | `r$trees` mutated on a path that never updates `r$treeHash`, breaking the documented cache-key invariant (latent — no reachable wrong output today) | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-356 | P3 | 7 (Shiny) | Two browser tabs on one app instance silently overwrite each other's cached download files (deterministic names in a process-wide tempdir) | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-357 | P3 | 7 (Shiny) | Orphaned UI output: `instabLegend2` is declared in the UI but never bound server-side, so the legend panel renders empty in two views | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-358 | P3 (perf) | 7 (Shiny) | Cluster-threshold slider re-runs the entire multi-method clustering sweep, though the threshold only picks among already-computed silhouette scores | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-359 | P3 | 7 (Shiny) | Tree-space mapping-quality `future_promise()` has no session-end cancellation — the same lifecycle gap T-311 fixed for the search worker | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-362 | P3 | 8 (Test suite health) | FIXED (this session) — awaiting `tidy` archive. A Tier-1 (CRAN-run) test file takes ~16.6 s against its documented < ~2 s budget, running four full `MaximizeParsimony()` searches on CRAN machines — T-351's fix moved the two worst blocks out but neve… | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-364 | P1 | 9 (Wagner) | FIXED `7685bf07` + `796a29d3` — awaiting `tidy` archive.  T-370 is this same defect filed twice; both are closed by these two commits, and the two earlier branch fixes (`bdc32fb2`, `355c4196`) are superseded, not merged.  Enforcement now goes throug… | fixed `7685bf07` — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-384 | P2 | 9 (Wagner/constraints) | FIXED `4c66a554` — awaiting `tidy` archive. See the resolution at the end of this row, which also corrects three of this row's own reachability claims. `map_constraint_nodes()` is rooting-blind: it accepts a constraint only when the canonicalised sp… | fixed `4c66a554` — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-365 | P2 | 9 (Wagner/PolEscapa) | `LengthAdded()` / `PolEscapa()` with `concavity = "profile"` index the *pre*-`PrepareDataProfile` contrast and token space against the *post*-prepare phyDat — a documented option that errors out on any character that is not plain binary. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-366 | P3 | 3,9 (Prune-reinsert/Wagner) | FIXED `d94d76b0` — awaiting `tidy` archive. `expand_and_reinsert` seeded `prelim` in the NA (Brazeau) regime and then patched it in the standard-Fitch regime, so insertion edge sets were mixed-regime on inapplicable-bearing data. | fixed `d94d76b0` — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-367 | P3 (dormant tripwire) | 9 (Wagner) | `wagner_incremental_rescore`'s Phase-2 uppass early termination is unsound, leaving `final_` stale — harmless today only because no caller reads `final_` before its next full rescore. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-368 | P3 (perf) | 9 (Wagner) | Constraint bookkeeping is re-derived from scratch on every insertion step — `O(n_tip^2 * n_splits * n_words)` per Wagner start, plus a fresh `n_node x n_words` heap allocation and zero-fill per step. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-372 | P3 | 9 (Wagner/PolEscapa) | `TreeLength()` errors `"Not a matrix."` on a *list* of trees under profile parsimony when the character carries no profile information — the single-tree path returns 0 for the same input. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-373 | P1 | 10 (HSJ/XFORM kernels) | Every search entry point silently no-ops when `total_words == 0`, which under HSJ/XFORM does *not* mean "all trees score the same" — the start tree is returned unsearched, with no warning. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-375 | P1 | 10 (HSJ/XFORM kernels) | HSJ bit-encodes contrast-row token indices as if they were states, so `"?"` in a secondary character scores as a concrete, conflicting state. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-376 | P1 | 10 (HSJ/XFORM kernels) | `primary_present` compares a token index against a levels index, so the HSJ score is not a function of the data — permuting the arbitrary contrast-row order changes it, and the package's own reader mis-classifies absent tips as present on a shipped … | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-379 | P3 | 10 (HSJ/XFORM kernels) | XFORM's `-2` sentinel throws away the information in the *known* secondaries, under-counting cost. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-380 | P3 | 10 (HSJ/XFORM kernels) | `ts_sankoff_test` never validates R-supplied matrix dimensions — a short cost matrix is an unchecked out-of-bounds read, and a wrong-stride *silently wrong* read before that. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-381 | P3 | 10 (HSJ/XFORM kernels) | The `min_steps` clamp silently absorbs an invariant violation that would inflate IW/XPIWE scores. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-382 | P3 | 10 (HSJ/XFORM kernels), 11 (Collapse) | Collapse reads stale `local_cost`/`prelim` for ratchet-zeroed blocks — conservative, so it costs an optimisation rather than correctness. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-390 | P2 | 9 (Wagner/constraints) | FIXED. `sprFirst = TRUE` under a topological constraint silently returns a constraint-VIOLATING tree: the SPR warm-up pass has no constraint parameter at all. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+| T-391 | P2 | 9 (Wagner/constraints), 3 (Prune-reinsert) | `pruneReinsertCycles > 0` under a topological constraint silently returns a constraint-VIOLATING tree, even though the constraint IS passed in — an enforcement gap inside re-insertion, not a plumbing omission. | fixed (see commit history) — archived 2026-08-04 at tracker migration; full original row: `git show findings-md-final:dev/red-team/findings.md` |
+
