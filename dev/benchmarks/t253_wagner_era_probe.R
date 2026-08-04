@@ -64,6 +64,13 @@ seedsFor <- function(i) BASE_SEED + seq_len(nSeeds) - 1L + (i - 1L) * 100L
 
 safeKey <- function(k) gsub("[^A-Za-z0-9]", "_", k)
 
+# Filename field separator.  It must be a character `safeKey()` can NEVER emit, or
+# keys like "project2084_(1)" -- which safeKey renders "project2084___1_" -- split
+# into the wrong number of fields and get silently dropped from the results.  That
+# cost 3 of 25 matrices on the first run: a partial answer that still LOOKED
+# complete.  "_" is unusable for exactly that reason; "@" is not in [A-Za-z0-9].
+FS <- "@@"
+
 # ---------------------------------------------------------------- STEP: prep ----
 if (identical(step, "prep")) {
   suppressPackageStartupMessages(library("TreeTools"))
@@ -143,8 +150,8 @@ if (identical(step, "addition")) {
       }
       # Write the deliverable BEFORE anything that could fail on it: a verification
       # error must not take the computed tree with it (the 2026-07-31 lesson).
-      saveRDS(tr, file.path(treeDir, sprintf("%s__%s__s%d.rds",
-                                             safeKey(key), engine, sd)))
+      saveRDS(tr, file.path(treeDir, paste0(
+        paste(safeKey(key), engine, paste0("s", sd), sep = FS), ".rds")))
       rows[[length(rows) + 1L]] <- data.frame(
         key = key, engine = engine, tsVersion = tsVer, tsLib = tsLib, seed = sd,
         wallS = wall, ok = TRUE, stringsAsFactors = FALSE
@@ -187,16 +194,19 @@ if (identical(step, "score")) {
 
   files <- list.files(treeDir, pattern = "\\.rds$", full.names = TRUE)
   rows <- list()
+  nSkipped <- 0L
   for (f in files) {
-    parts <- strsplit(sub("\\.rds$", "", basename(f)), "__", fixed = TRUE)[[1]]
+    parts <- strsplit(sub("\\.rds$", "", basename(f)), FS, fixed = TRUE)[[1]]
     if (length(parts) != 3L) {
       cat("SKIP unparseable filename:", basename(f), "\n")
+      nSkipped <- nSkipped + 1L
       next
     }
     keySafe <- parts[[1]]
     idx <- match(keySafe, safeKey(manifest$key))
     if (is.na(idx)) {
       cat("SKIP no manifest row:", basename(f), "\n")
+      nSkipped <- nSkipped + 1L
       next
     }
     key <- manifest$key[idx]
@@ -215,6 +225,18 @@ if (identical(step, "score")) {
   }
   scores <- do.call(rbind, rows)
   write.csv(scores, file.path(outDir, "scores.csv"), row.names = FALSE)
+
+  # ---- COMPLETENESS: say out loud what is missing.  A table covering 22 of 25
+  # matrices reads exactly like a table covering all of them, and the first run of
+  # this probe did precisely that (3 parenthesised keys lost to the field separator).
+  covered <- unique(scores$key)
+  missing <- setdiff(manifest$key, covered)
+  cat("\ncoverage:", length(covered), "of", nrow(manifest), "matrices;",
+      nSkipped, "tree files skipped\n")
+  if (length(missing)) {
+    cat("!! MISSING MATRICES (the result below is PARTIAL):",
+        paste(missing, collapse = ", "), "\n")
+  }
 
   # ------- the decision table: per MATRIX, not per (matrix, seed) -------
   # Pairing on cells would be pseudo-replicated -- seeds within a matrix are not
