@@ -203,11 +203,11 @@
 # the list-config entry points, which ignore anything they do not name.  A
 # `do.call()` onto a flat kernel has to be filtered through this, or a field
 # added for the list-config path becomes an unused-argument error there.
-.kernelConstraintArgs <- c("consSplitMatrix", "consContrast", "consTipData",
-                           "consWeight", "consLevels", "consExpectedScore")
+.kernelConsFields <- c("consSplitMatrix", "consContrast", "consTipData",
+                       "consWeight", "consLevels", "consExpectedScore")
 
 .KernelConstraintArgs <- function(consArgs) {
-  consArgs[intersect(names(consArgs), .kernelConstraintArgs)]
+  consArgs[intersect(names(consArgs), .kernelConsFields)]
 }
 
 # Does `tree` display a split separating a constraint character's "1" group
@@ -1590,8 +1590,8 @@ MaximizeParsimony <- function(
     if (any(violating)) {
       warning(sum(violating), " of the ", length(startTrees),
               " tree(s) supplied to `tree` do not satisfy `constraint`; ",
-              "they will be rearranged to comply before the search starts.",
-              call. = FALSE)
+              "they will be rearranged to comply before the search starts, ",
+              "or replaced if that fails.", call. = FALSE)
     }
   }
 
@@ -1763,11 +1763,14 @@ MaximizeParsimony <- function(
     })
   }
   if (length(outTrees) == 0L) {
-    # `treeTpl` is a starting tree, which under a constraint is exactly what
-    # may not be handed back: an empty pool means no replicate produced a tree
-    # the constraint gate accepted (or none finished at all), and returning an
-    # unvalidated tree would break the guarantee `constraint` makes.
-    if (!is.null(constraintConfig)) {
+    # `treeTpl` is a starting tree, so under a constraint it is exactly what may
+    # not be handed back unchecked: an empty pool means no replicate produced a
+    # tree the constraint gate accepted -- or, benignly, that the time limit
+    # expired before the first one finished.  Check rather than assume, so a
+    # short budget still returns a tree when the fallback happens to comply.
+    if (!is.null(constraintConfig) &&
+        .ConstraintViolated(treeTpl, constraintConfig[["consSplitMatrix"]],
+                            constraintConfig[["consZero"]])) {
       stop("The search returned no tree satisfying `constraint`. Check that ",
            "the constraint is compatible with the data, and allow more search ",
            "with `maxReplicates` or `maxSeconds`.")

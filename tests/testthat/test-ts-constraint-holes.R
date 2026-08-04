@@ -1,23 +1,14 @@
 # Tier 2: skipped on CRAN; see tests/testing-strategy.md
 skip_on_cran()
 
-## Three holes through which a `constraint` stopped binding the trees the user
-## is handed (T-402, T-324, T-403).
+## A `constraint` must bind the trees the caller is handed, at each of the three
+## boundaries where it can be lost: the starting tree, the pool capture, and the
+## final collapse (T-402, T-324, T-403).
 ##
-## T-402: a start tree supplied via `tree =` was never checked against the
-## constraint.  Constrained rearrangement cannot repair such a tree — an
-## unmapped split makes regraft_violates_constraint() reject every move — so
-## the replicate froze on it and reported its unconstrained score, which then
-## evicted the compliant trees other replicates found.
-##
-## T-324: the per-replicate pool capture had no constraint gate at all,
-## asymmetrically to the fuse capture beside it, so any violating tree that
-## reached it was handed straight back.
-##
-## T-403: the collapse pass protected only a node whose tip set was the "1"
-## group EXACTLY.  Tips ambiguous for a constraint character are free to sit on
-## either side, so the split is often realised by a wider node — left
-## unprotected, and contracted away under the default `collapse = TRUE`.
+## Each test asserts COMPLIANCE of the returned trees, not the score alone.  A
+## constraint-violating tree is drawn from a wider set of topologies than a legal
+## one, so it scores better; a score assertion alone would pass on exactly the
+## tree that breaks the contract.
 
 library("TreeTools", quietly = TRUE)
 
@@ -101,8 +92,9 @@ test_that("a violating `tree` cannot beat the constrained optimum (T-402)", {
   expect_equal(AllShown(one, c("a", "b"), setdiff(taxa, c("a", "b"))),
                length(one))
 
-  # Several replicates: the violating tree's illegal score used to evict every
-  # compliant tree the other replicates found.
+  # Several replicates: an illegal score is better than any legal one, so it
+  # evicts every compliant tree the other replicates find.  One bad start must
+  # not cost the whole search.
   set.seed(1)
   expect_warning(
     many <- MaximizeParsimony(abDataset, tree = abViolatingStart,
@@ -116,13 +108,13 @@ test_that("a violating `tree` cannot beat the constrained optimum (T-402)", {
 })
 
 
-test_that("a violating tree never enters the pool (T-324)", {
-  # The Wagner retry-exhaustion route that motivated T-324 is not constructible
-  # on demand, so the shared downstream half -- the ungated pool capture -- is
-  # driven through T-402's start instead: without the gate the replicate's
-  # frozen, violating tree is captured verbatim.  `poolSuboptimal` keeps
-  # non-best trees too, so a violating tree would be visible even if a better
-  # compliant one existed.
+test_that("no tree in the returned pool breaks the constraint (T-324)", {
+  # What this asserts is the outcome -- every tree handed back complies -- over
+  # the whole pool, not just the best-score trees: `poolSuboptimal` retains the
+  # near-misses, which is where an ungated capture shows up.  It does NOT prove
+  # the capture gate itself fires; the route that motivated T-324 is Wagner
+  # retry-exhaustion, whose reachability is unconfirmed and which cannot be
+  # forced from R.  Treat this as a contract test, not a gate test.
   set.seed(2)
   expect_warning(
     result <- MaximizeParsimony(abDataset, tree = abViolatingStart,
@@ -134,6 +126,49 @@ test_that("a violating tree never enters the pool (T-324)", {
   expect_equal(AllShown(result, c("a", "b"), setdiff(taxa, c("a", "b"))),
                length(result))
   expect_gte(as.numeric(attr(result, "score")), 10)
+
+  # The parallel driver has its own copy of the capture, on a per-thread
+  # constraint and pool; two threads is the project's per-agent core limit.
+  set.seed(2)
+  expect_warning(
+    parallel <- MaximizeParsimony(abDataset, tree = abViolatingStart,
+                                  constraint = abConstraint, maxReplicates = 4L,
+                                  nThreads = 2L, verbosity = 0L),
+    "do not satisfy `constraint`"
+  )
+  expect_equal(AllShown(parallel, c("a", "b"), setdiff(taxa, c("a", "b"))),
+               length(parallel))
+  expect_equal(as.numeric(attr(parallel, "score")), 10)
+})
+
+
+test_that("every flat kernel takes .PrepareConstraint()'s output", {
+  # The flat `ts_*` kernels declare their constraint arguments as formals, so a
+  # field .PrepareConstraint() adds for the list-config entry points is an
+  # unused-argument error at any site that splats the whole list into one.
+  # Assert the filter covers every formal each kernel actually declares, and
+  # exercise the entry points that splat -- `Resample(nReplicates > 1)` had no
+  # constrained coverage at all, so an unfiltered splat there stayed green.
+  kernels <- list(TreeSearch:::ts_wagner_tree,
+                  TreeSearch:::ts_random_wagner_tree,
+                  TreeSearch:::ts_resample_search,
+                  TreeSearch:::ts_parallel_resample,
+                  TreeSearch:::ts_successive_approx)
+  filtered <- names(TreeSearch:::.KernelConstraintArgs(
+    TreeSearch:::.PrepareConstraint(abConstraint, abDataset)
+  ))
+  for (k in kernels) {
+    expect_true(all(filtered %in% names(formals(k))))
+  }
+
+  set.seed(4)
+  expect_s3_class(
+    Resample(abDataset, constraint = abConstraint, nReplicates = 2L,
+             maxReplicates = 2L),
+    "multiPhylo"
+  )
+  set.seed(4)
+  expect_s3_class(AdditionTree(abDataset, constraint = abConstraint), "phylo")
 })
 
 
@@ -141,7 +176,8 @@ test_that("collapse keeps the constraint visible (T-403)", {
   # Only (a, e) and (b, f) are supported, so the branch that separates
   # {a, b} from {c, d} is unsupported and collapses -- taking the constraint
   # with it.  The node realising the split is {a, e, b, f}, not the "1" group
-  # {a, b}, which is why an exact-match protection missed it.
+  # {a, b}, so protection keyed on an exact match with the "1" group does not
+  # reach it.
   m <- rbind(
     c(1, 0, 0, 0, 1, 0, 0, 0),
     c(1, 0, 0, 0, 1, 0, 0, 0),

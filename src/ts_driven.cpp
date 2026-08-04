@@ -49,6 +49,26 @@ ProgressInfo make_progress(int rep, const DrivenParams& params,
   return pi;
 }
 
+// Does the tree satisfy the user constraint -- some edge separating the taxa
+// coded 1 for each constraint character from those coded 0?
+//
+// violates_constraint_posthoc() answers that directly, but builds a whole
+// TreeState and scores it.  The locked-node mapping is much cheaper and is
+// strictly the STRONGER test: it asks for the 1 group to be a clade exactly,
+// excluding the taxa coded `?`, and a tree that manages that necessarily
+// separates the two coded groups.  So a full mapping settles the case the
+// search puts us in almost every time -- every rearrangement it accepts is
+// filtered on that same mapping -- and only an unmapped split pays for Fitch.
+bool constraint_satisfied(TreeState& tree, ConstraintData& cd) {
+  map_constraint_nodes(tree, cd);
+  for (int s = 0; s < cd.n_splits; ++s) {
+    if (cd.constraint_node[s] < 0) {
+      return !violates_constraint_posthoc(tree, cd);
+    }
+  }
+  return true;
+}
+
 } // anonymous namespace
 
 bool capture_satisfies_constraint(TreeState& tree, ConstraintData* cd,
@@ -61,13 +81,13 @@ bool capture_satisfies_constraint(TreeState& tree, ConstraintData* cd,
   // user constraint: a tree can map every constraint node and still fail the
   // full Fitch check, which is the case the post-hoc DataSet exists for.
   if (!cd || !cd->active || !cd->has_posthoc) return true;
-  if (!violates_constraint_posthoc(tree, *cd)) return true;
+  if (constraint_satisfied(tree, *cd)) return true;
 
   impose_constraint(tree, *cd);
   tree.build_postorder();
   tree.reset_states(ds);
   score = score_tree(tree, ds);
-  return !violates_constraint_posthoc(tree, *cd);
+  return constraint_satisfied(tree, *cd);
 }
 
 // --- Single-replicate pipeline ---
@@ -179,11 +199,11 @@ ReplicateResult run_single_replicate(
   // is legal and so necessarily scores worse than the violation it replaces.
   // The R layer warns when a caller's `tree` is what arrived here violating.
   if (cd && cd->active && cd->has_posthoc &&
-      violates_constraint_posthoc(result.tree, *cd)) {
+      !constraint_satisfied(result.tree, *cd)) {
     impose_constraint(result.tree, *cd);
     result.tree.build_postorder();
     result.tree.reset_states(ds);
-    if (violates_constraint_posthoc(result.tree, *cd)) {
+    if (!constraint_satisfied(result.tree, *cd)) {
       // impose_constraint() is heuristic.  Discard the start rather than search
       // from a tree the constraint machinery cannot move: a constrained Wagner
       // build, with its own post-hoc reshuffles, is the better bet.
@@ -1098,6 +1118,21 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
     result.timings += rep_result.timings;
 
+    if (rep_result.interrupted) {
+      // Tested but not repaired: the deadline has already passed, and
+      // impose_constraint() is an unbounded SPR loop with no interrupt check
+      // of its own, so repairing here would extend an overrun.
+      const bool keep = !cd || !cd->active || !cd->has_posthoc ||
+                        constraint_satisfied(rep_result.tree, *cd);
+      if (keep && rep_result.score < 1e18) {
+        std::vector<uint8_t> rep_collapsed;
+        compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
+        pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
+      }
+      result.timed_out = true;
+      goto finish;
+    }
+
     // A replicate can still finish on a constraint-violating tree: a Wagner
     // start whose reshuffles all failed, or a phase that accepts on a looser
     // check than the pool promises.  The pool is what the caller is handed, so
@@ -1106,28 +1141,25 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
                                                      rep_result.score);
     if (!rep_ok) ++result.constraint_discards;
 
-    // Compute collapsed flags for collapsed-topology pool dedup.
-    // Trees that differ only in zero-length resolutions are treated
-    // as duplicates, improving pool diversity (Goloboff & Farris 2001).
-    std::vector<uint8_t> rep_collapsed;
+    // A discarded replicate contributes its count and nothing else.  Its score
+    // is that of a violating tree, which beats any legal one, so letting it
+    // through would credit the strategy arm that produced it, bias the coverage
+    // estimate downwards and report a figure no returned tree attains.  The
+    // stopping rules at the foot of the loop still run: skipping them would
+    // outlive the deadline and swallow an interrupt.
+    bool score_improved = false;
     if (rep_ok) {
+      // Compute collapsed flags for collapsed-topology pool dedup.
+      // Trees that differ only in zero-length resolutions are treated
+      // as duplicates, improving pool diversity (Goloboff & Farris 2001).
+      std::vector<uint8_t> rep_collapsed;
       compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
-    }
 
-    if (rep_result.interrupted) {
-      if (rep_ok && rep_result.score < 1e18) {
-        pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
-      }
-      result.timed_out = true;
-      goto finish;
-    }
-
-    // Add to pool with collapsed-topology dedup
-    double prev_best = pool.best_score();
-    if (rep_ok) {
+      // Add to pool with collapsed-topology dedup
+      double prev_best = pool.best_score();
       pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
+      score_improved = pool.best_score() < prev_best;
     }
-    bool score_improved = pool.best_score() < prev_best;
     if (score_improved) {
       result.last_improved_rep = rep1;
       unsuccessful_reps = 0;
@@ -1140,7 +1172,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // not use a fresh-start arm, so crediting/blaming one would corrupt the
     // bandit.  Together these two flags mean exactly `start_ptr == nullptr`;
     // any future warm-start source must be excluded here too.
-    if (params.adaptive_start && !pr_reseeded && !user_started) {
+    if (params.adaptive_start && !pr_reseeded && !user_started && rep_ok) {
       bool hit_best = (rep_result.score <= pool.best_score());
       strategy_tracker.update(rep_strategy, hit_best);
     }
@@ -1153,10 +1185,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     }
 
     ++result.replicates_completed;
-    result.replicate_scores.push_back(rep_result.score);
-
-    // Report end of replicate
-    report("replicate", 1, rep_result.score, rep1);
+    if (rep_ok) {
+      result.replicate_scores.push_back(rep_result.score);
+      report("replicate", 1, rep_result.score, rep1);
+    }
 
     // Periodic tree fusing
     if (params.fuse_interval > 0 &&

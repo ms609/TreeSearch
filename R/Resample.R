@@ -369,7 +369,7 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
     # Batch mode: run all replicates at once (optionally in parallel)
     batchArgs <- c(searchArgs,
                    list(nReplicates = nReplicates, nThreads = nThreads),
-                   consArgs, profileArgs)
+                   .KernelConstraintArgs(consArgs), profileArgs)
     result <- do.call(ts_parallel_resample, batchArgs)
 
     trees <- vector("list", nReplicates)

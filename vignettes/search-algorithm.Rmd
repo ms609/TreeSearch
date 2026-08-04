@@ -238,6 +238,17 @@ so a tree that breaks the constraint is never returned; and the enforced splits
 are protected from the final collapse pass, whichever branch happens to realise
 them.
 
+"Satisfies the constraint" here means what `constraint` promises the user: some
+edge separates the taxa coded `1` for a constraint character from those coded
+`0`, with `?` taxa free to sit on either side.
+Note that the locked-node filter used to screen individual rearrangements reads
+the constraint more strictly, as "the `1` group is a clade exactly", excluding
+the free taxa.
+Every strictly-compliant tree satisfies the user's constraint, so the search
+never returns a tree that breaks it; but a start that satisfies the user's
+constraint without satisfying the stricter form maps to no node, and the
+replicate makes no moves from it.
+
 
 ## The driven search pipeline
 

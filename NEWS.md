@@ -1,5 +1,24 @@
 # To integrate into 2.0.0 notes
 
+- `constraint` now binds the trees `MaximizeParsimony()` returns, at three
+  boundaries where it did not.  A starting tree supplied through `tree` was
+  never checked against the constraint; because a constrained search rejects
+  every rearrangement away from a violating tree, the replicate froze on it and
+  reported a score no constraint-satisfying tree could reach, which then evicted
+  the compliant trees other replicates had found.  A violating start is now
+  rearranged until it complies before the search begins, **with a warning**.
+  Separately, a replicate's own tree entered the pool unchecked, and the final
+  collapse of unsupported branches could contract the very branch that displayed
+  an enforced grouping -- so under the default `collapse = TRUE` a returned tree
+  could break the constraint outright.  Both paths are now checked.
+
+  **Constrained results may therefore differ from previous versions**: scores
+  can rise to the true constrained optimum, and returned trees will display the
+  constrained groupings.  `MaximizeParsimony()` also warns if any replicate
+  ended on a tree that could not be made to satisfy the constraint, and now
+  raises an error rather than returning an unverified tree if no
+  constraint-satisfying tree was found at all.
+
 - `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
   reported score is reproducible.  The x-transformation's step matrix is
   asymmetric -- a gain costs one more than the number of secondary characters it

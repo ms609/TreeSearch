@@ -241,12 +241,13 @@ void worker_thread(WorkerContext ctx) {
       compute_collapsed_flags(rep_result.tree, ds_local, rep_collapsed);
       ctx.shared_pool->add_collapsed(rep_result.tree, rep_result.score,
                                      rep_collapsed);
+      // Record per-replicate score for Chao1 coverage estimation.  A discarded
+      // replicate is left out: its score is a violating tree's, which no
+      // returned tree attains.
+      ctx.thread_scores[ctx.thread_id].push_back(rep_result.score);
     } else {
       ++ctx.thread_constraint_discards[ctx.thread_id];
     }
-
-    // Record per-replicate score for Chao1 coverage estimation
-    ctx.thread_scores[ctx.thread_id].push_back(rep_result.score);
 
     ctx.replicates_done->fetch_add(1, std::memory_order_relaxed);
 

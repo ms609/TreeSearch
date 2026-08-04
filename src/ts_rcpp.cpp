@@ -2189,10 +2189,10 @@ List ts_collapse_pool(
   // 1 group EXACTLY, which is what the search's locked-node machinery enforces.
   // The constraint the user is promised is looser: tips ambiguous for the
   // constraint character are free to sit on either side, so the split can be
-  // realised by a node that is not exactly the 1 group — and that node, being
-  // unmatched, was left collapsible, contracting the enforced grouping away.
-  // `cons_one` / `cons_zero` are the raw (uncanonicalised) groups, from which
-  // the realising node is found per tree below.
+  // realised by a node that is not exactly the 1 group, which no exact match
+  // reaches — and contracting that node's edge takes the enforced grouping with
+  // it.  `cons_one` / `cons_zero` are the raw (uncanonicalised) groups, from
+  // which the realising node is found per tree below.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
   std::vector<std::vector<uint64_t>> cons_canon;
@@ -2304,15 +2304,22 @@ List ts_collapse_pool(
         }
       }
 
-      // Protect the node that realises each split under the looser, promised
-      // reading: the MRCA of one group, when it holds none of the other.  The
+      // A split can also be realised by a node that is not the 1 group exactly,
+      // and that node needs protecting too — but only when nothing else keeps
+      // the split visible.  A node realises the split when it holds one whole
+      // group and none of the other; every such node's own edge displays it, so
+      // if any of them already survives the contraction there is nothing to do.
+      // Protecting unconditionally would instead force the resolution of a
+      // branch the constraint does not ask for, which is the "unsupported
+      // non-constraint branches still collapse" half of the promise.
+      //
+      // Where none survives, the MRCA of a group is the node protected: the
       // postorder visits every node before its parent, so the first node to
-      // hold a whole group is its MRCA; keeping that one edge is enough,
-      // because contracting an edge below it leaves its descendant set — and so
-      // the split it displays — unchanged.  Which of the two groups is the
-      // clade depends on the rooting alone, so try each in turn.  Groups of
-      // fewer than two tips are skipped: such a split is realised by a terminal
-      // edge, which is never a collapse candidate.
+      // hold a whole group is its MRCA, and keeping that one edge suffices,
+      // since contracting an edge below it leaves its descendant set — and so
+      // the split it displays — unchanged.  Groups of fewer than two tips are
+      // skipped: such a split is realised by a terminal edge, never a collapse
+      // candidate.
       for (size_t r = 0; r < cons_one.size(); ++r) {
         const std::vector<uint64_t>* grp[2] = { &cons_one[r], &cons_zero[r] };
         int n_in_group[2] = {0, 0};
@@ -2322,33 +2329,29 @@ List ts_collapse_pool(
           }
         }
         if (n_in_group[0] < 2 || n_in_group[1] < 2) continue;
-        for (int side = 0; side < 2; ++side) {
+
+        bool survives = false;
+        int to_protect = -1;
+        for (int side = 0; side < 2 && !survives; ++side) {
           const std::vector<uint64_t>& in = *grp[side];
           const std::vector<uint64_t>& out = *grp[1 - side];
-          // postorder holds internal nodes only, and the MRCA of two or more
-          // tips is internal, so the first match is that MRCA.
-          int mrca = -1;
-          for (size_t pi = 0; pi < tree.postorder.size() && mrca < 0; ++pi) {
-            const int node = tree.postorder[pi];
-            const uint64_t* nb = &tb[static_cast<size_t>(node) * wps];
-            bool holds = true;
+          for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
+            const int v = tree.postorder[pi];
+            if (v <= n_tip || v >= static_cast<int>(flags.size())) continue;
+            const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
+            bool realises = true;
             for (int w = 0; w < wps; ++w) {
-              if ((nb[w] & in[w]) != in[w]) { holds = false; break; }
+              if ((nb[w] & in[w]) != in[w] || (nb[w] & out[w])) {
+                realises = false;
+                break;
+              }
             }
-            if (holds) mrca = node;
+            if (!realises) continue;
+            if (!flags[v]) { survives = true; break; }
+            if (to_protect < 0) to_protect = v;  // the MRCA, in postorder
           }
-          if (mrca < 0) continue;
-          const uint64_t* mb = &tb[static_cast<size_t>(mrca) * wps];
-          bool clean = true;
-          for (int w = 0; w < wps; ++w) {
-            if (mb[w] & out[w]) { clean = false; break; }
-          }
-          if (!clean) continue;                 // this side is not the clade
-          if (mrca > n_tip && mrca < static_cast<int>(flags.size())) {
-            flags[mrca] = 0;
-          }
-          break;
         }
+        if (!survives && to_protect >= 0) flags[to_protect] = 0;
       }
     }
 
