@@ -51,6 +51,25 @@ ProgressInfo make_progress(int rep, const DrivenParams& params,
 
 } // anonymous namespace
 
+bool capture_satisfies_constraint(TreeState& tree, ConstraintData* cd,
+                                  const DataSet& ds, double& score)
+{
+  // Gate on the post-hoc DataSet, which only a *user* constraint carries.  The
+  // cross-replicate consensus constraint is a search heuristic, not a promise
+  // about the answer, so a tree that breaks it is not a wrong result and must
+  // not be thrown away.  The post-hoc check is also the right test even for a
+  // user constraint: a tree can map every constraint node and still fail the
+  // full Fitch check, which is the case the post-hoc DataSet exists for.
+  if (!cd || !cd->active || !cd->has_posthoc) return true;
+  if (!violates_constraint_posthoc(tree, *cd)) return true;
+
+  impose_constraint(tree, *cd);
+  tree.build_postorder();
+  tree.reset_states(ds);
+  score = score_tree(tree, ds);
+  return !violates_constraint_posthoc(tree, *cd);
+}
+
 // --- Single-replicate pipeline ---
 
 ReplicateResult run_single_replicate(
@@ -149,6 +168,30 @@ ReplicateResult run_single_replicate(
         best_wag = trial_score;
       }
     }
+  }
+
+  // A start that breaks the constraint has to be repaired here, before anything
+  // takes its score as a baseline.  Constrained rearrangement cannot undo it:
+  // regraft_violates_constraint() reads an unmapped split as "already
+  // violating" and rejects every move, so the search freezes on the start and
+  // reports its unconstrained — and therefore unbeatably low — score.  Nor can
+  // a later verify-and-revert gate help, for the same reason: the repaired tree
+  // is legal and so necessarily scores worse than the violation it replaces.
+  // The R layer warns when a caller's `tree` is what arrived here violating.
+  if (cd && cd->active && cd->has_posthoc &&
+      violates_constraint_posthoc(result.tree, *cd)) {
+    impose_constraint(result.tree, *cd);
+    result.tree.build_postorder();
+    result.tree.reset_states(ds);
+    if (violates_constraint_posthoc(result.tree, *cd)) {
+      // impose_constraint() is heuristic.  Discard the start rather than search
+      // from a tree the constraint machinery cannot move: a constrained Wagner
+      // build, with its own post-hoc reshuffles, is the better bet.
+      random_wagner_tree(result.tree, ds, cd);
+      result.tree.build_postorder();
+      result.tree.reset_states(ds);
+    }
+    best_wag = score_tree(result.tree, ds);
   }
 
   result.timings.wagner_ms = ph_lap();
@@ -1055,14 +1098,24 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
     result.timings += rep_result.timings;
 
+    // A replicate can still finish on a constraint-violating tree: a Wagner
+    // start whose reshuffles all failed, or a phase that accepts on a looser
+    // check than the pool promises.  The pool is what the caller is handed, so
+    // gate it here, as the fuse capture below already does.
+    const bool rep_ok = capture_satisfies_constraint(rep_result.tree, cd, ds,
+                                                     rep_result.score);
+    if (!rep_ok) ++result.constraint_discards;
+
     // Compute collapsed flags for collapsed-topology pool dedup.
     // Trees that differ only in zero-length resolutions are treated
     // as duplicates, improving pool diversity (Goloboff & Farris 2001).
     std::vector<uint8_t> rep_collapsed;
-    compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
+    if (rep_ok) {
+      compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
+    }
 
     if (rep_result.interrupted) {
-      if (rep_result.score < 1e18) {
+      if (rep_ok && rep_result.score < 1e18) {
         pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
       }
       result.timed_out = true;
@@ -1071,7 +1124,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
     // Add to pool with collapsed-topology dedup
     double prev_best = pool.best_score();
-    pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
+    if (rep_ok) {
+      pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
+    }
     bool score_improved = pool.best_score() < prev_best;
     if (score_improved) {
       result.last_improved_rep = rep1;

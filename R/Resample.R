@@ -393,7 +393,9 @@ Resample <- function(dataset, tree, method = "jack", proportion = 2 / 3,
   }
 
   # Single-replicate path (original behavior)
-  result <- do.call(ts_resample_search, c(searchArgs, consArgs, profileArgs))
+  result <- do.call(ts_resample_search,
+                    c(searchArgs, .KernelConstraintArgs(consArgs),
+                      profileArgs))
 
   if (nrow(result$edge) == 0L) {
     tr <- if (!missing(tree) && inherits(tree, "phylo")) tree

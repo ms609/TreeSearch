@@ -50,6 +50,12 @@ limit, whichever fires first — draws on only part of a large pool, and
 says so in a warning.  Raise \code{targetHits} as well as \code{maxReplicates} to
 use more of it.
 If unspecified, all replicates start from random Wagner trees.
+A start tree that does not satisfy \code{constraint} is rearranged until it
+does before the search begins, with a warning: \code{constraint} is a
+guarantee about the trees returned, whereas \code{tree} only says where to
+begin, so when the two conflict the guarantee wins.  A taxon coded \verb{?}
+for a constraint character is unconstrained by it and may start on
+either side of that split.
 Edge lengths are not supported and will be deleted.
 Rooted and unrooted trees are both accepted; an unrooted tree is rooted
 arbitrarily (on its first tip) before the search begins, which may

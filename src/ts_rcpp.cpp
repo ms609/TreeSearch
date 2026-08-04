@@ -2022,6 +2022,16 @@ List ts_driven_search(
     result = ts::driven_search(pool, ds, params, cd_ptr);
   }
 
+  // Reported here rather than where it is detected: the count accumulates on
+  // worker threads, and Rf_warning() is a main-thread-only call.
+  if (result.constraint_discards > 0) {
+    Rf_warning(
+      "%d replicate(s) ended on a tree that could not be made to satisfy "
+      "`constraint`, and were discarded. The remaining trees do satisfy it; "
+      "raise `maxReplicates` if too few trees were found.",
+      result.constraint_discards);
+  }
+
   // Build timings as a NumericVector (lighter than List)
   NumericVector timings = NumericVector::create(
     Named("wagner_ms")    = result.timings.wagner_ms,
@@ -2158,7 +2168,8 @@ List ts_collapse_pool(
     List scoringConfig,
     Nullable<List> hsjConfig = R_NilValue,
     Nullable<List> xformConfig = R_NilValue,
-    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<IntegerMatrix> consZero = R_NilValue)
 {
   ts::DataSet ds = unpack_scoring(contrast, tip_data, weight, levels,
                                   scoringConfig);
@@ -2173,16 +2184,31 @@ List ts_collapse_pool(
   // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
   // bitset: trees are re-rooted on tip 0 below, so every internal node's
   // descendant set excludes tip 0 and is directly comparable to these.
+  //
+  // The canonical bitsets alone protect only a node whose descendant set is the
+  // 1 group EXACTLY, which is what the search's locked-node machinery enforces.
+  // The constraint the user is promised is looser: tips ambiguous for the
+  // constraint character are free to sit on either side, so the split can be
+  // realised by a node that is not exactly the 1 group — and that node, being
+  // unmatched, was left collapsible, contracting the enforced grouping away.
+  // `cons_one` / `cons_zero` are the raw (uncanonicalised) groups, from which
+  // the realising node is found per tree below.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
   std::vector<std::vector<uint64_t>> cons_canon;
+  std::vector<std::vector<uint64_t>> cons_one, cons_zero;
+  auto row_bits = [&](const IntegerMatrix& m, int r) {
+    std::vector<uint64_t> b(wps, 0);
+    for (int c = 0; c < n_tip && c < m.ncol(); ++c) {
+      if (m(r, c)) b[c >> 6] |= (1ULL << (c & 63));
+    }
+    return b;
+  };
   if (consSplitMatrix.isNotNull()) {
     IntegerMatrix cs(consSplitMatrix.get());
     for (int r = 0; r < cs.nrow(); ++r) {
-      std::vector<uint64_t> b(wps, 0);
-      for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
-        if (cs(r, c)) b[c >> 6] |= (1ULL << (c & 63));
-      }
+      std::vector<uint64_t> b = row_bits(cs, r);
+      cons_one.push_back(b);
       if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
         for (int w = 0; w < wps; ++w) b[w] = ~b[w];
         int rem = n_tip & 63;
@@ -2190,6 +2216,13 @@ List ts_collapse_pool(
       }
       cons_canon.push_back(std::move(b));
     }
+    if (consZero.isNotNull()) {
+      IntegerMatrix cz(consZero.get());
+      for (int r = 0; r < cz.nrow() && r < cs.nrow(); ++r) {
+        cons_zero.push_back(row_bits(cz, r));
+      }
+    }
+    cons_zero.resize(cons_one.size(), std::vector<uint64_t>(wps, 0));
   }
 
   std::vector<IntegerMatrix> reps;          // representative collapsed edges
@@ -2268,6 +2301,53 @@ List ts_collapse_pool(
             if (nb[w] != cb[w]) { eq = false; break; }
           }
           if (eq) { flags[v] = 0; break; }
+        }
+      }
+
+      // Protect the node that realises each split under the looser, promised
+      // reading: the MRCA of one group, when it holds none of the other.  The
+      // postorder visits every node before its parent, so the first node to
+      // hold a whole group is its MRCA; keeping that one edge is enough,
+      // because contracting an edge below it leaves its descendant set — and so
+      // the split it displays — unchanged.  Which of the two groups is the
+      // clade depends on the rooting alone, so try each in turn.  Groups of
+      // fewer than two tips are skipped: such a split is realised by a terminal
+      // edge, which is never a collapse candidate.
+      for (size_t r = 0; r < cons_one.size(); ++r) {
+        const std::vector<uint64_t>* grp[2] = { &cons_one[r], &cons_zero[r] };
+        int n_in_group[2] = {0, 0};
+        for (int side = 0; side < 2; ++side) {
+          for (int w = 0; w < wps; ++w) {
+            n_in_group[side] += ts::popcount64((*grp[side])[w]);
+          }
+        }
+        if (n_in_group[0] < 2 || n_in_group[1] < 2) continue;
+        for (int side = 0; side < 2; ++side) {
+          const std::vector<uint64_t>& in = *grp[side];
+          const std::vector<uint64_t>& out = *grp[1 - side];
+          // postorder holds internal nodes only, and the MRCA of two or more
+          // tips is internal, so the first match is that MRCA.
+          int mrca = -1;
+          for (size_t pi = 0; pi < tree.postorder.size() && mrca < 0; ++pi) {
+            const int node = tree.postorder[pi];
+            const uint64_t* nb = &tb[static_cast<size_t>(node) * wps];
+            bool holds = true;
+            for (int w = 0; w < wps; ++w) {
+              if ((nb[w] & in[w]) != in[w]) { holds = false; break; }
+            }
+            if (holds) mrca = node;
+          }
+          if (mrca < 0) continue;
+          const uint64_t* mb = &tb[static_cast<size_t>(mrca) * wps];
+          bool clean = true;
+          for (int w = 0; w < wps; ++w) {
+            if (mb[w] & out[w]) { clean = false; break; }
+          }
+          if (!clean) continue;                 // this side is not the clade
+          if (mrca > n_tip && mrca < static_cast<int>(flags.size())) {
+            flags[mrca] = 0;
+          }
+          break;
         }
       }
     }

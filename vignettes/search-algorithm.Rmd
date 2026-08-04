@@ -217,6 +217,27 @@ Per-strategy attempt and success counts are returned in the
 `strategy_diagnostics` attribute of the search result for post-hoc
 inspection.
 
+### Starting trees under a constraint
+
+Whatever its source -- a Wagner build, a random topology, or a tree supplied
+through `tree` -- a start that does not satisfy the constraint is repaired
+before the replicate scores it, by the same minimal-SPR routine that repairs
+fused trees.
+This has to happen at the start rather than by rejecting the tree afterwards.
+Constrained rearrangement cannot climb out of a violating tree: an unmapped
+constraint split makes every candidate regraft illegal, so the replicate
+freezes on the tree it began with.
+Nor can the violation be caught by comparison later, because a violating tree
+is drawn from a wider set of topologies than a legal one and so tends to score
+*better*; taken as a baseline, it makes the legal repair look like a
+regression, and no subsequent phase can accept it.
+Where the repair does not succeed, the start is discarded in favour of a fresh
+constrained Wagner build.
+The same check gates each replicate's finished tree on its way into the pool,
+so a tree that breaks the constraint is never returned; and the enforced splits
+are protected from the final collapse pass, whichever branch happens to realise
+them.
+
 
 ## The driven search pipeline
 

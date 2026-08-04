@@ -142,7 +142,9 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
     addition_order = addition_order,
     concavity = as.double(concavity)
   )
-  result <- do.call(ts_wagner_tree, c(searchArgs, consArgs, profileArgs))
+  result <- do.call(ts_wagner_tree,
+                    c(searchArgs, .KernelConstraintArgs(consArgs),
+                      profileArgs))
 
   # Reconstruct phylo from edge matrix
   tree <- list(
