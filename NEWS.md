@@ -1,5 +1,24 @@
 # To integrate into 2.0.0 notes
 
+- `TreeLength()`, `CharacterLength()`, `TreeScore()` and `EdgeListScore()` -- and
+  so `Consistency()`, `ExpectedLength()`, `ConcordantInformation()`,
+  `LengthAdded()` and `SuccessiveApproximations()`, which score trees through
+  them -- now reject a
+  tree that contains a polytomy, with the "`tree` must be binary" error that
+  `TreeLength()` already gave for a single `phylo` tree.  Such a tree
+  previously returned a number.  The scoring engine derives its node counts from
+  the number of edges, which identifies a tree only if that tree is binary: a
+  polytomous tree with an odd number of edges wrote past the end of the arrays
+  holding its topology, and one with an even number of edges was rooted on a
+  leaf and then scored from memory outside its own state buffer, so repeating
+  the same call could return a different answer each time.  `MaximizeParsimony()`
+  collapses the trees it returns unless `collapse = FALSE`, so scoring its output
+  reached this path; search with `collapse = FALSE` to obtain trees that can be
+  scored, whose lengths are the score the search reports.  Resolving a collapsed
+  tree instead, with `TreeTools::MakeTreeBinary()`, does not recover that score:
+  an arbitrary resolution of a polytomy need not be one of the most parsimonious
+  ones.
+
 - `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
   reported score is reproducible.  The x-transformation's step matrix is
   asymmetric -- a gain costs one more than the number of secondary characters it

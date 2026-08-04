@@ -113,19 +113,25 @@ void compute_collapsed_flags(
     }
 
     // --- Condition 3: prelim[sibling] == prelim[parent] ---
-    // This full-row memcmp also reads words belonging to ratchet-zeroed
-    // blocks (active_mask == 0), which fitch_downpass leaves stale rather
-    // than updating. That staleness only ever makes equality *harder* to
-    // reach (a stale word is unlikely to coincidentally match), so its only
-    // effect is to under-flag collapsible edges — a lost optimisation, never
-    // a false collapse. One-sided safe; not worth a masked per-word compare.
-    // See red-team T-382.
+    // This full-row memcmp also spans words fitch_downpass does not write: the
+    // SIMD pad word, and the words of ratchet-zeroed blocks (active_mask == 0),
+    // which it skips. The pad word reads zero on both sides and so contributes
+    // nothing. A zeroed block's words are whatever the node last held, while a
+    // tip sibling always carries its real states — load_tip_states copies every
+    // word, active or not — so the two rows usually differ. That only makes
+    // equality *harder* to reach: it costs a collapse flag, never invents one.
+    // One-sided safe; not worth a masked per-word compare. See red-team T-382.
     size_t sb = static_cast<size_t>(s) * tw;
     size_t pb = static_cast<size_t>(p) * tw;
     if (std::memcmp(&tree.prelim[sb], &tree.prelim[pb], word_bytes) != 0)
       continue;
 
     // --- Conditions 4–5 (NA only): down2 and subtree_actives preservation ---
+    // Unlike condition 3, these rows are written only for NA blocks — even
+    // load_tip_states skips subtree_actives for the rest — so a non-NA block's
+    // words stay at the zeros the arrays were sized with and always compare
+    // equal, dropping out of a test that has nothing to say about them. Here
+    // the unwritten words make equality *easier*, not harder (T-411).
     if (has_na) {
       if (std::memcmp(&tree.down2[sb], &tree.down2[pb], word_bytes) != 0)
         continue;
