@@ -219,9 +219,13 @@ IntegerMatrix tree_to_edge(const ts::TreeState& tree) {
 // collapsed[c] == 1 (c internal) means the edge c -> parent[c] is zero-length:
 // c is removed and its children reattach to c's nearest retained ancestor,
 // producing a polytomy.  Tips and the root pseudo-node are always retained;
-// compute_collapsed_flags[_aggressive] never flags the root or its children, so
-// when the tree is rooted on a tip (the precondition for a rooting-invariant
-// collapse) no informative edge is root-adjacent and the basal split survives.
+// compute_collapsed_flags[_aggressive] do not flag root's children on any
+// scoring path, so when the tree is rooted on a tip (the precondition for a
+// rooting-invariant collapse) no informative edge is root-adjacent and the
+// basal split survives.  The lone exception is the total_words == 0
+// star-collapse branch (T-331), which flags root's children deliberately; the
+// loop below then contracts them and yields the star, which is the intended
+// answer for fully-uninformative data.  See red-team T-409.
 IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
                                      const std::vector<uint8_t>& collapsed) {
   const int n_tip = tree.n_tip;

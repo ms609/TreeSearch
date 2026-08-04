@@ -286,9 +286,11 @@ void compute_collapsed_regions(
   // parents visited before children. When a parent creates or joins a
   // region, its children inherit the same region_id.
   //
-  // The root itself is never collapsed (no parent edge) and root's children
-  // are excluded by compute_collapsed_flags(), so root always has
-  // region_id == -1.
+  // The root itself is never collapsed (no parent edge).  Root's children are
+  // excluded by compute_collapsed_flags() on every ordinary path, so root
+  // normally ends with region_id == -1 — but NOT in the total_words == 0
+  // star-collapse branch (T-331), which deliberately flags root's children too.
+  // Any future consumer of region_id must not assume region_id[root] == -1.
   const auto& po = tree.postorder;
   for (int idx = static_cast<int>(po.size()) - 1; idx >= 0; --idx) {
     int node = po[idx];
