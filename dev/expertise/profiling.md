@@ -3,7 +3,7 @@
 ## Purpose
 
 Profile the C++ search engine to identify bottlenecks. Produce specific,
-actionable optimization tasks for `to-do.md`.
+actionable optimization issues in `agent-issues/TreeSearch`.
 
 ## Tools
 
@@ -516,7 +516,7 @@ this metric (NNI→TBR vs TBR at 88 and 180 tips).
 
 ## Reporting Format
 
-For each finding, add to `to-do.md`:
+For each finding, open an issue in `agent-issues/TreeSearch` (label `task`) with:
 
 ```
 | T-NNN | P2 | OPEN | — | [Profile] Brief description | X% of time. Potential Y% improvement via Z approach. |

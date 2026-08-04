@@ -1,5 +1,14 @@
 # Closed Tasks — Decisions Worth Not Re-Litigating
 
+> **FROZEN 2026-08-04 — closed to new rows.** Task state moved to
+> [`agent-issues/TreeSearch` issues](https://github.com/agent-issues/TreeSearch/issues);
+> a closed issue (`wontfix`, or closed as *not planned*) is now where a terminal decision is
+> recorded, and `to-do.md` has been deleted.
+>
+> This file stays exactly as it is because its content is the one thing the tracker cannot
+> replace: **offline, grep-able reasoning for decisions whose rationale is not in any commit.**
+> Keep consulting it — the instruction below is still live — but do not append to it.
+
 This is **not** a full archive of every completed task. Routine fixes live in
 git history and merged PRs; do not duplicate them here. This file keeps only
 the closures whose *reasoning* is not recoverable from a commit: **not-a-bug
