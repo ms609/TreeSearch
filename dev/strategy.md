@@ -443,7 +443,7 @@ pre-T-214 state. Run 23547582438 (current HEAD) queued; will validate all. T-242
 **Task queue health:** 1 OPEN specific task (T-183), 6 PR-pending, 4 Shiny PARKED
 awaiting re-validation, 2 STALE (need decision). Standing tasks at P1.
 
-## Project State
+## Project State (as of 2026-03-23 — superseded; see the issue tracker)
 
 The C++ phylogenetic search engine is **v2.0.0** with a new
 `MaximizeParsimony()` API, driven C++ search, and fully modularized Shiny app.

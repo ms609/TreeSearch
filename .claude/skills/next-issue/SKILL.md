@@ -23,10 +23,15 @@ gh pr list --state open --json number,title,headRefName,files
 Cluster into tranches:
 
 - **Same file → same chip, never split across parallel chips.** The files that
-  actually collide here: `src/ts_rcpp.cpp` and `src/TreeSearch-init.c` (**append-only**
-  — add at the end, never reorder), `src/ts_fitch.cpp`, `src/ts_tbr.cpp`,
-  `src/ts_collapsed.cpp`, `R/MaximizeParsimony.R`, plus `DESCRIPTION` (`Collate:`) and
-  `NAMESPACE`, which need a manual merge pass whenever two branches touch them.
+  actually collide here: `src/ts_rcpp.cpp`, `src/TreeSearch-init.c` and the generated
+  `R/RcppExports.R` (the first two **append-only** — add at the end, never reorder),
+  `src/ts_fitch.cpp`, `src/ts_tbr.cpp`, `src/ts_collapsed.cpp`, `R/MaximizeParsimony.R`,
+  plus `DESCRIPTION` (`Collate:`) and `NAMESPACE`, which need a manual merge pass
+  whenever two branches touch them.
+- **Two subtler collision classes, neither visible from a file list.** Incompatible
+  parameter changes to the *same* Rcpp bridge function; and one chip's optimisation
+  invalidating an assumption another depends on. Both need the issues in one chip even
+  when the diffs would not textually conflict.
 - **Same bug mechanism, different call sites → bundle.** Often the better brief: one
   root cause with an enumerated call-site list beats N chips rediscovering it. #16 is
   the canonical shape — one bad `n_tip` derivation, four exported entry points.
@@ -56,6 +61,9 @@ the flagship inapplicable path) is this shape.
   library; `nThreads = 2L` maximum; no `src/Makevars.win` left behind.
 - **A regression test per issue, confirmed to fail pre-fix.** Assert only what the code
   promises — never how fast, how attached, or how ordered the local environment is.
+- Keep each brief **specific, scoped, independent and testable**: a named target rather
+  than "investigate X", completable in one session, minimal overlap with a sibling chip,
+  and with success criteria stated (tests pass, benchmark improves, oracle agrees).
 - **Mandatory checks** for what the diff touches: `devtools::check_man()` on a roxygen
   or signature change, `Rscript .claude/tools/compile-attrs.R` on any C++ signature
   change, `spelling::spell_check_package()` on documentation prose (run the exact
@@ -90,11 +98,32 @@ the flagship inapplicable path) is this shape.
   machinery, parallelism and RNG, `NAMESPACE`, cross-file mechanism fixes.
 - **Fable** — only after an Opus chip in this tranche has stalled twice.
 
-Effort: **low** (<15 min, 1–2 files), **medium** (15–60 min), **high** (60 min+, needs a
-deep `external-reviewer` pass).
+**Effort is reasoning depth, not task size** — the two come apart exactly where it matters.
+#16 touches four exported functions yet reduces to one boundary check once the mechanism is
+known; a one-line change that must preserve an invariant no test asserts is the opposite.
 
-Dispatch each tranche via `mcp__ccd_session__spawn_task`. Report per tranche: issues
-covered, model|effort and why, branch, anything held back.
+- **low** — mechanical: doc fix, guard clause, dead-code removal.
+- **medium** — default. The fix shape is known; the work is applying it carefully.
+- **high** — the fix shape must be *derived*, or the change spans call sites whose
+  interactions need tracing.
+- **xhigh** — the fix shape is genuinely **undecided**: several valid patches with
+  different trade-offs. Also where to re-dispatch when a `high` chip's patch was rejected
+  on *mechanism* rather than style.
+- **max** — being wrong is expensive and hard to detect: crown-jewel kernels, or a change
+  that must hold an invariant a test cannot assert. The step *after* `xhigh` stalls, never
+  a first choice — same discipline as `/red-team`'s "fable only after opus stalls twice".
+
+Move the right axis: more **effort** deepens the search within a rung; it does not clear the
+capability cliff *between* rungs. Shallow-but-plausible work wants more effort; work that is
+confidently wrong about a mechanism wants a better **model**.
+
+State the **size** estimate separately (files touched, rough duration) — that is what drives
+review depth and whether a tranche is reviewable as one PR.
+
+Dispatch each tranche via `mcp__ccd_session__spawn_task`. Note that it takes only `prompt`,
+`title`, `tldr` and `cwd` — **there is no model or effort parameter**, so the recommendation
+is advisory: put it in the report, and restate it inside the brief so the chip knows what
+depth it was scoped for.
 
 ## 5. Compact
 
