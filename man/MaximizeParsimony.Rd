@@ -50,6 +50,12 @@ limit, whichever fires first — draws on only part of a large pool, and
 says so in a warning.  Raise \code{targetHits} as well as \code{maxReplicates} to
 use more of it.
 If unspecified, all replicates start from random Wagner trees.
+A start tree that does not satisfy \code{constraint} is rearranged until it
+does before the search begins, with a warning: \code{constraint} is a
+guarantee about the trees returned, whereas \code{tree} only says where to
+begin, so when the two conflict the guarantee wins.  A taxon coded \verb{?}
+for a constraint character is unconstrained by it and may start on
+either side of that split.
 Edge lengths are not supported and will be deleted.
 Rooted and unrooted trees are both accepted; an unrooted tree is rooted
 arbitrarily (on its first tip) before the search begins, which may
@@ -138,7 +144,10 @@ returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
 Constraint searches are supported natively: all tree rearrangements
-are filtered to respect the constraint topology.}
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
 
 \item{effort}{Integer: how much search effort to spend, \strong{relative to the
 amount chosen automatically} for this dataset.  \code{0} (the default) accepts

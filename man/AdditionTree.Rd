@@ -23,10 +23,12 @@ Specify \code{Inf} to weight each additional step equally,
 \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
 Specify \code{"profile"} to employ an approximation of profile parsimony
 \insertCite{Faith2001}{TreeSearch}.
-Note that a numeric \code{concavity} value affects only the reported
-\verb{$score} of the tree returned by \code{AdditionTree()}: the tree topology
-has been observed to be identical whatever numeric value of \code{concavity}
-is specified (including \code{Inf}, i.e. equal weights).
+Note that tips are always placed using an equal-weights proxy, so a
+numeric \code{concavity} value has no effect on the tree topology returned
+by \code{AdditionTree()}: the topology has been observed to be identical
+whatever numeric value of \code{concavity} is specified (including \code{Inf},
+i.e. equal weights). \code{AdditionTree()} does not return a score, so this
+has no user-visible effect at all.
 Specifying \code{concavity = "profile"} \emph{does} affect the returned topology,
 because the underlying character data are recoded before tree
 construction begins.}
@@ -36,7 +38,10 @@ returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
 Constraint searches are supported natively: all tree rearrangements
-are filtered to respect the constraint topology.}
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
 
 \item{sequence}{Character or numeric vector listing sequence in which to add
 taxa. Randomized if not provided.}
@@ -57,8 +62,8 @@ parsimonious location.
 }
 \examples{
 data("inapplicable.phyData", package = "TreeSearch")
-# concavity = 10 affects the reported $score, but (empirically) not the
-# tree topology returned.
+# concavity = 10 has (empirically) no effect on the tree topology
+# returned: placement always uses an equal-weights proxy.
 AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 }
 \seealso{

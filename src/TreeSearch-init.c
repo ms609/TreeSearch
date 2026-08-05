@@ -60,7 +60,7 @@ extern SEXP _TreeSearch_ts_ev_cache_key_probe(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP
 extern SEXP _TreeSearch_ts_ls_fit(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_ls_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_collapsed_flags_debug(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_collapse_pool(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_collapse_pool(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_nni",               (DL_FUNC) &_TreeSearch_nni, 3},
@@ -116,7 +116,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_ls_fit", (DL_FUNC) &_TreeSearch_ts_ls_fit, 4},
   {"_TreeSearch_ts_ls_search", (DL_FUNC) &_TreeSearch_ts_ls_search, 6},
   {"_TreeSearch_ts_collapsed_flags_debug", (DL_FUNC) &_TreeSearch_ts_collapsed_flags_debug, 6},
-  {"_TreeSearch_ts_collapse_pool", (DL_FUNC) &_TreeSearch_ts_collapse_pool, 9},
+  {"_TreeSearch_ts_collapse_pool", (DL_FUNC) &_TreeSearch_ts_collapse_pool, 10},
   {NULL, NULL, 0}
 };
 

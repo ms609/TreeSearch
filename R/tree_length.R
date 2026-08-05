@@ -328,6 +328,9 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
            paste0(nEdge, collapse = ", "),
            "); try collapsing polytomies?)")
   }
+  if (nEdge != nTip + nTip - 2) {
+    stop("`tree` must be binary")
+  }
 
   if (is.null(attr(dataset, "levels")) || ncol(attr(dataset, "contrast")) == 0L) {
     return(rep(0L, length(tree)))
@@ -447,6 +450,10 @@ Fitch <- function(tree, dataset) {
   }
   if (!TreeIsRooted(tree)) {
     stop("`tree` must be rooted; try RootTree(tree)")
+  }
+  nTip <- length(TipLabels(tree))
+  if (dim(tree[["edge"]])[1] != nTip + nTip - 2) {
+    stop("`tree` must be binary")
   }
 }
 
@@ -576,6 +583,9 @@ TreeScore <- function(tree, dataset) {
     stop("Number of taxa in dataset (", nTaxa,
          ") not equal to number of tips in tree")
   }
+  if (dim(tree[["edge"]])[1] != nTaxa + nTaxa - 2) {
+    stop("`tree` must be binary")
+  }
   tree <- RenumberTips(tree, dataset[["tip.label"]])
   el <- RenumberEdges(tree[["edge"]][, 1], tree[["edge"]][, 2])
   # Return:
@@ -597,6 +607,14 @@ EdgeListScore <- function(parent, child, dataset, inPostorder = FALSE, ...) {
   if (!is.ParsimonyData(dataset)) {
     stop("`dataset` must be a `ParsimonyData` object; prepare it first with ",
          "`PrepareData()`, or supply your own `TreeScorer`.")
+  }
+  # Every internal node of a rooted binary tree parents exactly two children;
+  # the scoring kernel derives its node counts from the edge count alone, so a
+  # polytomy makes it index out of bounds.  This catches that case, to give the
+  # same message as the other entry points; the kernel checks the rest.
+  nChild <- tabulate(parent)
+  if (any(nChild != 0L & nChild != 2L)) {
+    stop("`tree` must be binary")
   }
   if (!inPostorder) {
     edgeList <- Preorder(cbind(parent, child))
