@@ -270,6 +270,15 @@ IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
 // first-encountered child of each node goes left.
 ts::TreeState build_topology_tree(const IntegerMatrix& edge) {
   int n_edge = edge.nrow();
+  // Same derivation, and so the same out-of-bounds writes, as init_from_edge.
+  // ncol is checked first: the child column is read as edge(i, 1), which on an
+  // n x 1 matrix indexes past the end of the underlying vector.
+  if (edge.ncol() != 2) {
+    stop("`tree` edge matrix must have exactly 2 columns.");
+  }
+  if (n_edge < 2 || !ts::edge_list_is_binary(&edge(0, 0), &edge(0, 1), n_edge)) {
+    stop("`tree` must be binary");
+  }
   int n_tip = n_edge / 2 + 1;
 
   ts::TreeState tree;
@@ -924,7 +933,8 @@ List ts_tbr_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -985,7 +995,8 @@ List ts_ratchet_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -1733,6 +1744,13 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
           flat[i] = se(i, 0);
           flat[n_edge + i] = se(i, 1);
         }
+        // init_from_edge refuses a non-binary tree by throwing, but under
+        // nThreads > 1 it runs on a worker thread, where an uncaught throw
+        // terminates the session.  Reject here, on the main thread.
+        if (!ts::edge_list_is_binary(flat.data(), flat.data() + n_edge,
+                                     n_edge)) {
+          stop("Each `startEdge` matrix must describe a binary tree.");
+        }
         params.start_edges.push_back(std::move(flat));
       }
     }
@@ -1850,14 +1868,44 @@ static void unpack_hsj(Nullable<List> hsjConfig, ts::DataSet& ds) {
     ds.hsj_alpha = as<double>(hc["hsjAlpha"]);
     ds.scoring_mode = ts::ScoringMode::HSJ;
 
-    if (hc.containsElementNamed("hsjTipLabels") &&
-        !Rf_isNull(hc["hsjTipLabels"])) {
+    // hsjTipLabels must be present and non-NULL whenever HSJ is enabled:
+    // score_hierarchy_block() reads ds.tip_labels unconditionally once
+    // scoring_mode == HSJ, and that field is only populated inside this
+    // branch. `list(hsjTipLabels = NULL)` keeps the element name, so
+    // containsElementNamed() alone does not catch an empty tip_labels (T-398).
+    if (!hc.containsElementNamed("hsjTipLabels") ||
+        Rf_isNull(hc["hsjTipLabels"])) {
+      Rcpp::stop("hsjConfig$hsjTipLabels must be provided (non-NULL) whenever "
+                 "hsjConfig is supplied (which enables HSJ scoring).");
+    }
+
+    {
       IntegerMatrix tl = as<IntegerMatrix>(hc["hsjTipLabels"]);
       validate_hsj_tip_labels(tl, hsjAbsentState,
                               static_cast<int>(ds.token_states.size()),
                               ds.n_levels);
       int n_t = tl.nrow();
       int n_c = tl.ncol();
+      // hsjTipLabels must cover every block's primary/secondary character
+      // index: score_hierarchy_block() reads
+      // tip_labels[t * n_orig_chars + block.primary_char] (and likewise for
+      // secondaries) unconditionally once scoring_mode == HSJ, so a
+      // non-NULL but too-narrow matrix reads past ds.tip_labels the same
+      // way a NULL one did (T-398).
+      for (const ts::HierarchyBlock& block : ds.hierarchy_blocks) {
+        if (block.primary_char < 0 || block.primary_char >= n_c) {
+          Rcpp::stop("hsjConfig$hsjTipLabels has %d columns, but a hierarchy "
+                     "block's primary character index is %d",
+                     n_c, block.primary_char);
+        }
+        for (int sec : block.secondary_chars) {
+          if (sec < 0 || sec >= n_c) {
+            Rcpp::stop("hsjConfig$hsjTipLabels has %d columns, but a "
+                       "hierarchy block's secondary character index is %d",
+                       n_c, sec);
+          }
+        }
+      }
       ds.n_orig_chars = n_c;
       ds.tip_labels.resize(n_t * n_c);
       for (int t = 0; t < n_t; ++t) {
@@ -1900,6 +1948,16 @@ static void unpack_xform(Nullable<List> xformConfig,
       List rc = xf_list[ch];
       NumericMatrix cm = as<NumericMatrix>(rc["cost_matrix"]);
       int ns = ns_vec[ch];
+      // Validate cost matrix dimensions match the character's state count
+      // (mirrors the check ts_sankoff_test() already performs; T-397 —
+      // Rcpp's Matrix indexing never bounds-checks a mis-shaped-but-
+      // same-length matrix, so an unguarded read here silently scores
+      // garbage instead of erroring).
+      if (cm.nrow() != ns || cm.ncol() != ns) {
+        Rcpp::stop("xformChars[[%d]]$cost_matrix has dimensions %d x %d, but "
+                   "character %d has %d states (expected %d x %d)",
+                   ch + 1, cm.nrow(), cm.ncol(), ch + 1, ns, ns, ns);
+      }
       double* dst = ds.sankoff_cost_matrices.data() +
           static_cast<size_t>(ch) * max_ns * max_ns;
       for (int r = 0; r < ns; ++r)
@@ -1926,6 +1984,22 @@ static void unpack_xform(Nullable<List> xformConfig,
       IntegerMatrix combo_grid = as<IntegerMatrix>(rc["combo_grid"]);
       IntegerMatrix tip_sec = as<IntegerMatrix>(rc["tip_sec_known"]);
       int n_sec = combo_grid.ncol();
+      // combo_grid must carry one row per present state (states 1..ns-1);
+      // state == -2 below indexes it at (s - 1) for s up to ns - 1, so
+      // fewer rows than that reads out of bounds (T-397).
+      if (combo_grid.nrow() != ns - 1) {
+        Rcpp::stop("xformChars[[%d]]$combo_grid has %d rows, but character "
+                   "%d has %d states (expected %d rows)",
+                   ch + 1, combo_grid.nrow(), ch + 1, ns, ns - 1);
+      }
+      // tip_sec_known is read at (t, d) for t in [0, n_t), d in
+      // [0, n_sec) in the state == -2 branch below; a truncated matrix
+      // reads past the SEXP the same way an unguarded combo_grid would.
+      if (tip_sec.nrow() != n_t || tip_sec.ncol() != n_sec) {
+        Rcpp::stop("xformChars[[%d]]$tip_sec_known has dimensions %d x %d, "
+                   "but expected %d x %d (n_tips x n_secondaries)",
+                   ch + 1, tip_sec.nrow(), tip_sec.ncol(), n_t, n_sec);
+      }
       for (int t = 0; t < n_t; ++t) {
         int state = ts_r[t];
         double* tip_ptr = ds.sankoff_tip_costs.data() +
@@ -1950,6 +2024,15 @@ static void unpack_xform(Nullable<List> xformConfig,
           }
         } else if (state >= 0 && state < ns) {
           tip_ptr[state] = 0.0;
+        } else {
+          // Any other value (e.g. state >= ns) falls through every branch
+          // above, leaving tip_ptr all-INF; that INF then propagates through
+          // the pool sentinel (1e18) rather than a true Inf and passes
+          // is.finite(), silently corrupting the score instead of erroring
+          // (T-397).
+          Rcpp::stop("xformChars[[%d]]$tip_states[%d] = %d is out of range; "
+                     "must be -1, -2, or in [0, %d)",
+                     ch + 1, t + 1, state, ns);
         }
       }
     }

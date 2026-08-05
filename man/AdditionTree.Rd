@@ -23,10 +23,12 @@ Specify \code{Inf} to weight each additional step equally,
 \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
 Specify \code{"profile"} to employ an approximation of profile parsimony
 \insertCite{Faith2001}{TreeSearch}.
-Note that a numeric \code{concavity} value affects only the reported
-\verb{$score} of the tree returned by \code{AdditionTree()}: the tree topology
-has been observed to be identical whatever numeric value of \code{concavity}
-is specified (including \code{Inf}, i.e. equal weights).
+Note that tips are always placed using an equal-weights proxy, so a
+numeric \code{concavity} value has no effect on the tree topology returned
+by \code{AdditionTree()}: the topology has been observed to be identical
+whatever numeric value of \code{concavity} is specified (including \code{Inf},
+i.e. equal weights). \code{AdditionTree()} does not return a score, so this
+has no user-visible effect at all.
 Specifying \code{concavity = "profile"} \emph{does} affect the returned topology,
 because the underlying character data are recoded before tree
 construction begins.}
@@ -60,8 +62,8 @@ parsimonious location.
 }
 \examples{
 data("inapplicable.phyData", package = "TreeSearch")
-# concavity = 10 affects the reported $score, but (empirically) not the
-# tree topology returned.
+# concavity = 10 has (empirically) no effect on the tree topology
+# returned: placement always uses an equal-weights proxy.
 AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 }
 \seealso{
