@@ -217,6 +217,38 @@ Per-strategy attempt and success counts are returned in the
 `strategy_diagnostics` attribute of the search result for post-hoc
 inspection.
 
+### Starting trees under a constraint
+
+Whatever its source -- a Wagner build, a random topology, or a tree supplied
+through `tree` -- a start that does not satisfy the constraint is repaired
+before the replicate scores it, by the same minimal-SPR routine that repairs
+fused trees.
+This has to happen at the start rather than by rejecting the tree afterwards.
+Constrained rearrangement cannot climb out of a violating tree: an unmapped
+constraint split makes every candidate regraft illegal, so the replicate
+freezes on the tree it began with.
+Nor can the violation be caught by comparison later, because a violating tree
+is drawn from a wider set of topologies than a legal one and so tends to score
+*better*; taken as a baseline, it makes the legal repair look like a
+regression, and no subsequent phase can accept it.
+Where the repair does not succeed, the start is discarded in favour of a fresh
+constrained Wagner build.
+The same check gates each replicate's finished tree on its way into the pool,
+so a tree that breaks the constraint is never returned; and the enforced splits
+are protected from the final collapse pass, whichever branch happens to realise
+them.
+
+"Satisfies the constraint" here means what `constraint` promises the user: some
+edge separates the taxa coded `1` for a constraint character from those coded
+`0`, with `?` taxa free to sit on either side.
+Note that the locked-node filter used to screen individual rearrangements reads
+the constraint more strictly, as "the `1` group is a clade exactly", excluding
+the free taxa.
+Every strictly-compliant tree satisfies the user's constraint, so the search
+never returns a tree that breaks it; but a start that satisfies the user's
+constraint without satisfying the stricter form maps to no node, and the
+replicate makes no moves from it.
+
 
 ## The driven search pipeline
 
