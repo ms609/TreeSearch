@@ -116,6 +116,19 @@
   ordinary Fitch data and now collapse like any other.  A replicate that
   retains any hierarchy block is unaffected.
 
+- `inapplicable = "hsj"` scoring no longer forms a reference one element past
+  the end of an internal vector.  The secondary-labelling uppass computed a
+  pointer to a node's children before testing whether it had any, and for a
+  childless node reached after the traversal had emitted its last child that
+  pointer addressed one past the end.  No
+  value was ever read through it and no score changed -- 900 of 900 HSJ and
+  x-transformation lengths are bit-identical either side of the fix -- but the
+  access is undefined behaviour, and any build whose standard library checks
+  its own preconditions aborted on it.  That includes the container behind the
+  `gcc-ASAN` workflow, which is why that workflow could not get past this
+  package: it stopped on the library assertion rather than on anything the
+  sanitizer itself had found.
+
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute
   level: `0` (the default) accepts the amount of search the dataset's size and
