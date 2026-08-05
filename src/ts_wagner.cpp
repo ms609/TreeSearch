@@ -346,8 +346,8 @@ static int wagner_smallest_containing_node(
 // neither side is a clade, the partial tree does not display the split, and no
 // further insertion can make it.
 static int wagner_map_complement(
-    const TreeState& tree, int n_tip, int nw,
-    const std::vector<uint64_t>& node_tips, const uint64_t* split,
+    const TreeState& tree, int nw,
+    const std::vector<uint64_t>& node_tips, const uint64_t* split_out,
     const std::vector<uint64_t>& added_tips,
     WagnerConstraintScratch& scratch)
 {
@@ -355,12 +355,10 @@ static int wagner_map_complement(
   int n_out = 0;
   int lone_out = -1;
   for (int w = 0; w < nw; ++w) {
-    uint64_t outside_mask = ~split[w];
-    if (w == nw - 1) {
-      const int rem = n_tip % 64;
-      if (rem > 0) outside_mask &= (1ULL << rem) - 1;
-    }
-    const uint64_t owd = outside_mask & added_tips[w];
+    // #54: the outside group is cd.split_zeros, not ~split_tips.  A `?`-coded
+    // tip is in neither, so it never pulls this LCA about — which is what lets
+    // it be placed on either side of the constraint, as documented.
+    const uint64_t owd = split_out[w] & added_tips[w];
     needed_out[w] = owd;
     if (owd) {
       n_out += popcount64(owd);
@@ -369,7 +367,7 @@ static int wagner_map_complement(
   }
   const int on = wagner_smallest_containing_node(
       tree, nw, node_tips, needed_out, n_out, lone_out);
-  return (on == n_tip) ? -1 : on;
+  return (on == tree.n_tip) ? -1 : on;
 }
 
 // Wagner-specific constraint node mapping.
@@ -426,6 +424,8 @@ static void wagner_map_constraint_nodes(
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
         &cd.split_tips[static_cast<size_t>(s) * nw];
+    const uint64_t* split_out =
+        &cd.split_zeros[static_cast<size_t>(s) * nw];
 
     // Once the inside LCA has reached the root it can never come back down —
     // grafting a leaf preserves ancestor relations among existing nodes, so the
@@ -441,9 +441,13 @@ static void wagner_map_constraint_nodes(
       // keep ConstraintData's T-384 flag at its "names the split itself"
       // default so a value left over from an earlier map_constraint_nodes()
       // cannot reach regraft_violates_constraint() before the next full remap.
+      // constraint_node_hi is pinned to constraint_node for the same reason:
+      // Wagner's LCA mapping has no displaying-chain, so the tight end is the
+      // only anchor it can honestly offer (#54).
       cd.constraint_complement[s] = 0;
+      cd.constraint_node_hi[s] = cd.constraint_node[s];
       scratch.outside_node[s] = wagner_map_complement(
-          tree, n_tip, nw, node_tips, split, added_tips, scratch);
+          tree, nw, node_tips, split_out, added_tips, scratch);
       continue;
     }
 
@@ -466,6 +470,7 @@ static void wagner_map_constraint_nodes(
         tree, nw, node_tips, needed, n_needed, lone_needed);
     cd.constraint_node[s] = inside_node;
     cd.constraint_complement[s] = 0;  // see the latched branch above
+    cd.constraint_node_hi[s] = inside_node;
 
     // A split is an *unrooted* bipartition, but a clade is a rooted subtree, so
     // "inside is monophyletic" is only one of the two ways this tree can display
@@ -485,7 +490,7 @@ static void wagner_map_constraint_nodes(
     if (inside_node == n_tip) {
       scratch.use_complement[s] = 1;
       scratch.outside_node[s] = wagner_map_complement(
-          tree, n_tip, nw, node_tips, split, added_tips, scratch);
+          tree, nw, node_tips, split_out, added_tips, scratch);
     }
   }
 }
@@ -534,8 +539,18 @@ static void wagner_collect_active_splits(
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
         &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
+    const uint64_t* split_out =
+        &cd.split_zeros[static_cast<size_t>(s) * cd.n_words];
 
-    bool tip_inside = (split[tw] >> tb) & 1;
+    const bool tip_inside = (split[tw] >> tb) & 1;
+    const bool tip_outside = (split_out[tw] >> tb) & 1;
+
+    // #54: a tip in neither group is FREE — the constraint says nothing
+    // about which side of the separating edge it belongs on, so no edge is
+    // barred to it.  Reading "outside" as ~split_tips, as this did before free
+    // tips were represented, forced every `?`-coded taxon out of the
+    // constrained group and could leave the filter with no legal edge at all.
+    if (!tip_inside && !tip_outside) continue;
 
     // Split constrains placement when the opposite side of the new tip
     // has at least one previously-added tip.  An inside tip is only
@@ -544,15 +559,10 @@ static void wagner_collect_active_splits(
     for (int w = 0; w < cd.n_words; ++w) {
       uint64_t prev = added_tips[w];
       if (prev & split[w]) has_prev_inside = true;
-      uint64_t outside_mask = ~split[w];
-      if (w == cd.n_words - 1) {
-        int rem = tree.n_tip % 64;
-        if (rem > 0) outside_mask &= (1ULL << rem) - 1;
-      }
-      if (prev & outside_mask) has_prev_outside = true;
+      if (prev & split_out[w]) has_prev_outside = true;
     }
     if (tip_inside && !has_prev_outside) continue;
-    if (!tip_inside && !has_prev_inside) continue;
+    if (tip_outside && !has_prev_inside) continue;
 
     // The constraint is active. constraint_node[s] is the LCA of
     // added inside tips (set by wagner_map_constraint_nodes).
@@ -586,12 +596,26 @@ static void wagner_collect_active_splits(
 
 // Does the finished tree display every constraint split?
 //
-// A bipartition is displayed iff some edge separates its two sides, i.e. iff
-// some node's subtree tip set equals one side exactly.  Only non-root nodes are
-// candidates: the root subtends every tip, and its two children already cover
-// the single edge the degree-two root sits on.  Tips are included so trivial
-// (single-taxon) splits are recognised.  Orientation-agnostic by construction,
-// so it stays correct however the tree happens to be rooted.
+// A split is displayed iff some edge separates its two groups, which is
+// node_displays_split() (ts_constraint.h) in one polarity or the other.  This
+// runs before any of map_constraint_nodes()'s machinery is valid, but it calls
+// the same predicate rather than restating it: this is the gate that decides
+// whether the caller reshuffles and rebuilds, and the stricter of the two entry
+// points would reject trees the other then searches happily (or, worse, accept
+// ones it will not move from).
+//
+// Every node is a candidate, tips and root alike.  Tips matter for a
+// single-taxon group, whose "clade" is the tip itself.  The root looks
+// redundant — it subtends every tip, and its two children already cover the
+// single edge the degree-two root sits on — but excluding it made this test
+// STRICTER than find_displaying_chain(), which scans tree.postorder and so
+// does reach the root: a split whose apart-group is empty maps there and
+// nowhere else, and the two entry points then disagreed about a tree that
+// every constraint is satisfied by.  Including it costs one comparison and
+// can never accept a violation, since the root displays a split only when the
+// apart-group is empty, and then so does every tree.
+// Orientation-agnostic by construction, so it stays correct however the tree
+// happens to be rooted.
 static bool wagner_tree_displays_constraint(const TreeState& tree,
                                             const ConstraintData& cd) {
   const int n_tip = tree.n_tip;
@@ -612,22 +636,15 @@ static bool wagner_tree_displays_constraint(const TreeState& tree,
 
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split = &cd.split_tips[static_cast<size_t>(s) * nw];
+    const uint64_t* split_out = &cd.split_zeros[static_cast<size_t>(s) * nw];
     bool found = false;
     for (int node = 0; node < tree.n_node && !found; ++node) {
-      if (node == n_tip) continue;  // root subtends everything
       const uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
-      bool eq = true, eqCompl = true;
-      for (int w = 0; w < nw; ++w) {
-        uint64_t tip_mask = ~0ULL;
-        if (w == nw - 1) {
-          int rem = n_tip % 64;
-          if (rem > 0) tip_mask = (1ULL << rem) - 1;
-        }
-        if (nd[w] != (split[w] & tip_mask)) eq = false;
-        if (nd[w] != (~split[w] & tip_mask)) eqCompl = false;
-        if (!eq && !eqCompl) break;
+      // Either group may be the clade side.
+      if (node_displays_split(nd, split, split_out, nw) ||
+          node_displays_split(nd, split_out, split, nw)) {
+        found = true;
       }
-      if (eq || eqCompl) found = true;
     }
     if (!found) return false;
   }
@@ -868,11 +885,14 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   // been exhaustive.  `constraint_fallback` alone is not enough: it only fires
   // when the filter rejected *every* edge, which the T-364/T-370 leak never did
   // -- it returned violating trees mutely.  Nor is the caller's post-hoc check
-  // enough, because AdditionTree() never sets `has_posthoc` (it is built only
-  // at the search entry, ts_rcpp.cpp), so on that path there is no reshuffle to
-  // fall back on -- including for the both-sides-straddle case above.  This
-  // check holds for every cause, known or not.  The caller reports it:
-  // Rf_warning() is not safe from a search worker thread.
+  // enough: AdditionTree() reaches ts_wagner_tree(), which calls this function
+  // directly and so never runs random_wagner_tree()'s reshuffle loop.  (It does
+  // build the posthoc DataSet -- R/AdditionTree.R splices the whole
+  // .PrepareConstraint() list through -- but nothing on that path consults it.)
+  // So on that path there is no retry to fall back on, including for the
+  // both-sides-straddle case above.  This check holds for every cause, known or
+  // not.  The caller reports it: Rf_warning() is not safe from a search worker
+  // thread.
   if (constrained) {
     result.constraint_violated =
         constraint_fallback || !wagner_tree_displays_constraint(tree, *cd);
@@ -1190,6 +1210,23 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
 // all constraint splits. (Uniform conditional on the split nesting
 // structure, which determines the partition of items across polytomy
 // resolution steps.)
+//
+// With free tips the "among those that satisfy" is narrower than the
+// documented contract: this reads cd.split_tips only, so every free tip is a
+// root-level item and the together-group comes out as an EXACT clade, which
+// displays the split under the free-taxa reading too
+// (agent-issues/TreeSearch#54).  So it samples a strict subset of the legal
+// topologies, and a free tip never starts inside the constrained group.
+// Widening it would change which start trees the search sees, which is a
+// search-quality change to measure on its own rather than a correctness fix to
+// make here.
+//
+// Making each together-group an exact clade is not always *possible*: the
+// R-side gate (.PrepareConstraint) admits four-gamete-compatible splits that
+// are not laminar, and those cannot all be clades at once.  That case is
+// handled by the collapse path below (a split that loses every tip to tighter
+// non-laminar splits gets split_root == -1 and is skipped, T-329) and caught
+// afterwards by the caller's post-hoc check, not by this comment's claim.
 
 namespace {
 

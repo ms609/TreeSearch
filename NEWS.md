@@ -1,5 +1,33 @@
 # To integrate into 2.0.0 notes
 
+- Profile parsimony computes exactly for more multi-state characters, where it
+  previously approximated nearly all of them.  The exact Maddison & Slatkin
+  solver caches into fixed-capacity memo tables and bails out when one fills --
+  a guard added to stop an unbounded probe loop -- but its reserved size was
+  never matched to the feasibility gate that feeds it.  Measured against the
+  worst character that gate admits, every one of them overflowed: a 3-state
+  character needs up to ~28,000 memo entries against the 4,096 reserved.
+  `StepInformation()` and `PrepareDataProfile(approx = "auto")` therefore fell
+  back to the Monte Carlo approximation for essentially every multi-state
+  character -- a documented mode, but not the one asked for.
+
+  The 2 s wall-clock budget is unchanged, and remains what caps the wait: a
+  character that cannot be solved within it still falls back to Monte Carlo.
+  Only the characters that fit inside that budget are affected.
+
+  **Information amounts for those characters will therefore change**, from a
+  sampled estimate to the exact value.  Which characters those are depends on
+  how fast the machine is, since the budget is what decides; pass
+  `approx = "mc"` for the previous behaviour throughout.  Note that
+  `approx = "exact"` waives the feasibility gate but not the budget, so it too
+  can fall back on a slow machine.
+
+  Under sanitizer builds the budget is scaled by the instrumentation's
+  slowdown.  Those builds run one to two orders of magnitude slower, so a 2 s
+  budget tripped on everything -- leaving the sanitizer inspecting the fallback
+  rather than the algorithm it was aimed at.  There is no responsiveness to
+  protect in a nightly memory check.
+
 - `constraint` now binds the trees `MaximizeParsimony()` returns, at three
   boundaries where it did not.  A starting tree supplied through `tree` was
   never checked against the constraint; because a constrained search rejects
@@ -18,6 +46,29 @@
   ended on a tree that could not be made to satisfy the constraint, and now
   raises an error rather than returning an unverified tree if no
   constraint-satisfying tree was found at all.
+- Every part of the search now reads `constraint` the way it is documented: a
+  tree is compatible with a constraint character when some edge separates the
+  taxa coded `1` from those coded `0`, with `?`-coded and unmentioned taxa free
+  to fall on either side.  The locked-node filter that screens individual
+  rearrangements, the constrained Wagner build and the collapse pass previously
+  required the `1` group to be a clade *exactly*, free taxa excluded.  That is
+  strictly stronger, so the search never accepted a rearrangement that broke the
+  documented constraint; but a start tree that satisfied the documented
+  constraint without making either group an exact clade matched no node, every
+  rearrangement was rejected, and the replicate returned its start unimproved.
+  Constrained searches with `?`-coded taxa therefore reach better scores.
+  The exact match also blunted the collapse protection described above: with
+  free taxa it matched no branch, so the separating edge could still be
+  contracted away -- the one route by which a *returned* tree could break the
+  constraint.
+- A constraint character whose `1` or `0` group holds fewer than two taxa now
+  warns and is ignored, rather than being enforced as a clade.  Every tree
+  separates such a group from the rest, so the character constrains nothing
+  under the documented reading.  The test is symmetric in the two groups, which
+  the old one was not: `c(a = 1, b = 1, c = 0)` and `c(a = 0, b = 0, c = 1)`
+  state the same constraint and are now treated the same way.  Code the taxa
+  that must fall outside a group as `0`, rather than leaving them `?`, to keep
+  it enforced.
 - `TreeLength()`, `CharacterLength()`, `TreeScore()` and `EdgeListScore()` -- and
   so `Consistency()`, `ExpectedLength()`, `ConcordantInformation()`,
   `LengthAdded()` and `SuccessiveApproximations()`, which score trees through
@@ -490,6 +541,52 @@
   triggering the T-302 `qmApp` scalar-unwrap fix; regression tests now cover
   both the `qmApp` (T-302) and `qm` (commit e8b318c3) scalar-unwrap paths,
   confirming all deltas are non-negative and match independent computation.
+
+- `ClusterStrings()` no longer crashes when the best clustering contains a
+  singleton cluster, no longer omits the documented `silhouette` attribute
+  when few unique strings are supplied, and its "no structure" branch now
+  returns the documented per-element cluster-assignment vector rather than a
+  bare scalar `1`.  Its internal call to `cluster::pam()` now passes the
+  Levenshtein distance matrix via `as.dist()`, so it is treated as a
+  dissimilarity rather than clustered on Euclidean distance between its
+  rows; **silhouette scores and, in some cases, cluster assignments for the
+  `pam` method may change** to more accurately reflect string similarity.
+
+- `ParsSim()` now errors clearly, instead of silently corrupting the Fitch
+  score, if asked to simulate a character with 32 or more states -- the
+  internal bit-set representation of state sets overflows a 32-bit integer
+  beyond that.  It also errors clearly, instead of an opaque
+  `sample.int()` failure, if a tree lacks the structure to host the number
+  of requested states for a character.  Simulation with `nExtraSteps > 0`
+  is also faster, as the redundant saturation scan previously performed
+  again on every character at return now reuses the result already
+  computed during the step-placement loop.
+  
+- `ClusteringConcordance(normalize = TRUE)` now chance-corrects large trees,
+  which it previously left uncorrected while still describing the result as
+  corrected.  The expected mutual information that sets the zero point was
+  accumulated by a recurrence over the hypergeometric distribution of cell
+  overlaps, seeded at the smallest overlap the marginals allow.  That
+  probability sinks below the smallest representable double once a character
+  scores about 1080 tips, and the recurrence being multiplicative, every later
+  term then stayed zero: `expected_mi()` returned exactly 0 where the seed
+  vanished for every block of the character, and a silently truncated sum --
+  as little as a quarter of the true value -- where it vanished for some.  The recurrence is now anchored at the
+  mode of the distribution, whose probability is the largest of at most
+  `N + 1` values summing to one and so is always representable.  The threshold
+  is a property of the tips each character scores rather than of the tree, and
+  only marginals close to even reach it: of 600 random partitions, none below
+  1200 items was affected, 13 of 60 at 1500 items, and 30 of 60 at 3000.
+  Values that were already correct are unchanged, to of order 1e-11 relative.
+
+- `expected_mi()` now checks that `ni` gives exactly two block sizes, as its
+  documentation always required.  A shorter vector was read past its end, and
+  the arbitrary values that produced could index the log-factorial lookup
+  table out of bounds and crash the session.
+
+- `QuartetConcordance()`'s counting kernel now rejects a negative character
+  state code rather than indexing its count buffers out of bounds.  State
+  codes generated by the package are always positive, so no result changes.
 
 # TreeSearch 2.0.0
 

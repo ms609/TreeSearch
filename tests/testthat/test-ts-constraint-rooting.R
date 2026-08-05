@@ -24,23 +24,8 @@ skip_on_cran()
 
 library("TreeTools")
 
-# Everything that could rescue a rooting-dependent TBR is switched off: a Wagner
-# start is re-rooted on tip 0 (796a29d3), fuse re-roots its recipient, and
-# nni-perturb calls impose_constraint(), which repairs the rooting as a
-# side-effect of repairing the split.
-tbrOnlyRun <- function(ds, startEdge, splitMatrix) {
-  TreeSearch:::ts_driven_search(
-    ds$contrast, ds$tip_data, ds$weight, ds$levels,
-    maxReplicates = 1L, targetHits = 99L, tbrMaxHits = 1L,
-    ratchetCycles = 0L, driftCycles = 0L, nniPerturbCycles = 0L,
-    xssRounds = 0L, rssRounds = 0L, cssRounds = 0L,
-    pruneReinsertCycles = 0L, fuseInterval = 0L,
-    outerCycles = 1L, maxOuterResets = 0L,
-    nniFirst = FALSE, sprFirst = FALSE,
-    poolMaxSize = 100L, poolSuboptimal = 0, maxSeconds = 0, verbosity = 0L,
-    nThreads = 1L, startEdge = startEdge, consSplitMatrix = splitMatrix
-  )
-}
+# tbrOnlyRun() lives in helper-ts.R: everything that could rescue a
+# rooting-dependent TBR is switched off there, so the scores below are TBR's.
 
 # Phases whose timing must be zero, so a passing test cannot be one that quietly
 # searched its way around the mapping.  Each is guarded by an explicit `> 0`
