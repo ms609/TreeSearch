@@ -97,6 +97,15 @@
   ordinary Fitch data and now collapse like any other.  A replicate that
   retains any hierarchy block is unaffected.
 
+- `inapplicable = "hsj"` scoring no longer forms a reference one element past
+  the end of an internal vector.  The secondary-labelling uppass computed a
+  pointer to a node's children before testing whether it had any, and for the
+  last node its traversal visited that pointer addressed one past the end.  No
+  value was ever read through it and no score changed -- 900 of 900 HSJ and
+  x-transformation lengths are bit-identical either side of the fix -- but the
+  access is undefined behaviour, and a hardened or instrumented build aborted
+  on it, which is what made the `AddressSanitizer` workflow unusable.
+
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute
   level: `0` (the default) accepts the amount of search the dataset's size and
