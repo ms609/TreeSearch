@@ -919,25 +919,31 @@ class SolverT {
 
   // Time budget: abort if computation exceeds this many seconds.
   //
-  // This is a net for a pathological blowup, not a latency promise, so it has
-  // to sit clear of the slowest work `.MS_SC_THRESHOLD` legitimately admits.
-  // Measured on a normal build, the gate's own worst admitted character --
-  // k=3 (9,9,9), sc=75, its exact threshold -- takes 12.7 s, and the k=3
-  // (8,7,5) character the profile tests use takes 1.9 s.  At the former 2 s
-  // the budget therefore fired on legitimate work: the caller silently got NA
-  // and fell back to Monte Carlo, and the 1.9 s case was a coin toss on CI.
-  // The coin toss is the bad outcome specifically: which way it lands is a
-  // property of the machine, so one box would score a character exactly and
-  // another approximately, and `StepInformation()` would report different
-  // information contents for identical data.  Holding the budget clear of the
-  // gate is what keeps that decision reproducible.  The dial for callers who
-  // want speed over exactness is `.MS_SC_THRESHOLD`, which is denominated in
-  // work rather than time; see the comment on it in R/data_manipulation.R.
+  // This is a latency promise, and it is deliberately the binding one.  It
+  // caps what a caller waits per character; `.MS_SC_THRESHOLD` only skips work
+  // that is hopeless enough to be worth not starting.  The two could be
+  // arranged the other way round -- gate on the character's shape, which is a
+  // machine-independent quantity, and let the clock recede to a backstop --
+  // and that would buy exactness that reproduces across machines.  It is not
+  // worth its price.  A dataset is hundreds of characters; a budget generous
+  // enough for the slowest one the gate admits (k=3 (9,9,9), sc=75, measured
+  // at 12.7 s on a 2021 desktop) is an hour of unresponsiveness in the bad
+  // case, for a caller who mostly wants a number back.  Exactness here is a
+  // refinement over an already-documented approximation, so it yields.
+  //
+  // The consequence, accepted knowingly: whether a given character is scored
+  // exactly or by Monte Carlo depends on how fast the machine is.  The
+  // fallback is a sampling estimate in any case, so its value was never
+  // machine-invariant either.  `approx = "mc"` is the escape hatch that is
+  // stable by construction; note that `approx = "exact"` is not one, since it
+  // waives the gate but is still stopped by this budget.
   //
   // An instrumented build runs one to two orders of magnitude slower, so the
   // budget would fire there on anything at all -- leaving the sanitizer
   // checking the bailout path instead of the algorithm it was pointed at.
-  // Scale rather than disable, so a genuine blowup is still bounded.
+  // Scale by that slowdown rather than disabling, so a genuine blowup is still
+  // bounded; there is no responsiveness to protect in a sanitizer run, which
+  // is a nightly check and not a user sitting at a prompt.
   // GCC announces ASan through __SANITIZE_ADDRESS__ and clang through
   // __has_feature; TS_SANITIZER_BUILD is the manual escape hatch for the
   // instrumented builds that announce themselves through neither (valgrind).
@@ -949,9 +955,9 @@ class SolverT {
 #  endif
 #endif
 #ifdef TS_MS_SLOW_BUILD
-  static constexpr double TIME_BUDGET_S = 600.0;
+  static constexpr double TIME_BUDGET_S = 200.0;
 #else
-  static constexpr double TIME_BUDGET_S = 30.0;
+  static constexpr double TIME_BUDGET_S = 2.0;
 #endif
   std::chrono::steady_clock::time_point start_time;
   bool budget_exceeded = false;

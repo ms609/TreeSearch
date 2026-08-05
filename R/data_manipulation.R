@@ -13,18 +13,19 @@
 #   k=4: n=13 (4,3,3,3)   sc=50  logB 305  logPVec  9555  <- threshold
 #   k=5: n=9  (2,2,2,2,1) sc=35  logB 142  logPVec  4990  <- threshold
 #
-# Wall-clock is deliberately not the dial.  It is the one quantity that
-# differs between the machine that tunes and the machine that runs, so gating
-# on it would let one character score exactly here and approximately there --
-# an irreproducible answer, which is worse than either a slow one or an
-# avowedly approximate one.  `TIME_BUDGET_S` is a backstop set clear of
-# everything this gate admits, not an arbiter; to trade exactness for speed,
-# lower a threshold here instead, and the trade lands the same way everywhere.
+# This gate is not the latency control, and should not be tuned as one.  It
+# skips work hopeless enough not to be worth starting; what a caller actually
+# waits is capped by `TIME_BUDGET_S` in MaddisonSlatkin.cpp, which stops the
+# recursion mid-flight and falls back to Monte Carlo.  Admitting a character
+# here therefore costs at most that budget, not the figures below.
 #
-# For scale only, and not to be treated as a target: (9,9,9) takes ~12.7 s and
-# (8,7,5) ~1.9 s on a 2021-vintage desktop.  Earlier revisions of this comment
-# quoted sub-second figures for the same characters; they are superseded, and
-# were ~13x optimistic against anything reproducible here.
+# Consequently these thresholds may be generous without hurting anyone, and
+# raising one does not make the package less responsive.  Timings, for scale
+# only, on a 2021-vintage desktop: (9,9,9) ~12.7 s, (8,7,5) ~1.9 s -- i.e. most
+# of the k=3 range is stopped by the clock, not finished.  Earlier revisions of
+# this comment quoted sub-second figures for the same characters and are
+# superseded; they were ~13x optimistic, which is how a 2 s budget came to look
+# like a backstop when it was in fact the operative limit.
 .MS_SC_THRESHOLD <- c(Inf, Inf, 75L, 50L, 35L)
 
 .MSSplitCount <- function(state_counts) {

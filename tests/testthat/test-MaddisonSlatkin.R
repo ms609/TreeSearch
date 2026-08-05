@@ -194,14 +194,15 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
   # (observed as a 6 h --run-donttest CI timeout).  The solver must now detect
   # the impending overflow and fall back to the MC approximation instead.
   #
-  # This character no longer needs either fallback: its peak demand is ~12k memo
-  # entries, within the capacity the tables now reserve, so it completes exactly.
-  # The property under test is the one the hang violated -- terminates, with
-  # usable values -- and that is what is asserted.  A fallback warning is NOT
-  # required: requiring one would pin an incidental consequence of the tables
-  # being too small, and would fail precisely when they are sized correctly.
-  # The guard itself is exercised on a character that genuinely exceeds the
-  # reserved capacity, below.
+  # This character no longer overflows a memo table -- its peak demand is ~12k
+  # entries, within the capacity the tables now reserve -- but neither does it
+  # fit the 2 s budget, so it still falls back, now by the clock rather than by
+  # the table.  Which guard wins is deliberately not asserted, nor that one
+  # wins at all: that is a property of how fast the machine is, and a quick
+  # enough one will simply finish.  A fallback warning is likewise NOT
+  # required; requiring one would fail on exactly the machines that need no
+  # fallback.  What the hang violated -- terminates, with usable values -- is
+  # what is asserted.
   char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
   si <- StepInformation(char, n_mc = 1000L)
   expect_type(si, "double")
@@ -210,13 +211,15 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
 
 
 test_that("An oversized exact recursion falls back rather than running away", {
-  # Tier 3: driving the recursion until a guard stops it is the point here, and
-  # that costs about half a minute.
+  # Tier 3: this is the one case that must actually drive the recursion until a
+  # guard stops it, so it spends the whole budget before it can assert anything.
   skip_extended()
 
   # sc = 52 is inside `.MS_SC_THRESHOLD[3]`, but on 75 tips the recursion is far
-  # more work than the gate's split-count predicts, so it is the case that still
-  # needs a fallback.  `approx = "exact"` is not strictly required, but says so.
+  # more work than the gate's split-count predicts.  `approx = "exact"` waives
+  # the gate -- and, importantly, does NOT waive the budget, which is the
+  # behaviour pinned here: an oversized recursion is stopped even when the
+  # caller has asked for exactness.
   #
   # Which guard stops it is not pinned.  Since the memo tables were sized to the
   # gate, the wall-clock budget is the one that fires in practice and the
