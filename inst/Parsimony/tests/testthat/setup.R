@@ -47,11 +47,32 @@ new_app_driver <- function(name, ...) {
 # Retry a couple of times before propagating, so a transient chromote hiccup
 # doesn't fail an otherwise-healthy run. A first-try success is the common path
 # and incurs no delay.
+#
+# debounceWait is load-bearing, not padding. mod_data's nTree / treeRange
+# watchers are debounce()d (aJiffy = 42 ms, typingJiffy = 105 ms), and a pending
+# debounce timer does NOT make Shiny busy -- there is nothing to recompute until
+# it expires, so wait_for_idle() can return before a debounced watcher has even
+# seen the input the test just set. A download captured at that point encodes the
+# state BEFORE the last set_inputs(); on a machine where the timer does fire in
+# time it encodes the state after. The same test then yields different snapshots
+# on different machines. Sleeping past the longest debounce window and waiting
+# again lets that work start and finish, which is what makes these baselines
+# reproducible rather than timing-dependent.
+#
+# This is how the Distribution baseline came to record `trees[1:125]` for a
+# state its test had set to c(77, 125) -- noticed only once the MaxMin
+# dependency fix let CI reach the suite at all.
 # ---------------------------------------------------------------------------
-wait_stable <- function(app, timeout = 30000, attempts = 3L) {
+wait_stable <- function(app, timeout = 30000, attempts = 3L,
+                        debounceWait = 0.25) {
   for (i in seq_len(attempts)) {
     ok <- tryCatch(
-      { app$wait_for_idle(timeout = timeout); TRUE },
+      {
+        app$wait_for_idle(timeout = timeout)
+        Sys.sleep(debounceWait)
+        app$wait_for_idle(timeout = timeout)
+        TRUE
+      },
       error = function(e) if (i == attempts) stop(e) else FALSE
     )
     if (isTRUE(ok)) break
