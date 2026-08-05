@@ -20,7 +20,7 @@ on:
       - "**.R[dD]ata"
       - "**.Rpro*"
   pull_request:
-    branches: ["*"]
+    branches: ["**"]
     paths-ignore:
       - "Meta**"
       - "memcheck**"
@@ -237,6 +237,21 @@ jobs:
           needs: |
             check
             coverage
+          # MaxMin url:: -- this is the Windows leg, so it cannot use the Linux
+          # tarball the `runner.os != 'Windows'` step below selects. Without a
+          # url:: reference the solve fails outright ("Can't find package called
+          # MaxMin"): pak does not read `Additional_repositories`, so the drat's
+          # indexed contrib/ layout is invisible to it. See ms609/packages'
+          # tools/publish-maxmin.R, which publishes this flat alias for exactly
+          # this purpose.
+          extra-packages: |
+            url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          # install-pandoc must stay explicit -- see the long note in
+          # agent-check.yml's windows leg. Auto-detect runs a second, fresh
+          # `pak::pkg_deps(".")` solve that cannot see extra-packages, so it
+          # fails on MaxMin by name; the branch only fires when pandoc is off
+          # PATH, which is why only the non-Linux legs hit it.
+          install-pandoc: true
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -327,8 +342,18 @@ jobs:
         with:
           needs: |
             check
+          # MaxMin url:: -- same reason as the core Windows leg. Added
+          # pre-emptively: this job was skipped in the run that diagnosed the
+          # failure (it is gated on `detect app changes`), so unlike the core leg
+          # it is not yet observed failing -- but it resolves the same
+          # `needs: check` Suggests on the same platform, so it would.
           extra-packages: |
             local::.
+            url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          # install-pandoc explicit for the same reason as the core Windows leg
+          # (auto-detect's `pak::pkg_deps(".")` solve cannot see extra-packages).
+          # `false` here: this job runs shinytest2, not vignettes.
+          install-pandoc: false
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
@@ -410,6 +435,19 @@ jobs:
         with:
           needs: |
             check
+          # MaxMin url:: -- same mechanism as the Windows and Linux legs, picked
+          # per architecture (macOS-latest is arm64; macos-15-intel is x86_64).
+          # Added pre-emptively and NOT yet observed failing: this job is
+          # `needs: core`, so it was skipped while the Windows leg was red.
+          # Fixing that leg unskips this one, which would then hit the identical
+          # unresolvable-Suggests error -- note `_R_CHECK_FORCE_SUGGESTS_: false`
+          # does not help, since it governs R CMD check, not pak's solve.
+          extra-packages: |
+            ${{ matrix.config.os == 'macos-15-intel' && 'url::https://ms609.github.io/packages/bin/macosx/big-sur-x86_64/MaxMin_latest.tgz' || 'url::https://ms609.github.io/packages/bin/macosx/big-sur-arm64/MaxMin_latest.tgz' }}
+          # install-pandoc explicit for the same reason as the Windows legs; also
+          # pre-emptive, since whether a macOS runner ships pandoc on PATH is
+          # exactly the condition that decides whether the bad branch fires.
+          install-pandoc: true
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
