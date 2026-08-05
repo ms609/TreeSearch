@@ -166,14 +166,24 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
   (`test-MaddisonSlatkin.R`, `test-Concordance.R`, `test-ParsSim.R`, `test-Consistency.R`,
   `test-ScoreSpectrum.R`, `test-QuartetResolution.R`, `test-TaxonInfluence.R`,
   `test-WideSample.R`, `test-pp-*.R`) is a useful first read.
-- **15 Legacy pure-R search API — sonnet, UNMEASURED / no inherited maturity.** Added
+- **15 Legacy pure-R search API — MEASURED 2026-08-05 at sonnet, still yielding.** Added
   2026-08-05 from #42's scope-coverage diff: 2,183 lines across 9 files backing the
-  still-shipped pre-C++-engine search functions, owned by no area. **Higher urgency than its
-  size suggests:** #16 (`sev:high`) names `EdgeListScore()` as *"the default `TreeScorer` for
-  `TreeSearch()`/`Ratchet()`/`Jackknife()`"* and one of four confirmed-vulnerable entry points,
-  so this family is a second, wholly unreviewed exposure surface for an already-confirmed bug —
-  take that question first. #42 offered "review once as frozen legacy, then deprioritise";
-  **the maintainer chose a full rotation area instead (2026-08-05): keep revisiting until the
-  seam stops yielding.** Legacy is not the same as clean, and this code is still shipped and
-  still the documented entry point for users who have not moved to the C++ engine. Treat "it
-  isn't growing" as a reason the seam should *exhaust* quickly, not as a reason to stop early.
+  still-shipped pre-C++-engine search functions, owned by no area. #42 offered "review once as
+  frozen legacy, then deprioritise"; **the maintainer chose a full rotation area instead
+  (2026-08-05): keep revisiting until the seam stops yielding.** Legacy is not the same as
+  clean, and this code is still shipped and still the documented entry point for users who have
+  not moved to the C++ engine. Treat "it isn't growing" as a reason the seam should *exhaust*
+  quickly, not as a reason to stop early.
+  **The `#16`/`EdgeListScore()` urgency that originally justified this row is now discharged**
+  — #16 is closed, its guard landed in PR #50, and the first round measured the pure-R layer
+  above it as *doubly* guarded (`R/CustomSearch.R:209` and `R/Ratchet.R:96` both reject
+  non-bifurcating input independently of the C++ fix; a 600-iteration fuzz of the default
+  rearrangement path produced no non-binary trees). Do not spend a second round re-asking it;
+  reopen only if the C++ guard is relaxed or a new caller bypasses those entry checks.
+  `start_tier` remains `sonnet` but is now inert — the seam yielded, so routing keeps the next
+  visit at the tier the log's experiment paragraph specifies. **Next visit starts here:** the
+  round's own leads — `SuccessiveWeights()` (`R/SuccessiveApproximations.R:175-189`) scores via
+  `CharacterLength()` rather than the kernel and was never checked for agreement with it, which
+  is exactly the shape of the already-confirmed #83 divergence; and the `-1` contract class of
+  #125, whose fix is one maintainer decision (refuse uniformly, per the existing deliberate
+  `stop()` at `R/SPR.R:101`) rather than four separate repairs.

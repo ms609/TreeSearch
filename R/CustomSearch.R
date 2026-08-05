@@ -59,8 +59,9 @@ EdgeListSearch <- function (edgeList, dataset,
   }
   hits <- 0L
   unimprovedSince <- 0L
-  
-  for (iter in 1:maxIter) {
+  iter <- 0L
+
+  for (iter in seq_len(maxIter)) {
     candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], 
                                      dataset = dataset, 
                                      TreeScorer = TreeScorer,
