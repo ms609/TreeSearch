@@ -121,7 +121,18 @@
 
   consContrast <- attr(constraint, "contrast")
   nConsStates <- ncol(consContrast)
-  if (nConsStates < 2L) return(list())
+  if (nConsStates < 2L) {
+    # One state means no taxon is coded `0`, so this is the extreme case of the
+    # inert character warned about below -- and the loudest one, because it is
+    # what `MatrixToPhyDat(c(a = 1, b = 1, c = 1))` produces: a user asking for
+    # a clade and getting no constraint at all.  Warn here rather than returning
+    # silently; the group-size test below never sees these characters.
+    warning("Constraint constrains nothing, and is ignored: no taxon is coded ",
+            "`0`, so every tree separates the `1` taxa from the (empty) `0` ",
+            "group.  Code the taxa that must fall outside the group as `0`.",
+            call. = FALSE)
+    return(list())
+  }
 
   consMat <- matrix(unlist(constraint, use.names = FALSE),
                     nrow = length(constraint), byrow = TRUE)

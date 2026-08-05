@@ -121,6 +121,9 @@ test_that("a 0/1 constraint matrix still enforces the exact clade", {
   set.seed(386)
   result <- tbrOnlyRun(ds, start[["edge"]], strict)
 
+  # Guard the guard: a search that froze would satisfy the compliance test
+  # below for the wrong reason, since the start already has {a,b} as a clade.
+  expect_lt(result$best_score, TreeLength(start, dataset))
   expect_true(all(vapply(result$trees, EdgeSeparatesGroups, logical(1),
                          labels = labels, inGroup = c("a", "b"),
                          outGroup = setdiff(labels, c("a", "b")))))
@@ -235,6 +238,15 @@ test_that(".PrepareConstraint codes free taxa as NA and drops vacuous rows", {
   # Two and two: kept, and kept silently.
   expect_silent(TreeSearch:::.PrepareConstraint(
     Inert("1", "1", "0", "0", "?", "?", "?", "?"), dataset))
+
+  # The loudest case of all, and the one the group-size test never sees: a
+  # constraint with a single state, which is what MatrixToPhyDat() returns for
+  # the `c(a = 1, b = 1, c = 1)` "make these a clade" idiom.  It reaches the
+  # `nConsStates < 2` early return, so it must warn there.
+  expect_warning(
+    TreeSearch:::.PrepareConstraint(
+      TreeTools::MatrixToPhyDat(c(a = "1", b = "1", c = "1")), dataset),
+    "constrains nothing")
 })
 
 test_that("the Wagner build places free taxa freely", {
@@ -255,12 +267,30 @@ test_that("the Wagner build places free taxa freely", {
                 info = paste("seed", seed))
   }
 
-  # A free taxon is genuinely free: over several addition orders the Wagner
-  # build is not forced to keep `e` out of the {a,b} group.
-  inGroup <- vapply(1:12, function(seed) {
+  # A free taxon is genuinely free.  `wagner_collect_active_splits()` used to
+  # read "outside the split" as ~split_tips, which put every `?` taxon in the
+  # apart group and forced it out of the constrained clade: the tightest node
+  # covering {a,b} and avoiding {c,d} was EXACTLY {a,b} in 25 of 25 seeds.  It
+  # now holds at least one free taxon in all 25.  Asserting only that {a,b} and
+  # {c,d} end up separated would not detect this -- an exact {a,b} clade
+  # separates them too.
+  tightest <- vapply(1:12, function(seed) {
     set.seed(seed)
-    tr <- AdditionTree(dataset, constraint = cons)
-    SeparatesGroups(tr, labels, c("a", "b", "e"), c("c", "d"))
-  }, logical(1))
-  expect_true(any(inGroup))
+    splits <- as.logical(as.Splits(AdditionTree(dataset, constraint = cons),
+                                   tipLabels = labels))
+    isOne <- labels %in% c("a", "b")
+    isZero <- labels %in% c("c", "d")
+    sizes <- c(
+      rowSums(splits)[apply(splits, 1, function(r) {
+        all(r[isOne]) && !any(r[isZero])
+      })],
+      (length(labels) - rowSums(splits))[apply(splits, 1, function(r) {
+        !any(r[isOne]) && all(r[isZero])
+      })]
+    )
+    if (length(sizes)) min(sizes) else NA_integer_
+  }, numeric(1))
+  # Compliant in every seed (no NA), and never pinned to the bare `1` group.
+  expect_false(anyNA(tightest))
+  expect_true(all(tightest > 2))
 })

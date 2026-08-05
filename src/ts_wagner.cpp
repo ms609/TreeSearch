@@ -1207,12 +1207,20 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
 //
 // With free tips the "among those that satisfy" is narrower than the
 // documented contract: this reads cd.split_tips only, so every free tip is a
-// root-level item and the together-group comes out as an EXACT clade.  That is
-// strictly compliant, hence always legal (agent-issues/TreeSearch#54) — but it
-// samples a strict subset of the legal topologies, so a free tip never starts
-// inside the constrained group.  Widening it would change which start trees
-// the search sees, which is a search-quality change to measure on its own
-// rather than a correctness fix to make here.
+// root-level item and the together-group comes out as an EXACT clade, which
+// displays the split under the free-taxa reading too
+// (agent-issues/TreeSearch#54).  So it samples a strict subset of the legal
+// topologies, and a free tip never starts inside the constrained group.
+// Widening it would change which start trees the search sees, which is a
+// search-quality change to measure on its own rather than a correctness fix to
+// make here.
+//
+// Making each together-group an exact clade is not always *possible*: the
+// R-side gate (.PrepareConstraint) admits four-gamete-compatible splits that
+// are not laminar, and those cannot all be clades at once.  That case is
+// handled by the collapse path below (a split that loses every tip to tighter
+// non-laminar splits gets split_root == -1 and is skipped, T-329) and caught
+// afterwards by the caller's post-hoc check, not by this comment's claim.
 
 namespace {
 
