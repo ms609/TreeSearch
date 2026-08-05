@@ -2235,25 +2235,29 @@ List ts_collapse_pool(
   // must stay visible even when its branch is zero-length (it would otherwise be
   // contracted, leaving the result looking unconstrained).  We protect every
   // constraint split from collapse — the unsupported NON-constraint branches
-  // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
-  // bitset: trees are re-rooted on tip 0 below, so every internal node's
-  // descendant set excludes tip 0 and is directly comparable to these.
+  // still collapse.
+  //
+  // Each split is stored as the pair of groups build_constraint() reads
+  // (1 = together, 0 = apart, anything else = free; see ts_constraint.cpp), not
+  // as one canonical bitset: with free tips the enforced grouping is generally
+  // NOT any node's exact tip set, and the exact-match test this replaced then
+  // protected nothing at all (agent-issues/TreeSearch#54).  A pure 0/1 matrix
+  // still gives apart == the complement, and the test below still fires on
+  // exactly the node the equality test used to find.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
-  std::vector<std::vector<uint64_t>> cons_canon;
+  std::vector<std::vector<uint64_t>> cons_one, cons_zero;
   if (consSplitMatrix.isNotNull()) {
     IntegerMatrix cs(consSplitMatrix.get());
     for (int r = 0; r < cs.nrow(); ++r) {
-      std::vector<uint64_t> b(wps, 0);
+      std::vector<uint64_t> one(wps, 0), zero(wps, 0);
       for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
-        if (cs(r, c)) b[c >> 6] |= (1ULL << (c & 63));
+        const int v = cs(r, c);
+        if (v != 1 && v != 0) continue;                 // free tip
+        (v == 1 ? one : zero)[c >> 6] |= (1ULL << (c & 63));
       }
-      if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
-        for (int w = 0; w < wps; ++w) b[w] = ~b[w];
-        int rem = n_tip & 63;
-        if (rem) b[wps - 1] &= ((1ULL << rem) - 1);  // clear padding bits
-      }
-      cons_canon.push_back(std::move(b));
+      cons_one.push_back(std::move(one));
+      cons_zero.push_back(std::move(zero));
     }
   }
 
@@ -2306,11 +2310,14 @@ List ts_collapse_pool(
 
     ts::compute_collapsed_flags_aggressive(tree, ds, flags);
 
-    // Protect constraint splits: clear the collapse flag of any internal edge
-    // whose bipartition realises a constraint (keeps the enforced clade
-    // visible).  Per-node descendant tip sets via a postorder OR; rooted on
-    // tip 0, so every internal set excludes tip 0 == the canonical form above.
-    if (!cons_canon.empty()) {
+    // Protect constraint splits: clear the collapse flag of the internal edge
+    // that realises each constraint (keeps the enforced clade visible).  That
+    // is the TIGHTEST node displaying the split — collapsing it is what would
+    // hide the grouping, whereas the looser nodes above it (which differ only
+    // by free tips) show nothing the tight one does not.  Per-node descendant
+    // tip sets via a postorder OR; rooted on tip 0, so every internal set
+    // excludes tip 0 and only one of the two groups can be the clade side.
+    if (!cons_one.empty()) {
       std::vector<uint64_t> tb(static_cast<size_t>(tree.n_node) * wps, 0);
       for (int tp = 0; tp < n_tip; ++tp) {
         tb[static_cast<size_t>(tp) * wps + (tp >> 6)] = 1ULL << (tp & 63);
@@ -2324,15 +2331,26 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      for (int v = n_tip + 1; v < tree.n_node; ++v) {
-        if (v >= static_cast<int>(flags.size()) || !flags[v]) continue;
-        const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-        for (const auto& cb : cons_canon) {
-          bool eq = true;
-          for (int w = 0; w < wps; ++w) {
-            if (nb[w] != cb[w]) { eq = false; break; }
-          }
-          if (eq) { flags[v] = 0; break; }
+      auto displays = [&](const uint64_t* nb, const std::vector<uint64_t>& in,
+                          const std::vector<uint64_t>& out) {
+        for (int w = 0; w < wps; ++w) {
+          if (in[w] & ~nb[w]) return false;   // a required tip missing
+          if (out[w] & nb[w]) return false;   // an excluded tip present
+        }
+        return true;
+      };
+      for (size_t ci = 0; ci < cons_one.size(); ++ci) {
+        int tight = -1, tight_size = n_tip + 1;
+        for (int v = n_tip + 1; v < tree.n_node; ++v) {
+          const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
+          if (!displays(nb, cons_one[ci], cons_zero[ci]) &&
+              !displays(nb, cons_zero[ci], cons_one[ci])) continue;
+          int sz = 0;
+          for (int w = 0; w < wps; ++w) sz += ts::popcount64(nb[w]);
+          if (sz < tight_size) { tight_size = sz; tight = v; }
+        }
+        if (tight >= 0 && tight < static_cast<int>(flags.size())) {
+          flags[tight] = 0;
         }
       }
     }

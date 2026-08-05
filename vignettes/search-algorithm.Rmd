@@ -217,6 +217,36 @@ Per-strategy attempt and success counts are returned in the
 `strategy_diagnostics` attribute of the search result for post-hoc
 inspection.
 
+### What a topological constraint requires
+
+A tree satisfies a constraint character when some edge separates the taxa
+coded `1` from those coded `0`.
+Taxa coded `?`, and taxa that the constraint does not mention at all, are
+*free*: the constraint says nothing about which side of that edge they belong
+on, and a tree is compliant however they fall.
+This is what `constraint` promises the user, and every part of the search reads
+it the same way -- the locked-node filter that screens individual
+rearrangements, the check that gates a finished replicate on its way into the
+pool, the constrained Wagner build, and the minimal-SPR repair that fixes a
+violating start.
+
+Reading a constraint more strictly -- as "the `1` group is a clade exactly",
+excluding the free taxa -- never returns a wrong answer, because every
+strictly-compliant tree also satisfies the user's constraint.
+It does, however, cost search: a tree that satisfies the constraint the user
+wrote, without making either group an exact clade, matches no node under the
+stricter reading, and an unmapped constraint split makes every candidate
+regraft illegal, so the replicate freezes on the tree it began with.
+Enforcing one reading everywhere is therefore a search-quality matter rather
+than a correctness one.
+
+The free-taxa reading also determines which rearrangements are legal, not just
+which trees are.
+A subtree made only of free taxa may be regrafted anywhere, since moving it
+cannot disturb the separating edge; and a subtree carrying `1`-group taxa may
+be regrafted anywhere within the largest clade that still covers the `1` group
+and excludes the `0` group, not merely within the smallest one.
+
 
 ## The driven search pipeline
 

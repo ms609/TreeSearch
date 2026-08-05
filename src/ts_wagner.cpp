@@ -347,20 +347,19 @@ static int wagner_smallest_containing_node(
 // further insertion can make it.
 static int wagner_map_complement(
     const TreeState& tree, int n_tip, int nw,
-    const std::vector<uint64_t>& node_tips, const uint64_t* split,
+    const std::vector<uint64_t>& node_tips, const uint64_t* split_out,
     const std::vector<uint64_t>& added_tips,
     WagnerConstraintScratch& scratch)
 {
+  (void)n_tip;
   uint64_t* needed_out = scratch.needed_out.data();
   int n_out = 0;
   int lone_out = -1;
   for (int w = 0; w < nw; ++w) {
-    uint64_t outside_mask = ~split[w];
-    if (w == nw - 1) {
-      const int rem = n_tip % 64;
-      if (rem > 0) outside_mask &= (1ULL << rem) - 1;
-    }
-    const uint64_t owd = outside_mask & added_tips[w];
+    // T-386: the outside group is cd.split_zeros, not ~split_tips.  A `?`-coded
+    // tip is in neither, so it never pulls this LCA about — which is what lets
+    // it be placed on either side of the constraint, as documented.
+    const uint64_t owd = split_out[w] & added_tips[w];
     needed_out[w] = owd;
     if (owd) {
       n_out += popcount64(owd);
@@ -426,6 +425,8 @@ static void wagner_map_constraint_nodes(
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
         &cd.split_tips[static_cast<size_t>(s) * nw];
+    const uint64_t* split_out =
+        &cd.split_zeros[static_cast<size_t>(s) * nw];
 
     // Once the inside LCA has reached the root it can never come back down —
     // grafting a leaf preserves ancestor relations among existing nodes, so the
@@ -441,9 +442,13 @@ static void wagner_map_constraint_nodes(
       // keep ConstraintData's T-384 flag at its "names the split itself"
       // default so a value left over from an earlier map_constraint_nodes()
       // cannot reach regraft_violates_constraint() before the next full remap.
+      // constraint_node_hi is pinned to constraint_node for the same reason:
+      // Wagner's LCA mapping has no displaying-chain, so the tight end is the
+      // only anchor it can honestly offer (T-386).
       cd.constraint_complement[s] = 0;
+      cd.constraint_node_hi[s] = cd.constraint_node[s];
       scratch.outside_node[s] = wagner_map_complement(
-          tree, n_tip, nw, node_tips, split, added_tips, scratch);
+          tree, n_tip, nw, node_tips, split_out, added_tips, scratch);
       continue;
     }
 
@@ -466,6 +471,7 @@ static void wagner_map_constraint_nodes(
         tree, nw, node_tips, needed, n_needed, lone_needed);
     cd.constraint_node[s] = inside_node;
     cd.constraint_complement[s] = 0;  // see the latched branch above
+    cd.constraint_node_hi[s] = inside_node;
 
     // A split is an *unrooted* bipartition, but a clade is a rooted subtree, so
     // "inside is monophyletic" is only one of the two ways this tree can display
@@ -485,7 +491,7 @@ static void wagner_map_constraint_nodes(
     if (inside_node == n_tip) {
       scratch.use_complement[s] = 1;
       scratch.outside_node[s] = wagner_map_complement(
-          tree, n_tip, nw, node_tips, split, added_tips, scratch);
+          tree, n_tip, nw, node_tips, split_out, added_tips, scratch);
     }
   }
 }
@@ -534,8 +540,18 @@ static void wagner_collect_active_splits(
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
         &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
+    const uint64_t* split_out =
+        &cd.split_zeros[static_cast<size_t>(s) * cd.n_words];
 
-    bool tip_inside = (split[tw] >> tb) & 1;
+    const bool tip_inside = (split[tw] >> tb) & 1;
+    const bool tip_outside = (split_out[tw] >> tb) & 1;
+
+    // T-386: a tip in neither group is FREE — the constraint says nothing
+    // about which side of the separating edge it belongs on, so no edge is
+    // barred to it.  Reading "outside" as ~split_tips, as this did before free
+    // tips were represented, forced every `?`-coded taxon out of the
+    // constrained group and could leave the filter with no legal edge at all.
+    if (!tip_inside && !tip_outside) continue;
 
     // Split constrains placement when the opposite side of the new tip
     // has at least one previously-added tip.  An inside tip is only
@@ -544,15 +560,10 @@ static void wagner_collect_active_splits(
     for (int w = 0; w < cd.n_words; ++w) {
       uint64_t prev = added_tips[w];
       if (prev & split[w]) has_prev_inside = true;
-      uint64_t outside_mask = ~split[w];
-      if (w == cd.n_words - 1) {
-        int rem = tree.n_tip % 64;
-        if (rem > 0) outside_mask &= (1ULL << rem) - 1;
-      }
-      if (prev & outside_mask) has_prev_outside = true;
+      if (prev & split_out[w]) has_prev_outside = true;
     }
     if (tip_inside && !has_prev_outside) continue;
-    if (!tip_inside && !has_prev_inside) continue;
+    if (tip_outside && !has_prev_inside) continue;
 
     // The constraint is active. constraint_node[s] is the LCA of
     // added inside tips (set by wagner_map_constraint_nodes).
@@ -586,12 +597,20 @@ static void wagner_collect_active_splits(
 
 // Does the finished tree display every constraint split?
 //
-// A bipartition is displayed iff some edge separates its two sides, i.e. iff
-// some node's subtree tip set equals one side exactly.  Only non-root nodes are
-// candidates: the root subtends every tip, and its two children already cover
-// the single edge the degree-two root sits on.  Tips are included so trivial
-// (single-taxon) splits are recognised.  Orientation-agnostic by construction,
-// so it stays correct however the tree happens to be rooted.
+// A split is displayed iff some edge separates its two groups, i.e. iff some
+// node's subtree tip set covers one group and holds none of the other — the
+// same free-taxa reading map_constraint_nodes() applies (T-386), spelled out
+// again here because Wagner runs before any of that machinery is valid.  It
+// MUST stay in step with node_displays_split() in ts_constraint.cpp: this is
+// the gate that decides whether the caller reshuffles and rebuilds, and the
+// stricter of the two entry points would reject trees the other then searches
+// happily (or, worse, accept ones it will not move from).
+//
+// Only non-root nodes are candidates: the root subtends every tip, and its two
+// children already cover the single edge the degree-two root sits on.  Tips are
+// included so trivial (single-taxon) groups are recognised.
+// Orientation-agnostic by construction, so it stays correct however the tree
+// happens to be rooted.
 static bool wagner_tree_displays_constraint(const TreeState& tree,
                                             const ConstraintData& cd) {
   const int n_tip = tree.n_tip;
@@ -612,22 +631,21 @@ static bool wagner_tree_displays_constraint(const TreeState& tree,
 
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split = &cd.split_tips[static_cast<size_t>(s) * nw];
+    const uint64_t* split_out = &cd.split_zeros[static_cast<size_t>(s) * nw];
     bool found = false;
     for (int node = 0; node < tree.n_node && !found; ++node) {
       if (node == n_tip) continue;  // root subtends everything
       const uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
-      bool eq = true, eqCompl = true;
+      // Either group may be the clade side; free tips (in neither mask) are
+      // not looked at.  No width mask is needed — both masks carry zeros above
+      // tip n_tip - 1, so padding bits can never make a test fail.
+      bool holds = true, holdsCompl = true;
       for (int w = 0; w < nw; ++w) {
-        uint64_t tip_mask = ~0ULL;
-        if (w == nw - 1) {
-          int rem = n_tip % 64;
-          if (rem > 0) tip_mask = (1ULL << rem) - 1;
-        }
-        if (nd[w] != (split[w] & tip_mask)) eq = false;
-        if (nd[w] != (~split[w] & tip_mask)) eqCompl = false;
-        if (!eq && !eqCompl) break;
+        if ((split[w] & ~nd[w]) || (split_out[w] & nd[w])) holds = false;
+        if ((split_out[w] & ~nd[w]) || (split[w] & nd[w])) holdsCompl = false;
+        if (!holds && !holdsCompl) break;
       }
-      if (eq || eqCompl) found = true;
+      if (holds || holdsCompl) found = true;
     }
     if (!found) return false;
   }

@@ -35,6 +35,10 @@ construction begins.}
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
+A returned tree is compatible with a constraint character when some edge
+separates the taxa coded \code{1} from those coded \code{0}.  Taxa coded \verb{?}, and taxa
+that \code{constraint} does not mention, are unconstrained: they may fall on
+either side of that edge, and are not required to join either group.
 Constraint searches are supported natively: all tree rearrangements
 are filtered to respect the constraint topology.}
 

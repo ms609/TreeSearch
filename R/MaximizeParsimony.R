@@ -145,10 +145,14 @@
     }
   }
 
-  keep <- apply(consSplits, 1, function(row) {
-    s <- sum(row)
-    s >= 1 && s < length(constraint) - 1
-  })
+  # A character only constrains anything when both groups are occupied: with no
+  # "0" tips there is no edge for the "1" tips to be separated *from*, so the
+  # documented contract ("some edge separates the 1 taxa from the 0 taxa") is
+  # vacuously true and enforcing the group as a clade would be a restriction the
+  # user never asked for.
+  nOne <- rowSums(consSplits)
+  nZero <- rowSums(consZero)
+  keep <- nOne >= 1 & nZero >= 1 & nOne < length(constraint) - 1
   consSplits <- consSplits[keep, , drop = FALSE]
   consZero   <- consZero[keep, , drop = FALSE]
   if (nrow(consSplits) == 0L) return(list())
@@ -187,6 +191,15 @@
 
   consTipData <- matrix(unlist(constraint, use.names = FALSE),
                         nrow = length(constraint), byrow = TRUE)
+
+  # Fold the two groups into the single membership matrix the C++ engine reads:
+  # 1 = "together", 0 = "apart", NA = free to fall on either side.  A tip that
+  # is in neither group must not be coded 0, or the engine would enforce the
+  # stricter "the 1 group is an exact clade" reading and refuse to move a start
+  # tree that already satisfies the documented one (agent-issues/TreeSearch#54).
+  # build_constraint() (src/ts_constraint.cpp) treats any value that is neither
+  # 1 nor 0 as free, so a plain 0/1 matrix still means "no free tips".
+  consSplits[consSplits == 0L & consZero == 0L] <- NA_integer_
 
   list(
     consSplitMatrix = consSplits,
@@ -694,6 +707,10 @@
 #' returned trees will be perfectly compatible with each character in
 #' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
 #' in any output tree.
+#' A returned tree is compatible with a constraint character when some edge
+#' separates the taxa coded `1` from those coded `0`.  Taxa coded `?`, and taxa
+#' that `constraint` does not mention, are unconstrained: they may fall on
+#' either side of that edge, and are not required to join either group.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
 #' @param effort Integer: how much search effort to spend, **relative to the
