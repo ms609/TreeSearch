@@ -131,7 +131,6 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   .CheckDataCharLen(dataset)
   .CheckTreeCharLen(tree)
-  tipLabel <- tree[["tip.label"]]
   tree <- .TreeForTaxa(tree, names(dataset))
   
   mat <- do.call(rbind, dataset)

@@ -176,9 +176,16 @@ void classify_clip_constraints(const TreeState& tree, int clip_node,
 
 // --- Per-candidate check ---
 
-// Returns true if regrafting at edge (above, below) would violate
-// any active constraint given the current clip_zones classification.
+// Returns true if regrafting onto the edge whose child endpoint is `below`
+// would violate any active constraint, given the current clip_zones
+// classification.  (Only `below` is needed: the parent endpoint of the target
+// edge never changes which side of a constraint clade the clip lands on.)
 // Uses DFS timestamps for O(1) descendant test per constraint.
+//
+// Screening only.  It classifies against the PRE-clip mapping, so a TBR
+// rerooting can still break a split it passed; every caller must re-verify the
+// applied move (map_constraint_nodes + constraint_node[s] >= 0) before
+// accepting it.
 bool regraft_violates_constraint(int below,
                                  const ConstraintData& cd);
 
@@ -205,9 +212,16 @@ bool violates_constraint_posthoc(const TreeState& tree,
 std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words);
 
 // Repair constraint violations by minimal SPR moves.
-// After return, all constraint splits are displayed and
-// update_constraint() has been called. Caller must rescore.
-// Returns the number of SPR moves performed (0 if tree was valid).
+//
+// HEURISTIC, and it can fail: a pass bails out when the repair needs more than
+// n_tip / 4 + 2 moves, individual moves are skipped when they would corrupt the
+// tree (see try_move), and nothing guarantees the fixed-point is reached within
+// the n_splits + 1 pass cap.  The return value does NOT distinguish "repaired"
+// from "gave up" -- so EVERY caller must re-verify (map_constraint_nodes, then
+// constraint_node[s] >= 0 for all s) and discard the tree if it still violates.
+//
+// update_constraint() has been called on return. Caller must rescore.
+// Returns the number of SPR moves performed (0 if tree was already valid).
 int impose_constraint(TreeState& tree, ConstraintData& cd);
 
 } // namespace ts

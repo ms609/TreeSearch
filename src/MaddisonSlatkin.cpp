@@ -1584,7 +1584,7 @@ public:
       double b = LogB(token0, states);
       double p = LogP(steps, states, token0);
       double val;
-      if (!(p > NEG_INF) || !(p > NEG_INF)) {
+      if (!(b > NEG_INF) || !(p > NEG_INF)) {
         val = NEG_INF;
       } else {
         val = b + p;
