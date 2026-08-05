@@ -112,7 +112,32 @@ silence is not evidence. And the same function is already the subject of
 so a reader is going in there anyway; settling
 both in one pass costs barely more than settling one.
 
-### Item 7 — area 13 gets two filed constraint findings from an area-11 round, one of them P1
+### Item 7 — area 13 gets two filed constraint findings from an area-11 round, one of them sev:high
+
+**DO NOT PROMOTE THIS ROW TO A `needs-escalation` LABEL.** The 2026-08-04 area-12 round did
+promote it, on #18 and #19, and the orchestrator **reverted both the same round**. The rule it
+followed ("promote it to a label the moment it gets filed as an issue") is scoped to the class
+that rule is written about — *a high-severity finding a finder flagged but could not pin down*,
+where the ask is **more capability**. This row is the other class this file admits: a
+**cross-area-routed** residual, and its ask is a **sequencing decision**, as the heading below
+says in as many words.
+
+Two reasons the label is not merely redundant here but actively harmful:
+
+1. `needs-escalation` encodes exactly one thing — *the next dispatch on this area must be
+   `opus`+*. Area 13's `start_tier` is **already `opus`**, so the label changes no routing
+   decision that was not already made.
+2. *Normal run* step 3's label branch reads "if non-empty, dispatch this round at opus (or
+   higher) regardless of `start_tier`/last yield, **no further reading needed for this
+   check**." So a label hit can *suppress* reading this row — and this row is the only place
+   the actual ask exists. Labelling it converts a sequencing question into a tier answer and
+   then hides the question.
+
+**The generalisable defect** (filed 2026-08-04): the rotation's routing state is **tier-only**.
+There is no channel for a non-tier verdict, and two distinct ones are now on record — this
+row's sequencing ask, and the *work-shape* verdicts of areas 10 and 13 ("next visit is not a
+finder"). Mis-encoding either into the tier channel is worse than leaving it in prose, because
+prose is at least read as prose.
 
 Recorded 2026-08-04 by the area-11 round. **Cross-area class** (the second one this file admits):
 area 11 found them, area 13 owns them, and area 13's *recorded next-visit plan predates them*.
@@ -121,17 +146,17 @@ Receiving-area check done as this file requires: area 13's most recent round is 
 and nothing later in `log.md` touches either finding. So this is genuinely open, not a re-queue
 of resolved work.
 
-**The two findings.** [`T-402` = #18](https://github.com/agent-issues/TreeSearch/issues/18) (**P1**) — a `constraint` is silently ignored when
+**The two findings.** [`T-402` = #18](https://github.com/agent-issues/TreeSearch/issues/18) (**sev:high**) — a `constraint` is silently ignored when
 the caller supplies a violating start via `tree =`; the search freezes on it, reports a
 better-than-constrained score, and *evicts* every compliant tree other replicates find.
-[`T-403` = #19](https://github.com/agent-issues/TreeSearch/issues/19) (P2) — the "enforced splits are protected from collapse" promise is an
+[`T-403` = #19](https://github.com/agent-issues/TreeSearch/issues/19) (sev:med) — the "enforced splits are protected from collapse" promise is an
 exact-match test with no access to `consZero`, so under the **default** `collapse = TRUE` the
 returned trees can violate the constraint outright (20/20 seeds).
 
 **The ask is a sequencing decision, not a review.** Area 13's next visit was recorded as *"a
 bounded exhaustive harness, not a finder"* (the `topology_spr` / `build_postorder`-guard
 equivalence). That plan is orthogonal to these two and still stands on its merits — but it was
-set when area 13 had no filed P1. Whoever takes area 13 next should decide explicitly which
+set when area 13 had no filed sev:high finding. Whoever takes area 13 next should decide explicitly which
 comes first and record the reason, rather than defaulting to the older note.
 
 **Two things to read before patching anything in this class**, both already in the rows:
