@@ -20,7 +20,7 @@ collaborators.
 |-------|---------|
 | `red-team` | Filed by `/red-team`. Also that skill's mode switch — don't delete it |
 | `sev:high` / `sev:med` / `sev:low` | Former P1 / P2 / P3 |
-| `area:1`…`area:13` | Red-team focus area, per `dev/red-team/focus-areas.md` |
+| `area:1`…`area:15` | Which area **owns the code**, per `dev/red-team/focus-areas.md` — not which round found it; an issue may carry several |
 | `task` | Planned work migrated from the retired `to-do.md` |
 | `deferred` | Assessed and parked; not scheduled |
 | `chore` | Infrastructure / process work |

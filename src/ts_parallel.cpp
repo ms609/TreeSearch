@@ -153,6 +153,9 @@ struct WorkerContext {
   // Per-thread score accumulator (index = thread_id)
   std::vector<double>* thread_scores;
 
+  // Per-thread count of replicates dropped by the constraint capture gate
+  int* thread_constraint_discards;
+
   // Wall-clock deadline for sector phases (only meaningful when use_timeout)
   bool use_timeout;
   std::chrono::steady_clock::time_point deadline;
@@ -230,14 +233,21 @@ void worker_thread(WorkerContext ctx) {
     // Accumulate phase timings for this thread
     ctx.thread_timings[ctx.thread_id] += rep_result.timings;
 
-    // Add to shared pool with collapsed-topology dedup
-    std::vector<uint8_t> rep_collapsed;
-    compute_collapsed_flags(rep_result.tree, ds_local, rep_collapsed);
-    ctx.shared_pool->add_collapsed(rep_result.tree, rep_result.score,
-                                   rep_collapsed);
-
-    // Record per-replicate score for Chao1 coverage estimation
-    ctx.thread_scores[ctx.thread_id].push_back(rep_result.score);
+    // Add to shared pool with collapsed-topology dedup, gated on the
+    // constraint exactly as the serial driver's capture is.
+    if (capture_satisfies_constraint(rep_result.tree, cd_ptr, ds_local,
+                                     rep_result.score)) {
+      std::vector<uint8_t> rep_collapsed;
+      compute_collapsed_flags(rep_result.tree, ds_local, rep_collapsed);
+      ctx.shared_pool->add_collapsed(rep_result.tree, rep_result.score,
+                                     rep_collapsed);
+      // Record per-replicate score for Chao1 coverage estimation.  A discarded
+      // replicate is left out: its score is a violating tree's, which no
+      // returned tree attains.
+      ctx.thread_scores[ctx.thread_id].push_back(rep_result.score);
+    } else {
+      ++ctx.thread_constraint_discards[ctx.thread_id];
+    }
 
     ctx.replicates_done->fetch_add(1, std::memory_order_relaxed);
 
@@ -361,6 +371,7 @@ DrivenResult parallel_driven_search(
   // Per-thread timing and score accumulators
   std::vector<PhaseTimings> thread_timings(n_threads);
   std::vector<std::vector<double>> thread_scores(n_threads);
+  std::vector<int> thread_constraint_discards(n_threads, 0);
 
   // Spawn worker threads
   std::vector<std::thread> workers;
@@ -368,6 +379,7 @@ DrivenResult parallel_driven_search(
   for (int t = 0; t < n_threads; ++t) {
     ctx.thread_timings = thread_timings.data();
     ctx.thread_scores = thread_scores.data();
+    ctx.thread_constraint_discards = thread_constraint_discards.data();
     ctx.thread_id = t;
     workers.emplace_back(worker_thread, ctx);
   }
@@ -579,6 +591,7 @@ DrivenResult parallel_driven_search(
   // Sum per-thread timings; merge per-thread replicate scores
   for (int t = 0; t < n_threads; ++t) {
     result.timings += thread_timings[t];
+    result.constraint_discards += thread_constraint_discards[t];
     for (double s : thread_scores[t]) {
       result.replicate_scores.push_back(s);
     }

@@ -1,19 +1,38 @@
 # To integrate into 2.0.0 notes
 
-- `constraint` now enforces exactly what it documents: a returned tree is
-  compatible with a constraint character when some edge separates the taxa
-  coded `1` from those coded `0`, with `?`-coded and unmentioned taxa free to
-  fall on either side.  The enforcement machinery previously required the `1`
-  group to be a clade *exactly*, free taxa excluded.  That is strictly
-  stronger, so the search never accepted a tree that broke the documented
-  constraint; but a start tree that satisfied the documented constraint without
-  making either group an exact clade matched no node, every rearrangement was
-  rejected, and the replicate returned its start unimproved.  Constrained
-  searches with `?`-coded taxa therefore reach better scores.
-  The collapse pass is fixed with it: it identified the branch realising a
-  constraint by exact match too, so with free taxa it protected nothing and the
-  separating edge could be contracted away -- the one route by which a
-  *returned* tree could break the constraint.
+- `constraint` now binds the trees `MaximizeParsimony()` returns, at three
+  boundaries where it did not.  A starting tree supplied through `tree` was
+  never checked against the constraint; because a constrained search rejects
+  every rearrangement away from a violating tree, the replicate froze on it and
+  reported a score no constraint-satisfying tree could reach, which then evicted
+  the compliant trees other replicates had found.  A violating start is now
+  rearranged until it complies before the search begins, **with a warning**.
+  Separately, a replicate's own tree entered the pool unchecked, and the final
+  collapse of unsupported branches could contract the very branch that displayed
+  an enforced grouping -- so under the default `collapse = TRUE` a returned tree
+  could break the constraint outright.  Both paths are now checked.
+
+  **Constrained results may therefore differ from previous versions**: scores
+  can rise to the true constrained optimum, and returned trees will display the
+  constrained groupings.  `MaximizeParsimony()` also warns if any replicate
+  ended on a tree that could not be made to satisfy the constraint, and now
+  raises an error rather than returning an unverified tree if no
+  constraint-satisfying tree was found at all.
+- Every part of the search now reads `constraint` the way it is documented: a
+  tree is compatible with a constraint character when some edge separates the
+  taxa coded `1` from those coded `0`, with `?`-coded and unmentioned taxa free
+  to fall on either side.  The locked-node filter that screens individual
+  rearrangements, the constrained Wagner build and the collapse pass previously
+  required the `1` group to be a clade *exactly*, free taxa excluded.  That is
+  strictly stronger, so the search never accepted a rearrangement that broke the
+  documented constraint; but a start tree that satisfied the documented
+  constraint without making either group an exact clade matched no node, every
+  rearrangement was rejected, and the replicate returned its start unimproved.
+  Constrained searches with `?`-coded taxa therefore reach better scores.
+  The exact match also blunted the collapse protection described above: with
+  free taxa it matched no branch, so the separating edge could still be
+  contracted away -- the one route by which a *returned* tree could break the
+  constraint.
 - A constraint character whose `1` or `0` group holds fewer than two taxa now
   warns and is ignored, rather than being enforced as a clade.  Every tree
   separates such a group from the rest, so the character constrains nothing

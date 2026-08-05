@@ -111,8 +111,17 @@ Profile mode sets `ds.concavity = 1.0` (finite sentinel) so existing
   `constraint_node` (tightest, used for "must land outside") and
   `constraint_node_hi` (highest, "must land inside"). Any writer of one must
   write the other — `ts_wagner.cpp` pins hi to the tight anchor.
-- `.PrepareConstraint()` drops (and warns about) a character with no `0` taxa:
-  vacuous under the documented contract.
+- `.PrepareConstraint()` drops (and warns about) a character whose `1` **or**
+  `0` group holds fewer than two taxa: vacuous under the documented contract,
+  since every tree separates such a group from the rest.
+- A user constraint binds at three boundaries besides the per-move filter
+  (agent-issues/TreeSearch#59): the start tree is repaired by `impose_constraint()`
+  before it is scored, each replicate's finished tree is gated by
+  `capture_satisfies_constraint()` on its way into the pool, and the enforced
+  split is kept out of the final collapse. `impose_constraint()` is heuristic and
+  can fail, so every caller re-verifies. The collapse protects a realising node
+  only when no other realising node already survives — protecting
+  unconditionally would resolve a branch the constraint never asked for.
 - Wagner uses LCA-based constraint mapping (`wagner_map_constraint_nodes`)
   since splits aren't fully present during incremental construction.
 - Wagner has a posthoc retry loop (up to 100 random addition orders) as a

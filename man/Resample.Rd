@@ -80,7 +80,10 @@ constrains nothing -- every tree separates such a group from the rest -- and
 is ignored with a warning.  To group taxa, code the taxa they must be
 separated from as \code{0} rather than leaving them \verb{?}.
 Constraint searches are supported natively: all tree rearrangements
-are filtered to respect the constraint topology.}
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detail. Set to \code{0} to run silently.

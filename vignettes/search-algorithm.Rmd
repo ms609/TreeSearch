@@ -235,8 +235,8 @@ excluding the free taxa -- never returns a wrong answer, because every
 strictly-compliant tree also satisfies the user's constraint.
 It does, however, cost search: a tree that satisfies the constraint the user
 wrote, without making either group an exact clade, matches no node under the
-stricter reading, and an unmapped constraint split makes every candidate
-regraft illegal, so the replicate freezes on the tree it began with.
+stricter reading, and is then treated exactly like a violating start (below) --
+frozen, or repaired to a topology it did not need to be moved to.
 Enforcing one reading everywhere is therefore a search-quality matter rather
 than a correctness one.
 
@@ -246,6 +246,31 @@ A subtree made only of free taxa may be regrafted anywhere, since moving it
 cannot disturb the separating edge; and a subtree carrying `1`-group taxa may
 be regrafted anywhere within the largest clade that still covers the `1` group
 and excludes the `0` group, not merely within the smallest one.
+
+### Starting trees under a constraint
+
+Whatever its source -- a Wagner build, a random topology, or a tree supplied
+through `tree` -- a start that does not satisfy the constraint is repaired
+before the replicate scores it, by the same minimal-SPR routine that repairs
+fused trees.
+This has to happen at the start rather than by rejecting the tree afterwards.
+Constrained rearrangement cannot climb out of a violating tree: an unmapped
+constraint split makes every candidate regraft illegal, so the replicate
+freezes on the tree it began with.
+Nor can the violation be caught by comparison later, because a violating tree
+is drawn from a wider set of topologies than a legal one and so tends to score
+*better*; taken as a baseline, it makes the legal repair look like a
+regression, and no subsequent phase can accept it.
+Where the repair does not succeed, the start is discarded in favour of a fresh
+constrained Wagner build.
+The same check gates each replicate's finished tree on its way into the pool,
+so a tree that breaks the constraint is never returned; and the enforced splits
+are protected from the final collapse pass, whichever branch happens to realise
+them.
+
+A start that already separates the two groups is left alone, however its free
+taxa happen to fall; the repair fires only on a start that genuinely violates
+the constraint.
 
 
 ## The driven search pipeline

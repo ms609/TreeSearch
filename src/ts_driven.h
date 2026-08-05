@@ -359,6 +359,11 @@ struct DrivenResult {
   // search (TNT "Total rearrangements examined" analogue). Serial path only;
   // 0 when run in parallel. See DataSet::n_candidates_evaluated.
   long long candidates_evaluated = 0;
+
+  // Replicates whose finished tree still violated the user constraint after
+  // repair and so never entered the pool (see capture_satisfies_constraint).
+  // Reported by the caller: Rf_warning() is not safe from a worker thread.
+  int constraint_discards = 0;
 };
 
 // Result of a single replicate (tree + score, no pool interaction).
@@ -390,6 +395,14 @@ ReplicateResult run_single_replicate(
     const SplitFrequencyTable* split_freq = nullptr,
     StartStrategy strategy = StartStrategy::WAGNER_RANDOM,
     const TreePool* pool = nullptr);
+
+// Gate a finished replicate's tree on its way into the pool.  Mirrors the fuse
+// capture: repair a constraint violation, verify the repair took, and return
+// false when it did not, so nothing the caller is handed can break the
+// constraint the caller asked for.  `score` is refreshed when a repair moves
+// the tree.  Inert unless a *user* constraint is active.
+bool capture_satisfies_constraint(TreeState& tree, ConstraintData* cd,
+                                  const DataSet& ds, double& score);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool
