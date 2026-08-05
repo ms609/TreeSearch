@@ -104,8 +104,11 @@
   pointer addressed one past the end.  No
   value was ever read through it and no score changed -- 900 of 900 HSJ and
   x-transformation lengths are bit-identical either side of the fix -- but the
-  access is undefined behaviour, and a hardened or instrumented build aborted
-  on it, which is what made the `AddressSanitizer` workflow unusable.
+  access is undefined behaviour, and any build whose standard library checks
+  its own preconditions aborted on it.  That includes the container behind the
+  `gcc-ASAN` workflow, which is why that workflow could not get past this
+  package: it stopped on the library assertion rather than on anything the
+  sanitizer itself had found.
 
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute
