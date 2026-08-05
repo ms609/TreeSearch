@@ -39,6 +39,10 @@ A returned tree is compatible with a constraint character when some edge
 separates the taxa coded \code{1} from those coded \code{0}.  Taxa coded \verb{?}, and taxa
 that \code{constraint} does not mention, are unconstrained: they may fall on
 either side of that edge, and are not required to join either group.
+A character whose \code{1} or \code{0} group contains fewer than two taxa therefore
+constrains nothing -- every tree separates such a group from the rest -- and
+is ignored with a warning.  To group taxa, code the taxa they must be
+separated from as \code{0} rather than leaving them \verb{?}.
 Constraint searches are supported natively: all tree rearrangements
 are filtered to respect the constraint topology.}
 

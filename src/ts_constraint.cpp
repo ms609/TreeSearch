@@ -34,7 +34,7 @@ ConstraintData build_constraint(
   // Pack split_matrix rows into a pair of bitmasks.
   // split_matrix is column-major (from R): element [s, t] is at
   // index s + n_splits * t.  1 -> "together" group, 0 -> "apart" group,
-  // anything else (NA_INTEGER) -> free, in neither mask (T-386).
+  // anything else (NA_INTEGER) -> free, in neither mask (#54).
   for (int s = 0; s < n_splits; ++s) {
     uint64_t* ones = &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
     uint64_t* zeros = &cd.split_zeros[static_cast<size_t>(s) * cd.n_words];
@@ -87,7 +87,7 @@ ConstraintData build_constraint_from_bitsets(
   cd.split_tips.assign(split_bits, split_bits + total);
   // These splits come from pool bipartitions, which partition every tip: there
   // are no free tips, so the "apart" group is exactly the complement and the
-  // free-taxa machinery collapses back to the exact-clade test (T-386).
+  // free-taxa machinery collapses back to the exact-clade test (#54).
   cd.split_zeros.assign(total, 0ULL);
   {
     const int rem = n_tips % 64;
@@ -173,24 +173,9 @@ std::vector<uint64_t> compute_node_tips(const TreeState& tree, int n_words)
 // Map constraint nodes: find which internal node holds each split
 // =========================================================================
 
-// Does the edge above `node` separate `together` from `apart`?  It does when
-// the node's descendant tip set covers every tip of `together` and holds none
-// of `apart`; the tips in neither group are free and are not looked at (T-386).
-//
-// With `apart` the exact complement of `together` — a constraint with no free
-// tips, and every split built by build_constraint_from_bitsets() — the two
-// conditions together force set equality, which is the exact-clade test this
-// replaced.
-static inline bool node_displays_split(
-    const uint64_t* nd, const uint64_t* together, const uint64_t* apart,
-    int n_words)
-{
-  for (int w = 0; w < n_words; ++w) {
-    if ((together[w] & ~nd[w]) != 0ULL) return false;  // a required tip missing
-    if ((apart[w] & nd[w]) != 0ULL) return false;      // an excluded tip present
-  }
-  return true;
-}
+// node_displays_split() — the shared "does this node display the split"
+// predicate — lives in ts_constraint.h, so the Wagner build and the collapse
+// pass answer the question with the same code rather than a lookalike.
 
 // Tightest and highest node displaying `together` | `apart`, or {-1, -1}.
 //
@@ -277,7 +262,7 @@ void map_constraint_nodes(const TreeState& tree, ConstraintData& cd)
   // that every tree which mapped successfully before maps to exactly the same
   // node now.
   //
-  // T-386: "is a clade" is the free-taxa reading, not set equality -- see
+  // #54: "is a clade" is the free-taxa reading, not set equality -- see
   // node_displays_split().  The chain of displaying nodes is recorded at both
   // ends, because a regraft that must land INSIDE the constrained group may use
   // the whole chain while one that must land outside may not; see
@@ -396,7 +381,7 @@ void classify_clip_constraints(const TreeState& tree, int clip_node,
   // "outside", a tip of the group that must stay apart from it.  A clip made
   // only of FREE tips is in neither, and lands here as UNCONSTRAINED — the
   // whole point of the free-taxa reading, and what lets such a clip be
-  // regrafted anywhere without breaking the separating edge (T-386).  Reading
+  // regrafted anywhere without breaking the separating edge (#54).  Reading
   // "outside" as ~split, which is what this did before free tips existed,
   // pinned every free tip to the far side of the constraint.
   for (int s = 0; s < cd.n_splits; ++s) {
@@ -404,6 +389,23 @@ void classify_clip_constraints(const TreeState& tree, int clip_node,
         &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
     const uint64_t* zeros =
         &cd.split_zeros[static_cast<size_t>(s) * cd.n_words];
+
+    // The clip carries the constraint with it: its own tip set covers one
+    // group and holds none of the other.  Wherever it is regrafted, the node
+    // at the attachment point has exactly the clip's tip set, so the split
+    // stays displayed — and TBR's rerooting of the clip cannot change that,
+    // since the set is the same however the subtree hangs.  Testing this
+    // first is what unpins a clip that contains the whole displaying chain:
+    // the anchor is then inside the clipped subtree, no surviving `below` can
+    // be its descendant, and the MUST_INSIDE test below would reject every
+    // regraft of a subtree that is in fact free to go anywhere.
+    if (node_displays_split(cd.clip_tip_mask.data(), ones, zeros,
+                            cd.n_words) ||
+        node_displays_split(cd.clip_tip_mask.data(), zeros, ones,
+                            cd.n_words)) {
+      cd.clip_zones[s] = ClipZone::UNCONSTRAINED;
+      continue;
+    }
 
     bool any_inside = false;
     bool any_outside = false;
@@ -486,8 +488,8 @@ bool regraft_violates_constraint(int below,
                             ? ClipZone::MUST_INSIDE : ClipZone::MUST_OUTSIDE;
 
     // The two ends of the displaying chain answer two different questions, and
-    // each wants the end that permits most (T-386; with no free tips the chain
-    // is one node long and both reduce to the pre-T-386 test):
+    // each wants the end that permits most (#54; with no free tips the chain
+    // is one node long and both reduce to the pre-#54 test):
     //
     //  * a clip that must land INSIDE carries tips of the together-group but
     //    none of the apart-group, so anywhere within the HIGHEST displaying
@@ -795,7 +797,7 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
   // already displayed every constraint, spending up to n_tip / 4 + 2 arbitrary
   // SPR moves on it.  That mattered most at ts_nni_perturb.cpp's unconditional
   // impose_constraint() call, which runs after every perturbation cycle.
-  // "Is a clade" is the free-taxa reading (T-386), so a tree that satisfies
+  // "Is a clade" is the free-taxa reading (#54), so a tree that satisfies
   // what `constraint` documents is likewise left alone.  The repair below aims
   // at making the canonical side a clade, which displays the split either way.
   std::vector<int> violated;
@@ -833,7 +835,7 @@ static int impose_one_pass(TreeState& tree, ConstraintData& cd,
 
   // Tips that keep node `nd` from displaying the split: those of the
   // together-group it is missing, plus those of the apart-group it holds.
-  // Free tips appear in neither, so the repair never moves one (T-386) — they
+  // Free tips appear in neither, so the repair never moves one (#54) — they
   // may sit on whichever side they already do.
   auto repair_cost = [&](const uint64_t* nd, const uint64_t* ones,
                          const uint64_t* zeros) {

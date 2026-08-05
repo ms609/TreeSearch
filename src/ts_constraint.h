@@ -8,11 +8,12 @@
 // remaining tips are FREE: coded `?`, or absent from the constraint phyDat
 // altogether.  A tree satisfies the split iff some edge separates the 1 group
 // from the 0 group, free tips falling on either side.  That is the contract
-// `?MaximizeParsimony`'s `constraint` argument documents, and since T-386 it is
-// the one enforced here: a node DISPLAYS the split when its descendant tip set
-// is a superset of one group and disjoint from the other.
+// `?MaximizeParsimony`'s `constraint` argument documents, and since
+// agent-issues/TreeSearch#54 it is the one enforced here: a node DISPLAYS the
+// split when its descendant tip set is a superset of one group and disjoint
+// from the other.
 //
-// Requiring the tip set to EQUAL a group (the pre-T-386 test) is strictly
+// Requiring the tip set to EQUAL a group (the pre-#54 test) is strictly
 // stronger.  It never returned a wrong answer, but a start tree that satisfied
 // the documented contract without making either group an exact clade mapped to
 // no node at all, which regraft_violates_constraint() reads as "the tree
@@ -53,9 +54,9 @@ struct ConstraintData {
 
   // The tips that must end up on the OTHER side of that edge, same layout.
   // Disjoint from split_tips; the two need NOT be complements — a tip in
-  // neither mask is free to fall on either side (T-386).  When the caller
+  // neither mask is free to fall on either side (#54).  When the caller
   // supplies no free tips this is exactly ~split_tips, and every check below
-  // reduces to the pre-T-386 exact-clade test.
+  // reduces to the pre-#54 exact-clade test.
   std::vector<uint64_t> split_zeros;
 
   // Current mapping: constraint_node[i] = the TIGHTEST node (tip or internal)
@@ -109,7 +110,7 @@ struct ConstraintData {
 //   anything else (NA_INTEGER, as .PrepareConstraint() writes for a `?`-coded
 //      or unconstrained taxon) — tip t is FREE, and may fall on either side.
 // A pure 0/1 matrix therefore means "no free tips", i.e. the exact-clade
-// reading that predates T-386; callers that build one by hand keep it.
+// reading that predates #54; callers that build one by hand keep it.
 // The two groups are swapped where needed so that tip 0 is never in
 // split_tips ("outside" the canonical side) — the same invariant the Wagner
 // and pool paths have always relied on, and harmless because a split is an
@@ -127,6 +128,29 @@ void build_constraint_posthoc(
     int expected_score);
 
 // --- Node mapping and DFS timestamps ---
+
+// Does the edge above a node whose descendant tip set is `nd` separate
+// `together` from `apart`?  It does when the set covers every tip of
+// `together` and holds none of `apart`; the tips in neither group are free and
+// are not looked at.  With `apart` the exact complement of `together` the two
+// conditions force set equality, which is the exact-clade test this replaced.
+//
+// THE definition of "displays a constraint split", shared by every entry point
+// that has to decide it: the search/TBR mapping (map_constraint_nodes), the
+// Wagner build's own check (wagner_tree_displays_constraint, ts_wagner.cpp),
+// and the collapse pass's branch protection (ts_collapse_pool, ts_rcpp.cpp).
+// They must not drift apart: the stricter of any two would reject trees
+// another searches happily, or accept ones it will not move from.
+inline bool node_displays_split(
+    const uint64_t* nd, const uint64_t* together, const uint64_t* apart,
+    int n_words)
+{
+  for (int w = 0; w < n_words; ++w) {
+    if ((together[w] & ~nd[w]) != 0ULL) return false;  // a required tip missing
+    if ((apart[w] & nd[w]) != 0ULL) return false;      // an excluded tip present
+  }
+  return true;
+}
 
 // Find which internal node holds each constraint split in the current tree.
 // Must be called after each accepted move and at search init.

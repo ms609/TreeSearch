@@ -1,7 +1,7 @@
 # Tier 2: skipped on CRAN; see tests/testing-strategy.md
 skip_on_cran()
 
-## T-386 / agent-issues/TreeSearch#54: the constraint the search enforces must
+## agent-issues/TreeSearch#54: the constraint the search enforces must
 ## be the one `?MaximizeParsimony`'s `constraint` argument documents.
 ##
 ## The documented contract is the phyDat reading: a returned tree is compliant
@@ -70,26 +70,9 @@ SeparatesGroups <- function(tree, labels, inGroup, outGroup) {
 # The engine hands back bare edge matrices for rooted binary trees.
 EdgeSeparatesGroups <- function(edge, labels, inGroup, outGroup) {
   tree <- structure(
-    list(edge = edge, Nnode = length(labels) - 1L, tip.label = labels),
+    list(edge = edge, Nnode = max(edge) - length(labels), tip.label = labels),
     class = "phylo")
   SeparatesGroups(tree, labels, inGroup, outGroup)
-}
-
-# TBR only: every phase that could rescue a frozen replicate by starting
-# somewhere else is switched off, so the reported score is what rearranging the
-# supplied start achieved.  Mirrors tbrOnlyRun() in test-ts-constraint-rooting.R.
-tbrOnly <- function(ds, startEdge, splitMatrix) {
-  TreeSearch:::ts_driven_search(
-    ds$contrast, ds$tip_data, ds$weight, ds$levels,
-    maxReplicates = 1L, targetHits = 99L, tbrMaxHits = 1L,
-    ratchetCycles = 0L, driftCycles = 0L, nniPerturbCycles = 0L,
-    xssRounds = 0L, rssRounds = 0L, cssRounds = 0L,
-    pruneReinsertCycles = 0L, fuseInterval = 0L,
-    outerCycles = 1L, maxOuterResets = 0L,
-    nniFirst = FALSE, sprFirst = FALSE,
-    poolMaxSize = 100L, poolSuboptimal = 0, maxSeconds = 0, verbosity = 0L,
-    nThreads = 1L, startEdge = startEdge, consSplitMatrix = splitMatrix
-  )
 }
 
 test_that("free `?` taxa do not freeze a compliant start tree", {
@@ -100,21 +83,21 @@ test_that("free `?` taxa do not freeze a compliant start tree", {
   startScore <- TreeLength(start, dataset)
 
   # Premise: the start satisfies the documented constraint but neither group is
-  # a clade, so the pre-T-386 exact-clade test could not map it.
+  # a clade, so the pre-#54 exact-clade test could not map it.
   expect_true(SeparatesGroups(start, labels, c("a", "b"), c("c", "d")))
   expect_false(SeparatesGroups(start, labels, c("a", "b"),
                                setdiff(labels, c("a", "b"))))
 
   # Take the split matrix from .PrepareConstraint rather than writing it out,
   # so this exercises the same R -> C++ contract the user's `constraint =`
-  # phyDat travels along: pre-T-386 it coded the free taxa 0 (making {a,b} an
+  # phyDat travels along: pre-#54 it coded the free taxa 0 (making {a,b} an
   # exact clade), now it codes them NA.
   free <- TreeSearch:::.PrepareConstraint(
     freeTaxaConstraint(), dataset)[["consSplitMatrix"]]
   expect_equal(as.vector(free), c(1L, 1L, 0L, 0L, NA, NA, NA, NA))
 
   set.seed(386)
-  result <- tbrOnly(ds, start[["edge"]], free)
+  result <- tbrOnlyRun(ds, start[["edge"]], free)
 
   # The defect: every regraft was rejected and the start came back unimproved.
   expect_lt(result$best_score, startScore)
@@ -136,7 +119,7 @@ test_that("a 0/1 constraint matrix still enforces the exact clade", {
 
   strict <- matrix(c(1L, 1L, 0L, 0L, 0L, 0L, 0L, 0L), nrow = 1)
   set.seed(386)
-  result <- tbrOnly(ds, start[["edge"]], strict)
+  result <- tbrOnlyRun(ds, start[["edge"]], strict)
 
   expect_true(all(vapply(result$trees, EdgeSeparatesGroups, logical(1),
                          labels = labels, inGroup = c("a", "b"),
@@ -222,12 +205,62 @@ test_that(".PrepareConstraint codes free taxa as NA and drops vacuous rows", {
   expect_equal(as.vector(consArgs[["consSplitMatrix"]]),
                c(1L, 1L, 0L, 0L, NA, NA, NA, NA))
 
-  # A character with no `0` taxa constrains nothing under the documented
-  # contract — there is no group for the `1` taxa to be separated FROM — so it
-  # must not be enforced as a clade.
-  vacuous <- phangorn::phyDat(
-    matrix(c("1", "1", "?", "?", "?", "?", "?", "?"), nrow = 8,
-           dimnames = list(letters[1:8], NULL)),
-    type = "USER", levels = c("0", "1"))
-  expect_equal(TreeSearch:::.PrepareConstraint(vacuous, dataset), list())
+  # A group of fewer than two taxa is separated from the rest by every tree, so
+  # such a character constrains nothing under the documented contract and must
+  # not be enforced as a clade.  It is dropped, but not silently: coding only
+  # `1` and `?` almost always means "group these taxa", which is not what it
+  # says, and the alternative reading is the one that froze replicates.
+  Inert <- function(...) {
+    phangorn::phyDat(matrix(c(...), nrow = 8,
+                            dimnames = list(letters[1:8], NULL)),
+                     type = "USER", levels = c("0", "1"))
+  }
+  # No `0` group at all.
+  expect_warning(
+    dropped <- TreeSearch:::.PrepareConstraint(
+      Inert("1", "1", "?", "?", "?", "?", "?", "?"), dataset),
+    "constrains nothing")
+  expect_equal(dropped, list())
+  # A `0` group of one.  The two groups are interchangeable, so this must be
+  # treated exactly like its mirror image below -- which the old
+  # `1`-group-only test did not do.
+  expect_warning(
+    TreeSearch:::.PrepareConstraint(
+      Inert("1", "1", "0", "?", "?", "?", "?", "?"), dataset),
+    "constrains nothing")
+  expect_warning(
+    TreeSearch:::.PrepareConstraint(
+      Inert("0", "0", "1", "?", "?", "?", "?", "?"), dataset),
+    "constrains nothing")
+  # Two and two: kept, and kept silently.
+  expect_silent(TreeSearch:::.PrepareConstraint(
+    Inert("1", "1", "0", "0", "?", "?", "?", "?"), dataset))
+})
+
+test_that("the Wagner build places free taxa freely", {
+  # wagner_tree_displays_constraint() and wagner_collect_active_splits() are a
+  # second, independent implementation of the same reading.  AdditionTree() is
+  # the path with no post-hoc retry to fall back on (has_posthoc is set only at
+  # the search entry), so a Wagner build that read the constraint strictly
+  # would warn here — and, before the fix, was forced to place every `?` taxon
+  # outside the constrained group.
+  dataset <- freeTaxaData()
+  labels <- names(dataset)
+  cons <- freeTaxaConstraint()
+
+  for (seed in 1:8) {
+    set.seed(seed)
+    tree <- expect_silent(AdditionTree(dataset, constraint = cons))
+    expect_true(SeparatesGroups(tree, labels, c("a", "b"), c("c", "d")),
+                info = paste("seed", seed))
+  }
+
+  # A free taxon is genuinely free: over several addition orders the Wagner
+  # build is not forced to keep `e` out of the {a,b} group.
+  inGroup <- vapply(1:12, function(seed) {
+    set.seed(seed)
+    tr <- AdditionTree(dataset, constraint = cons)
+    SeparatesGroups(tr, labels, c("a", "b", "e"), c("c", "d"))
+  }, logical(1))
+  expect_true(any(inGroup))
 })

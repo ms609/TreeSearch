@@ -2331,20 +2331,17 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      auto displays = [&](const uint64_t* nb, const std::vector<uint64_t>& in,
-                          const std::vector<uint64_t>& out) {
-        for (int w = 0; w < wps; ++w) {
-          if (in[w] & ~nb[w]) return false;   // a required tip missing
-          if (out[w] & nb[w]) return false;   // an excluded tip present
-        }
-        return true;
-      };
+      // ts::node_displays_split() (ts_constraint.h) is the shared definition —
+      // the search's mapping and the Wagner build's check use the same one, so
+      // the branch protected here is the branch they enforce.
       for (size_t ci = 0; ci < cons_one.size(); ++ci) {
+        const uint64_t* one = cons_one[ci].data();
+        const uint64_t* zero = cons_zero[ci].data();
         int tight = -1, tight_size = n_tip + 1;
         for (int v = n_tip + 1; v < tree.n_node; ++v) {
           const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-          if (!displays(nb, cons_one[ci], cons_zero[ci]) &&
-              !displays(nb, cons_zero[ci], cons_one[ci])) continue;
+          if (!ts::node_displays_split(nb, one, zero, wps) &&
+              !ts::node_displays_split(nb, zero, one, wps)) continue;
           int sz = 0;
           for (int w = 0; w < wps; ++w) sz += ts::popcount64(nb[w]);
           if (sz < tight_size) { tight_size = sz; tight = v; }

@@ -145,14 +145,30 @@
     }
   }
 
-  # A character only constrains anything when both groups are occupied: with no
-  # "0" tips there is no edge for the "1" tips to be separated *from*, so the
-  # documented contract ("some edge separates the 1 taxa from the 0 taxa") is
-  # vacuously true and enforcing the group as a clade would be a restriction the
-  # user never asked for.
+  # Every tree separates a group of fewer than two taxa from anything: the edge
+  # above a lone tip already does it, and an empty group needs no edge at all.
+  # Such a character constrains nothing under the documented contract, so
+  # enforcing its group as a clade would restrict the search for a guarantee it
+  # already has -- which is the over-strict reading agent-issues/TreeSearch#54
+  # is about.  The test is symmetric in the two groups because they are
+  # interchangeable: which one a user calls "1" is arbitrary, and
+  # build_constraint() swaps them freely to canonicalise.
+  #
+  # Warn rather than drop silently: a character coding only "1" and "?" almost
+  # certainly means "group these taxa", which is not what it says.
   nOne <- rowSums(consSplits)
   nZero <- rowSums(consZero)
-  keep <- nOne >= 1 & nZero >= 1 & nOne < length(constraint) - 1
+  inert <- nOne < 2 | nZero < 2
+  if (any(inert)) {
+    warning("Constraint character", if (sum(inert) > 1) "s" else "", " ",
+            paste(which(inert), collapse = ", "),
+            if (sum(inert) > 1) " constrain" else " constrains",
+            " nothing, and", if (sum(inert) > 1) " are" else " is",
+            " ignored: every tree separates a group of fewer than two taxa ",
+            "from the rest.  Taxa coded `?` join neither group; code those ",
+            "that must fall outside the group as `0`.", call. = FALSE)
+  }
+  keep <- !inert
   consSplits <- consSplits[keep, , drop = FALSE]
   consZero   <- consZero[keep, , drop = FALSE]
   if (nrow(consSplits) == 0L) return(list())
@@ -711,6 +727,10 @@
 #' separates the taxa coded `1` from those coded `0`.  Taxa coded `?`, and taxa
 #' that `constraint` does not mention, are unconstrained: they may fall on
 #' either side of that edge, and are not required to join either group.
+#' A character whose `1` or `0` group contains fewer than two taxa therefore
+#' constrains nothing -- every tree separates such a group from the rest -- and
+#' is ignored with a warning.  To group taxa, code the taxa they must be
+#' separated from as `0` rather than leaving them `?`.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
 #' @param effort Integer: how much search effort to spend, **relative to the

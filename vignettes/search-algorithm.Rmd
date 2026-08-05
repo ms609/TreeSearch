@@ -217,7 +217,7 @@ Per-strategy attempt and success counts are returned in the
 `strategy_diagnostics` attribute of the search result for post-hoc
 inspection.
 
-### What a topological constraint requires
+## Topological constraints
 
 A tree satisfies a constraint character when some edge separates the taxa
 coded `1` from those coded `0`.

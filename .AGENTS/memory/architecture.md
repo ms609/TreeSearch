@@ -94,8 +94,25 @@ Profile mode sets `ds.concavity = 1.0` (finite sentinel) so existing
 
 ## Constraint enforcement
 
+- A constraint split names **two disjoint groups** plus a FREE remainder. A tree
+  satisfies it iff some edge separates the groups; free tips may fall either
+  side. This is what `?MaximizeParsimony`'s `constraint` documents and, since
+  agent-issues/TreeSearch#54, what every entry point enforces. `ts::node_displays_split()`
+  (`ts_constraint.h`) is THE shared predicate — `map_constraint_nodes()`,
+  `wagner_tree_displays_constraint()` and `ts_collapse_pool()` all call it.
+  Reintroducing an exact-clade test at any one of them freezes replicates.
 - `build_constraint()` reads R split matrix with **column-major** indexing:
-  `split_matrix[s + n_splits * t]`.
+  `split_matrix[s + n_splits * t]`. Values: `1` = together-group, `0` =
+  apart-group, **anything else (`NA_INTEGER`) = free**. A hand-built 0/1 matrix
+  therefore means "no free tips" and reduces to the exact-clade behaviour, which
+  is what `build_constraint_from_bitsets()` (consensus constraints) relies on.
+- `ConstraintData` carries `split_zeros` (the apart-group) alongside
+  `split_tips`, and both ends of the displaying-node chain:
+  `constraint_node` (tightest, used for "must land outside") and
+  `constraint_node_hi` (highest, "must land inside"). Any writer of one must
+  write the other — `ts_wagner.cpp` pins hi to the tight anchor.
+- `.PrepareConstraint()` drops (and warns about) a character with no `0` taxa:
+  vacuous under the documented contract.
 - Wagner uses LCA-based constraint mapping (`wagner_map_constraint_nodes`)
   since splits aren't fully present during incremental construction.
 - Wagner has a posthoc retry loop (up to 100 random addition orders) as a
