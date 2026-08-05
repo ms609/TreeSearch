@@ -166,7 +166,10 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
   (`test-MaddisonSlatkin.R`, `test-Concordance.R`, `test-ParsSim.R`, `test-Consistency.R`,
   `test-ScoreSpectrum.R`, `test-QuartetResolution.R`, `test-TaxonInfluence.R`,
   `test-WideSample.R`, `test-pp-*.R`) is a useful first read.
-- **15 Legacy pure-R search API — MEASURED 2026-08-05 at sonnet, still yielding.** Added
+- **15 Legacy pure-R search API — MEASURED 2026-08-05 at BOTH sonnet and opus; yielding
+  heavily. The `start_tier` column still reads `sonnet` — the maintainer's recorded choice on
+  #42 — but the experiment below falsifies the reasoning behind it. Left unchanged pending the
+  maintainer's call; it is inert either way, since routing governs a visited area.** Added
   2026-08-05 from #42's scope-coverage diff: 2,183 lines across 9 files backing the
   still-shipped pre-C++-engine search functions, owned by no area. #42 offered "review once as
   frozen legacy, then deprioritise"; **the maintainer chose a full rotation area instead
@@ -180,10 +183,18 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
   non-bifurcating input independently of the C++ fix; a 600-iteration fuzz of the default
   rearrangement path produced no non-binary trees). Do not spend a second round re-asking it;
   reopen only if the C++ guard is relaxed or a new caller bypasses those entry checks.
-  `start_tier` remains `sonnet` but is now inert — the seam yielded, so routing keeps the next
-  visit at the tier the log's experiment paragraph specifies. **Next visit starts here:** the
-  round's own leads — `SuccessiveWeights()` (`R/SuccessiveApproximations.R:175-189`) scores via
-  `CharacterLength()` rather than the kernel and was never checked for agreement with it, which
-  is exactly the shape of the already-confirmed #83 divergence; and the `-1` contract class of
-  #125, whose fix is one maintainer decision (refuse uniformly, per the existing deliberate
-  `stop()` at `R/SPR.R:101`) rather than four separate repairs.
+  **This row carried the tier-economics experiment, and it settled the tier question for good.**
+  Paired passes over the identical scope on 2026-08-05: `sonnet` returned 5 candidates and **0
+  sev:high**; `opus`, handed sonnet's entire yield as off-limits, returned **26 candidates and 4
+  sev:high**, all 26 confirmed. The cheap pass removed no work from the expensive one. Sonnet
+  found broken *documented contracts*; opus found *silent wrong answers* — different classes,
+  not different amounts. See the log's two 2026-08-05 entries; **do not re-run this experiment.**
+  **Next visit starts here** (stay at `opus`, fresh agent, and prefer a targeted shape over
+  another general finder): the **decayed custom-criterion façade** — #137 (`Ratchet()` never
+  forwards `TreeScorer`), #126 (`SuccessiveApproximations()`'s undocumented capability gap) and
+  the dead `SuccessiveWeights()` are one story, and the useful work is auditing *which advertised
+  custom-criterion entry points work end to end*, each with a test whose scorer is
+  distinguishable from `EdgeListScore` (a test using an equivalent scorer cannot see #137);
+  and **porting the validated neighbourhood enumerator to the C++ `all_spr`/`all_tbr` paths**,
+  which were never audited — the R-side harness (validated against 2(n−3) and 2(n−3)(2n−7))
+  found four distinct sampler defects in one pass and should generalise.
