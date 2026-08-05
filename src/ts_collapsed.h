@@ -13,6 +13,17 @@ namespace ts {
 /// collapsed[c] == 1 means the edge from c to parent[c] is zero-length
 /// and clipping c cannot improve the score (safe to skip as TBR/SPR clip).
 ///
+/// NOTE: unlike compute_collapsed_flags_aggressive(), this function CAN flag
+/// TERMINAL (pendant) edges — `c` is iterated over all nodes, tips included, so
+/// a tip whose state sets contain its sibling's in every character is flagged
+/// (all-"?" tips always are).  Split-based consumers never act on tip flags,
+/// though note that only one of them says so explicitly: tree_to_collapsed_edge
+/// iterates v >= n_tip + 1, whereas compute_collapsed_splits tests
+/// collapsed[node] with no tip guard and is safe only because it walks
+/// tree.postorder, which build_postorder() fills with internal nodes alone.
+/// tbr_search's clip-skip and regraft-merge DO read tip flags, so this silently
+/// removes every pendant edge of such a tip from the neighbourhood.
+///
 /// Requires valid state arrays — call after full_rescore / score_tree.
 void compute_collapsed_flags(
     const TreeState& tree,
@@ -26,9 +37,13 @@ void compute_collapsed_flags(
 /// for exact regraft merging).  Using these flags to skip clips/regrafts is a
 /// HEURISTIC neighbourhood reduction (Goloboff's asymmetric reachability): scoring
 /// stays exact, but some improving moves may be skipped.  For the standard
-/// (no-inapplicable) Fitch path the criterion is final_[p] & final_[c] != 0 for
-/// every character (validated bit-for-bit against a brute-force MPR oracle,
-/// dev/benchmarks/b2_minlength_oracle.R).  For datasets with inapplicable
+/// (no-inapplicable) Fitch path the criterion is mpr[p] & mpr[c] != 0 for every
+/// character, where mpr[] is the MARGINAL MPR set recomputed inside this
+/// function from prelim + local_cost.  It is NOT tree.final_, which holds one
+/// arbitrary reconstruction rather than the full marginal set — see the
+/// derivation comment in compute_collapsed_flags_aggressive().  (Criterion
+/// validated bit-for-bit against a brute-force MPR oracle,
+/// dev/benchmarks/b2_minlength_oracle.R.)  For datasets with inapplicable
 /// characters it falls back to the conservative compute_collapsed_flags (NA
 /// soft-collapse is not yet derived), so NA datasets are unaffected.
 ///

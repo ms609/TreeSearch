@@ -115,6 +115,28 @@ jobs:
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
           needs: check
+          # MaxMin url:: -- the Windows counterpart of the arm64 leg's line, and
+          # the reason this leg used to fail before compiling anything. MaxMin is
+          # not on CRAN, and pak does NOT read `Additional_repositories` from
+          # DESCRIPTION (confirmed empirically 2026-08-03, recorded in
+          # ms609/packages' tools/publish-maxmin.R), so the indexed drat layout
+          # alone leaves it unresolvable and the solve dies with "Can't find
+          # package called MaxMin". Naming the flat, unversioned alias directly
+          # is the mechanism that publish script exists to provide; it always
+          # points at the current build, so it needs no edit when MaxMin moves.
+          extra-packages: |
+            url::https://ms609.github.io/packages/bin/windows/MaxMin_latest.zip
+          # install-pandoc MUST stay explicit here, and the url:: above is not
+          # sufficient without it. Left unset, setup-r-dependencies auto-detects
+          # by running `pak::pkg_deps(".", dependencies = list(direct = "all"))`
+          # -- a SECOND, fresh solve that sees neither the lockfile nor
+          # extra-packages, so it looks MaxMin up by name and dies with
+          # "* local::.: Can't install dependency MaxMin" even though MaxMin has
+          # just been installed successfully. That branch only runs when pandoc
+          # is absent from PATH, which is exactly why the Linux legs never hit it
+          # (their runners ship pandoc) and this one did. `true` rather than
+          # `false` because this leg checks with vignettes.
+          install-pandoc: true
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.

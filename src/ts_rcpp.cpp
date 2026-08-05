@@ -219,9 +219,13 @@ IntegerMatrix tree_to_edge(const ts::TreeState& tree) {
 // collapsed[c] == 1 (c internal) means the edge c -> parent[c] is zero-length:
 // c is removed and its children reattach to c's nearest retained ancestor,
 // producing a polytomy.  Tips and the root pseudo-node are always retained;
-// compute_collapsed_flags[_aggressive] never flags the root or its children, so
-// when the tree is rooted on a tip (the precondition for a rooting-invariant
-// collapse) no informative edge is root-adjacent and the basal split survives.
+// compute_collapsed_flags[_aggressive] do not flag root's children on any
+// scoring path, so when the tree is rooted on a tip (the precondition for a
+// rooting-invariant collapse) no informative edge is root-adjacent and the
+// basal split survives.  The lone exception is the total_words == 0
+// star-collapse branch (T-331), which flags root's children deliberately; the
+// loop below then contracts them and yields the star, which is the intended
+// answer for fully-uninformative data.  See red-team T-409.
 IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
                                      const std::vector<uint8_t>& collapsed) {
   const int n_tip = tree.n_tip;
@@ -266,6 +270,15 @@ IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
 // first-encountered child of each node goes left.
 ts::TreeState build_topology_tree(const IntegerMatrix& edge) {
   int n_edge = edge.nrow();
+  // Same derivation, and so the same out-of-bounds writes, as init_from_edge.
+  // ncol is checked first: the child column is read as edge(i, 1), which on an
+  // n x 1 matrix indexes past the end of the underlying vector.
+  if (edge.ncol() != 2) {
+    stop("`tree` edge matrix must have exactly 2 columns.");
+  }
+  if (n_edge < 2 || !ts::edge_list_is_binary(&edge(0, 0), &edge(0, 1), n_edge)) {
+    stop("`tree` must be binary");
+  }
   int n_tip = n_edge / 2 + 1;
 
   ts::TreeState tree;
@@ -920,7 +933,8 @@ List ts_tbr_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -981,7 +995,8 @@ List ts_ratchet_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -1729,6 +1744,13 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
           flat[i] = se(i, 0);
           flat[n_edge + i] = se(i, 1);
         }
+        // init_from_edge refuses a non-binary tree by throwing, but under
+        // nThreads > 1 it runs on a worker thread, where an uncaught throw
+        // terminates the session.  Reject here, on the main thread.
+        if (!ts::edge_list_is_binary(flat.data(), flat.data() + n_edge,
+                                     n_edge)) {
+          stop("Each `startEdge` matrix must describe a binary tree.");
+        }
         params.start_edges.push_back(std::move(flat));
       }
     }
@@ -1846,14 +1868,44 @@ static void unpack_hsj(Nullable<List> hsjConfig, ts::DataSet& ds) {
     ds.hsj_alpha = as<double>(hc["hsjAlpha"]);
     ds.scoring_mode = ts::ScoringMode::HSJ;
 
-    if (hc.containsElementNamed("hsjTipLabels") &&
-        !Rf_isNull(hc["hsjTipLabels"])) {
+    // hsjTipLabels must be present and non-NULL whenever HSJ is enabled:
+    // score_hierarchy_block() reads ds.tip_labels unconditionally once
+    // scoring_mode == HSJ, and that field is only populated inside this
+    // branch. `list(hsjTipLabels = NULL)` keeps the element name, so
+    // containsElementNamed() alone does not catch an empty tip_labels (T-398).
+    if (!hc.containsElementNamed("hsjTipLabels") ||
+        Rf_isNull(hc["hsjTipLabels"])) {
+      Rcpp::stop("hsjConfig$hsjTipLabels must be provided (non-NULL) whenever "
+                 "hsjConfig is supplied (which enables HSJ scoring).");
+    }
+
+    {
       IntegerMatrix tl = as<IntegerMatrix>(hc["hsjTipLabels"]);
       validate_hsj_tip_labels(tl, hsjAbsentState,
                               static_cast<int>(ds.token_states.size()),
                               ds.n_levels);
       int n_t = tl.nrow();
       int n_c = tl.ncol();
+      // hsjTipLabels must cover every block's primary/secondary character
+      // index: score_hierarchy_block() reads
+      // tip_labels[t * n_orig_chars + block.primary_char] (and likewise for
+      // secondaries) unconditionally once scoring_mode == HSJ, so a
+      // non-NULL but too-narrow matrix reads past ds.tip_labels the same
+      // way a NULL one did (T-398).
+      for (const ts::HierarchyBlock& block : ds.hierarchy_blocks) {
+        if (block.primary_char < 0 || block.primary_char >= n_c) {
+          Rcpp::stop("hsjConfig$hsjTipLabels has %d columns, but a hierarchy "
+                     "block's primary character index is %d",
+                     n_c, block.primary_char);
+        }
+        for (int sec : block.secondary_chars) {
+          if (sec < 0 || sec >= n_c) {
+            Rcpp::stop("hsjConfig$hsjTipLabels has %d columns, but a "
+                       "hierarchy block's secondary character index is %d",
+                       n_c, sec);
+          }
+        }
+      }
       ds.n_orig_chars = n_c;
       ds.tip_labels.resize(n_t * n_c);
       for (int t = 0; t < n_t; ++t) {
@@ -1896,6 +1948,16 @@ static void unpack_xform(Nullable<List> xformConfig,
       List rc = xf_list[ch];
       NumericMatrix cm = as<NumericMatrix>(rc["cost_matrix"]);
       int ns = ns_vec[ch];
+      // Validate cost matrix dimensions match the character's state count
+      // (mirrors the check ts_sankoff_test() already performs; T-397 —
+      // Rcpp's Matrix indexing never bounds-checks a mis-shaped-but-
+      // same-length matrix, so an unguarded read here silently scores
+      // garbage instead of erroring).
+      if (cm.nrow() != ns || cm.ncol() != ns) {
+        Rcpp::stop("xformChars[[%d]]$cost_matrix has dimensions %d x %d, but "
+                   "character %d has %d states (expected %d x %d)",
+                   ch + 1, cm.nrow(), cm.ncol(), ch + 1, ns, ns, ns);
+      }
       double* dst = ds.sankoff_cost_matrices.data() +
           static_cast<size_t>(ch) * max_ns * max_ns;
       for (int r = 0; r < ns; ++r)
@@ -1922,6 +1984,22 @@ static void unpack_xform(Nullable<List> xformConfig,
       IntegerMatrix combo_grid = as<IntegerMatrix>(rc["combo_grid"]);
       IntegerMatrix tip_sec = as<IntegerMatrix>(rc["tip_sec_known"]);
       int n_sec = combo_grid.ncol();
+      // combo_grid must carry one row per present state (states 1..ns-1);
+      // state == -2 below indexes it at (s - 1) for s up to ns - 1, so
+      // fewer rows than that reads out of bounds (T-397).
+      if (combo_grid.nrow() != ns - 1) {
+        Rcpp::stop("xformChars[[%d]]$combo_grid has %d rows, but character "
+                   "%d has %d states (expected %d rows)",
+                   ch + 1, combo_grid.nrow(), ch + 1, ns, ns - 1);
+      }
+      // tip_sec_known is read at (t, d) for t in [0, n_t), d in
+      // [0, n_sec) in the state == -2 branch below; a truncated matrix
+      // reads past the SEXP the same way an unguarded combo_grid would.
+      if (tip_sec.nrow() != n_t || tip_sec.ncol() != n_sec) {
+        Rcpp::stop("xformChars[[%d]]$tip_sec_known has dimensions %d x %d, "
+                   "but expected %d x %d (n_tips x n_secondaries)",
+                   ch + 1, tip_sec.nrow(), tip_sec.ncol(), n_t, n_sec);
+      }
       for (int t = 0; t < n_t; ++t) {
         int state = ts_r[t];
         double* tip_ptr = ds.sankoff_tip_costs.data() +
@@ -1946,6 +2024,15 @@ static void unpack_xform(Nullable<List> xformConfig,
           }
         } else if (state >= 0 && state < ns) {
           tip_ptr[state] = 0.0;
+        } else {
+          // Any other value (e.g. state >= ns) falls through every branch
+          // above, leaving tip_ptr all-INF; that INF then propagates through
+          // the pool sentinel (1e18) rather than a true Inf and passes
+          // is.finite(), silently corrupting the score instead of erroring
+          // (T-397).
+          Rcpp::stop("xformChars[[%d]]$tip_states[%d] = %d is out of range; "
+                     "must be -1, -2, or in [0, %d)",
+                     ch + 1, t + 1, state, ns);
         }
       }
     }
@@ -2016,6 +2103,16 @@ List ts_driven_search(
     result = ts::parallel_driven_search(pool, ds, params, cd_ptr, nThreads);
   } else {
     result = ts::driven_search(pool, ds, params, cd_ptr);
+  }
+
+  // Reported here rather than where it is detected: the count accumulates on
+  // worker threads, and Rf_warning() is a main-thread-only call.
+  if (result.constraint_discards > 0) {
+    Rf_warning(
+      "%d replicate(s) ended on a tree that could not be made to satisfy "
+      "`constraint`, and were discarded. The remaining trees do satisfy it; "
+      "raise `maxReplicates` if too few trees were found.",
+      result.constraint_discards);
   }
 
   // Build timings as a NumericVector (lighter than List)
@@ -2154,7 +2251,8 @@ List ts_collapse_pool(
     List scoringConfig,
     Nullable<List> hsjConfig = R_NilValue,
     Nullable<List> xformConfig = R_NilValue,
-    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<IntegerMatrix> consZero = R_NilValue)
 {
   ts::DataSet ds = unpack_scoring(contrast, tip_data, weight, levels,
                                   scoringConfig);
@@ -2169,22 +2267,55 @@ List ts_collapse_pool(
   // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
   // bitset: trees are re-rooted on tip 0 below, so every internal node's
   // descendant set excludes tip 0 and is directly comparable to these.
+  //
+  // The canonical bitsets alone protect only a node whose descendant set is the
+  // 1 group EXACTLY, which is what the search's locked-node machinery enforces.
+  // The constraint the user is promised is looser: tips ambiguous for the
+  // constraint character are free to sit on either side, so the split can be
+  // realised by a node that is not exactly the 1 group, which no exact match
+  // reaches — and contracting that node's edge takes the enforced grouping with
+  // it.  `cons_one` / `cons_zero` are the raw (uncanonicalised) groups, from
+  // which the realising node is found per tree below.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
   std::vector<std::vector<uint64_t>> cons_canon;
+  std::vector<std::vector<uint64_t>> cons_one, cons_zero;
+  auto row_bits = [&](const IntegerMatrix& m, int r) {
+    std::vector<uint64_t> b(wps, 0);
+    for (int c = 0; c < n_tip && c < m.ncol(); ++c) {
+      if (m(r, c)) b[c >> 6] |= (1ULL << (c & 63));
+    }
+    return b;
+  };
   if (consSplitMatrix.isNotNull()) {
     IntegerMatrix cs(consSplitMatrix.get());
     for (int r = 0; r < cs.nrow(); ++r) {
-      std::vector<uint64_t> b(wps, 0);
-      for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
-        if (cs(r, c)) b[c >> 6] |= (1ULL << (c & 63));
-      }
+      std::vector<uint64_t> b = row_bits(cs, r);
+      cons_one.push_back(b);
       if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
         for (int w = 0; w < wps; ++w) b[w] = ~b[w];
         int rem = n_tip & 63;
         if (rem) b[wps - 1] &= ((1ULL << rem) - 1);  // clear padding bits
       }
       cons_canon.push_back(std::move(b));
+    }
+    if (consZero.isNotNull()) {
+      IntegerMatrix cz(consZero.get());
+      for (int r = 0; r < cz.nrow() && r < cs.nrow(); ++r) {
+        cons_zero.push_back(row_bits(cz, r));
+      }
+    }
+    cons_zero.resize(cons_one.size(), std::vector<uint64_t>(wps, 0));
+  }
+  // Group sizes depend only on the constraint, so they are counted once here
+  // rather than per tree.  A group of fewer than two taxa is skipped below:
+  // such a split is realised by a terminal edge, never a collapse candidate.
+  std::vector<int> n_one_tips(cons_one.size(), 0);
+  std::vector<int> n_zero_tips(cons_one.size(), 0);
+  for (size_t r = 0; r < cons_one.size(); ++r) {
+    for (int w = 0; w < wps; ++w) {
+      n_one_tips[r] += ts::popcount64(cons_one[r][w]);
+      n_zero_tips[r] += ts::popcount64(cons_zero[r][w]);
     }
   }
 
@@ -2265,6 +2396,48 @@ List ts_collapse_pool(
           }
           if (eq) { flags[v] = 0; break; }
         }
+      }
+
+      // A split can also be realised by a node that is not the 1 group exactly,
+      // and that node needs protecting too — but only when nothing else keeps
+      // the split visible.  A node realises the split when it holds one whole
+      // group and none of the other; every such node's own edge displays it, so
+      // if any of them already survives the contraction there is nothing to do.
+      // Protecting unconditionally would instead force the resolution of a
+      // branch the constraint does not ask for, which is the "unsupported
+      // non-constraint branches still collapse" half of the promise.
+      //
+      // Where none survives, the MRCA of a group is the node protected: the
+      // postorder visits every node before its parent, so the first node to
+      // hold a whole group is its MRCA, and keeping that one edge suffices,
+      // since contracting an edge below it leaves its descendant set — and so
+      // the split it displays — unchanged.
+      for (size_t r = 0; r < cons_one.size(); ++r) {
+        if (n_one_tips[r] < 2 || n_zero_tips[r] < 2) continue;
+        const std::vector<uint64_t>* grp[2] = { &cons_one[r], &cons_zero[r] };
+
+        bool survives = false;
+        int to_protect = -1;
+        for (int side = 0; side < 2 && !survives; ++side) {
+          const std::vector<uint64_t>& in = *grp[side];
+          const std::vector<uint64_t>& out = *grp[1 - side];
+          for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
+            const int v = tree.postorder[pi];
+            if (v <= n_tip || v >= static_cast<int>(flags.size())) continue;
+            const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
+            bool realises = true;
+            for (int w = 0; w < wps; ++w) {
+              if ((nb[w] & in[w]) != in[w] || (nb[w] & out[w])) {
+                realises = false;
+                break;
+              }
+            }
+            if (!realises) continue;
+            if (!flags[v]) { survives = true; break; }
+            if (to_protect < 0) to_protect = v;  // the MRCA, in postorder
+          }
+        }
+        if (!survives && to_protect >= 0) flags[to_protect] = 0;
       }
     }
 
