@@ -164,6 +164,47 @@ test_that("MaximizeParsimony honours and searches under a `?` constraint", {
                          outGroup = c("c", "d"))))
 })
 
+test_that("the collapse pass keeps the enforced grouping visible", {
+  # The one place the strict reading did return a wrong answer.  A constraint
+  # is external evidence for a grouping, so ts_collapse_pool() protects the
+  # branch that realises it from contraction — but it identified that branch by
+  # matching a node's tip set to the `1` group EXACTLY.  With free taxa the
+  # realising node is generally not that set, so nothing was protected and the
+  # separating edge was contracted away: the returned tree broke the documented
+  # constraint even though every tree the search visited satisfied it.
+  labels <- letters[1:6]
+  # Two characters support (a,e), two support (b,f); none supports (c,d), so
+  # the branch that separates {a,b} from {c,d} is unsupported and collapses
+  # unless it is protected.
+  charDat <- StringToPhyDat(
+    c("100010", "100010", "010001", "010001", "000000"), labels)
+  at <- attributes(charDat)
+  scoringConfig <- list(
+    min_steps = integer(0), concavity = Inf, xpiwe = FALSE,
+    xpiwe_r = 0.5, xpiwe_max_f = 5.0, obs_count = integer(0),
+    infoAmounts = NULL
+  )
+  # {a,e,b,f} | {c,d} separates {a,b} from {c,d}; neither group is a clade.
+  tree <- Preorder(RenumberTips(
+    ape::read.tree(text = "(((a,e),(b,f)),(c,d));"), labels))
+  cons <- phangorn::phyDat(
+    matrix(c("1", "1", "0", "0", "?", "?"), nrow = 6,
+           dimnames = list(labels, NULL)),
+    type = "USER", levels = c("0", "1"))
+
+  collapsed <- TreeSearch:::ts_collapse_pool(
+    list(tree[["edge"]]), at$contrast,
+    matrix(unlist(charDat, use.names = FALSE), nrow = 6, byrow = TRUE),
+    at$weight, at$levels, scoringConfig, NULL, NULL,
+    TreeSearch:::.PrepareConstraint(cons, charDat)[["consSplitMatrix"]])
+
+  out <- structure(
+    list(edge = collapsed$trees[[1]], tip.label = labels,
+         Nnode = max(collapsed$trees[[1]]) - 6L),
+    class = "phylo")
+  expect_true(SeparatesGroups(Renumber(out), labels, c("a", "b"), c("c", "d")))
+})
+
 test_that(".PrepareConstraint codes free taxa as NA and drops vacuous rows", {
   dataset <- freeTaxaData()
 
