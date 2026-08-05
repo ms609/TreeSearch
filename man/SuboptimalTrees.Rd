@@ -24,7 +24,7 @@ so that a suboptimal sample is not prematurely truncated.}
 
 \item{\dots}{Further arguments passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}, including
 scoring options (\code{concavity}, \code{inapplicable}, ...) and search effort
-(\code{maxReplicates}, \code{maxSeconds}, \code{strategy}, \code{nThreads}, \code{verbosity}).
+(\code{maxReplicates}, \code{maxSeconds}, \code{effort}, \code{nThreads}, \code{verbosity}).
 Named \code{\link[=SearchControl]{SearchControl()}} fields may also be passed here to override the
 constructed control.}
 }

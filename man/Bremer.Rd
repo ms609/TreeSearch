@@ -138,7 +138,7 @@ serially with a different seed would -- with both remaining valid upper bounds
 on the decay.}
 
 \item{\dots}{Further arguments passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} /
-\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, e.g. \code{maxReplicates}, \code{maxSeconds}, \code{strategy},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, e.g. \code{maxReplicates}, \code{maxSeconds}, \code{effort},
 \code{nThreads}, \code{verbosity}.}
 }
 \value{

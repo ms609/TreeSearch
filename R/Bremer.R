@@ -64,7 +64,7 @@
 #' on the decay.
 #' @inheritParams MaximizeParsimony
 #' @param \dots Further arguments passed to [`MaximizeParsimony()`] /
-#' [`SuboptimalTrees()`], e.g. `maxReplicates`, `maxSeconds`, `strategy`,
+#' [`SuboptimalTrees()`], e.g. `maxReplicates`, `maxSeconds`, `effort`,
 #' `nThreads`, `verbosity`.
 #'
 #' @return A numeric vector (or, if `format = "character"`, a
@@ -217,13 +217,22 @@ Bremer <- function(tree, dataset,
               "meaningless unless you pass the same scoring arguments ",
               "(`concavity`, `inapplicable`, ...) used to find the trees. ",
               "Proceeding with the supplied score.")
+      # The mode mismatch already conveys that the criteria differ; the numeric
+      # length check below would only restate it, so stop here.
+      return(invisible(NULL))
     }
-    return(invisible(NULL))
+    # A matching signature validates the scoring MODE, but not the numeric VALUE
+    # of a user-supplied `optimalScore` (which can be stale or from another
+    # dataset), nor a `hierarchy` whose CONTENTS differ (the signature records
+    # only its presence).  Fall through to the length check so a contradictory
+    # supplied L* is caught rather than silently inflating every decay value.
   }
 
   # Fallback (no recorded signature: a bare optimalScore, a single-tree reference,
-  # or a tree built outside MaximizeParsimony).  Compare the supplied optimal
-  # score to the reference's length under the current scoring arguments.
+  # or a tree built outside MaximizeParsimony; or a signature that matched the
+  # scoring mode but whose L* value still merits a numeric cross-check).  Compare
+  # the supplied optimal score to the reference's length under the current
+  # scoring arguments.
   suppliedLstar <- if (!is.null(optimalScore)) {
     optimalScore
   } else if (inherits(tree, "multiPhylo")) {
@@ -423,9 +432,21 @@ Bremer <- function(tree, dataset,
             "annealing are always disabled here for soundness.")
   }
   converseFixed <- disabled
-  # nThreads is forced to 1 (the negative-constraint pool guard is on the
-  # serial search path only); everything else the user passes flows through.
-  passthrough <- dots[setdiff(names(dots), c(names(disabled), "nThreads"))]
+  # `collapse` and `.negativeConstraint` are managed by Bremer(): the converse
+  # search fixes both, so a user copy arriving through `...` would collide with
+  # the explicit argument in do.call ("matched by multiple actual arguments").
+  # Strip them with a warning, mirroring SuboptimalTrees()'s handling of its own
+  # managed arguments.  `nThreads` is forced to 1 (the negative-constraint pool
+  # guard is on the serial search path only); everything else flows through.
+  managed <- intersect(names(dots), c("collapse", ".negativeConstraint"))
+  if (length(managed)) {
+    warning("Ignoring `", paste(managed, collapse = "`, `"),
+            "`: Bremer() manages ", if (length(managed) > 1L) "these" else "this",
+            " to run the converse-constraint search.")
+  }
+  passthrough <- dots[setdiff(names(dots),
+                              c(names(disabled), "nThreads", "collapse",
+                                ".negativeConstraint"))]
 
   # L* (the unconstrained optimum) is found by a full-strength search -- the
   # worse-accepting phases are safe here because there is no forbidden clade.

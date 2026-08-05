@@ -2106,7 +2106,14 @@ List ts_driven_search(
 
   ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
   ts::DrivenResult result;
-  if (nThreads != 1) {
+  // The parallel driven search has no negative-constraint (forbidden-clade)
+  // backstop: its shared pool is never set_forbidden and tree_fuse is
+  // constraint-blind, so it could return a tree that displays a forbidden clade.
+  // The R layer already forces nThreads = 1 (with a warning) whenever a negative
+  // constraint is set; force it here too, so a direct C++ caller cannot silently
+  // reach the unguarded path and report an unsound converse-search best.
+  const bool has_neg_constraint = cd_ptr && cd_ptr->neg_active;
+  if (nThreads != 1 && !has_neg_constraint) {
     result = ts::parallel_driven_search(pool, ds, params, cd_ptr, nThreads);
   } else {
     result = ts::driven_search(pool, ds, params, cd_ptr);

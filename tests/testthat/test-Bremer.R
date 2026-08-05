@@ -249,6 +249,43 @@ test_that("Bremer warns (does not error) on an inconsistent optimalScore, then p
   expect_type(con, "double")
 })
 
+test_that("a contradictory optimalScore warns even with a matching signature (B-F1)", {
+  dat <- StringToPhyDat("1100000 1110000 1111000 1111100 1001000",
+                        1:7, byTaxon = FALSE)
+  names(dat) <- c(LETTERS[1:6], "out")
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
+  # The whole multiPhylo carries a "scoring" signature.  A matching signature
+  # validates the scoring MODE but not the numeric VALUE of a supplied L*, so a
+  # contradictory optimalScore must STILL warn -- it silently inflated every
+  # decay value before the signature branch fell through to the length check.
+  expect_warning(
+    con <- Bremer(mpts, dat, method = "constraint",
+                  optimalScore = attr(mpts, "score") - 2,
+                  maxReplicates = 20L, verbosity = 0L),
+    "differs from the reference")
+  expect_type(con, "double")
+  # Control: the default (correct L*, matching signature) does not false-warn.
+  set.seed(1)
+  expect_warning(Bremer(mpts, dat, maxReplicates = 12L, verbosity = 0L), NA)
+})
+
+test_that("Bremer strips a managed `collapse` from ... with a warning (B-F4)", {
+  dat <- StringToPhyDat("1111000 1111000 1100000", 1:7, byTaxon = FALSE)
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 6L, verbosity = 0L)
+  ref <- mpts[[1]]
+  # A reserved MaximizeParsimony formal passed through `...` previously collided
+  # in do.call ("matched by multiple actual arguments"); it is now stripped with
+  # a warning, mirroring SuboptimalTrees().
+  expect_warning(
+    con <- Bremer(ref, dat, method = "constraint", collapse = FALSE,
+                  optimalScore = attr(mpts, "score"),
+                  maxReplicates = 12L, verbosity = 0L),
+    "manages")
+  expect_type(con, "double")
+})
+
 test_that("constraint Bremer matches enumeration on inapplicable (bgs) data", {
   # The default scoring mode (inapplicable = "bgs") previously had no ground-
   # truth oracle.  Validate the negative-constraint machinery + exact_verify_sweep
@@ -395,6 +432,31 @@ test_that("converse search on >= 12 tips (sectors engaged) returns clade-free tr
     disp <- SplitFrequency(ref, structure(list(tr), class = "multiPhylo"))
     expect_lt(unname(disp[splitNames[i]]), 0.5)   # returned tree lacks the clade
   }
+})
+
+test_that("a negative constraint forces serial search with a warning (A-F2/A-F3)", {
+  skip_on_cran()
+  dat <- sectorFixture(13)
+  set.seed(1)
+  mpts <- MaximizeParsimony(dat, maxReplicates = 6L, verbosity = 0L)
+  ref <- mpts[[1]]
+  splits <- as.Splits(ref, tipLabels = names(dat))
+  splitNames <- rownames(as.matrix(splits))
+  # The parallel driven search has no forbidden-clade backstop, so a negative
+  # constraint must be clamped to serial (with a warning) at the R layer -- and,
+  # defensively, in C++.  Confirm the warning fires and the returned tree still
+  # lacks the forbidden clade even though nThreads > 1 was requested.
+  set.seed(2)
+  expect_warning(
+    res <- MaximizeParsimony(dat, collapse = TRUE, nThreads = 2L,
+                             .negativeConstraint = splits[[1]],
+                             driftCycles = 0L, sectorGoDrift = 0L,
+                             sectorDriftCycles = 0L, annealCycles = 0L,
+                             maxReplicates = 8L, verbosity = 0L),
+    regexp = "serial", ignore.case = TRUE)
+  tr <- if (inherits(res, "phylo")) res else res[[1L]]
+  disp <- SplitFrequency(ref, structure(list(tr), class = "multiPhylo"))
+  expect_lt(unname(disp[splitNames[1]]), 0.5)
 })
 
 test_that("constraint Bremer on >= 12 tips is non-negative and <= pool", {

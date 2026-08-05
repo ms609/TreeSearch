@@ -124,6 +124,15 @@ NNIPerturbResult nni_perturb_search(
         if (cd->constraint_node[_s] < 0) { accept = false; break; }
       }
     }
+    // Negative (converse/Bremer) constraint: the blind NNI perturbation can
+    // rebuild a forbidden clade that the neg-guarded TBR could not climb back
+    // out of.  Reject such a tree even if it scores better, reverting to the
+    // (clade-free) best_tree -- otherwise the replicate can strand on the clade,
+    // needlessly right-censoring its Bremer value.  Soundness is guaranteed by
+    // the pool backstop regardless; this preserves reach.
+    if (accept && cd && cd->neg_active && displays_forbidden_clade(tree, *cd)) {
+      accept = false;
+    }
 
     if (accept) {
       best_score = tbr_result.best_score;

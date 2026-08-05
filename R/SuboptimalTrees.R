@@ -29,7 +29,7 @@
 #' so that a suboptimal sample is not prematurely truncated.
 #' @param \dots Further arguments passed to [`MaximizeParsimony()`], including
 #' scoring options (`concavity`, `inapplicable`, ...) and search effort
-#' (`maxReplicates`, `maxSeconds`, `strategy`, `nThreads`, `verbosity`).
+#' (`maxReplicates`, `maxSeconds`, `effort`, `nThreads`, `verbosity`).
 #' Named [`SearchControl()`] fields may also be passed here to override the
 #' constructed control.
 #'
