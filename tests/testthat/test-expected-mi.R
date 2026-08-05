@@ -88,6 +88,29 @@ test_that("expected_mi() agrees across the factorial lookup boundary", {
                tolerance = 1e-8)
 })
 
+test_that("mi_key() distinguishes block sizes above 65535", {
+  # Sorting is only sound because expected_mi() is invariant under both
+  # canonicalizations the key applies.
+  expect_equal(expected_mi(c(3L, 61L), c(30L, 31L)),
+               expected_mi(c(61L, 3L), c(31L, 30L)))
+  expect_identical(TreeSearch:::mi_key(c(3L, 61L), c(30L, 31L)),
+                   TreeSearch:::mi_key(c(61L, 3L), c(31L, 30L)))
+
+  # Block sizes differing by a multiple of 65536 must not share a key
+  aliases <- c(60L, 61L, 65596L, 65597L, 131133L)
+  keys <- vapply(aliases, function(n) {
+    TreeSearch:::mi_key(c(3L, n), c(30L, 31L))
+  }, character(1))
+  expect_equal(anyDuplicated(keys), 0L)
+
+  # The cached value must belong to the partition asked for.  Populate the
+  # small key first, so a colliding key would return it.
+  expect_equal(TreeSearch:::.ExpectedMI(c(3L, 61L), c(30L, 31L)),
+               expected_mi(c(3L, 61L), c(30L, 31L)))
+  expect_equal(TreeSearch:::.ExpectedMI(c(3L, 65597L), c(30L, 31L)),
+               expected_mi(c(3L, 65597L), c(30L, 31L)))
+})
+
 test_that("quartet_concordance() rejects negative state codes", {
   splits <- matrix(c(TRUE, TRUE, FALSE, FALSE), ncol = 1)
   characters <- matrix(c(1L, 1L, 2L, 2L), ncol = 1)

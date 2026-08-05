@@ -158,34 +158,37 @@ std::string mi_key(IntegerVector ni, IntegerVector nj) {
     Rcpp::stop("ni must be a vector of length 2.");
   }
   
-  std::vector<uint16_t> ni_vals = {static_cast<uint16_t>(ni[0]),
-                                   static_cast<uint16_t>(ni[1])};
+  // 32 bits spans the whole of `int`, so distinct block sizes always give
+  // distinct keys.  A narrower code aliases: encoded in 16 bits, block sizes
+  // differing by a multiple of 65536 shared a key, and the cache then served
+  // one partition's expected mutual information for the other's.
+  std::vector<uint32_t> ni_vals = {static_cast<uint32_t>(ni[0]),
+                                   static_cast<uint32_t>(ni[1])};
   std::sort(ni_vals.begin(), ni_vals.end());
-  
-  std::vector<uint16_t> nj_vals;
+
+  std::vector<uint32_t> nj_vals;
   nj_vals.reserve(nj.size());
   for (int val : nj) {
-    nj_vals.push_back(static_cast<uint16_t>(val));
+    nj_vals.push_back(static_cast<uint32_t>(val));
   }
   std::sort(nj_vals.begin(), nj_vals.end());
-  
-  // Encode each uint16_t as 4 hex characters — no R allocation needed
+
+  // Encode each value as 8 hex characters — no R allocation needed
   static const char hex[] = "0123456789abcdef";
   std::string key;
-  key.reserve((2 + nj_vals.size()) * 4);
-  
-  for (uint16_t v : ni_vals) {
-    key += hex[(v >> 12) & 0xF];
-    key += hex[(v >> 8)  & 0xF];
-    key += hex[(v >> 4)  & 0xF];
-    key += hex[(v)       & 0xF];
+  key.reserve((2 + nj_vals.size()) * 8);
+
+  const auto append_hex = [&](uint32_t v) {
+    for (int shift = 28; shift >= 0; shift -= 4) {
+      key += hex[(v >> shift) & 0xF];
+    }
+  };
+  for (uint32_t v : ni_vals) {
+    append_hex(v);
   }
-  for (uint16_t v : nj_vals) {
-    key += hex[(v >> 12) & 0xF];
-    key += hex[(v >> 8)  & 0xF];
-    key += hex[(v >> 4)  & 0xF];
-    key += hex[(v)       & 0xF];
+  for (uint32_t v : nj_vals) {
+    append_hex(v);
   }
-  
+
   return key;
 }
