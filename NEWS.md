@@ -491,6 +491,28 @@
   both the `qmApp` (T-302) and `qm` (commit e8b318c3) scalar-unwrap paths,
   confirming all deltas are non-negative and match independent computation.
 
+- `ClusteringConcordance(normalize = TRUE)` now chance-corrects trees of more
+  than about 1100 tips, which it previously reported uncorrected while still
+  describing the result as corrected.  The expected mutual information that
+  sets the zero point was accumulated by a recurrence over the hypergeometric
+  distribution of cell overlaps, seeded at the smallest overlap the marginals
+  allow; for a balanced split of 1200 tips that probability is around
+  2^-1197, which underflows to zero in double precision, and because the
+  recurrence is multiplicative every later term stayed zero, so `expected_mi()`
+  returned exactly 0.  The recurrence is now anchored at the mode of the
+  distribution, whose probability is the largest of at most `N + 1` values
+  summing to one and so is always representable.  Only splits close to balanced
+  against a near-balanced character were affected, and none at 1000 tips or
+  fewer: against an even character, 39 of the 1199 possible split sizes
+  returned a spurious zero at 1200 tips, and 519 of 1999 at 2000 tips.
+  Expected mutual information that was already correct is unchanged to within
+  2.3e-12 relative.
+
+- `expected_mi()` now checks that `ni` gives exactly two block sizes.  A
+  shorter vector was read past its end, and the arbitrary values that produced
+  could index the log-factorial lookup table out of bounds and crash the
+  session.
+
 # TreeSearch 2.0.0
 
 ## Breaking changes
