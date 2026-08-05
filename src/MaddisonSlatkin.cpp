@@ -926,6 +926,13 @@ class SolverT {
   // (8,7,5) character the profile tests use takes 1.9 s.  At the former 2 s
   // the budget therefore fired on legitimate work: the caller silently got NA
   // and fell back to Monte Carlo, and the 1.9 s case was a coin toss on CI.
+  // The coin toss is the bad outcome specifically: which way it lands is a
+  // property of the machine, so one box would score a character exactly and
+  // another approximately, and `StepInformation()` would report different
+  // information contents for identical data.  Holding the budget clear of the
+  // gate is what keeps that decision reproducible.  The dial for callers who
+  // want speed over exactness is `.MS_SC_THRESHOLD`, which is denominated in
+  // work rather than time; see the comment on it in R/data_manipulation.R.
   //
   // An instrumented build runs one to two orders of magnitude slower, so the
   // budget would fire there on anything at all -- leaving the sanitizer
