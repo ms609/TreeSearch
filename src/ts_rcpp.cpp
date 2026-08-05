@@ -270,6 +270,15 @@ IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
 // first-encountered child of each node goes left.
 ts::TreeState build_topology_tree(const IntegerMatrix& edge) {
   int n_edge = edge.nrow();
+  // Same derivation, and so the same out-of-bounds writes, as init_from_edge.
+  // ncol is checked first: the child column is read as edge(i, 1), which on an
+  // n x 1 matrix indexes past the end of the underlying vector.
+  if (edge.ncol() != 2) {
+    stop("`tree` edge matrix must have exactly 2 columns.");
+  }
+  if (n_edge < 2 || !ts::edge_list_is_binary(&edge(0, 0), &edge(0, 1), n_edge)) {
+    stop("`tree` must be binary");
+  }
   int n_tip = n_edge / 2 + 1;
 
   ts::TreeState tree;
@@ -924,7 +933,8 @@ List ts_tbr_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -985,7 +995,8 @@ List ts_ratchet_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -1732,6 +1743,13 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
         for (int i = 0; i < n_edge; ++i) {
           flat[i] = se(i, 0);
           flat[n_edge + i] = se(i, 1);
+        }
+        // init_from_edge refuses a non-binary tree by throwing, but under
+        // nThreads > 1 it runs on a worker thread, where an uncaught throw
+        // terminates the session.  Reject here, on the main thread.
+        if (!ts::edge_list_is_binary(flat.data(), flat.data() + n_edge,
+                                     n_edge)) {
+          stop("Each `startEdge` matrix must describe a binary tree.");
         }
         params.start_edges.push_back(std::move(flat));
       }
