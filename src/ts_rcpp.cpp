@@ -270,6 +270,15 @@ IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
 // first-encountered child of each node goes left.
 ts::TreeState build_topology_tree(const IntegerMatrix& edge) {
   int n_edge = edge.nrow();
+  // Same derivation, and so the same out-of-bounds writes, as init_from_edge.
+  // ncol is checked first: the child column is read as edge(i, 1), which on an
+  // n x 1 matrix indexes past the end of the underlying vector.
+  if (edge.ncol() != 2) {
+    stop("`tree` edge matrix must have exactly 2 columns.");
+  }
+  if (n_edge < 2 || !ts::edge_list_is_binary(&edge(0, 0), &edge(0, 1), n_edge)) {
+    stop("`tree` must be binary");
+  }
   int n_tip = n_edge / 2 + 1;
 
   ts::TreeState tree;
@@ -924,7 +933,8 @@ List ts_tbr_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -985,7 +995,8 @@ List ts_ratchet_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -1733,6 +1744,13 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
           flat[i] = se(i, 0);
           flat[n_edge + i] = se(i, 1);
         }
+        // init_from_edge refuses a non-binary tree by throwing, but under
+        // nThreads > 1 it runs on a worker thread, where an uncaught throw
+        // terminates the session.  Reject here, on the main thread.
+        if (!ts::edge_list_is_binary(flat.data(), flat.data() + n_edge,
+                                     n_edge)) {
+          stop("Each `startEdge` matrix must describe a binary tree.");
+        }
         params.start_edges.push_back(std::move(flat));
       }
     }
@@ -2087,6 +2105,16 @@ List ts_driven_search(
     result = ts::driven_search(pool, ds, params, cd_ptr);
   }
 
+  // Reported here rather than where it is detected: the count accumulates on
+  // worker threads, and Rf_warning() is a main-thread-only call.
+  if (result.constraint_discards > 0) {
+    Rf_warning(
+      "%d replicate(s) ended on a tree that could not be made to satisfy "
+      "`constraint`, and were discarded. The remaining trees do satisfy it; "
+      "raise `maxReplicates` if too few trees were found.",
+      result.constraint_discards);
+  }
+
   // Build timings as a NumericVector (lighter than List)
   NumericVector timings = NumericVector::create(
     Named("wagner_ms")    = result.timings.wagner_ms,
@@ -2238,12 +2266,11 @@ List ts_collapse_pool(
   // still collapse.
   //
   // Each split is stored as the pair of groups build_constraint() reads
-  // (1 = together, 0 = apart, anything else = free; see ts_constraint.cpp), not
-  // as one canonical bitset: with free tips the enforced grouping is generally
-  // NOT any node's exact tip set, and the exact-match test this replaced then
-  // protected nothing at all (agent-issues/TreeSearch#54).  A pure 0/1 matrix
-  // still gives apart == the complement, and the test below still fires on
-  // exactly the node the equality test used to find.
+  // (1 = together, 0 = apart, anything else = free; see ts_constraint.cpp).
+  // Both come out of the one membership matrix, so the protection here cannot
+  // drift from the constraint the search enforced.  A pure 0/1 matrix gives
+  // apart == the complement, and the test below then fires on exactly the node
+  // an exact-match test would have found.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
   std::vector<std::vector<uint64_t>> cons_one, cons_zero;
@@ -2258,6 +2285,17 @@ List ts_collapse_pool(
       }
       cons_one.push_back(std::move(one));
       cons_zero.push_back(std::move(zero));
+    }
+  }
+  // Group sizes depend only on the constraint, so they are counted once here
+  // rather than per tree.  A group of fewer than two taxa is skipped below:
+  // such a split is realised by a terminal edge, never a collapse candidate.
+  std::vector<int> n_one_tips(cons_one.size(), 0);
+  std::vector<int> n_zero_tips(cons_one.size(), 0);
+  for (size_t r = 0; r < cons_one.size(); ++r) {
+    for (int w = 0; w < wps; ++w) {
+      n_one_tips[r] += ts::popcount64(cons_one[r][w]);
+      n_zero_tips[r] += ts::popcount64(cons_zero[r][w]);
     }
   }
 
@@ -2310,13 +2348,10 @@ List ts_collapse_pool(
 
     ts::compute_collapsed_flags_aggressive(tree, ds, flags);
 
-    // Protect constraint splits: clear the collapse flag of the internal edge
-    // that realises each constraint (keeps the enforced clade visible).  That
-    // is the TIGHTEST node displaying the split — collapsing it is what would
-    // hide the grouping, whereas the looser nodes above it (which differ only
-    // by free tips) show nothing the tight one does not.  Per-node descendant
-    // tip sets via a postorder OR; rooted on tip 0, so every internal set
-    // excludes tip 0 and only one of the two groups can be the clade side.
+    // Protect constraint splits: keep an internal edge that realises each
+    // constraint out of the contraction, so the enforced grouping stays
+    // visible.  Per-node descendant tip sets via a postorder OR; rooted on
+    // tip 0, so every internal set excludes tip 0.
     if (!cons_one.empty()) {
       std::vector<uint64_t> tb(static_cast<size_t>(tree.n_node) * wps, 0);
       for (int tp = 0; tp < n_tip; ++tp) {
@@ -2331,24 +2366,44 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      // ts::node_displays_split() (ts_constraint.h) is the shared definition —
-      // the search's mapping and the Wagner build's check use the same one, so
-      // the branch protected here is the branch they enforce.
-      for (size_t ci = 0; ci < cons_one.size(); ++ci) {
-        const uint64_t* one = cons_one[ci].data();
-        const uint64_t* zero = cons_zero[ci].data();
-        int tight = -1, tight_size = n_tip + 1;
-        for (int v = n_tip + 1; v < tree.n_node; ++v) {
-          const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-          if (!ts::node_displays_split(nb, one, zero, wps) &&
-              !ts::node_displays_split(nb, zero, one, wps)) continue;
-          int sz = 0;
-          for (int w = 0; w < wps; ++w) sz += ts::popcount64(nb[w]);
-          if (sz < tight_size) { tight_size = sz; tight = v; }
+      // A node realises the split when it holds one whole group and none of the
+      // other -- ts::node_displays_split() (ts_constraint.h), the same predicate
+      // the search's mapping and the Wagner build read, so the branch protected
+      // here is the branch they enforce.  With free tips that node is generally
+      // NOT the 1 group exactly, and the exact-match test this replaced then
+      // protected nothing at all (agent-issues/TreeSearch#54).
+      //
+      // Protect one such node, and only when nothing else keeps the split
+      // visible: every realising node's own edge displays the split, so if any
+      // of them already survives the contraction there is nothing to do.
+      // Protecting unconditionally would instead force the resolution of a
+      // branch the constraint does not ask for, which is the "unsupported
+      // non-constraint branches still collapse" half of the promise.
+      //
+      // Where none survives, the MRCA of a group is the node protected: the
+      // postorder visits every node before its parent, so the first node to
+      // hold a whole group is its MRCA, and keeping that one edge suffices,
+      // since contracting an edge below it leaves its descendant set — and so
+      // the split it displays — unchanged.
+      for (size_t r = 0; r < cons_one.size(); ++r) {
+        if (n_one_tips[r] < 2 || n_zero_tips[r] < 2) continue;
+        const std::vector<uint64_t>* grp[2] = { &cons_one[r], &cons_zero[r] };
+
+        bool survives = false;
+        int to_protect = -1;
+        for (int side = 0; side < 2 && !survives; ++side) {
+          const uint64_t* in = grp[side]->data();
+          const uint64_t* out = grp[1 - side]->data();
+          for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
+            const int v = tree.postorder[pi];
+            if (v <= n_tip || v >= static_cast<int>(flags.size())) continue;
+            const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
+            if (!ts::node_displays_split(nb, in, out, wps)) continue;
+            if (!flags[v]) { survives = true; break; }
+            if (to_protect < 0) to_protect = v;  // the MRCA, in postorder
+          }
         }
-        if (tight >= 0 && tight < static_cast<int>(flags.size())) {
-          flags[tight] = 0;
-        }
+        if (!survives && to_protect >= 0) flags[to_protect] = 0;
       }
     }
 

@@ -848,7 +848,6 @@ QuartetConcordance <- function(
     setNames(ret, names(splits))
   } else {
     # return = "char"
-    p <- num / den
     if (isTRUE(weight)) {
       vapply(
         seq_len(dim(num)[[2]]),
@@ -1095,7 +1094,6 @@ ConcordantInformation <- function(tree, dataset) {
     totalNoise <- sum(noise[index])
     totalSignal <- sum(signal[index])
     signalNoise <- totalSignal / totalNoise
-    discarded = 0
 
     infoNeeded <- Log2Unrooted(length(dataset))
     infoOverkill <- totalInfo / infoNeeded

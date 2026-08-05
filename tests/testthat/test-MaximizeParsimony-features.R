@@ -535,7 +535,9 @@ test_that("Constrained Wagner tree works with multiple seeds", {
       list(contrast = at$contrast,
            tip_data = matrix(unlist(ds5, use.names = FALSE), nrow = 5, byrow = TRUE),
            weight = at$weight, levels = at$levels),
-      consArgs))
+      # The flat kernels declare the constraint arguments as formals, so they
+      # take only the subset .PrepareConstraint() builds for them.
+      TreeSearch:::.KernelConstraintArgs(consArgs)))
     expect_true(is.finite(result$score), info = paste("seed", s))
     expect_equal(nrow(result$edge), 8L, info = paste("seed", s))
   }

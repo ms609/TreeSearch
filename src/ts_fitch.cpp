@@ -240,11 +240,14 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
 
   // Use reverse postorder, but only visit nodes whose ancestor's final
   // may have changed. We track this with a "dirty" flag per node.
-  // Reusable per-thread scratch (S-PROF round 3 / Tier 1): this function runs
-  // once per clip in the TBR hot loop, so a fresh vector<bool> here was a
-  // per-clip heap allocation. thread_local keeps it per-thread-safe (each
-  // search thread owns its TreeState); char avoids vector<bool> proxy-bit
-  // access in the reverse scan below. assign() reuses capacity after warmup.
+  // `char` (not vector<bool>) avoids proxy-bit access in the reverse scan
+  // below.  NOTE: this was once `static thread_local` scratch (S-PROF round 3
+  // / Tier 1) to avoid a per-clip heap allocation in the TBR hot loop, but the
+  // thread_local was removed in d6fa51293 because MinGW tears down
+  // thread_local vectors via emutls when each std::thread worker exits, which
+  // corrupted the heap.  So the per-clip allocation + O(n_node) zero-fill is
+  // back; re-hoisting it needs a TreeState/DataSet-owned buffer (the
+  // char_steps_scratch / evs_false_cache pattern), NOT thread_local.
   std::vector<char> dirty;
   dirty.assign(tree.n_node, 0);
 
@@ -287,9 +290,15 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
 // each affected node exactly once in postorder, reading current children's
 // prelims — which are guaranteed correct because postorder processes
 // children before parents.
+//
+// A TBR rerooting additionally rewrites the children of every node on
+// clip_node..reroot_parent; passing clip_node as start_c covers them (see
+// ts_fitch.h).  Off-path nodes inside the moved fragment keep both their
+// children and their whole subtree, so their prelim and local_cost are
+// untouched and the returned delta stays exact.
 
 int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
-                         int start_a, int start_b) {
+                         int start_a, int start_b, int start_c) {
   std::vector<char> dirty(tree.n_node, 0);
 
   // Mark the rootward path from `node` up to (and including) the root.
@@ -304,6 +313,7 @@ int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
   };
   mark_path(start_a);
   mark_path(start_b);
+  if (start_c >= 0) mark_path(start_c);
 
   int length_delta = 0;
 
@@ -353,7 +363,7 @@ int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
 }
 
 void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
-                        int start_a, int start_b) {
+                        int start_a, int start_b, int start_c) {
   // Step 1: root final_ = prelim (root prelim may have changed in downpass).
   int root = tree.n_tip;
   size_t root_base = static_cast<size_t>(root) * tree.total_words;
@@ -375,6 +385,7 @@ void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
   };
   mark_path(start_a);
   mark_path(start_b);
+  if (start_c >= 0) mark_path(start_c);
 
   // Step 3: reverse postorder — visit any node whose parent is dirty_up.
   // If that node's final_ changes, propagate the flag to it.

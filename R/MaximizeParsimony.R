@@ -134,6 +134,17 @@
     return(list())
   }
 
+  # Constraints are enforced as bipartitions, so only the two extreme states of
+  # a character are read: taxa carrying an intermediate state are in neither
+  # group and go unconstrained.  Say so rather than let the caller infer, from
+  # `@param constraint`'s "compatible with each character", that a third state
+  # groups its taxa too.
+  if (nConsStates > 2L) {
+    warning("`constraint` characters with more than two states are enforced ",
+            "as the split between their first and last state only; taxa in ",
+            "any intermediate state are left unconstrained.", call. = FALSE)
+  }
+
   consMat <- matrix(unlist(constraint, use.names = FALSE),
                     nrow = length(constraint), byrow = TRUE)
   # For each constraint character, record the tips unambiguously in the "1"
@@ -230,12 +241,75 @@
 
   list(
     consSplitMatrix = consSplits,
+    consZero = consZero,
     consContrast = consContrast,
     consTipData = consTipData,
     consWeight = as.integer(consWeight),
     consLevels = attr(constraint, "levels"),
     consExpectedScore = as.integer(consExpectedScore)
   )
+}
+
+# Constraint fields the flat `ts_*` kernels declare as formals, in contrast to
+# the list-config entry points, which ignore anything they do not name.  A
+# `do.call()` onto a flat kernel has to be filtered through this, or a field
+# added for the list-config path becomes an unused-argument error there.
+.kernelConsFields <- c("consSplitMatrix", "consContrast", "consTipData",
+                       "consWeight", "consLevels", "consExpectedScore")
+
+.KernelConstraintArgs <- function(consArgs) {
+  consArgs[intersect(names(consArgs), .kernelConsFields)]
+}
+
+# Does `tree` display a split separating a constraint character's "1" group
+# from its "0" group?  This is the phyDat reading `constraint` is documented
+# in: tips ambiguous for the character sit on either side, so the test is
+# "some edge separates the two groups", not the stricter "the 1 group is
+# exactly a clade" that the search's locked-node machinery enforces
+# internally.  `consOne` / `consZero` are .PrepareConstraint()'s matrices, in
+# `tip_data` column order; `tree`'s tips must already be renumbered to match.
+#
+# The two groups are the character's extreme states, so this answers for
+# exactly what the engine enforces -- an intermediate state's taxa are in
+# neither group here and are unconstrained there too (.PrepareConstraint()
+# warns about that at input).
+.ConstraintViolated <- function(tree, consOne, consZero) {
+  # `consOne` is the membership matrix the C++ kernels read, so it uses their
+  # coding: 1 = in the group, anything else -- including the NA that marks a
+  # free tip -- out of it.  Reduce it to 0/1 here rather than let an NA
+  # propagate through the accumulation below and turn every comparison NA.
+  consOne <- (!is.na(consOne) & consOne == 1L) * 1L
+  edge <- Postorder(tree)[["edge"]]
+  parent <- edge[, 1L]
+  child <- edge[, 2L]
+  nTip <- ncol(consOne)
+  nRow <- nrow(consOne)
+  # One accumulation pass carries every group at once: rows 1..nRow are the
+  # "1" groups, the rest the "0" groups.  Nodes index the COLUMNS, so each
+  # accumulation touches one contiguous stretch of a column-major matrix.
+  counts <- matrix(0L, nrow = 2L * nRow, ncol = max(edge))
+  counts[, seq_len(nTip)] <- rbind(consOne, consZero)
+  for (i in seq_along(parent)) {
+    counts[, parent[i]] <- counts[, parent[i]] + counts[, child[i]]
+  }
+  # Postorder lists every node before its parent, so the first node holding a
+  # whole group is that group's MRCA; the groups are separated iff one MRCA
+  # holds none of the other group.
+  nodes <- c(child, parent[length(parent)])
+  for (r in seq_len(nRow)) {
+    one <- counts[r, ]
+    zero <- counts[nRow + r, ]
+    nOne <- sum(consOne[r, ])
+    nZero <- sum(consZero[r, ])
+    mrcaOne <- nodes[one[nodes] == nOne][1]
+    mrcaZero <- nodes[zero[nodes] == nZero][1]
+    displayed <- (!is.na(mrcaOne) && zero[mrcaOne] == 0L) ||
+      (!is.na(mrcaZero) && one[mrcaZero] == 0L)
+    if (!displayed) {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
 # Ratchet depth for implied weights under `thorough`/`large`, applied after the
@@ -655,6 +729,12 @@
 #'   says so in a warning.  Raise `targetHits` as well as `maxReplicates` to
 #'   use more of it.
 #'   If unspecified, all replicates start from random Wagner trees.
+#'   A start tree that does not satisfy `constraint` is rearranged until it
+#'   does before the search begins, with a warning: `constraint` is a
+#'   guarantee about the trees returned, whereas `tree` only says where to
+#'   begin, so when the two conflict the guarantee wins.  A taxon coded `?`
+#'   for a constraint character is unconstrained by it and may start on
+#'   either side of that split.
 #'   Edge lengths are not supported and will be deleted.
 #'   Rooted and unrooted trees are both accepted; an unrooted tree is rooted
 #'   arbitrarily (on its first tip) before the search begins, which may
@@ -744,6 +824,9 @@
 #' separated from as `0` rather than leaving them `?`.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
+#' Each constraint character is enforced as a single split, so one with more
+#' than two states is read as the split between its first and last state
+#' alone: taxa in an intermediate state are left unconstrained, with a warning.
 #' @param effort Integer: how much search effort to spend, **relative to the
 #'   amount chosen automatically** for this dataset.  `0` (the default) accepts
 #'   the automatic choice; `1` asks for one notch more, `-1` one notch less.
@@ -1568,6 +1651,23 @@ MaximizeParsimony <- function(
     cli_alert_info("Constraint: {nrow(consArgs$consSplitMatrix)} split{?s}")
   }
 
+  # A start tree that breaks the constraint is not something the search can
+  # rearrange its way out of -- every constrained move from it is rejected, so
+  # it would freeze the replicate on a tree scoring better than any legal one.
+  # The engine repairs such a start before scoring it, but the conflict is the
+  # caller's to know about: either `tree` or `constraint` is not what they
+  # meant, and the tree they get back will not be the one they supplied.
+  if (userTree && length(consArgs) > 0L) {
+    violating <- vapply(startTrees, .ConstraintViolated, logical(1),
+                        consArgs[["consSplitMatrix"]], consArgs[["consZero"]])
+    if (any(violating)) {
+      warning(sum(violating), " of the ", length(startTrees),
+              " tree(s) supplied to `tree` do not satisfy `constraint`; ",
+              "they will be rearranged to comply before the search starts, ",
+              "or replaced if that fails.", call. = FALSE)
+    }
+  }
+
   # --- Profile parsimony: extract info_amounts ---
   profileArgs <- list()
   if (useProfile) {
@@ -1701,7 +1801,11 @@ MaximizeParsimony <- function(
     # enforced clade"): a constraint is external evidence for a grouping the
     # matrix doesn't capture, so it stays visible even at zero length, while the
     # unsupported non-constraint branches still collapse.  consSplitMatrix rows
-    # are the enforced bipartitions in tip_data order (see .PrepareConstraint).
+    # are the enforced bipartitions in tip_data order, carrying both groups
+    # (1 = together, 0 = apart, NA = free; see .PrepareConstraint).  The kernel
+    # needs both: a tree with free tips generally realises the split at a node
+    # whose tip set is wider than the 1 group, which no exact match reaches, so
+    # the enforced grouping would collapse out of the returned tree.
     consSplits <- if (!is.null(constraintConfig)) {
       constraintConfig[["consSplitMatrix"]]
     }
@@ -1728,6 +1832,18 @@ MaximizeParsimony <- function(
     })
   }
   if (length(outTrees) == 0L) {
+    # `treeTpl` is a starting tree, so under a constraint it is exactly what may
+    # not be handed back unchecked: an empty pool means no replicate produced a
+    # tree the constraint gate accepted -- or, benignly, that the time limit
+    # expired before the first one finished.  Check rather than assume, so a
+    # short budget still returns a tree when the fallback happens to comply.
+    if (!is.null(constraintConfig) &&
+        .ConstraintViolated(treeTpl, constraintConfig[["consSplitMatrix"]],
+                            constraintConfig[["consZero"]])) {
+      stop("The search returned no tree satisfying `constraint`. Check that ",
+           "the constraint is compatible with the data, and allow more search ",
+           "with `maxReplicates` or `maxSeconds`.")
+    }
     outTrees <- list(treeTpl)
   }
 

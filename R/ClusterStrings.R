@@ -41,12 +41,7 @@ ClusterStrings <- function (x, maxCluster = 12) {
     possibleClusters <- 2:maxCluster
     hSil <- pamSil <- -99
     dists <- adist(x) # approximate string distance
-    
-    nMethodsChecked <- 2
-    methInc <- 1 / nMethodsChecked
-    nK <- length(possibleClusters)
-    kInc <- 1 / (nMethodsChecked * nK)
-    
+
     pamClusters <- lapply(possibleClusters, function (k) {
       cluster::pam(dists, k = k)
     })

@@ -1,19 +1,66 @@
 # To integrate into 2.0.0 notes
 
-- `constraint` now enforces exactly what it documents: a returned tree is
-  compatible with a constraint character when some edge separates the taxa
-  coded `1` from those coded `0`, with `?`-coded and unmentioned taxa free to
-  fall on either side.  The enforcement machinery previously required the `1`
-  group to be a clade *exactly*, free taxa excluded.  That is strictly
-  stronger, so the search never accepted a tree that broke the documented
-  constraint; but a start tree that satisfied the documented constraint without
-  making either group an exact clade matched no node, every rearrangement was
-  rejected, and the replicate returned its start unimproved.  Constrained
-  searches with `?`-coded taxa therefore reach better scores.
-  The collapse pass is fixed with it: it identified the branch realising a
-  constraint by exact match too, so with free taxa it protected nothing and the
-  separating edge could be contracted away -- the one route by which a
-  *returned* tree could break the constraint.
+- Profile parsimony computes exactly for more multi-state characters, where it
+  previously approximated nearly all of them.  The exact Maddison & Slatkin
+  solver caches into fixed-capacity memo tables and bails out when one fills --
+  a guard added to stop an unbounded probe loop -- but its reserved size was
+  never matched to the feasibility gate that feeds it.  Measured against the
+  worst character that gate admits, every one of them overflowed: a 3-state
+  character needs up to ~28,000 memo entries against the 4,096 reserved.
+  `StepInformation()` and `PrepareDataProfile(approx = "auto")` therefore fell
+  back to the Monte Carlo approximation for essentially every multi-state
+  character -- a documented mode, but not the one asked for.
+
+  The 2 s wall-clock budget is unchanged, and remains what caps the wait: a
+  character that cannot be solved within it still falls back to Monte Carlo.
+  Only the characters that fit inside that budget are affected.
+
+  **Information amounts for those characters will therefore change**, from a
+  sampled estimate to the exact value.  Which characters those are depends on
+  how fast the machine is, since the budget is what decides; pass
+  `approx = "mc"` for the previous behaviour throughout.  Note that
+  `approx = "exact"` waives the feasibility gate but not the budget, so it too
+  can fall back on a slow machine.
+
+  Under sanitizer builds the budget is scaled by the instrumentation's
+  slowdown.  Those builds run one to two orders of magnitude slower, so a 2 s
+  budget tripped on everything -- leaving the sanitizer inspecting the fallback
+  rather than the algorithm it was aimed at.  There is no responsiveness to
+  protect in a nightly memory check.
+
+- `constraint` now binds the trees `MaximizeParsimony()` returns, at three
+  boundaries where it did not.  A starting tree supplied through `tree` was
+  never checked against the constraint; because a constrained search rejects
+  every rearrangement away from a violating tree, the replicate froze on it and
+  reported a score no constraint-satisfying tree could reach, which then evicted
+  the compliant trees other replicates had found.  A violating start is now
+  rearranged until it complies before the search begins, **with a warning**.
+  Separately, a replicate's own tree entered the pool unchecked, and the final
+  collapse of unsupported branches could contract the very branch that displayed
+  an enforced grouping -- so under the default `collapse = TRUE` a returned tree
+  could break the constraint outright.  Both paths are now checked.
+
+  **Constrained results may therefore differ from previous versions**: scores
+  can rise to the true constrained optimum, and returned trees will display the
+  constrained groupings.  `MaximizeParsimony()` also warns if any replicate
+  ended on a tree that could not be made to satisfy the constraint, and now
+  raises an error rather than returning an unverified tree if no
+  constraint-satisfying tree was found at all.
+- Every part of the search now reads `constraint` the way it is documented: a
+  tree is compatible with a constraint character when some edge separates the
+  taxa coded `1` from those coded `0`, with `?`-coded and unmentioned taxa free
+  to fall on either side.  The locked-node filter that screens individual
+  rearrangements, the constrained Wagner build and the collapse pass previously
+  required the `1` group to be a clade *exactly*, free taxa excluded.  That is
+  strictly stronger, so the search never accepted a rearrangement that broke the
+  documented constraint; but a start tree that satisfied the documented
+  constraint without making either group an exact clade matched no node, every
+  rearrangement was rejected, and the replicate returned its start unimproved.
+  Constrained searches with `?`-coded taxa therefore reach better scores.
+  The exact match also blunted the collapse protection described above: with
+  free taxa it matched no branch, so the separating edge could still be
+  contracted away -- the one route by which a *returned* tree could break the
+  constraint.
 - Random starting trees under a constraint now sample every topology the
   constraint permits.  Every tree the old generator produced was compliant, but
   it built each "together" group as an exact clade with the `?`-coded taxa held
@@ -30,6 +77,24 @@
   state the same constraint and are now treated the same way.  Code the taxa
   that must fall outside a group as `0`, rather than leaving them `?`, to keep
   it enforced.
+- `TreeLength()`, `CharacterLength()`, `TreeScore()` and `EdgeListScore()` -- and
+  so `Consistency()`, `ExpectedLength()`, `ConcordantInformation()`,
+  `LengthAdded()` and `SuccessiveApproximations()`, which score trees through
+  them -- now reject a
+  tree that contains a polytomy, with the "`tree` must be binary" error that
+  `TreeLength()` already gave for a single `phylo` tree.  Such a tree
+  previously returned a number.  The scoring engine derives its node counts from
+  the number of edges, which identifies a tree only if that tree is binary: a
+  polytomous tree with an odd number of edges wrote past the end of the arrays
+  holding its topology, and one with an even number of edges was rooted on a
+  leaf and then scored from memory outside its own state buffer, so repeating
+  the same call could return a different answer each time.  `MaximizeParsimony()`
+  collapses the trees it returns unless `collapse = FALSE`, so scoring its output
+  reached this path; search with `collapse = FALSE` to obtain trees that can be
+  scored, whose lengths are the score the search reports.  Resolving a collapsed
+  tree instead, with `TreeTools::MakeTreeBinary()`, does not recover that score:
+  an arbitrary resolution of a polytomy need not be one of the most parsimonious
+  ones.
 
 - `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
   reported score is reproducible.  The x-transformation's step matrix is
@@ -127,6 +192,19 @@
   still passing a (now-empty) hierarchy config through; those replicates are
   ordinary Fitch data and now collapse like any other.  A replicate that
   retains any hierarchy block is unaffected.
+
+- `inapplicable = "hsj"` scoring no longer forms a reference one element past
+  the end of an internal vector.  The secondary-labelling uppass computed a
+  pointer to a node's children before testing whether it had any, and for a
+  childless node reached after the traversal had emitted its last child that
+  pointer addressed one past the end.  No
+  value was ever read through it and no score changed -- 900 of 900 HSJ and
+  x-transformation lengths are bit-identical either side of the fix -- but the
+  access is undefined behaviour, and any build whose standard library checks
+  its own preconditions aborted on it.  That includes the container behind the
+  `gcc-ASAN` workflow, which is why that workflow could not get past this
+  package: it stopped on the library assertion rather than on anything the
+  sanitizer itself had found.
 
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute

@@ -930,6 +930,12 @@ std::vector<double> wagner_goloboff_scores(const DataSet& ds) {
 
       // tip_ambiguous: bit c is set when tip has ALL n_states for char c.
       // Compute as the AND of all per-state words masked to active chars.
+      // For an inapplicable-coded block, plane 0 is the NA indicator (see
+      // ts_data.cpp's tip_states fill), so this AND requires the NA bit too:
+      // a tip coded {0,1} -- every applicable state but not "-" -- has the
+      // NA bit clear and so is scored non-ambiguous (informative) here, even
+      // though it carries no information about which applicable state holds.
+      // Untested whether that should count as ambiguous (T-371); left as is.
       uint64_t tip_ambiguous = blk.active_mask;
       for (int s = 0; s < blk.n_states; ++s) {
         tip_ambiguous &= tip_base[offset + s];
