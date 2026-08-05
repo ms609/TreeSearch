@@ -1,11 +1,10 @@
 # `dev/red-team/` — the red-team rotation's state
 
-Everything the `/red-team` skill reads and writes. The skill itself now lives in this repo, at
-[`.claude/skills/red-team/SKILL.md`](../../.claude/skills/red-team/SKILL.md) — it was
-user-level and shared across projects until 2026-08-05, when it was rewritten around GitHub
-issues and moved here alongside `/next-issue` (the retired user-level copy,
-`~/.claude/skills-retired/red-team/`, is the only surviving record of file mode). **This
-directory is the project-local memory that makes it work.** If a file
+Everything the `/red-team` skill reads and writes. The skill itself is user-level and shared
+across projects (`~/.claude/skills/red-team/`), rewritten 2026-08-05 around GitHub issues —
+its dual-mode `findings.md` machinery is retired to `~/.claude/skills-retired/red-team/`, the
+only surviving record of file mode. **This directory is the project-local memory that makes
+it work.** If a file
 here goes stale, the next round pays for it in wasted finder tokens — that is not
 hypothetical, it is what the 2026-07-27 rounds measured.
 

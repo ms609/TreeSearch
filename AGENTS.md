@@ -236,7 +236,7 @@ These recur; they are activities, not issues, and have no tracker entry:
 
 | Practice | Invoke | Reference |
 |----------|--------|-----------|
-| Red-team review | `/red-team` | `.claude/skills/red-team/SKILL.md`; state in `dev/red-team/README.md` |
+| Red-team review | `/red-team` | `dev/red-team/README.md` |
 | Performance profiling | `/profile` | `dev/profiling/` |
 | Issue triage & dispatch | `/next-issue` | `.claude/skills/next-issue/SKILL.md` |
 | PR maintenance | — | `.AGENTS/memory/pr-maintenance.md` |
