@@ -1,5 +1,28 @@
 # To integrate into 2.0.0 notes
 
+- Profile parsimony now computes exactly for the multi-state characters it
+  classes as feasible, instead of quietly approximating them.  The exact
+  Maddison & Slatkin solver caches into fixed-capacity memo tables and bails out
+  when one fills -- a guard added to stop an unbounded probe loop -- but its
+  reserved size was never matched to the feasibility gate that feeds it.
+  Measured against the worst character that gate admits, every one of them
+  overflowed: a 3-state character needs up to ~28,000 memo entries against the
+  4,096 reserved.  `StepInformation()` and `PrepareDataProfile(approx = "auto")`
+  therefore fell back to the Monte Carlo approximation for essentially every
+  multi-state character -- a documented mode, but not the one asked for.
+
+  **Information amounts for multi-state characters will therefore change**, from
+  a sampled estimate to the exact value, and those characters take longer to
+  prepare.  Pass `approx = "mc"` to keep the previous behaviour.
+
+  The accompanying wall-clock budget, which returns `NA` and falls back when the
+  recursion runs long, rises from 2 s to 30 s: measured on a normal build, the
+  slowest character the feasibility gate admits takes 12.7 s, so the old value
+  fired on legitimate work rather than on the runaway recursion it exists to
+  catch.  It is scaled further under sanitizer builds, which run one to two
+  orders of magnitude slower and so tripped it on everything -- leaving the
+  sanitizer inspecting the fallback rather than the algorithm it was aimed at.
+
 - `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
   reported score is reproducible.  The x-transformation's step matrix is
   asymmetric -- a gain costs one more than the number of secondary characters it

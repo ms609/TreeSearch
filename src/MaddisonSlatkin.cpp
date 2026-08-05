@@ -918,8 +918,34 @@ class SolverT {
   int s_max_global = 0;
 
   // Time budget: abort if computation exceeds this many seconds.
-  // Legitimate computations complete in <2s; blowups take >100s.
-  static constexpr double TIME_BUDGET_S = 2.0;
+  //
+  // This is a net for a pathological blowup, not a latency promise, so it has
+  // to sit clear of the slowest work `.MS_SC_THRESHOLD` legitimately admits.
+  // Measured on a normal build, the gate's own worst admitted character --
+  // k=3 (9,9,9), sc=75, its exact threshold -- takes 12.7 s, and the k=3
+  // (8,7,5) character the profile tests use takes 1.9 s.  At the former 2 s
+  // the budget therefore fired on legitimate work: the caller silently got NA
+  // and fell back to Monte Carlo, and the 1.9 s case was a coin toss on CI.
+  //
+  // An instrumented build runs one to two orders of magnitude slower, so the
+  // budget would fire there on anything at all -- leaving the sanitizer
+  // checking the bailout path instead of the algorithm it was pointed at.
+  // Scale rather than disable, so a genuine blowup is still bounded.
+  // GCC announces ASan through __SANITIZE_ADDRESS__ and clang through
+  // __has_feature; TS_SANITIZER_BUILD is the manual escape hatch for the
+  // instrumented builds that announce themselves through neither (valgrind).
+#if defined(__SANITIZE_ADDRESS__) || defined(TS_SANITIZER_BUILD)
+#  define TS_MS_SLOW_BUILD 1
+#elif defined(__has_feature)
+#  if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
+#    define TS_MS_SLOW_BUILD 1
+#  endif
+#endif
+#ifdef TS_MS_SLOW_BUILD
+  static constexpr double TIME_BUDGET_S = 600.0;
+#else
+  static constexpr double TIME_BUDGET_S = 30.0;
+#endif
   std::chrono::steady_clock::time_point start_time;
   bool budget_exceeded = false;
   // Set when we bail because a memo table reached its reserved capacity (as
@@ -1315,8 +1341,19 @@ public:
           LnRootedCache& lnr)
     : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
 
-    logB_cache.reserve(8192);    // OAFlatMap: capacity 16384, load <= 0.5
-    logPVec_idx.reserve(4096);   // OAFlatMap: capacity 8192, load <= 0.5
+    // Sized against the worst character `.MS_SC_THRESHOLD` admits to this
+    // solver, measured at the entry high-water mark rather than guessed:
+    //
+    //   k=5 (2,2,2,2,1) sc=35   logB   142   logPVec  4990
+    //   k=4 (4,3,3,3)   sc=50   logB   305   logPVec  9555
+    //   k=3 (8,7,5)     sc=42   logB   422   logPVec 12047
+    //   k=3 (9,9,9)     sc=75   logB   990   logPVec 27951
+    //
+    // logPVec_idx previously reserved 4096, so `at_capacity()` bailed on every
+    // one of them: the exact solver returned NA and every multistate character
+    // the gate admits fell back to Monte Carlo without the caller asking.
+    logB_cache.reserve(8192);     // OAFlatMap: capacity 16384, bails above 8192
+    logPVec_idx.reserve(32768);   // OAFlatMap: capacity 65536, bails above 32768
 
     logRD_cache.reserve(1024);
     validDraws_cache.reserve(256);
