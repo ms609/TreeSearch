@@ -35,7 +35,10 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
-/.agent*
+/.agent-*
+# Windows core.ignorecase folds "/.agent-*" onto tracked ".AGENTS/" (agent
+# memory files) unless explicitly excepted here.
+!/.AGENTS/
 # paired A/B libraries built by dev/benchmarks/ab_*.R
 /.ab-*
 /agent-*.md
