@@ -113,6 +113,13 @@ Profile mode sets `ds.concavity = 1.0` (finite sentinel) so existing
   write the other — `ts_wagner.cpp` pins hi to the tight anchor.
 - `.PrepareConstraint()` drops (and warns about) a character with no `0` taxa:
   vacuous under the documented contract.
+- `random_constrained_tree()` (`ts_wagner.cpp`, the `RANDOM_TREE` start
+  strategy) builds its backbone from the NAMED tips only, then inserts each free
+  tip at a uniformly random edge of it. Placing free tips at root level instead
+  — what it did before — makes every group an exact clade and leaves most
+  compliant topologies unreachable (15 of 35, on 6 taxa with 2 free). Probe it
+  through `ts_random_constrained_tree()`, not `MaximizeParsimony()`: TBR
+  rearranges the start, so the returned tree says nothing about the generator.
 - Wagner uses LCA-based constraint mapping (`wagner_map_constraint_nodes`)
   since splits aren't fully present during incremental construction.
 - Wagner has a posthoc retry loop (up to 100 random addition orders) as a

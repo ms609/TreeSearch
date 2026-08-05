@@ -3745,3 +3745,28 @@ std::string ts_ev_cache_key_probe(
   std::snprintf(buf, sizeof(buf), "%016llx", (unsigned long long)key);
   return std::string(buf);
 }
+
+// Sample one start tree from the RANDOM_TREE strategy's constrained generator.
+//
+// A thin wrapper over random_constrained_tree() (ts_wagner.cpp) so that tests
+// can inspect the tree the search STARTS from.  Going through
+// MaximizeParsimony() cannot: TBR rearranges whatever it is handed, so the
+// returned tree says nothing about where the generator put the free tips.
+// Draws from R's RNG, so set.seed() reproduces a sample.
+// [[Rcpp::export]]
+IntegerMatrix ts_random_constrained_tree(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
+{
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::ConstraintData cd = build_constraint_from_r(
+      tip_data.nrow(), consSplitMatrix, R_NilValue, R_NilValue,
+      R_NilValue, R_NilValue, 0);
+
+  ts::TreeState tree;
+  ts::random_constrained_tree(tree, ds, cd);
+  return tree_to_edge(tree);
+}

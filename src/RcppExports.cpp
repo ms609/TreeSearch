@@ -855,3 +855,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// ts_random_constrained_tree
+IntegerMatrix ts_random_constrained_tree(NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, Nullable<IntegerMatrix> consSplitMatrix);
+RcppExport SEXP _TreeSearch_ts_random_constrained_tree(SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP consSplitMatrixSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type contrast(contrastSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type tip_data(tip_dataSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type weight(weightSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type levels(levelsSEXP);
+    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type consSplitMatrix(consSplitMatrixSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_random_constrained_tree(contrast, tip_data, weight, levels, consSplitMatrix));
+    return rcpp_result_gen;
+END_RCPP
+}

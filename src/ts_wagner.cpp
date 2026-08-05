@@ -1192,28 +1192,43 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
 // Algorithm:
 // 1. Identify constraint splits ordered from largest to smallest (by
 //    popcount of the "inside" set). Larger splits enclose smaller ones.
-// 2. Assign each tip to its tightest (smallest) enclosing constraint
-//    split, or "root level" if unconstrained.
-// 3. Build the tree bottom-up: for each constraint split (smallest first),
-//    randomly wire all its direct children (tips + smaller split roots)
-//    into a binary subtree via random edge insertion.
-// 4. Finally, wire all root-level items (unconstrained tips + top-level
-//    split roots) into the tree.
+// 2-3. Assign each NAMED tip — one the constraint puts in a "together" or an
+//    "apart" group — to its tightest (smallest) enclosing constraint split,
+//    or "root level" if it is in no together-group.
+// 4. Build the backbone bottom-up: for each constraint split (smallest
+//    first), randomly wire all its direct children (tips + smaller split
+//    roots) into a binary subtree via random edge insertion.
+// 5. Wire all root-level items (named-but-unowned tips + top-level split
+//    roots) into the tree.
+// 6. Insert every FREE tip — named by no split, so coded `?` or absent from
+//    the constraint altogether — at a uniformly random edge of the finished
+//    backbone.
 //
-// The result is a uniformly random binary tree among those that satisfy
-// all constraint splits. (Uniform conditional on the split nesting
-// structure, which determines the partition of items across polytomy
-// resolution steps.)
+// The result is a uniformly random binary tree among those that satisfy all
+// constraint splits. (Uniform conditional on the split nesting structure,
+// which determines the partition of items across polytomy resolution steps.)
 //
-// With free tips the "among those that satisfy" is narrower than the
-// documented contract: this reads cd.split_tips only, so every free tip is a
-// root-level item and the together-group comes out as an EXACT clade, which
-// displays the split under the free-taxa reading too
-// (agent-issues/TreeSearch#54).  So it samples a strict subset of the legal
-// topologies, and a free tip never starts inside the constrained group.
-// Widening it would change which start trees the search sees, which is a
-// search-quality change to measure on its own rather than a correctness fix to
-// make here.
+// Step 6 is what makes "among those that satisfy" mean the documented
+// contract (agent-issues/TreeSearch#54) rather than a corner of it.  A free
+// tip is in neither group of any split, so wherever it lands the edge that
+// separated the two groups still separates them: compliance survives, and the
+// sampler reaches the compliant trees that hold free tips INSIDE a constrained
+// group.  Before, free tips were root-level items in step 5, which put every
+// one of them outside every constrained group in every tree this ever
+// returned — the together-group always came out as an exact clade, and on six
+// taxa constrained by a single character with two free tips only 15 of the 35
+// compliant topologies could be drawn at all.  With no free tips the two are
+// the same function, down to the RNG draw sequence, which is what keeps the
+// pool/consensus caller (build_constraint_from_bitsets, whose splits name
+// every tip) on its old behaviour.
+//
+// Still narrower than the contract in one respect: a tip that IS named, but by
+// a different character, keeps its backbone position.  Given {a,b} vs {c,d}
+// and {e,f} vs {g,h}, tip c is free of the second split and could legally sit
+// inside {e,f}, but is held at root level.  Offering it those positions means
+// an edge list filtered per tip against the clades its own splits bar it from,
+// O(n) per tip rather than O(1); the free tips step 6 does move are the ones a
+// user writes `?` for.
 //
 // Making each together-group an exact clade is not always *possible*: the
 // R-side gate (.PrepareConstraint) admits four-gamete-compatible splits that
@@ -1224,6 +1239,15 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
 
 namespace {
 
+// Fisher-Yates shuffle of a list of node indices, drawing from the search RNG.
+void shuffle_items(std::vector<int>& items) {
+  for (int i = static_cast<int>(items.size()) - 1; i > 0; --i) {
+    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
+    if (j > i) j = i;  // guard the thread_safe_unif() == 1 corner
+    std::swap(items[i], items[j]);
+  }
+}
+
 // Randomly resolve a set of items into a binary subtree.
 // `items` are node indices (tips or internal subtree roots).
 // Returns the root node of the resolved subtree.
@@ -1233,12 +1257,7 @@ int resolve_randomly(TreeState& tree, std::vector<int>& items,
                      int& next_internal) {
   if (items.size() == 1) return items[0];
 
-  // Shuffle items
-  for (int i = static_cast<int>(items.size()) - 1; i > 0; --i) {
-    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
-    if (j > i) j = i;
-    std::swap(items[i], items[j]);
-  }
+  shuffle_items(items);
 
   if (items.size() == 2) {
     int nd = next_internal++;
@@ -1394,6 +1413,23 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
     }
   }
 
+  // Tips that no split names at all are FREE of every constraint, so the
+  // contract puts no edge out of reach for them (#54).  Hold them out of the
+  // backbone; step 6 scatters them over the finished tree.  A tip named only
+  // in "apart" groups has tip_owner == -1 too, but it is not free: it stays a
+  // root-level item, which is where every split that names it needs it.
+  std::vector<uint64_t> named(n_words, 0ULL);
+  for (int s = 0; s < n_splits; ++s) {
+    const size_t off = static_cast<size_t>(s) * n_words;
+    for (int w = 0; w < n_words; ++w) {
+      named[w] |= cd.split_tips[off + w] | cd.split_zeros[off + w];
+    }
+  }
+  std::vector<int> free_tips;
+  for (int t = 0; t < n_tip; ++t) {
+    if (!tip_in_split(t, named.data())) free_tips.push_back(t);
+  }
+
   // --- Step 4: Build bottom-up ---
   // For each split, collect its direct children (tips + child split roots)
   // and resolve them randomly.
@@ -1434,12 +1470,15 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
   }
 
   // --- Step 5: Wire root level ---
-  // Collect unconstrained tips + top-level split roots, then build
-  // directly onto the root node (avoiding extra node allocation).
+  // Collect the named tips no together-group owns, plus top-level split
+  // roots, then build directly onto the root node (avoiding extra node
+  // allocation).  Free tips are deliberately absent — step 6 places them.
   std::vector<int> root_items;
 
   for (int t = 0; t < n_tip; ++t) {
-    if (tip_owner[t] == -1) root_items.push_back(t);
+    if (tip_owner[t] == -1 && tip_in_split(t, named.data())) {
+      root_items.push_back(t);
+    }
   }
   for (int i = 0; i < n_splits; ++i) {
     if (parent_split[i] == -1 && split_root[i] >= 0) {
@@ -1447,12 +1486,19 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
     }
   }
 
-  // Shuffle root items
-  for (int i = static_cast<int>(root_items.size()) - 1; i > 0; --i) {
-    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
-    if (j > i) j = i;
-    std::swap(root_items[i], root_items[j]);
+  shuffle_items(free_tips);
+
+  // Fewer than two root-level items leaves step 6 no edge to insert onto —
+  // and, when the one item is a tip, no root children at all.  Promote free
+  // tips until there are two.  Only reachable when the constraint names at
+  // most one tip, which leaves it nothing to enforce; the shuffle above is
+  // what keeps which tips get promoted random.
+  while (root_items.size() < 2 && !free_tips.empty()) {
+    root_items.push_back(free_tips.back());
+    free_tips.pop_back();
   }
+
+  shuffle_items(root_items);
 
   if (root_items.size() >= 2) {
     // Wire first two items as root's children
@@ -1506,6 +1552,69 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
       tree.right[0] = tree.right[si];
       tree.parent[tree.left[0]] = root;
       tree.parent[tree.right[0]] = root;
+    }
+  }
+
+  // --- Step 6: Scatter the free tips over the whole tree ---
+  // Uniformly random edge, anywhere in the backbone — including inside a
+  // constrained group, which is the point (#54): the tips a user codes `?` are
+  // the ones the contract says may fall on either side of every constraint
+  // edge, and this used to place all of them outside all of them.  The
+  // insertion cannot break a constraint, because a free tip is in neither
+  // group of any split: whatever edge separated the two groups still has every
+  // "together" tip below it and no "apart" tip.
+  //
+  // Non-empty only if the root got wired above: the promotion loop hands free
+  // tips over until root_items reaches two, so tree.left[0] / tree.right[0]
+  // are set whenever there is anything left to place.
+  if (!free_tips.empty()) {
+    // Every node but the root heads one edge.  The root's two children head
+    // the two halves of ONE unrooted edge, so list just one of them, or that
+    // edge would be sampled at twice the rate of every other — the same guard
+    // step 5 applies to its own insertions.
+    std::vector<int> edge_children;
+    edge_children.reserve(static_cast<size_t>(2 * n_tip - 3));
+    const int root_half = tree.right[0];
+    std::vector<int> stack;
+    stack.push_back(tree.left[0]);
+    stack.push_back(tree.right[0]);
+    while (!stack.empty()) {
+      const int nd = stack.back();
+      stack.pop_back();
+      if (nd != root_half) edge_children.push_back(nd);
+      if (nd >= n_tip) {
+        const int ni = nd - n_tip;
+        stack.push_back(tree.left[ni]);
+        stack.push_back(tree.right[ni]);
+      }
+    }
+
+    for (int tip : free_tips) {
+      const int new_nd = next_internal++;
+      const int new_ni = new_nd - n_tip;
+
+      const int n_edges = static_cast<int>(edge_children.size());
+      int edge_idx = static_cast<int>(ts::thread_safe_unif() * n_edges);
+      if (edge_idx >= n_edges) edge_idx = n_edges - 1;
+      const int below = edge_children[edge_idx];
+      const int above = tree.parent[below];
+
+      tree.parent[new_nd] = above;
+      tree.left[new_ni] = tip;
+      tree.right[new_ni] = below;
+      tree.parent[tip] = new_nd;
+      tree.parent[below] = new_nd;
+
+      // `above` is the root or an internal node: a tip is never a parent.
+      const int ai = above - n_tip;
+      if (tree.left[ai] == below) {
+        tree.left[ai] = new_nd;
+      } else {
+        tree.right[ai] = new_nd;
+      }
+
+      edge_children.push_back(new_nd);
+      edge_children.push_back(tip);
     }
   }
 

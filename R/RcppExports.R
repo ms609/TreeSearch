@@ -245,3 +245,7 @@ ts_ev_cache_key_probe <- function(edge, contrast, tip_data, weight, levels, conc
     .Call(`_TreeSearch_ts_ev_cache_key_probe`, edge, contrast, tip_data, weight, levels, concavity, zero_active, set_upweight, bump_pattern_freq)
 }
 
+ts_random_constrained_tree <- function(contrast, tip_data, weight, levels, consSplitMatrix = NULL) {
+    .Call(`_TreeSearch_ts_random_constrained_tree`, contrast, tip_data, weight, levels, consSplitMatrix)
+}
+

@@ -247,6 +247,17 @@ cannot disturb the separating edge; and a subtree carrying `1`-group taxa may
 be regrafted anywhere within the largest clade that still covers the `1` group
 and excludes the `0` group, not merely within the smallest one.
 
+It also determines where a replicate may *start*.
+The random-topology starting strategy builds a backbone from the taxa the
+constraint names, then inserts each free taxon at a uniformly chosen edge of
+that backbone -- inside a constrained group as readily as outside it, since a
+free taxon belongs to neither group and so cannot disturb the edge that
+separates them.
+Holding the free taxa outside instead would still give a compliant tree, but
+only ever one in which each group is an exact clade: on six taxa constrained by
+a single character with two free taxa, that is 15 of the 35 compliant
+topologies, and the replicate would never begin at any of the other 20.
+
 
 ## The driven search pipeline
 
