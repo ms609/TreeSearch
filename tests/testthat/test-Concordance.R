@@ -289,7 +289,7 @@ test_that("ClusteringConcordance() aligns splits to dataset tips (#86)", {
   # `tree` carries an extra tip (t8) absent from `dataset`; MatchStrings()
   # drops it from `keep`, but the unpruned `splits` matrix previously kept
   # all 8 tip-columns, so indexing it by the 7-taxon `aChar` mask recycled
-  # silently rather than erroring -- length(keep) = 7 divides NTip(tree) = 8's
+  # silently rather than raising an error -- length(keep) = 7 divides NTip(tree) = 8's
   # neighbouring 4 non-trivial splits into 5, corrupting every value, not
   # just misaligning a few.
   tree <- ape::read.tree(text = "(((t1,t2),(t3,t4)),((t5,t6),(t7,t8)));")

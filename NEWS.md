@@ -592,18 +592,18 @@
   wrong values whenever `tree` carried tips absent from `dataset`: the splits
   matrix was left at the tree's full tip count while the character matrix was
   reduced to the shared taxa, so indexing one by the other recycled rather
-  than erroring.  Splits are now restricted to the shared taxa via
+  than raising an error.  Splits are now restricted to the shared taxa via
   `Subsplit()`, matching the taxon set `dataset` describes, while keeping
   each surviving split's original node number -- pruning `tree` itself would
   renumber nodes and break `ConcordanceTable()`'s and `PaintCharacters()`'s
   `tree$edge`-based lookups.
-- `ConcordanceTable()` errored ("non-numeric matrix extent") on a tree with a
+- `ConcordanceTable()` raised "non-numeric matrix extent" on a tree with a
   single split or a dataset with a single character/pattern, because
   subsetting a named row out of the underlying 3D array silently dropped the
   split or character dimension when it had extent one.
-- `ClusteringConcordance(return = "char")` errored ("dim(X) must have a
-  positive length") on a dataset with a single pattern, for the same reason.
-- `QuartetConcordance()` errored on a contrast level combining an applicable
+- `ClusteringConcordance(return = "char")` raised "dim(X) must have a
+  positive length" on a dataset with a single pattern, for the same reason.
+- `QuartetConcordance()` failed on a contrast level combining an applicable
   state with `-` (e.g. `{0,-}`, as used by some datasets to distinguish
   "trait absent" from "trait not scored"): such a level was misclassified as
   a pure single-state (grouping) level, rather than ambiguous.
