@@ -20,7 +20,7 @@ collaborators.
 |-------|---------|
 | `red-team` | Filed by `/red-team`. Also that skill's mode switch — don't delete it |
 | `sev:high` / `sev:med` / `sev:low` | Former P1 / P2 / P3 |
-| `area:1`…`area:13` | Red-team focus area, per `dev/red-team/focus-areas.md` |
+| `area:1`…`area:15` | Which area **owns the code**, per `dev/red-team/focus-areas.md` — not which round found it; an issue may carry several |
 | `task` | Planned work migrated from the retired `to-do.md` |
 | `deferred` | Assessed and parked; not scheduled |
 | `chore` | Infrastructure / process work |
@@ -236,7 +236,7 @@ These recur; they are activities, not issues, and have no tracker entry:
 
 | Practice | Invoke | Reference |
 |----------|--------|-----------|
-| Red-team review | `/red-team` | `dev/red-team/README.md` |
+| Red-team review | `/red-team` | `.claude/skills/red-team/SKILL.md`; state in `dev/red-team/README.md` |
 | Performance profiling | `/profile` | `dev/profiling/` |
 | Issue triage & dispatch | `/next-issue` | `.claude/skills/next-issue/SKILL.md` |
 | PR maintenance | — | `.AGENTS/memory/pr-maintenance.md` |

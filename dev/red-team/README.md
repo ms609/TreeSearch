@@ -1,7 +1,11 @@
 # `dev/red-team/` — the red-team rotation's state
 
-Everything the `/red-team` skill reads and writes. The skill itself is user-level and shared
-across projects; **this directory is the project-local memory that makes it work.** If a file
+Everything the `/red-team` skill reads and writes. The skill itself now lives in this repo, at
+[`.claude/skills/red-team/SKILL.md`](../../.claude/skills/red-team/SKILL.md) — it was
+user-level and shared across projects until 2026-08-05, when it was rewritten around GitHub
+issues and moved here alongside `/next-issue` (the retired user-level copy,
+`~/.claude/skills-retired/red-team/`, is the only surviving record of file mode). **This
+directory is the project-local memory that makes it work.** If a file
 here goes stale, the next round pays for it in wasted finder tokens — that is not
 hypothetical, it is what the 2026-07-27 rounds measured.
 
@@ -9,7 +13,7 @@ hypothetical, it is what the 2026-07-27 rounds measured.
 
 | File | What it is | Who writes it |
 |------|------------|---------------|
-| [`focus-areas.md`](focus-areas.md) | The rotation table: 13 numbered areas, the files each owns, its `start_tier`, and its key questions. Built once, edited rarely. **Adding a row** also needs, and nothing currently automates: a matching `area:N` GitHub label (`gh label create area:N --description "Red-team focus area N"`), and recomputing `N` in `log.md`'s rotation-formula comment (see RT12-01). | A round, when it finds the scope row wrong |
+| [`focus-areas.md`](focus-areas.md) | The rotation table: 15 numbered areas, the files each owns, its `start_tier`, and its key questions. Built once, edited rarely. **Adding a row** also needs, and nothing currently automates: a matching `area:N` GitHub label (`gh label create area:N --description "Red-team focus area N"`), and recomputing `N` in `log.md`'s rotation-formula comment (see RT12-01). | A round, when it finds the scope row wrong |
 | [`log.md`](log.md) | Append-only, **newest first**. One entry per round (`area` / `reviewed_by` / `date` / `tier` / `yield` / `notes`), the **model-version legend** at the top, and `last_focus:` at the very bottom. | Every round |
 | **GitHub issues** in [`agent-issues/TreeSearch`](https://github.com/agent-issues/TreeSearch/issues?q=label%3Ared-team) | **OPEN verified findings live here since 2026-08-04**, labelled `red-team` + `sev:high\|med\|low` + `area:N`. Status is GitHub state, so it cannot drift from merge state. Filed *after* verification; trivial issues are fixed inline and noted in `log.md` instead. | A round files; a merged `Fixes #N` closes |
 | [`findings-archive.md`](findings-archive.md) | **FROZEN 2026-08-04.** Terminal-state findings from the file era, one compressed line each. **Offline anti-duplication memory, not a trophy case** — the one thing the tracker doesn't provide. | Nobody; it is closed to new rows |
