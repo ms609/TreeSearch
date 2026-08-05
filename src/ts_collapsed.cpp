@@ -21,8 +21,14 @@ void compute_collapsed_flags(
   // (all-zero flags == nothing collapses — the safe conservative outcome).
   // Falling back to the conservative flags is NOT sufficient: it is equally
   // blind to hierarchy/Sankoff support.  See red-team T-330.
-  if (ds.scoring_mode == ScoringMode::HSJ ||
-      ds.scoring_mode == ScoringMode::XFORM) return;
+  //
+  // Gate on whether hierarchy data actually EXISTS (T-408), not merely on
+  // scoring_mode: an HSJ/XFORM config with no hierarchy_blocks / sankoff_n_chars
+  // carries no topology-dependent support this kernel is blind to, so collapse
+  // is safe. Matches DataSet::topology_independent()'s predicate.
+  if ((ds.scoring_mode == ScoringMode::HSJ ||
+       ds.scoring_mode == ScoringMode::XFORM) &&
+      (!ds.hierarchy_blocks.empty() || ds.sankoff_n_chars > 0)) return;
 
   // If all characters were simplified away (total_words == 0), every binary
   // resolution ties at the same score: no internal branch carries support,
@@ -156,8 +162,12 @@ void compute_collapsed_flags_aggressive(
   // modes (all-zero flags).  Guarded independently of compute_collapsed_flags:
   // the has_na delegation at the bottom of this block only reaches it on NA
   // data, not the general HSJ/XFORM case.  See red-team T-330.
-  if (ds.scoring_mode == ScoringMode::HSJ ||
-      ds.scoring_mode == ScoringMode::XFORM) {
+  //
+  // Gate on hierarchy data presence, not scoring_mode alone (T-408); see
+  // compute_collapsed_flags() above for the rationale.
+  if ((ds.scoring_mode == ScoringMode::HSJ ||
+       ds.scoring_mode == ScoringMode::XFORM) &&
+      (!ds.hierarchy_blocks.empty() || ds.sankoff_n_chars > 0)) {
     collapsed.assign(tree.n_node, 0);
     return;
   }
