@@ -18,6 +18,29 @@
   ended on a tree that could not be made to satisfy the constraint, and now
   raises an error rather than returning an unverified tree if no
   constraint-satisfying tree was found at all.
+- Every part of the search now reads `constraint` the way it is documented: a
+  tree is compatible with a constraint character when some edge separates the
+  taxa coded `1` from those coded `0`, with `?`-coded and unmentioned taxa free
+  to fall on either side.  The locked-node filter that screens individual
+  rearrangements, the constrained Wagner build and the collapse pass previously
+  required the `1` group to be a clade *exactly*, free taxa excluded.  That is
+  strictly stronger, so the search never accepted a rearrangement that broke the
+  documented constraint; but a start tree that satisfied the documented
+  constraint without making either group an exact clade matched no node, every
+  rearrangement was rejected, and the replicate returned its start unimproved.
+  Constrained searches with `?`-coded taxa therefore reach better scores.
+  The exact match also blunted the collapse protection described above: with
+  free taxa it matched no branch, so the separating edge could still be
+  contracted away -- the one route by which a *returned* tree could break the
+  constraint.
+- A constraint character whose `1` or `0` group holds fewer than two taxa now
+  warns and is ignored, rather than being enforced as a clade.  Every tree
+  separates such a group from the rest, so the character constrains nothing
+  under the documented reading.  The test is symmetric in the two groups, which
+  the old one was not: `c(a = 1, b = 1, c = 0)` and `c(a = 0, b = 0, c = 1)`
+  state the same constraint and are now treated the same way.  Code the taxa
+  that must fall outside a group as `0`, rather than leaving them `?`, to keep
+  it enforced.
 - `TreeLength()`, `CharacterLength()`, `TreeScore()` and `EdgeListScore()` -- and
   so `Consistency()`, `ExpectedLength()`, `ConcordantInformation()`,
   `LengthAdded()` and `SuccessiveApproximations()`, which score trees through
