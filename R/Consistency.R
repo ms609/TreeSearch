@@ -51,12 +51,19 @@
 #' If zero (the default), the \acronym{RHI} is not calculated.
 #' @inheritParams CharacterLength
 #' 
-#' @return `Consistency()` returns a matrix with named columns specifying the 
+#' @return `Consistency()` returns a matrix with named columns specifying the
 #' consistency index (`ci`),
 #' retention index (`ri`),
 #' rescaled consistency index (`rc`) and
 #' relative homoplasy index (`rhi`).
-#' 
+#' `ci` is `NaN` for a constant character, for which both the observed and
+#' minimum length are zero.
+#' `ri` and `rc` are `NaN` when the maximum and minimum length coincide, as
+#' for a constant or an autapomorphic character.
+#' `rhi` is `NaN` when the observed length already equals the minimum length
+#' and the median length under random leaf relabelling also equals the
+#' minimum; if only the median length equals the minimum, `rhi` is `Inf`.
+#'
 #' @examples 
 #' data(inapplicable.datasets)
 #' dataset <- inapplicable.phyData[[4]]
@@ -104,7 +111,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
   if (compress) {
     ret
   } else {
-    ret[attr(dataset, "index"), ]
+    ret[attr(dataset, "index"), , drop = FALSE]
   }
 }
 
@@ -147,8 +154,13 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
+  # Topology (edges + tip labels) is included verbatim, not canonicalized
+  # for rerooting/rotation, so a cache miss -- not a wrong hit -- is the
+  # failure mode if two encodings of the same topology happen to differ.
+  treeKey <- paste(c(tree[["edge"]], tree[["tip.label"]]), collapse = ",")
+
   .LengthForChar <- function(x) {
-    key <- paste(c(nRelabel, x), collapse = ",")
+    key <- paste(c(nRelabel, treeKey, x), collapse = ",")
     if (!is.null(.CharLengthCache[[key]])) {
       .CharLengthCache[[key]]
     } else {
@@ -223,7 +235,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   wholes <- mapping[2 ^ (seq_len(nAssigned) - 1)]
   
   ambigTokens <- contr[ambig & seq_along(contr) %fin% char]
-  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(contr[ambig])), 32),
+  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(ambigTokens)), 32),
                                 2, function(x) sum(wholes[x]))
   
   # Return:
