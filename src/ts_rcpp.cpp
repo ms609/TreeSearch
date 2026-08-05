@@ -2105,6 +2105,16 @@ List ts_driven_search(
     result = ts::driven_search(pool, ds, params, cd_ptr);
   }
 
+  // Reported here rather than where it is detected: the count accumulates on
+  // worker threads, and Rf_warning() is a main-thread-only call.
+  if (result.constraint_discards > 0) {
+    Rf_warning(
+      "%d replicate(s) ended on a tree that could not be made to satisfy "
+      "`constraint`, and were discarded. The remaining trees do satisfy it; "
+      "raise `maxReplicates` if too few trees were found.",
+      result.constraint_discards);
+  }
+
   // Build timings as a NumericVector (lighter than List)
   NumericVector timings = NumericVector::create(
     Named("wagner_ms")    = result.timings.wagner_ms,
@@ -2241,7 +2251,8 @@ List ts_collapse_pool(
     List scoringConfig,
     Nullable<List> hsjConfig = R_NilValue,
     Nullable<List> xformConfig = R_NilValue,
-    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
+    Nullable<IntegerMatrix> consZero = R_NilValue)
 {
   ts::DataSet ds = unpack_scoring(contrast, tip_data, weight, levels,
                                   scoringConfig);
@@ -2256,22 +2267,55 @@ List ts_collapse_pool(
   // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
   // bitset: trees are re-rooted on tip 0 below, so every internal node's
   // descendant set excludes tip 0 and is directly comparable to these.
+  //
+  // The canonical bitsets alone protect only a node whose descendant set is the
+  // 1 group EXACTLY, which is what the search's locked-node machinery enforces.
+  // The constraint the user is promised is looser: tips ambiguous for the
+  // constraint character are free to sit on either side, so the split can be
+  // realised by a node that is not exactly the 1 group, which no exact match
+  // reaches — and contracting that node's edge takes the enforced grouping with
+  // it.  `cons_one` / `cons_zero` are the raw (uncanonicalised) groups, from
+  // which the realising node is found per tree below.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
   std::vector<std::vector<uint64_t>> cons_canon;
+  std::vector<std::vector<uint64_t>> cons_one, cons_zero;
+  auto row_bits = [&](const IntegerMatrix& m, int r) {
+    std::vector<uint64_t> b(wps, 0);
+    for (int c = 0; c < n_tip && c < m.ncol(); ++c) {
+      if (m(r, c)) b[c >> 6] |= (1ULL << (c & 63));
+    }
+    return b;
+  };
   if (consSplitMatrix.isNotNull()) {
     IntegerMatrix cs(consSplitMatrix.get());
     for (int r = 0; r < cs.nrow(); ++r) {
-      std::vector<uint64_t> b(wps, 0);
-      for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
-        if (cs(r, c)) b[c >> 6] |= (1ULL << (c & 63));
-      }
+      std::vector<uint64_t> b = row_bits(cs, r);
+      cons_one.push_back(b);
       if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
         for (int w = 0; w < wps; ++w) b[w] = ~b[w];
         int rem = n_tip & 63;
         if (rem) b[wps - 1] &= ((1ULL << rem) - 1);  // clear padding bits
       }
       cons_canon.push_back(std::move(b));
+    }
+    if (consZero.isNotNull()) {
+      IntegerMatrix cz(consZero.get());
+      for (int r = 0; r < cz.nrow() && r < cs.nrow(); ++r) {
+        cons_zero.push_back(row_bits(cz, r));
+      }
+    }
+    cons_zero.resize(cons_one.size(), std::vector<uint64_t>(wps, 0));
+  }
+  // Group sizes depend only on the constraint, so they are counted once here
+  // rather than per tree.  A group of fewer than two taxa is skipped below:
+  // such a split is realised by a terminal edge, never a collapse candidate.
+  std::vector<int> n_one_tips(cons_one.size(), 0);
+  std::vector<int> n_zero_tips(cons_one.size(), 0);
+  for (size_t r = 0; r < cons_one.size(); ++r) {
+    for (int w = 0; w < wps; ++w) {
+      n_one_tips[r] += ts::popcount64(cons_one[r][w]);
+      n_zero_tips[r] += ts::popcount64(cons_zero[r][w]);
     }
   }
 
@@ -2352,6 +2396,48 @@ List ts_collapse_pool(
           }
           if (eq) { flags[v] = 0; break; }
         }
+      }
+
+      // A split can also be realised by a node that is not the 1 group exactly,
+      // and that node needs protecting too — but only when nothing else keeps
+      // the split visible.  A node realises the split when it holds one whole
+      // group and none of the other; every such node's own edge displays it, so
+      // if any of them already survives the contraction there is nothing to do.
+      // Protecting unconditionally would instead force the resolution of a
+      // branch the constraint does not ask for, which is the "unsupported
+      // non-constraint branches still collapse" half of the promise.
+      //
+      // Where none survives, the MRCA of a group is the node protected: the
+      // postorder visits every node before its parent, so the first node to
+      // hold a whole group is its MRCA, and keeping that one edge suffices,
+      // since contracting an edge below it leaves its descendant set — and so
+      // the split it displays — unchanged.
+      for (size_t r = 0; r < cons_one.size(); ++r) {
+        if (n_one_tips[r] < 2 || n_zero_tips[r] < 2) continue;
+        const std::vector<uint64_t>* grp[2] = { &cons_one[r], &cons_zero[r] };
+
+        bool survives = false;
+        int to_protect = -1;
+        for (int side = 0; side < 2 && !survives; ++side) {
+          const std::vector<uint64_t>& in = *grp[side];
+          const std::vector<uint64_t>& out = *grp[1 - side];
+          for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
+            const int v = tree.postorder[pi];
+            if (v <= n_tip || v >= static_cast<int>(flags.size())) continue;
+            const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
+            bool realises = true;
+            for (int w = 0; w < wps; ++w) {
+              if ((nb[w] & in[w]) != in[w] || (nb[w] & out[w])) {
+                realises = false;
+                break;
+              }
+            }
+            if (!realises) continue;
+            if (!flags[v]) { survives = true; break; }
+            if (to_protect < 0) to_protect = v;  // the MRCA, in postorder
+          }
+        }
+        if (!survives && to_protect >= 0) flags[to_protect] = 0;
       }
     }
 
