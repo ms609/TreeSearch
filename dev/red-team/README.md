@@ -9,11 +9,12 @@ hypothetical, it is what the 2026-07-27 rounds measured.
 
 | File | What it is | Who writes it |
 |------|------------|---------------|
-| [`focus-areas.md`](focus-areas.md) | The rotation table: 13 numbered areas, the files each owns, its `start_tier`, and its key questions. Built once, edited rarely. | A round, when it finds the scope row wrong |
+| [`focus-areas.md`](focus-areas.md) | The rotation table: 13 numbered areas, the files each owns, its `start_tier`, and its key questions. Built once, edited rarely. **Adding a row** also needs, and nothing currently automates: a matching `area:N` GitHub label (`gh label create area:N --description "Red-team focus area N"`), and recomputing `N` in `log.md`'s rotation-formula comment (see RT12-01). | A round, when it finds the scope row wrong |
 | [`log.md`](log.md) | Append-only, **newest first**. One entry per round (`area` / `reviewed_by` / `date` / `tier` / `yield` / `notes`), the **model-version legend** at the top, and `last_focus:` at the very bottom. | Every round |
 | **GitHub issues** in [`agent-issues/TreeSearch`](https://github.com/agent-issues/TreeSearch/issues?q=label%3Ared-team) | **OPEN verified findings live here since 2026-08-04**, labelled `red-team` + `sev:high\|med\|low` + `area:N`. Status is GitHub state, so it cannot drift from merge state. Filed *after* verification; trivial issues are fixed inline and noted in `log.md` instead. | A round files; a merged `Fixes #N` closes |
 | [`findings-archive.md`](findings-archive.md) | **FROZEN 2026-08-04.** Terminal-state findings from the file era, one compressed line each. **Offline anti-duplication memory, not a trophy case** — the one thing the tracker doesn't provide. | Nobody; it is closed to new rows |
 | [`migration-map.tsv`](migration-map.tsv) | Every historical `T-nnn` → its issue number, archive entry, or open-PR reference. `T-nnn` ids are **frozen, not retired**: they persist in shipped source comments and in `log.md`. | Written once, at migration |
+| [`migration-map-todo.tsv`](migration-map-todo.tsv) | Same idea, for the pre-tracker `T-nnn` ids that became `task` issues (#27+) rather than `red-team` findings — kept separate because it maps a different label family. | Written once, at migration |
 | [`escalation-backlog.md`](escalation-backlog.md) | Seams that are re-eligible *now* but are not next in rotation — chiefly ones reopened by a model-version bump. Split into Open / Resolved-history. | `revisit`, and rounds that leave a residual |
 | `proofs/` | Written derivations backing a specific finding (e.g. `union-construct-lower-bound.md`). | Whoever needs one |
 | `heavy-tests/` | Standalone harnesses too slow for the test suite (e.g. `impose_validity/`, the T-327/T-333 constraint-repair driver). | Whoever needs one |
@@ -23,14 +24,22 @@ hypothetical, it is what the 2026-07-27 rounds measured.
 Working artifacts under `proofs/`, `heavy-tests/` and `reviews/` are **live** as long as the
 finding they back is open. Never sweep them without checking the **open issue list** first.
 
-**Current state (2026-08-04, post-migration):** **24 open issues** — 6 `sev:high`, 5 `sev:med`,
-13 `sev:low` — and **61 archived rows** in `findings-archive.md`. Two findings (former T-395,
-T-396) were not migrated because they have an open upstream PR.
+**Globbing gotcha (found 2026-08-04 doing the area-12 file-coverage diff):** `R/` holds one
+lowercase-extension file, `R/pp_info_extra_step.r` — a case-sensitive `ls R/*.R` / `Glob`
+pattern silently skips it. Any future scope-coverage diff should glob `R/*.[Rr]`, not `R/*.R`.
 
-Do not maintain that count by hand; it is now a query:
+**Current state (2026-08-04, post-migration):** **24 open issues** and **61 archived rows** in
+`findings-archive.md`. Two findings (former T-395, T-396) were not migrated because they have
+an open upstream PR.
+
+Do not maintain the open count, or its severity breakdown, by hand — both are now a query (a
+hand-kept breakdown drifted within the same round it was written: an area-12 audit on
+2026-08-04 found this line reading 6/5/13 against a true 6/4/14):
 
 ```bash
 gh issue list --repo agent-issues/TreeSearch --label red-team --state open --json number --jq length
+gh issue list --repo agent-issues/TreeSearch --label red-team --state open --json labels \
+  --jq '[.[].labels[].name | select(startswith("sev:"))] | group_by(.) | map({(.[0]): length}) | add'
 ```
 
 The 2026-07-27 history is still worth knowing before reading an empty high-severity column as a

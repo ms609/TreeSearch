@@ -12,6 +12,15 @@ test_that("Distribution and concordance plots render correctly", {
   }
 
   app$set_inputs(`data-dataSource` = "Sun2018")
+  # Let the dataset load finish before setting anything that depends on it.
+  # UpdateAllTrees() resets treeRange to the full 1:nTrees span whenever the tree
+  # count changes (mod_data.R), so a `data-treeRange` that lands mid-load is
+  # silently clobbered by the reset -- and set_inputs()' default 4 s wait is not
+  # long enough for Sun2018's 125 trees, as the "Server did not update any output
+  # values within 4 seconds" warning on this line reported. Whether the clobber
+  # beat the capture varied by machine, which is what made this snapshot record
+  # trees[1:125] on some runs and trees[77:125] on others.
+  wait_stable(app)
   app$set_inputs(plotFormat = "clus")
   app$set_inputs(`data-treeRange` = c(77, 125))
   wait_stable(app)

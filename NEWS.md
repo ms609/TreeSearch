@@ -88,6 +88,15 @@
   known rooting-sensitivity of HSJ scoring, which remains a separate, open
   issue.
 
+- Zero-length-branch collapse (`collapse = TRUE`) no longer disables itself
+  for an `inapplicable = "hsj"`/`"xform"` search whenever *no* hierarchy
+  block actually exists in that replicate -- previously it keyed on the
+  scoring mode alone.  This only affects `Resample()`, whose bootstrap and
+  jackknife replicates can drop every hierarchy block from a unit while
+  still passing a (now-empty) hierarchy config through; those replicates are
+  ordinary Fitch data and now collapse like any other.  A replicate that
+  retains any hierarchy block is unaffected.
+
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute
   level: `0` (the default) accepts the amount of search the dataset's size and
