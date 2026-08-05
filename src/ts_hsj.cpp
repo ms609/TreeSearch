@@ -304,7 +304,7 @@ static int fitch_label_char(
     // contributed its children by then), so forming `&co.kids[kidOff[node]]`
     // for such a node dereferences one past the end -- the OOB read
     // -D_GLIBCXX_ASSERTIONS aborts on.  The two loops above already skip on
-    // nk == 0; this one did not (#51).
+    // nk == 0; this one did not (agent-issues/TreeSearch#51).
     if (nk == 0) continue;
     const int* kid = &co.kids[co.kidOff[node]];
     // Resolve each child: prefer parent's (already-resolved) state if it lies
