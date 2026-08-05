@@ -627,6 +627,11 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
             targetHits = targetHits,
             maxSeconds = maxSeconds,
             nThreads = nThreads,
+            # The app scores every returned tree, to display its length and to
+            # apply the suboptimality tolerance; only a binary tree can be
+            # scored, and an arbitrary resolution of a collapsed one need not
+            # be most parsimonious.
+            collapse = FALSE,
             verbosity = 0L
           )
           # Only pass control when non-default, so the effort rung applies
@@ -833,6 +838,7 @@ search_server <- function(id, r, AnyTrees, HaveData, UpdateAllTrees, log_fns) {
         if (identical(searchInapplicable, "hsj") && !is.null(searchHierarchy) &&
             searchHsjAlpha != 1.0)
           paste0("  hsj_alpha = ", searchHsjAlpha, ","),
+        "  collapse = FALSE,",
         "  verbosity = 0",
         ")"))
 

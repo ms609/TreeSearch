@@ -1,13 +1,53 @@
 #include "ts_tree.h"
 #include <algorithm>
 #include <cstring>
+#include <stdexcept>
 
 namespace ts {
+
+bool edge_list_is_binary(const int* edge_parent, const int* edge_child,
+                         int n_edge) {
+  // A rooted binary tree on n tips has 2 * (n - 1) edges, so an odd count
+  // cannot describe one; n_edge < 2 leaves no root to attach.
+  if (n_edge < 2 || (n_edge & 1)) return false;
+  const int n_tip = (n_edge / 2) + 1;
+  const int n_internal = n_tip - 1;
+  const int n_node = n_tip + n_internal;
+
+  // Every non-root node must appear exactly once as a child and every internal
+  // node at most twice as a parent.  n_edge == 2 * n_internal then forces
+  // "at most twice" to "exactly twice", which is binarity.  A multifurcating
+  // edge list has more real tips than the n_tip derived above, so its extra
+  // tips are counted as internal nodes and parent no children at all.
+  std::vector<uint8_t> child_of_an_edge(n_node, 0);
+  std::vector<uint8_t> n_child(n_internal, 0);
+  for (int i = 0; i < n_edge; ++i) {
+    const int p = edge_parent[i] - 1;
+    const int c = edge_child[i] - 1;
+    if (p < n_tip || p >= n_node) return false;
+    if (c < 0 || c >= n_node || c == n_tip) return false;
+    if (child_of_an_edge[c]) return false;
+    child_of_an_edge[c] = 1;
+    if (++n_child[p - n_tip] > 2) return false;
+  }
+  return true;
+}
 
 void TreeState::init_from_edge(
     const int* edge_parent, const int* edge_child,
     int n_edge, const DataSet& ds)
 {
+  // Every count below is derived from n_edge on the assumption that the edge
+  // list is binary, and nothing downstream rechecks it.  On a multifurcating
+  // list the derived n_tip falls short of the real tip count, so the loop
+  // writes past the end of parent[]/left[]/right[] (odd n_edge) or roots the
+  // tree on a real tip, leaving a one-element postorder whose downpass reads
+  // prelim[-total_words] (even n_edge).  Refuse the tree instead.  Rcpp
+  // forwards this to R as an error at every export boundary.
+  if (!edge_list_is_binary(edge_parent, edge_child, n_edge)) {
+    throw std::invalid_argument("`tree` must be binary");
+  }
+
   n_tip = (n_edge / 2) + 1;
   n_internal = n_tip - 1;
   n_node = n_tip + n_internal;
@@ -294,6 +334,15 @@ void TreeState::reset_states(const DataSet& ds) {
   //   subtree_a — only NA blocks; tips: load_tip_states + pass 2 update;
   //               internals: pass 1 + pass 3
   //   local_cost— only standard blocks; written in pass 1
+  //
+  // T-411: the collapse kernels (ts_collapsed.cpp) are a THIRD consumer the
+  // audit above does not cover.  They compare whole rows by memcmp, so they
+  // also read words no pass ever writes: the SIMD pad word, and — for
+  // down2 / subtree_actives — the non-NA blocks of an NA dataset.  Those read
+  // as zero only because every path that sizes a TreeState's state arrays
+  // zero-fills them (assign in init_from_edge, ts_sector.cpp and
+  // ts_constraint.cpp; resize on a fresh TreeState's empty vectors in
+  // ts_fuse.cpp).  Re-audit the collapse kernels before relaxing that.
   load_tip_states(ds);
 }
 
