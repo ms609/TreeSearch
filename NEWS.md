@@ -491,6 +491,35 @@
   both the `qmApp` (T-302) and `qm` (commit e8b318c3) scalar-unwrap paths,
   confirming all deltas are non-negative and match independent computation.
 
+- `QuartetResolution()` no longer errors on a tree in which the four focal
+  tips form an unresolved (star) quartet -- reachable from
+  `MaximizeParsimony(collapse = TRUE)` output, the default since 2026-06-24.
+  Such a tree now contributes `NA` rather than raising a `vapply` error.
+
+- `WideSample()` fixes three bugs in tree-set handling: the `effort = 1`
+  (`FarFirst()`) tier returned trees in farthest-first selection order rather
+  than the ascending input order its own comment described; `FarFirst()` was
+  called with a mix of positional and named arguments, fragile to any future
+  change to the function's argument order; and the `firstHit` attribute
+  (a per-*stage* tally computed from tree names) was copied onto the
+  subsetted output unchanged, so it continued to describe the pre-subset
+  input rather than the trees actually returned -- `firstHit` is now dropped
+  when subsetting, rather than carried over stale; call `WhenFirstHit()` on
+  the result to recompute it. Other attributes (`score`, `hits_to_best`,
+  etc.) are unaffected.
+
+- `BootstrapTree()` no longer risks the classic `sample()` length-1 vector
+  trap, in which a single remaining character index `k` would be sampled as
+  `sample(1:k, ...)` rather than always returning `k`.
+
+- `WhenFirstHit()`'s stage-name pattern is now anchored, so a tree or
+  replicate name that merely contains a stage pattern (rather than matching
+  it exactly) no longer produces a spurious, garbled stage label.
+
+- `TaxonInfluence()`'s distance-weighted mean no longer assumes a fixed
+  dimension ordering from a user-supplied `Distance` function; the returned
+  matrix's shape is now checked and normalized explicitly.
+
 # TreeSearch 2.0.0
 
 ## Breaking changes
