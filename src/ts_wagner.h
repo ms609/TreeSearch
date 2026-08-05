@@ -80,13 +80,14 @@ std::vector<double> wagner_entropy_scores(const DataSet& ds);
 void random_topology_tree(TreeState& tree, const DataSet& ds);
 
 // Build a random tree topology that satisfies topological constraints.
-// Constructs the constraint backbone (one node per constraint split) from the
-// tips the constraint names, randomly resolves all multifurcations by uniform
-// random binary insertion, then inserts each tip the constraint leaves FREE
-// (`?`-coded or unmentioned) at a uniformly random edge of the result — a free
-// tip may land on either side of every constraint edge, so restricting it to
-// the far side, as this did before agent-issues/TreeSearch#54, sampled a
-// corner of the legal topologies rather than the whole of them.
+// Constructs the constraint backbone (one node per constraint split), randomly
+// resolving all multifurcations by uniform random binary insertion, then places
+// each tip that has room the backbone would not give it at a uniformly random
+// edge of the region its own splits leave open — inside the clade of the
+// tightest split that must contain it, never inside one that must not, and
+// anywhere at all for a tip the constraint does not name.  Restricting such a
+// tip to a sibling position, as this did before agent-issues/TreeSearch#54,
+// sampled a corner of the legal topologies rather than the whole of them.
 // Like random_topology_tree(), the result is NOT scored.
 //
 // Falls back to random_topology_tree() if no constraints are active.

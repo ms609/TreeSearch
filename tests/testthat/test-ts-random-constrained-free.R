@@ -142,6 +142,72 @@ test_that("`?` taxa start inside a constrained group as well as outside", {
   expect_equal(min(tightest), 2L)  # and still sometimes exactly a clade
 })
 
+## Two characters with disjoint groups.  Neither clade encloses the other's
+## group, so the contract lets them come out nested either way round, or as
+## siblings -- and lets each take on the taxa the other names.  A generator that
+## derives its shape from the nesting of the "together" groups can build only
+## the sibling arrangement, which is what both earlier versions did.
+##
+## 1155 of the 10395 unrooted trees on 8 taxa comply.  Enumerating them all is
+## too slow for a test, so this asserts how many DISTINCT ones 6000 draws reach:
+## the sibling-only generators top out at 105 of them.
+test_that("two constraints nest either way round", {
+  tips <- letters[1:8]
+  ds <- rctDataset(tips)
+  tsd <- make_ts_data(ds)
+  na <- NA_integer_
+  splitMatrix <- matrix(c(1L, 1L, 0L, 0L, na, na, na, na,
+                          na, na, na, na, 1L, 1L, 0L, 0L),
+                        nrow = 2, byrow = TRUE)
+
+  # One split matrix per draw, then every question answered from it: the
+  # per-draw work, not the sampling, is what makes this test's runtime.
+  sepM <- function(m, g1, g2) {
+    any(apply(m, 1, function(r) {
+      all(r[g1] == r[g1][[1]]) && all(r[g2] == r[g2][[1]]) &&
+        r[g1][[1]] != r[g2][[1]]
+    }))
+  }
+  holdsM <- function(m, want, avoid, other) {
+    any(apply(m, 1, function(r) {
+      for (side in list(r, !r)) {
+        if (all(side[want]) && !any(side[avoid]) && all(side[other])) return(TRUE)
+      }
+      FALSE
+    }))
+  }
+
+  nDraw <- 4000L
+  seen <- character(nDraw)
+  nest <- character(nDraw)
+  compliant <- logical(nDraw)
+  for (s in seq_len(nDraw)) {
+    set.seed(s)
+    tree <- rctDraw(tsd, splitMatrix, tips)
+    m <- rctSplits(tree, tips)
+    compliant[[s]] <- sepM(m, c("a", "b"), c("c", "d")) &&
+      sepM(m, c("e", "f"), c("g", "h"))
+    seen[[s]] <- as.character(as.numeric(as.TreeNumber(tree)))
+    # Which clade, if either, holds the other constraint's group?
+    nest[[s]] <- if (holdsM(m, c("c", "d"), c("a", "b"), c("g", "h"))) {
+      "gh-in-cd"
+    } else if (holdsM(m, c("g", "h"), c("e", "f"), c("c", "d"))) {
+      "cd-in-gh"
+    } else {
+      "siblings"
+    }
+  }
+
+  expect_equal(sum(!compliant), 0L)
+  # Both nesting orders occur, not just the sibling arrangement the backbone
+  # construction is limited to.
+  expect_setequal(unique(nest), c("gh-in-cd", "cd-in-gh", "siblings"))
+  # ...and the reachable set is the whole compliant one, near enough that this
+  # many draws find the great majority of its 1155 members.  Both earlier
+  # versions of the generator top out at 105.
+  expect_gt(length(unique(seen)), 1050)
+})
+
 ## Guard against over-loosening: a constraint that names every taxon has no
 ## free tips, so the generator must behave exactly as it always did.
 test_that("a constraint with no free taxa still builds exact clades", {

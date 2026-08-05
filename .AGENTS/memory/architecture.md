@@ -114,12 +114,19 @@ Profile mode sets `ds.concavity = 1.0` (finite sentinel) so existing
 - `.PrepareConstraint()` drops (and warns about) a character with no `0` taxa:
   vacuous under the documented contract.
 - `random_constrained_tree()` (`ts_wagner.cpp`, the `RANDOM_TREE` start
-  strategy) builds its backbone from the NAMED tips only, then inserts each free
-  tip at a uniformly random edge of it. Placing free tips at root level instead
-  — what it did before — makes every group an exact clade and leaves most
-  compliant topologies unreachable (15 of 35, on 6 taxa with 2 free). Probe it
-  through `ts_random_constrained_tree()`, not `MaximizeParsimony()`: TBR
-  rearranges the start, so the returned tree says nothing about the generator.
+  strategy) has TWO samplers. No free tips → the old group-nesting backbone,
+  which is then complete and uniform. Any free tip → tip-at-a-time insertion:
+  rejection first (uniform when it lands), then legality-filtered insertion
+  (always lands), then unnamed tips unfiltered. The backbone alone reaches only
+  15 of 35 compliant trees on 6 taxa / 1 character, and 105 of 1155 on 8 taxa /
+  2 characters; insertion reaches all. The filter is
+  `regraft_violates_constraint()` with a one-tip clip, over masks restricted to
+  the placed tips — unrestricted masks make every edge look illegal. Probe via
+  `ts_random_constrained_tree()`, not `MaximizeParsimony()`: TBR rearranges the
+  start, so the returned tree says nothing about the generator.
+- A compliance checker built on `as.Splits()` MISSES pendant edges, so a
+  constraint whose group has one taxon reads as violated when every tree
+  satisfies it. Add the trivial splits before testing.
 - Wagner uses LCA-based constraint mapping (`wagner_map_constraint_nodes`)
   since splits aren't fully present during incremental construction.
 - Wagner has a posthoc retry loop (up to 100 random addition orders) as a
