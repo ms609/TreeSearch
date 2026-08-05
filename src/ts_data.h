@@ -268,6 +268,20 @@ struct DataSet {
   mutable long long na_t_vroot_ns = 0;   // vroot_cache build / compute_from_above
   mutable long long na_t_accept_ns = 0;  // accept-path NA dirty rescores
   mutable long long na_n_accept = 0;
+  // Moves that rerooted the clipped fragment AND were rescored by the dirty-set
+  // accept path (i.e. incremental_ok held), counted ALWAYS (not only under
+  // TS_NA_TIMING) for the same reason as na_n_evs above: it is one increment per
+  // rescore, and it is the only evidence that the reroot arm of that path was
+  // reached at all.  Without it the regression test for that arm cannot tell a
+  // correct rescore from an unexercised one — so it must count the arm, NOT the
+  // move class: a rerooting move under HSJ/XFORM takes full_rescore instead, and
+  // counting it here would let the test report coverage of code that never ran.
+  //
+  // Counted at the rescore, i.e. BEFORE the accept/reject decision: a move
+  // counted here may still be rejected by the constraint check, the tabu test or
+  // the score comparison.  It is therefore an upper bound on accepted rerootings
+  // — read it against the arm it witnesses, not against n_accepted.
+  mutable long long n_reroot_accepts = 0;
 
   // Per-pattern step scratch for the weighted (IW/profile) full-rescore path
   // (fitch_score_ew).  Lives on DataSet for the SAME reason as evs_false_cache

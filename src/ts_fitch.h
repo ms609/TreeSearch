@@ -56,13 +56,20 @@ int fitch_incremental_downpass(TreeState& tree, const DataSet& ds,
 void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
                               int start_node);
 
-// Dirty-set rescore after an SPR move (T-300).
+// Dirty-set rescore after an SPR or TBR move (T-300).
 //
-// Recomputes prelim and local_cost for every node on the union of paths
-// start_a -> root and start_b -> root, visiting each node exactly once in
-// postorder.  start_a and start_b are the two clip endpoints whose children
-// changed after apply_tbr_move (typically nz = clip grandparent and
-// nx = regraft point).
+// Recomputes prelim and local_cost for every node on the union of the rootward
+// paths from start_a, start_b and (optionally) start_c, visiting each node
+// exactly once in postorder.  start_a and start_b are the two clip endpoints
+// whose children changed after apply_tbr_move (typically nz = clip grandparent
+// and nx = regraft point).
+//
+// start_c: optional third dirty seed (-1 = unused), needed only when the move
+// rerooted the clipped fragment.  apply_tbr_move reverses the parent/child
+// links along clip_node..reroot_parent, so every node on that path gains new
+// children; after the reversal that path IS clip_node's rootward chain, so
+// seeding at clip_node marks exactly those nodes (and nothing else new).
+// Mirrors fitch_na_dirty_downpass's start_c.
 //
 // Caller must call tree.build_postorder_prealloc() first so that
 // tree.postorder reflects the post-move topology.
@@ -71,21 +78,22 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
 // For IW/profile, ignore the return value and use extract_char_steps +
 // compute_weighted_score after this call (local_cost is correct).
 int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
-                         int start_a, int start_b);
+                         int start_a, int start_b, int start_c = -1);
 
 // Companion uppass for fitch_dirty_downpass.  Recomputes final_ for nodes
 // whose ancestor's final_ may have changed, seeded from the same start
 // points.  Propagates downward.
 void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
-                        int start_a, int start_b);
+                        int start_a, int start_b, int start_c = -1);
 
 // --- NA-aware dirty-set incremental rescore (T-300 NA variant) ---
 //
 // Same dirty-set approach as fitch_dirty_downpass / fitch_dirty_uppass but
 // handles inapplicable-bearing blocks via the NA-aware Pass 1 / Pass 2
-// logic.  Used for the SPR accept path under has_inapplicable to avoid
-// full_rescore.  The return value is the EW length delta for standard
-// blocks only — NA block step counts require Pass 3, so call
+// logic.  Used for the SPR and TBR-rerooting accept paths under
+// has_inapplicable to avoid full_rescore, and by exact_verify_sweep's
+// incremental candidate rescore.  The return value is the EW length delta for
+// standard blocks only — NA block step counts require Pass 3, so call
 // fitch_na_pass3_score(tree, ds) on the updated state to obtain the
 // authoritative score.
 // start_c: optional third dirty seed (-1 = unused). The TBR-reroot dirty region
