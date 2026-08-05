@@ -2,6 +2,7 @@
 #include "ts_collapsed.h"
 #include "ts_constraint.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 #include "ts_fitch.h"
 #include "ts_fuse.h"
 #include "ts_tbr.h"
@@ -33,6 +34,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <string>
 
@@ -56,6 +58,10 @@ void ThreadSafePool::fuse_round(DataSet& ds, const DrivenParams& params,
   // only (recombines nothing on the mission class). Opt-in TS_FUSE_PAIRWISE=1:
   // also fuse into a few genuinely suboptimal recipients (requires
   // poolSuboptimal>0), the configuration where recombination can strictly win.
+  // T-338: worker-thread-reachable getenv(). Safe today because nothing in
+  // src/ calls setenv/putenv concurrently (grep-confirmed); would need a
+  // main-thread hoist before parallel dispatch if C-level env mutation is
+  // ever added. See dev/red-team/findings.md T-338.
   const char* fp_env = std::getenv("TS_FUSE_PAIRWISE");
   const bool fuse_pairwise = fp_env && fp_env[0] == '1';
 
@@ -189,15 +195,18 @@ void worker_thread(WorkerContext ctx) {
     // Seed RNG for this replicate
     local_rng.seed((*ctx.seeds)[rep]);
 
-    // Use starting tree for replicate 0 if provided
+    // Use the rep'th user-supplied starting tree, if the pool reaches it.
+    // Reps are claimed dynamically, but rep -> tree stays 1:1 (as rep -> seed
+    // does), so which thread runs a rep does not change what it starts from.
     TreeState* start_ptr = nullptr;
     TreeState start_tree;
-    if (rep == 0 && ctx.params->start_n_edge > 0 &&
-        static_cast<int>(ctx.params->start_edge.size()) >=
+    if (rep < static_cast<int>(ctx.params->start_edges.size()) &&
+        ctx.params->start_n_edge > 0 &&
+        static_cast<int>(ctx.params->start_edges[rep].size()) >=
             2 * ctx.params->start_n_edge) {
-      const int* edge_parent = ctx.params->start_edge.data();
+      const int* edge_parent = ctx.params->start_edges[rep].data();
       const int* edge_child =
-          ctx.params->start_edge.data() + ctx.params->start_n_edge;
+          ctx.params->start_edges[rep].data() + ctx.params->start_n_edge;
       start_tree.init_from_edge(edge_parent, edge_child,
                                 ctx.params->start_n_edge, ds_local);
       start_ptr = &start_tree;
@@ -279,10 +288,11 @@ DrivenResult parallel_driven_search(
     return result;
   }
 
-  // Auto-detect thread count
+  // Auto-detect thread count: one fewer thread than the number of CPU cores
+  // (docs: MaximizeParsimony(nThreads = 0)), floored at 1.
   if (n_threads <= 0) {
-    n_threads = static_cast<int>(std::thread::hardware_concurrency());
-    if (n_threads <= 1) n_threads = 2;  // at least 2 if auto
+    n_threads = static_cast<int>(std::thread::hardware_concurrency()) - 1;
+    if (n_threads < 1) n_threads = 1;
     n_threads = std::min(n_threads, params.max_replicates);
   }
   n_threads = std::max(1, std::min(n_threads, params.max_replicates));
@@ -340,6 +350,8 @@ DrivenResult parallel_driven_search(
 
   // Cancel file: read path from environment variable (set by Shiny app).
   // If the file exists, the search should stop.
+  // T-338: worker-thread-reachable getenv(), safe today (no concurrent
+  // setenv/putenv in src/); see dev/red-team/findings.md T-338.
   std::string cancel_path;
   {
     const char* cancel_env = std::getenv("TREESEARCH_CANCEL_FILE");
@@ -363,6 +375,10 @@ DrivenResult parallel_driven_search(
   // Main thread: poll for interrupt and timeout
   int last_stab_done = 0;     // replicates_done at last consensus check
   int last_progress_done = -1; // replicate count at last progress print
+  // Wall-clock of the last progress emission, so the heartbeat can fire between
+  // replicate completions.  Seeded to the search start, not the epoch, so the
+  // first heartbeat lands one full interval in rather than immediately.
+  auto last_progress_time = start_time;
   bool progress_on_line = false; // true after a \r progress line is open
   while (true) {
     // Sleep briefly to avoid spinning
@@ -446,7 +462,10 @@ DrivenResult parallel_driven_search(
     // Dynamic limit: (targetHits / hits) * nTip * psf.
     // When hits == 0 the limit is infinite (no data yet on hit rate).
     // When targetHits == 0 (disabled) falls back to flat nTip * psf.
-    if (params.perturb_stop_factor > 0) {
+    // The dry-spell bookkeeping is shared by both no-improvement rules, so it has to run
+    // whenever EITHER is active -- guarding it on perturb_stop_factor alone would leave
+    // reps_at_last_improvement frozen and make the patience rule fire on the first check.
+    if (params.perturb_stop_factor > 0 || params.stop_patience > 0) {
       int done = replicates_done.load(std::memory_order_relaxed);
       double cur_best = shared_pool.best_score();
       if (cur_best < last_known_best) {
@@ -454,14 +473,33 @@ DrivenResult parallel_driven_search(
         reps_at_last_improvement = done;
       }
       int dry_spell = done - reps_at_last_improvement;
-      if (dry_spell > 0) {
+      // Flat replicate patience (`stopPatience`): no reference to the hit count, so its
+      // firing time does not stretch when replicates get more expensive.
+      if (params.stop_patience > 0 && dry_spell >= params.stop_patience) {
+        stop_flag.store(true, std::memory_order_relaxed);
+        result.perturb_stop = true;
+        if (params.verbosity >= 1) {
+          if (progress_on_line) { Rprintf("\n"); progress_on_line = false; }
+          Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                  "(stopPatience %d)\n", dry_spell, params.stop_patience);
+        }
+        break;
+      }
+      if (params.perturb_stop_factor > 0 && dry_spell > 0) {
         int hits = shared_pool.hits_to_best();
         if (hits > 0) {
-          int limit = (params.target_hits > 0)
-              ? static_cast<int>(
-                  static_cast<double>(params.target_hits) / hits
-                  * ds_prototype.n_tips * params.perturb_stop_factor)
-              : ds_prototype.n_tips * params.perturb_stop_factor;
+          // Saturate rather than truncate -- see the serial path in ts_driven.cpp: the
+          // product overflows `int` for large stop settings, and casting an out-of-range
+          // double to int is undefined behaviour that lands negative, stopping the search
+          // on its first non-improving replicate.
+          const double limit_d = (params.target_hits > 0)
+              ? static_cast<double>(params.target_hits) / hits
+                * ds_prototype.n_tips * params.perturb_stop_factor
+              : static_cast<double>(ds_prototype.n_tips) * params.perturb_stop_factor;
+          const int limit =
+              limit_d >= static_cast<double>(std::numeric_limits<int>::max())
+              ? std::numeric_limits<int>::max()
+              : static_cast<int>(limit_d);
           if (dry_spell >= limit) {
             stop_flag.store(true, std::memory_order_relaxed);
             result.perturb_stop = true;
@@ -486,21 +524,40 @@ DrivenResult parallel_driven_search(
     // the check.  At verbosity >= 2 emit a plain \n line so batch logs still
     // carry progress detail without the flush risk.
     if (params.verbosity >= 1) {
+      const bool isTty = TS_ISATTY();
       int done = replicates_done.load(std::memory_order_relaxed);
-      if (done != last_progress_done) {
+      const bool repFinished = (done != last_progress_done);
+      // Heartbeat: a replicate on a large matrix can run for hours, so reporting
+      // only when `done` changes leaves a batch log silent for that whole time
+      // and indistinguishable from a hung job.  Re-emit on a wall-clock cadence
+      // even when no replicate has finished.
+      bool dueByTime = false;
+      const double hbInterval = ts::heartbeat_interval(isTty);
+      auto pollNow = std::chrono::steady_clock::now();
+      if (hbInterval > 0) {
+        const double sinceEmit =
+            std::chrono::duration<double>(pollNow - last_progress_time).count();
+        dueByTime = sinceEmit >= hbInterval;
+      }
+      if (repFinished || dueByTime) {
         auto st = shared_pool.status();
-        if (TS_ISATTY()) {
-          Rprintf("\r[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d",
+        const double elapsedS =
+            std::chrono::duration<double>(pollNow - start_time).count();
+        if (isTty) {
+          Rprintf("\r[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d | %.0fs   ",
                   n_threads, done, params.max_replicates,
-                  st.best_score, st.pool_size, st.hits_to_best);
+                  st.best_score, st.pool_size, st.hits_to_best, elapsedS);
           R_FlushConsole();
           progress_on_line = true;
-        } else if (params.verbosity >= 2) {
-          Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d\n",
+        } else if (params.verbosity >= 2 || dueByTime) {
+          // At verbosity 1 a non-tty run prints only the time-driven heartbeat,
+          // keeping the previous per-replicate quiet default for batch logs.
+          Rprintf("[%d threads] Replicates: %d/%d | Best: %.5g | Pool: %d | Hits: %d | %.0fs\n",
                   n_threads, done, params.max_replicates,
-                  st.best_score, st.pool_size, st.hits_to_best);
+                  st.best_score, st.pool_size, st.hits_to_best, elapsedS);
         }
         last_progress_done = done;
+        last_progress_time = pollNow;
       }
     }
   }
@@ -615,9 +672,11 @@ std::vector<ResampleResult> parallel_resample(
     double xpiwe_max_f,
     const int* obs_count_r)
 {
+  // Auto-detect thread count: one fewer thread than the number of CPU cores
+  // (docs: Resample(nThreads = 0)), floored at 1.
   if (n_threads <= 0) {
-    n_threads = static_cast<int>(std::thread::hardware_concurrency());
-    if (n_threads <= 1) n_threads = 2;
+    n_threads = static_cast<int>(std::thread::hardware_concurrency()) - 1;
+    if (n_threads < 1) n_threads = 1;
     n_threads = std::min(n_threads, n_replicates);
   }
   n_threads = std::max(1, std::min(n_threads, n_replicates));
@@ -640,6 +699,21 @@ std::vector<ResampleResult> parallel_resample(
     ts::thread_rng = &local_rng;
     ts::thread_stop_flag = &stop_flag;
 
+    // T-336: per-worker copy of the mutable ConstraintData.  `cd` carries
+    // per-tree/per-clip workspace (constraint_node, dfs_entry/exit, clip_zones,
+    // clip_tip_mask, posthoc_data) that every search WRITES via
+    // map_constraint_nodes/impose_constraint and reads back to gate acceptance.
+    // Sharing one instance across workers is a data race; mirror worker_thread
+    // (above) and give each worker its own copy.  One copy per worker suffices
+    // because searches within a worker run sequentially.  Pass `cd` through
+    // unchanged when it is null / inactive (unchanged behaviour on that path).
+    ConstraintData cd_local;
+    ConstraintData* cd_ptr = cd;
+    if (cd && cd->active) {
+      cd_local = *cd;
+      cd_ptr = &cd_local;
+    }
+
     while (true) {
       int rep = next_rep.fetch_add(1, std::memory_order_relaxed);
       if (rep >= n_replicates) break;
@@ -652,7 +726,7 @@ std::vector<ResampleResult> parallel_resample(
           tip_data_r, n_tips, n_patterns,
           original_weights, levels_r, min_steps_r,
           concavity, params,
-          info_amounts_r, info_max_steps, cd,
+          info_amounts_r, info_max_steps, cd_ptr,
           xpiwe, xpiwe_r, xpiwe_max_f, obs_count_r);
     }
 

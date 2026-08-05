@@ -87,6 +87,47 @@ test_that("T-214: nested constraint splits on 12 tips", {
   }
 })
 
+test_that("T-390: sprFirst warmup does not drop a constraint", {
+  # Reproduces the finding exactly: congreveLamsdellMatrices[[1]], a single
+  # clade of the first 6 tips constrained (the rest free), seed 11,
+  # maxReplicates = 2. Before the fix, `sprFirst = TRUE` warmed up into a
+  # constraint-violating tree that scored better than the constrained
+  # optimum (193 vs. 203) because TBR afterwards cannot repair a violated
+  # constraint (regraft_violates_constraint rejects all moves once a split
+  # is unmapped), so the violation carried through unchallenged.
+  data(congreveLamsdellMatrices, package = "TreeSearch")
+  dataset <- congreveLamsdellMatrices[[1]]
+  tips <- names(dataset)
+  consTips <- tips[1:6]
+  otherTips <- setdiff(tips, consTips)
+  cons <- ape::read.tree(
+    text = paste0("((", paste(consTips, collapse = ","), "),",
+                  paste(otherTips, collapse = ","), ");")
+  )
+
+  set.seed(11)
+  baseline <- MaximizeParsimony(dataset, constraint = cons,
+                                maxReplicates = 2L, verbosity = 0L)
+  baselineScore <- attr(baseline, "score")
+
+  set.seed(11)
+  result <- MaximizeParsimony(
+    dataset, constraint = cons, maxReplicates = 2L, verbosity = 0L,
+    control = SearchControl(sprFirst = TRUE)
+  )
+
+  for (i in seq_along(result)) {
+    expect_true(
+      check_constraint(result[[i]], cons),
+      info = paste("sprFirst=TRUE tree", i)
+    )
+  }
+  # A constraint-violating tree can score better than the true constrained
+  # optimum (that is the tell in the finding): a compliant search must not
+  # beat it.
+  expect_true(attr(result, "score") >= baselineScore)
+})
+
 test_that("T-214: multi-split constraint with IW scoring", {
   set.seed(7142)
   m <- matrix(sample(c("0", "1"), 10 * 8, replace = TRUE),

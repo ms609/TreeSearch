@@ -36,8 +36,7 @@ test_that(".ScaleWeight scales true fractional weights by default", {
 })
 
 test_that(".ScaleWeight honours TreeSearch.fractional.scale option", {
-  old <- options(TreeSearch.fractional.scale = 100L)
-  on.exit(options(old), add = TRUE)
+  withr::local_options(TreeSearch.fractional.scale = 100L)
   expect_identical(TreeSearch:::.ScaleWeight(c(0.5, 0.75)),
                    c(50L, 75L))
 })
@@ -80,8 +79,7 @@ test_that(".ScaleWeight errors when sum(scaled) > .Machine$integer.max", {
   # Each weight of (INT_MAX / 4 + 1) * scale would push total >> INT_MAX.
   # Use a non-integer value so the fractional branch runs.
   big_w <- (.Machine$integer.max %/% 4L + 1L) / weight_multiplier
-  old <- options(TreeSearch.fractional.scale = weight_multiplier)
-  on.exit(options(old), add = TRUE)
+  withr::local_options(TreeSearch.fractional.scale = weight_multiplier)
   expect_error(
     TreeSearch:::.ScaleWeight(rep(big_w, 5L)),
     regexp = "integer.max",

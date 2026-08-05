@@ -54,6 +54,7 @@ SearchControl(
   poolSuboptimal = 0,
   consensusStableReps = 0L,
   perturbStopFactor = 2L,
+  stopPatience = 0L,
   adaptiveLevel = FALSE,
   consensusConstrain = FALSE,
   pruneReinsertCycles = 0L,
@@ -286,6 +287,23 @@ Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
 per-replicate granularity.}
 
+\item{stopPatience}{Integer; stop after this many consecutive replicates
+fail to improve the best score.  Unlike \code{perturbStopFactor} this is a
+flat count: it refers neither to the tip count nor to the number of hits,
+so the replicate at which it fires does not stretch as replicates become
+individually more expensive.  Deeper per-replicate search (a longer
+ratchet, say) therefore buys quality without also extending the run.
+Counts reset on every improvement, so a search that keeps improving is
+never cut short: a serial search stops at \code{lastImprovement + stopPatience}
+replicates.  With \code{nThreads > 1} the count is instead taken over replicates
+completed into the shared tree pool and is evaluated when the coordinating
+thread polls, so the rule fires later and less precisely -- and if every
+replicate is quick enough that the search finishes between polls, not at
+all.  As with \code{perturbStopFactor} and \code{consensusStableReps}, only the serial
+path gives an exact replicate count.
+0 (default) disables this criterion.  When several stopping criteria are
+active the search stops as soon as any one of them is met.}
+
 \item{adaptiveLevel}{Logical; dynamically scale ratchet and drift effort
 based on the observed hit rate?  When \code{TRUE}, easy landscapes
 (high hit rate) trigger reduced effort per replicate, while hard
@@ -382,7 +400,7 @@ A named list of class \code{"SearchControl"}.
 \description{
 Construct a list of low-level search parameters for
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.  Most users can ignore these and rely on the
-\code{strategy} presets (\code{"sprint"}, \code{"default"}, \code{"thorough"}); \code{SearchControl}
+\code{effort} rungs (\code{sprint}, \code{default}, \code{thorough}, \code{large}); \code{SearchControl}
 is provided for expert tuning.
 }
 \details{

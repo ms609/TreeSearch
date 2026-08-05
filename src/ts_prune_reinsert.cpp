@@ -393,7 +393,20 @@ void expand_and_reinsert(
 
   // 3. Build postorder and score the backbone
   tree.build_postorder();
-  score_tree(tree, ds);  // sets prelim/final_ for all backbone nodes
+  // EW proxy, not score_tree(): wagner_incremental_rescore below (ts_wagner.cpp)
+  // only maintains prelim/final_ in the standard-Fitch regime, with no NA
+  // branch. On has_inapplicable datasets score_tree() would fall through to
+  // fitch_na_score and write NA-regime prelim for the backbone, while the
+  // insertion loop patches inserted-path entries in standard-Fitch regime --
+  // a mixed-regime tree.prelim that compute_insertion_edge_sets() then reads
+  // when choosing reinsertion edges (T-366). Matches the sibling call sites
+  // at ts_wagner.cpp:449 and ts_sector.cpp:917. Final score is unaffected
+  // (full_rescore() is authoritative); this only affects placement quality
+  // during prune-reinsert, which is opt-in / default-off (pruneReinsertCycles
+  // = 0L). Known follow-up out of scope here: fitch_na_score's local_cost is
+  // only written in the non-NA branch, which would still corrupt
+  // wagner_incremental_rescore's old_cost subtraction for NA blocks (T-366).
+  fitch_score(tree, ds);  // sets prelim/final_ for all backbone nodes
 
   // 4. Wagner-insert each dropped tip.
   // Internal nodes for new insertions: n_tip + (m-1), n_tip + m, ...
@@ -449,8 +462,16 @@ void expand_and_reinsert(
     // Exact insertion cost via directional edge sets: edge_set[D] =
     // combine(prelim[D], up[D]).  Replaces the union-of-finals approximation
     // (final_[node] | final_[child]) that undercut insertion cost (~+30% Wagner
-    // trees); mirrors the main Wagner builder.  prelim is current here
-    // (wagner_incremental_rescore maintains both prelim and final_).
+    // trees); mirrors the main Wagner builder.  prelim is current here, which
+    // is all compute_insertion_edge_sets reads.
+    //
+    // Do NOT extend this to final_: wagner_incremental_rescore does NOT keep
+    // final_ current.  Its Phase-2 uppass stops descending as soon as a node's
+    // final_ is unchanged, but the changed-prelim region lies BELOW the point
+    // where Phase 1 broke out, so final_ for nodes under that break — including
+    // freshly created internals, which init_wagner_state left at 0 — can be
+    // stale.  Reading final_ here without a full uppass first is a wrong-cost
+    // bug, and was one before this edge-set rewrite landed.
     if (have_words) {
       compute_insertion_edge_sets(tree, ds, pr_edge_set, pr_up, pr_pre);
     }
@@ -511,10 +532,10 @@ void expand_and_reinsert(
 
 #ifdef TS_SCOREAPPROX_PROBE
     // Observational scoring-approximation probe (non-perturbing; production
-    // still inserts at the _bounded choice).  prelim/final_ are both current
-    // here (wagner_incremental_rescore maintains them) and the in-tree portion
-    // is fully binary from root, so compute_insertion_edge_sets is exact and
-    // safe.  Tally Δ = exact_cost(E_bounded) − min_E exact_cost(E), per the
+    // still inserts at the _bounded choice).  prelim is current here and the
+    // in-tree portion is fully binary from root, so compute_insertion_edge_sets
+    // — which reads only prelim — is exact and safe.  final_ is NOT current;
+    // see the note at the production edge-set call above.  Tally Δ = exact_cost(E_bounded) − min_E exact_cost(E), per the
     // advisor: exact-suboptimality of the bounded choice, not raw edge flips.
     if (have_words && best_below >= 0 && best_below != n_tip) {
       compute_insertion_edge_sets(tree, ds, sa_edge_set, sa_up, sa_pre);
@@ -617,6 +638,7 @@ PruneReinsertResult prune_reinsert_search(
       tp.max_accepted_changes = params.tbr_max_moves;
       tp.max_hits = params.tbr_max_hits;
       tp.tabu_size = params.tabu_size;
+      tp.certify_unrooted = false;   // reduced sub-tree; reinserted, then judged
       tbr_search(red_tree, red_ds, tp, nullptr, nullptr, nullptr,
                  check_timeout);
     }
@@ -649,19 +671,39 @@ PruneReinsertResult prune_reinsert_search(
       tp.max_accepted_changes = params.tbr_full_max_moves;  // 0 = converge
       tp.max_hits = params.tbr_max_hits;
       tp.tabu_size = params.tabu_size;
+      tp.certify_unrooted = false;   // candidate for step 7's accept-or-revert
       tbr_search(tree, ds, tp, cd, nullptr, nullptr, check_timeout);
     }
 
-    // 7. Accept or revert
+    // 7. Accept or revert.
+    // T-391: the reduced-tree TBR (step 4) runs with no ConstraintData at
+    // all, and expand_and_reinsert()'s greedy Wagner placement (step 5)
+    // never consults cd either — cd only reaches the full-tree TBR polish
+    // (step 6), which can refuse to further violate an already-broken
+    // constraint but cannot repair one (regraft_violates_constraint rejects
+    // moves once a split is unmapped). A cycle can therefore return a
+    // strictly-better-scoring tree that no longer displays every constraint
+    // split. Verify compliance before capturing, mirroring the accept check
+    // in ts_nni_perturb.cpp (:117-123), so a violating tree is rejected
+    // regardless of which upstream step actually destroyed the split.
     double new_score = score_tree(tree, ds);
+    bool accept = new_score < current_score - 1e-10;
+    if (accept && cd && cd->active) {
+      map_constraint_nodes(tree, *cd);
+      for (int s = 0; s < cd->n_splits; ++s) {
+        if (cd->constraint_node[s] < 0) { accept = false; break; }
+      }
+    }
     // Negative (converse/Bremer) constraint: the reduced-backbone TBR (step 4)
     // runs cd-blind, so expand_and_reinsert can rebuild a forbidden clade.
     // Reject such a tree even if it scores better, reverting to the (clade-free)
     // pre-prune backup -- otherwise the replicate can strand on the clade.
     // Soundness is already guaranteed by the pool backstop; this preserves reach.
-    bool neg_violated =
-        cd && cd->neg_active && displays_forbidden_clade(tree, *cd);
-    if (new_score < current_score - 1e-10 && !neg_violated) {
+    if (accept && cd && cd->neg_active && displays_forbidden_clade(tree, *cd)) {
+      accept = false;
+    }
+
+    if (accept) {
       current_score = new_score;
       result.best_score = new_score;
       ++result.n_improvements;

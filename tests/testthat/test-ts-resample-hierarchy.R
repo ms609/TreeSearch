@@ -286,3 +286,64 @@ test_that("Hierarchical resampling produces different trees across replicates", 
   })))
   expect_gt(n_unique, 1L)
 })
+
+
+# ===== T-373 regression: all-hierarchy bootstrap replicate must search ======
+
+test_that("T-373: bootstrap replicate with all free weights zeroed still searches", {
+  # Reachability route 2 from the T-373 red-team finding: a hierarchical
+  # bootstrap draw that (by chance) samples zero copies of every free
+  # (non-hierarchy) unit zeroes every Fitch pattern's weight, so
+  # `total_words == 0` downstream even though `ds` itself has free characters.
+  # Before the fix, every search kernel bailed out on `total_words == 0`
+  # (treating it as "no informative characters"), silently returning the
+  # unsearched starting tree -- wrong for HSJ, whose hierarchy DP stays
+  # topology-dependent. This mirrors dev/red-team/heavy-tests/
+  # hsj-totalwords-zero-noop.R (the durable C++-level repro) at the R level,
+  # via the exact `ts_driven_search()` call `.ResampleHierarchy()` makes.
+  ds <- make_resample_data()
+  h <- make_resample_hierarchy()
+
+  at <- attributes(ds)
+  contrast <- at$contrast
+  tip_data <- matrix(unlist(ds, use.names = FALSE), nrow = length(ds),
+                     byrow = TRUE)
+  levels <- at$levels
+  tips <- names(ds)
+
+  hsjCfg <- list(
+    hierarchyBlocks = TreeSearch:::.HierarchyToBlocks(h),
+    hsjTipLabels = TreeSearch:::.BuildTipLabels(ds),
+    hsjAlpha = 1.0,
+    hsjAbsentState = TreeSearch:::.HSJAbsentState(ds)
+  )
+
+  # A bootstrap draw that samples every free-character unit zero times:
+  # every Fitch pattern's weight is zero, so total_words == 0 downstream
+  # (simplify_patterns / build_dataset drop weight-0 patterns entirely).
+  zeroWeights <- integer(length(at$weight))
+
+  # Deliberately poor starting tree, fixed via startEdge, so there is room
+  # to improve and a "did it search" check is unambiguous.
+  badStart <- TreeTools::Renumber(TreeTools::RenumberTips(
+    ape::read.tree(text = "(t1,(t2,(t3,(t4,(t5,t6)))));"), tips))
+  startEdge <- badStart$edge
+
+  ctrl <- SearchControl(tbrMaxHits = 20L, ratchetCycles = 5L)
+  rt <- list(maxReplicates = 1L, targetHits = 20L, maxSeconds = 0,
+             verbosity = 0L, nThreads = 1L,
+             startEdge = list(startEdge), progressCallback = NULL)
+  sg <- list(min_steps = integer(0), concavity = Inf, xpiwe = FALSE,
+             xpiwe_r = 0.5, xpiwe_max_f = 5, obs_count = integer(0),
+             infoAmounts = NULL)
+
+  set.seed(1)
+  result <- TreeSearch:::ts_driven_search(
+    contrast, tip_data, zeroWeights, levels,
+    ctrl, rt, sg, NULL, hsjCfg, NULL
+  )
+
+  expect_gt(length(result$trees), 0L)
+  expect_false(identical(as.integer(result$trees[[1L]]),
+                         as.integer(startEdge)))
+})

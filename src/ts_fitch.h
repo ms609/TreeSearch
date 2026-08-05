@@ -143,6 +143,44 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
                                  std::vector<uint64_t>& up,
                                  std::vector<int>& pre);
 
+// L3b (lever #6): incremental patch-from-full maintenance of the directional
+// insertion edge set for one clip.  Given the pristine intact-tree base
+// (`up_base`, computed once per pass by compute_insertion_edge_sets on the
+// unclipped tree) and working `up`/`edge_set` buffers that equal the base at
+// entry, patch them to the CURRENT divided (clipped, already-downpassed) tree's
+// values, touching only the changed frontier around the clip.  Every touched
+// node id is appended to `changed`; the caller restores the base for the next
+// clip by memcpy'ing base -> buffer over exactly those ids.  `worklist` is
+// caller-owned scratch (reused across clips).  nz/ns are the clip grandparent /
+// sibling from TreeState::clip_state.  Produces a result byte-identical to
+// compute_insertion_edge_sets for every node the divided tree reads (oracle-
+// asserted per clip).  Gate to the plain directional-EW/IW regime only.
+void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
+                               int nz, int ns,
+                               const std::vector<uint64_t>& up_base,
+                               std::vector<uint64_t>& up,
+                               std::vector<uint64_t>& edge_set,
+                               std::vector<int>& changed,
+                               std::vector<int>& worklist);
+
+// L3b base-incremental-update: after an accepted SPR move (subtree at clip_node,
+// parent nx, sibling ns, grandparent nz, relocated to edge (above, below)),
+// patch the per-pass intact base (up_base / edge_set_base) from the pre-move to
+// the post-move tree in place, touching only the changed frontier — instead of a
+// full O(n_node) compute_insertion_edge_sets recompute.  Requires the post-move
+// tree already downpassed (tree.prelim current, e.g. fitch_dirty_downpass(nz,nx)).
+// Every touched node id is appended to `changed` (caller syncs the working
+// buffers over them).  `worklist`/`tmp` are caller-owned scratch (tmp >=
+// total_words).  SPR only (reroot_parent < 0); caller falls back to a full
+// recompute otherwise.  Oracle-asserted vs a from-scratch recompute per call.
+void update_base_after_spr_move(const TreeState& tree, const DataSet& ds,
+                                int nz, int nx, int ns, int above, int below,
+                                std::vector<uint64_t>& up_base,
+                                std::vector<uint64_t>& edge_set_base,
+                                std::vector<int>& changed,
+                                std::vector<int>& worklist,
+                                std::vector<uint64_t>& tmp);
+
 // --- Flat EW specializations (skip weight/upweight overhead) ---
 //
 // These use FlatBlock metadata (1 cache line for all blocks) instead of

@@ -153,10 +153,15 @@
         paste0("treeFile <- ", Enquote(TreeFileName(r$treeFiles))),
         "trees <- read.nexus(treeFile)",
         if (!identical(r$trees, r$allTrees)) {
-          paste0(
-            "trees <- trees[unique(as.integer(seq.int(",
-            r$treeRange[1], ", ", r$treeRange[2],
-            ", length.out = ", r$nTree, ")))]"
+          c(
+            if (!is.null(r$thinningSeed)) {
+              paste0("set.seed(", r$thinningSeed, ")")
+            },
+            paste0(
+              "trees <- WideSample(trees[",
+              r$treeRange[1], ":", r$treeRange[2],
+              "], ", r$nTree, ")"
+            )
           )
         }
       ))
@@ -202,14 +207,19 @@
   TwoWide <- function(n) {
     formatC(n, width = 2, flag = "0")
   }
+  # tempdir() is shared by every tab of a single running app process, but
+  # these counters reset to 0 per-session — so two tabs' first uploads both
+  # produced "treeFile-01.txt" and silently clobbered each other. Namespace
+  # by session token so concurrent tabs never collide (T-356).
+  sessionTag <- gsub("[^A-Za-z0-9]", "", session$token)
   DataFileName <- function(n) if (length(n)) {
-    paste0("dataFile-", TwoWide(n), ".txt")
+    paste0("dataFile-", sessionTag, "-", TwoWide(n), ".txt")
   }
   ExcelFileName <- function(n) if (length(n)) {
-    paste0("excelFile-", TwoWide(n), ".xlsx")
+    paste0("excelFile-", sessionTag, "-", TwoWide(n), ".xlsx")
   }
   TreeFileName <- function(n) if (length(n)) {
-    paste0("treeFile-", TwoWide(n), ".txt")
+    paste0("treeFile-", sessionTag, "-", TwoWide(n), ".txt")
   }
   LastFile <- function(type) {
     switch(pmatch(type, c("data", "excel", "tree")), 

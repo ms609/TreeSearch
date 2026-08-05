@@ -215,3 +215,60 @@ test_that("SearchControl prune-reinsert defaults are correct", {
   expect_equal(ctrl$pruneReinsertDrop, 0.10)
   expect_equal(ctrl$pruneReinsertSelection, 0L)
 })
+
+# ---------- T-391: prune-reinsert must not silently drop a constraint ----------
+# Do NOT use `%in%` on Splits objects here -- see test-ts-wagner.R's
+# displays_split() comment: TreeTools' %in% is an S4 method that does not
+# dispatch from the TreeSearch namespace scope tests run in, and silently
+# answers FALSE for a tree that DOES display the split.
+check_constraint <- function(tree, constraint) {
+  tips <- sort(constraint$tip.label)
+  tree_sp <- TreeTools::as.Splits(tree, tipLabels = tips)
+  cons_sp <- TreeTools::as.Splits(constraint, tipLabels = tips)
+  tm <- as.logical(tree_sp)
+  cm <- as.logical(cons_sp)
+  if (!is.matrix(tm)) tm <- matrix(tm, nrow = 1)
+  if (!is.matrix(cm)) cm <- matrix(cm, nrow = 1)
+  all(apply(cm, 1, function(c_row) {
+    any(apply(tm, 1, function(t_row) {
+      all(c_row == t_row) || all(c_row == !t_row)
+    }))
+  }))
+}
+
+test_that("Prune-reinsert honours a topological constraint (T-391)", {
+  data("congreveLamsdellMatrices", package = "TreeSearch")
+  pd <- congreveLamsdellMatrices[[1]]
+  tips <- names(pd)
+
+  # One 6-taxon constraint on the first six taxa (as filed).
+  cons <- ape::read.tree(text = paste0(
+    "((", paste(tips[1:6], collapse = ","), "),(",
+    paste(tips[-(1:6)], collapse = ","), "));"
+  ))
+
+  set.seed(11)
+  baseline <- TreeSearch::MaximizeParsimony(
+    pd, constraint = cons, maxReplicates = 2L, verbosity = 0L
+  )
+  baseline_ok <- vapply(seq_along(baseline),
+                        function(i) check_constraint(baseline[[i]], cons),
+                        logical(1))
+  expect_true(all(baseline_ok))
+
+  set.seed(11)
+  result <- TreeSearch::MaximizeParsimony(
+    pd, constraint = cons, maxReplicates = 2L, verbosity = 0L,
+    control = TreeSearch::SearchControl(pruneReinsertCycles = 3L)
+  )
+  ok <- vapply(seq_along(result),
+              function(i) check_constraint(result[[i]], cons),
+              logical(1))
+
+  # Pre-fix: prune-reinsert returned a strictly better-scoring but
+  # constraint-VIOLATING tree (0/n compliant) -- the improved score is itself
+  # the tell, since it beats the constrained optimum. Compliance must hold
+  # regardless of whether the score matches the unconstrained baseline.
+  expect_true(all(ok))
+  expect_true(attr(result, "score") >= attr(baseline, "score") - 1e-8)
+})

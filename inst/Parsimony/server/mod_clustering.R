@@ -88,22 +88,23 @@ clustering_server <- function(id, r, distMeth, log_fns) {
     # Clusterings
     ############################################################################
 
-    clusterings <- bindCache(reactive({
-      ## CAUTION: Update LogClusterings() to reflect any changes made
-      ## to this function
-      LogMsg("clusterings()")
+    # The multi-method sweep (K-means++, PAM, hierarchical-minimax across
+    # k = 2..15, each with a full cluster::silhouette() pass) is expensive
+    # but does not depend on silThreshold() at all — that value is only
+    # used afterwards to pick a winner among the already-computed silhouette
+    # scores. Keeping it out of this reactive's cache key means dragging the
+    # threshold slider no longer forces a full re-sweep (T-358).
+    clusterSweep <- bindCache(reactive({
+      LogMsg("clusterSweep()")
       maxCluster <- min(15L, length(r$trees) - 1L)
       if (maxCluster > 1L) {
         possibleClusters <- 2:maxCluster
 
-        hSil <- pamSil <- -99
         dists <- distances()
 
         nMethodsChecked <- 3L
         cli::cli_progress_bar("Computing clusterings", "K-means",
                               total = nMethodsChecked)
-
-        nK <- length(possibleClusters)
 
         kClusters <- lapply(possibleClusters,
                             function(k) TreeDist::KMeansPP(dists, k))
@@ -136,6 +137,25 @@ clustering_server <- function(id, r, distMeth, log_fns) {
         hCluster <- hClusters[[bestH]]
         cli::cli_progress_update(1, status = "Done")
 
+        list(kSil = kSil, kCluster = kCluster, bestK = bestK,
+             pamSil = pamSil, pamCluster = pamCluster, bestPam = bestPam,
+             hSil = hSil, hCluster = hCluster, bestH = bestH)
+      } else {
+        NULL
+      }
+    }), r$treeHash, distMeth())
+
+    clusterings <- reactive({
+      ## CAUTION: Update LogClusterings() to reflect any changes made
+      ## to this function
+      LogMsg("clusterings()")
+      sweep <- clusterSweep()
+
+      if (!is.null(sweep)) {
+        kSil    <- sweep$kSil;    kCluster   <- sweep$kCluster;   bestK   <- sweep$bestK
+        pamSil  <- sweep$pamSil;  pamCluster <- sweep$pamCluster; bestPam <- sweep$bestPam
+        hSil    <- sweep$hSil;    hCluster   <- sweep$hCluster;   bestH   <- sweep$bestH
+
         bestCluster <- c("none", "pam", "hmm", "kmn")[
           which.max(c(silThreshold(), pamSil, hSil, kSil))]
       } else {
@@ -159,8 +179,7 @@ clustering_server <- function(id, r, distMeth, log_fns) {
            cluster = switch(bestCluster, pam = pamCluster, hmm = hCluster,
                             kmn = kCluster, 1)
       )
-
-    }), r$treeHash, silThreshold(), distMeth())
+    })
 
     ############################################################################
     # LogClusterings

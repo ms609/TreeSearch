@@ -191,6 +191,7 @@ XPIWE
 XSS
 YU
 ZANOL
+Zanol
 Zoologica
 abcd
 ac
@@ -249,6 +250,7 @@ outgroup
 pachycephalosaurid
 palaeoscolecid
 patagonensis
+pectinate
 phyllostomid
 phylo
 phylogenetics
@@ -258,8 +260,10 @@ polytomies
 polytomy
 postorder
 preorder
+preset's
 propto
 pscore
+rootings
 rRNA
 rearranger
 reconverged
@@ -274,10 +278,12 @@ rerooting
 rerootings
 rescored
 rescoring
+reweighting
 rightarrow
 run's
 search's
 secondaries
+segfaulted
 sim
 softmax
 speedup
@@ -295,9 +301,12 @@ tb
 textrm
 th
 tinkerings
+trifurcation
 uk
 undersampled
+unparseable
 unrooted
+unrooting
 updaters
 uppass
 upweighted

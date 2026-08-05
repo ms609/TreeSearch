@@ -38,8 +38,7 @@ inline double l2factorial(int n) {
 //' small or unbalanced partitions, where raw mutual information is appreciably
 //' inflated by chance agreement.
 //'
-//' The value is computed analytically \insertCite{Vinh2010}{TreeDist},
-//' summing over
+//' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
 //' the hypergeometric distribution of cell overlaps, and is returned in bits
 //' (logarithms to base two).
 //'
@@ -48,7 +47,6 @@ inline double l2factorial(int n) {
 //' @param nj Integer vector giving the block sizes of the second partition
 //'   (also summing to `N`).
 //' @return The expected mutual information, in bits.
-//' @references \insertAllCited{}
 //' @seealso [`SiteConcordance`]
 //' @examples
 //' # Expected MI between a 3|4 split and a 2|5 split of 7 items:

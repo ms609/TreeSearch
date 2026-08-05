@@ -21,18 +21,6 @@ ts_rss <- function(tree, ds, minSize = 6L, maxSize = 50L, rssPicks = 0L,
                              maxHits = maxHits)
 }
 
-# Set env vars for the duration of `code`, restoring prior state (incl. unset).
-with_env <- function(vars, code) {
-  nms <- names(vars)
-  old <- Sys.getenv(nms, unset = NA)
-  do.call(Sys.setenv, as.list(vars))
-  on.exit(for (i in seq_along(nms)) {
-    if (is.na(old[[i]])) Sys.unsetenv(nms[[i]])
-    else do.call(Sys.setenv, stats::setNames(list(old[[i]]), nms[[i]]))
-  })
-  force(code)
-}
-
 # 40-tip structured dataset: large enough that internal clades span a range of
 # sizes >= sectorMinSize, so both the size window and the growth ramp engage.
 set.seed(913)
@@ -56,7 +44,7 @@ test_that("TS_SECT_GROW=0 kill-switch is identical to default-off", {
   set.seed(1); base <- ts_rss(scal_tree, scal_ds)
   # Growth knobs are supplied but the kill-switch must neutralise them entirely.
   set.seed(1)
-  off <- with_env(c(TS_SECT_GROW = "0", TS_SECT_GROW_INC = "50",
+  off <- withr::with_envvar(c(TS_SECT_GROW = "0", TS_SECT_GROW_INC = "50",
                     TS_SECT_GROW_SELFACT = "40", TS_SECT_GROW_START = "6"),
                   ts_rss(scal_tree, scal_ds))
   expect_equal(off$score, base$score)
@@ -66,7 +54,7 @@ test_that("TS_SECT_GROW=0 kill-switch is identical to default-off", {
 test_that("frac=0 / no-op env leaves the search byte-identical", {
   set.seed(1); base <- ts_rss(scal_tree, scal_ds)
   set.seed(1)
-  same <- with_env(c(TS_SECT_MAXFRAC = "0"),   # 0 = disabled -> baseline
+  same <- withr::with_envvar(c(TS_SECT_MAXFRAC = "0"),   # 0 = disabled -> baseline
                    ts_rss(scal_tree, scal_ds))
   expect_equal(same$score, base$score)
   expect_equal(same$edge, base$edge)
@@ -75,7 +63,7 @@ test_that("frac=0 / no-op env leaves the search byte-identical", {
 test_that("adaptive growth engages (more sector picks), valid and non-worse", {
   set.seed(1); base <- ts_rss(scal_tree, scal_ds)
   set.seed(1)
-  grown <- with_env(c(TS_SECT_GROW = "1", TS_SECT_GROW_INC = "50",
+  grown <- withr::with_envvar(c(TS_SECT_GROW = "1", TS_SECT_GROW_INC = "50",
                       TS_SECT_GROW_SELFACT = "40", TS_SECT_GROW_START = "6",
                       TS_SECT_GROW_MOVEON = "0"),
                     ts_rss(scal_tree, scal_ds))
@@ -89,7 +77,7 @@ test_that("adaptive growth engages (more sector picks), valid and non-worse", {
 test_that("growth `moveon` bounds the run but does NOT suppress the size ramp", {
   set.seed(1); base <- ts_rss(scal_tree, scal_ds)
   set.seed(1)
-  mo <- with_env(c(TS_SECT_GROW = "1", TS_SECT_GROW_INC = "50",
+  mo <- withr::with_envvar(c(TS_SECT_GROW = "1", TS_SECT_GROW_INC = "50",
                    TS_SECT_GROW_START = "6", TS_SECT_GROW_MOVEON = "2"),
                  ts_rss(scal_tree, scal_ds))
   validate_result(mo, 40L)
@@ -109,7 +97,7 @@ test_that("nTip-scaled cap ENLARGES sector selection (upward binding)", {
   # now also become selectable -> the search must behave differently.
   set.seed(1); base <- ts_rss(scal_tree, scal_ds, maxSize = 12L)
   set.seed(1)
-  up <- with_env(c(TS_SECT_MAXSIZE = "200", TS_SECT_MAXFRAC = "0.9",
+  up <- withr::with_envvar(c(TS_SECT_MAXSIZE = "200", TS_SECT_MAXFRAC = "0.9",
                    TS_SECT_THRESHOLD = "10"),
                  ts_rss(scal_tree, scal_ds, maxSize = 12L))
   validate_result(up, 40L)
@@ -123,7 +111,7 @@ test_that("nTip-scaled cap RESTRICTS when the fraction is small", {
   # threshold 10 < 40 tips, frac 0.5 -> eff_max = min(50, 20) = 20, narrowing
   # the window below the preset ceiling.  Must stay valid and non-worse.
   set.seed(1)
-  capped <- with_env(c(TS_SECT_MAXFRAC = "0.5", TS_SECT_THRESHOLD = "10"),
+  capped <- withr::with_envvar(c(TS_SECT_MAXFRAC = "0.5", TS_SECT_THRESHOLD = "10"),
                      ts_rss(scal_tree, scal_ds))
   validate_result(capped, 40L)
   expect_lte(capped$score, scal_start)
@@ -136,7 +124,7 @@ test_that("threshold gates the fraction: below threshold == baseline", {
   # path still filters on the preset maxSize=50 via eff_max=cap_base... so here
   # we keep MAXSIZE at the preset to assert pure gating).
   set.seed(1)
-  gated <- with_env(c(TS_SECT_MAXFRAC = "0.5", TS_SECT_THRESHOLD = "999"),
+  gated <- withr::with_envvar(c(TS_SECT_MAXFRAC = "0.5", TS_SECT_THRESHOLD = "999"),
                     ts_rss(scal_tree, scal_ds))
   expect_equal(gated$score, base$score)
   expect_equal(gated$edge, base$edge)

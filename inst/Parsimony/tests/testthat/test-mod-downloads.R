@@ -43,7 +43,7 @@ test_that("saveZip testmode: copies cmdLogFile and filename is correct", {
   args <- make_args()
   writeLines("# sentinel log", con = args$cmdLogFile)
 
-  withr::with_options(list(shiny.testmode = TRUE), {
+  with_options(list(shiny.testmode = TRUE), {
     testServer(downloads_server, args = args, {
       path <- output$saveZip
       expect_true(file.exists(path))
@@ -56,7 +56,7 @@ test_that("saveZip testmode: copies cmdLogFile and filename is correct", {
 test_that("savePlotZip testmode: filename uses saveDetails and content is written", {
   args <- make_args()
 
-  withr::with_options(list(shiny.testmode = TRUE), {
+  with_options(list(shiny.testmode = TRUE), {
     testServer(downloads_server, args = args, {
       path <- output$savePlotZip
       expect_true(file.exists(path))

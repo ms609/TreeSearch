@@ -243,3 +243,74 @@ test_that("Fuse events appear when fusing triggers", {
   # but search should complete successfully
   expect_true("done" %in% phases)
 })
+
+# ===== Intra-phase heartbeat =====
+# Phase-boundary reporting alone leaves the console silent for as long as one
+# phase runs: measured at 582 s (TBR) and 549 s (ratchet) on a 182-tip, 420-char
+# matrix with inapplicable tokens throughout -- 96% of a 1173 s replicate.
+
+test_that("Heartbeat reports inside a long phase, and honours its interval", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Vinther2008"]]
+
+  HeartbeatLines <- function(seconds) {
+    out <- withr::with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), capture.output({
+      set.seed(3)
+      invisible(MaximizeParsimony(ds, .rung = "thorough",
+                                  maxReplicates = 1L, verbosity = 2L))
+    }, type = "output"))
+    grep("in phase", out, value = TRUE)
+  }
+
+  # A tiny interval fires; this dataset is small, so only the coarse-strided
+  # ratchet reliably ticks, which is enough to show the mechanism works.
+  expect_gt(length(HeartbeatLines("0.001")), 0L)
+
+  # Explicitly disabled.
+  expect_length(HeartbeatLines("0"), 0L)
+
+  # Junk falls back to the DEFAULT cadence rather than being read as 0.  That
+  # default is 120 s off a terminal, which this sub-second search cannot reach,
+  # so the observable claim here is only that junk parses without error and does
+  # not turn into a fast interval; the fallback value itself is asserted in
+  # ts_heartbeat.cpp's own logic, not here.
+  expect_length(HeartbeatLines("not-a-number"), 0L)
+})
+
+test_that("Heartbeat never reports a score below the true optimum", {
+  # The ratchet's perturbed TBR searches a REWEIGHTED matrix, and sectorial
+  # searches score a SUBTREE; both ran ~33 where the real optimum is 79.  Only
+  # call sites searching the whole tree under real weights set a
+  # TBRParams::heartbeat_label, so no such score can be reported.
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Vinther2008"]]
+  best <- NULL
+  out <- withr::with_envvar(c(TS_HEARTBEAT_SECONDS = "0.001"), capture.output({
+    set.seed(3)
+    best <- MaximizeParsimony(ds, .rung = "thorough", maxReplicates = 1L,
+                              verbosity = 2L)
+  }, type = "output"))
+  optimum <- attr(best, "score")
+
+  reported <- as.numeric(sub(".*best ([0-9.]+),.*", "\\1",
+                             grep("in phase", out, value = TRUE)))
+  skip_if(length(reported) == 0L, "no heartbeat lines emitted on this platform")
+  expect_true(all(reported >= optimum))
+})
+
+test_that("Heartbeat does not change the search result", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Vinther2008"]]
+
+  Search <- function(seconds) {
+    withr::with_envvar(c(TS_HEARTBEAT_SECONDS = seconds), {
+      set.seed(42)
+      MaximizeParsimony(ds, effort = -9L, maxReplicates = 3L,
+                        verbosity = 0L)
+    })
+  }
+  quiet <- Search("0")
+  noisy <- Search("0.001")
+  expect_equal(attr(noisy, "score"), attr(quiet, "score"))
+  expect_length(noisy, length(quiet))
+})

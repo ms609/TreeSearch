@@ -26,6 +26,14 @@ row-major: \code{cost_matrix[from, to]}.}
 \item{\code{forced_root_state}}{Integer: -1 (unconstrained).}
 \item{\code{block_chars}}{Integer vector of original character indices
 (1-based) belonging to this block.}
+\item{\code{combo_grid}}{Integer matrix (\code{n_present × n_secondary}),
+row \code{i} giving the 1-based level index of each secondary for
+present-state \code{i + 1}.}
+\item{\code{tip_sec_known}}{Integer matrix (\code{n_tip × n_secondary}).
+For tips with \code{tip_states == -2}, column \code{s} holds the
+1-based level index of secondary \code{s} if it was observed, or
+0 if it was unknown; used to constrain the admissible states of a
+partially-known combination.}
 }
 }
 \item{\code{non_hierarchy_indices}}{Integer vector of original character
@@ -56,6 +64,25 @@ number of secondary characters.
 \item \strong{Present → present:} Hamming distance (number of secondaries with
 different states).
 }
+}
+
+\subsection{Rooting}{
+
+Because gain and loss cost differently, this cost matrix is \strong{asymmetric}
+whenever a block has at least one secondary character -- and the length of a
+tree under an asymmetric step matrix depends on where the tree is rooted,
+unlike ordinary parsimony.  The asymmetry is the point of the recoding (the
+first gain of the controlling character pays for the secondaries it brings
+into existence), so this is intrinsic rather than a defect.
+
+\code{TreeSearch} treats topologies as unrooted, so \code{\link[=TreeLength]{TreeLength()}} and
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}} both evaluate x-transformation lengths at a canonical
+rooting -- on the first taxon of \code{dataset} -- giving one length per topology
+and making a reported score reproducible.  That length is an upper bound on
+the rooting-free minimum, exceeding it by at most the total number of
+secondary characters across blocks.  If a rooting is biologically meaningful
+to you, score the tree yourself with the block's \code{cost_matrix} rather than
+relying on the canonical value.
 }
 }
 \references{

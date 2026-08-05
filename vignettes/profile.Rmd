@@ -95,7 +95,7 @@ par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
 plot(ape::consensus(betterTrees))
 ```
 
-Type `?MaximizeParsimony` to view all search parameters, including strategy
+Type `?MaximizeParsimony` to view all search parameters, including effort
 presets, time limits, and parallel search options.
 
 ## View the results

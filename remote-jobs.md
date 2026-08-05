@@ -8,12 +8,12 @@ produce results an agent needs to retrieve later.
 - **Add a row** when you submit a remote job whose results won't be
   consumed in the same conversation turn.
 - **Delete the row** once results have been retrieved and acted on
-  (committed to repo, written up in coordination.md, etc.).
+  (committed to repo, written up in the relevant issue, etc.).
 - Agents check this file at `/assign` time, after triaging `a.*` and
-  `u.*` files but before claiming from `to-do.md`. If a retrievable
+  `u.*` files but before claiming an issue. If a retrievable
   job is listed, retrieving and processing it takes priority.
 - Use the lock (`bash ../../todo-lock.sh . acquire/release`) if editing
-  concurrently, same as `to-do.md`.
+  concurrently, same as the issue tracker.
 
 ## Jobs
 
