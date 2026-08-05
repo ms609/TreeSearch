@@ -154,11 +154,16 @@ test_that("every flat kernel takes .PrepareConstraint()'s output", {
                   TreeSearch:::ts_resample_search,
                   TreeSearch:::ts_parallel_resample,
                   TreeSearch:::ts_successive_approx)
-  filtered <- names(TreeSearch:::.KernelConstraintArgs(
-    TreeSearch:::.PrepareConstraint(abConstraint, abDataset)
-  ))
+  consArgs <- TreeSearch:::.PrepareConstraint(abConstraint, abDataset)
+  filtered <- names(TreeSearch:::.KernelConstraintArgs(consArgs))
   for (k in kernels) {
-    expect_true(all(filtered %in% names(formals(k))))
+    kernelFormals <- names(formals(k))
+    # Nothing the kernel does not declare -- an unused-argument error...
+    expect_equal(setdiff(filtered, kernelFormals), character(0))
+    # ...and nothing it declares left behind, which would silently fall back to
+    # the kernel's own default instead of the constraint the caller gave.
+    expect_equal(setdiff(intersect(names(consArgs), kernelFormals), filtered),
+                 character(0))
   }
 
   set.seed(4)
@@ -169,6 +174,54 @@ test_that("every flat kernel takes .PrepareConstraint()'s output", {
   )
   set.seed(4)
   expect_s3_class(AdditionTree(abDataset, constraint = abConstraint), "phylo")
+})
+
+
+test_that("a three-state constraint says what it does and does not enforce", {
+  # Constraints are enforced as bipartitions throughout -- locked-node filter,
+  # capture gate, and impose_constraint(), which can repair to nothing else.  A
+  # third state's taxa are therefore unconstrained, and a character can sit
+  # above its minimum length with the enforced split intact.  What must not
+  # happen is that silently: judging captures by the stricter full-Fitch reading
+  # instead would discard every replicate of a search that cannot do better,
+  # turning a partial answer into no answer at all.
+  taxa6 <- letters[1:6]
+  constraint <- MatrixToPhyDat(matrix(
+    c("2", "2", "0", "0", "1", "1"), ncol = 1,
+    dimnames = list(taxa6, NULL)
+  ))
+  expect_equal(as.numeric(MinimumLength(constraint)), 2)
+  # {a, b} is an exact clade here -- the enforced split holds -- yet the
+  # character costs 3, which is the gap the warning is about.
+  expect_equal(as.numeric(TreeLength(
+    ape::read.tree(text = "((a,b),(e,(c,(f,d))));"), constraint)), 3)
+
+  expect_warning(TreeSearch:::.PrepareConstraint(constraint, constraint),
+                 "more than two states")
+
+  # Data pulling against the constraint: it supports (a,b) but also (c,e) and
+  # (d,f), which splits the intermediate state apart.
+  m <- rbind(
+    c(1, 1, 0, 0, 0, 0), c(1, 1, 0, 0, 0, 0),
+    c(0, 0, 1, 0, 1, 0), c(0, 0, 1, 0, 1, 0),
+    c(0, 0, 0, 1, 0, 1), c(0, 0, 0, 1, 0, 1)
+  )
+  colnames(m) <- taxa6
+  dataset <- MatrixToPhyDat(t(m))
+
+  # collapse = FALSE keeps the trees binary for TreeLength().
+  set.seed(7)
+  expect_warning(
+    result <- MaximizeParsimony(dataset, constraint = constraint,
+                                maxReplicates = 4L, verbosity = 0L,
+                                collapse = FALSE),
+    "more than two states"
+  )
+  # The enforced split still binds on every returned tree...
+  expect_equal(AllShown(result, c("a", "b"), c("c", "d")), length(result))
+  # ...and a search that can only partially satisfy the constraint returns
+  # trees rather than erroring with an empty pool.
+  expect_gt(length(result), 0)
 })
 
 

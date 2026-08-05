@@ -2224,6 +2224,17 @@ List ts_collapse_pool(
     }
     cons_zero.resize(cons_one.size(), std::vector<uint64_t>(wps, 0));
   }
+  // Group sizes depend only on the constraint, so they are counted once here
+  // rather than per tree.  A group of fewer than two taxa is skipped below:
+  // such a split is realised by a terminal edge, never a collapse candidate.
+  std::vector<int> n_one_tips(cons_one.size(), 0);
+  std::vector<int> n_zero_tips(cons_one.size(), 0);
+  for (size_t r = 0; r < cons_one.size(); ++r) {
+    for (int w = 0; w < wps; ++w) {
+      n_one_tips[r] += ts::popcount64(cons_one[r][w]);
+      n_zero_tips[r] += ts::popcount64(cons_zero[r][w]);
+    }
+  }
 
   std::vector<IntegerMatrix> reps;          // representative collapsed edges
   std::vector<uint64_t> rep_hash;           // collapsed-split hash per rep
@@ -2317,18 +2328,10 @@ List ts_collapse_pool(
       // postorder visits every node before its parent, so the first node to
       // hold a whole group is its MRCA, and keeping that one edge suffices,
       // since contracting an edge below it leaves its descendant set — and so
-      // the split it displays — unchanged.  Groups of fewer than two tips are
-      // skipped: such a split is realised by a terminal edge, never a collapse
-      // candidate.
+      // the split it displays — unchanged.
       for (size_t r = 0; r < cons_one.size(); ++r) {
+        if (n_one_tips[r] < 2 || n_zero_tips[r] < 2) continue;
         const std::vector<uint64_t>* grp[2] = { &cons_one[r], &cons_zero[r] };
-        int n_in_group[2] = {0, 0};
-        for (int side = 0; side < 2; ++side) {
-          for (int w = 0; w < wps; ++w) {
-            n_in_group[side] += ts::popcount64((*grp[side])[w]);
-          }
-        }
-        if (n_in_group[0] < 2 || n_in_group[1] < 2) continue;
 
         bool survives = false;
         int to_protect = -1;

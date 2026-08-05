@@ -53,14 +53,28 @@ ProgressInfo make_progress(int rep, const DrivenParams& params,
 // coded 1 for each constraint character from those coded 0?
 //
 // violates_constraint_posthoc() answers that directly, but builds a whole
-// TreeState and scores it.  The locked-node mapping is much cheaper and is
-// strictly the STRONGER test: it asks for the 1 group to be a clade exactly,
-// excluding the taxa coded `?`, and a tree that manages that necessarily
-// separates the two coded groups.  So a full mapping settles the case the
-// search puts us in almost every time -- every rearrangement it accepts is
-// filtered on that same mapping -- and only an unmapped split pays for Fitch.
+// TreeState and scores it.  For a BINARY constraint the locked-node mapping is
+// much cheaper and is strictly the stronger test: it asks for the 1 group to be
+// a clade exactly, excluding the taxa coded `?`, and a tree that manages that
+// necessarily separates the two coded groups.  So a full mapping settles the
+// case the search puts us in almost every time -- every rearrangement it
+// accepts is filtered on that same mapping -- and only an unmapped split pays
+// for Fitch.
+//
+// With a third state the two tests diverge -- its taxa belong to no split_tips
+// entry, so the character can sit above its minimum length with every split
+// mapped -- and the mapping is the one to follow.  It is the standard the rest
+// of the engine enforces: the locked-node filter screens rearrangements on it,
+// and impose_constraint() repairs to it and nothing more, so judging a capture
+// by the stricter Fitch check would discard every replicate of a search that
+// cannot produce anything better.  The R layer warns at input that an
+// intermediate state goes unconstrained.
+//
+// update_constraint(), not map_constraint_nodes(): the DFS timestamps have to
+// move with the node ids, or a consumer that reads both without re-mapping
+// (spr_search) sees this tree's nodes against another tree's timestamps.
 bool constraint_satisfied(TreeState& tree, ConstraintData& cd) {
-  map_constraint_nodes(tree, cd);
+  update_constraint(tree, cd);
   for (int s = 0; s < cd.n_splits; ++s) {
     if (cd.constraint_node[s] < 0) {
       return !violates_constraint_posthoc(tree, cd);
@@ -206,10 +220,17 @@ ReplicateResult run_single_replicate(
     if (!constraint_satisfied(result.tree, *cd)) {
       // impose_constraint() is heuristic.  Discard the start rather than search
       // from a tree the constraint machinery cannot move: a constrained Wagner
-      // build, with its own post-hoc reshuffles, is the better bet.
+      // build, with its own post-hoc reshuffles, is the better bet.  It is not
+      // a guarantee either -- exhausting those reshuffles returns a violating
+      // tree -- so repair whatever it hands back rather than trusting it.
       random_wagner_tree(result.tree, ds, cd);
       result.tree.build_postorder();
       result.tree.reset_states(ds);
+      if (!constraint_satisfied(result.tree, *cd)) {
+        impose_constraint(result.tree, *cd);
+        result.tree.build_postorder();
+        result.tree.reset_states(ds);
+      }
     }
     best_wag = score_tree(result.tree, ds);
   }

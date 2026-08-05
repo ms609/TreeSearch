@@ -123,6 +123,17 @@
   nConsStates <- ncol(consContrast)
   if (nConsStates < 2L) return(list())
 
+  # Constraints are enforced as bipartitions, so only the two extreme states of
+  # a character are read: taxa carrying an intermediate state are in neither
+  # group and go unconstrained.  Say so rather than let the caller infer, from
+  # `@param constraint`'s "compatible with each character", that a third state
+  # groups its taxa too.
+  if (nConsStates > 2L) {
+    warning("`constraint` characters with more than two states are enforced ",
+            "as the split between their first and last state only; taxa in ",
+            "any intermediate state are left unconstrained.", call. = FALSE)
+  }
+
   consMat <- matrix(unlist(constraint, use.names = FALSE),
                     nrow = length(constraint), byrow = TRUE)
   # For each constraint character, record the tips unambiguously in the "1"
@@ -217,26 +228,32 @@
 # exactly a clade" that the search's locked-node machinery enforces
 # internally.  `consOne` / `consZero` are .PrepareConstraint()'s matrices, in
 # `tip_data` column order; `tree`'s tips must already be renumbered to match.
+#
+# The two groups are the character's extreme states, so this answers for
+# exactly what the engine enforces -- an intermediate state's taxa are in
+# neither group here and are unconstrained there too (.PrepareConstraint()
+# warns about that at input).
 .ConstraintViolated <- function(tree, consOne, consZero) {
   edge <- Postorder(tree)[["edge"]]
   parent <- edge[, 1L]
   child <- edge[, 2L]
   nTip <- ncol(consOne)
   nRow <- nrow(consOne)
-  # One accumulation pass carries every group at once: columns 1..nRow are the
-  # "1" groups, the rest the "0" groups.
-  counts <- matrix(0L, nrow = max(edge), ncol = 2L * nRow)
-  counts[seq_len(nTip), ] <- t(rbind(consOne, consZero))
+  # One accumulation pass carries every group at once: rows 1..nRow are the
+  # "1" groups, the rest the "0" groups.  Nodes index the COLUMNS, so each
+  # accumulation touches one contiguous stretch of a column-major matrix.
+  counts <- matrix(0L, nrow = 2L * nRow, ncol = max(edge))
+  counts[, seq_len(nTip)] <- rbind(consOne, consZero)
   for (i in seq_along(parent)) {
-    counts[parent[i], ] <- counts[parent[i], ] + counts[child[i], ]
+    counts[, parent[i]] <- counts[, parent[i]] + counts[, child[i]]
   }
   # Postorder lists every node before its parent, so the first node holding a
   # whole group is that group's MRCA; the groups are separated iff one MRCA
   # holds none of the other group.
   nodes <- c(child, parent[length(parent)])
   for (r in seq_len(nRow)) {
-    one <- counts[, r]
-    zero <- counts[, nRow + r]
+    one <- counts[r, ]
+    zero <- counts[nRow + r, ]
     nOne <- sum(consOne[r, ])
     nZero <- sum(consZero[r, ])
     mrcaOne <- nodes[one[nodes] == nOne][1]
@@ -754,6 +771,9 @@
 #' in any output tree.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
+#' Each constraint character is enforced as a single split, so one with more
+#' than two states is read as the split between its first and last state
+#' alone: taxa in an intermediate state are left unconstrained, with a warning.
 #' @param effort Integer: how much search effort to spend, **relative to the
 #'   amount chosen automatically** for this dataset.  `0` (the default) accepts
 #'   the automatic choice; `1` asks for one notch more, `-1` one notch less.
