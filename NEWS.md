@@ -99,8 +99,9 @@
 
 - `inapplicable = "hsj"` scoring no longer forms a reference one element past
   the end of an internal vector.  The secondary-labelling uppass computed a
-  pointer to a node's children before testing whether it had any, and for the
-  last node its traversal visited that pointer addressed one past the end.  No
+  pointer to a node's children before testing whether it had any, and for a
+  childless node reached after the traversal had emitted its last child that
+  pointer addressed one past the end.  No
   value was ever read through it and no score changed -- 900 of 900 HSJ and
   x-transformation lengths are bit-identical either side of the fix -- but the
   access is undefined behaviour, and a hardened or instrumented build aborted
