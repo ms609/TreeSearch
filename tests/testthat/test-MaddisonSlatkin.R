@@ -136,11 +136,13 @@ test_that("MaddisonSlatkin with 5 states", {
   n <- sum(states)
   # min steps = 4 (one fewer than number of states)
   ms <- MaddisonSlatkin(4:(n - 1L), states)
-  # On slow CI machines the 2s budget may be exceeded, yielding NA.
-  # Skip the value checks in that case — the budget itself is correct
-  # behaviour; we just can't verify the math when it fires.
+  # Either resource guard -- the wall-clock budget or a memo table's reserved
+  # capacity -- yields NA, and both are correct behaviour; the value checks
+  # simply cannot run when one fires.  Name neither: this skipped on every
+  # machine for as long as the capacity was the binding guard, and a message
+  # that blamed the budget was part of what made that look expected.
   if (any(is.na(ms))) {
-    skip("MaddisonSlatkin 5-state computation hit time budget")
+    skip("MaddisonSlatkin 5-state computation hit a resource guard")
   }
   expect_equal(sum(exp(ms[is.finite(ms)])), 1, tolerance = 1e-10)
 
@@ -192,18 +194,42 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
   # (observed as a 6 h --run-donttest CI timeout).  The solver must now detect
   # the impending overflow and fall back to the MC approximation instead.
   #
-  # Two guards can trigger that fallback, and which fires is a timing-dependent
-  # race: the capacity guard once a memo table hits its reserved size, or the
-  # 2 s wall-clock budget.  A fast machine reaches the capacity first (cache
-  # warning); a slow one reaches 2 s first (time-budget warning).  Both warnings
-  # contain "exceeded" and both are correct outcomes -- the only wrong outcome is
-  # a hang.  So assert completion with finite values (the anti-hang property) and
-  # that *some* fallback warning fired, without pinning which guard won the race.
+  # This character no longer overflows a memo table -- its peak demand is ~12k
+  # entries, within the capacity the tables now reserve -- but neither does it
+  # fit the 2 s budget, so it still falls back, now by the clock rather than by
+  # the table.  Which guard wins is deliberately not asserted, nor that one
+  # wins at all: that is a property of how fast the machine is, and a quick
+  # enough one will simply finish.  A fallback warning is likewise NOT
+  # required; requiring one would fail on exactly the machines that need no
+  # fallback.  What the hang violated -- terminates, with usable values -- is
+  # what is asserted.
   char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
-  # capture_warnings() evaluates its argument in this frame, so `si` is assigned
-  # here, and it collects every warning without pinning which guard won the race.
+  si <- StepInformation(char, n_mc = 1000L)
+  expect_type(si, "double")
+  expect_true(length(si) >= 1L && all(is.finite(si)))
+})
+
+
+test_that("An oversized exact recursion falls back rather than running away", {
+  # Tier 3: this is the one case that must actually drive the recursion until a
+  # guard stops it, so it spends the whole budget before it can assert anything.
+  skip_extended()
+
+  # sc = 52 is inside `.MS_SC_THRESHOLD[3]`, but on 75 tips the recursion is far
+  # more work than the gate's split-count predicts.  `approx = "exact"` waives
+  # the gate -- and, importantly, does NOT waive the budget, which is the
+  # behaviour pinned here: an oversized recursion is stopped even when the
+  # caller has asked for exactness.
+  #
+  # Which guard stops it is not pinned.  Since the memo tables were sized to the
+  # gate, the wall-clock budget is the one that fires in practice and the
+  # capacity guard has receded to what it was added for -- a backstop against
+  # the probe_slot() spin, which no input reachable through StepInformation now
+  # gets near.  The wrong outcome is that spin, not which guard wins.
+  char <- rep(c("0", "1", "2"), c(60L, 12L, 3L))
   si <- NULL
-  warningsSeen <- capture_warnings(si <- StepInformation(char, n_mc = 1000L))
+  warningsSeen <- capture_warnings(
+    si <- StepInformation(char, approx = "exact", n_mc = 1000L))
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
   expect_match(paste(warningsSeen, collapse = "\n"), "exceeded")

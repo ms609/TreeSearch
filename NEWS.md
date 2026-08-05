@@ -1,5 +1,33 @@
 # To integrate into 2.0.0 notes
 
+- Profile parsimony computes exactly for more multi-state characters, where it
+  previously approximated nearly all of them.  The exact Maddison & Slatkin
+  solver caches into fixed-capacity memo tables and bails out when one fills --
+  a guard added to stop an unbounded probe loop -- but its reserved size was
+  never matched to the feasibility gate that feeds it.  Measured against the
+  worst character that gate admits, every one of them overflowed: a 3-state
+  character needs up to ~28,000 memo entries against the 4,096 reserved.
+  `StepInformation()` and `PrepareDataProfile(approx = "auto")` therefore fell
+  back to the Monte Carlo approximation for essentially every multi-state
+  character -- a documented mode, but not the one asked for.
+
+  The 2 s wall-clock budget is unchanged, and remains what caps the wait: a
+  character that cannot be solved within it still falls back to Monte Carlo.
+  Only the characters that fit inside that budget are affected.
+
+  **Information amounts for those characters will therefore change**, from a
+  sampled estimate to the exact value.  Which characters those are depends on
+  how fast the machine is, since the budget is what decides; pass
+  `approx = "mc"` for the previous behaviour throughout.  Note that
+  `approx = "exact"` waives the feasibility gate but not the budget, so it too
+  can fall back on a slow machine.
+
+  Under sanitizer builds the budget is scaled by the instrumentation's
+  slowdown.  Those builds run one to two orders of magnitude slower, so a 2 s
+  budget tripped on everything -- leaving the sanitizer inspecting the fallback
+  rather than the algorithm it was aimed at.  There is no responsiveness to
+  protect in a nightly memory check.
+
 - `constraint` now binds the trees `MaximizeParsimony()` returns, at three
   boundaries where it did not.  A starting tree supplied through `tree` was
   never checked against the constraint; because a constrained search rejects
