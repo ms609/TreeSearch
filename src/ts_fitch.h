@@ -90,9 +90,10 @@ void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
 //
 // Same dirty-set approach as fitch_dirty_downpass / fitch_dirty_uppass but
 // handles inapplicable-bearing blocks via the NA-aware Pass 1 / Pass 2
-// logic.  Used for the SPR accept path under has_inapplicable to avoid
-// full_rescore.  The return value is the EW length delta for standard
-// blocks only — NA block step counts require Pass 3, so call
+// logic.  Used for the SPR and TBR-rerooting accept paths under
+// has_inapplicable to avoid full_rescore, and by exact_verify_sweep's
+// incremental candidate rescore.  The return value is the EW length delta for
+// standard blocks only — NA block step counts require Pass 3, so call
 // fitch_na_pass3_score(tree, ds) on the updated state to obtain the
 // authoritative score.
 // start_c: optional third dirty seed (-1 = unused). The TBR-reroot dirty region

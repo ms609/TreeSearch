@@ -2807,7 +2807,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // XFORM still fall back to full_rescore.
         bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
         const int third = (!is_spr && clip_node >= tree.n_tip) ? clip_node : -1;
-        if (!is_spr) ++ds.n_reroot_accepts;
+        // Count the ARM, not the move class: under HSJ/XFORM a rerooting move
+        // still falls through to full_rescore below, and counting it here would
+        // let the regression test in test-ts-tbr-dirty-rescore.R report coverage
+        // of a dirty-set rescore that never ran (src/ts_data.h).
+        if (!is_spr && incremental_ok) ++ds.n_reroot_accepts;
         double actual;
         const auto _t_acc = na_timing ? std::chrono::steady_clock::now()
                                     : std::chrono::steady_clock::time_point{};
