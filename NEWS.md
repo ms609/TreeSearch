@@ -491,6 +491,26 @@
   both the `qmApp` (T-302) and `qm` (commit e8b318c3) scalar-unwrap paths,
   confirming all deltas are non-negative and match independent computation.
 
+- `ClusterStrings()` no longer crashes when the best clustering contains a
+  singleton cluster, no longer omits the documented `silhouette` attribute
+  when few unique strings are supplied, and its "no structure" branch now
+  returns the documented per-element cluster-assignment vector rather than a
+  bare scalar `1`.  Its internal call to `cluster::pam()` now passes the
+  Levenshtein distance matrix via `as.dist()`, so it is treated as a
+  dissimilarity rather than clustered on Euclidean distance between its
+  rows; **silhouette scores and, in some cases, cluster assignments for the
+  `pam` method may change** to more accurately reflect string similarity.
+
+- `ParsSim()` now errors clearly, instead of silently corrupting the Fitch
+  score, if asked to simulate a character with 32 or more states -- the
+  internal bit-set representation of state sets overflows a 32-bit integer
+  beyond that.  It also errors clearly, instead of an opaque
+  `sample.int()` failure, if a tree lacks the structure to host the number
+  of requested states for a character.  Simulation with `nExtraSteps > 0`
+  is also faster, as the redundant saturation scan previously performed
+  again on every character at return now reuses the result already
+  computed during the step-placement loop.
+
 # TreeSearch 2.0.0
 
 ## Breaking changes
