@@ -1,3 +1,5 @@
+# Tier 1: arithmetic only, no search, whole file under a second.
+#
 # An independent reference for the expected mutual information under the
 # hypergeometric null.  lchoose() works in log space, so unlike the C++
 # recurrence it cannot underflow at the tails of the distribution.
@@ -21,11 +23,24 @@ test_that("expected_mi() is correct for large balanced partitions", {
   # P(K = kmin) is around 2^-1197 at N = 1200; a recurrence seeded there
   # returns exactly zero for every k.
   expect_equal(expected_mi(c(550L, 550L), c(550L, 550L)),
-               ReferenceEmi(c(550L, 550L), c(550L, 550L)), tolerance = 1e-8)
+               ReferenceEmi(c(550L, 550L), c(550L, 550L)), tolerance = 1e-9)
   expect_equal(expected_mi(c(600L, 600L), c(600L, 600L)),
-               ReferenceEmi(c(600L, 600L), c(600L, 600L)), tolerance = 1e-8)
+               ReferenceEmi(c(600L, 600L), c(600L, 600L)), tolerance = 1e-9)
   expect_equal(expected_mi(c(1000L, 1000L), c(1000L, 1000L)),
-               ReferenceEmi(c(1000L, 1000L), c(1000L, 1000L)), tolerance = 1e-8)
+               ReferenceEmi(c(1000L, 1000L), c(1000L, 1000L)), tolerance = 1e-9)
+
+  # `nj` as ClusteringConcordance() supplies it: a tabulate() over states,
+  # which need not be two
+  expect_equal(expected_mi(c(600L, 600L), c(300L, 300L, 300L, 300L)),
+               ReferenceEmi(c(600L, 600L), c(300L, 300L, 300L, 300L)),
+               tolerance = 1e-9)
+  expect_equal(expected_mi(c(437L, 1063L), c(211L, 396L, 893L)),
+               ReferenceEmi(c(437L, 1063L), c(211L, 396L, 893L)),
+               tolerance = 1e-9)
+
+  # The value the caller that motivated the fix actually receives
+  expect_equal(TreeSearch:::.ExpectedMI(c(600L, 600L), c(600L, 600L)),
+               ReferenceEmi(c(600L, 600L), c(600L, 600L)), tolerance = 1e-9)
 
   # Chance-corrected mutual information is positive and decreases with N
   balanced <- vapply(c(500L, 1000L, 1100L, 1200L, 2000L), function(n) {
@@ -77,16 +92,23 @@ test_that("quartet_concordance() rejects negative state codes", {
   splits <- matrix(c(TRUE, TRUE, FALSE, FALSE), ncol = 1)
   characters <- matrix(c(1L, 1L, 2L, 2L), ncol = 1)
   counts <- TreeSearch:::quartet_concordance(splits, characters)
-  expect_equal(dim(counts[["concordant"]]), c(1L, 1L))
+  expect_equal(counts[["concordant"]], matrix(1))
+  expect_equal(counts[["decisive"]], matrix(1))
 
   negative <- matrix(c(1L, -1L, 2L, 2L), ncol = 1)
   expect_error(TreeSearch:::quartet_concordance(splits, negative),
                "non-negative")
+
   # NA marks the absence of a state, and is not a negative code: a taxon
-  # scored NA counts as if it were not in the matrix at all
-  missing <- matrix(c(1L, NA_integer_, 2L, 2L), ncol = 1)
-  expect_equal(TreeSearch:::quartet_concordance(splits, missing),
-               TreeSearch:::quartet_concordance(
-                 matrix(c(TRUE, FALSE, FALSE), ncol = 1),
-                 matrix(c(1L, 2L, 2L), ncol = 1)))
+  # scored NA counts as if it were not in the matrix at all.  Six taxa give
+  # a quartet count that a dropped taxon could change, unlike three.
+  sixSplits <- matrix(c(TRUE, TRUE, TRUE, FALSE, FALSE, FALSE), ncol = 1)
+  sixChars <- matrix(c(1L, 1L, 2L, 2L, 1L, 2L), ncol = 1)
+  sixCounts <- TreeSearch:::quartet_concordance(sixSplits, sixChars)
+  expect_equal(sixCounts[["concordant"]], matrix(1))
+  expect_equal(sixCounts[["decisive"]], matrix(5))
+  expect_equal(
+    TreeSearch:::quartet_concordance(rbind(sixSplits, TRUE),
+                                     rbind(sixChars, NA_integer_)),
+    sixCounts)
 })
