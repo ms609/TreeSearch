@@ -1655,6 +1655,10 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.intra_fuse         = as<bool>(ctrl["intraFuse"]);
   params.pool_max_size      = as<int>(ctrl["poolMaxSize"]);
   params.pool_suboptimal    = as<double>(ctrl["poolSuboptimal"]);
+  // Absent in a control list built by an older caller: treat as 0 ("no separate
+  // enumeration ceiling") rather than letting as<int>() throw on R_NilValue.
+  params.enum_pool_max_size = ctrl.containsElementNamed("enumMaxTrees")
+    ? as<int>(ctrl["enumMaxTrees"]) : 0;
 
   // Stopping / adaptive
   params.consensus_stable_reps = as<int>(ctrl["consensusStableReps"]);

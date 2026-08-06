@@ -1436,6 +1436,10 @@ finish:
   //    one tree, so different TBR-connected islands are only discovered if
   //    different replicates landed on them.  We enumerate from each seed
   //    tree to explore its island, stopping when the pool is full.
+  //
+  //    The retention ceiling is raised HERE, not before the loop: past this
+  //    point the pool is pure output, so a larger cap only appends topologies.
+  pool.raise_max_size(params.enum_pool_max_size);
   if (pool.size() > 0 && pool.size() < pool.max_size) {
     TBRParams tp;
     tp.accept_equal = true;

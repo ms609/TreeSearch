@@ -557,7 +557,32 @@
     # through .IwRatchetDepth()'s targetHits/defaultHits escalation (capped at
     # .iwRatchetMaxCycles), which is a genuine reach lever the equal-weights
     # measurement above cannot see.
-    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
+    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L)),
+    # `enumMaxTrees` multiplier: the size of the returned MPT set, relative to
+    # `poolMaxSize`.  Doubling in step with the other two knobs, from rung 5, so
+    # that one notch keeps meaning "roughly twice the work" on this axis too.
+    #
+    # This scales the ENUMERATION ceiling only, never `poolMaxSize` itself, and
+    # the distinction is the whole point.  During the replicate loop the pool cap
+    # is the size of the working set the search reads -- fuse donors are the
+    # entire pool (uncapped, and taken under the pool mutex on the parallel
+    # path), conflict-guided sector selection reads the pool's split frequencies
+    # once per replicate, and `consensusConstrain` reads its consensus splits --
+    # so scaling it would change which trees the search VISITS.  The
+    # anytime-dominance argument that licenses raising `maxReplicates` above
+    # therefore does NOT transfer to `poolMaxSize`: a bigger pool can delay
+    # every later improvement rather than merely appending to the result.
+    # After the loop, the pool is pure output and a bigger ceiling can only
+    # append equal-score topologies, so the same argument DOES hold there.
+    #
+    # It is bounded in practice without needing a cap: enumeration shares the
+    # `maxSeconds * enumTimeFraction` reserve, and its loop exits as soon as the
+    # pool fills, so an over-generous ceiling costs enumeration time, never a
+    # worse tree.  As with `hitMultiplier` the doubling shape is an OPERATING
+    # POINT rather than a measurement -- what is measured is that the July 2026
+    # 182-tip runs returned exactly `poolMaxSize` trees in all four analyses,
+    # i.e. the ceiling bound the answer rather than the MPT count doing so.
+    enumMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
   )
 }
 
@@ -632,9 +657,13 @@
 #' most-parsimonious tree (\acronym{MPT}) is recovered.
 #' The size of the returned set is bounded by, in order:
 #' \enumerate{
-#'   \item **`poolMaxSize`** (default `100`) — a hard ceiling on the number of
-#'     trees retained.  Raise it (via [`SearchControl()`]) to keep more MPTs;
-#'     with the default you will never see more than 100.
+#'   \item **`enumMaxTrees`**, falling back to **`poolMaxSize`** (default `100`)
+#'     when `enumMaxTrees` is `0` — a hard ceiling on the number of trees
+#'     retained; with the default you will never see more than 100.  Prefer
+#'     raising `enumMaxTrees` (via [`SearchControl()`]): it applies only once the
+#'     search is over, so it cannot alter which trees are visited, whereas
+#'     `poolMaxSize` also sizes the working set that fusing and sectorial search
+#'     read.  From `effort` rung 5 the ladder raises `enumMaxTrees` for you.
 #'   \item **MPT-enumeration time.** After the main search, a TBR plateau walk
 #'     enumerates equal-score neighbours of each pool tree, within a time
 #'     reserve of `maxSeconds * enumTimeFraction`.  If this phase times out it
@@ -798,9 +827,13 @@
 #'       TBR-disconnected islands that random restarts alone miss.}
 #'     \item{4, `large`}{`thorough`'s provisioning with `maxReplicates` raised
 #'       to 500, to suit the higher per-replicate cost of big trees.}
-#'     \item{5 and up}{`thorough`'s provisioning, with both the replicate budget
-#'       and the hit target doubling each notch (1000, 2000, 4000 ...
-#'       replicates), so that one notch always means roughly twice the work.
+#'     \item{5 and up}{`thorough`'s provisioning, with the replicate budget, the
+#'       hit target and the \acronym{MPT}-enumeration ceiling (`enumMaxTrees`)
+#'       all doubling each notch (1000, 2000, 4000 ... replicates), so that one
+#'       notch always means roughly twice the work.  `poolMaxSize` is
+#'       deliberately *not* scaled: it sizes the working set that fusing and
+#'       sectorial search read during the run, so raising it would change which
+#'       trees are visited rather than only how many are returned.
 #'       There is no policy ceiling: extra replicates cannot cost reach, only
 #'       wall, which is what you asked to spend.  The ladder stops only at rung
 #'       26, where the replicate budget outgrows R's integer type.}
@@ -1228,6 +1261,18 @@ MaximizeParsimony <- function(
       # about this dataset and outranks the ladder.
       if (!userSetHits && spec[["hitMultiplier"]] > 1L) {
         targetHits <- as.integer(targetHits * spec[["hitMultiplier"]])
+      }
+
+      # Rung-scaled MPT-enumeration ceiling (rung 5 and up).  Keyed off the
+      # POST-merge `poolMaxSize`, so a user who raised the pool gets a
+      # proportionally larger returned set rather than having their value
+      # ignored.  Skipped when the user named `enumMaxTrees` themselves.
+      # `poolMaxSize` is deliberately not touched -- see .RungSpec().
+      if (!("enumMaxTrees" %in% union(names(controlDots),
+                                      attr(control, "explicit"))) &&
+          spec[["enumMultiplier"]] > 1L) {
+        control[["enumMaxTrees"]] <-
+          as.integer(control[["poolMaxSize"]] * spec[["enumMultiplier"]])
       }
 
       # Implied-weights ratchet depth. Under implied weights the optimum often
