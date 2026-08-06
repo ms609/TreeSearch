@@ -73,10 +73,12 @@ kernelTbrEmul <- function(tree, d, unrooted) {
   best
 }
 
-# Full unrooted-TBR cleanliness check: all_tbr at TWO distinct rootings (tip1 &
-# tip2) covers every break edge (each rooting only omits its own root-edge =
-# that tip's pendant); plus all_spr for good measure.  Returns the best
-# improving neighbour length and tree, or NULL if clean.
+# Full unrooted-TBR cleanliness check.  The two rootings (tip1 & tip2) date
+# from when all_tbr omitted its own root edge, so one rooting could not see that
+# tip's pendant bisection; #147 fixed that, and a single rooting now covers
+# every break edge.  Kept as belt and braces -- it is cheap relative to scoring,
+# and it also exercises all_spr.  Returns the best improving neighbour length
+# and tree, or NULL if clean.
 bestImproving <- function(tree, d) {
   base <- TreeLength(tree, d$phy)
   cand <- list()
