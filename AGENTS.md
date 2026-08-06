@@ -20,7 +20,7 @@ collaborators.
 |-------|---------|
 | `red-team` | Filed by `/red-team`. Also that skill's mode switch — don't delete it |
 | `sev:high` / `sev:med` / `sev:low` | Former P1 / P2 / P3 |
-| `area:1`…`area:13` | Red-team focus area, per `dev/red-team/focus-areas.md` |
+| `area:1`…`area:15` | Red-team focus area, per `dev/red-team/focus-areas.md` — **count the rows, this range grows** |
 | `task` | Planned work migrated from the retired `to-do.md` |
 | `deferred` | Assessed and parked; not scheduled |
 | `chore` | Infrastructure / process work |
@@ -246,7 +246,8 @@ These recur; they are activities, not issues, and have no tracker entry:
 | File | Purpose |
 |------|---------|
 | **GitHub issues** (`agent-issues/TreeSearch`) | The task queue and the findings tracker |
-| `dev/red-team/` | Rotation state: `focus-areas.md`, `log.md`, frozen `findings-archive.md`, `migration-map*.tsv` |
+| **GitHub Discussions**, one category per `area:N` | Red-team round records. `dev/red-team/log.md` is **closed to new entries** — it keeps only the model-version legend, `last_focus:`, and the frozen pre-2026-08 history |
+| `dev/red-team/` | Scope and tiers: `focus-areas.md`; frozen `log.md`, `findings-archive.md`, `migration-map*.tsv` |
 | `dev/strategy.md` | Historical strategic narrative (was `coordination.md`; **not** kept current) |
 | `completed-tasks.md` | **Frozen.** Pre-tracker decisions worth not re-litigating; still worth grepping |
 | `dev/expertise/*.md` | Standing-practice methodology references |
