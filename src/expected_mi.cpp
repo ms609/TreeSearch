@@ -158,34 +158,45 @@ std::string mi_key(IntegerVector ni, IntegerVector nj) {
     Rcpp::stop("ni must be a vector of length 2.");
   }
   
-  std::vector<uint16_t> ni_vals = {static_cast<uint16_t>(ni[0]),
-                                   static_cast<uint16_t>(ni[1])};
+  // 32 bits spans the whole of `int`, so distinct block sizes always give
+  // distinct keys.  A narrower code aliases: encoded in 16 bits, block sizes
+  // differing by a multiple of 65536 shared a key, and the cache then served
+  // one partition's expected mutual information for the other's.
+  std::vector<uint32_t> ni_vals = {static_cast<uint32_t>(ni[0]),
+                                   static_cast<uint32_t>(ni[1])};
   std::sort(ni_vals.begin(), ni_vals.end());
-  
-  std::vector<uint16_t> nj_vals;
+
+  std::vector<uint32_t> nj_vals;
   nj_vals.reserve(nj.size());
   for (int val : nj) {
-    nj_vals.push_back(static_cast<uint16_t>(val));
+    nj_vals.push_back(static_cast<uint32_t>(val));
   }
   std::sort(nj_vals.begin(), nj_vals.end());
-  
-  // Encode each uint16_t as 4 hex characters — no R allocation needed
+
+  // Encode each value as 8 hex characters — no R allocation needed.  Sizing
+  // the string up front and writing through a pointer beats appending to a
+  // reserved string, which re-checks capacity on every character.
   static const char hex[] = "0123456789abcdef";
-  std::string key;
-  key.reserve((2 + nj_vals.size()) * 4);
-  
-  for (uint16_t v : ni_vals) {
-    key += hex[(v >> 12) & 0xF];
-    key += hex[(v >> 8)  & 0xF];
-    key += hex[(v >> 4)  & 0xF];
-    key += hex[(v)       & 0xF];
+  std::string key((2 + nj_vals.size()) * 8, '0');
+  char *out = &key[0];
+
+  const auto write_hex = [&out](uint32_t v) {
+    out[0] = hex[(v >> 28) & 0xF];
+    out[1] = hex[(v >> 24) & 0xF];
+    out[2] = hex[(v >> 20) & 0xF];
+    out[3] = hex[(v >> 16) & 0xF];
+    out[4] = hex[(v >> 12) & 0xF];
+    out[5] = hex[(v >> 8)  & 0xF];
+    out[6] = hex[(v >> 4)  & 0xF];
+    out[7] = hex[(v)       & 0xF];
+    out += 8;
+  };
+  for (uint32_t v : ni_vals) {
+    write_hex(v);
   }
-  for (uint16_t v : nj_vals) {
-    key += hex[(v >> 12) & 0xF];
-    key += hex[(v >> 8)  & 0xF];
-    key += hex[(v >> 4)  & 0xF];
-    key += hex[(v)       & 0xF];
+  for (uint32_t v : nj_vals) {
+    write_hex(v);
   }
-  
+
   return key;
 }

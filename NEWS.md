@@ -633,6 +633,14 @@
   met during search, and `MultiRatchet()` no longer errors when a starting
   tree already meets `stopAtScore`.
 
+- The cache behind `ClusteringConcordance(normalize = TRUE)` keyed partitions
+  on block sizes narrowed to 16 bits, so two partitions whose block sizes
+  differed by a multiple of 65536 shared an entry and the second was given the
+  first one's expected mutual information.  Reaching this needed a tree of at
+  least 65536 tips, so no published result is affected; keys now span the full
+  range of an integer, which rules the collision out rather than making it
+  unlikely.
+
 # TreeSearch 2.0.0
 
 ## Breaking changes
