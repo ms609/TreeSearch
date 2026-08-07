@@ -60,20 +60,24 @@ PrepareData <- function(dataset, concavity = Inf) {
   }
 
   at <- attributes(dataset)
-  # `original_weight` (integer pattern multiplicities) is the base for
-  # character resampling; `weight` is the rescaled score weight passed to the
-  # C++ engine (identical for the usual integer weights).
+  # `original_weight` is the base for character resampling; `weight` is the
+  # same value, passed to the C++ engine. Both must go through
+  # `.ScaleWeight()`: for the usual integer weights it's a no-op, but for
+  # fractional weights (e.g. `rep(0.5, nChar)`) truncating `original_weight`
+  # to an integer instead floors every value to zero, so bootstrap/jackknife
+  # resample from an all-zero vector without any error (#139).
+  scaledWeight <- .ScaleWeight(at[["weight"]])
   structure(
     list(
       contrast = at[["contrast"]],
       tip_data = matrix(unlist(dataset, use.names = FALSE),
                         nrow = length(dataset), byrow = TRUE),
-      weight = .ScaleWeight(at[["weight"]]),
+      weight = scaledWeight,
       levels = at[["levels"]],
       min_steps = minSteps,
       concavity = if (iw) as.double(concavity) else Inf,
       info_amounts = infoAmounts,
-      original_weight = as.integer(at[["weight"]]),
+      original_weight = scaledWeight,
       index = at[["index"]],
       tip.label = names(dataset),
       nTip = length(dataset)

@@ -24,7 +24,13 @@ List quartet_concordance(const LogicalMatrix splits, const IntegerMatrix charact
     for (int t = 0; t < n_taxa; ++t) {
       int state = characters(t, c);
       char_col[t] = state;
-      if (!IntegerVector::is_na(state) && state > max_state) max_state = state;
+      if (!IntegerVector::is_na(state)) {
+        // State codes index n0 / n1 directly
+        if (state < 0) {
+          Rcpp::stop("`characters` must contain non-negative state codes.");
+        }
+        if (state > max_state) max_state = state;
+      }
     }
     // Hoist resize outside split loop: only reallocate when a new character
     // has states beyond the current buffer capacity.

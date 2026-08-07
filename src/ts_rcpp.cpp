@@ -2251,8 +2251,7 @@ List ts_collapse_pool(
     List scoringConfig,
     Nullable<List> hsjConfig = R_NilValue,
     Nullable<List> xformConfig = R_NilValue,
-    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
-    Nullable<IntegerMatrix> consZero = R_NilValue)
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
 {
   ts::DataSet ds = unpack_scoring(contrast, tip_data, weight, levels,
                                   scoringConfig);
@@ -2264,48 +2263,29 @@ List ts_collapse_pool(
   // must stay visible even when its branch is zero-length (it would otherwise be
   // contracted, leaving the result looking unconstrained).  We protect every
   // constraint split from collapse — the unsupported NON-constraint branches
-  // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
-  // bitset: trees are re-rooted on tip 0 below, so every internal node's
-  // descendant set excludes tip 0 and is directly comparable to these.
+  // still collapse.
   //
-  // The canonical bitsets alone protect only a node whose descendant set is the
-  // 1 group EXACTLY, which is what the search's locked-node machinery enforces.
-  // The constraint the user is promised is looser: tips ambiguous for the
-  // constraint character are free to sit on either side, so the split can be
-  // realised by a node that is not exactly the 1 group, which no exact match
-  // reaches — and contracting that node's edge takes the enforced grouping with
-  // it.  `cons_one` / `cons_zero` are the raw (uncanonicalised) groups, from
-  // which the realising node is found per tree below.
+  // Each split is stored as the pair of groups build_constraint() reads
+  // (1 = together, 0 = apart, anything else = free; see ts_constraint.cpp).
+  // Both come out of the one membership matrix, so the protection here cannot
+  // drift from the constraint the search enforced.  A pure 0/1 matrix gives
+  // apart == the complement, and the test below then fires on exactly the node
+  // an exact-match test would have found.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
-  std::vector<std::vector<uint64_t>> cons_canon;
   std::vector<std::vector<uint64_t>> cons_one, cons_zero;
-  auto row_bits = [&](const IntegerMatrix& m, int r) {
-    std::vector<uint64_t> b(wps, 0);
-    for (int c = 0; c < n_tip && c < m.ncol(); ++c) {
-      if (m(r, c)) b[c >> 6] |= (1ULL << (c & 63));
-    }
-    return b;
-  };
   if (consSplitMatrix.isNotNull()) {
     IntegerMatrix cs(consSplitMatrix.get());
     for (int r = 0; r < cs.nrow(); ++r) {
-      std::vector<uint64_t> b = row_bits(cs, r);
-      cons_one.push_back(b);
-      if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
-        for (int w = 0; w < wps; ++w) b[w] = ~b[w];
-        int rem = n_tip & 63;
-        if (rem) b[wps - 1] &= ((1ULL << rem) - 1);  // clear padding bits
+      std::vector<uint64_t> one(wps, 0), zero(wps, 0);
+      for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
+        const int v = cs(r, c);
+        if (v != 1 && v != 0) continue;                 // free tip
+        (v == 1 ? one : zero)[c >> 6] |= (1ULL << (c & 63));
       }
-      cons_canon.push_back(std::move(b));
+      cons_one.push_back(std::move(one));
+      cons_zero.push_back(std::move(zero));
     }
-    if (consZero.isNotNull()) {
-      IntegerMatrix cz(consZero.get());
-      for (int r = 0; r < cz.nrow() && r < cs.nrow(); ++r) {
-        cons_zero.push_back(row_bits(cz, r));
-      }
-    }
-    cons_zero.resize(cons_one.size(), std::vector<uint64_t>(wps, 0));
   }
   // Group sizes depend only on the constraint, so they are counted once here
   // rather than per tree.  A group of fewer than two taxa is skipped below:
@@ -2368,11 +2348,11 @@ List ts_collapse_pool(
 
     ts::compute_collapsed_flags_aggressive(tree, ds, flags);
 
-    // Protect constraint splits: clear the collapse flag of any internal edge
-    // whose bipartition realises a constraint (keeps the enforced clade
-    // visible).  Per-node descendant tip sets via a postorder OR; rooted on
-    // tip 0, so every internal set excludes tip 0 == the canonical form above.
-    if (!cons_canon.empty()) {
+    // Protect constraint splits: keep an internal edge that realises each
+    // constraint out of the contraction, so the enforced grouping stays
+    // visible.  Per-node descendant tip sets via a postorder OR; rooted on
+    // tip 0, so every internal set excludes tip 0.
+    if (!cons_one.empty()) {
       std::vector<uint64_t> tb(static_cast<size_t>(tree.n_node) * wps, 0);
       for (int tp = 0; tp < n_tip; ++tp) {
         tb[static_cast<size_t>(tp) * wps + (tp >> 6)] = 1ULL << (tp & 63);
@@ -2386,23 +2366,16 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      for (int v = n_tip + 1; v < tree.n_node; ++v) {
-        if (v >= static_cast<int>(flags.size()) || !flags[v]) continue;
-        const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-        for (const auto& cb : cons_canon) {
-          bool eq = true;
-          for (int w = 0; w < wps; ++w) {
-            if (nb[w] != cb[w]) { eq = false; break; }
-          }
-          if (eq) { flags[v] = 0; break; }
-        }
-      }
-
-      // A split can also be realised by a node that is not the 1 group exactly,
-      // and that node needs protecting too — but only when nothing else keeps
-      // the split visible.  A node realises the split when it holds one whole
-      // group and none of the other; every such node's own edge displays it, so
-      // if any of them already survives the contraction there is nothing to do.
+      // A node realises the split when it holds one whole group and none of the
+      // other -- ts::node_displays_split() (ts_constraint.h), the same predicate
+      // the search's mapping and the Wagner build read, so the branch protected
+      // here is the branch they enforce.  With free tips that node is generally
+      // NOT the 1 group exactly, and the exact-match test this replaced then
+      // protected nothing at all (agent-issues/TreeSearch#54).
+      //
+      // Protect one such node, and only when nothing else keeps the split
+      // visible: every realising node's own edge displays the split, so if any
+      // of them already survives the contraction there is nothing to do.
       // Protecting unconditionally would instead force the resolution of a
       // branch the constraint does not ask for, which is the "unsupported
       // non-constraint branches still collapse" half of the promise.
@@ -2419,20 +2392,13 @@ List ts_collapse_pool(
         bool survives = false;
         int to_protect = -1;
         for (int side = 0; side < 2 && !survives; ++side) {
-          const std::vector<uint64_t>& in = *grp[side];
-          const std::vector<uint64_t>& out = *grp[1 - side];
+          const uint64_t* in = grp[side]->data();
+          const uint64_t* out = grp[1 - side]->data();
           for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
             const int v = tree.postorder[pi];
             if (v <= n_tip || v >= static_cast<int>(flags.size())) continue;
             const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-            bool realises = true;
-            for (int w = 0; w < wps; ++w) {
-              if ((nb[w] & in[w]) != in[w] || (nb[w] & out[w])) {
-                realises = false;
-                break;
-              }
-            }
-            if (!realises) continue;
+            if (!ts::node_displays_split(nb, in, out, wps)) continue;
             if (!flags[v]) { survives = true; break; }
             if (to_protect < 0) to_protect = v;  // the MRCA, in postorder
           }

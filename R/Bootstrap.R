@@ -17,6 +17,10 @@ BootstrapTree <- function (edgeList, dataset, EdgeSwapper = NNISwap,
                            maxIter, maxHits, verbosity = 1L,
                            stopAtPeak = FALSE, stopAtPlateau = 0L, ...) {
   startWeights <- dataset[["original_weight"]]
+  if (sum(startWeights) == 0L) {
+    stop("`dataset[[\"original_weight\"]]` sums to zero; no characters ",
+         "to resample.")
+  }
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
   resampling <- tabulate(
