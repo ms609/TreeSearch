@@ -180,7 +180,27 @@ TaxonInfluence <- function(
         write.nexus(result, file = leafFile)
       }
     }
-    d <- matrix(Distance(tree, result), length(result))
+    # `Distance()`'s matrix orientation is not a documented contract: TreeDist
+    # returns dim (length(result), length(tree)) when tip labels mismatch
+    # (the path this function always takes) but (length(tree), length(result))
+    # when they match, so a user-supplied `Distance` could transpose silently.
+    # Normalize explicitly rather than assuming either orientation. (When
+    # length(result) == nTreeArg the two orientations are indistinguishable
+    # from shape alone; a transposed square result would pass through
+    # undetected, same as any shape-only check.)
+    # (`length()` of a single "phylo" counts its list components, not trees.)
+    nTreeArg <- if (inherits(tree, "phylo")) 1L else length(tree)
+    d <- as.matrix(Distance(tree, result))
+    expectedDim <- c(length(result), nTreeArg)
+    if (!identical(dim(d), expectedDim)) {
+      if (identical(dim(d), rev(expectedDim))) {
+        d <- t(d)
+      } else {
+        stop("`Distance(tree, result)` returned a ",
+             paste(dim(d), collapse = " x "), " matrix; expected ",
+             paste(expectedDim, collapse = " x "), ".")
+      }
+    }
     dwMean <- if (calcWeighted) {
       resWeights <- if (length(result) > 1) {
         colSums(as.matrix(Distance(result)))

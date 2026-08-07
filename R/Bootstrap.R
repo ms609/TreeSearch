@@ -23,8 +23,10 @@ BootstrapTree <- function (edgeList, dataset, EdgeSwapper = NNISwap,
   }
   eachChar <- seq_along(startWeights)
   deindexedChars <- rep.int(eachChar, startWeights)
-  resampling <- tabulate(sample(deindexedChars, replace = TRUE),
-                         length(startWeights))
+  resampling <- tabulate(
+    deindexedChars[sample.int(length(deindexedChars), replace = TRUE)],
+    length(startWeights)
+  )
   # R copy-on-modify: the caller's `dataset` is unchanged.
   dataset[["weight"]] <- as.integer(resampling)
 
