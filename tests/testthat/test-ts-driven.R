@@ -297,6 +297,11 @@ test_that("startEdge accepts a bare matrix or a list of matrices", {
   expect_error(Run(list(edges[[1]][, 1, drop = FALSE])),
                "exactly 2 columns")
   expect_error(Run(list()), "supplies no edge matrices")
+  # A 0 x 2 matrix satisfies every check above, then reaches
+  # `flat.data() + n_edge` on an empty vector -- pointer arithmetic that is
+  # undefined before C++20 and that neither sanitizer leg reports.
+  expect_error(Run(list(edges[[1]][0, , drop = FALSE])),
+               "at least one edge")
 })
 
 test_that("MaximizeParsimony() uses C++ engine", {

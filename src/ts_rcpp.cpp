@@ -1726,6 +1726,15 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
     }
     {
       const int n_edge = mats[0].nrow();
+      // A zero-row matrix passes both checks below -- its ncol is 2, and
+      // every matrix agrees on nrow -- leaves `flat` empty, and then reaches
+      // `flat.data() + n_edge`: pointer arithmetic on a possibly-null
+      // pointer, undefined before C++20 and reported by neither UBSan's
+      // nonnull check nor hardened libstdc++.  No tree has zero edges, so
+      // reject it here alongside the other shape checks.
+      if (n_edge < 1) {
+        stop("Each `startEdge` matrix must describe at least one edge.");
+      }
       params.start_n_edge = n_edge;
       params.start_edges.reserve(mats.size());
       for (const IntegerMatrix& se : mats) {
