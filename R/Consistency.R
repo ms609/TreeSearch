@@ -220,8 +220,17 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     2 ^ seq_along(tokensToSort)
   
   nAssigned <- log2(nWhole) + 1
-  wholes <- mapping[2 ^ (seq_len(nAssigned) - 1)]
-  
+  wholeBits <- 2 ^ (seq_len(nAssigned) - 1)
+  # A state that never occurs on its own -- only ever within an ambiguous
+  # (polymorphic) token -- has no row in `mapping` yet.  Give it its own
+  # unused code so that ambiguous tokens referencing it still sum to a
+  # meaningful value, rather than silently contributing zero.
+  unassigned <- wholeBits[mapping[wholeBits] == 0]
+  if (length(unassigned)) {
+    mapping[unassigned] <- 2 ^ (length(tokensToSort) + seq_along(unassigned))
+  }
+  wholes <- mapping[wholeBits]
+
   ambigTokens <- contr[ambig & seq_along(contr) %fin% char]
   mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(contr[ambig])), 32),
                                 2, function(x) sum(wholes[x]))
