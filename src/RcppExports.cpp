@@ -590,8 +590,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_collapse_pool
-List ts_collapse_pool(List edges, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, List scoringConfig, Nullable<List> hsjConfig, Nullable<List> xformConfig, Nullable<IntegerMatrix> consSplitMatrix, Nullable<IntegerMatrix> consZero);
-RcppExport SEXP _TreeSearch_ts_collapse_pool(SEXP edgesSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP scoringConfigSEXP, SEXP hsjConfigSEXP, SEXP xformConfigSEXP, SEXP consSplitMatrixSEXP, SEXP consZeroSEXP) {
+List ts_collapse_pool(List edges, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, List scoringConfig, Nullable<List> hsjConfig, Nullable<List> xformConfig, Nullable<IntegerMatrix> consSplitMatrix);
+RcppExport SEXP _TreeSearch_ts_collapse_pool(SEXP edgesSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP scoringConfigSEXP, SEXP hsjConfigSEXP, SEXP xformConfigSEXP, SEXP consSplitMatrixSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -604,8 +604,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Nullable<List> >::type hsjConfig(hsjConfigSEXP);
     Rcpp::traits::input_parameter< Nullable<List> >::type xformConfig(xformConfigSEXP);
     Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type consSplitMatrix(consSplitMatrixSEXP);
-    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type consZero(consZeroSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_collapse_pool(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix, consZero));
+    rcpp_result_gen = Rcpp::wrap(ts_collapse_pool(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix));
     return rcpp_result_gen;
 END_RCPP
 }

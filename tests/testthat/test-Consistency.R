@@ -93,6 +93,20 @@ test_that("Consistency() handles `-`", {
   )
 })
 
+test_that("ExpectedLength() handles a state only seen within a polymorphism", {
+  # A state that never appears on its own -- only ever inside an ambiguous
+  # (polymorphic) token -- must not crash .SortTokens()'s wholes/ambiguity
+  # remapping.  Regression test for a crash reported downstream of the
+  # #88/#87/#94/#112 fix:
+  # Error in names(object) <- nm :
+  #   'names' attribute [4] must be the same length as the vector [2]
+  tree <- TreeTools::BalancedTree(paste0("t", 1:4))
+  dat <- StringToPhyDat("00(12)(12)", TipLabels(tree))
+  expect_silent(el <- ExpectedLength(dat, tree, nRelabel = 20))
+  expect_type(el, "double")
+  expect_length(el, 1)
+})
+
 test_that(".SortTokens() works", {
   contrast <- structure(c(0, 0, 1, 1, 0, 0, 0, 1, 0,
                           1, 0, 1, 0, 0, 0, 0, 0, 1, 
@@ -123,7 +137,6 @@ test_that(".SortTokens() works", {
   expect_equal(TreeSearch:::.SortTokens(rep(c(1, 2, 3, 4, 8, 9),
                                c(2, 3, 4, 5, 1, 1)), cont, inapp = 1),
                rep(c(4, 2, 63, 1, 3, 6), c(2, 3, 4, 5, 1, 1)))
-
 })
 
 test_that(".SortTokens() keeps a present-only partial-ambiguity token", {
@@ -206,4 +219,10 @@ test_that("Consistency() returns the documented NaN for degenerate chars", {
   set.seed(1)
   rhiRes <- Consistency(autDat, tree, nRelabel = 50)
   expect_true(is.nan(rhiRes[, "rhi"]))
+
+  # States that only ever occur within a polymorphism (never on their own)
+  # must not be silently mapped to zero -- regression test for a crash in
+  # ExpectedLength() when a character like "00(12)(12)" is scored.
+  expect_equal(TreeSearch:::.SortTokens(rep(1:2, 2:2), c(1, 6), NA),
+               rep(c(2, 12), 2:2))
 })

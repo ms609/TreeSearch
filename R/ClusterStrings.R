@@ -5,12 +5,14 @@
 #' 
 #' @param x Character vector.
 #' @param maxCluster Integer specifying maximum number of clusters to consider.
-#' @return `NameClusters()` returns an integer assigning each element of `x`
-#' to a cluster, with an attribute `med` specifying the median string in each 
+#' @return `ClusterStrings()` returns an integer assigning each element of `x`
+#' to a cluster, with an attribute `med` specifying the median string in each
 #' cluster, and `silhouette` reporting the silhouette coefficient of the optimal
-#' clustering.  Coefficients < 0.5 indicate weak structure, and no clusters are
-#' returned.  If the number of unique elements of `x` is less than `maxCluster`,
-#' all occurrences of each entry are assigned to an individual cluster.
+#' clustering.  Coefficients < 0.5 indicate weak structure, in which case all
+#' elements of `x` are assigned to a single cluster.  If the number of unique
+#' elements of `x` is less than `maxCluster`, all occurrences of each entry
+#' are assigned to an individual cluster instead, with `silhouette` reported
+#' as `NA`.
 #' 
 #' @examples
 #' ClusterStrings(c(paste0("FirstCluster ", 1:5),
@@ -36,14 +38,14 @@ ClusterStrings <- function (x, maxCluster = 12) {
   
   if (length(unique(x)) < maxCluster) {
     nom <- unique(x)
-    structure(match(x, nom), "med" = nom)
+    structure(match(x, nom), "med" = nom, silhouette = NA_real_)
   } else {
     possibleClusters <- 2:maxCluster
     hSil <- pamSil <- -99
     dists <- adist(x) # approximate string distance
 
     pamClusters <- lapply(possibleClusters, function (k) {
-      cluster::pam(dists, k = k)
+      cluster::pam(as.dist(dists), k = k)
     })
     pamSils <- vapply(pamClusters, function (pamCluster) {
       mean(cluster::silhouette(pamCluster)[, 3])
@@ -63,12 +65,13 @@ ClusterStrings <- function (x, maxCluster = 12) {
     
     bestCluster <- c("none", "pam", "hmm")[which.max(c(0.5, pamSil, hSil))]
     
-    clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster, 1)
-    
+    clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster,
+                         rep(1L, length(x)))
+
     medians <- vapply(seq_len(max(clustering)),
                       function (i) {
                         these <- clustering == i
-                        x[these][which.min(colSums(dists[these, these]))]
+                        x[these][which.min(colSums(dists[these, these, drop = FALSE]))]
                       }, character(1))
     
     structure(clustering,
