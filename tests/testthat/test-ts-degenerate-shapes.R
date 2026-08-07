@@ -267,7 +267,15 @@ test_that("L3b incremental edge sets survive degenerate data", {
   # TS_L3B_INCREMENTAL forces it, so its six memcpy sites and its
   # `&edge_set_buf[db]` address formations are unreachable from any
   # ordinarily-sized test.  Force the path on a small tree instead of
-  # paying for 150 tips.
+  # paying for 150 tips.  That the knob is sufficient here was checked, not
+  # assumed -- `l3b_active` also requires a null sector mask, no tabu and no
+  # pool collection, and this call satisfies all of them: run it with
+  # TS_L3B_STATS=1 and the stats line reports patch_clips = 36.
+  #
+  # The two zero-word datasets below are the complementary case: L3b is
+  # correctly *inert* for them, because `l3b_active` requires
+  # `use_directional`, which requires `total_words > 0`.  Between them the
+  # two halves cover both sides of that guard.
   original <- Sys.getenv("TS_L3B_INCREMENTAL", unset = NA)
   on.exit({
     if (is.na(original)) {

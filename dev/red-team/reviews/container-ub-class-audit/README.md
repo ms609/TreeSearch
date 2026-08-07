@@ -54,6 +54,14 @@ Zero aborts. Battery 3 matters most: `l3b_active` requires `n_tip >= 150`
 unless `TS_L3B_INCREMENTAL` is set, so eight `ts_tbr.cpp` sites had never
 been executed by any test at any point.
 
+Two honest qualifications on battery 3. The knobs were *set*; that each one
+switched on the path it names was not verified individually, so read that
+row as breadth, not as 37 confirmed alternative kernels. The exception is
+L3b, which is load-bearing and was confirmed: `l3b_active` also demands a
+null sector mask, no tabu list and no pool collection, and under
+`TS_L3B_STATS=1` the forced 12-tip call reports `patch_clips=36`, so the
+path really does engage.
+
 **Positive control.** "No aborts" is uninterpretable without proof that the
 harness can abort. Reverting the `#151` entry guard and rebuilding produced
 `stl_vector.h:1130: Assertion '__n < this->size()' failed` on the very first
