@@ -20,6 +20,9 @@ rctPhylo <- function(edge, tips) {
 }
 
 ## Split membership matrix, columns in `tips` order.
+##
+## as.Splits() reports NON-TRIVIAL splits only: it omits the pendant edge of
+## each tip.  Every helper below inherits that, so see rctSeparates().
 rctSplits <- function(tree, tips) {
   sp <- as.Splits(tree, tipLabels = tips)
   m <- as.logical(sp)
@@ -31,7 +34,16 @@ rctSplits <- function(tree, tips) {
 ## Does some edge put all of `together` on one side and all of `apart` on the
 ## other?  This is the documented contract, stated without reference to which
 ## group the machinery happens to canonicalise as "inside".
+##
+## Both groups must hold at least two taxa, and that is checked rather than
+## assumed.  A group of one is separated from everything by its own pendant
+## edge, so EVERY tree satisfies such a character -- but the pendant edges are
+## not in rctSplits(), so this would answer FALSE for all of them and report a
+## correct sampler as broken.  Measuring coverage that way is what produced the
+## retracted figures this file's comments used to quote.  A test that wants a
+## one-taxon group must add the trivial splits first.
 rctSeparates <- function(tree, tips, together, apart) {
+  stopifnot(length(together) > 1, length(apart) > 1)
   m <- rctSplits(tree, tips)
   any(apply(m, 1, function(r) {
     all(r[together] == r[together][[1]]) &&

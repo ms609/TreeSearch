@@ -3816,6 +3816,8 @@ IntegerMatrix ts_random_constrained_tree(
     CharacterVector levels,
     Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
 {
+  validate_tip_data_values(INTEGER(tip_data), tip_data.nrow(), tip_data.ncol(),
+                           contrast.nrow());
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
   ts::ConstraintData cd = build_constraint_from_r(
       tip_data.nrow(), consSplitMatrix, R_NilValue, R_NilValue,

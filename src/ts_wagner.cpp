@@ -1219,12 +1219,21 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
 // WITH FREE TIPS -- `?`-coded, or unnamed by a character -- that reasoning
 // fails.  A clade may take on any tip the split does not name, two splits with
 // disjoint groups may nest either way round or not at all, and the backbone
-// above can build only one of those arrangements: on seven taxa with two such
-// characters it reaches 65 of the 187 compliant topologies, and with the free
-// tips pinned outside every group (the pre-#54 code) just 15.
+// above can build only one of those arrangements: of the 1155 compliant trees
+// on eight taxa constrained by two characters ({a,b}|{c,d} and {e,f}|{g,h}) it
+// reaches 105, and so did the pre-#121 code that also pinned the free tips
+// outside every group.  On six taxa with one character and two free tips, where
+// there is only one clade to arrange, the two differ: 35 of 35 against 15.
 // random_constrained_by_insertion() below drops the backbone and grows the tree
 // a tip at a time instead, each at a uniformly random edge among those that
-// keep the tree compliant -- which reaches all 187.  See its own comment.
+// keep the tree compliant -- which reaches all 1155.  See its own comment.
+//
+// Those counts are from exhaustive enumeration, checked against every edge
+// INCLUDING the pendant ones: a group of one taxon is separated from the rest
+// by its own pendant edge, so a checker that looks only at non-trivial splits
+// (as.Splits() omits them) reads such a character as unsatisfiable and
+// undercounts the compliant set.  An earlier revision of this comment quoted
+// figures measured that way; they were wrong.
 //
 // Making each together-group an exact clade is not always *possible*: the
 // R-side gate (.PrepareConstraint) admits four-gamete-compatible splits that

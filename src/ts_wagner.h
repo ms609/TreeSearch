@@ -80,15 +80,22 @@ std::vector<double> wagner_entropy_scores(const DataSet& ds);
 void random_topology_tree(TreeState& tree, const DataSet& ds);
 
 // Build a random tree topology that satisfies topological constraints.
-// Constructs the constraint backbone (one node per constraint split), randomly
-// resolving all multifurcations by uniform random binary insertion, then places
-// each tip that has room the backbone would not give it at a uniformly random
-// edge of the region its own splits leave open — inside the clade of the
-// tightest split that must contain it, never inside one that must not, and
-// anywhere at all for a tip the constraint does not name.  Restricting such a
-// tip to a sibling position, as this did before agent-issues/TreeSearch#54,
-// sampled a corner of the legal topologies rather than the whole of them.
+// Every compliant topology is reachable; see ts_wagner.cpp for why, and for
+// where the sampling is exactly uniform and where it is not.
 // Like random_topology_tree(), the result is NOT scored.
+//
+// Two constructions, picked by whether any split leaves a tip free:
+//
+//  * no free tips — the constraint pins every clade, so this builds the nesting
+//    of the "together" groups directly and resolves each polytomy by uniform
+//    random insertion.  Cheap.  This is the path consensus constraints
+//    (build_constraint_from_bitsets) take.
+//  * any free tip — no backbone at all: the tree is grown a tip at a time, each
+//    at a uniformly random edge among those that keep the constraint displayed.
+//    Costs a constraint re-map per named tip, plus a bounded rejection pass
+//    ahead of it (agent-issues/TreeSearch#128), so it is much the dearer of the
+//    two.  Building a backbone here instead would reach only a fraction of the
+//    legal topologies (agent-issues/TreeSearch#121).
 //
 // Falls back to random_topology_tree() if no constraints are active.
 void random_constrained_tree(TreeState& tree, const DataSet& ds,
