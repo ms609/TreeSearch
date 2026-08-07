@@ -596,6 +596,14 @@
   therefore returns more trees than before, and any count derived from it will
   rise.  `MaximizeParsimony()` is unaffected: it drives a separate enumerator
   that has always swept the root edge.
+- `Ratchet(stopAtScore = )` no longer returns a tree whose independently
+  recomputed score disagrees with its `"score"` attribute.  Its early-exit
+  paths -- meeting the target score during search, or already meeting it on
+  entry -- skipped the bookkeeping that the return value depends on, so the
+  *input* tree could be returned carrying the *improved* score.
+  `returnAll = TRUE` no longer errors ("No trees!?") when the target score is
+  met during search, and `MultiRatchet()` no longer errors when a starting
+  tree already meets `stopAtScore`.
 
 # TreeSearch 2.0.0
 
