@@ -185,7 +185,7 @@ test_that("ExpectedLength() cache does not collide across tree topologies", {
   expect_equal(ExpectedLength(charDat, bal, 500), balLength)
 })
 
-test_that("ExpectedLength() cache key is invariant to edge order", {
+test_that("ExpectedLength() cache key is invariant to edge order and labels", {
   tips <- paste0("t", 1:10)
   tree <- TreeTools::BalancedTree(tips)
   charDat <- StringToPhyDat("0000011111", tips)
@@ -194,18 +194,54 @@ test_that("ExpectedLength() cache key is invariant to edge order", {
   postLength <- ExpectedLength(charDat, TreeTools::Postorder(tree), 200)
   nKeys <- length(ls(TreeSearch:::.CharLengthCache))
 
-  # The same labelled topology presented in a different edge order must reuse
-  # the existing entry, not add a second one.  Asserting the key count, rather
-  # than the returned value, is what makes this a regression test: the median
-  # is stable enough that a recomputation would return the same number.
-  preLength <- ExpectedLength(charDat, TreeTools::Preorder(tree), 200)
-  expect_equal(length(ls(TreeSearch:::.CharLengthCache)), nKeys)
-  expect_equal(preLength, postLength)
+  # Each of these presents the same rooted shape, so each must reuse the
+  # existing entry rather than add one.  Asserting the key count, rather than
+  # the returned value, is what makes this a regression test: the median is
+  # stable enough that a recomputation would return the same number.
+  expect_equal(ExpectedLength(charDat, TreeTools::Preorder(tree), 200),
+               postLength)
+  expect_equal(ExpectedLength(charDat, ape::rotate(tree, length(tips) + 2L),
+                              200), postLength)
+  # A different labelling of the same shape samples the same distribution, so
+  # it shares the entry too
+  relabelled <- TreeTools::RenumberTips(
+    TreeTools::BalancedTree(sample(tips)), tips)
+  expect_equal(ExpectedLength(charDat, relabelled, 200), postLength)
 
-  # Rotating a node likewise leaves the labelled topology unchanged
-  rotated <- ape::rotate(tree, length(tips) + 2L)
-  expect_equal(ExpectedLength(charDat, rotated, 200), postLength)
   expect_equal(length(ls(TreeSearch:::.CharLengthCache)), nKeys)
+})
+
+test_that(".ShapeKey() identifies rooted shapes", {
+  tips <- paste0("t", 1:12)
+  bal <- TreeTools::BalancedTree(tips)
+  pec <- TreeTools::PectinateTree(tips)
+
+  # Invariant to edge order, node rotation and labelling; distinguishes shape
+  expect_equal(TreeSearch:::.ShapeKey(TreeTools::Preorder(bal)),
+               TreeSearch:::.ShapeKey(TreeTools::Postorder(bal)))
+  expect_equal(TreeSearch:::.ShapeKey(ape::rotate(bal, 15L)),
+               TreeSearch:::.ShapeKey(bal))
+  expect_equal(TreeSearch:::.ShapeKey(TreeTools::RenumberTips(
+                 TreeTools::BalancedTree(rev(tips)), tips)),
+               TreeSearch:::.ShapeKey(bal))
+  expect_false(TreeSearch:::.ShapeKey(pec) == TreeSearch:::.ShapeKey(bal))
+
+  # Agrees with TreeTools' independent enumeration as an equivalence relation
+  set.seed(2)
+  trees <- lapply(1:60, function(i) TreeTools::RandomTree(9, root = TRUE))
+  mine <- vapply(trees, TreeSearch:::.ShapeKey, character(1))
+  theirs <- vapply(trees, function(tr) {
+    as.character(TreeTools::RootedTreeShape(tr))
+  }, character(1))
+  expect_equal(as.integer(factor(mine, levels = unique(mine))),
+               as.integer(factor(theirs, levels = unique(theirs))))
+
+  # Unlike RootedTreeShape(), no leaf-count ceiling
+  expect_error(TreeTools::RootedTreeShape(TreeTools::BalancedTree(56)))
+  expect_type(TreeSearch:::.ShapeKey(TreeTools::BalancedTree(56)), "character")
+  # Leaf counts whose codes pad to the same length stay distinct
+  expect_false(TreeSearch:::.ShapeKey(TreeTools::BalancedTree(55)) ==
+                 TreeSearch:::.ShapeKey(TreeTools::BalancedTree(56)))
 })
 
 test_that("Consistency() returns a matrix, not a vector, for one character", {

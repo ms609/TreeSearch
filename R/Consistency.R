@@ -135,7 +135,6 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 #' 
 #' @export
 #' @importFrom stats median
-#' @importFrom TreeTools Preorder SortTree
 #' @family tree scoring
 #' @template MRS
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
@@ -157,31 +156,19 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
-  # Canonicalising leaves the key invariant to edge order and node rotation,
-  # so one labelled topology occupies one entry however it was constructed.
-  # `.TreeForTaxa()` above has already renumbered tips to dataset order, which
-  # is what makes SortTree()'s label-driven ordering deterministic here.
-  # The key identifies the labelled topology, deliberately not the tree shape.
-  # The sampled distribution does depend on shape alone -- FastCharacterLength()
-  # is positional and the relabellings uniform -- but keying on shape would buy
-  # nothing: distinct trees of 24+ leaves practically never share a rooted shape
-  # (no collisions among 200 random 24-leaf trees, against 177 at 8 leaves, where
-  # the computation is trivial anyway), and RootedTreeShape() stops at 55 leaves,
-  # which over half the bundled inapplicable.phyData datasets exceed.  Sharing an
-  # entry between distinct trees would also leave a result dependent on what had
-  # been scored earlier in the session.
-  # Rooting is left un-canonicalised, as characters here may contain
-  # inapplicable tokens, whose lengths are not rooting-invariant.
-  canonical <- Preorder(SortTree(tree))
-  canonEdge <- canonical[["edge"]]
-  # The edge block is length-prefixed so that no tip label can be read as an
-  # edge entry, or vice versa.
-  treeKey <- paste(c(length(canonEdge), canonEdge, canonical[["tip.label"]]),
-                   collapse = ",")
-  # Cache per tree, and within that per character, rather than pasting both
-  # into one key: that keeps the tree key -- as long as the tree is large --
-  # out of every character's entry, and leaves no ambiguity about where the
-  # tree key ends and the state counts begin.
+  # Key on the unlabelled rooted shape, which is what the sampled distribution
+  # is a function of: leaf states are permuted uniformly, and relabelling
+  # composes with a uniform permutation to leave it uniform, so any two trees
+  # of the same shape are sampling the same distribution.  Keying on the
+  # labelled topology instead would be sound but strictly weaker -- identical
+  # topologies are a subset of identical shapes, so it would miss every reuse
+  # this catches and none of its own.  Rooting is part of the shape, as these
+  # characters may contain inapplicable tokens, whose lengths are not
+  # rooting-invariant.
+  treeKey <- .ShapeKey(tree)
+  # Cache per shape, and within that per character, rather than pasting both
+  # into one key: that keeps the shape key out of every character's entry, and
+  # leaves no ambiguity about where the shape key ends and the counts begin.
   treeCache <- .CharLengthCache[[treeKey]]
   if (is.null(treeCache)) {
     treeCache <- new.env(hash = TRUE, parent = emptyenv())
@@ -226,6 +213,42 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
 
 .Bin <- function(x) {
   sum(2 ^ (seq_along(x)[as.logical(x)] - 1))
+}
+
+
+# Canonical identifier of a rooted tree's unlabelled shape, after
+# Aho, Hopcroft & Ullman: a leaf encodes as `01`, and an internal node wraps
+# its children's codes, sorted into a fixed order, in `0`...`1`.  Sorting is
+# what makes the code canonical, so it is already invariant to edge order and
+# to node rotation, and two rooted shapes are isomorphic exactly if their codes
+# agree.  Unlike `TreeTools::RootedTreeShape()`, which enumerates shapes into
+# an integer and so stops at 55 leaves, this is bounded only by string length.
+# @param tree A rooted, binary tree of class `phylo`.
+# @return A string identifying the shape of `tree`.
+#' @importFrom TreeTools NTip Postorder
+.ShapeKey <- function(tree) {
+  edge <- Postorder(tree)[["edge"]]
+  nTip <- NTip(tree)
+  code <- character(max(edge))
+  code[seq_len(nTip)] <- "01"
+  kids <- vector("list", max(edge))
+  # Postorder guarantees that a node's children are coded before the edge that
+  # subtends it is read, so a single pass suffices.
+  for (i in seq_len(dim(edge)[[1]])) {
+    parent <- edge[[i, 1]]
+    kids[[parent]] <- c(kids[[parent]], code[[edge[[i, 2]]]])
+    if (length(kids[[parent]]) == 2L) {
+      code[[parent]] <- paste0("0", paste(sort(kids[[parent]],
+                                               method = "radix"),
+                                          collapse = ""), "1")
+    }
+  }
+  bits <- as.integer(strsplit(code[[edge[[dim(edge)[[1]], 1]]]], "",
+                              fixed = TRUE)[[1]]) == 1L
+  # Pack to bytes for compactness.  Padding to a byte boundary could otherwise
+  # conflate shapes whose codes differ only in length, so the leaf count leads.
+  bits <- c(bits, rep(FALSE, (-length(bits)) %% 8))
+  paste0(nTip, ":", paste(as.character(packBits(bits, "raw")), collapse = ""))
 }
 
 
