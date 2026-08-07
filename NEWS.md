@@ -550,6 +550,27 @@
   both the `qmApp` (T-302) and `qm` (commit e8b318c3) scalar-unwrap paths,
   confirming all deltas are non-negative and match independent computation.
 
+- `ExpectedLength()`'s internal cache no longer collides across trees:
+  its key omitted any tree-derived component, so scoring two different trees
+  against the same dataset with the same `nRelabel` could silently return one
+  tree's cached result for the other, corrupting `rhi` -- a published
+  statistic -- returned by `Consistency()`.
+
+- `.SortTokens()` (used internally by `ExpectedLength()`) no longer rewrites
+  a partial-ambiguity token (e.g. `(01)`) as full ambiguity when the
+  dataset's contrast holds other ambiguous tokens (e.g. `?`) that are not
+  present in the character being processed, another silent corruption of
+  `rhi`.
+
+- `Consistency()` now always returns a matrix, even for a dataset that
+  compresses to a single character pattern; it previously returned a bare
+  numeric vector in that case, breaking `[, "ci"]`-style column access.
+
+- `Consistency()`'s documentation now states explicitly when its `ci`, `ri`,
+  `rc` and `rhi` columns are `NaN` (constant, autapomorphic and
+  zero-null-homoplasy characters respectively); the values themselves are
+  unchanged.
+  
 - `QuartetResolution()` no longer errors on a tree in which the four focal
   tips form an unresolved (star) quartet -- reachable from
   `MaximizeParsimony(collapse = TRUE)` output, the default since 2026-06-24.

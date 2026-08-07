@@ -51,12 +51,21 @@
 #' If zero (the default), the \acronym{RHI} is not calculated.
 #' @inheritParams CharacterLength
 #' 
-#' @return `Consistency()` returns a matrix with named columns specifying the 
+#' @return `Consistency()` returns a matrix with named columns specifying the
 #' consistency index (`ci`),
 #' retention index (`ri`),
 #' rescaled consistency index (`rc`) and
 #' relative homoplasy index (`rhi`).
-#' 
+#' `ci` is `NaN` for a constant character, for which both the observed and
+#' minimum length are zero.
+#' `ri` and `rc` are `NaN` when the maximum and minimum length coincide, as
+#' for a constant or an autapomorphic character.
+#' `rhi` is `NA` throughout if `nRelabel = 0`, as it is then not calculated.
+#' Otherwise `rhi` is `NaN` when the observed length already equals the
+#' minimum length and the median length under random leaf relabelling also
+#' equals the minimum; if only the median length equals the minimum, `rhi`
+#' is `Inf`.
+#'
 #' @examples 
 #' data(inapplicable.datasets)
 #' dataset <- inapplicable.phyData[[4]]
@@ -104,7 +113,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
   if (compress) {
     ret
   } else {
-    ret[attr(dataset, "index"), ]
+    ret[attr(dataset, "index"), , drop = FALSE]
   }
 }
 
@@ -147,10 +156,29 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
+  # Key on the unlabelled rooted shape, which is what the sampled distribution
+  # is a function of: leaf states are permuted uniformly, and relabelling
+  # composes with a uniform permutation to leave it uniform, so any two trees
+  # of the same shape are sampling the same distribution.  Keying on the
+  # labelled topology instead would be sound but strictly weaker -- identical
+  # topologies are a subset of identical shapes, so it would miss every reuse
+  # this catches and none of its own.  Rooting is part of the shape, as these
+  # characters may contain inapplicable tokens, whose lengths are not
+  # rooting-invariant.
+  treeKey <- .ShapeKey(tree)
+  # Cache per shape, and within that per character, rather than pasting both
+  # into one key: that keeps the shape key out of every character's entry, and
+  # leaves no ambiguity about where the shape key ends and the counts begin.
+  treeCache <- .CharLengthCache[[treeKey]]
+  if (is.null(treeCache)) {
+    treeCache <- new.env(hash = TRUE, parent = emptyenv())
+    .CharLengthCache[[treeKey]] <- treeCache
+  }
+
   .LengthForChar <- function(x) {
     key <- paste(c(nRelabel, x), collapse = ",")
-    if (!is.null(.CharLengthCache[[key]])) {
-      .CharLengthCache[[key]]
+    if (!is.null(treeCache[[key]])) {
+      treeCache[[key]]
     } else {
       patterns <- apply(unname(unique(t(
         as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
@@ -167,7 +195,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
         contrast = rwContrast,
         class = "phyDat")
       ret <- median(FastCharacterLength(tree, phy))
-      .CharLengthCache[[key]] <- ret
+      treeCache[[key]] <- ret
       ret
     }
   }
@@ -185,6 +213,42 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
 
 .Bin <- function(x) {
   sum(2 ^ (seq_along(x)[as.logical(x)] - 1))
+}
+
+
+# Canonical identifier of a rooted tree's unlabelled shape, after
+# Aho, Hopcroft & Ullman: a leaf encodes as `01`, and an internal node wraps
+# its children's codes, sorted into a fixed order, in `0`...`1`.  Sorting is
+# what makes the code canonical, so it is already invariant to edge order and
+# to node rotation, and two rooted shapes are isomorphic exactly if their codes
+# agree.  Unlike `TreeTools::RootedTreeShape()`, which enumerates shapes into
+# an integer and so stops at 55 leaves, this is bounded only by string length.
+# @param tree A rooted, binary tree of class `phylo`.
+# @return A string identifying the shape of `tree`.
+#' @importFrom TreeTools NTip Postorder
+.ShapeKey <- function(tree) {
+  edge <- Postorder(tree)[["edge"]]
+  nTip <- NTip(tree)
+  code <- character(max(edge))
+  code[seq_len(nTip)] <- "01"
+  kids <- vector("list", max(edge))
+  # Postorder guarantees that a node's children are coded before the edge that
+  # subtends it is read, so a single pass suffices.
+  for (i in seq_len(dim(edge)[[1]])) {
+    parent <- edge[[i, 1]]
+    kids[[parent]] <- c(kids[[parent]], code[[edge[[i, 2]]]])
+    if (length(kids[[parent]]) == 2L) {
+      code[[parent]] <- paste0("0", paste(sort(kids[[parent]],
+                                               method = "radix"),
+                                          collapse = ""), "1")
+    }
+  }
+  bits <- as.integer(strsplit(code[[edge[[dim(edge)[[1]], 1]]]], "",
+                              fixed = TRUE)[[1]]) == 1L
+  # Pack to bytes for compactness.  Padding to a byte boundary could otherwise
+  # conflate shapes whose codes differ only in length, so the leaf count leads.
+  bits <- c(bits, rep(FALSE, (-length(bits)) %% 8))
+  paste0(nTip, ":", paste(as.character(packBits(bits, "raw")), collapse = ""))
 }
 
 
@@ -232,7 +296,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   wholes <- mapping[wholeBits]
 
   ambigTokens <- contr[ambig & seq_along(contr) %fin% char]
-  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(contr[ambig])), 32),
+  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(ambigTokens)), 32),
                                 2, function(x) sum(wholes[x]))
   
   # Return:
