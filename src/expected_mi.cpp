@@ -173,21 +173,29 @@ std::string mi_key(IntegerVector ni, IntegerVector nj) {
   }
   std::sort(nj_vals.begin(), nj_vals.end());
 
-  // Encode each value as 8 hex characters — no R allocation needed
+  // Encode each value as 8 hex characters — no R allocation needed.  Sizing
+  // the string up front and writing through a pointer beats appending to a
+  // reserved string, which re-checks capacity on every character.
   static const char hex[] = "0123456789abcdef";
-  std::string key;
-  key.reserve((2 + nj_vals.size()) * 8);
+  std::string key((2 + nj_vals.size()) * 8, '0');
+  char *out = &key[0];
 
-  const auto append_hex = [&](uint32_t v) {
-    for (int shift = 28; shift >= 0; shift -= 4) {
-      key += hex[(v >> shift) & 0xF];
-    }
+  const auto write_hex = [&out](uint32_t v) {
+    out[0] = hex[(v >> 28) & 0xF];
+    out[1] = hex[(v >> 24) & 0xF];
+    out[2] = hex[(v >> 20) & 0xF];
+    out[3] = hex[(v >> 16) & 0xF];
+    out[4] = hex[(v >> 12) & 0xF];
+    out[5] = hex[(v >> 8)  & 0xF];
+    out[6] = hex[(v >> 4)  & 0xF];
+    out[7] = hex[(v)       & 0xF];
+    out += 8;
   };
   for (uint32_t v : ni_vals) {
-    append_hex(v);
+    write_hex(v);
   }
   for (uint32_t v : nj_vals) {
-    append_hex(v);
+    write_hex(v);
   }
 
   return key;

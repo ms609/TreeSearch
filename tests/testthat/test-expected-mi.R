@@ -96,6 +96,14 @@ test_that("mi_key() distinguishes block sizes above 65535", {
   expect_identical(TreeSearch:::mi_key(c(3L, 61L), c(30L, 31L)),
                    TreeSearch:::mi_key(c(61L, 3L), c(31L, 30L)))
 
+  # Fixed-width hex of the sorted values.  0x12345678 has eight distinct
+  # nibbles, so an emit that mis-shifts one is caught here; injectivity
+  # alone would not notice.
+  expect_identical(
+    TreeSearch:::mi_key(c(65597L, 3L), c(305419896L, 30L)),
+    paste(sprintf("%08x", c(3L, 65597L, 30L, 305419896L)), collapse = "")
+  )
+
   # Block sizes differing by a multiple of 65536 must not share a key
   aliases <- c(60L, 61L, 65596L, 65597L, 131133L)
   keys <- vapply(aliases, function(n) {
