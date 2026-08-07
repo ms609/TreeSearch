@@ -60,9 +60,11 @@
 #' minimum length are zero.
 #' `ri` and `rc` are `NaN` when the maximum and minimum length coincide, as
 #' for a constant or an autapomorphic character.
-#' `rhi` is `NaN` when the observed length already equals the minimum length
-#' and the median length under random leaf relabelling also equals the
-#' minimum; if only the median length equals the minimum, `rhi` is `Inf`.
+#' `rhi` is `NA` throughout if `nRelabel = 0`, as it is then not calculated.
+#' Otherwise `rhi` is `NaN` when the observed length already equals the
+#' minimum length and the median length under random leaf relabelling also
+#' equals the minimum; if only the median length equals the minimum, `rhi`
+#' is `Inf`.
 #'
 #' @examples 
 #' data(inapplicable.datasets)
@@ -166,13 +168,25 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   # session.  Rooting is likewise left un-canonicalised, as characters here
   # may contain inapplicable tokens, whose lengths are not rooting-invariant.
   canonical <- Preorder(SortTree(tree))
-  treeKey <- paste(c(canonical[["edge"]], canonical[["tip.label"]]),
+  canonEdge <- canonical[["edge"]]
+  # The edge block is length-prefixed so that no tip label can be read as an
+  # edge entry, or vice versa.
+  treeKey <- paste(c(length(canonEdge), canonEdge, canonical[["tip.label"]]),
                    collapse = ",")
+  # Cache per tree, and within that per character, rather than pasting both
+  # into one key: that keeps the tree key -- as long as the tree is large --
+  # out of every character's entry, and leaves no ambiguity about where the
+  # tree key ends and the state counts begin.
+  treeCache <- .CharLengthCache[[treeKey]]
+  if (is.null(treeCache)) {
+    treeCache <- new.env(hash = TRUE, parent = emptyenv())
+    .CharLengthCache[[treeKey]] <- treeCache
+  }
 
   .LengthForChar <- function(x) {
-    key <- paste(c(nRelabel, treeKey, x), collapse = ",")
-    if (!is.null(.CharLengthCache[[key]])) {
-      .CharLengthCache[[key]]
+    key <- paste(c(nRelabel, x), collapse = ",")
+    if (!is.null(treeCache[[key]])) {
+      treeCache[[key]]
     } else {
       patterns <- apply(unname(unique(t(
         as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
@@ -189,7 +203,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
         contrast = rwContrast,
         class = "phyDat")
       ret <- median(FastCharacterLength(tree, phy))
-      .CharLengthCache[[key]] <- ret
+      treeCache[[key]] <- ret
       ret
     }
   }
