@@ -133,6 +133,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 #' 
 #' @export
 #' @importFrom stats median
+#' @importFrom TreeTools Preorder SortTree
 #' @family tree scoring
 #' @template MRS
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
@@ -154,10 +155,19 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
-  # Topology (edges + tip labels) is included verbatim, not canonicalized
-  # for rerooting/rotation, so a cache miss -- not a wrong hit -- is the
-  # failure mode if two encodings of the same topology happen to differ.
-  treeKey <- paste(c(tree[["edge"]], tree[["tip.label"]]), collapse = ",")
+  # Canonicalising leaves the key invariant to edge order and node rotation,
+  # so one labelled topology occupies one entry however it was constructed.
+  # `.TreeForTaxa()` above has already renumbered tips to dataset order, which
+  # is what makes SortTree()'s label-driven ordering deterministic here.
+  # The key identifies the labelled topology, deliberately not the tree shape:
+  # the sampled length distribution depends only on shape, but the value
+  # cached is a finite-sample median, so sharing entries between distinct
+  # trees would make a result depend on what was scored earlier in the
+  # session.  Rooting is likewise left un-canonicalised, as characters here
+  # may contain inapplicable tokens, whose lengths are not rooting-invariant.
+  canonical <- Preorder(SortTree(tree))
+  treeKey <- paste(c(canonical[["edge"]], canonical[["tip.label"]]),
+                   collapse = ",")
 
   .LengthForChar <- function(x) {
     key <- paste(c(nRelabel, treeKey, x), collapse = ",")

@@ -185,6 +185,29 @@ test_that("ExpectedLength() cache does not collide across tree topologies", {
   expect_equal(ExpectedLength(charDat, bal, 500), balLength)
 })
 
+test_that("ExpectedLength() cache key is invariant to edge order", {
+  tips <- paste0("t", 1:10)
+  tree <- TreeTools::BalancedTree(tips)
+  charDat <- StringToPhyDat("0000011111", tips)
+
+  set.seed(101)
+  postLength <- ExpectedLength(charDat, TreeTools::Postorder(tree), 200)
+  nKeys <- length(ls(TreeSearch:::.CharLengthCache))
+
+  # The same labelled topology presented in a different edge order must reuse
+  # the existing entry, not add a second one.  Asserting the key count, rather
+  # than the returned value, is what makes this a regression test: the median
+  # is stable enough that a recomputation would return the same number.
+  preLength <- ExpectedLength(charDat, TreeTools::Preorder(tree), 200)
+  expect_equal(length(ls(TreeSearch:::.CharLengthCache)), nKeys)
+  expect_equal(preLength, postLength)
+
+  # Rotating a node likewise leaves the labelled topology unchanged
+  rotated <- ape::rotate(tree, length(tips) + 2L)
+  expect_equal(ExpectedLength(charDat, rotated, 200), postLength)
+  expect_equal(length(ls(TreeSearch:::.CharLengthCache)), nKeys)
+})
+
 test_that("Consistency() returns a matrix, not a vector, for one character", {
   tree <- ape::read.tree(
     text = ("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
