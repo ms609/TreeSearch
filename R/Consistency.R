@@ -161,12 +161,17 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   # so one labelled topology occupies one entry however it was constructed.
   # `.TreeForTaxa()` above has already renumbered tips to dataset order, which
   # is what makes SortTree()'s label-driven ordering deterministic here.
-  # The key identifies the labelled topology, deliberately not the tree shape:
-  # the sampled length distribution depends only on shape, but the value
-  # cached is a finite-sample median, so sharing entries between distinct
-  # trees would make a result depend on what was scored earlier in the
-  # session.  Rooting is likewise left un-canonicalised, as characters here
-  # may contain inapplicable tokens, whose lengths are not rooting-invariant.
+  # The key identifies the labelled topology, deliberately not the tree shape.
+  # The sampled distribution does depend on shape alone -- FastCharacterLength()
+  # is positional and the relabellings uniform -- but keying on shape would buy
+  # nothing: distinct trees of 24+ leaves practically never share a rooted shape
+  # (no collisions among 200 random 24-leaf trees, against 177 at 8 leaves, where
+  # the computation is trivial anyway), and RootedTreeShape() stops at 55 leaves,
+  # which over half the bundled inapplicable.phyData datasets exceed.  Sharing an
+  # entry between distinct trees would also leave a result dependent on what had
+  # been scored earlier in the session.
+  # Rooting is left un-canonicalised, as characters here may contain
+  # inapplicable tokens, whose lengths are not rooting-invariant.
   canonical <- Preorder(SortTree(tree))
   canonEdge <- canonical[["edge"]]
   # The edge block is length-prefixed so that no tip label can be read as an
