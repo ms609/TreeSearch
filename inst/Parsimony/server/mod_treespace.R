@@ -79,7 +79,7 @@ treespace_server <- function(id, r, clusterings, silThreshold, scores,
     })
 
     LogFirstHit <- function() {
-      LogCodeP("whenHit <- gsub(\"(seed|start|ratch\\\\d+|final)_\\\\d+\", \"\\\\1\",
+      LogCodeP("whenHit <- gsub(\"^(seed|start|ratch\\\\d+|final)_\\\\d+$\", \"\\\\1\",
               names(trees), perl = TRUE)")
       LogCodeP("attr(trees, \"firstHit\") <- table(whenHit)[unique(whenHit)]")
     }

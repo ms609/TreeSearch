@@ -2907,6 +2907,46 @@ List ts_bench_tbr_phases(
   }
   bool use_iw = std::isfinite(ds.concavity);
 
+  // A dataset can leave the Fitch kernel nothing to do -- every character
+  // constant or autapomorphic gives zero blocks -- so `total_words == 0` and
+  // `n_blocks == 0`, and `tree.prelim`, `vroot_cache` and the snapshot buffers
+  // are all empty.  The phase loops below would work them anyway:
+  // `&tree.prelim[sc_base]` and `&vroot_cache[ei * total_words]` take the
+  // address of element 0 of an empty vector (what `_GLIBCXX_ASSERTIONS`
+  // traps), and the snapshot benchmark's `memcpy` passes a null `.data()` to a
+  // parameter declared `nonnull` (what UBSan reports).  Both are undefined
+  // behaviour, and neither stops the function: it completes every clip and
+  // every snapshot iteration.
+  //
+  // Guard at entry rather than per site.  This is a benchmark harness, and
+  // with no Fitch words there is no per-phase work to time -- zero is the
+  // honest answer, where the numbers it used to report were timings of
+  // zero-byte copies.  Phase A above is safe at zero words (the HSJ search
+  // path scores that way by design), so the score is still real.
+  if (tree.total_words == 0) {
+    return List::create(
+      Named("n_tips") = tree.n_tip,
+      Named("n_node") = tree.n_node,
+      Named("n_blocks") = ds.n_blocks,
+      Named("total_words") = tree.total_words,
+      Named("total_chars") = 0,
+      Named("block_n_states") = IntegerVector(0),
+      Named("has_na") = has_na,
+      Named("use_iw") = use_iw,
+      Named("score") = score,
+      Named("time_full_rescore_us") = time_full_rescore_us,
+      Named("time_clip_incr_us") = 0.0,
+      Named("time_indirect_us") = 0.0,
+      Named("time_unclip_us") = 0.0,
+      Named("time_snapshot_save_us") = 0.0,
+      Named("time_snapshot_restore_us") = 0.0,
+      Named("snapshot_bytes") = 0.0,
+      Named("n_clips") = 0,
+      Named("n_candidates") = 0,
+      Named("n_snapshot_iters") = 0
+    );
+  }
+
   // Seed RNG
   std::mt19937 rng = ts::make_rng();
 
