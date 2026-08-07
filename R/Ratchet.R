@@ -121,7 +121,15 @@ Ratchet <- function(tree, dataset,
     if (verbosity > 1L) {
       message("*** Target score of ", stopAtScore, " met.")                     # nocov
     }
-    return(tree)
+    tree[["edge"]] <- cbind(edgeList[[1]], edgeList[[2]])
+    attr(tree, "score") <- bestScore
+    return(
+      if (returnAll) {
+        structure(list(tree), class = "multiPhylo")
+      } else {
+        tree
+      }
+    )
   }
   if (is.function(swappers)){
     swappers <- list(swappers)
@@ -167,10 +175,15 @@ Ratchet <- function(tree, dataset,
       if (!is.null(stopAtScore) && candScore < stopAtScore + epsilon) {
         BREAK <- TRUE
         if (verbosity > 1L) {                                                   # nocov start
-          message("  * Target score ", stopAtScore, 
+          message("  * Target score ", stopAtScore,
                   " met; terminating tree search.")
         }                                                                       # nocov end
+        edgeList <- candidate
         bestScore <- candScore
+        if (returnAll) {
+          forest[[i]] <- candidate
+          forestScores[i] <- candScore
+        }
         break
       }
     }
