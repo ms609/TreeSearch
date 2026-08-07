@@ -61,6 +61,14 @@
   free taxa it matched no branch, so the separating edge could still be
   contracted away -- the one route by which a *returned* tree could break the
   constraint.
+- Random starting trees under a constraint now sample every topology the
+  constraint permits.  Every tree the old generator produced was compliant, but
+  it built each "together" group as an exact clade with the `?`-coded taxa held
+  outside, so most compliant topologies could never be drawn at all: 15 of the
+  35 on six taxa with one constraint character, and 105 of the 1155 on eight
+  taxa with two.  Both are now drawn in full, and at close to equal rates.
+  Constrained searches that use random starts therefore begin from the whole
+  range of legal trees rather than one corner of it.
 - A constraint character whose `1` or `0` group holds fewer than two taxa now
   warns and is ignored, rather than being enforced as a clade.  Every tree
   separates such a group from the rest, so the character constrains nothing
