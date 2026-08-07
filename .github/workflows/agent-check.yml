@@ -92,6 +92,85 @@ jobs:
           "
         shell: bash
 
+  glibcxx-assertions:
+    runs-on: ubuntu-24.04-arm
+    name: libstdc++ hardened assertions
+
+    # libstdc++'s -D_GLIBCXX_ASSERTIONS turns container out-of-bounds *address
+    # formation* (e.g. `vec[n]` where n == vec.size(), with no load or store)
+    # into a hard abort. That class is invisible to plain builds, to the R CMD
+    # check leg above, and to ASan itself (which watches accesses, not address
+    # arithmetic) -- see agent-issues/TreeSearch#60 and #51. Runs independently
+    # of `ubuntu` for the fastest possible feedback, and skips vignettes/manual
+    # since it only needs testthat, not a full R CMD check.
+    env:
+      NOT_CRAN: "true"
+      # Cover the same tier-3 paths (long TBR/ratchet/resample searches) as
+      # `ubuntu`, since that's where a container out-of-bounds is most likely
+      # to be formed.
+      TREESEARCH_EXTENDED_TESTS: ${{ inputs.extended }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-30"
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: "release"
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+          extra-packages: |
+            shinytest2=?ignore
+            url::https://ms609.github.io/packages/bin/linux/aarch64-release/MaxMin_latest.tar.gz
+          # A cache-version distinct from `ubuntu`'s: that job's cache is
+          # saved post-job from the *same* restore key (OS/R-version/needs),
+          # and would otherwise get overwritten with this leg's hardened
+          # TreeSearch install -- silently handing `ubuntu` a build it never
+          # asked for, and next time round handing this leg a stale cached
+          # library that skips reinstalling under the flag.
+          cache-version: 3
+
+      - name: Build source tarball
+        shell: bash
+        run: R CMD build --no-build-vignettes --no-manual --no-resave-data .
+
+      - name: Install with libstdc++ hardened assertions
+        # MUST be PKG_CPPFLAGS, not PKG_CXXFLAGS: a user Makevars can zero the
+        # latter (it does on the maintainer's own dev machine), and the flag
+        # would then silently not reach the compiler.
+        #
+        # `shell: bash` (not the stepless default) is load-bearing here: only
+        # the explicit form runs with `-o pipefail`, so a failing `R CMD
+        # INSTALL` still fails the step even though its exit code is piped
+        # through `tee`.
+        env:
+          PKG_CPPFLAGS: -D_GLIBCXX_ASSERTIONS
+        shell: bash
+        run: |
+          R CMD INSTALL TreeSearch_*.tar.gz 2>&1 | tee /tmp/install.log
+          flag_count=$(grep -c -- '-D_GLIBCXX_ASSERTIONS' /tmp/install.log || echo 0)
+          echo "Compiler invocations carrying the flag: $flag_count"
+          if [ "${flag_count:-0}" -eq 0 ]; then
+            echo "::error::-D_GLIBCXX_ASSERTIONS never reached a compiler invocation -- this leg would silently provide no coverage"
+            exit 1
+          fi
+
+      - name: Run test suite under hardened libstdc++
+        shell: bash
+        run: |
+          Rscript -e "
+            library(testthat)
+            library(TreeSearch)
+            test_dir('tests/testthat', package = 'TreeSearch', load_package = 'installed',
+                     reporter = 'summary', stop_on_failure = TRUE)
+          "
+
   windows:
     needs: ubuntu
     runs-on: windows-latest
