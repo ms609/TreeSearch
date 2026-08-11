@@ -142,6 +142,17 @@ struct DrivenParams {
   int pool_max_size = 100;
   double pool_suboptimal = 0.0;  // 0 = keep only optimal
 
+  // Retention ceiling for the MPT-enumeration phase alone; 0 means "no separate
+  // ceiling", i.e. keep `pool_max_size` throughout, which is the default and is
+  // byte-identical to the behaviour before this field existed.
+  //
+  // Split from `pool_max_size` because only this half is safe to scale with
+  // search effort: during the replicate loop the cap is the size of the working
+  // set that fuse, sector selection and consensusConstrain all read, so raising
+  // it changes the search trajectory; after the loop it is purely how many
+  // equal-score topologies get returned.  See TreePool::raise_max_size().
+  int enum_pool_max_size = 0;
+
   // Timeout (seconds). 0 or negative = no timeout.
   double max_seconds = 0.0;
 
