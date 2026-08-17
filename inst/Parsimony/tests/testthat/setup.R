@@ -60,7 +60,7 @@ new_app_driver <- function(name, ...) {
 # reproducible rather than timing-dependent.
 #
 # This is how the Distribution baseline came to record `trees[1:125]` for a
-# state its test had set to c(77, 125) -- noticed only once the MaxMin
+# state its test had set to c(77, 125) -- noticed only once the Coreset
 # dependency fix let CI reach the suite at all.
 # ---------------------------------------------------------------------------
 wait_stable <- function(app, timeout = 30000, attempts = 3L,

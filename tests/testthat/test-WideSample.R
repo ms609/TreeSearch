@@ -1,6 +1,6 @@
 # Tier 1: runs on CRAN
 # Tests for WideSample() — Max-Min diversity (MMDP) tree subsampling
-skip_if_not_installed("MaxMin")
+skip_if_not_installed("Coreset")
 
 test_that("n >= length(trees) returns all trees", {
   trees <- as.phylo(0:9, nTip = 8)
@@ -163,14 +163,14 @@ test_that("bad dist argument is caught", {
 # Solver tiers ------------------------------------------------------------
 
 test_that("FarFirst() is called with named arguments, robust to formal order", {
-  # A stub with formals in a different order to MaxMin::FarFirst()'s
+  # A stub with formals in a different order to Coreset::FarFirst()'s
   # (k, d, N, ...): only fully-named call sites bind correctly regardless of
   # the package's chosen formal order.
   mockFarFirst <- function(d, k, N, ...) {
     stopifnot(is.numeric(k), length(k) == 1, is.function(d), is.numeric(N))
     seq_len(k)
   }
-  testthat::local_mocked_bindings(FarFirst = mockFarFirst, .package = "MaxMin")
+  testthat::local_mocked_bindings(FarFirst = mockFarFirst, .package = "Coreset")
 
   trees <- as.phylo(0:9, nTip = 8)
   expect_length(WideSample(trees, 3, effort = 1), 3)      # tier-1 selection
