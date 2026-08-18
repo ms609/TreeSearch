@@ -122,7 +122,7 @@
   consContrast <- attr(constraint, "contrast")
   nConsStates <- ncol(consContrast)
   if (nConsStates < 2L) {
-    warning("Igoring empty constraint", call. = FALSE)
+    warning("Ignoring empty constraint", call. = FALSE)
     return(list())
   }
 
