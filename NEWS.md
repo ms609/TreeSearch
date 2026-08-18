@@ -521,7 +521,7 @@
   are now private and no longer exported.
 
 - `WideSample()` now dispatches to the appropriate Max-Min diversity (MMDP)
-  solver from the `MaxMin` package, choosing the tier automatically
+  solver from the `Coreset` package, choosing the tier automatically
   from `length(trees)`.
 
 - New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
