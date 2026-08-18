@@ -590,8 +590,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_collapse_pool
-List ts_collapse_pool(List edges, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, List scoringConfig, Nullable<List> hsjConfig, Nullable<List> xformConfig, Nullable<IntegerMatrix> consSplitMatrix);
-RcppExport SEXP _TreeSearch_ts_collapse_pool(SEXP edgesSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP scoringConfigSEXP, SEXP hsjConfigSEXP, SEXP xformConfigSEXP, SEXP consSplitMatrixSEXP) {
+List ts_collapse_pool(List edges, NumericMatrix contrast, IntegerMatrix tip_data, IntegerVector weight, CharacterVector levels, List scoringConfig, Nullable<List> hsjConfig, Nullable<List> xformConfig, Nullable<IntegerMatrix> consSplitMatrix, Nullable<IntegerMatrix> consZero);
+RcppExport SEXP _TreeSearch_ts_collapse_pool(SEXP edgesSEXP, SEXP contrastSEXP, SEXP tip_dataSEXP, SEXP weightSEXP, SEXP levelsSEXP, SEXP scoringConfigSEXP, SEXP hsjConfigSEXP, SEXP xformConfigSEXP, SEXP consSplitMatrixSEXP, SEXP consZeroSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -604,7 +604,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Nullable<List> >::type hsjConfig(hsjConfigSEXP);
     Rcpp::traits::input_parameter< Nullable<List> >::type xformConfig(xformConfigSEXP);
     Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type consSplitMatrix(consSplitMatrixSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_collapse_pool(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix));
+    Rcpp::traits::input_parameter< Nullable<IntegerMatrix> >::type consZero(consZeroSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_collapse_pool(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix, consZero));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -766,8 +767,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // ts_sankoff_test
-List ts_sankoff_test(IntegerMatrix edge, IntegerVector n_states_r, List cost_matrices_r, IntegerMatrix tip_states_r, IntegerVector forced_root_r);
-RcppExport SEXP _TreeSearch_ts_sankoff_test(SEXP edgeSEXP, SEXP n_states_rSEXP, SEXP cost_matrices_rSEXP, SEXP tip_states_rSEXP, SEXP forced_root_rSEXP) {
+List ts_sankoff_test(IntegerMatrix edge, IntegerVector n_states_r, List cost_matrices_r, IntegerMatrix tip_states_r, IntegerVector forced_root_r, Nullable<List> combo_grids_r, Nullable<List> tip_sec_known_r);
+RcppExport SEXP _TreeSearch_ts_sankoff_test(SEXP edgeSEXP, SEXP n_states_rSEXP, SEXP cost_matrices_rSEXP, SEXP tip_states_rSEXP, SEXP forced_root_rSEXP, SEXP combo_grids_rSEXP, SEXP tip_sec_known_rSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -776,7 +777,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type cost_matrices_r(cost_matrices_rSEXP);
     Rcpp::traits::input_parameter< IntegerMatrix >::type tip_states_r(tip_states_rSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type forced_root_r(forced_root_rSEXP);
-    rcpp_result_gen = Rcpp::wrap(ts_sankoff_test(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r));
+    Rcpp::traits::input_parameter< Nullable<List> >::type combo_grids_r(combo_grids_rSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type tip_sec_known_r(tip_sec_known_rSEXP);
+    rcpp_result_gen = Rcpp::wrap(ts_sankoff_test(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r, combo_grids_r, tip_sec_known_r));
     return rcpp_result_gen;
 END_RCPP
 }

@@ -16,7 +16,7 @@ MaximizeParsimony(
   inapplicable = "bgs",
   hsj_alpha = 1,
   constraint,
-  strategy = "auto",
+  effort = 0L,
   maxReplicates = 96L,
   targetHits = NULL,
   maxSeconds = 0,
@@ -25,6 +25,7 @@ MaximizeParsimony(
   progressCallback = NULL,
   control = SearchControl(),
   collapse = TRUE,
+  .rung = NULL,
   ...
 )
 }
@@ -33,13 +34,32 @@ MaximizeParsimony(
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-or a \code{multiPhylo} (first tree used).
-When supplied, the first replicate uses this topology as its starting
-point (warm-start), skipping the random Wagner tree construction.
-Subsequent replicates still begin from random Wagner trees.
-This is useful for continuing a search from a previously found optimum.
+or a \code{multiPhylo} containing a pool of such trees, which must all bear the
+same tip labels.
+Replicate \emph{i} starts from tree \emph{i} of the pool (warm-start), skipping the
+random Wagner tree construction; any further replicates begin from random
+Wagner trees.  Supplying a single tree thus warm-starts the first
+replicate only.
+This is useful for continuing a search from previously found optima: a
+whole \code{multiPhylo} of most-parsimonious trees seeds the search with the
+topological diversity that tree fusing exploits, which a single tree
+cannot.
+One tree is consumed per replicate actually run, so a search that
+converges early — on \code{targetHits}, \code{maxSeconds} or the perturbation
+limit, whichever fires first — draws on only part of a large pool, and
+says so in a warning.  Raise \code{targetHits} as well as \code{maxReplicates} to
+use more of it.
 If unspecified, all replicates start from random Wagner trees.
-Edge lengths are not supported and will be deleted.}
+A start tree that does not satisfy \code{constraint} is rearranged until it
+does before the search begins, with a warning: \code{constraint} is a
+guarantee about the trees returned, whereas \code{tree} only says where to
+begin, so when the two conflict the guarantee wins.  A taxon coded \verb{?}
+for a constraint character is unconstrained by it and may start on
+either side of that split.
+Edge lengths are not supported and will be deleted.
+Rooted and unrooted trees are both accepted; an unrooted tree is rooted
+arbitrarily (on its first tip) before the search begins, which may
+affect how any polytomies it contains are resolved.}
 
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
@@ -100,7 +120,18 @@ hierarchy required.}
 \item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
 via x-transformations
 \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-\code{hierarchy}.}
+\code{hierarchy}.  \strong{Scores are rooting-sensitive}: the step matrix of
+this recoding is asymmetric -- gaining the controlling character costs one more
+than the number of secondaries it brings into existence, against 1 to
+lose it -- so a tree's length depends on where its root sits, whereas
+parsimony under the other methods does not.  Lengths are therefore
+reported at a canonical rooting, on the first taxon of \code{dataset}, which
+is the rooting the returned trees carry; \code{TreeLength()} canonicalises
+identically, so it reproduces the reported score and one topology has
+one length.  That value is an upper bound on the rooting-free minimum,
+exceeding it by at most the total number of secondary characters across
+hierarchy blocks, and attaining it for 87-98\% of rootings in
+simulation.}
 }}
 
 \item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
@@ -113,47 +144,92 @@ returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
 Constraint searches are supported natively: all tree rearrangements
-are filtered to respect the constraint topology.}
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
 
-\item{strategy}{Character: named strategy preset controlling the search
-heuristic parameters. Presets:
+\item{effort}{Integer: how much search effort to spend, \strong{relative to the
+amount chosen automatically} for this dataset.  \code{0} (the default) accepts
+the automatic choice; \code{1} asks for one notch more, \code{-1} one notch less.
+
+The automatic choice is made from dataset size and character count, since
+those predict how much search a matrix repays: \code{sprint} for <=30 taxa;
+\code{large} for >=120 taxa with >=100 character patterns; \code{thorough} for
+65-119 taxa with >=100 character patterns; \code{default} otherwise.  Because
+\code{effort} is an offset rather than an absolute level, \code{effort = 0} gives a
+30-taxon and a 300-taxon matrix quite different searches -- which is the
+intent.
+
+The rungs, in order:
 \describe{
-\item{\code{"auto"} (default)}{Selects automatically based on dataset size
-and character count:
-\code{"sprint"} for <=30 taxa; \code{"large"} for >=120 taxa with >=100
-character patterns; \code{"thorough"} for 65-119 taxa with >=100
-character patterns; \code{"default"} otherwise.}
-\item{\code{"sprint"}}{Fast search: 3 ratchet cycles, no drift, minimal
-sectorial. Good for small datasets or quick surveys.}
-\item{\code{"default"}}{Balanced: 6 ratchet cycles, sectorial search and
+\item{1, \code{sprint}}{Fast: 3 ratchet cycles, no drift, minimal sectorial.
+Small datasets and quick surveys.}
+\item{2, \code{default}}{Balanced: 6 ratchet cycles, sectorial search and
 fusing.}
-\item{\code{"thorough"}}{Intensive: 20 ratchet cycles, adaptive
-perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
-starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
-character patterns; the drift cycles also recover equal-score trees on
+\item{3, \code{thorough}}{Intensive: 20 ratchet cycles, adaptive perturbation,
+extra sectorial rounds, drift (2 cycles), 5 Wagner starts and an outer
+cycle loop.  The drift cycles also recover equal-score trees on
 TBR-disconnected islands that random restarts alone miss.}
-\item{\code{"large"}}{Large-tree search (>=120 tips): the \code{"thorough"}
-settings with \code{maxReplicates} raised to 500 to suit the higher
-per-replicate cost.}
-\item{\code{"intensive"}}{Deprecated alias of \code{"thorough"}, retained for
-backward compatibility.  The extra Wagner starts (5) that once
-distinguished it are now folded into \code{"thorough"}, so the two are
-identical.}
-\item{\code{"none"}}{Use only the explicitly supplied parameter values.}
+\item{4, \code{large}}{\code{thorough}'s provisioning with \code{maxReplicates} raised
+to 500, to suit the higher per-replicate cost of big trees.}
+\item{5 and up}{\code{thorough}'s provisioning, with the replicate budget, the
+hit target and the \acronym{MPT}-enumeration ceiling (\code{enumMaxTrees})
+all doubling each notch (1000, 2000, 4000 ... replicates), so that one
+notch always means roughly twice the work.  \code{poolMaxSize} is
+deliberately \emph{not} scaled: it sizes the working set that fusing and
+sectorial search read during the run, so raising it would change which
+trees are visited rather than only how many are returned.
+There is no policy ceiling: extra replicates cannot cost reach, only
+wall, which is what you asked to spend.  The ladder stops only at rung
+26, where the replicate budget outgrows R's integer type.}
 }
-Presets stop on \code{targetHits} and the \code{perturbStopFactor} no-improvement
-rule; \code{consensusStableReps} (consensus-stability stopping) is off by default
-and is not enabled by any preset.
-Explicit \code{control} fields always override the preset; for example,
-\verb{strategy = "sprint", control = SearchControl(ratchetCycles = 10L)} uses
-sprint defaults for everything except \code{ratchetCycles}.}
+
+Above rung 4 the \strong{replicate budget} is what climbs first, because
+\code{targetHits} cannot act once that budget is reached -- and on hard datasets
+it always is.  Measured on 30 inapplicable-bearing matrices: tripling the
+hit target bought 4409 extra replicates in total, but only 243 of them on
+the six matrices that had anything left to find, and \strong{none at all} on the
+three hardest, where the replicate cap bound every run of both arms.  A
+ladder that raised the hit target first would spend its effort almost
+entirely on datasets that were already solved.
+
+\code{targetHits} is raised in step all the same, for two reasons that are not
+reach: it governs when \emph{easy} runs stop, so without it a notch would be
+inert on every dataset that finishes early; and under implied weights it
+additionally deepens the ratchet (see \code{targetHits}), which the equal-weights
+measurement above cannot see.  Read rungs 5+ as buying \strong{confidence and
+distinct trees on easy data, and reach on hard data} -- not as buying reach
+uniformly.
+
+The rung-4 budget of 500 is measured: a 34-matrix, 120--180-tip sweep found
+the fraction of runs reaching the best score climbing from 0.68 at 96
+replicates to 0.79 at 250, with the hard-matrix subset \strong{still climbing at
+500 and no knee}.  The doubling \emph{above} that is an operating point rather
+than a fitted constant: nothing measures where the reach curve flattens, so
+the ladder simply keeps offering more in even steps.  Treat rungs 5+ as
+"spend about twice as long again", not as calibrated levels.
+
+Anything you set yourself wins: \code{maxReplicates} and \code{targetHits} you supply
+are never rescaled by \code{effort}, and explicit \code{control} fields always
+override the rung's preset -- for example
+\verb{effort = -2, control = SearchControl(ratchetCycles = 10L)} uses the lower
+rung's settings for everything except \code{ratchetCycles}.
+
+Every rung stops on \code{targetHits} and the \code{perturbStopFactor}
+no-improvement rule; \code{consensusStableReps} (consensus-stability stopping) is
+off by default and no rung enables it.  Under implied weights only, rungs 1
+and 2 additionally stop on a flat replicate patience (\code{stopPatience} 20 and
+15 respectively) and deepen the ratchet to match (\code{ratchetCycles} 12 and
+20); the pair is a package, since each half fails on its own.  Equal weights
+is unaffected.}
 
 \item{maxReplicates}{Integer: maximum number of independent search
 replicates (default: 96).
 The default is a multiple of 48 (= LCM(12, 16)) so that replicates
 divide evenly across common 12- or 16-core machines when running in
 parallel.
-When \code{strategy} resolves to \code{"large"} (automatically selected for
+When \code{effort} resolves to rung 4 (\code{large} -- chosen automatically for
 datasets of \eqn{\ge}{>=} 120 tips and \eqn{\ge}{>=} 100 characters) and
 \code{maxReplicates} is left at its default, the
 cap is raised to 500: a 120--180-tip sweep showed the fraction of runs
@@ -169,8 +245,40 @@ finding all MPTs.  A rough minimum is
 A warning is issued when an explicit value falls below this threshold
 for datasets with 30 or more taxa.}
 
-\item{targetHits}{Integer: stop when the best score has been found
-independently this many times (default: \code{max(10, NTip / 5)}).}
+\item{targetHits}{Integer: stop a replicate series once the best score has
+been re-found this many times without further improvement
+(default: \code{max(10, NTip / 5)}).  This is the main control over \emph{how hard the
+search tries to be sure it is finished}, and rungs 1-4 of \code{effort} all
+share it -- they differ in per-replicate effort, not in when they stop.
+(Rung 5 and above raise it, alongside the replicate budget.)  It sets the balance between the two goals a user may bring to a
+search:
+\describe{
+\item{A single tree one can be reasonably confident is
+most-parsimonious}{Use a small \code{targetHits} (e.g. 4--10).  The search
+stops soon after the score stops improving: fast, and safe on datasets
+whose optimum is reached early.  On hard datasets the score can still
+improve after a long unproductive stretch (a better tree may lie many
+replicates away), so a small \code{targetHits} trades a chance at the true
+optimum for speed; raise it (or \code{maxReplicates}) when certainty matters
+more than wall-clock.}
+\item{A set of trees representing the full range of most-parsimonious
+trees}{Use a large \code{targetHits} with a high \code{maxReplicates}.  Distinct
+equally-parsimonious topologies -- and whole \acronym{TBR}-disconnected
+islands of them -- keep being discovered for as long as replicates run,
+and the terminal enumeration step can only fill in trees on islands a
+replicate has already reached, so a larger budget samples more islands.
+No stopping rule can \emph{detect} that every island has been found: a long
+run with no new topology is not proof that none remain, so completeness
+is bought with search effort, never inferred.}
+}
+Under implied weights (finite \code{concavity}) at \code{effort} rung 3 (\code{thorough})
+or above, raising \code{targetHits} above its default also deepens the ratchet
+in proportion, up to 115 cycles: no dataset property reliably predicts how
+much character reweighting a matrix needs, so a raised \code{targetHits} is taken
+as the user's own signal that this one needs more.  Lowering \code{targetHits}
+does not make the ratchet shallower than its default depth (fewer cycles
+were slower to the optimum on every matrix tested), and setting
+\code{ratchetCycles} yourself overrides this entirely.}
 
 \item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
 search. When reached, the current replicate finishes and the search
@@ -189,7 +297,17 @@ thread scheduling nondeterminism. Use \code{nThreads = 1} for reproducible
 results.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
-more detail. Set to \code{0} to run silently.}
+more detail. Set to \code{0} to run silently.
+At \code{1} (default) each replicate reports its score, pool size and hit count;
+at \code{2} and above each search phase reports on completion.
+
+On a large dataset a single phase can run for many minutes, during which
+neither level would print anything: on a 182-tip, 420-character matrix with
+inapplicable tokens throughout, one TBR phase took 582 s and one ratchet
+549 s, together 96\% of a 1173 s replicate.  A \emph{heartbeat} therefore reports
+from inside the long phases -- overwriting one console line at a terminal,
+or emitting discrete lines to a batch log -- so a slow search is
+distinguishable from a hung one.  See the environment variables below.}
 
 \item{progressCallback}{Optional function called with a single list
 argument containing search progress information.
@@ -199,10 +317,16 @@ The list includes elements: \code{replicate}, \code{max_replicates},
 When \code{NULL} (default) and \code{verbosity >= 1} in an interactive session,
 a \code{cli} progress bar is created automatically.
 Supply a custom function (e.g. using \code{\link[shiny:setProgress]{shiny::setProgress()}})
-to control progress display.}
+to control progress display.
+
+Note that supplying a callback \emph{replaces} the per-replicate console line
+rather than adding to it, and that the callback fires only when a replicate
+or a fuse completes -- so on a dataset whose replicates take many minutes,
+nothing arrives until the first one finishes.  The heartbeat described under
+\code{verbosity} is independent of the callback and reports throughout.}
 
 \item{control}{A \code{\link{SearchControl}} object (or a named list) of low-level
-search parameters.  Most users can rely on the \code{strategy} presets and
+search parameters.  Most users can rely on \code{effort} and
 ignore this argument; see \code{\link[=SearchControl]{SearchControl()}} for full documentation
 of individual fields.}
 
@@ -227,6 +351,14 @@ collapse, so an enforced-but-unsupported clade (a zero-length branch) stays
 visible (a constraint encodes external evidence the matrix does not
 capture); unsupported non-constraint branches still collapse.}
 
+\item{.rung}{Internal.  Pins a named entry of the effort ladder
+(\code{"sprint"}, \code{"default"}, \code{"thorough"}, \code{"large"}), or \code{"none"} to apply no
+preset at all; \code{NULL} (default) selects the rung from \code{effort} and the
+dataset's size, which is what every ordinary call should do.  Exists for
+controlled experiments and the preset smoke tests, which need to name a rung
+absolutely rather than relative to the automatic choice.  Not part of the
+stable interface: prefer \code{effort}.}
+
 \item{...}{Backward compatibility.}
 }
 \value{
@@ -249,13 +381,17 @@ improved the best score (0 if not tracked, e.g. parallel search).}
 \item{\code{consensus_stable}}{Logical: \code{TRUE} if the search stopped
 because the strict consensus was unchanged for
 \code{consensusStableReps} consecutive replicates.}
-\item{\code{perturb_stop}}{Logical: \code{TRUE} if the search stopped because
-\code{nTip * perturbStopFactor} consecutive replicates failed to improve
-the best score (see \code{\link[=SearchControl]{SearchControl()}}).}
+\item{\code{perturb_stop}}{Logical: \code{TRUE} if the search stopped because a
+run of replicates failed to improve the best score -- either the
+\code{nTip * perturbStopFactor} dry-spell limit or the flat \code{stopPatience}
+count (see \code{\link[=SearchControl]{SearchControl()}}).  The flag does not distinguish which of
+the two fired; in a serial search, comparing
+\code{last_improved_rep + stopPatience} against \code{replicates} will tell you.}
 \item{\code{timings}}{Named numeric vector of cumulative wall-clock time
 (in milliseconds) spent in each search phase across all replicates:
 \code{wagner_ms}, \code{tbr_ms}, \code{xss_ms}, \code{rss_ms}, \code{css_ms}, \code{ratchet_ms},
-\code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}.}
+\code{drift_ms}, \code{final_tbr_ms}, \code{fuse_ms}, \code{nni_ms}, \code{nni_perturb_ms},
+\code{anneal_ms}, \code{prune_reinsert_ms}.}
 \item{\code{replicate_scores}}{Numeric vector of the best parsimony score
 found by each completed replicate.  Passed to \code{\link[=ScoreSpectrum]{ScoreSpectrum()}} for
 Chao1-style landscape coverage estimation.}
@@ -263,7 +399,8 @@ Chao1-style landscape coverage estimation.}
 rearrangements evaluated across the whole search — the analogue of
 TNT's "rearrangements examined", useful for comparing search
 efficiency (candidates per unit of score improvement).  Counted only
-for single-threaded searches (\code{0} when \code{nThreads > 1}); excludes
+for single-threaded searches (\code{0} for any parallel search, i.e.
+\code{nThreads != 1}, including \code{nThreads = 0} auto-detect); excludes
 NNI-warmup and simulated-annealing candidates.}
 }
 }
@@ -298,9 +435,13 @@ topologies held in its tree pool; it does not guarantee that every
 most-parsimonious tree (\acronym{MPT}) is recovered.
 The size of the returned set is bounded by, in order:
 \enumerate{
-\item \strong{\code{poolMaxSize}} (default \code{100}) — a hard ceiling on the number of
-trees retained.  Raise it (via \code{\link[=SearchControl]{SearchControl()}}) to keep more MPTs;
-with the default you will never see more than 100.
+\item \strong{\code{enumMaxTrees}}, falling back to \strong{\code{poolMaxSize}} (default \code{100})
+when \code{enumMaxTrees} is \code{0} — a hard ceiling on the number of trees
+retained; with the default you will never see more than 100.  Prefer
+raising \code{enumMaxTrees} (via \code{\link[=SearchControl]{SearchControl()}}): it applies only once the
+search is over, so it cannot alter which trees are visited, whereas
+\code{poolMaxSize} also sizes the working set that fusing and sectorial search
+read.  From \code{effort} rung 5 the ladder raises \code{enumMaxTrees} for you.
 \item \strong{MPT-enumeration time.} After the main search, a TBR plateau walk
 enumerates equal-score neighbours of each pool tree, within a time
 reserve of \code{maxSeconds * enumTimeFraction}.  If this phase times out it
@@ -332,6 +473,36 @@ by its information profile \insertCite{Faith2001}{TreeSearch}; see
 \code{\link[=PrepareDataProfile]{PrepareDataProfile()}} for how multi-state profiles are computed.
 }
 
+\section{Progress reporting in non-interactive sessions}{
+
+
+The automatic \code{cli} progress bar requires an interactive session.  Under
+\code{Rscript} (including a batch or cluster job) two environment variables control
+reporting instead:
+
+\describe{
+\item{\code{TREESEARCH_PROGRESS_FILE}}{Path to a status file.  After each
+replicate, a single line is written -- and the file truncated, so it
+always holds current state rather than a history -- containing
+\code{replicate}, \code{max_replicates}, \code{best_score}, \code{hits_to_best} and
+\code{target_hits}, space-separated.  Poll it to monitor a long job:
+\verb{TREESEARCH_PROGRESS_FILE=progress.txt Rscript analysis.R}.  Only
+consulted when \code{progressCallback} is \code{NULL}.}
+\item{\code{TS_HEARTBEAT_SECONDS}}{Heartbeat cadence in seconds; fractional
+values are allowed.  Defaults to 30 at a terminal (where the line
+overwrites itself) and 120 to a batch log (where every heartbeat is a
+permanent line).  Set to \code{0} to disable.  An unparseable value falls back
+to the default rather than disabling.}
+}
+
+The heartbeat reports only from searches of the whole tree under the real
+character weights.  Sectorial searches score a subtree, and the ratchet's
+perturbation phase scores a reweighted matrix; both legitimately run far below
+the true optimum, so reporting them would look like erratic progress.  Any
+score the heartbeat prints is therefore directly comparable with the final
+tree score.
+}
+
 \examples{
 data("inapplicable.phyData", package = "TreeSearch")
 dataset <- inapplicable.phyData[["Vinther2008"]]
@@ -343,6 +514,10 @@ result <- MaximizeParsimony(
 )
 result
 attr(result, "score")
+
+# Ask for one notch less search than this dataset would get by default,
+# whatever its size:
+sprint <- MaximizeParsimony(dataset, effort = -1, maxReplicates = 12)
 
 }
 \references{

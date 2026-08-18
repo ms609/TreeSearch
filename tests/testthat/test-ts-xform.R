@@ -317,6 +317,71 @@ test_that("Xform scores heterogeneous-n_states blocks consistently (SK-01)", {
 # tree from the Sankoff term alone.  This test exercises that path so the
 # hardened/ASAN CI covers it.
 
+# ===== T-379: partial secondaries must constrain, not free, -2 tips =========
+# A tip coded -2 ("present, secondary combination unknown") previously freed
+# EVERY present state regardless of any secondary that WAS actually observed,
+# discarding real information and undercounting cost. With one secondary
+# unknown but two known, and those two knowns conflicting with a comparison
+# tip's fully-resolved combination, the admissible set should now exclude
+# that comparison tip's exact state -- forcing a strictly positive
+# present-present Hamming cost instead of the old free-ride of 0.
+
+test_that("Xform -2 tip is constrained by its known secondaries (T-379)", {
+  # Tip A: primary present, secondaries all "1" -> fully resolved combo (2,2,2).
+  # Tip B: primary present, secondaries "0","0","?" -> two secondaries KNOWN
+  #   (both conflicting with A's "1","1"), one unknown.
+  # Tip C: primary present, secondaries all "0" -> supplies the "0" level for
+  #   secondary 3 so that character has 2 informative levels (otherwise it
+  #   would trivially degenerate to 1, and B's "unknown" would be moot). C is
+  #   excluded from the scored tree below so it cannot mask the effect.
+  mat <- matrix(c(
+    "1", "1", "1", "1",
+    "1", "0", "0", "?",
+    "1", "0", "0", "0"
+  ), nrow = 3, byrow = TRUE,
+  dimnames = list(c("A", "B", "C"), NULL))
+  ds <- make_dat(mat)
+  h <- CharacterHierarchy("1" = 2:4)
+
+  rec <- RecodeHierarchy(ds, h)
+  blk <- rec$sankoff_chars[[1]]
+  expect_equal(blk$n_states, 9L)  # 2^3 present combos + absent
+
+  # Score A and B alone, as a 2-tip cherry: with a single sister pair, the
+  # Sankoff minimum reduces to A's fixed state plus the cheapest transition
+  # to any state B's tip cost allows -- i.e. exactly the quantity T-379
+  # changes. (Tip C only exists to register the "0" level above; it plays no
+  # further part here.)
+  abIdx <- match(c("A", "B"), names(ds))
+  tipStatesMat <- matrix(as.integer(blk$tip_states[abIdx]), ncol = 1)
+  expect_equal(tipStatesMat[2, 1], -2L)  # B: present, secondary 3 unknown
+
+  tree <- ape::read.tree(text = "(A,B);")
+
+  # Score WITHOUT combo info -- mirrors the pre-fix behaviour: -2 frees every
+  # present state, so B can "become" A's exact state at zero cost.
+  score_old <- TreeSearch:::ts_sankoff_test(
+    tree$edge, as.integer(blk$n_states), list(blk$cost_matrix),
+    tipStatesMat, as.integer(blk$forced_root_state)
+  )$score
+  expect_equal(score_old, 0)
+
+  # Score WITH combo info -- B is now constrained to states consistent with
+  # its two known (and, here, A-conflicting) secondaries, so it can no longer
+  # reach A's exact state.
+  combo_grids <- list(blk$combo_grid)
+  tip_sec_known <- list(matrix(as.integer(blk$tip_sec_known[abIdx, ]),
+                                nrow = 2))
+  score_new <- TreeSearch:::ts_sankoff_test(
+    tree$edge, as.integer(blk$n_states), list(blk$cost_matrix),
+    tipStatesMat, as.integer(blk$forced_root_state),
+    combo_grids, tip_sec_known
+  )$score
+
+  expect_gt(score_new, score_old)
+})
+
+
 test_that("Xform search handles all-hierarchy data (zero Fitch words)", {
   mat <- matrix(c(
     "1", "0", "0", "-", "-",
@@ -332,12 +397,135 @@ test_that("Xform search handles all-hierarchy data (zero Fitch words)", {
   expect_length(setdiff(seq_len(5L), HierarchyChars(h)), 0L)
 
   set.seed(42)
-  res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "xform",
-                           maxReplicates = 4L, targetHits = 3L, verbosity = 0L)
+  # This all-hierarchy matrix provably triggers T-374's open residue: pool
+  # membership is decided on search-time scores taken at differing rootings, so
+  # the returned trees do not share a length at the common rooting they are
+  # reported at (measured: 7 to 9), and MaximizeParsimony() warns and reports the
+  # smallest.  Pinned as an expectation rather than left as ambient noise in a
+  # green suite -- if this warning ever STOPS firing, the residue has been fixed
+  # (or masked) and that deserves to be noticed here.
+  res <- NULL
+  expect_warning(
+    res <- MaximizeParsimony(ds, hierarchy = h, inapplicable = "xform",
+                             maxReplicates = 4L, targetHits = 3L,
+                             verbosity = 0L),
+    "do not share a length")
   expect_s3_class(res[[1]], "phylo")
   expect_equal(length(res[[1]]$tip.label), 6L)
   for (tr in res) {
     expect_s3_class(tr, "phylo")
     expect_true(TreeIsRooted(tr))
   }
+})
+
+
+# ===== T-385: a reported length must be reproducible ==========================
+# The x-transformation's step matrix is asymmetric (gain = nSec + 1, loss = 1),
+# so a tree's length depends on where its root sits -- unlike parsimony under the
+# symmetric criteria.  The engine recorded `best_score` mid-search at whatever
+# rooting the replicate held, while `ts_collapse_pool()` returns every tree
+# re-rooted on tip 0, so `attr(res, "score")` did not reproduce under
+# `TreeLength()` of the very tree returned (measured: 178 reported against 183
+# returned, 36 tips / 6 blocks).  Both boundaries now score at a canonical
+# rooting.  See dev/plans/2026-07-29-t374b-xform-rooting-policy.md.
+
+test_that("TreeLength xform is rooting-invariant (T-385)", {
+  # 8-tip case whose Sankoff term genuinely varies with the rooting.  That
+  # precondition is ASSERTED below rather than assumed, so this test cannot pass
+  # vacuously on data that happens to be rooting-insensitive.
+  mat <- matrix(c(
+    "0", "-", "-",
+    "1", "1", "1",
+    "0", "-", "-",
+    "0", "-", "-",
+    "1", "0", "0",
+    "0", "-", "-",
+    "0", "-", "-",
+    "0", "-", "-"
+  ), nrow = 8, byrow = TRUE,
+  dimnames = list(paste0("t", 1:8), NULL))
+  ds <- make_dat(mat)
+  h <- CharacterHierarchy("1" = 2:3)
+  tree <- ape::read.tree(text = "(((t1,t3),((t2,t5),t7)),(t4,(t6,t8)));")
+  taxa <- names(ds)
+
+  # Precondition: the raw Sankoff kernel IS rooting-sensitive here (3 to 5).
+  # ts_sankoff_test() is untouched by the fix, so this measures the data.
+  recoded <- RecodeHierarchy(ds, h)
+  xf <- TreeSearch:::.PrepareXformArgs(recoded, length(ds))
+  kernel <- vapply(taxa, function(taxon) {
+    tr <- RenumberTips(Renumber(RootTree(tree, taxon)), taxa)
+    TreeSearch:::ts_sankoff_test(tr[["edge"]], xf$n_states, xf$cost_matrices,
+                                 xf$tip_states, xf$forced_root, xf$combo_grids,
+                                 xf$tip_sec_known)$score
+  }, numeric(1))
+  expect_gt(diff(range(kernel)), 0)
+
+  # Given that, TreeLength() must still return ONE length for ONE topology.
+  lengths <- vapply(taxa, function(taxon) {
+    TreeLength(RootTree(tree, taxon), ds, hierarchy = h,
+               inapplicable = "xform")
+  }, numeric(1))
+  expect_equal(diff(range(lengths)), 0)
+
+  # The multiPhylo method must canonicalise identically to the single-tree one:
+  # it previously rooted only trees that arrived unrooted.
+  multi <- TreeLength(
+    structure(lapply(taxa, function(taxon) RootTree(tree, taxon)),
+              class = "multiPhylo"),
+    ds, hierarchy = h, inapplicable = "xform"
+  )
+  expect_equal(unname(multi), unname(lengths))
+})
+
+test_that("MaximizeParsimony xform reports the length of the tree it returns (T-385)", {
+  # End-to-end guard on the report path.  Larger than the test above so the
+  # search has room to end at a rooting other than the returned one.
+  set.seed(7)
+  nTip <- 16L
+  cols <- list()
+  hierArgs <- list()
+  for (b in 1:3) {
+    primary <- sample(c("0", "1"), nTip, replace = TRUE)
+    priIdx <- length(cols) + 1L
+    cols[[length(cols) + 1L]] <- primary
+    secIdx <- integer(2)
+    for (s in 1:2) {
+      cols[[length(cols) + 1L]] <- ifelse(
+        primary == "0", "-", sample(c("0", "1"), nTip, replace = TRUE))
+      secIdx[s] <- length(cols)
+    }
+    hierArgs[[as.character(priIdx)]] <- secIdx
+  }
+  for (f in 1:6) {
+    cols[[length(cols) + 1L]] <- sample(c("0", "1"), nTip, replace = TRUE)
+  }
+  mat <- do.call(cbind, cols)
+  dimnames(mat) <- list(paste0("t", seq_len(nTip)), NULL)
+  ds <- make_dat(mat)
+  h <- do.call(CharacterHierarchy, hierArgs)
+
+  set.seed(11)
+  res <- suppressWarnings(
+    MaximizeParsimony(ds, inapplicable = "xform", hierarchy = h,
+                      maxReplicates = 3L, verbosity = 0L))
+
+  reported <- unique(unname(attr(res, "score")))
+  expect_length(reported, 1L)
+  returned <- unname(vapply(res, function(tr) {
+    TreeLength(tr, ds, hierarchy = h, inapplicable = "xform")
+  }, numeric(1)))
+
+  # The contract is that the reported score is the canonical length of the pool,
+  # reproducible from the trees returned -- NOT that every returned tree shares
+  # it.  Pool membership is still decided on search-time scores taken at differing
+  # rootings, so on some data the pool genuinely spans a range and
+  # MaximizeParsimony() warns (all-hierarchy matrices do: see the zero-Fitch-words
+  # test above, which spans 7 to 9).  That is the open residue of T-374 and is
+  # deliberately out of scope for the reporting fix.  Assert the contract:
+  expect_equal(reported, min(returned))
+
+  # On THIS dataset the pool does happen to be self-consistent.  Asserted as a
+  # property of the data, not as something the code promises.
+  expect_equal(diff(range(returned)), 0)
 })

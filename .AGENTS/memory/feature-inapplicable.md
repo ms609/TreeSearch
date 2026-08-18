@@ -94,3 +94,41 @@ secondaries supported (state count = ∏k_i + 1). Nested hierarchies deferred.
 Integration complete: `ScoringMode::XFORM` in `score_tree()` dispatches
 Fitch(non-hierarchy) + Sankoff(recoded). `MaximizeParsimony()` accepts
 `inapplicable = "xform"`. End-to-end search verified.
+
+---
+
+## Memory-safety checking: reach for `-D_GLIBCXX_ASSERTIONS` before ASan
+
+The HSJ/XFORM kernels index a lot of flat `std::vector` scratch (`tip_labels`
+row-major over `n_orig_chars`, `sec_states` over `m * n_node`, CanonOrder's
+CSR `kids`/`kidOff`/`kidNum`), so container-bounds bugs are this subsystem's
+recurring failure mode. libstdc++ hardened mode catches them locally on
+Windows in seconds, where ASan needs a Linux container round-trip:
+
+```bash
+# The flag MUST go in PKG_CPPFLAGS: ~/.R/Makevars.win zeroes PKG_CXXFLAGS.
+TMPBUILD=$(mktemp -d)
+(cd "$TMPBUILD" && R CMD build --no-build-vignettes --no-manual --no-resave-data <src>)
+PKG_CPPFLAGS="-D_GLIBCXX_ASSERTIONS" \
+  R CMD INSTALL --library=.agent-<id> --preclean "$TMPBUILD"/TreeSearch_*.tar.gz
+# Confirm the flag took: grep -c _GLIBCXX_ASSERTIONS <build log>  -->  expect ~34
+NOT_CRAN=true Rscript -e "library(TreeSearch, lib.loc='<ABSOLUTE Windows path>');
+  testthat::test_file('tests/testthat/test-ts-hsj.R', reporter='summary')"
+```
+
+Three things to know when reading the result:
+
+- A failure aborts the process printing `stl_vector.h:<n>: ... Assertion
+  '__n < this->size()' failed`, naming the **container type only** — not the
+  call site. `_Tp = int` plus a `const_reference` return narrows it to a read
+  through a const `std::vector<int>`. Bisect by guarding candidate sites.
+- `lib.loc` must be an absolute *Windows* path. A relative one makes
+  `test_file()` (which chdirs to `tests/testthat/`) fail to find the lazy-load
+  DB, which looks like several real regressions.
+- It only instruments `operator[]` on libstdc++ containers, so raw-pointer
+  arithmetic off `.data()` still needs ASan.
+
+Always run the same file against a pristine-trunk build too, and treat only a
+*difference* as signal: `test-CharacterHierarchy.R` reports 5 errors under
+`library()` + `test_file()` either way, because it calls internals unqualified
+and only `R CMD check`'s namespace environment can see them.

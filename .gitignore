@@ -9,7 +9,6 @@ src/*.so
 src/*.dll
 .Rdata
 .Rd2pdf**
-.Rprofile
 .Renviron
 *.gcno
 *.knit.md
@@ -36,7 +35,12 @@ gen-*tip/*
 results-*
 inst/DELETE*
 *.bak
-/.agent*
+/.agent-*
+# Windows core.ignorecase folds "/.agent-*" onto tracked ".AGENTS/" (agent
+# memory files) unless explicitly excepted here.
+!/.AGENTS/
+# paired A/B libraries built by dev/benchmarks/ab_*.R
+/.ab-*
 /agent-*.md
 /to-do.md
 /issues.md
@@ -61,8 +65,7 @@ test_output.txt
 dev/profiling/.vtune-lib-*/
 dev/profiling/.build-*
 dev/profiling/.Makevars.symboled
-/.claude
-!/.claude/CLAUDE.md
+/.claude/settings.local.json
 
 # /profile skill — VTune results and profvis HTML are large and stale fast
 dev/profiling/result_*/
@@ -86,3 +89,12 @@ dev/benchmarks/*.run
 dev/benchmarks/*.png
 dev/benchmarks/trace_*.txt
 dev/benchmarks/*_raw.txt
+
+# /red-team skill — run outputs from heavy tests and repro harnesses (regenerable
+# from the committed drivers).  The drivers, repro scripts, proofs and review notes
+# under dev/red-team/ are TRACKED and must stay so: they back open findings.
+dev/red-team/heavy-tests/**/*.log
+dev/red-team/heavy-tests/**/*-results/
+dev/red-team/heavy-tests/**/build/
+dev/red-team/reviews/**/*.log
+dev/red-team/**/*.rds

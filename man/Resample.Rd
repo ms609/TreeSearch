@@ -33,14 +33,10 @@ Resample(
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
 \code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
-\item{tree}{(optional) A bifurcating tree of class \code{\link[ape]{phylo}},
-or a \code{multiPhylo} (first tree used).
-When supplied, the first replicate uses this topology as its starting
-point (warm-start), skipping the random Wagner tree construction.
-Subsequent replicates still begin from random Wagner trees.
-This is useful for continuing a search from a previously found optimum.
-If unspecified, all replicates start from random Wagner trees.
-Edge lengths are not supported and will be deleted.}
+\item{tree}{A tree of class \code{\link[ape]{phylo}} whose splits are to be
+supported.  Each resample replicate searches from scratch; \code{tree} is
+returned in place of any replicate whose search yields no tree, and is not
+used as a starting point (unlike \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}'s \code{tree}).}
 
 \item{method}{Unambiguous abbreviation of \code{jackknife} or \code{bootstrap}
 specifying how to resample characters.  Note that jackknife is considered
@@ -76,10 +72,23 @@ returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
 Constraint searches are supported natively: all tree rearrangements
-are filtered to respect the constraint topology.}
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
-more detail. Set to \code{0} to run silently.}
+more detail. Set to \code{0} to run silently.
+At \code{1} (default) each replicate reports its score, pool size and hit count;
+at \code{2} and above each search phase reports on completion.
+
+On a large dataset a single phase can run for many minutes, during which
+neither level would print anything: on a 182-tip, 420-character matrix with
+inapplicable tokens throughout, one TBR phase took 582 s and one ratchet
+549 s, together 96\% of a 1173 s replicate.  A \emph{heartbeat} therefore reports
+from inside the long phases -- overwriting one console line at a terminal,
+or emitting discrete lines to a batch log -- so a slow search is
+distinguishable from a hung one.  See the environment variables below.}
 
 \item{nReplicates}{Integer specifying how many resample replicates to run.
 Default \code{1L} runs a single replicate (original behaviour).
@@ -118,7 +127,18 @@ hierarchy required.}
 \item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
 via x-transformations
 \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-\code{hierarchy}.}
+\code{hierarchy}.  \strong{Scores are rooting-sensitive}: the step matrix of
+this recoding is asymmetric -- gaining the controlling character costs one more
+than the number of secondaries it brings into existence, against 1 to
+lose it -- so a tree's length depends on where its root sits, whereas
+parsimony under the other methods does not.  Lengths are therefore
+reported at a canonical rooting, on the first taxon of \code{dataset}, which
+is the rooting the returned trees carry; \code{TreeLength()} canonicalises
+identically, so it reproduces the reported score and one topology has
+one length.  That value is an upper bound on the rooting-free minimum,
+exceeding it by at most the total number of secondary characters across
+hierarchy blocks, and attaining it for 87-98\% of rootings in
+simulation.}
 }}
 
 \item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
@@ -168,10 +188,10 @@ See discussion in \insertCite{Egan2006;textual}{TreeSearch};
 
 For a discussion of suitable search parameters in resampling estimates, see
 \insertCite{Muller2005;textual}{TreeSearch}.
-Each resampling may begin from the optimal tree
-(potentially quicker, but may overestimate support values as searches get
-stuck in local optima close to the optimal tree)
-or a random tree (whence finding an optimal tree may take longer).
+Each resample replicate searches the resampled matrix from scratch, rather
+than from \code{tree}.  Starting each replicate from the optimal tree would be
+quicker, but risks overestimating support: searches get stuck in local
+optima close to the tree whose support is being measured.
 
 For other ways to estimate clade concordance, see \code{\link[=SiteConcordance]{SiteConcordance()}}.
 }

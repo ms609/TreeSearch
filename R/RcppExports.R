@@ -31,8 +31,7 @@ MaddisonSlatkin_clear_cache <- function() {
 #' small or unbalanced partitions, where raw mutual information is appreciably
 #' inflated by chance agreement.
 #'
-#' The value is computed analytically \insertCite{Vinh2010}{TreeDist},
-#' summing over
+#' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
 #' the hypergeometric distribution of cell overlaps, and is returned in bits
 #' (logarithms to base two).
 #'
@@ -41,7 +40,6 @@ MaddisonSlatkin_clear_cache <- function() {
 #' @param nj Integer vector giving the block sizes of the second partition
 #'   (also summing to `N`).
 #' @return The expected mutual information, in bits.
-#' @references \insertAllCited{}
 #' @seealso [`SiteConcordance`]
 #' @examples
 #' # Expected MI between a 3|4 split and a 2|5 split of 7 items:
@@ -199,8 +197,8 @@ ts_driven_search <- function(contrast, tip_data, weight, levels, searchControl, 
     .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig, hsjConfig, xformConfig)
 }
 
-ts_collapse_pool <- function(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig = NULL, xformConfig = NULL, consSplitMatrix = NULL) {
-    .Call(`_TreeSearch_ts_collapse_pool`, edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix)
+ts_collapse_pool <- function(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig = NULL, xformConfig = NULL, consSplitMatrix = NULL, consZero = NULL) {
+    .Call(`_TreeSearch_ts_collapse_pool`, edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix, consZero)
 }
 
 ts_resample_search <- function(contrast, tip_data, weight, levels, bootstrap = FALSE, jackProportion = 2.0 / 3.0, maxReplicates = 5L, targetHits = 2L, tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04, driftCycles = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL, xpiwe = FALSE, xpiwe_r = 0.5, xpiwe_max_f = 5.0, obs_count = integer()) {
@@ -227,8 +225,8 @@ ts_hsj_score <- function(edge, contrast, tip_data, weight, levels, hierarchy_blo
     .Call(`_TreeSearch_ts_hsj_score`, edge, contrast, tip_data, weight, levels, hierarchy_blocks_r, alpha, tip_labels_r, absent_state)
 }
 
-ts_sankoff_test <- function(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r) {
-    .Call(`_TreeSearch_ts_sankoff_test`, edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r)
+ts_sankoff_test <- function(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r, combo_grids_r = NULL, tip_sec_known_r = NULL) {
+    .Call(`_TreeSearch_ts_sankoff_test`, edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r, combo_grids_r, tip_sec_known_r)
 }
 
 ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr) {

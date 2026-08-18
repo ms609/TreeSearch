@@ -241,7 +241,7 @@ ts_tbr_climb <- function(tree, ds, concavity, min_steps) {
 test_that("incremental exact_verify rescore is byte-identical to legacy (TS_NA_NOINCR)", {
   skip_if_not_installed("TreeTools")
   data(inapplicable.phyData)
-  on.exit(Sys.unsetenv("TS_NA_NOINCR"), add = TRUE)
+  withr::defer(Sys.unsetenv("TS_NA_NOINCR"))
 
   for (nm in c("Vinther2008", "DeAssis2011")) {
     dataset <- inapplicable.phyData[[nm]]
@@ -279,7 +279,7 @@ test_that("TS_NA_INCR_AUDIT cross-check runs clean (per-candidate incr == full)"
   ds <- make_ts_data(dataset)
   n_tip <- length(dataset)
   minSteps <- as.integer(MinimumLength(dataset, compress = TRUE))
-  on.exit(Sys.unsetenv("TS_NA_INCR_AUDIT"), add = TRUE)
+  withr::defer(Sys.unsetenv("TS_NA_INCR_AUDIT"))
   Sys.setenv(TS_NA_INCR_AUDIT = "1")
   set.seed(123)
   res <- expect_no_error(ts_tbr_climb(as.phylo(1, n_tip), ds, 10, minSteps))

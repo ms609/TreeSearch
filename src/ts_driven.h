@@ -142,6 +142,17 @@ struct DrivenParams {
   int pool_max_size = 100;
   double pool_suboptimal = 0.0;  // 0 = keep only optimal
 
+  // Retention ceiling for the MPT-enumeration phase alone; 0 means "no separate
+  // ceiling", i.e. keep `pool_max_size` throughout, which is the default and is
+  // byte-identical to the behaviour before this field existed.
+  //
+  // Split from `pool_max_size` because only this half is safe to scale with
+  // search effort: during the replicate loop the cap is the size of the working
+  // set that fuse, sector selection and consensusConstrain all read, so raising
+  // it changes the search trajectory; after the loop it is purely how many
+  // equal-score topologies get returned.  See TreePool::raise_max_size().
+  int enum_pool_max_size = 0;
+
   // Timeout (seconds). 0 or negative = no timeout.
   double max_seconds = 0.0;
 
@@ -201,10 +212,13 @@ struct DrivenParams {
   // re-exploration after escaping local optima.
   int max_outer_resets = 0;
 
-  // Optional starting tree edge matrix (R format: n_edge × 2, 1-based).
-  // When non-empty, replicate 0 uses this topology instead of Wagner.
-  // Subsequent replicates still use random Wagner trees.
-  std::vector<int> start_edge;  // flattened column-major [parent|child]
+  // Optional pool of starting tree edge matrices (R format: n_edge × 2,
+  // 1-based).  Replicate i uses start_edges[i] instead of a Wagner start;
+  // replicates past the end of the pool still use random Wagner trees.
+  // A single user tree is simply a pool of one, so the one-tree path is
+  // unchanged.  All trees are binary over the same taxa, so they share
+  // start_n_edge.
+  std::vector<std::vector<int>> start_edges;  // each flat col-major [par|chi]
   int start_n_edge = 0;
 
   // Consensus-stability stopping criterion.
@@ -221,6 +235,26 @@ struct DrivenParams {
   // replicates that fail to improve the best score.  Resets on
   // every improvement.
   int perturb_stop_factor = 0;
+
+  // 0 = disabled (the kernel default; R's `stopPatience`).
+  // Stop after this many consecutive replicates fail to improve the best score,
+  // as a FLAT count with no reference to the hit count.  Resets on every
+  // improvement, so a run stops at last_improvement + stop_patience.
+  //
+  // Why this exists.  Both other no-improvement rules are indexed on replicates
+  // *via hits*: targetHits waits for N independent re-hits, and
+  // perturb_stop_factor scales its own dry-spell limit by targetHits/hits.  So
+  // any change that makes a replicate individually better but slower delays the
+  // stop instead of improving the answer.  A flat count breaks that coupling,
+  // which is what lets a deeper ratchet pay for itself.
+  //
+  // CONFIRMED LIVE, implied weights only (two arrays, 4624 cells, 2026-07-28):
+  // the score/wall relationship is monotone in this value with no knife edge, so
+  // it is an operating point rather than a fitted constant.  Shipped per preset
+  // by .IwStopPackage() in R/MaximizeParsimony.R -- see there for the values and
+  // the measurements behind them.  Equal weights is untested and left at 0.
+  int stop_patience = 0;
+
   // Adaptive search level.
   // When true, dynamically scale ratchet_cycles and drift_cycles based
   // on the hit rate (fraction of replicates that find the current best
@@ -336,6 +370,11 @@ struct DrivenResult {
   // search (TNT "Total rearrangements examined" analogue). Serial path only;
   // 0 when run in parallel. See DataSet::n_candidates_evaluated.
   long long candidates_evaluated = 0;
+
+  // Replicates whose finished tree still violated the user constraint after
+  // repair and so never entered the pool (see capture_satisfies_constraint).
+  // Reported by the caller: Rf_warning() is not safe from a worker thread.
+  int constraint_discards = 0;
 };
 
 // Result of a single replicate (tree + score, no pool interaction).
@@ -367,6 +406,14 @@ ReplicateResult run_single_replicate(
     const SplitFrequencyTable* split_freq = nullptr,
     StartStrategy strategy = StartStrategy::WAGNER_RANDOM,
     const TreePool* pool = nullptr);
+
+// Gate a finished replicate's tree on its way into the pool.  Mirrors the fuse
+// capture: repair a constraint violation, verify the repair took, and return
+// false when it did not, so nothing the caller is handed can break the
+// constraint the caller asked for.  `score` is refreshed when a repair moves
+// the tree.  Inert unless a *user* constraint is active.
+bool capture_satisfies_constraint(TreeState& tree, ConstraintData* cd,
+                                  const DataSet& ds, double& score);
 
 // Run the full driven search. Returns search statistics.
 // The pool contents (all retained trees) are accessible via the pool

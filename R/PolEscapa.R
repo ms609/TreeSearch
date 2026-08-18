@@ -47,8 +47,8 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   if (attr(char, "nr") > 1L) {
     stop("`char` must comprise a single character; try char[, 1]")
   }
-  cont <- attr(char, "contrast")
-  zeroRows <- which(rowSums(cont) == 0)
+  rawCont <- attr(char, "contrast")
+  zeroRows <- which(rowSums(rawCont) == 0)
   usedTokens <- unique(unlist(char, use.names = FALSE))
   if (any(zeroRows %in% usedTokens)) {
     stop("`char` contrast matrix lacks levels for token(s) ",
@@ -60,8 +60,7 @@ LengthAdded <- function(trees, char, concavity = Inf) {
   
   trees <- RootTree(trees, 1) # Avoid warnings in TreeLength()
   start <- TreeLength(trees, char, concavity)
-  contApp <- cont[, setdiff(colnames(cont), "-"), drop = FALSE]
-  
+
   if (is.finite(concavity)) {
     # minLength attribute must be fixed.
     # Otherwise setting the only instance of a `1` to `?` will change the
@@ -69,8 +68,28 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     char <- PrepareDataIW(char)
   } else if (.UseProfile(concavity)) {
     char <- PrepareDataProfile(char)
+    if (attr(char, "nr") == 0) {
+      # `char` carries no information: ambiguating any single leaf cannot
+      # create information, so every leaf's score is unchanged from `start`.
+      return(setNames(rep(0, length(char)), names(char)))
+    }
   }
-  
+
+  # Read the contrast from the dataset that will actually be scored, not from
+  # the dataset the user supplied (T-365).  `PrepareDataIW()` leaves tokens and
+  # contrast untouched, but `PrepareDataProfile()` replaces the contrast
+  # wholesale with `rbind(diag(k), rep(1, k))` and renumbers every tip's token
+  # to `1:k`, with `k + 1` denoting ambiguity -- folding inapplicable, partially
+  # ambiguous and singleton codings into that ambiguous token.  Row and token
+  # indices taken from the unprepared `char` therefore name rows that no longer
+  # exist, and must not be `rbind()`ed onto the new contrast.
+  # Under profile parsimony the applicability distinction is consequently
+  # already gone: `cont` has no "-" column, so every token is applicable and
+  # `qm == qmApp == k + 1`.  A leaf coded inapplicable is ambiguous before and
+  # after ambiguation, so it still scores a zero-length change, as documented.
+  cont <- attr(char, "contrast")
+  contApp <- cont[, setdiff(colnames(cont), "-"), drop = FALSE]
+
   # Define ambiguous state, depending on applicability.
   # Take the first matching row when multiple rows are fully ambiguous, to
   # avoid silently assigning a vector to `charQm[[leaf]]` (analogous to the
@@ -86,7 +105,6 @@ LengthAdded <- function(trees, char, concavity = Inf) {
     inapp <- logical(nrow(cont))
     app <- !inapp
   }
-  inappLevel <- which.max(inapp)
   qmApp <- which(apply(contApp == 1, 1, all) & !inapp)
   if (length(qmApp) == 0) {
     attr(char, "contrast") <- rbind(cont, colnames(cont) != "-")

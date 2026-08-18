@@ -263,3 +263,34 @@ test_that("Pool suboptimal collection works in parallel", {
     expect_true(result$scores[i] <= result$best_score + 5.0 + 0.01)
   }
 })
+
+# --- 10. nThreads = 0 (auto-detect) actually engages the parallel path ---
+# T-339: the Rcpp dispatch gate used to read `nThreads > 1`, so nThreads = 0
+# (documented as "auto-detect: use one fewer thread than the number of CPU
+# cores") silently fell through to the single-threaded path instead of
+# reaching parallel_driven_search()'s own auto-detect. `strategy_diagnostics`
+# is only populated on the parallel branch (see ts_rcpp.cpp), so its presence
+# is a reliable, thread-count-independent signal of which branch ran.
+
+test_that("nThreads = 0 dispatches to the parallel search, not serial", {
+  skip_on_cran()
+  ds <- make_ts_data(vinther)
+
+  # maxReplicates = 2L caps the auto-detected thread count at 2 regardless of
+  # host core count (see AGENTS.md: max 2 cores per agent).
+  r_serial <- TreeSearch:::ts_driven_search(
+    contrast = ds$contrast, tip_data = ds$tip_data,
+    weight = ds$weight, levels = ds$levels,
+    maxReplicates = 2L, targetHits = 1L, verbosity = 0L,
+    nThreads = 1L
+  )
+  r_auto <- TreeSearch:::ts_driven_search(
+    contrast = ds$contrast, tip_data = ds$tip_data,
+    weight = ds$weight, levels = ds$levels,
+    maxReplicates = 2L, targetHits = 1L, verbosity = 0L,
+    nThreads = 0L
+  )
+
+  expect_equal(length(r_serial$strategy_diagnostics), 0L)
+  expect_gt(length(r_auto$strategy_diagnostics), 0L)
+})

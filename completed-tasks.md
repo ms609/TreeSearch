@@ -1,5 +1,14 @@
 # Closed Tasks — Decisions Worth Not Re-Litigating
 
+> **FROZEN 2026-08-04 — closed to new rows.** Task state moved to
+> [`agent-issues/TreeSearch` issues](https://github.com/agent-issues/TreeSearch/issues);
+> a closed issue (`wontfix`, or closed as *not planned*) is now where a terminal decision is
+> recorded, and `to-do.md` has been deleted.
+>
+> This file stays exactly as it is because its content is the one thing the tracker cannot
+> replace: **offline, grep-able reasoning for decisions whose rationale is not in any commit.**
+> Keep consulting it — the instruction below is still live — but do not append to it.
+
 This is **not** a full archive of every completed task. Routine fixes live in
 git history and merged PRs; do not duplicate them here. This file keeps only
 the closures whose *reasoning* is not recoverable from a commit: **not-a-bug
@@ -35,6 +44,8 @@ decision + a pointer to the write-up. Routine fixes get a one-line row in
 | T-183 | Pool-seeded Wagner / consensus backbone | **Superseded** by `consensusConstrain` (ts_driven.cpp), which constrains the whole replicate pipeline, not just Wagner. Marginal starting-tree value given the NNI→TBR pipeline. |
 | T-198–201 | Boltzmann parallel tempering | **Ruled out** by T-199: 0% cold↔warm swap acceptance across all datasets. PCSA component salvaged as T-207/PR #227. See pt-evaluation expertise note. |
 | T-185 | IQ-TREE acceleration ideas | Stochastic NNI-perturbation worth trying (→T-186, implemented). **Batch NNI not worthwhile** — see batch-nni expertise note. |
+| VINE | Vine-style embedding + NJ-decoder search (bioRxiv `10.64898/2025.12.24.696405`) | **Ruled out for both candidate slots.** (i) `LeastSquaresTree()`: the refit discards the decoder's branch lengths, so RSS-after-refit is piecewise *constant* in the input matrix (6 distinct values over 241 grid points); the only differentiable surrogate misranks topologies (Spearman +0.10–+0.36 among RF==2 neighbours, unchanged by scale/affine correction). An oracle hill-climb on the *true* objective never beat NNI+SPR. (ii) Sector starts (`build_ras_sector`): perturbed-NJ makes *better* individual starts than RAS Wagner (2.5 vs 4.0 excess) but **loses** on best-of-5 (1 win / 7 ties / 7 losses) because its restarts are half as diverse (CID 0.162 vs 0.328) — multi-start sector solving is diversity-limited, not start-quality-limited. Two unrelated leads recorded in the write-up: `method = "ols"` returns topologies worse than the NJ start when rescored under NNLS (5/5 targets), and `ts_ls.{cpp,h}` has no `certify_unrooted` equivalent. Full write-up: `dev/benchmarks/vine-embedding-ls-search.md`. |
+| MAXINFO / AML | Maximum-information tree; concave-per-branch parsimony | **Both ruled out.** The published Nishimaki-Sato 2026 metric is topology-independent at realistic n (consensus collapse), inflatable by invariant sites, and label-invariant (a complement child scores a perfect 1.000). Its sound chance-corrected form collapses onto weighted parsimony. The surviving concave-per-branch exit **is Ancestral Maximum Likelihood** — NP-hard (Addario-Berry et al. 2004) and statistically inconsistent (shrinks internal edges to nothing as k grows, arXiv:0802.0914). AML is the *transpose* of implied weighting, which is exactly why IW is cheap and this is not. Only open question: AML vs IW at >=6 taxa. Write-up: `dev/plans/2026-08-03-concave-branch-criterion-is-aml.md`. |
 
 ## Search-tuning experiments — settled, don't re-run
 

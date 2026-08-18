@@ -2,6 +2,7 @@
 #include "ts_fitch.h"
 #include "ts_collapsed.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 #include "ts_tabu.h"
 #include "ts_splits.h"
 #include <algorithm>
@@ -18,10 +19,38 @@
 #include <R.h>
 #include <Rinternals.h>
 
+// Software-prefetch hint (read, low temporal locality), mirroring the scalar
+// reroot path's existing scheme (ts_tbr.cpp scalar branch).  A pure
+// microarchitectural directive: it moves no program-visible state and is
+// non-faulting on a bad/OOB address, so it never changes a score or trajectory.
+#if defined(__GNUC__) || defined(__clang__)
+#define TS_PREFETCH_R0(p) __builtin_prefetch((p), 0, 0)
+#elif defined(_MSC_VER) && defined(TS_SIMD_SSE2)
+#define TS_PREFETCH_R0(p) _mm_prefetch(reinterpret_cast<const char*>(p), _MM_HINT_T0)
+#else
+#define TS_PREFETCH_R0(p) ((void)0)
+#endif
+
 namespace ts {
 
 // --- Fast hash for virtual_prelim deduplication (Phase 3A) ---
 // Word-at-a-time multiply-xor hash (faster than byte-by-byte FNV-1a).
+
+// EW/NA integer bail-cutoff slack. The cutoff is best_candidate - divided_length
+// + slack; the scorer bails on extra_steps >= cutoff. slack=1 (the historical
+// value) lets an equal-length, NON-improving candidate accumulate its full extra
+// before rejection (candidate == best is not < best); slack=0 makes it bail the
+// moment its running extra reaches the current minimum. Byte-identical either way
+// (acceptance is strict-<, so no equal candidate is ever recorded, and improvers
+// -- true extra < min -- never reach the tighter cutoff): the drift path already
+// ships slack=0 (ts_drift.cpp). DEFAULT 0 (tight); TS_TBR_LOOSE_CUTOFF reverts to
+// 1 for the A/B. Read once (recompute fires only on improvement, but cache anyway
+// per the getenv-cost lesson). IW is unaffected (it bounds on the float
+// best_candidate directly, already tight).
+static inline int tbr_cutoff_slack() {
+  static const int v = std::getenv("TS_TBR_LOOSE_CUTOFF") ? 1 : 0;
+  return v;
+}
 
 static uint64_t fast_hash(const uint64_t* data, int n_words) {
   uint64_t hash = 14695981039346656037ULL;
@@ -91,9 +120,18 @@ static double full_rescore(TreeState& tree, const DataSet& ds) {
 }
 
 // Re-root the tree so tip `t` is a direct child of the root pseudo-node n_tip.
-// Parsimony length is root-invariant, so this only changes the representation
-// (which edges are clippable and where the root edge sits) — it lets the search
-// reach moves the current rooting hides.  Rebuilds postorder; does NOT refresh
+// Parsimony length is root-invariant for the SYMMETRIC criteria (EW / IW / NA /
+// profile, and since T-374 also HSJ), so for those this only changes the
+// representation (which edges are clippable and where the root edge sits) — it
+// lets the search reach moves the current rooting hides.  It is NOT
+// root-invariant under XFORM: the x-transformation's step matrix is asymmetric
+// (gain = nSec + 1 against loss = 1), so a reroot can change the score by up to
+// sum(nSec) over blocks (T-374; measured in
+// dev/plans/2026-07-29-t374b-xform-rooting-policy.md).  Callers under XFORM must
+// treat the score as rooting-relative.  HSJ used to belong in that list because
+// its alpha.d/m term was read off a directional pick; the secondary labelling is
+// now rooted canonically at tip 0 inside the kernel (ts_hsj.cpp), so HSJ scores
+// are a function of the unrooted topology.  Rebuilds postorder; does NOT refresh
 // Fitch state arrays, so the caller must full_rescore() afterwards.
 // Generalises reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
 // Declared in ts_tbr.h (used by the output-collapse kernel in ts_rcpp.cpp).
@@ -682,6 +720,14 @@ static bool try_root_edge_moves(TreeState& tree, const DataSet& ds,
   // Refresh states so prelim[] is current for cL/cR and every fragment node.
   best_score = full_rescore(tree, ds);
 
+  // T-373 (HSJ/XFORM, total_words == 0): this additive root-edge scan is
+  // Fitch-only (rootjoin/base_split bookkeeping via tree.prelim), with no
+  // HSJ/XFORM fallback, so with tw == 0 it would index the EMPTY tree.prelim
+  // (UB). best_score above already holds the authoritative (full_rescore)
+  // HSJ/XFORM score; skip the root-edge scan itself -- same "screening
+  // degraded, accept exact" trade as the TBR reroot-candidate skip above.
+  if (tw == 0) return false;
+
   const uint64_t* pL = &tree.prelim[static_cast<size_t>(cL) * tw];
   const uint64_t* pR = &tree.prelim[static_cast<size_t>(cR) * tw];
   const int rootjoin = fitch_indirect_length_cached(pL, pR, ds, INT_MAX);
@@ -802,6 +848,25 @@ static inline uint64_t tree_topo_hash(const TreeState& tree) {
 // Dataset fingerprint: mix n_tips, n_blocks, and every tip_states word so that
 // any dataset change (adding a char, changing a tip state) produces a new key.
 // The cache is cleared whenever the fingerprint changes.
+// TS_NA_TIMING: enable the NA cost-decomposition counters on DataSet.
+//
+// Read ONCE per process via a function-local static.  That is correct here and
+// deliberately unlike the per-call kill-switch reads elsewhere in this file
+// (TS_IW_NOX4 etc., which must stay per-call so an in-process A/B can toggle
+// arms): these counters are pure diagnostics that never change behaviour, so
+// freezing the flag at first use costs nothing and keeps getenv out of the
+// convergence path (see the ucrt getenv cost note).
+static bool na_timing_enabled() {
+  static const bool on = std::getenv("TS_NA_TIMING") != nullptr;
+  return on;
+}
+
+static inline long long ns_since(
+    const std::chrono::steady_clock::time_point& t0) {
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+             std::chrono::steady_clock::now() - t0).count();
+}
+
 static inline uint64_t ds_fingerprint(const DataSet& ds) {
   uint64_t h = (uint64_t)ds.n_tips * 2654435761ULL
              ^ (uint64_t)ds.n_blocks * 2246822519ULL;
@@ -815,8 +880,17 @@ static inline uint64_t ds_fingerprint(const DataSet& ds) {
 // fields ARE the "scoring state that varies mid-search"), and NA scoring reads
 // all three (ts_fitch_na*.h).  exact_verify therefore scores a topology
 // differently in the perturbed vs base regime, so the regime must be part of
-// the cache key.  Mixing the same three fields here covers the regime by
-// construction.
+// the cache key.
+//
+// `concavity` and `scoring_mode` are mixed in for the same reason.  Keying on the
+// three mask/freq fields alone was sufficient only while they were the ONLY
+// scoring state that varied for a given DataSet.  They are not the only candidate:
+// anything that rescores one DataSet under two weighting regimes -- a concavity
+// sweep, or a phase that swaps in a cheaper surrogate scorer -- leaves all three
+// untouched while changing what "is this topology a TBR optimum" MEANS.  Without
+// these terms a FALSE memoized under one regime is served to the other and a real
+// improving move is silently suppressed.  Verified reachable: before this change
+// k=10 and k=40 hashed identically (test-ts-na-evcache.R now pins both terms).
 static inline uint64_t weight_fingerprint(const DataSet& ds) {
   uint64_t h = 14695981039346656037ULL;
   for (const auto& blk : ds.blocks) {
@@ -824,6 +898,11 @@ static inline uint64_t weight_fingerprint(const DataSet& ds) {
     h ^= blk.upweight_mask; h *= 1099511628211ULL;
   }
   for (int f : ds.pattern_freq) { h ^= (uint64_t)(uint32_t)f; h *= 1099511628211ULL; }
+  static_assert(sizeof(uint64_t) == sizeof(double), "double is not 64-bit");
+  uint64_t kbits = 0;
+  std::memcpy(&kbits, &ds.concavity, sizeof(kbits));   // HUGE_VAL when EW
+  h ^= kbits;                                        h *= 1099511628211ULL;
+  h ^= (uint64_t)static_cast<int>(ds.scoring_mode);  h *= 1099511628211ULL;
   return h;
 }
 
@@ -927,6 +1006,13 @@ static bool exact_verify_sweep(TreeState& tree, const DataSet& ds,
   // the inner loop) and not cached, so the env var toggles reliably.  The
   // deterministic guard is test-ts-na-evcache.R.
   const bool cache_hit = evs_false_cache.count(cache_key) != 0;
+  // Counted unconditionally (NOT under TS_NA_TIMING, unlike the ns brackets):
+  // one increment per convergence, and na_n_evs paired with na_n_evs_skipped is
+  // what lets an A/B prove the certify_unrooted gate reached a live call site.
+  // A gate that never fires and a gate that fires and buys nothing look
+  // identical without both halves of that pair.
+  ++ds.na_n_evs;
+  if (cache_hit) ++ds.na_n_evs_hits;
   if (cache_hit && !std::getenv("TS_EV_AUDIT")) return false;
 
   save_topology(tree, snap);
@@ -1339,7 +1425,7 @@ static inline void spr_scan_plain_ew(
       best_below = below;
       best_reroot_parent = -1;
       best_reroot_child = -1;
-      cutoff = static_cast<int>(best_candidate - divided_length + 1);
+      cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
     }
   }
 }
@@ -1399,6 +1485,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                      const std::vector<bool>* sector_mask,
                      TreePool* collect_pool,
                      std::function<bool()> check_timeout) {
+  // TS_NA_TIMING: decompose this call's wall into the NA-only per-clip
+  // scaffolding, the accept-path rescores, and the exact_verify certification,
+  // accumulating onto the DataSet so one R-level call yields whole-search totals.
+  // A scope guard, so the total is charged on EVERY return path -- including the
+  // entry full_rescore and the no-informative-characters early exit below, both
+  // of which sit before the flag block further down.
+  const bool na_timing = na_timing_enabled();
+  struct NaTotalTimer {
+    const DataSet* ds; std::chrono::steady_clock::time_point t0; bool on;
+    ~NaTotalTimer() { if (on) ds->na_t_total_ns += ns_since(t0); }
+  } _na_total{&ds, std::chrono::steady_clock::now(), na_timing};
+
   double best_score = full_rescore(tree, ds);
   // Tracks whether `best_score` is the authoritative score of the current
   // (tree, state arrays). Each accepted move and each state_snap.restore
@@ -1408,8 +1506,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // skipping a redundant O(n_node x n_char) pass when states are coherent.
   bool score_fresh = true;
 
-  // No informative characters: all trees have the same score.
-  if (ds.total_words == 0) {
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
+  // when total_words == 0.
+  if (ds.topology_independent()) {
     return {best_score, 0, 0, 0, true};
   }
 
@@ -1441,6 +1541,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // scalar reroot path (for A/B). Read once (no per-clip getenv, per the
   // getenv-cost lesson).
   const bool iw_x4 = std::getenv("TS_IW_NOX4") == nullptr;
+  // Software-prefetch the x4 reroot batches' next vroot_cache row-heads, giving
+  // the flat-x4 EW/IW/NA batches the same L2/L3-latency hiding the scalar reroot
+  // path already has (the x4 kernels currently issue 4 cold demand loads to
+  // scattered rows with no hint).  Pure hint => byte-identical.  DEFAULT-OFF
+  // (opt-in TS_TBR_PREFETCH=1): local Windows/MinGW is flat, so the win/wash is
+  // settled on Hamilton EPYC raw-TBR + MaximizeParsimony wall (min-of-runs)
+  // before any default flip.  Read once (no per-clip getenv, getenv-cost lesson).
+  const bool tbr_prefetch = std::getenv("TS_TBR_PREFETCH") != nullptr;
   // Pure-IW extract_char_steps dirty-region: derive per-clip divided_steps
   // incrementally (full_char_steps + cs_delta - nx) instead of the O(n_node)
   // walk. On by default; kill-switch TS_IW_NODIRTY reverts to extract+add.
@@ -1555,9 +1663,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   refresh_collapsed_all_zero();
   const bool revert_check = std::getenv("TS_REVERT_CHECK") != nullptr;
   const bool iw_scanchk = std::getenv("TS_IW_SCANCHK") != nullptr;
+  // Oracle for the dirty-set accept path (see TS_TBR_ACCEPTCHK below).
+  const bool acceptchk = std::getenv("TS_TBR_ACCEPTCHK") != nullptr;
   // TS_PHYS_REROOT selects the legacy physical-reroot reference path; it is read
   // once per outer reroot-loop iteration below (>=1/call), so hoist it too.
   const bool phys_reroot = std::getenv("TS_PHYS_REROOT") != nullptr;
+  // NA certification gating (params.certify_unrooted).  The gate is OPT-IN via
+  // TS_NA_NOCERTIFY: unset => certify at every caller exactly as before, so the
+  // shipped default is byte-identical to the parent commit and the
+  // floor-attainment gate (not this commit) decides whether to flip it.  Read
+  // once per call, not per outer iteration, per the getenv-cost lesson.
+  const bool certify_na = params.certify_unrooted
+      || std::getenv("TS_NA_NOCERTIFY") == nullptr;
   // B2 ceiling probe (measurement only, env-gated => production byte-identical):
   // count SPR-regraft candidates that pass collapse Condition 1 (zero parent
   // cost) but are NOT conservatively collapsed (Condition 3 fails) — the set an
@@ -1706,7 +1823,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // (final[a]|final[d]) that mis-counts and hides improving moves -- the same
   // bug the EW directional fix cured, now extended to IW.  NA keeps its own
   // 3-pass scorers.
-  const bool use_directional = !has_na;
+  // T-373: also requires total_words > 0 -- has_na can only be true when at
+  // least one Fitch block exists (so has_na == false is guaranteed whenever
+  // total_words == 0, HSJ/XFORM included), but the directional edge-set
+  // machinery indexes tree.prelim/edge_set_buf by total_words, so without
+  // this guard it would run over EMPTY buffers (UB) whenever an HSJ/XFORM
+  // dataset simplifies away every Fitch block.
+  const bool use_directional = !has_na && tree.total_words > 0;
   std::vector<uint64_t> edge_set_buf;
   // Caller-owned scratch for compute_insertion_edge_sets, reused across clips
   // (size-ensured, non-zeroing) so the up-message buffer and preorder list are
@@ -2055,8 +2178,14 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       int best_reroot_parent = -1, best_reroot_child = -1;
 
       // SPR candidates — with early termination (optimization #1)
+      // T-373 (HSJ/XFORM, total_words == 0): `tree.prelim` is then EMPTY, so
+      // `&tree.prelim[0]` is UB (aborts under _GLIBCXX_ASSERTIONS). The value
+      // is never dereferenced in that case -- every consumer below indexes it
+      // only inside loops bounded by ds.n_blocks (== 0 here) -- so a null
+      // placeholder is behaviourally identical and avoids constructing it.
       size_t clip_base = static_cast<size_t>(clip_node) * tree.total_words;
-      const uint64_t* clip_prelim = &tree.prelim[clip_base];
+      const uint64_t* clip_prelim =
+          tree.total_words > 0 ? &tree.prelim[clip_base] : nullptr;
 
       // EW/NA bail cutoff, maintained across this clip's SPR + reroot loops.
       // Recomputed ONLY inside an accept block (when best_candidate improves) —
@@ -2077,7 +2206,12 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       // once by criterion flavour — EW (with the flat-kernel weight-class split)
       // or IW/XPIWE (strip-only, no flat variant). Byte-identical; ew_mono
       // default ON, TS_EW_MONO_OFF reverts to the general loop for BOTH.
-      const bool mono_plain = ew_mono && !has_na
+      // T-373: also requires use_directional (== total_words > 0 here, since
+      // has_na is already excluded above) -- both monomorphized scans below
+      // index clip_prelim/edge_set_buf unconditionally by total_words, which
+      // is only valid once compute_insertion_edge_sets() has actually
+      // populated edge_set_buf (skipped when total_words == 0, T-373).
+      const bool mono_plain = ew_mono && !has_na && use_directional
           && sector_mask == nullptr && !constrained && collapsed_all_zero
           && !b2_ceiling;
       const bool ew_mono_plain = mono_plain && !use_iw;
@@ -2161,15 +2295,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           // Exact directional cost (mirrors the EW path): the edge set above
           // `below` is edge_set_buf[below], replacing the union-of-finals
           // approximation that hid improving IW moves.
+          // T-373: with tw == 0, edge_set_buf was never populated
+          // (use_directional is false, compute_insertion_edge_sets skipped)
+          // -- pass null, matching clip_prelim above; unused inside the
+          // scorer's ds.n_blocks-bounded loop (== 0 here).
+          const uint64_t* vroot = tw > 0
+              ? &edge_set_buf[static_cast<size_t>(below) * tw] : nullptr;
           candidate = indirect_iw_length_cached(
-              clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
-              ds, base_iw, iw_delta, best_candidate);
+              clip_prelim, vroot, ds, base_iw, iw_delta, best_candidate);
         } else {
           // Exact directional cost: the edge set above `below` (= node_d) is
           // edge_set_buf[below], replacing the union-of-finals approximation.
-          int extra = fitch_indirect_length_cached(
-              clip_prelim, &edge_set_buf[static_cast<size_t>(below) * tw],
-              ds, cutoff);
+          // T-373: see the use_iw branch above.
+          const uint64_t* vroot = tw > 0
+              ? &edge_set_buf[static_cast<size_t>(below) * tw] : nullptr;
+          int extra = fitch_indirect_length_cached(clip_prelim, vroot, ds, cutoff);
           candidate = divided_length + extra;
         }
         ++n_evaluated;
@@ -2190,7 +2330,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           best_below = below;
           best_reroot_parent = -1;
           best_reroot_child = -1;
-          cutoff = static_cast<int>(best_candidate - divided_length + 1);
+          cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
         }
       }
       }  // end else (general SPR loop; ew_mono_plain template dispatch above)
@@ -2201,7 +2341,18 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       }
 
       // TBR candidates (rerooting) — with vroot cache (optimization #4)
-      if (clip_node >= tree.n_tip) {
+      // T-373: this whole block is Fitch-only, indexing tree.prelim/from_above
+      // /vroot_cache unconditionally by total_words (compute_from_above,
+      // fitch_join_states, the flat batch-4 kernels, etc. -- none of it is
+      // HSJ/XFORM-aware), so with total_words == 0 it would run over EMPTY
+      // buffers (UB). Skipping it there leaves the SPR-candidate scan above
+      // (now mode-safe) plus the exact accept-time full_rescore below as the
+      // search mechanism for that case -- reroot candidates are not screened,
+      // but nothing is scored incorrectly (same "screening degraded, accept
+      // exact" shape as T-377).
+      if (clip_node >= tree.n_tip && tree.total_words > 0) {
+        const auto _t_vroot = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
         compute_from_above(tree, ds, clip_node, from_above);
         collect_subtree_edges(tree, clip_node, sub_edges);
 
@@ -2220,10 +2371,16 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         } else {
           precompute_vroot_cache(tree, main_edges, vroot_cache);
         }
+        // compute_from_above + vroot build, per clip.  Charged together because
+        // both are per-clip scaffolding that exists to serve the candidate scan
+        // rather than to score any single candidate.
+        if (na_timing) ds.na_t_vroot_ns += ns_since(_t_vroot);
 
         // For NA: precompute per-edge below_actives (OR of applicable
         // subtree_actives words for node_d of each edge)
         if (has_na) {
+          const auto _t_below = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
           below_actives_cache.resize(
               static_cast<size_t>(n_main) * ds.n_blocks);
           for (int ei = 0; ei < n_main; ++ei) {
@@ -2244,6 +2401,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               below_actives_cache[
                   static_cast<size_t>(ei) * ds.n_blocks + b_i] = ba;
             }
+          }
+          if (na_timing) {
+            ds.na_t_below_ns += ns_since(_t_below);
+            ++ds.na_n_below;
           }
         }
 
@@ -2311,6 +2472,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               }
               if (b_n == 0) break;
 
+              // Prefetch the NEXT batch's vroot rows (ki now indexes it) so the
+              // 4 cold row-heads overlap this batch's reduce.  Candidate order,
+              // cutoff and tie-breaks untouched — a pure latency hint.
+              if (tbr_prefetch) {
+                for (size_t p = 0; p < 4 && ki + p < n_kept; ++p)
+                  TS_PREFETCH_R0(
+                      &vroot_cache[static_cast<size_t>(kept_ei[ki + p]) * tw]);
+              }
+
               // cutoff is maintained across the clip (recomputed only on
               // improvement); byte-identical to the old per-batch recompute.
               int cutoff_b = cutoff;
@@ -2371,7 +2541,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                   best_below = main_edges[b_ei[k]].second;
                   best_reroot_parent = sp;
                   best_reroot_child = sc;
-                  cutoff = static_cast<int>(best_candidate - divided_length + 1);
+                  cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
                 }
               }
             }
@@ -2386,6 +2556,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             // iw_x4 is disabled (TS_IW_NOX4) this whole branch is skipped and
             // both NA and no-NA IW fall through to the scalar `else` below.
             int ei = 0;
+            size_t iw_pf = 0;  // parallel cursor into kept_ei (prefetch only):
+                               // kept_ei carries the identical skip predicate in
+                               // the same ascending order, so iw_pf == the count
+                               // of kept_ei consumed after each batch.
             while (ei < n_main) {
               int b_ei[4];
               int b_n = 0;
@@ -2399,6 +2573,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 ++ei;
               }
               if (b_n == 0) break;
+
+              // Prefetch the next batch's vroot rows via kept_ei (see iw_pf).
+              // Pure latency hint; candidate order, cutoff and tie-breaks are
+              // untouched (the scan above still drives selection off main_edges).
+              iw_pf += static_cast<size_t>(b_n);
+              if (tbr_prefetch) {
+                const size_t nk = kept_ei.size();
+                for (size_t p = 0; p < 4 && iw_pf + p < nk; ++p)
+                  TS_PREFETCH_R0(
+                      &vroot_cache[static_cast<size_t>(kept_ei[iw_pf + p]) * tw]);
+              }
 
               double scores[4] = {best_candidate, best_candidate,
                                   best_candidate, best_candidate};
@@ -2515,7 +2700,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
                 best_below = below;
                 best_reroot_parent = sp;
                 best_reroot_child = sc;
-                cutoff = static_cast<int>(best_candidate - divided_length + 1);
+                cutoff = static_cast<int>(best_candidate - divided_length + tbr_cutoff_slack());
               }
             }
           }
@@ -2607,19 +2792,32 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
         tree.build_postorder_prealloc(work_stack);
 
-        // T-300: dirty-set incremental rescore for SPR moves.  The two
-        // affected nodes after apply_tbr_move are nz (clip grandparent,
-        // children changed: nx -> ns) and nx (regraft point, children
-        // changed to {clip_node, below}).  fitch_dirty_downpass updates
-        // every node on the union of paths nz->root and nx->root exactly
-        // once in postorder; sums correctly with no shared-ancestor
-        // ambiguity.  TBR moves with non-trivial rerooting and NA
-        // datasets fall back to full_rescore.
+        // T-300: dirty-set incremental rescore.  The affected nodes after
+        // apply_tbr_move are nz (clip grandparent, children changed:
+        // nx -> ns), nx (regraft point, children changed to
+        // {new_subtree_root, below}) and — for a TBR rerooting only — every
+        // node on clip_node..reroot_parent, whose parent/child links the move
+        // reverses.  After that reversal the path IS clip_node's rootward
+        // chain, so a third seed at clip_node marks exactly those nodes;
+        // `third` stays -1 for SPR, leaving the two-seed set untouched.
+        // fitch_dirty_downpass updates every node on the union of the seeds'
+        // rootward paths exactly once in postorder; sums correctly with no
+        // shared-ancestor ambiguity.  Only scoring modes whose total equals
+        // the Fitch/IW result (see incremental_ok) take this path; HSJ and
+        // XFORM still fall back to full_rescore.
         bool is_spr = (best_reroot_parent < 0 || best_reroot_parent == clip_node);
+        const int third = (!is_spr && clip_node >= tree.n_tip) ? clip_node : -1;
+        // Count the ARM, not the move class: under HSJ/XFORM a rerooting move
+        // still falls through to full_rescore below, and counting it here would
+        // let the regression test in test-ts-tbr-dirty-rescore.R report coverage
+        // of a dirty-set rescore that never ran (src/ts_data.h).
+        if (!is_spr && incremental_ok) ++ds.n_reroot_accepts;
         double actual;
-        if (is_spr && !has_na && incremental_ok) {
-          int delta = fitch_dirty_downpass(tree, ds, nz, nx);
-          fitch_dirty_uppass(tree, ds, nz, nx);
+        const auto _t_acc = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
+        if (!has_na && incremental_ok) {
+          int delta = fitch_dirty_downpass(tree, ds, nz, nx, third);
+          fitch_dirty_uppass(tree, ds, nz, nx, third);
           if (use_iw) {
             std::fill(divided_steps.begin(), divided_steps.end(), 0);
             extract_char_steps(tree, ds, divided_steps);
@@ -2627,14 +2825,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
           } else {
             actual = best_score + static_cast<double>(delta);
           }
-        } else if (is_spr && has_na && incremental_ok) {
+        } else if (has_na && incremental_ok) {
           // T-300 NA variant: dirty-set Pass 1 + Pass 2 instead of full
           // rescore.  Pass 3 still runs over the full tree because it
           // populates internal down2 (read by extract_char_steps) and
           // counts NA-block steps directly.  Savings come from skipping
-          // Pass 1 + Pass 2 on off-dirty nodes.
-          fitch_na_dirty_downpass(tree, ds, nz, nx);
-          fitch_na_dirty_uppass(tree, ds, nz, nx);
+          // Pass 1 + Pass 2 on off-dirty nodes.  The same three-seed dirty
+          // region already backs the exact_verify_sweep incremental path.
+          fitch_na_dirty_downpass(tree, ds, nz, nx, third);
+          fitch_na_dirty_uppass(tree, ds, nz, nx, third);
           int ew_total = fitch_na_pass3_score(tree, ds);
           if (use_iw) {
             std::fill(divided_steps.begin(), divided_steps.end(), 0);
@@ -2648,10 +2847,36 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             actual = static_cast<double>(ew_total) + ds.ew_offset;
           }
         } else {
-          // Non-trivial TBR rerooting, or a scoring mode whose incremental
-          // delta is not exact (HSJ/XFORM, see incremental_ok): recompute the
-          // authoritative score via score_tree().
+          // A scoring mode whose incremental delta is not exact (HSJ/XFORM,
+          // see incremental_ok): recompute the authoritative score via
+          // score_tree().
           actual = full_rescore(tree, ds);
+        }
+        // Accept-path rescore: the price of ACCEPTING a move, as distinct from
+        // scanning candidates.  On NA this is the dirty down/uppass plus a
+        // full-tree Pass 3; HSJ/XFORM still pay an outright full_rescore.
+        if (na_timing) {
+          ds.na_t_accept_ns += ns_since(_t_acc);
+          ++ds.na_n_accept;
+        }
+
+        // AUDIT (env TS_TBR_ACCEPTCHK): cross-check the incremental accept
+        // score against full_rescore and abort on any drift.  This is the
+        // oracle for the dirty-set accept path — an earlier incremental
+        // attempt shipped a systematic delta of -3 (b7303ee5) precisely
+        // because no such check existed.  full_rescore leaves prelim/final_
+        // coherent for the whole tree, so running it here is state-neutral.
+        // No-op unless the env var is set.
+        if (acceptchk && incremental_ok) {
+          const double audit = full_rescore(tree, ds);
+          if (std::fabs(actual - audit) > 1e-6) {
+            Rcpp::stop("TS_TBR_ACCEPTCHK mismatch mode=%s reroot=%d clip=%d "
+                       "incr=%.6f full=%.6f diff=%.6f",
+                       has_na ? (use_iw ? "NA+IW" : "NA+EW")
+                              : (use_iw ? "IW" : "EW"),
+                       is_spr ? 0 : 1, clip_node, actual, audit,
+                       actual - audit);
+          }
         }
 
         // DIAGNOSTIC (env TS_IW_SCANCHK): compare the scan's predicted
@@ -2796,7 +3021,8 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // Recompute collapsed regions after the accepted move (states are
         // valid from full_rescore in the accept path above).
         if (!collapsed.empty()) {
-          compute_collapsed_flags(tree, ds, collapsed);
+          if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
+          else               compute_collapsed_flags(tree, ds, collapsed);
           refresh_collapsed_all_zero();  // lever #7 gate must not go stale
         }
         // Optimization #6: don't reshuffle after acceptance — the topology
@@ -2857,6 +3083,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       pass_candidates_evaluated += (n_evaluated - clip_evals_before);
 
+      // Piggyback the existing per-clip poll rather than adding a clock read to
+      // the candidate loop: the profiling campaign left the hot path at-limit,
+      // and a per-candidate chrono::now() would reopen it.  Stride 64 amortises
+      // the clock read across clips, which are individually cheap.
+      // Silent unless the caller labelled this search -- see TBRParams.
+      if (params.heartbeat_label != nullptr) {
+        ts::heartbeat(params.heartbeat_label, best_score, 64);
+      }
+
       if (ts::check_interrupt()) break;
       ++clips_since_timeout_check;
       if (check_timeout && clips_since_timeout_check >= timeout_interval) {
@@ -2898,9 +3133,40 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // fast additive for EW / apply+rescore for IW).  NA: the indirect scan is
     // only approximate, so an EXACT full-neighbourhood sweep is required to
     // certify a true unrooted-TBR optimum (see exact_verify_sweep).
-    bool improved = has_na
-        ? exact_verify_sweep(tree, ds, best_score)
-        : try_root_edge_moves(tree, ds, best_score, ew_directional);
+    bool improved;
+    if (has_na && !certify_na) {
+      // This caller does not need a certified optimum (see
+      // TBRParams::certify_unrooted): accept the approximate scan's apparent
+      // convergence instead of paying the exhaustive sweep to prove it.
+      //
+      // exact_verify_sweep re-synced best_score to the tree on BOTH its exits
+      // (entry, and again before returning false).  Skipping it removes that
+      // sync, so do it here explicitly -- a best_score that drifts from the
+      // returned topology is the ts_tbr.cpp:660 bug class, and it would surface
+      // in a floor-attainment panel as a quality regression that is really a
+      // reporting bug.  One rescore per convergence: not measurable.
+      ++ds.na_n_evs_skipped;
+      tree.build_postorder();
+      best_score = full_rescore(tree, ds);
+      score_fresh = true;
+      improved = false;
+    } else if (has_na) {
+      // Timed separately: this O(n^2) certification is the single largest
+      // unmeasured item on the native-NA path, and it is invisible to every
+      // candidate-based metric because it never bumps n_candidates_evaluated.
+      const auto _t_evs = na_timing ? std::chrono::steady_clock::now()
+                                    : std::chrono::steady_clock::time_point{};
+      improved = exact_verify_sweep(tree, ds, best_score);
+      // na_n_evs_improved is counted ALWAYS (only the ns bracket is
+      // TS_NA_TIMING-gated): it says how often certification found a real
+      // improving move rather than merely proving optimality, which is the
+      // mechanistic explanation of any quality difference the gate causes.  A
+      // panel that cannot see it can only report that reach dropped, not why.
+      if (improved) ++ds.na_n_evs_improved;
+      if (na_timing) ds.na_t_evs_ns += ns_since(_t_evs);
+    } else {
+      improved = try_root_edge_moves(tree, ds, best_score, ew_directional);
+    }
     if (!improved) break;
     score_fresh = true;
     if (!collapsed.empty()) {
@@ -2925,10 +3191,15 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   reroot_prev = best_score;
   reroot_at_tip(tree, reroot_tip);
   reroot_tip = (reroot_tip + 1) % tree.n_tip;
-  best_score = full_rescore(tree, ds);   // root-invariant; refreshes states
+  // Refreshes states.  Root-invariant for EW / IW / NA / profile and, since
+  // T-374, HSJ — under XFORM alone the score is rooting-relative, so there this
+  // value is the length at the rooting the tree currently carries, not an
+  // absolute.
+  best_score = full_rescore(tree, ds);
   score_fresh = true;
   if (!collapsed.empty()) {
-    compute_collapsed_flags(tree, ds, collapsed);
+    if (collapse_aggr) compute_collapsed_flags_aggressive(tree, ds, collapsed);
+    else               compute_collapsed_flags(tree, ds, collapsed);
     refresh_collapsed_all_zero();  // lever #7 gate must not go stale (legacy reroot)
   }
   }  // end outer reroot for(;;)

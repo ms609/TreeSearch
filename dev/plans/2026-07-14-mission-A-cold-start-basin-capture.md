@@ -5,6 +5,30 @@ REACH mission. Canonical hard case: **project5432** (482t, 189 chars, ~44% missi
 production search reliably lands at ~1947 (best-ever across every config); TNT reaches **1943** ~1/3 of
 runs and **1944** reliably. Gap = 3 steps / ~0.15% on this one matrix.
 
+## UPDATE 2026-07-22 — TS reaches 1943; 1943 is a *shared* floor; gap is luck+speed, not pathology
+Two things have moved since this doc was written; read this before the (still-valid) CLOSED sections below.
+- **"1939" is retracted — it was never a real tree** (a sectorial-search bestScore-column *trace phantom*;
+  `best` over all 10 000 saved trees of the run that "showed" it = 1942). Ignore every "1939 phase" / "1939
+  target" reference below. Best-known ladder is **1942 (stored) / 1943 (both engines' working floor)**.
+- **TreeSearch now reaches 1943** — the new best TS-*generated* score, one step below the prior TS-side best
+  of 1944. Reached by an aggressive perturbation swarm (Hamilton array 17943743, 16 seeds × ~48 h; block 1
+  cold then `tree=best` warm-forward; deep reweighting kick `ratchetPerturbMaxMoves=0` + drift 25 +
+  `postRatchetSectorial` + `adaptiveStart` + intraFuse, iterated). Floor **1943 on 6/16 seeds**, canonically
+  verified. Recorded observationally: block-1 **cold still floors ~1945–1947** (the cold-start diagnosis
+  below is unchanged); it is the *sustained iteration under this stack* that descends. Because `tree=` warms
+  only rep 1 (7/8 reps/block are cold RAS), no single mechanism is isolated beyond "the perturbation stack" —
+  but against the old 1870-rep breadth null (0 hits), the differentiator is the **stack, not restart volume**.
+- **⇒ Reframing (user, 2026-07-22): the residual 1943 → 1942 gap is a rarity / luck-and-speed gap, not a TS
+  pathology.** A 28 h heavy TNT hammer also floored at 1943 across all seeds; 1942 is a rare lucky escape for
+  *either* engine. Both sit in the same 1943-quality basin regime. This supersedes the "TS 0/20 cold vs TNT
+  4/12" mechanism-gap read for the 1943→1942 step specifically (the cold-start basin capture *to 1943* is
+  what the swarm's iteration achieves; the sub-1943 escape is rare for both).
+- **Committed artifacts (so they never go missing):** `dev/benchmarks/hardtail/` — `project5432_best_1942_tnt.tre`
+  (1942, verified), `project5432_ts_reach_1943.tre` (1943, verified), and a self-contained `README.md`
+  (regime, provenance, config, the stale-engine "should we re-run?" footnote). Swarm ran on Hamilton lib
+  TreeSearch 2.0.0 (lags `cpp-search`); a current-engine re-run to settle whether TS reaches 1942 is **held
+  for a go decision, not launched**.
+
 ## The diagnosis is DONE and it is actionable (read [[project5432-basin-structure]] in memory first)
 - **1943 is a VALID, STABLE TS optimum.** Seeded at 1943, TS's own TBR HOLDS it (0 improving moves);
   MaximizeParsimony retains it. NOT a completeness / representation / rooting problem.
@@ -43,16 +67,25 @@ this is a CONFIRMED recipe defect.
   benefit on solved matrices UNTESTED"). If it helps broadly → a deployable default fix (needs small-tree
   non-regression + user OK to change a default). Reach benefit was 5432-only (n=1); wall benefit is open.
 
-## Genuinely-open angles (the mission's search space — none yet refuted)
-1. **A cold-start CONSTRUCTOR that generates starts near the target basin.** The fan-out's original goal
-   stands even though BSS (one instantiation) is dead. Candidates: constraint-guided / char-informed
-   addition sequence; progressive assembly; a start-generator that lands within capture radius. The bar:
-   does it land TS within ~8–12 TBR of the best basin?
-2. **Push the reweighting kick as a basin-HOPPING schedule** (the one thing that worked) — strength,
-   schedule, multi-kick — beyond the single-knob ratchet default. Plateaus at 1945; can a schedule cross
-   the last ~2 steps?
-3. **Smarter breadth**, not naive: 2150+ uniform cold reps = 0 hits, so uniform restarts are refuted;
-   the open question is whether STRUCTURED / diversified starts raise the per-rep basin-capture rate.
+## These three angles are now ALL CLOSED (2026-07-16) — do NOT re-investigate
+Full evidence + harnesses in `2026-07-11-project5432-hard-tail-characterization.md`
+("Mission A angles — ALL CLOSED") and the memory nodes cited there.
+1. **Cold-start CONSTRUCTOR — CLOSED five ways:** per-split detectability (anti-detect), absolute
+   synapomorphy count (chance), joint clique recovery (36th pctile count-matched), scaffold-sufficiency
+   (all 25 deep splits fixed → 1/12), clique-START routability (0/60, WORSE than RAS), clique-proportional
+   reweight (≈uniform, wrong-skew). Harnesses `detect_backbone.R`/`detect_synap.R`/`scaffold_suff.R`/
+   `clique_prep.R`/`clique_start.R`/`clique_weight_probe.R`.
+2. **Basin-HOPPING schedule — CLOSED:** every near-optimal TS tree ≥97 TBR from 1943; ratchet is monotone
+   ILS; no accept-worse schedule walks ~100 rearrangements.
+3. **Structured breadth — CLOSED:** random char-resample starts land FARTHER than cold (0/400).
+
+**CAPSTONE / why:** the 1943 deep backbone has ≈no clean character support (≈4/183 chars) — it is an
+EMERGENT AGGREGATE feature (wins only on total tree length), so NO per-char / compatibility / reweight
+start-generator can bias toward it. **Reach is NOT a hard limit** (TNT ~1/3). The only remaining lever is
+**search-side**: sectorial-over-retained-diverse-pool (already in TS, insufficient alone on 5432) or the
+UNTRIED CID-tabu / diversity-gated restarts ([[diversity-generation-gates]]). Best tree stored = **1942**
+(`floors/project5432_regen_1942.tre`). The next 1939 phase should start from the search-side lever, NOT a
+constructor.
 
 ## Discipline (the campaign's hard-won rules — obey them)
 - **Existence-before-build.** BSS was saved from a 250-line dead build by a structural precondition test.

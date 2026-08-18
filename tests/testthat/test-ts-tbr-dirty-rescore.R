@@ -120,6 +120,61 @@ test_that("TBR dirty-set rescore matches full rescore (NA-IW dataset, many accep
   }
 })
 
+test_that("dirty-set rescore matches full rescore on TBR-REROOTING accepts", {
+  # Issue #38: the dirty-set accept path originally covered SPR-classified
+  # accepts only; accepts that rerooted the clipped fragment fell back to
+  # full_rescore.  Extending it adds a third dirty seed at clip_node, because
+  # apply_tbr_move reverses the parent/child links along
+  # clip_node..reroot_parent and so gives every node on that path new children.
+  #
+  # The four tests above cannot guard this arm: they assert score identity but
+  # have no way to tell whether a rerooting accept ever occurred, so they would
+  # pass just as happily if the arm were never entered.  `n_reroot_accepts`
+  # (src/ts_data.h) is what makes this one non-vacuous -- it is asserted
+  # positive, so losing coverage fails the test rather than silently voiding it.
+  data("inapplicable.phyData", package = "TreeSearch")
+  minSteps <- function(dataset) {
+    as.integer(MinimumLength(dataset, compress = TRUE))
+  }
+
+  set.seed(6273)
+  mat <- matrix(sample(0:3, 20 * 8, replace = TRUE),
+                nrow = 20, dimnames = list(paste0("t", 1:20), NULL))
+  random20 <- MatrixToPhyDat(mat)
+  vinther <- inapplicable.phyData[["Vinther2008"]]
+
+  cases <- list(
+    list(label = "EW", dataset = random20, concavity = -1, score_conc = Inf),
+    list(label = "IW", dataset = random20, concavity = 10, score_conc = 10),
+    list(label = "NA", dataset = vinther, concavity = -1, score_conc = Inf),
+    list(label = "NA-IW", dataset = vinther, concavity = 10, score_conc = 10)
+  )
+
+  for (case in cases) {
+    ds <- make_ts_data(case$dataset)
+    n_tip <- length(case$dataset)
+    ms <- if (is.finite(case$score_conc)) minSteps(case$dataset) else integer(0)
+    n_reroot <- 0
+
+    for (start in c(3, 29, 131, 512, 900)) {
+      tree <- as.phylo(start, n_tip)
+      set.seed(7000 + start)
+      result <- ts_tbr(tree, ds, maxHits = 50L, concavity = case$concavity,
+                       min_steps = ms)
+      n_reroot <- n_reroot + result$n_reroot_accepts
+
+      rt <- result_tree(result, tree)
+      independent <- ts_score(rt, ds, concavity = case$score_conc,
+                              min_steps = ms)
+      expect_equal(result$score, independent, tolerance = 1e-10,
+                   info = paste(case$label, "start =", start))
+      validate_result(result, n_tip)
+    }
+
+    expect_gt(n_reroot, 0)  # coverage: the rerooting arm was actually entered
+  }
+})
+
 test_that("XPIWE x4 + dirty-region opts are byte-identical to opts-off (port guard)", {
   # Regression guard for the IW->XPIWE opt port (src/ts_tbr.cpp `iw_family`
   # gate): the x4 reroot batch + extract_char_steps dirty-region must produce
@@ -150,7 +205,7 @@ test_that("XPIWE x4 + dirty-region opts are byte-identical to opts-off (port gua
       verbosity = 0L, control = ctrl))
     min(attr(r, "score"))
   }
-  on.exit({ Sys.unsetenv("TS_IW_NOX4"); Sys.unsetenv("TS_IW_NODIRTY") }, add = TRUE)
+  withr::defer({ Sys.unsetenv("TS_IW_NOX4"); Sys.unsetenv("TS_IW_NODIRTY") })
   score_on  <- run(TRUE)
   score_off <- run(FALSE)
   expect_equal(score_on, score_off, tolerance = 0)
@@ -178,7 +233,7 @@ test_that("NA-IW x4 reroot batch is byte-identical to scalar (NA port guard)", {
       verbosity = 0L, control = ctrl))
     min(attr(r, "score"))
   }
-  on.exit(Sys.unsetenv("TS_IW_NOX4"), add = TRUE)
+  withr::defer(Sys.unsetenv("TS_IW_NOX4"))
   score_x4  <- run(TRUE)
   score_scalar <- run(FALSE)
   expect_equal(score_x4, score_scalar, tolerance = 0)

@@ -42,8 +42,18 @@ struct ConstraintData {
 
   // Current mapping: constraint_node[i] = the internal node whose
   // subtree tips match split i in the current tree.
-  // -1 if not yet mapped.
+  // -1 if not yet mapped (or the tree does not display split i).
   std::vector<int> constraint_node;
+
+  // Polarity of constraint_node[i] (T-384).  0: the node's descendant tip set
+  // is split_tips[i] itself.  1: it is the *complement* of split_tips[i], i.e.
+  // the tip-0 side of the bipartition.  A constraint split is an UNROOTED
+  // bipartition, so a tree displays it whenever EITHER side is a rooted clade,
+  // and which side that is depends on the rooting alone -- see
+  // map_constraint_nodes().  Consumers that treat constraint_node[i] as "the
+  // inside clade" must swap MUST_INSIDE/MUST_OUTSIDE when this is 1.
+  // Written by every map_constraint_nodes() call, alongside constraint_node.
+  std::vector<char> constraint_complement;
 
   // DFS timestamps for O(1) descendant checks.
   // Node u is ancestor of v iff dfs_entry[u] <= dfs_entry[v]

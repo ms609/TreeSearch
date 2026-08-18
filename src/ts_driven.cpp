@@ -14,6 +14,7 @@
 #include "ts_splits.h"
 #include "ts_prune_reinsert.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 
 #include <R.h>
 #include <Rmath.h>
@@ -22,6 +23,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <limits>
 #include <string>
 #include <functional>
 
@@ -47,7 +49,60 @@ ProgressInfo make_progress(int rep, const DrivenParams& params,
   return pi;
 }
 
+// Does the tree satisfy the user constraint -- some edge separating the taxa
+// coded 1 for each constraint character from those coded 0?
+//
+// violates_constraint_posthoc() answers that directly, but builds a whole
+// TreeState and scores it.  For a BINARY constraint the locked-node mapping is
+// much cheaper and is strictly the stronger test: it asks for the 1 group to be
+// a clade exactly, excluding the taxa coded `?`, and a tree that manages that
+// necessarily separates the two coded groups.  So a full mapping settles the
+// case the search puts us in almost every time -- every rearrangement it
+// accepts is filtered on that same mapping -- and only an unmapped split pays
+// for Fitch.
+//
+// With a third state the two tests diverge -- its taxa belong to no split_tips
+// entry, so the character can sit above its minimum length with every split
+// mapped -- and the mapping is the one to follow.  It is the standard the rest
+// of the engine enforces: the locked-node filter screens rearrangements on it,
+// and impose_constraint() repairs to it and nothing more, so judging a capture
+// by the stricter Fitch check would discard every replicate of a search that
+// cannot produce anything better.  The R layer warns at input that an
+// intermediate state goes unconstrained.
+//
+// update_constraint(), not map_constraint_nodes(): the DFS timestamps have to
+// move with the node ids, or a consumer that reads both without re-mapping
+// (spr_search) sees this tree's nodes against another tree's timestamps.
+bool constraint_satisfied(TreeState& tree, ConstraintData& cd) {
+  update_constraint(tree, cd);
+  for (int s = 0; s < cd.n_splits; ++s) {
+    if (cd.constraint_node[s] < 0) {
+      return !violates_constraint_posthoc(tree, cd);
+    }
+  }
+  return true;
+}
+
 } // anonymous namespace
+
+bool capture_satisfies_constraint(TreeState& tree, ConstraintData* cd,
+                                  const DataSet& ds, double& score)
+{
+  // Gate on the post-hoc DataSet, which only a *user* constraint carries.  The
+  // cross-replicate consensus constraint is a search heuristic, not a promise
+  // about the answer, so a tree that breaks it is not a wrong result and must
+  // not be thrown away.  The post-hoc check is also the right test even for a
+  // user constraint: a tree can map every constraint node and still fail the
+  // full Fitch check, which is the case the post-hoc DataSet exists for.
+  if (!cd || !cd->active || !cd->has_posthoc) return true;
+  if (constraint_satisfied(tree, *cd)) return true;
+
+  impose_constraint(tree, *cd);
+  tree.build_postorder();
+  tree.reset_states(ds);
+  score = score_tree(tree, ds);
+  return constraint_satisfied(tree, *cd);
+}
 
 // --- Single-replicate pipeline ---
 
@@ -74,6 +129,12 @@ ReplicateResult run_single_replicate(
     auto now = PhClock::now();
     double ms = std::chrono::duration<double, std::milli>(now - ph_start).count();
     ph_start = now;
+    // Every phase boundary passes through here, immediately before that phase's
+    // own summary line is printed.  Hooking the heartbeat here — rather than at
+    // each of the dozen `verbosity >= 2` blocks — guarantees an in-place
+    // heartbeat line is cleared before anything else writes over it, and resets
+    // the in-phase timer so the next phase reports its own elapsed time.
+    ts::heartbeat_phase(nullptr);
     return ms;
   };
 
@@ -143,6 +204,37 @@ ReplicateResult run_single_replicate(
     }
   }
 
+  // A start that breaks the constraint has to be repaired here, before anything
+  // takes its score as a baseline.  Constrained rearrangement cannot undo it:
+  // regraft_violates_constraint() reads an unmapped split as "already
+  // violating" and rejects every move, so the search freezes on the start and
+  // reports its unconstrained — and therefore unbeatably low — score.  Nor can
+  // a later verify-and-revert gate help, for the same reason: the repaired tree
+  // is legal and so necessarily scores worse than the violation it replaces.
+  // The R layer warns when a caller's `tree` is what arrived here violating.
+  if (cd && cd->active && cd->has_posthoc &&
+      !constraint_satisfied(result.tree, *cd)) {
+    impose_constraint(result.tree, *cd);
+    result.tree.build_postorder();
+    result.tree.reset_states(ds);
+    if (!constraint_satisfied(result.tree, *cd)) {
+      // impose_constraint() is heuristic.  Discard the start rather than search
+      // from a tree the constraint machinery cannot move: a constrained Wagner
+      // build, with its own post-hoc reshuffles, is the better bet.  It is not
+      // a guarantee either -- exhausting those reshuffles returns a violating
+      // tree -- so repair whatever it hands back rather than trusting it.
+      random_wagner_tree(result.tree, ds, cd);
+      result.tree.build_postorder();
+      result.tree.reset_states(ds);
+      if (!constraint_satisfied(result.tree, *cd)) {
+        impose_constraint(result.tree, *cd);
+        result.tree.build_postorder();
+        result.tree.reset_states(ds);
+      }
+    }
+    best_wag = score_tree(result.tree, ds);
+  }
+
   result.timings.wagner_ms = ph_lap();
   if (verbosity >= 2) {
     if (starting_tree) {
@@ -163,12 +255,18 @@ ReplicateResult run_single_replicate(
   // NNI-optimized, and SPR is skipped (NNI→TBR outperforms NNI→SPR→TBR).
   // When constrained, NNI was skipped above; fall back to SPR warmup.
   if (!nni_wagner && params.spr_first) {
-    spr_search(result.tree, ds, 1, check_timeout);
+    // T-390: pass `cd` so a constrained search cannot warm up into a
+    // constraint-violating tree that TBR afterwards cannot repair.
+    spr_search(result.tree, ds, 1, check_timeout, cd);
   }
   {
     TBRParams tp;
     tp.tabu_size = params.tabu_size;
     tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+    // Whole tree, real weights: this search's running best IS the user's
+    // objective, so it is safe to report.  Measured at 582 s on a 182-tip
+    // inapplicable matrix -- the single longest silent stretch in a replicate.
+    tp.heartbeat_label = "TBR";
     tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
   }
   result.timings.tbr_ms = ph_lap();
@@ -495,6 +593,8 @@ ReplicateResult run_single_replicate(
           TBRParams tp;
           tp.tabu_size = params.tabu_size;
           tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+          // Per-cycle reconverge, kept-if-improved: not a reported result.
+          tp.certify_unrooted = false;
           tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
         }
 
@@ -563,6 +663,7 @@ ReplicateResult run_single_replicate(
       TBRParams tp;
       tp.tabu_size = params.tabu_size;
       tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+      tp.heartbeat_label = "TBR";  // whole tree, real weights: safe to report
       tbr_search(result.tree, ds, tp, cd, nullptr, nullptr, check_timeout);
     }
     result.timings.final_tbr_ms += ph_lap();
@@ -630,6 +731,41 @@ ReplicateResult run_single_replicate(
     }
   } // end outer loop
 
+  // Optional final certification of the tree this replicate contributes to the
+  // pool (TS_NA_FINAL_CERTIFY, default off).
+  //
+  // Every whole-tree TBR above carries params.tabu_size, which the shipped
+  // presets set to 100 (default) / 200 (thorough), and do_reroot -- the gate on
+  // the NA certifier -- requires tabu_size == 0.  So on inapplicable data the
+  // tree a replicate reports has NEVER been certified as a true unrooted-TBR
+  // optimum, while the sector and fuse sub-searches (which leave tabu_size at 0)
+  // pay for certification repeatedly on trees nobody reports.  This pass is the
+  // other half of the TBRParams::certify_unrooted trade: spend ONE certification
+  // where it is worth something.  Env-gated so it is a measurable arm of the
+  // floor-attainment gate rather than a silent default change.  No-op unless the
+  // data carry inapplicables; skipped under constraints, where do_reroot is off
+  // regardless.
+  //
+  // Skipped outright once the budget is spent.  `tbr_search` polls
+  // `check_timeout` only every n_tip clips, and this pass runs AFTER the
+  // outer-cycle loop's own timeout checks, so a replicate that reaches here with
+  // the clock already expired would still pay a whole O(n^3) certification --
+  // seconds to minutes on an 88-tip matrix.  That breaks the `maxSeconds`
+  // contract for the user, and in a matched-wall A/B it silently hands this arm
+  // more wall than the arm it is being compared against.
+  const bool budgetSpent = ts::check_interrupt()
+      || (check_timeout && check_timeout());
+  if (cd == nullptr && !budgetSpent
+      && std::getenv("TS_NA_FINAL_CERTIFY") != nullptr) {
+    TBRParams tp;
+    tp.tabu_size = 0;                 // REQUIRED: do_reroot gates on this
+    tp.certify_unrooted = true;
+    tp.clip_order = static_cast<ClipOrder>(params.clip_order);
+    tbr_search(result.tree, ds, tp, nullptr, nullptr, nullptr, check_timeout);
+    result.tree.build_postorder();
+    result.tree.reset_states(ds);
+  }
+
   result.score = score_tree(result.tree, ds);
   return result;
 }
@@ -665,6 +801,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   auto start_time = std::chrono::steady_clock::now();
 
   // Cancel file: read path from environment variable (set by Shiny app).
+  // T-338: worker-thread-reachable getenv() (driven_search runs on the
+  // resample-worker path); safe today, no concurrent setenv/putenv in src/.
+  // See dev/red-team/findings.md T-338.
   std::string cancel_path;
   {
     const char* cancel_env = std::getenv("TREESEARCH_CANCEL_FILE");
@@ -704,6 +843,12 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
   bool has_callback = static_cast<bool>(params.progress_callback);
 
+  // Intra-phase heartbeat.  Phase-boundary lines alone leave the console silent
+  // for as long as one phase runs, which on a large inapplicable matrix is
+  // ~10 minutes for TBR and again for the ratchet.  Serial only: heartbeat_begin
+  // no-ops on worker threads, and the parallel path reports from its coordinator.
+  ts::HeartbeatScope heartbeatScope(params.verbosity);
+
   // Helper: report progress via callback or Rprintf fallback.
   // Callbacks are ALWAYS invoked when present (regardless of verbosity)
   // so that Shiny progress polling works at verbosity=0.
@@ -741,6 +886,36 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
   ConstraintData auto_cd;  // built from pool consensus; reused across reps
   double auto_cd_best_score = 1e18;  // score when auto_cd was last built
 
+  // POOL_RESEED probe (opt-in TS_POOL_RESEED, default OFF -> deployed path
+  // byte-identical).  For a fraction `pr_prob` of replicates, seed the pipeline
+  // from a retained best-score pool tree instead of a fresh Wagner start.  The
+  // reseeded tree then runs the full TBR + XSS/RSS/CSS + ratchet + drift
+  // pipeline, giving the diverse equal-length pool set its own sectorial
+  // RE-SOLVE pass — TNT's cross-set channel ("whole-tree reuse as starting
+  // points"), which the fresh-start bandit arms never exercise.  getenv is
+  // hoisted here (per-loop getenv is ~2.4us on ucrt; negligible per-rep but
+  // hoisted on principle).  Selection is a uniform draw over best-score
+  // entries; no diversity-weighting until the plain version shows signal.
+  // NB validate matched-WALL (targetHits huge) so a reseeded rep re-deriving
+  // the best score cannot inflate hits_to_best into an early stop; hits-
+  // accounting is a deploy-gate concern, not a probe-measurement one.
+  // T-338: worker-thread-reachable getenv(); inert (see :671 note above).
+  bool pr_enabled = false;
+  double pr_prob = 0.5;
+  {
+    const char* pr_env = std::getenv("TS_POOL_RESEED");
+    if (pr_env && pr_env[0] != '\0') {
+      // Gate on the PARSED value, not the first char: "0.25"/"0.5" begin with
+      // '0' but are enabled; only "0"/""/non-positive disable.  (A prior guard
+      // `pr_env[0] != '0'` wrongly disabled every fractional probability.)
+      double v = std::atof(pr_env);
+      if (v > 0.0 && v <= 1.0) {
+        pr_enabled = true;
+        pr_prob = v;  // "1" -> 1.0, "0.25" -> 0.25
+      }
+    }
+  }
+
   for (int rep = 0; rep < params.max_replicates; ++rep) {
     int rep1 = rep + 1;
 
@@ -758,16 +933,49 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       }
     }
 
-    // Use starting tree for replicate 0 if provided
+    // Use the rep'th user-supplied starting tree, if the pool reaches it
     TreeState* start_ptr = nullptr;
     TreeState start_tree;
-    if (rep == 0 && params.start_n_edge > 0 &&
-        static_cast<int>(params.start_edge.size()) >= 2 * params.start_n_edge) {
-      const int* edge_parent = params.start_edge.data();
-      const int* edge_child = params.start_edge.data() + params.start_n_edge;
+    bool pr_reseeded = false;  // this rep seeded from a pool tree (POOL_RESEED)
+    if (rep < static_cast<int>(params.start_edges.size()) &&
+        params.start_n_edge > 0 &&
+        static_cast<int>(params.start_edges[rep].size()) >=
+            2 * params.start_n_edge) {
+      const int* edge_parent = params.start_edges[rep].data();
+      const int* edge_child =
+          params.start_edges[rep].data() + params.start_n_edge;
       start_tree.init_from_edge(edge_parent, edge_child,
                                 params.start_n_edge, ds);
       start_ptr = &start_tree;
+    }
+    // Captured before POOL_RESEED can also set start_ptr, so this flags the
+    // user-supplied case alone.  Like pr_reseeded, it bars this rep from
+    // voting in the bandit below.
+    const bool user_started = (start_ptr != nullptr);
+
+    // POOL_RESEED: when enabled and no user start is in play, seed this rep
+    // from a uniformly-chosen best-score pool tree (>=2 entries required).
+    // Reuses the existing starting_tree plumbing, so the reseeded tree flows
+    // through the full pipeline exactly as a Wagner start would.
+    if (pr_enabled && start_ptr == nullptr && pool.size() >= 2) {
+      std::uniform_real_distribution<double> pr_draw(0.0, 1.0);
+      if (pr_draw(bandit_rng) < pr_prob) {
+        const auto& entries = pool.all();
+        const double pool_best = pool.best_score();
+        // Collect indices of best-score entries, pick one uniformly.
+        std::vector<int> best_idx;
+        best_idx.reserve(entries.size());
+        for (int ei = 0; ei < static_cast<int>(entries.size()); ++ei) {
+          if (entries[ei].score <= pool_best) best_idx.push_back(ei);
+        }
+        if (!best_idx.empty()) {
+          std::uniform_int_distribution<int> pick(
+              0, static_cast<int>(best_idx.size()) - 1);
+          start_tree = entries[best_idx[pick(bandit_rng)]].tree;
+          start_ptr = &start_tree;
+          pr_reseeded = true;
+        }
+      }
     }
 
     // Adaptive level: adjust ratchet/drift cycles based on hit rate.
@@ -907,7 +1115,9 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // Select starting-tree strategy for this replicate.
     StartStrategy rep_strategy = StartStrategy::WAGNER_RANDOM;
     if (start_ptr) {
-      // User-supplied starting tree for rep 0 — strategy is moot
+      // Warm start (user tree or POOL_RESEED): run_single_replicate() takes
+      // the supplied topology and never reaches the strategy switch, so
+      // rep_strategy is inert here — and must not be fed back to the bandit.
     } else if (params.adaptive_start) {
       rep_strategy = strategy_tracker.select(bandit_rng);
     } else if (params.wagner_bias != 0) {
@@ -915,7 +1125,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       rep_strategy = static_cast<StartStrategy>(params.wagner_bias);
     }
 
-    if (params.verbosity >= 2 && params.adaptive_start && !has_callback) {
+    if (params.verbosity >= 2 && params.adaptive_start && !has_callback &&
+        start_ptr == nullptr) {
+      // Suppressed for warm starts: no arm was pulled, so naming one would
+      // misreport what the replicate actually did.
       Rprintf("  Strategy: %s\n", strategy_name(rep_strategy));
     }
 
@@ -926,24 +1139,48 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
     result.timings += rep_result.timings;
 
-    // Compute collapsed flags for collapsed-topology pool dedup.
-    // Trees that differ only in zero-length resolutions are treated
-    // as duplicates, improving pool diversity (Goloboff & Farris 2001).
-    std::vector<uint8_t> rep_collapsed;
-    compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
-
     if (rep_result.interrupted) {
-      if (rep_result.score < 1e18) {
+      // Tested but not repaired: the deadline has already passed, and
+      // impose_constraint() is an unbounded SPR loop with no interrupt check
+      // of its own, so repairing here would extend an overrun.
+      const bool keep = !cd || !cd->active || !cd->has_posthoc ||
+                        constraint_satisfied(rep_result.tree, *cd);
+      if (keep && rep_result.score < 1e18) {
+        std::vector<uint8_t> rep_collapsed;
+        compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
         pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
       }
       result.timed_out = true;
       goto finish;
     }
 
-    // Add to pool with collapsed-topology dedup
-    double prev_best = pool.best_score();
-    pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
-    bool score_improved = pool.best_score() < prev_best;
+    // A replicate can still finish on a constraint-violating tree: a Wagner
+    // start whose reshuffles all failed, or a phase that accepts on a looser
+    // check than the pool promises.  The pool is what the caller is handed, so
+    // gate it here, as the fuse capture below already does.
+    const bool rep_ok = capture_satisfies_constraint(rep_result.tree, cd, ds,
+                                                     rep_result.score);
+    if (!rep_ok) ++result.constraint_discards;
+
+    // A discarded replicate contributes its count and nothing else.  Its score
+    // is that of a violating tree, which beats any legal one, so letting it
+    // through would credit the strategy arm that produced it, bias the coverage
+    // estimate downwards and report a figure no returned tree attains.  The
+    // stopping rules at the foot of the loop still run: skipping them would
+    // outlive the deadline and swallow an interrupt.
+    bool score_improved = false;
+    if (rep_ok) {
+      // Compute collapsed flags for collapsed-topology pool dedup.
+      // Trees that differ only in zero-length resolutions are treated
+      // as duplicates, improving pool diversity (Goloboff & Farris 2001).
+      std::vector<uint8_t> rep_collapsed;
+      compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
+
+      // Add to pool with collapsed-topology dedup
+      double prev_best = pool.best_score();
+      pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
+      score_improved = pool.best_score() < prev_best;
+    }
     if (score_improved) {
       result.last_improved_rep = rep1;
       unsuccessful_reps = 0;
@@ -951,20 +1188,28 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       ++unsuccessful_reps;
     }
 
-    // Update strategy bandit (T-190)
-    if (params.adaptive_start) {
+    // Update strategy bandit (T-190).  Skip warm-started reps — POOL_RESEED
+    // (pr_reseeded) and user-supplied `tree =` (user_started) alike: they did
+    // not use a fresh-start arm, so crediting/blaming one would corrupt the
+    // bandit.  Together these two flags mean exactly `start_ptr == nullptr`;
+    // any future warm-start source must be excluded here too.
+    if (params.adaptive_start && !pr_reseeded && !user_started && rep_ok) {
       bool hit_best = (rep_result.score <= pool.best_score());
       strategy_tracker.update(rep_strategy, hit_best);
-      if (score_improved) {
-        strategy_tracker.decay(0.5);
-      }
+    }
+    // Decay is landscape staleness, not arm attribution: an improved best
+    // score dates the evidence gathered so far whatever built the tree, so it
+    // fires for warm-started reps too.  (Kept out of the guard above so that
+    // excluding a rep from voting does not silently also stop the clock.)
+    if (params.adaptive_start && score_improved) {
+      strategy_tracker.decay(0.5);
     }
 
     ++result.replicates_completed;
-    result.replicate_scores.push_back(rep_result.score);
-
-    // Report end of replicate
-    report("replicate", 1, rep_result.score, rep1);
+    if (rep_ok) {
+      result.replicate_scores.push_back(rep_result.score);
+      report("replicate", 1, rep_result.score, rep1);
+    }
 
     // Periodic tree fusing
     if (params.fuse_interval > 0 &&
@@ -993,6 +1238,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
       // any suboptimal recipients. Read per-fuse (fusing fires only every
       // fuse_interval reps, so the getenv cost is negligible — and a plain
       // read stays togglable per-call, unlike a process-lifetime static).
+      // T-338: worker-thread-reachable getenv(); inert (see :671 note above).
       const char* fp_env = std::getenv("TS_FUSE_PAIRWISE");
       const bool fuse_pairwise = fp_env && fp_env[0] == '1';
 
@@ -1131,11 +1377,20 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     if (params.perturb_stop_factor > 0 && unsuccessful_reps > 0) {
       int hits = pool.hits_to_best();
       if (hits > 0) {
-        int limit = (params.target_hits > 0)
-            ? static_cast<int>(
-                static_cast<double>(params.target_hits) / hits
-                * ds.n_tips * params.perturb_stop_factor)
-            : ds.n_tips * params.perturb_stop_factor;
+        // Saturate rather than truncate: the product overflows `int` for large stop
+        // settings (e.g. 100000 hits x 69 tips x factor 10000), and casting an
+        // out-of-range double to int is undefined behaviour -- in practice it lands
+        // negative, so the rule fires on the very first non-improving replicate and the
+        // search returns a worse tree with no warning.  An enormous limit means "in
+        // effect, never stop on this rule", which is what such settings ask for.
+        const double limit_d = (params.target_hits > 0)
+            ? static_cast<double>(params.target_hits) / hits
+              * ds.n_tips * params.perturb_stop_factor
+            : static_cast<double>(ds.n_tips) * params.perturb_stop_factor;
+        const int limit =
+            limit_d >= static_cast<double>(std::numeric_limits<int>::max())
+            ? std::numeric_limits<int>::max()
+            : static_cast<int>(limit_d);
         if (unsuccessful_reps >= limit) {
           if (params.verbosity >= 1 && !has_callback) {
             Rprintf("Stopped: %d consecutive unsuccessful replicates "
@@ -1148,6 +1403,19 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
           break;
         }
       }
+    }
+
+    // Flat replicate patience (`stopPatience`).  Deliberately makes no reference to the
+    // hit count, so its firing time does not stretch when replicates become individually
+    // more expensive.  Placed after the hits and dry-spell rules so it can only ever stop
+    // the search EARLIER than those would.
+    if (params.stop_patience > 0 && unsuccessful_reps >= params.stop_patience) {
+      if (params.verbosity >= 1 && !has_callback) {
+        Rprintf("Stopped: %d consecutive unsuccessful replicates "
+                "(stopPatience %d)\n", unsuccessful_reps, params.stop_patience);
+      }
+      result.perturb_stop = true;
+      break;
     }
 
     if (ts::check_interrupt() || check_timeout()) {
@@ -1168,6 +1436,10 @@ finish:
   //    one tree, so different TBR-connected islands are only discovered if
   //    different replicates landed on them.  We enumerate from each seed
   //    tree to explore its island, stopping when the pool is full.
+  //
+  //    The retention ceiling is raised HERE, not before the loop: past this
+  //    point the pool is pure output, so a larger cap only appends topologies.
+  pool.raise_max_size(params.enum_pool_max_size);
   if (pool.size() > 0 && pool.size() < pool.max_size) {
     TBRParams tp;
     tp.accept_equal = true;
@@ -1184,9 +1456,112 @@ finish:
       tbr_search(enum_tree, ds, tp, cd, nullptr, &pool, check_enum_timeout);
       ++seed_idx;
     }
+    // T-338: worker-thread-reachable Rprintf; inert because verbosity
+    // defaults to 0 and ts_parallel_resample never wires it up.
     if (params.verbosity >= 2) {
       Rprintf("MPT enumeration: %d trees in pool (%.1f s)\n",
               pool.size(), elapsed());
+    }
+  }
+
+  // Terminal fuse pass (opt-in: TS_TERMINAL_FUSE=1).
+  // The periodic in-loop fuse (see above) is the LAST fuse the search runs;
+  // perturbStop and the MPT-enumeration phase both ENRICH the pool afterwards
+  // with diverse equal-score topologies that are never fused. A single pass
+  // over the converged+enriched pool can recombine complementary clades the
+  // loop never got to (project175: a converged 406 pool fuses to 405 in one
+  // exchange from almost any best-score anchor). Robust multi-anchor: best-only
+  // has a small unlucky-anchor failure rate, so fuse into a few best-score
+  // anchors and keep the best. tree_fuse iterates ALL donors per anchor, so a
+  // handful of anchors suffices. Default OFF pending across-seed validation.
+  {
+    // T-338: worker-thread-reachable getenv(); inert (see :671 note above).
+    const char* tf_env = std::getenv("TS_TERMINAL_FUSE");
+    if (tf_env && tf_env[0] == '1' && pool.size() >= 2) {
+      auto tf_start = std::chrono::steady_clock::now();
+      FuseParams fp;
+      fp.accept_equal = params.fuse_accept_equal;
+      fp.max_rounds = 10;
+      const double best_before = pool.best_score();
+
+      TreeState best_fused;
+      double best_fused_score = best_before;
+      bool have_fused = false;
+      const auto& entries = pool.all();
+      int anchors_tried = 0;
+      for (int ei = 0;
+           ei < static_cast<int>(entries.size()) && anchors_tried < 3; ++ei) {
+        if (entries[ei].score > best_before) continue;  // best-score anchors
+        ++anchors_tried;
+        TreeState cand = entries[ei].tree;
+        tree_fuse(cand, ds, pool, fp);
+        double cs = score_tree(cand, ds);
+        if (!have_fused || cs < best_fused_score) {
+          best_fused = std::move(cand);
+          best_fused_score = cs;
+          have_fused = true;
+        }
+      }
+
+      // Diagnostic: always report the terminal-fuse attempt (verbosity>=1),
+      // so "executed-but-no-key" is distinguishable from "never executed".
+      // T-338: worker-thread-reachable Rprintf; inert (see :1290 note above).
+      if (params.verbosity >= 1 && !has_callback) {
+        Rprintf("Terminal fuse attempt: pool=%d anchors=%d best_before=%.5g "
+                "-> best_fused=%.5g\n",
+                static_cast<int>(pool.size()), anchors_tried, best_before,
+                best_fused_score);
+      }
+
+      if (have_fused && best_fused_score < best_before) {
+        // Constraint repair, mirroring the in-loop fuse path.
+        bool fused_ok = true;
+        if (cd && cd->active) {
+          map_constraint_nodes(best_fused, *cd);
+          bool viol = false;
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) { viol = true; break; }
+          }
+          if (viol) {
+            impose_constraint(best_fused, *cd);
+            best_fused.build_postorder();
+            best_fused.reset_states(ds);
+            best_fused_score = score_tree(best_fused, ds);
+            map_constraint_nodes(best_fused, *cd);
+            for (int _s = 0; _s < cd->n_splits; ++_s) {
+              if (cd->constraint_node[_s] < 0) { fused_ok = false; break; }
+            }
+          }
+        }
+        if (fused_ok && best_fused_score < best_before) {
+          std::vector<uint8_t> fused_collapsed;
+          compute_collapsed_flags(best_fused, ds, fused_collapsed);
+          pool.add_collapsed(best_fused, best_fused_score, fused_collapsed);
+          result.last_improved_rep = result.replicates_completed;
+          if (params.verbosity >= 1 && !has_callback) {
+            Rprintf("Terminal fuse improved: %.5g -> %.5g\n",
+                    best_before, best_fused_score);
+          }
+          // Re-enumerate MPTs of the improved island so the returned set is
+          // honest (add_collapsed evicted the now-suboptimal trees).
+          if (pool.size() > 0 && pool.size() < pool.max_size) {
+            TBRParams tp;
+            tp.accept_equal = true;
+            tp.tabu_size = params.tabu_size > 0 ? params.tabu_size : 100;
+            int seed_idx = 0;
+            while (seed_idx < pool.size() && pool.size() < pool.max_size) {
+              if (check_enum_timeout()) break;
+              TreeState enum_tree = pool.all()[seed_idx].tree;
+              tp.max_hits = std::max(10, (pool.max_size - pool.size()) * 2);
+              tbr_search(enum_tree, ds, tp, cd, nullptr, &pool,
+                         check_enum_timeout);
+              ++seed_idx;
+            }
+          }
+        }
+      }
+      result.timings.fuse_ms += std::chrono::duration<double, std::milli>(
+          std::chrono::steady_clock::now() - tf_start).count();
     }
   }
 

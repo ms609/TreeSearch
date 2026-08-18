@@ -369,6 +369,17 @@ static int drift_phase(TreeState& tree, const DataSet& ds,
   if (constrained) update_constraint(tree, *cd);
   double score = drift_full_rescore(tree, ds);
   int n_accepted = 0;
+
+  // T-373: this clip/regraft scan (like stochastic_tbr_phase, ts_temper.cpp)
+  // is Fitch/IW-only with no HSJ/XFORM full-rescore fallback -- every
+  // candidate is indexed via tree.prelim/from_above by total_words, so with
+  // total_words == 0 that construction would take the address of element 0
+  // of an EMPTY vector (UB, aborts under _GLIBCXX_ASSERTIONS). Skip this
+  // phase entirely in that case; drift_search()'s equal-score and search
+  // phases both delegate to tbr_search(), which remains exact for HSJ/XFORM,
+  // so the caller still searches -- only this incremental phase no-ops.
+  if (ds.total_words == 0) return n_accepted;
+
   const bool use_iw = std::isfinite(ds.concavity);
   const double eps = use_iw ? 1e-10 : 0.0;
 
@@ -874,8 +885,14 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
                          const std::vector<bool>* sector_mask) {
   double best_score = drift_full_rescore(tree, ds);
 
-  // No informative characters: all trees have the same score.
-  if (ds.total_words == 0) return {best_score, 0, 0};
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
+  // when total_words == 0. The "equal-score drift" and "search" phases below
+  // both delegate to tbr_search(), which full-rescores every accept, so they
+  // still search exactly; only the odd-cycle drift_phase() (a Fitch/IW-only
+  // incremental scan with no HSJ/XFORM fallback) is skipped in that case --
+  // see the total_words guard inside drift_phase().
+  if (ds.topology_independent()) return {best_score, 0, 0};
 
   int total_drift_moves = 0;
   int total_tbr_moves = 0;
@@ -918,6 +935,8 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
       eq_params.max_accepted_changes = tree.n_tip / 8;
       eq_params.max_hits = 100;  // generous for equal-score exploration
       eq_params.tabu_size = params.tabu_size;
+      // Perturbation phase: this tree is a departure point, never a result.
+      eq_params.certify_unrooted = false;
 
       TBRResult eq_result = tbr_search(tree, ds, eq_params, cd,
                                         sector_mask, nullptr, check_timeout);
@@ -930,6 +949,9 @@ DriftResult drift_search(TreeState& tree, const DataSet& ds,
     search_params.max_accepted_changes = 0;  // run to convergence
     search_params.max_hits = params.max_hits;
     search_params.tabu_size = params.tabu_size;
+    // Same argument as the ratchet: a cycle that improves is re-perturbed next
+    // round, one that does not is restored away (drift_restore_topology below).
+    search_params.certify_unrooted = false;
 
     TBRResult search_result = tbr_search(tree, ds, search_params, cd,
                                           sector_mask, nullptr, check_timeout);

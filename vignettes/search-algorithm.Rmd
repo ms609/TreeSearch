@@ -80,6 +80,23 @@ The HSJ and x-transformation methods require a character hierarchy
 specification via the `CharacterHierarchy` class;
 see `vignette("inapplicable")` for details.
 
+HSJ scoring correctly identifies the controlling primary's absence,
+presence, and any partial ambiguity (e.g. `?`), regardless of the arbitrary
+internal order in which a dataset's observed character-state tokens happen
+to be stored -- that internal order need not match, and often does not
+match, the order of the character states themselves.
+
+An HSJ score is a property of the unrooted tree.
+The criterion sums a symmetric dissimilarity over the branches and
+minimizes over the labellings of the internal nodes, so where the tree is
+rooted cannot affect it; a score reported by `MaximizeParsimony()` is
+therefore reproduced exactly by `TreeLength()` of the tree returned.
+Secondary characters place no constraint on taxa whose controlling primary
+codes the structure absent, since there the secondary does not exist.
+The x-transformation differs on both counts: its step matrix is asymmetric,
+so its scores *are* rooting-sensitive, and they are reported at a
+canonical rooting rather than being rooting-free.
+
 ## Starting trees
 
 ### Wagner tree construction
@@ -200,6 +217,38 @@ Per-strategy attempt and success counts are returned in the
 `strategy_diagnostics` attribute of the search result for post-hoc
 inspection.
 
+### Starting trees under a constraint
+
+Whatever its source -- a Wagner build, a random topology, or a tree supplied
+through `tree` -- a start that does not satisfy the constraint is repaired
+before the replicate scores it, by the same minimal-SPR routine that repairs
+fused trees.
+This has to happen at the start rather than by rejecting the tree afterwards.
+Constrained rearrangement cannot climb out of a violating tree: an unmapped
+constraint split makes every candidate regraft illegal, so the replicate
+freezes on the tree it began with.
+Nor can the violation be caught by comparison later, because a violating tree
+is drawn from a wider set of topologies than a legal one and so tends to score
+*better*; taken as a baseline, it makes the legal repair look like a
+regression, and no subsequent phase can accept it.
+Where the repair does not succeed, the start is discarded in favour of a fresh
+constrained Wagner build.
+The same check gates each replicate's finished tree on its way into the pool,
+so a tree that breaks the constraint is never returned; and the enforced splits
+are protected from the final collapse pass, whichever branch happens to realise
+them.
+
+"Satisfies the constraint" here means what `constraint` promises the user: some
+edge separates the taxa coded `1` for a constraint character from those coded
+`0`, with `?` taxa free to sit on either side.
+Note that the locked-node filter used to screen individual rearrangements reads
+the constraint more strictly, as "the `1` group is a clade exactly", excluding
+the free taxa.
+Every strictly-compliant tree satisfies the user's constraint, so the search
+never returns a tree that breaks it; but a start that satisfies the user's
+constraint without satisfying the stricter form maps to no node, and the
+replicate makes no moves from it.
+
 
 ## The driven search pipeline
 
@@ -268,6 +317,34 @@ includes a topology-dependent hierarchy term (the hierarchy dynamic
 program or Sankoff contribution) that an incremental Fitch delta cannot
 capture; for these modes an accepted move is therefore re-scored in full
 before the best score is updated.
+
+### Reporting an x-transformation score
+
+The x-transformation's step matrix is asymmetric: gaining the controlling
+character costs one more than the number of secondary characters it brings
+into existence, whereas losing it costs one.
+A tree's length under an asymmetric step matrix depends on where the tree is
+rooted, whereas parsimony under the symmetric criteria does not -- and the
+search moves the root freely, since Wagner addition, tree fusing, sector search
+and the output collapse all re-root.
+
+The score the search compares is therefore the length at whichever rooting a
+replicate happens to hold.
+That is a sound quantity to search on: it is an upper bound on the rooting-free
+minimum, and in simulation 87--98% of rootings attain that minimum exactly, with
+the excess never exceeding the total number of secondary characters across
+hierarchy blocks.
+It is not, however, reproducible from the returned tree, whose rooting the
+output stage has since canonicalised.
+`MaximizeParsimony()` therefore re-scores the returned trees at that same
+canonical rooting -- the first taxon of the dataset -- before reporting, and
+`TreeLength()` canonicalises identically, so a reported x-transformation score
+is the length of the tree in hand, and one topology has one length.
+This affects reporting only: the quantity the search optimises is unchanged.
+
+Because pool membership is still decided on scores taken at differing rootings,
+the returned trees need not all share that canonical length;
+`MaximizeParsimony()` warns when they do not.
 
 ### Zero-length edge skipping
 
@@ -444,7 +521,7 @@ fresh sectorial pass can exploit structural improvements available in
 that basin before final TBR polish.
 This approximates the pattern used by TNT's `xmult` command, which
 interleaves sectorial search throughout each replicate [@Goloboff1999].
-This option is disabled by default; no current strategy preset enables it.
+This option is disabled by default; no effort rung enables it.
 
 
 ## Tree fusing
@@ -533,12 +610,12 @@ Constraints are cleared and rebuilt whenever a new best score is
 discovered, preventing premature lock-in.
 
 
-## Strategy presets
+## Search effort
 
-`MaximizeParsimony()` automatically selects a strategy preset based on
-dataset size:
+`MaximizeParsimony()` automatically selects an effort rung based on
+dataset size; `effort` shifts the choice by that many notches:
 
-| Preset      | Condition                                   | Character                         |
+| Rung        | Condition                                   | Character                         |
 |-------------|---------------------------------------------|-----------------------------------|
 | `sprint`    | $\leq$ 30 tips                              | Minimal ratchet, no drift         |
 | `default`   | 31--64 tips, or $\geq$ 65 with < 100 patterns | Balanced; adaptive search level   |

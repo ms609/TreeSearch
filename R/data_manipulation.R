@@ -160,7 +160,10 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
     cli::cli_inform(c("!" = "No informative characters in `dataset`."))
     # Construct empty phyDat manually (avoids [.phyDat issues with 0 columns)
     dataset[] <- lapply(dataset, function(x) integer(0))
-    attr(dataset, "info.amounts") <- double(0)
+    # A zero-column matrix (not a bare `double(0)`) so profile scoring of a
+    # `multiPhylo` -- which passes `info.amounts` to C++ as a
+    # `Nullable<NumericMatrix>` -- does not fail with "Not a matrix."
+    attr(dataset, "info.amounts") <- matrix(double(0), nrow = 1, ncol = 0)
     attr(dataset, "weight") <- integer(0)
     attr(dataset, "nr") <- 0L
     attr(dataset, "index") <- integer(0)

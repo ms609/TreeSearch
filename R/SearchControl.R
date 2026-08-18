@@ -2,7 +2,7 @@
 #'
 #' Construct a list of low-level search parameters for
 #' [`MaximizeParsimony()`].  Most users can ignore these and rely on the
-#' `strategy` presets (`"sprint"`, `"default"`, `"thorough"`); `SearchControl`
+#' `effort` rungs (`sprint`, `default`, `thorough`, `large`); `SearchControl`
 #' is provided for expert tuning.
 #'
 #' The parameters correspond to heuristics described by
@@ -123,8 +123,22 @@
 #'   within each replicate, after TBR polish.  This approximates TNT's
 #'   within-replicate fusing pattern. Default: `FALSE`.
 #' @param poolMaxSize Integer; maximum trees retained in the pool.
+#'   This governs the pool throughout the search, so it is not only a ceiling on
+#'   the trees returned: fuse draws its donors from the pool, and conflict-guided
+#'   sector selection and `consensusConstrain` both read it.  Raising it
+#'   therefore changes the trajectory as well as the output; to keep more
+#'   most-parsimonious trees without that side effect, use `enumMaxTrees`.
 #' @param poolSuboptimal Numeric; retain trees that are this many steps
 #'   worse than the best tree.  0 (default) keeps only optimal trees.
+#' @param enumMaxTrees Integer; retention ceiling applied to the
+#'   \acronym{MPT}-enumeration phase alone, which runs after the last replicate.
+#'   `0` (default) keeps `poolMaxSize` throughout, reproducing the behaviour
+#'   before this argument existed.  Because enumeration happens once the search
+#'   is over, a larger ceiling here only appends further equal-score topologies:
+#'   it cannot change which trees the search visits.  This is the knob
+#'   [`MaximizeParsimony()`]'s `effort` scales; `poolMaxSize` is deliberately
+#'   left alone.  Values below `poolMaxSize` are ignored (the ceiling is only
+#'   ever raised).
 #' @param consensusStableReps Integer; stop when the strict consensus of
 #'   best-score pool trees has been unchanged for this many consecutive
 #'   replicates.
@@ -147,6 +161,22 @@
 #'   Inspired by IQ-TREE's unsuccessful-perturbation stopping rule
 #'   \insertCite{Nguyen2015}{TreeSearch}; adapted from per-perturbation to
 #'   per-replicate granularity.
+#' @param stopPatience Integer; stop after this many consecutive replicates
+#'   fail to improve the best score.  Unlike `perturbStopFactor` this is a
+#'   flat count: it refers neither to the tip count nor to the number of hits,
+#'   so the replicate at which it fires does not stretch as replicates become
+#'   individually more expensive.  Deeper per-replicate search (a longer
+#'   ratchet, say) therefore buys quality without also extending the run.
+#'   Counts reset on every improvement, so a search that keeps improving is
+#'   never cut short: a serial search stops at `lastImprovement + stopPatience`
+#'   replicates.  With `nThreads > 1` the count is instead taken over replicates
+#'   completed into the shared tree pool and is evaluated when the coordinating
+#'   thread polls, so the rule fires later and less precisely -- and if every
+#'   replicate is quick enough that the search finishes between polls, not at
+#'   all.  As with `perturbStopFactor` and `consensusStableReps`, only the serial
+#'   path gives an exact replicate count.
+#'   0 (default) disables this criterion.  When several stopping criteria are
+#'   active the search stops as soon as any one of them is met.
 #' @param adaptiveLevel Logical; dynamically scale ratchet and drift effort
 #'   based on the observed hit rate?  When `TRUE`, easy landscapes
 #'   (high hit rate) trigger reduced effort per replicate, while hard
@@ -340,6 +370,7 @@ SearchControl <- function(
     # Stopping criteria
     consensusStableReps = 0L,
     perturbStopFactor = 2L,
+    stopPatience = 0L,
     adaptiveLevel = FALSE,
     consensusConstrain = FALSE,
     # Taxon pruning-reinsertion (T-266)
@@ -360,7 +391,8 @@ SearchControl <- function(
     # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
     # random-tree, pool-ratchet, pool-NNI-perturb}. Overrides wagnerBias.
     adaptiveStart = FALSE,
-    enumTimeFraction = 0.1
+    enumTimeFraction = 0.1,
+    enumMaxTrees = 0L
 ) {
   # Record which fields the caller set explicitly (by name or position;
   # `match.call()` normalises positional args to their names).  This lets
@@ -381,12 +413,47 @@ SearchControl <- function(
       stop("`", .p, "` must be a single positive integer")
     }
   }
+  # `enumMaxTrees` takes 0 ("follow poolMaxSize") but never a negative: the
+  # kernel only ever RAISES the ceiling, so a negative would be silently inert
+  # rather than reported, hiding a sign typo.
+  .emt <- as.integer(enumMaxTrees)
+  if (length(.emt) != 1L || is.na(.emt) || .emt < 0L) {
+    stop("`enumMaxTrees` must be a single non-negative integer ",
+         "(0 follows `poolMaxSize`)")
+  }
+  # `stopPatience` is a replicate count, so a negative value is meaningless; the
+  # kernel treats anything <= 0 as "off", which would silently ignore a typo
+  # such as -20 rather than honouring the obvious intent.
+  .sp <- as.integer(stopPatience)
+  if (length(.sp) != 1L || is.na(.sp) || .sp < 0L) {
+    stop("`stopPatience` must be a single non-negative integer (0 disables it)")
+  }
   # `stallEscalateFactor` multiplies the ratchet perturbation probability when a
   # run stalls; a value < 1 would *shrink* perturbation on stalling (the wrong
   # direction), and the C++ escalator treats exactly 1 as "off".
   .se <- as.double(stallEscalateFactor)
   if (length(.se) != 1L || is.na(.se) || .se < 1) {
     stop("`stallEscalateFactor` must be a single number >= 1")
+  }
+  # Documented-range parameters passed straight to the C++ engine unchecked:
+  # out-of-range values don't crash, they silently produce degenerate search
+  # behaviour (e.g. a negative probability or a fraction > 1), which is worse
+  # than an explicit error.
+  .etf <- as.double(enumTimeFraction)
+  if (length(.etf) != 1L || is.na(.etf) || .etf < 0 || .etf > 0.5) {
+    stop("`enumTimeFraction` must be a single number between 0 and 0.5")
+  }
+  for (.p in c("nniPerturbFraction", "ratchetPerturbProb")) {
+    .v <- as.double(get(.p))
+    if (length(.v) != 1L || is.na(.v) || .v < 0 || .v > 1) {
+      stop("`", .p, "` must be a single number between 0 and 1")
+    }
+  }
+  .sMin <- as.integer(sectorMinSize)
+  .sMax <- as.integer(sectorMaxSize)
+  if (length(.sMin) != 1L || length(.sMax) != 1L ||
+      is.na(.sMin) || is.na(.sMax) || .sMin > .sMax) {
+    stop("`sectorMinSize` must be less than or equal to `sectorMaxSize`")
   }
   structure(
     list(
@@ -439,6 +506,7 @@ SearchControl <- function(
       poolSuboptimal = as.double(poolSuboptimal),
       consensusStableReps = as.integer(consensusStableReps),
       perturbStopFactor = as.integer(perturbStopFactor),
+      stopPatience = as.integer(stopPatience),
       adaptiveLevel = as.logical(adaptiveLevel),
       consensusConstrain = as.logical(consensusConstrain),
       pruneReinsertCycles = as.integer(pruneReinsertCycles),
@@ -453,7 +521,8 @@ SearchControl <- function(
       annealTEnd = as.double(annealTEnd),
       annealMovesPerPhase = as.integer(annealMovesPerPhase),
       adaptiveStart = as.logical(adaptiveStart),
-      enumTimeFraction = as.double(enumTimeFraction)
+      enumTimeFraction = as.double(enumTimeFraction),
+      enumMaxTrees = .emt
     ),
     class = "SearchControl",
     explicit = .explicit
@@ -485,8 +554,8 @@ print.SearchControl <- function(x, ...) {
                      "sectorCombStarts", "sectorFuseRounds",
                      "postRatchetSectorial"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
-                     "poolMaxSize", "poolSuboptimal"),
-    "Stopping" = c("consensusStableReps", "perturbStopFactor",
+                     "poolMaxSize", "poolSuboptimal", "enumMaxTrees"),
+    "Stopping" = c("consensusStableReps", "perturbStopFactor", "stopPatience",
                     "adaptiveLevel",
                     "consensusConstrain", "adaptiveStart",
                     "enumTimeFraction")
