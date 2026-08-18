@@ -177,20 +177,10 @@ ClusteringConcordance <- function(
   dataset <- dataset[keep]
 
   # Prepare data
-  # `tree` may carry tips absent from `dataset` (already dropped from `keep`).
-  # Restrict `splits` to the shared taxon set via `Subsplit()` rather than
-  # pruning `tree` itself: retaining extra tips computes bipartitions over a
-  # different taxon set than `dataset` describes (and column-indexing the
-  # unpruned splits matrix by `keep` cannot recover the correct, smaller set
-  # of splits), but `KeepTip()` would renumber nodes and break any caller
-  # (e.g. `ConcordanceTable()`, `PaintCharacters()`) that matches these split
-  # names against `tree$edge`.
+  # `tree` may carry tips absent from `dataset`; Subsplit restricts `splits` to the
+  # shared taxa without renumbering nodes.
   splits <- as.logical(Subsplit(as.Splits(tree), keep))
-  # `Subsplit()` drops row names entirely when exactly one split survives
-  # restriction (its own version of the drop-to-a-vector bug this file works
-  # around elsewhere) -- recover each surviving split's original node number
-  # by matching it (or its complement) against `tree`'s own splits, likewise
-  # restricted to `keep`'s columns.
+  # Recover each surviving split's original node number
   if (is.null(rownames(splits))) {
     fullRestricted <- as.logical(as.Splits(tree))[, TipLabels(tree) %in% keep,
                                                   drop = FALSE]
