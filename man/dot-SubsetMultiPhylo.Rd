@@ -7,6 +7,11 @@
 .SubsetMultiPhylo(trees, idx)
 }
 \description{
-Subset a multiPhylo preserving attributes
+Non-standard attributes describe the whole \code{multiPhylo} object (e.g.
+\code{score}, \code{hits_to_best}, \code{replicate_scores}) and are copied over
+unchanged, with one exception: \code{firstHit} is a per-\emph{stage} tally computed
+from the (pre-subset) set of tree names, so it no longer describes the
+returned subset and is dropped rather than carried over stale.
+\code{\link[=WhenFirstHit]{WhenFirstHit()}} can recompute it from the subset's own names if needed.
 }
 \keyword{internal}

@@ -1,11 +1,31 @@
 # Feasibility thresholds for MaddisonSlatkin exact computation.
 # The split_count is the coefficient of x^floor(n/2) in the generating
 # polynomial prod_i (1 + x + ... + x^{a_i}), capturing partition shape.
-# Calibrated from worst-case (balanced) partition timing experiments
-# using bitmask encoding (states at positions 2^(i-1)):
-#   k=3: n=27 (9,9,9)   sc=75  0.97s safe;  n=31 (11,10,10) sc=96 1.32s marginal
-#   k=4: n=13 (4,3,3,3) sc=50  0.36s safe;  n=15 (4,4,4,3)  sc=70 0.94s marginal
-#   k=5: n=9  (2,2,2,2,1) sc=35 0.22s safe; n=10 (2,2,2,2,2) sc=51 0.49s
+# Calibrated in work units, not seconds.  The figures below are each
+# character's peak demand on the solver's two memo tables, measured at the
+# entry high-water mark on a normal build.  They are properties of the
+# character, so they mean the same thing on every machine and do not go stale
+# as hardware turns over; `MaddisonSlatkin.cpp` reserves against the largest
+# of them, so nothing this gate admits can overflow a table.
+# Worst-case (balanced) partitions, bitmask encoding (states at 2^(i-1)):
+#   k=3: n=27 (9,9,9)     sc=75  logB 990  logPVec 27951  <- threshold
+#        n=20 (8,7,5)     sc=42  logB 422  logPVec 12047
+#   k=4: n=13 (4,3,3,3)   sc=50  logB 305  logPVec  9555  <- threshold
+#   k=5: n=9  (2,2,2,2,1) sc=35  logB 142  logPVec  4990  <- threshold
+#
+# This gate is not the latency control, and should not be tuned as one.  It
+# skips work hopeless enough not to be worth starting; what a caller actually
+# waits is capped by `TIME_BUDGET_S` in MaddisonSlatkin.cpp, which stops the
+# recursion mid-flight and falls back to Monte Carlo.  Admitting a character
+# here therefore costs at most that budget, not the figures below.
+#
+# Consequently these thresholds may be generous without hurting anyone, and
+# raising one does not make the package less responsive.  Timings, for scale
+# only, on a 2021-vintage desktop: (9,9,9) ~12.7 s, (8,7,5) ~1.9 s -- i.e. most
+# of the k=3 range is stopped by the clock, not finished.  Earlier revisions of
+# this comment quoted sub-second figures for the same characters and are
+# superseded; they were ~13x optimistic, which is how a 2 s budget came to look
+# like a backstop when it was in fact the operative limit.
 .MS_SC_THRESHOLD <- c(Inf, Inf, 75L, 50L, 35L)
 
 .MSSplitCount <- function(state_counts) {
