@@ -115,7 +115,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 }
 
 #' @rdname SPR
-#' @return `TBRMoves()` returns a list of all trees one SPR move away from
+#' @return `SPRMoves()` returns a list of all trees one SPR move away from
 #'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
 #' @export
 SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod("SPRMoves")

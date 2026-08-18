@@ -918,8 +918,47 @@ class SolverT {
   int s_max_global = 0;
 
   // Time budget: abort if computation exceeds this many seconds.
-  // Legitimate computations complete in <2s; blowups take >100s.
+  //
+  // This is a latency promise, and it is deliberately the binding one.  It
+  // caps what a caller waits per character; `.MS_SC_THRESHOLD` only skips work
+  // that is hopeless enough to be worth not starting.  The two could be
+  // arranged the other way round -- gate on the character's shape, which is a
+  // machine-independent quantity, and let the clock recede to a backstop --
+  // and that would buy exactness that reproduces across machines.  It is not
+  // worth its price.  A dataset is hundreds of characters; a budget generous
+  // enough for the slowest one the gate admits (k=3 (9,9,9), sc=75, measured
+  // at 12.7 s on a 2021 desktop) is an hour of unresponsiveness in the bad
+  // case, for a caller who mostly wants a number back.  Exactness here is a
+  // refinement over an already-documented approximation, so it yields.
+  //
+  // The consequence, accepted knowingly: whether a given character is scored
+  // exactly or by Monte Carlo depends on how fast the machine is.  The
+  // fallback is a sampling estimate in any case, so its value was never
+  // machine-invariant either.  `approx = "mc"` is the escape hatch that is
+  // stable by construction; note that `approx = "exact"` is not one, since it
+  // waives the gate but is still stopped by this budget.
+  //
+  // An instrumented build runs one to two orders of magnitude slower, so the
+  // budget would fire there on anything at all -- leaving the sanitizer
+  // checking the bailout path instead of the algorithm it was pointed at.
+  // Scale by that slowdown rather than disabling, so a genuine blowup is still
+  // bounded; there is no responsiveness to protect in a sanitizer run, which
+  // is a nightly check and not a user sitting at a prompt.
+  // GCC announces ASan through __SANITIZE_ADDRESS__ and clang through
+  // __has_feature; TS_SANITIZER_BUILD is the manual escape hatch for the
+  // instrumented builds that announce themselves through neither (valgrind).
+#if defined(__SANITIZE_ADDRESS__) || defined(TS_SANITIZER_BUILD)
+#  define TS_MS_SLOW_BUILD 1
+#elif defined(__has_feature)
+#  if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
+#    define TS_MS_SLOW_BUILD 1
+#  endif
+#endif
+#ifdef TS_MS_SLOW_BUILD
+  static constexpr double TIME_BUDGET_S = 200.0;
+#else
   static constexpr double TIME_BUDGET_S = 2.0;
+#endif
   std::chrono::steady_clock::time_point start_time;
   bool budget_exceeded = false;
   // Set when we bail because a memo table reached its reserved capacity (as
@@ -1315,8 +1354,19 @@ public:
           LnRootedCache& lnr)
     : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
 
-    logB_cache.reserve(8192);    // OAFlatMap: capacity 16384, load <= 0.5
-    logPVec_idx.reserve(4096);   // OAFlatMap: capacity 8192, load <= 0.5
+    // Sized against the worst character `.MS_SC_THRESHOLD` admits to this
+    // solver, measured at the entry high-water mark rather than guessed:
+    //
+    //   k=5 (2,2,2,2,1) sc=35   logB   142   logPVec  4990
+    //   k=4 (4,3,3,3)   sc=50   logB   305   logPVec  9555
+    //   k=3 (8,7,5)     sc=42   logB   422   logPVec 12047
+    //   k=3 (9,9,9)     sc=75   logB   990   logPVec 27951
+    //
+    // logPVec_idx previously reserved 4096, so `at_capacity()` bailed on every
+    // one of them: the exact solver returned NA and every multistate character
+    // the gate admits fell back to Monte Carlo without the caller asking.
+    logB_cache.reserve(8192);     // OAFlatMap: capacity 16384, bails above 8192
+    logPVec_idx.reserve(32768);   // OAFlatMap: capacity 65536, bails above 32768
 
     logRD_cache.reserve(1024);
     validDraws_cache.reserve(256);
@@ -1584,7 +1634,7 @@ public:
       double b = LogB(token0, states);
       double p = LogP(steps, states, token0);
       double val;
-      if (!(p > NEG_INF) || !(p > NEG_INF)) {
+      if (!(b > NEG_INF) || !(p > NEG_INF)) {
         val = NEG_INF;
       } else {
         val = b + p;

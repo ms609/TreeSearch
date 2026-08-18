@@ -349,36 +349,63 @@ struct StateSnapshot {
     postorder.resize(tree.postorder.size());
   }
 
+  // Every copy below is guarded on a non-zero length.  A dataset can leave the
+  // Fitch kernel nothing to do -- HSJ data whose characters all belong to a
+  // hierarchy is the case observed -- giving `total_words == 0` and
+  // `n_blocks == 0`, which sizes prelim/final_/local_cost to zero.  An empty
+  // vector's `.data()` is then permitted to be null, and `memcpy`'s `nonnull`
+  // parameters forbid that even for a zero-length copy: benign on the
+  // toolchains we target, but UBSan reports it and a compiler is entitled to
+  // infer non-nullness from the attribute.  Same guard as
+  // `TreeState::load_tip_states()` and `::save_node_state()`.
+  //
+  // `has_na_arrays` and `postorder` were not implicated -- NA arrays are sized
+  // from the same `state_sz`, and postorder is never empty -- but they are
+  // guarded on the same footing so a future zero-length case cannot reopen it.
+
   void save(const TreeState& tree) {
     size_t state_bytes = prelim.size() * sizeof(uint64_t);
     size_t cost_bytes = local_cost.size() * sizeof(uint64_t);
-    std::memcpy(prelim.data(), tree.prelim.data(), state_bytes);
-    std::memcpy(final_.data(), tree.final_.data(), state_bytes);
-    std::memcpy(local_cost.data(), tree.local_cost.data(), cost_bytes);
-    if (has_na_arrays) {
+    if (state_bytes > 0) {
+      std::memcpy(prelim.data(), tree.prelim.data(), state_bytes);
+      std::memcpy(final_.data(), tree.final_.data(), state_bytes);
+    }
+    if (cost_bytes > 0) {
+      std::memcpy(local_cost.data(), tree.local_cost.data(), cost_bytes);
+    }
+    if (has_na_arrays && state_bytes > 0) {
       std::memcpy(down2.data(), tree.down2.data(), state_bytes);
       std::memcpy(subtree_actives.data(), tree.subtree_actives.data(),
                    state_bytes);
     }
-    std::memcpy(postorder.data(), tree.postorder.data(),
-                 tree.postorder.size() * sizeof(int));
+    if (!tree.postorder.empty()) {
+      std::memcpy(postorder.data(), tree.postorder.data(),
+                   tree.postorder.size() * sizeof(int));
+    }
   }
 
   void restore(TreeState& tree) const {
     size_t state_bytes = prelim.size() * sizeof(uint64_t);
     size_t cost_bytes = local_cost.size() * sizeof(uint64_t);
-    std::memcpy(tree.prelim.data(), prelim.data(), state_bytes);
-    std::memcpy(tree.final_.data(), final_.data(), state_bytes);
-    std::memcpy(tree.local_cost.data(), local_cost.data(), cost_bytes);
-    if (has_na_arrays) {
+    if (state_bytes > 0) {
+      std::memcpy(tree.prelim.data(), prelim.data(), state_bytes);
+      std::memcpy(tree.final_.data(), final_.data(), state_bytes);
+    }
+    if (cost_bytes > 0) {
+      std::memcpy(tree.local_cost.data(), local_cost.data(), cost_bytes);
+    }
+    if (has_na_arrays && state_bytes > 0) {
       std::memcpy(tree.down2.data(), down2.data(), state_bytes);
       std::memcpy(tree.subtree_actives.data(), subtree_actives.data(),
                    state_bytes);
     }
-    // Restore postorder size AND data (clip may have shrunk the vector)
+    // Restore postorder size AND data (clip may have shrunk the vector).  The
+    // resize is unconditional; only the copy needs the guard.
     tree.postorder.resize(postorder.size());
-    std::memcpy(tree.postorder.data(), postorder.data(),
-                 postorder.size() * sizeof(int));
+    if (!postorder.empty()) {
+      std::memcpy(tree.postorder.data(), postorder.data(),
+                   postorder.size() * sizeof(int));
+    }
   }
 };
 

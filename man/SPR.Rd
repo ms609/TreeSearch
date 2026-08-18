@@ -61,7 +61,7 @@ class \code{\link[ape]{phylo}}, i.e. \code{dim(tree$edge)[1]}}
 \value{
 This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
 
-\code{TBRMoves()} returns a list of all trees one SPR move away from
+\code{SPRMoves()} returns a list of all trees one SPR move away from
 \code{tree}, with edges and nodes in preorder, rooted on the first-labelled tip.
 
 a list containing two elements, corresponding in turn to the

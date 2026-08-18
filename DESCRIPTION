@@ -59,7 +59,7 @@ Suggests:
   future,
   highs,
   knitr,
-  MaxMin,
+  Coreset,
   phangorn (>= 2.2.1),
   pkgload,
   PlotTools,

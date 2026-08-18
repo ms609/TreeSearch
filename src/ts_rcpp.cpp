@@ -1751,6 +1751,15 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
     }
     {
       const int n_edge = mats[0].nrow();
+      // A zero-row matrix passes both checks below -- its ncol is 2, and
+      // every matrix agrees on nrow -- leaves `flat` empty, and then reaches
+      // `flat.data() + n_edge`: pointer arithmetic on a possibly-null
+      // pointer, undefined before C++20 and reported by neither UBSan's
+      // nonnull check nor hardened libstdc++.  No tree has zero edges, so
+      // reject it here alongside the other shape checks.
+      if (n_edge < 1) {
+        stop("Each `startEdge` matrix must describe at least one edge.");
+      }
       params.start_n_edge = n_edge;
       params.start_edges.reserve(mats.size());
       for (const IntegerMatrix& se : mats) {
@@ -2287,8 +2296,7 @@ List ts_collapse_pool(
     List scoringConfig,
     Nullable<List> hsjConfig = R_NilValue,
     Nullable<List> xformConfig = R_NilValue,
-    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue,
-    Nullable<IntegerMatrix> consZero = R_NilValue)
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
 {
   ts::DataSet ds = unpack_scoring(contrast, tip_data, weight, levels,
                                   scoringConfig);
@@ -2300,48 +2308,29 @@ List ts_collapse_pool(
   // must stay visible even when its branch is zero-length (it would otherwise be
   // contracted, leaving the result looking unconstrained).  We protect every
   // constraint split from collapse — the unsupported NON-constraint branches
-  // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
-  // bitset: trees are re-rooted on tip 0 below, so every internal node's
-  // descendant set excludes tip 0 and is directly comparable to these.
+  // still collapse.
   //
-  // The canonical bitsets alone protect only a node whose descendant set is the
-  // 1 group EXACTLY, which is what the search's locked-node machinery enforces.
-  // The constraint the user is promised is looser: tips ambiguous for the
-  // constraint character are free to sit on either side, so the split can be
-  // realised by a node that is not exactly the 1 group, which no exact match
-  // reaches — and contracting that node's edge takes the enforced grouping with
-  // it.  `cons_one` / `cons_zero` are the raw (uncanonicalised) groups, from
-  // which the realising node is found per tree below.
+  // Each split is stored as the pair of groups build_constraint() reads
+  // (1 = together, 0 = apart, anything else = free; see ts_constraint.cpp).
+  // Both come out of the one membership matrix, so the protection here cannot
+  // drift from the constraint the search enforced.  A pure 0/1 matrix gives
+  // apart == the complement, and the test below then fires on exactly the node
+  // an exact-match test would have found.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
-  std::vector<std::vector<uint64_t>> cons_canon;
   std::vector<std::vector<uint64_t>> cons_one, cons_zero;
-  auto row_bits = [&](const IntegerMatrix& m, int r) {
-    std::vector<uint64_t> b(wps, 0);
-    for (int c = 0; c < n_tip && c < m.ncol(); ++c) {
-      if (m(r, c)) b[c >> 6] |= (1ULL << (c & 63));
-    }
-    return b;
-  };
   if (consSplitMatrix.isNotNull()) {
     IntegerMatrix cs(consSplitMatrix.get());
     for (int r = 0; r < cs.nrow(); ++r) {
-      std::vector<uint64_t> b = row_bits(cs, r);
-      cons_one.push_back(b);
-      if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
-        for (int w = 0; w < wps; ++w) b[w] = ~b[w];
-        int rem = n_tip & 63;
-        if (rem) b[wps - 1] &= ((1ULL << rem) - 1);  // clear padding bits
+      std::vector<uint64_t> one(wps, 0), zero(wps, 0);
+      for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
+        const int v = cs(r, c);
+        if (v != 1 && v != 0) continue;                 // free tip
+        (v == 1 ? one : zero)[c >> 6] |= (1ULL << (c & 63));
       }
-      cons_canon.push_back(std::move(b));
+      cons_one.push_back(std::move(one));
+      cons_zero.push_back(std::move(zero));
     }
-    if (consZero.isNotNull()) {
-      IntegerMatrix cz(consZero.get());
-      for (int r = 0; r < cz.nrow() && r < cs.nrow(); ++r) {
-        cons_zero.push_back(row_bits(cz, r));
-      }
-    }
-    cons_zero.resize(cons_one.size(), std::vector<uint64_t>(wps, 0));
   }
   // Group sizes depend only on the constraint, so they are counted once here
   // rather than per tree.  A group of fewer than two taxa is skipped below:
@@ -2404,11 +2393,11 @@ List ts_collapse_pool(
 
     ts::compute_collapsed_flags_aggressive(tree, ds, flags);
 
-    // Protect constraint splits: clear the collapse flag of any internal edge
-    // whose bipartition realises a constraint (keeps the enforced clade
-    // visible).  Per-node descendant tip sets via a postorder OR; rooted on
-    // tip 0, so every internal set excludes tip 0 == the canonical form above.
-    if (!cons_canon.empty()) {
+    // Protect constraint splits: keep an internal edge that realises each
+    // constraint out of the contraction, so the enforced grouping stays
+    // visible.  Per-node descendant tip sets via a postorder OR; rooted on
+    // tip 0, so every internal set excludes tip 0.
+    if (!cons_one.empty()) {
       std::vector<uint64_t> tb(static_cast<size_t>(tree.n_node) * wps, 0);
       for (int tp = 0; tp < n_tip; ++tp) {
         tb[static_cast<size_t>(tp) * wps + (tp >> 6)] = 1ULL << (tp & 63);
@@ -2422,23 +2411,16 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      for (int v = n_tip + 1; v < tree.n_node; ++v) {
-        if (v >= static_cast<int>(flags.size()) || !flags[v]) continue;
-        const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-        for (const auto& cb : cons_canon) {
-          bool eq = true;
-          for (int w = 0; w < wps; ++w) {
-            if (nb[w] != cb[w]) { eq = false; break; }
-          }
-          if (eq) { flags[v] = 0; break; }
-        }
-      }
-
-      // A split can also be realised by a node that is not the 1 group exactly,
-      // and that node needs protecting too — but only when nothing else keeps
-      // the split visible.  A node realises the split when it holds one whole
-      // group and none of the other; every such node's own edge displays it, so
-      // if any of them already survives the contraction there is nothing to do.
+      // A node realises the split when it holds one whole group and none of the
+      // other -- ts::node_displays_split() (ts_constraint.h), the same predicate
+      // the search's mapping and the Wagner build read, so the branch protected
+      // here is the branch they enforce.  With free tips that node is generally
+      // NOT the 1 group exactly, and the exact-match test this replaced then
+      // protected nothing at all (agent-issues/TreeSearch#54).
+      //
+      // Protect one such node, and only when nothing else keeps the split
+      // visible: every realising node's own edge displays the split, so if any
+      // of them already survives the contraction there is nothing to do.
       // Protecting unconditionally would instead force the resolution of a
       // branch the constraint does not ask for, which is the "unsupported
       // non-constraint branches still collapse" half of the promise.
@@ -2455,20 +2437,13 @@ List ts_collapse_pool(
         bool survives = false;
         int to_protect = -1;
         for (int side = 0; side < 2 && !survives; ++side) {
-          const std::vector<uint64_t>& in = *grp[side];
-          const std::vector<uint64_t>& out = *grp[1 - side];
+          const uint64_t* in = grp[side]->data();
+          const uint64_t* out = grp[1 - side]->data();
           for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
             const int v = tree.postorder[pi];
             if (v <= n_tip || v >= static_cast<int>(flags.size())) continue;
             const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-            bool realises = true;
-            for (int w = 0; w < wps; ++w) {
-              if ((nb[w] & in[w]) != in[w] || (nb[w] & out[w])) {
-                realises = false;
-                break;
-              }
-            }
-            if (!realises) continue;
+            if (!ts::node_displays_split(nb, in, out, wps)) continue;
             if (!flags[v]) { survives = true; break; }
             if (to_protect < 0) to_protect = v;  // the MRCA, in postorder
           }
@@ -2976,6 +2951,46 @@ List ts_bench_tbr_phases(
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
   bool use_iw = std::isfinite(ds.concavity);
+
+  // A dataset can leave the Fitch kernel nothing to do -- every character
+  // constant or autapomorphic gives zero blocks -- so `total_words == 0` and
+  // `n_blocks == 0`, and `tree.prelim`, `vroot_cache` and the snapshot buffers
+  // are all empty.  The phase loops below would work them anyway:
+  // `&tree.prelim[sc_base]` and `&vroot_cache[ei * total_words]` take the
+  // address of element 0 of an empty vector (what `_GLIBCXX_ASSERTIONS`
+  // traps), and the snapshot benchmark's `memcpy` passes a null `.data()` to a
+  // parameter declared `nonnull` (what UBSan reports).  Both are undefined
+  // behaviour, and neither stops the function: it completes every clip and
+  // every snapshot iteration.
+  //
+  // Guard at entry rather than per site.  This is a benchmark harness, and
+  // with no Fitch words there is no per-phase work to time -- zero is the
+  // honest answer, where the numbers it used to report were timings of
+  // zero-byte copies.  Phase A above is safe at zero words (the HSJ search
+  // path scores that way by design), so the score is still real.
+  if (tree.total_words == 0) {
+    return List::create(
+      Named("n_tips") = tree.n_tip,
+      Named("n_node") = tree.n_node,
+      Named("n_blocks") = ds.n_blocks,
+      Named("total_words") = tree.total_words,
+      Named("total_chars") = 0,
+      Named("block_n_states") = IntegerVector(0),
+      Named("has_na") = has_na,
+      Named("use_iw") = use_iw,
+      Named("score") = score,
+      Named("time_full_rescore_us") = time_full_rescore_us,
+      Named("time_clip_incr_us") = 0.0,
+      Named("time_indirect_us") = 0.0,
+      Named("time_unclip_us") = 0.0,
+      Named("time_snapshot_save_us") = 0.0,
+      Named("time_snapshot_restore_us") = 0.0,
+      Named("snapshot_bytes") = 0.0,
+      Named("n_clips") = 0,
+      Named("n_candidates") = 0,
+      Named("n_snapshot_iters") = 0
+    );
+  }
 
   // Seed RNG
   std::mt19937 rng = ts::make_rng();
@@ -3869,4 +3884,31 @@ std::string ts_ev_cache_key_probe(
   char buf[17];
   std::snprintf(buf, sizeof(buf), "%016llx", (unsigned long long)key);
   return std::string(buf);
+}
+
+// Sample one start tree from the RANDOM_TREE strategy's constrained generator.
+//
+// A thin wrapper over random_constrained_tree() (ts_wagner.cpp) so that tests
+// can inspect the tree the search STARTS from.  Going through
+// MaximizeParsimony() cannot: TBR rearranges whatever it is handed, so the
+// returned tree says nothing about where the generator put the free tips.
+// Draws from R's RNG, so set.seed() reproduces a sample.
+// [[Rcpp::export]]
+IntegerMatrix ts_random_constrained_tree(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
+{
+  validate_tip_data_values(INTEGER(tip_data), tip_data.nrow(), tip_data.ncol(),
+                           contrast.nrow());
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::ConstraintData cd = build_constraint_from_r(
+      tip_data.nrow(), consSplitMatrix, R_NilValue, R_NilValue,
+      R_NilValue, R_NilValue, 0);
+
+  ts::TreeState tree;
+  ts::random_constrained_tree(tree, ds, cd);
+  return tree_to_edge(tree);
 }

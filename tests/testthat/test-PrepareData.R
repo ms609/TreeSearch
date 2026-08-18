@@ -71,6 +71,22 @@ test_that("Resampling weights change the score", {
   expect_lte(TreeScore(tree, dropOne), full)
 })
 
+test_that("original_weight is not truncated for fractional weights (#139)", {
+  # Regression test: BootstrapTree()/JackknifeTree() resample from
+  # `original_weight`. If fractional character weights were floored to
+  # integer instead of scaled like `weight`, every value would floor to
+  # zero (or be biased relative to the user's specified weights), and
+  # resampling would silently degenerate.
+  tokens <- matrix(c(0, 1, 1, 0, 1, 0, 0, 1), byrow = TRUE, nrow = 4L,
+                   dimnames = list(letters[1:4], NULL))
+  pd <- TreeTools::MatrixToPhyDat(tokens)
+  attr(pd, "weight") <- rep(0.5, length(attr(pd, "weight")))
+
+  obj <- PrepareData(pd)
+  expect_true(all(obj[["original_weight"]] > 0))
+  expect_equal(obj[["original_weight"]], obj[["weight"]])
+})
+
 test_that("Deprecated Morphy aliases still work", {
   pd <- TreeTools::MatrixToPhyDat(matrix(
     c("-", "-", 0, 0), byrow = TRUE, nrow = 4L,

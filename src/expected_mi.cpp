@@ -6,26 +6,38 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-#define MAX_FACTORIAL_LOOKUP 8192
-static double log2_factorial_table[MAX_FACTORIAL_LOOKUP + 1];
-static const double LOG2_E = 1.4426950408889634;
+namespace {
 
-__attribute__((constructor))
-void initialize_factorial_cache() {
-  log2_factorial_table[0] = 0.0;
-  for (int i = 1; i <= MAX_FACTORIAL_LOOKUP; i++) {
-    log2_factorial_table[i] = log2_factorial_table[i - 1] + std::log2(i);
-  }
+constexpr int MAX_FACTORIAL_LOOKUP = 8192;
+constexpr double LOG2_E = 1.4426950408889634;
+
+// Block-scope static: C++17 guarantees the initialization runs exactly once
+// even if several threads reach it together.
+const std::vector<double>& log2_factorial_table() {
+  static const std::vector<double> table = []() {
+    std::vector<double> t(MAX_FACTORIAL_LOOKUP + 1);
+    t[0] = 0.0;
+    for (int i = 1; i <= MAX_FACTORIAL_LOOKUP; ++i) {
+      t[i] = t[i - 1] + std::log2(i);
+    }
+    return t;
+  }();
+  return table;
 }
 
 // Fast lookup with bounds checking
 inline double l2factorial(int n) {
+  if (n < 0) {
+    Rcpp::stop("Factorial undefined for negative arguments.");
+  }
   if (n <= MAX_FACTORIAL_LOOKUP) {
-    return log2_factorial_table[n];
+    return log2_factorial_table()[n];
   } else {
     return lgamma(n + 1) * LOG2_E;
   }
 }
+
+} // namespace
 
 //' Expected mutual information between two partitions
 //'
@@ -54,6 +66,9 @@ inline double l2factorial(int n) {
 //' @export
 // [[Rcpp::export]]
 double expected_mi(const IntegerVector &ni, const IntegerVector &nj) {
+  if (ni.size() != 2) {
+    Rcpp::stop("ni must be a vector of length 2.");
+  }
   // ni and nj are vectors listing the number of entitites in each cluster
   // ni = {a, N-a}; nj = counts of character states
   const int a = ni[0];
@@ -77,36 +92,63 @@ double expected_mi(const IntegerVector &ni, const IntegerVector &nj) {
     if (kmin > kmax) continue;
     
     const double log2mj = std::log2(static_cast<double>(mj));
-    
-    // compute P(K=kmin)
-    double log2P = (l2factorial(mj) - l2factorial(kmin) - l2factorial(mj - kmin))
-      + (l2factorial(N - mj) - l2factorial(a - kmin) - l2factorial(N - mj - (a - kmin)))
-      - log2_denom;
-      double Pk = std::pow(2.0, log2P);
-      
-      for (int k = kmin; k <= kmax; ++k) {
-        if (Pk > 0.0) {
-          // contribution from inside the split
-          if (k > 0) {
-            double mi_in = std::log2(static_cast<double>(k)) + log2N - (log2a + log2mj);
-            emi += (static_cast<double>(k) * invN) * mi_in * Pk;
-          }
-          // contribution from outside the split
-          int kout = mj - k;
-          if (kout > 0) {
-            double mi_out = std::log2(static_cast<double>(kout)) + log2N - (log2Na + log2mj);
-            emi += (static_cast<double>(kout) * invN) * mi_out * Pk;
-          }
-        }
-        // Update P(k) → P(k+1)
-        if (k < kmax) {
-          double numer = static_cast<double>((mj - k) * (a - k));
-          double denom = static_cast<double>((k + 1) * (N - mj - a + k + 1));
-          Pk *= numer / denom;
-        }
+
+    // Mutual information contributed by an overlap of k, per unit probability
+    const auto cell_mi = [&](int k) {
+      double contribution = 0.0;
+      // contribution from inside the split
+      if (k > 0) {
+        double mi_in = std::log2(static_cast<double>(k)) + log2N - (log2a + log2mj);
+        contribution += (static_cast<double>(k) * invN) * mi_in;
       }
+      // contribution from outside the split
+      const int kout = mj - k;
+      if (kout > 0) {
+        double mi_out = std::log2(static_cast<double>(kout)) + log2N - (log2Na + log2mj);
+        contribution += (static_cast<double>(kout) * invN) * mi_out;
+      }
+      return contribution;
+    };
+
+    // Anchor the recurrence at the mode of the hypergeometric.  P(K = kmode)
+    // is the largest of at most N + 1 probabilities summing to one, so it is
+    // always representable; P(K = kmin) is not — at N = 1200 it is around
+    // 2^-1197, and a recurrence seeded with the zero it underflows to stays
+    // zero for every remaining k.
+    const int kmode = std::min(kmax, std::max(kmin, static_cast<int>(
+      (static_cast<double>(mj) + 1.0) * (static_cast<double>(a) + 1.0) /
+        (static_cast<double>(N) + 2.0))));
+
+    const double log2Pmode =
+      (l2factorial(mj) - l2factorial(kmode) - l2factorial(mj - kmode))
+      + (l2factorial(N - mj) - l2factorial(a - kmode)
+           - l2factorial(N - mj - (a - kmode)))
+      - log2_denom;
+    const double Pmode = std::exp2(log2Pmode);
+
+    emi += cell_mi(kmode) * Pmode;
+
+    // Walk down: P(k - 1) = P(k) * k(N - mj - a + k) / ((mj - k + 1)(a - k + 1))
+    double Pk = Pmode;
+    for (int k = kmode; k > kmin; --k) {
+      Pk *= (static_cast<double>(k) * (N - mj - a + k)) /
+        (static_cast<double>(mj - k + 1) * (a - k + 1));
+      // The distribution is unimodal, so once the tail underflows every
+      // remaining term is likewise negligible.
+      if (!(Pk > 0.0)) break;
+      emi += cell_mi(k - 1) * Pk;
+    }
+
+    // Walk up: P(k + 1) = P(k) * (mj - k)(a - k) / ((k + 1)(N - mj - a + k + 1))
+    Pk = Pmode;
+    for (int k = kmode; k < kmax; ++k) {
+      Pk *= (static_cast<double>(mj - k) * (a - k)) /
+        (static_cast<double>(k + 1) * (N - mj - a + k + 1));
+      if (!(Pk > 0.0)) break;
+      emi += cell_mi(k + 1) * Pk;
+    }
   }
-  
+
   return emi;
 }
 
@@ -116,34 +158,45 @@ std::string mi_key(IntegerVector ni, IntegerVector nj) {
     Rcpp::stop("ni must be a vector of length 2.");
   }
   
-  std::vector<uint16_t> ni_vals = {static_cast<uint16_t>(ni[0]),
-                                   static_cast<uint16_t>(ni[1])};
+  // 32 bits spans the whole of `int`, so distinct block sizes always give
+  // distinct keys.  A narrower code aliases: encoded in 16 bits, block sizes
+  // differing by a multiple of 65536 shared a key, and the cache then served
+  // one partition's expected mutual information for the other's.
+  std::vector<uint32_t> ni_vals = {static_cast<uint32_t>(ni[0]),
+                                   static_cast<uint32_t>(ni[1])};
   std::sort(ni_vals.begin(), ni_vals.end());
-  
-  std::vector<uint16_t> nj_vals;
+
+  std::vector<uint32_t> nj_vals;
   nj_vals.reserve(nj.size());
   for (int val : nj) {
-    nj_vals.push_back(static_cast<uint16_t>(val));
+    nj_vals.push_back(static_cast<uint32_t>(val));
   }
   std::sort(nj_vals.begin(), nj_vals.end());
-  
-  // Encode each uint16_t as 4 hex characters — no R allocation needed
+
+  // Encode each value as 8 hex characters — no R allocation needed.  Sizing
+  // the string up front and writing through a pointer beats appending to a
+  // reserved string, which re-checks capacity on every character.
   static const char hex[] = "0123456789abcdef";
-  std::string key;
-  key.reserve((2 + nj_vals.size()) * 4);
-  
-  for (uint16_t v : ni_vals) {
-    key += hex[(v >> 12) & 0xF];
-    key += hex[(v >> 8)  & 0xF];
-    key += hex[(v >> 4)  & 0xF];
-    key += hex[(v)       & 0xF];
+  std::string key((2 + nj_vals.size()) * 8, '0');
+  char *out = &key[0];
+
+  const auto write_hex = [&out](uint32_t v) {
+    out[0] = hex[(v >> 28) & 0xF];
+    out[1] = hex[(v >> 24) & 0xF];
+    out[2] = hex[(v >> 20) & 0xF];
+    out[3] = hex[(v >> 16) & 0xF];
+    out[4] = hex[(v >> 12) & 0xF];
+    out[5] = hex[(v >> 8)  & 0xF];
+    out[6] = hex[(v >> 4)  & 0xF];
+    out[7] = hex[(v)       & 0xF];
+    out += 8;
+  };
+  for (uint32_t v : ni_vals) {
+    write_hex(v);
   }
-  for (uint16_t v : nj_vals) {
-    key += hex[(v >> 12) & 0xF];
-    key += hex[(v >> 8)  & 0xF];
-    key += hex[(v >> 4)  & 0xF];
-    key += hex[(v)       & 0xF];
+  for (uint32_t v : nj_vals) {
+    write_hex(v);
   }
-  
+
   return key;
 }
