@@ -121,7 +121,18 @@
 
   consContrast <- attr(constraint, "contrast")
   nConsStates <- ncol(consContrast)
-  if (nConsStates < 2L) return(list())
+  if (nConsStates < 2L) {
+    # One state means no taxon is coded `0`, so this is the extreme case of the
+    # inert character warned about below -- and the loudest one, because it is
+    # what `MatrixToPhyDat(c(a = 1, b = 1, c = 1))` produces: a user asking for
+    # a clade and getting no constraint at all.  Warn here rather than returning
+    # silently; the group-size test below never sees these characters.
+    warning("Constraint constrains nothing, and is ignored: no taxon is coded ",
+            "`0`, so every tree separates the `1` taxa from the (empty) `0` ",
+            "group.  Code the taxa that must fall outside the group as `0`.",
+            call. = FALSE)
+    return(list())
+  }
 
   # Constraints are enforced as bipartitions, so only the two extreme states of
   # a character are read: taxa carrying an intermediate state are in neither
@@ -156,10 +167,30 @@
     }
   }
 
-  keep <- apply(consSplits, 1, function(row) {
-    s <- sum(row)
-    s >= 1 && s < length(constraint) - 1
-  })
+  # Every tree separates a group of fewer than two taxa from anything: the edge
+  # above a lone tip already does it, and an empty group needs no edge at all.
+  # Such a character constrains nothing under the documented contract, so
+  # enforcing its group as a clade would restrict the search for a guarantee it
+  # already has -- which is the over-strict reading agent-issues/TreeSearch#54
+  # is about.  The test is symmetric in the two groups because they are
+  # interchangeable: which one a user calls "1" is arbitrary, and
+  # build_constraint() swaps them freely to canonicalise.
+  #
+  # Warn rather than drop silently: a character coding only "1" and "?" almost
+  # certainly means "group these taxa", which is not what it says.
+  nOne <- rowSums(consSplits)
+  nZero <- rowSums(consZero)
+  inert <- nOne < 2 | nZero < 2
+  if (any(inert)) {
+    warning("Constraint character", if (sum(inert) > 1) "s" else "", " ",
+            paste(which(inert), collapse = ", "),
+            if (sum(inert) > 1) " constrain" else " constrains",
+            " nothing, and", if (sum(inert) > 1) " are" else " is",
+            " ignored: every tree separates a group of fewer than two taxa ",
+            "from the rest.  Taxa coded `?` join neither group; code those ",
+            "that must fall outside the group as `0`.", call. = FALSE)
+  }
+  keep <- !inert
   consSplits <- consSplits[keep, , drop = FALSE]
   consZero   <- consZero[keep, , drop = FALSE]
   if (nrow(consSplits) == 0L) return(list())
@@ -199,6 +230,15 @@
   consTipData <- matrix(unlist(constraint, use.names = FALSE),
                         nrow = length(constraint), byrow = TRUE)
 
+  # Fold the two groups into the single membership matrix the C++ engine reads:
+  # 1 = "together", 0 = "apart", NA = free to fall on either side.  A tip that
+  # is in neither group must not be coded 0, or the engine would enforce the
+  # stricter "the 1 group is an exact clade" reading and refuse to move a start
+  # tree that already satisfies the documented one (agent-issues/TreeSearch#54).
+  # build_constraint() (src/ts_constraint.cpp) treats any value that is neither
+  # 1 nor 0 as free, so a plain 0/1 matrix still means "no free tips".
+  consSplits[consSplits == 0L & consZero == 0L] <- NA_integer_
+
   list(
     consSplitMatrix = consSplits,
     consZero = consZero,
@@ -234,6 +274,11 @@
 # neither group here and are unconstrained there too (.PrepareConstraint()
 # warns about that at input).
 .ConstraintViolated <- function(tree, consOne, consZero) {
+  # `consOne` is the membership matrix the C++ kernels read, so it uses their
+  # coding: 1 = in the group, anything else -- including the NA that marks a
+  # free tip -- out of it.  Reduce it to 0/1 here rather than let an NA
+  # propagate through the accumulation below and turn every comparison NA.
+  consOne <- (!is.na(consOne) & consOne == 1L) * 1L
   edge <- Postorder(tree)[["edge"]]
   parent <- edge[, 1L]
   child <- edge[, 2L]
@@ -798,6 +843,14 @@
 #' returned trees will be perfectly compatible with each character in
 #' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
 #' in any output tree.
+#' A returned tree is compatible with a constraint character when some edge
+#' separates the taxa coded `1` from those coded `0`.  Taxa coded `?`, and taxa
+#' that `constraint` does not mention, are unconstrained: they may fall on
+#' either side of that edge, and are not required to join either group.
+#' A character whose `1` or `0` group contains fewer than two taxa therefore
+#' constrains nothing -- every tree separates such a group from the rest -- and
+#' is ignored with a warning.  To group taxa, code the taxa they must be
+#' separated from as `0` rather than leaving them `?`.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
 #' Each constraint character is enforced as a single split, so one with more
@@ -1793,21 +1846,17 @@ MaximizeParsimony <- function(
     # enforced clade"): a constraint is external evidence for a grouping the
     # matrix doesn't capture, so it stays visible even at zero length, while the
     # unsupported non-constraint branches still collapse.  consSplitMatrix rows
-    # are the enforced bipartitions in tip_data order (see .PrepareConstraint).
-    # `consZero` names the tips the constraint places on the far side of the
-    # split; tips ambiguous for the character are in neither group.  Without it
-    # the kernel can only recognise a node whose tip set is the 1 group exactly,
-    # and a split realised by any wider node goes unprotected -- collapsing the
-    # enforced grouping out of the returned tree.
+    # are the enforced bipartitions in tip_data order, carrying both groups
+    # (1 = together, 0 = apart, NA = free; see .PrepareConstraint).  The kernel
+    # needs both: a tree with free tips generally realises the split at a node
+    # whose tip set is wider than the 1 group, which no exact match reaches, so
+    # the enforced grouping would collapse out of the returned tree.
     consSplits <- if (!is.null(constraintConfig)) {
       constraintConfig[["consSplitMatrix"]]
     }
-    consZero <- if (!is.null(constraintConfig)) {
-      constraintConfig[["consZero"]]
-    }
     collapsed <- ts_collapse_pool(
       bestTrees, contrast, tip_data, weight, levels,
-      scoringConfig, hsjConfig, xformConfig, consSplits, consZero
+      scoringConfig, hsjConfig, xformConfig, consSplits
     )
     outTrees <- lapply(collapsed$trees, function(edgeMat) {
       tr <- list(

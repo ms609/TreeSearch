@@ -195,3 +195,45 @@ test_that("Bench function works with synthetic binary data", {
   expect_true(result$n_blocks > 0)
   expect_true(result$n_candidates > 0)
 })
+
+test_that("ts_bench_tbr_phases stops rather than benchmarking zero Fitch words", {
+  # An all-constant matrix simplifies away every Fitch block, so total_words
+  # and n_blocks are both zero and prelim / vroot_cache / the snapshot buffers
+  # are empty vectors.  The function used to run its whole clip loop and
+  # snapshot benchmark over them -- 18 clips and 434 snapshot iterations on a
+  # 12-tip tree -- indexing element 0 of empty vectors and memcpy'ing null
+  # pointers.  Both are undefined behaviour; neither aborted a release build,
+  # which is why this went unnoticed.
+  #
+  # Assert the contract, not the timings: with no Fitch words there is no
+  # per-phase work, so the counts are zero and the structural fields still
+  # describe the input.  The Phase A score is computed before the guard and
+  # remains real.
+  set.seed(1)
+  nTip <- 12L
+  tree <- RandomTree(paste0("t", seq_len(nTip)), root = TRUE)
+  mat <- matrix("0", nrow = nTip, ncol = 3,
+                dimnames = list(tree$tip.label, NULL))
+  ds <- MatrixToPhyDat(mat)
+  at <- attributes(ds)
+  tipData <- matrix(unlist(ds, use.names = FALSE),
+                    nrow = length(ds), byrow = TRUE)
+
+  result <- TreeSearch:::ts_bench_tbr_phases(
+    tree$edge, at$contrast, tipData, at$weight, at$levels
+  )
+
+  expect_equal(result$total_words, 0L)
+  expect_equal(result$n_blocks, 0L)
+
+  # The phases did not run.
+  expect_equal(result$n_clips, 0L)
+  expect_equal(result$n_candidates, 0L)
+  expect_equal(result$n_snapshot_iters, 0L)
+  expect_equal(result$snapshot_bytes, 0)
+
+  # Structure is unchanged, so a caller reading these fields still works.
+  expect_equal(result$n_tips, nTip)
+  expect_false(result$has_na)
+  expect_true(result$time_full_rescore_us >= 0)
+})
