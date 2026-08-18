@@ -1,5 +1,25 @@
 # To integrate into 2.0.0 notes
 
+- New `SearchControl()` parameter `enumMaxTrees`: a retention ceiling applied to
+  the post-search MPT-enumeration phase alone.  `0` (the default)
+  keeps `poolMaxSize` throughout, so behaviour is unchanged unless you set it.
+  From `effort` rung 5 the ladder now doubles it each notch alongside the
+  replicate budget and the hit target, so asking for more effort also asks for a
+  more complete tree set — previously a search could be given eight times the
+  budget and still return only the default 100 trees.
+
+  `poolMaxSize` is deliberately **not** scaled, and the split is the point.
+  During the replicate loop the pool cap is not a ceiling on what is returned but
+  the size of the working set the search reads: fusing draws its donors from the
+  whole pool, conflict-guided sectorial search reads the pool's split
+  frequencies once per replicate, and `consensusConstrain` reads its consensus
+  splits.  Raising it therefore changes which trees the search *visits*, so the
+  anytime-dominance argument that licenses raising `maxReplicates` — a higher cap
+  only appends later replicates and can never delay an earlier improvement — does
+  not transfer to it.  Once the loop is over the pool is pure output, and there
+  the same argument does hold, which is why the ceiling is raised at that point
+  instead.  Raising `poolMaxSize` yourself still works and still governs both
+  phases; `enumMaxTrees` is the side-effect-free way to keep more trees.
 - Profile parsimony computes exactly for more multi-state characters, where it
   previously approximated nearly all of them.  The exact Maddison & Slatkin
   solver caches into fixed-capacity memo tables and bails out when one fills --

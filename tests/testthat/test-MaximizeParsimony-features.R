@@ -214,6 +214,59 @@ test_that("both budget knobs double, so a notch is the same size either way", {
   for (r in 1:4) expect_equal(RS(r)[["hitMultiplier"]], 1L)
 })
 
+test_that("the ladder scales the MPT ceiling at the same rate", {
+  RS <- TreeSearch:::.RungSpec
+  for (r in 5:9) {
+    expect_equal(RS(r)[["enumMultiplier"]] / RS(r - 1L)[["enumMultiplier"]], 2)
+  }
+  for (r in 1:4) expect_equal(RS(r)[["enumMultiplier"]], 1L)
+})
+
+test_that("no preset touches enumMaxTrees, and an explicit value survives", {
+  # The ladder must be the only thing that sets this field automatically, so no
+  # preset may carry a value of its own.
+  for (p in TreeSearch:::.StrategyPresets()) {
+    expect_equal(p[["enumMaxTrees"]], 0L)
+  }
+  # A user-supplied `enumMaxTrees` outranks the ladder, exactly as a
+  # user-supplied `targetHits` or `maxReplicates` does; the merge must record it
+  # as explicit for the rung block to skip it.
+  ctrl <- TreeSearch:::.ApplyStrategyPreset(
+    SearchControl(enumMaxTrees = 7L),
+    TreeSearch:::.StrategyPresets()[["thorough"]],
+    explicitDots = character(0)
+  )
+  expect_equal(ctrl[["enumMaxTrees"]], 7L)
+  expect_true("enumMaxTrees" %in% attr(ctrl, "explicit"))
+})
+
+test_that("enumMaxTrees defaults to 0 and rejects a negative", {
+  expect_equal(SearchControl()[["enumMaxTrees"]], 0L)
+  expect_equal(SearchControl(enumMaxTrees = 250L)[["enumMaxTrees"]], 250L)
+  expect_error(SearchControl(enumMaxTrees = -1L), "non-negative")
+  # 0 is legal (it means "follow poolMaxSize"), unlike poolMaxSize itself.
+  expect_error(SearchControl(poolMaxSize = 0L), "positive integer")
+})
+
+test_that("a raised enumMaxTrees can return more trees than poolMaxSize", {
+  # End-to-end: the ceiling has to reach the C++ enumeration phase, so this
+  # fails if the field is dropped anywhere along SearchControl -> ctrl list ->
+  # DrivenParams -> TreePool::raise_max_size().
+  skip_on_cran()
+  set.seed(90210)
+  small <- MaximizeParsimony(ds, maxReplicates = 3L, targetHits = 99L,
+                             poolMaxSize = 4L, verbosity = 0L)
+  set.seed(90210)
+  big <- MaximizeParsimony(ds, maxReplicates = 3L, targetHits = 99L,
+                           poolMaxSize = 4L, enumMaxTrees = 40L,
+                           verbosity = 0L)
+  expect_lte(length(small), 4L)
+  expect_gt(length(big), length(small))
+  # Raising the ceiling must not change the score: enumeration only ever adds
+  # EQUAL-score topologies.
+  expect_equal(attr(big, "score"), attr(small, "score"))
+})
+
 test_that("effort = 0 reproduces the automatic choice on every size band", {
   # The whole point of an offset rather than an absolute level: the default
   # must be byte-identical to what the package chose before `effort` existed.

@@ -132,11 +132,7 @@ ParsSim <- function(tree,
   # --- Determine state counts per character ----------------------------------
   n_states_vec <- rep(seq_along(nChar) + 1L, times = nChar)
   if (any(n_states_vec > 31L)) {
-    stop("ParsSim() supports at most 31 states per character (state codes ",
-         "0:30): the internal Fitch bit-set representation packs states ",
-         "into a 32-bit integer via bitwShiftL(), which silently overflows ",
-         "to NA beyond that. Requested up to ", max(n_states_vec),
-         " states via `nChar`.")
+    stop("ParsSim() supports at most 31 states per character.")
   }
 
   # --- Validate and expand rootState ------------------------------------------

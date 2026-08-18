@@ -222,7 +222,7 @@ test_that(".PrepareConstraint codes free taxa as NA and drops vacuous rows", {
   expect_warning(
     dropped <- TreeSearch:::.PrepareConstraint(
       Inert("1", "1", "?", "?", "?", "?", "?", "?"), dataset),
-    "constrains nothing")
+    "trivial constraint")
   expect_equal(dropped, list())
   # A `0` group of one.  The two groups are interchangeable, so this must be
   # treated exactly like its mirror image below -- which the old
@@ -230,11 +230,11 @@ test_that(".PrepareConstraint codes free taxa as NA and drops vacuous rows", {
   expect_warning(
     TreeSearch:::.PrepareConstraint(
       Inert("1", "1", "0", "?", "?", "?", "?", "?"), dataset),
-    "constrains nothing")
+    "trivial constraint")
   expect_warning(
     TreeSearch:::.PrepareConstraint(
       Inert("0", "0", "1", "?", "?", "?", "?", "?"), dataset),
-    "constrains nothing")
+    "trivial constraint")
   # Two and two: kept, and kept silently.
   expect_silent(TreeSearch:::.PrepareConstraint(
     Inert("1", "1", "0", "0", "?", "?", "?", "?"), dataset))
@@ -246,7 +246,7 @@ test_that(".PrepareConstraint codes free taxa as NA and drops vacuous rows", {
   expect_warning(
     TreeSearch:::.PrepareConstraint(
       TreeTools::MatrixToPhyDat(c(a = "1", b = "1", c = "1")), dataset),
-    "constrains nothing")
+    "empty constraint")
 })
 
 test_that("the Wagner build places free taxa freely", {

@@ -156,19 +156,9 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
-  # Key on the unlabelled rooted shape, which is what the sampled distribution
-  # is a function of: leaf states are permuted uniformly, and relabelling
-  # composes with a uniform permutation to leave it uniform, so any two trees
-  # of the same shape are sampling the same distribution.  Keying on the
-  # labelled topology instead would be sound but strictly weaker -- identical
-  # topologies are a subset of identical shapes, so it would miss every reuse
-  # this catches and none of its own.  Rooting is part of the shape, as these
-  # characters may contain inapplicable tokens, whose lengths are not
-  # rooting-invariant.
+  # Key on the unlabelled rooted shape
   treeKey <- .ShapeKey(tree)
-  # Cache per shape, and within that per character, rather than pasting both
-  # into one key: that keeps the shape key out of every character's entry, and
-  # leaves no ambiguity about where the shape key ends and the counts begin.
+  # Cache per shape, and within that per character
   treeCache <- .CharLengthCache[[treeKey]]
   if (is.null(treeCache)) {
     treeCache <- new.env(hash = TRUE, parent = emptyenv())
@@ -218,11 +208,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
 
 # Canonical identifier of a rooted tree's unlabelled shape, after
 # Aho, Hopcroft & Ullman: a leaf encodes as `01`, and an internal node wraps
-# its children's codes, sorted into a fixed order, in `0`...`1`.  Sorting is
-# what makes the code canonical, so it is already invariant to edge order and
-# to node rotation, and two rooted shapes are isomorphic exactly if their codes
-# agree.  Unlike `TreeTools::RootedTreeShape()`, which enumerates shapes into
-# an integer and so stops at 55 leaves, this is bounded only by string length.
+# its children's codes, sorted into a fixed order, in `0`...`1`.
 # @param tree A rooted, binary tree of class `phylo`.
 # @return A string identifying the shape of `tree`.
 #' @importFrom TreeTools NTip Postorder
