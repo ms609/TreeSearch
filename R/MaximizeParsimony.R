@@ -122,15 +122,7 @@
   consContrast <- attr(constraint, "contrast")
   nConsStates <- ncol(consContrast)
   if (nConsStates < 2L) {
-    # One state means no taxon is coded `0`, so this is the extreme case of the
-    # inert character warned about below -- and the loudest one, because it is
-    # what `MatrixToPhyDat(c(a = 1, b = 1, c = 1))` produces: a user asking for
-    # a clade and getting no constraint at all.  Warn here rather than returning
-    # silently; the group-size test below never sees these characters.
-    warning("Constraint constrains nothing, and is ignored: no taxon is coded ",
-            "`0`, so every tree separates the `1` taxa from the (empty) `0` ",
-            "group.  Code the taxa that must fall outside the group as `0`.",
-            call. = FALSE)
+    warning("Igoring empty constraint", call. = FALSE)
     return(list())
   }
 
@@ -150,8 +142,7 @@
   # For each constraint character, record the tips unambiguously in the "1"
   # group (derived state present, ancestral absent) and, separately, those in
   # the "0" group (ancestral present, derived absent).  Tips ambiguous for the
-  # character ("?", or unconstrained taxa) belong to neither group and are free
-  # to plot on either side of the split.
+  # character ("?", or unconstrained taxa) may plot anywhere.
   consSplits <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
   consZero   <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
   for (ch in seq_len(ncol(consMat))) {
@@ -167,28 +158,13 @@
     }
   }
 
-  # Every tree separates a group of fewer than two taxa from anything: the edge
-  # above a lone tip already does it, and an empty group needs no edge at all.
-  # Such a character constrains nothing under the documented contract, so
-  # enforcing its group as a clade would restrict the search for a guarantee it
-  # already has -- which is the over-strict reading agent-issues/TreeSearch#54
-  # is about.  The test is symmetric in the two groups because they are
-  # interchangeable: which one a user calls "1" is arbitrary, and
-  # build_constraint() swaps them freely to canonicalise.
-  #
-  # Warn rather than drop silently: a character coding only "1" and "?" almost
-  # certainly means "group these taxa", which is not what it says.
+  # Ignore trivial constraints
   nOne <- rowSums(consSplits)
   nZero <- rowSums(consZero)
   inert <- nOne < 2 | nZero < 2
   if (any(inert)) {
-    warning("Constraint character", if (sum(inert) > 1) "s" else "", " ",
-            paste(which(inert), collapse = ", "),
-            if (sum(inert) > 1) " constrain" else " constrains",
-            " nothing, and", if (sum(inert) > 1) " are" else " is",
-            " ignored: every tree separates a group of fewer than two taxa ",
-            "from the rest.  Taxa coded `?` join neither group; code those ",
-            "that must fall outside the group as `0`.", call. = FALSE)
+    warning("Ignoring trivial constraint character", if (sum(inert) > 1) "s" else "", " ",
+            paste(which(inert), collapse = ", "), call. = FALSE)
   }
   keep <- !inert
   consSplits <- consSplits[keep, , drop = FALSE]
@@ -196,14 +172,6 @@
   if (nrow(consSplits) == 0L) return(list())
 
   # Every returned tree must display all constraint splits simultaneously.
-  # Two splits are jointly displayable iff they are compatible in the
-  # four-gamete sense: treating each as a bipartition of the tips it
-  # constrains (its "1" group vs its "0" group, ambiguous tips excluded), the
-  # pair is compatible iff at least one of the four group intersections is
-  # empty.  A laminar (nested-or-disjoint) test alone is too strict: it rejects
-  # the case where the two "0" groups are disjoint -- i.e. the splits' "1"
-  # sides jointly cover the constrained tips -- which is perfectly displayable,
-  # e.g. ab | cef and abcd | ef coexist on ((a,b),(d,(c,(e,f)))).
   nSplits <- nrow(consSplits)
   if (nSplits > 1L) {
     for (i in seq_len(nSplits - 1L)) {
@@ -216,7 +184,7 @@
                       !any(aZero & bOne) || !any(aZero & bZero)
         if (!compatible) {
           stop("Constraint is impossible to satisfy: splits ", i, " and ", j,
-               " are incompatible (all four taxon groupings co-occur)")
+               " are incompatible")
         }
       }
     }
