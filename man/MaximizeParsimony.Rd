@@ -51,6 +51,12 @@ limit, whichever fires first — draws on only part of a large pool, and
 says so in a warning.  Raise \code{targetHits} as well as \code{maxReplicates} to
 use more of it.
 If unspecified, all replicates start from random Wagner trees.
+A start tree that does not satisfy \code{constraint} is rearranged until it
+does before the search begins, with a warning: \code{constraint} is a
+guarantee about the trees returned, whereas \code{tree} only says where to
+begin, so when the two conflict the guarantee wins.  A taxon coded \verb{?}
+for a constraint character is unconstrained by it and may start on
+either side of that split.
 Edge lengths are not supported and will be deleted.
 Rooted and unrooted trees are both accepted; an unrooted tree is rooted
 arbitrarily (on its first tip) before the search begins, which may
@@ -139,7 +145,10 @@ returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
 Constraint searches are supported natively: all tree rearrangements
-are filtered to respect the constraint topology.}
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
 
 \item{.negativeConstraint}{Internal.  A splits object (or \code{NULL}) naming
 clades that returned trees must \emph{not} display; used by \code{\link[=Bremer]{Bremer()}} to run
@@ -169,9 +178,13 @@ cycle loop.  The drift cycles also recover equal-score trees on
 TBR-disconnected islands that random restarts alone miss.}
 \item{4, \code{large}}{\code{thorough}'s provisioning with \code{maxReplicates} raised
 to 500, to suit the higher per-replicate cost of big trees.}
-\item{5 and up}{\code{thorough}'s provisioning, with both the replicate budget
-and the hit target doubling each notch (1000, 2000, 4000 ...
-replicates), so that one notch always means roughly twice the work.
+\item{5 and up}{\code{thorough}'s provisioning, with the replicate budget, the
+hit target and the \acronym{MPT}-enumeration ceiling (\code{enumMaxTrees})
+all doubling each notch (1000, 2000, 4000 ... replicates), so that one
+notch always means roughly twice the work.  \code{poolMaxSize} is
+deliberately \emph{not} scaled: it sizes the working set that fusing and
+sectorial search read during the run, so raising it would change which
+trees are visited rather than only how many are returned.
 There is no policy ceiling: extra replicates cannot cost reach, only
 wall, which is what you asked to spend.  The ladder stops only at rung
 26, where the replicate budget outgrows R's integer type.}
@@ -437,9 +450,13 @@ topologies held in its tree pool; it does not guarantee that every
 most-parsimonious tree (\acronym{MPT}) is recovered.
 The size of the returned set is bounded by, in order:
 \enumerate{
-\item \strong{\code{poolMaxSize}} (default \code{100}) — a hard ceiling on the number of
-trees retained.  Raise it (via \code{\link[=SearchControl]{SearchControl()}}) to keep more MPTs;
-with the default you will never see more than 100.
+\item \strong{\code{enumMaxTrees}}, falling back to \strong{\code{poolMaxSize}} (default \code{100})
+when \code{enumMaxTrees} is \code{0} — a hard ceiling on the number of trees
+retained; with the default you will never see more than 100.  Prefer
+raising \code{enumMaxTrees} (via \code{\link[=SearchControl]{SearchControl()}}): it applies only once the
+search is over, so it cannot alter which trees are visited, whereas
+\code{poolMaxSize} also sizes the working set that fusing and sectorial search
+read.  From \code{effort} rung 5 the ladder raises \code{enumMaxTrees} for you.
 \item \strong{MPT-enumeration time.} After the main search, a TBR plateau walk
 enumerates equal-score neighbours of each pool tree, within a time
 reserve of \code{maxSeconds * enumTimeFraction}.  If this phase times out it

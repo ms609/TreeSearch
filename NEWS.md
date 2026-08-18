@@ -16,6 +16,62 @@
   landscape analysis.  `MaximizeParsimony(collapse = FALSE)` now surfaces the
   per-tree scores of the retained pool via a `scores` attribute (and a `score`
   attribute on each tree), so `Suboptimality()` works on the result directly.
+- New `SearchControl()` parameter `enumMaxTrees`: a retention ceiling applied to
+  the post-search MPT-enumeration phase alone.  `0` (the default)
+  keeps `poolMaxSize` throughout, so behaviour is unchanged unless you set it.
+  From `effort` rung 5 the ladder now doubles it each notch alongside the
+  replicate budget and the hit target, so asking for more effort also asks for a
+  more complete tree set — previously a search could be given eight times the
+  budget and still return only the default 100 trees.
+
+  `poolMaxSize` is deliberately **not** scaled, and the split is the point.
+  During the replicate loop the pool cap is not a ceiling on what is returned but
+  the size of the working set the search reads: fusing draws its donors from the
+  whole pool, conflict-guided sectorial search reads the pool's split
+  frequencies once per replicate, and `consensusConstrain` reads its consensus
+  splits.  Raising it therefore changes which trees the search *visits*, so the
+  anytime-dominance argument that licenses raising `maxReplicates` — a higher cap
+  only appends later replicates and can never delay an earlier improvement — does
+  not transfer to it.  Once the loop is over the pool is pure output, and there
+  the same argument does hold, which is why the ceiling is raised at that point
+  instead.  Raising `poolMaxSize` yourself still works and still governs both
+  phases; `enumMaxTrees` is the side-effect-free way to keep more trees.
+- `constraint` now binds the trees `MaximizeParsimony()` returns, at three
+  boundaries where it did not.  A starting tree supplied through `tree` was
+  never checked against the constraint; because a constrained search rejects
+  every rearrangement away from a violating tree, the replicate froze on it and
+  reported a score no constraint-satisfying tree could reach, which then evicted
+  the compliant trees other replicates had found.  A violating start is now
+  rearranged until it complies before the search begins, **with a warning**.
+  Separately, a replicate's own tree entered the pool unchecked, and the final
+  collapse of unsupported branches could contract the very branch that displayed
+  an enforced grouping -- so under the default `collapse = TRUE` a returned tree
+  could break the constraint outright.  Both paths are now checked.
+
+  **Constrained results may therefore differ from previous versions**: scores
+  can rise to the true constrained optimum, and returned trees will display the
+  constrained groupings.  `MaximizeParsimony()` also warns if any replicate
+  ended on a tree that could not be made to satisfy the constraint, and now
+  raises an error rather than returning an unverified tree if no
+  constraint-satisfying tree was found at all.
+- `TreeLength()`, `CharacterLength()`, `TreeScore()` and `EdgeListScore()` -- and
+  so `Consistency()`, `ExpectedLength()`, `ConcordantInformation()`,
+  `LengthAdded()` and `SuccessiveApproximations()`, which score trees through
+  them -- now reject a
+  tree that contains a polytomy, with the "`tree` must be binary" error that
+  `TreeLength()` already gave for a single `phylo` tree.  Such a tree
+  previously returned a number.  The scoring engine derives its node counts from
+  the number of edges, which identifies a tree only if that tree is binary: a
+  polytomous tree with an odd number of edges wrote past the end of the arrays
+  holding its topology, and one with an even number of edges was rooted on a
+  leaf and then scored from memory outside its own state buffer, so repeating
+  the same call could return a different answer each time.  `MaximizeParsimony()`
+  collapses the trees it returns unless `collapse = FALSE`, so scoring its output
+  reached this path; search with `collapse = FALSE` to obtain trees that can be
+  scored, whose lengths are the score the search reports.  Resolving a collapsed
+  tree instead, with `TreeTools::MakeTreeBinary()`, does not recover that score:
+  an arbitrary resolution of a polytomy need not be one of the most parsimonious
+  ones.
 
 - `inapplicable = "xform"` scores are now reported at a canonical rooting, so a
   reported score is reproducible.  The x-transformation's step matrix is
@@ -113,6 +169,19 @@
   still passing a (now-empty) hierarchy config through; those replicates are
   ordinary Fitch data and now collapse like any other.  A replicate that
   retains any hierarchy block is unaffected.
+
+- `inapplicable = "hsj"` scoring no longer forms a reference one element past
+  the end of an internal vector.  The secondary-labelling uppass computed a
+  pointer to a node's children before testing whether it had any, and for a
+  childless node reached after the traversal had emitted its last child that
+  pointer addressed one past the end.  No
+  value was ever read through it and no score changed -- 900 of 900 HSJ and
+  x-transformation lengths are bit-identical either side of the fix -- but the
+  access is undefined behaviour, and any build whose standard library checks
+  its own preconditions aborted on it.  That includes the container behind the
+  `gcc-ASAN` workflow, which is why that workflow could not get past this
+  package: it stopped on the library assertion rather than on anything the
+  sanitizer itself had found.
 
 - `MaximizeParsimony(effort = )` replaces `strategy = `, which is removed (it
   was never released).  `effort` is a **relative** offset, not an absolute

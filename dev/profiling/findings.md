@@ -13,6 +13,7 @@ Tags:
 | ID-suggest | P? | Status | Depends | Headline | Detail (% time, mechanism, verified Δ, micro-bench path) |
 |------------|----|--------|---------|----------|---------------------------------------------------------|
 | T-300 | P1 | DONE | — | [Optimise] `full_rescore` after accepted TBR move (ts_tbr.cpp:1138): replace with incremental rescore | LANDED (commits f531bbcd EW + 014ccdea NA dirty-set). 19.2 % of NA-path DLL CPU; 15.2 % wall speedup on Zhu2013 NA (3.88→3.29 s). |
+| #38 | P3 | DONE / AT-LIMIT | T-300 | [AT-LIMIT] the residue T-300 left: `full_rescore` on TBR-**rerooting** accepts | The rerooting arm is now incremental too (third dirty seed at `clip_node`), but the lever is spent. Post-T-300 the WHOLE accept branch is **0.18–0.51 %** of `tbr_search` wall (Vinther2008 / Agnarsson2004 / Zanol2014 × EW,IW; in-DLL `na_t_accept_ms`, 15 paired cells, `dev/profiling/drivers/tbr-accept-ab-cell.R`). The patch cuts that slice to ×0.901 median (12/15 cells) ⇒ **≈0.03 % of wall e2e — undetectable**. Merge case is codepath unification, not speed. Rerooting accepts are ~18 % of accepts, so this is not a coverage artefact. |
 
 ## Round 3 (2026-06-16) — standard-Fitch TNT-parity path (Zhu2013 `-`→`?`, auto→thorough)
 

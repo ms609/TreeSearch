@@ -299,6 +299,15 @@ static int fitch_label_char(
   for (int i = static_cast<int>(co.post.size()) - 1; i >= 0; --i) {
     int node = co.post[i];
     int nk = co.kidNum[node];
+    // A canonical leaf has no children to resolve, and forming
+    // `&co.kids[co.kidOff[node]]` for one can dereference co.kids.end():
+    // kidOff is written as the CURRENT kids.size() when the DFS pops a node,
+    // so every childless node popped after the final push_back carries the
+    // end offset -- always the last node popped, and usually several more
+    // (>1 in 843 of 900 random 2-24 tip trees).  That is the OOB read
+    // -D_GLIBCXX_ASSERTIONS aborts on.  The two loops above already skip on
+    // nk == 0; this one did not (agent-issues/TreeSearch#51).
+    if (nk == 0) continue;
     const int* kid = &co.kids[co.kidOff[node]];
     // Resolve each child: prefer parent's (already-resolved) state if it lies
     // in the child's set (DELTRAN-style); otherwise pick order-invariantly.

@@ -196,6 +196,18 @@ struct TreeState {
   void reset_states(const DataSet& ds);
 };
 
+// True iff the 1-based edge list of `n_edge` rows has the degree spectrum of a
+// rooted binary tree under the node convention above: every parent internal,
+// every non-root node claimed as a child exactly once, each internal claiming
+// two.  That is what `init_from_edge` needs — it derives every node count from
+// `n_edge` alone, and anything else makes it index past the end of
+// parent[]/left[]/right[].  It is NOT full tree validation: a list satisfying
+// it can still hold a cycle unreachable from the root, which `build_postorder`
+// catches instead.  Callers that can report an error more helpfully than the
+// throw in `init_from_edge` should test with this first.
+bool edge_list_is_binary(const int* edge_parent, const int* edge_child,
+                         int n_edge);
+
 } // namespace ts
 
 #endif // TS_TREE_H

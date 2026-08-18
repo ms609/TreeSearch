@@ -155,6 +155,17 @@
   nConsStates <- ncol(consContrast)
   if (nConsStates < 2L) return(list())
 
+  # Constraints are enforced as bipartitions, so only the two extreme states of
+  # a character are read: taxa carrying an intermediate state are in neither
+  # group and go unconstrained.  Say so rather than let the caller infer, from
+  # `@param constraint`'s "compatible with each character", that a third state
+  # groups its taxa too.
+  if (nConsStates > 2L) {
+    warning("`constraint` characters with more than two states are enforced ",
+            "as the split between their first and last state only; taxa in ",
+            "any intermediate state are left unconstrained.", call. = FALSE)
+  }
+
   consMat <- matrix(unlist(constraint, use.names = FALSE),
                     nrow = length(constraint), byrow = TRUE)
   # For each constraint character, record the tips unambiguously in the "1"
@@ -222,12 +233,70 @@
 
   list(
     consSplitMatrix = consSplits,
+    consZero = consZero,
     consContrast = consContrast,
     consTipData = consTipData,
     consWeight = as.integer(consWeight),
     consLevels = attr(constraint, "levels"),
     consExpectedScore = as.integer(consExpectedScore)
   )
+}
+
+# Constraint fields the flat `ts_*` kernels declare as formals, in contrast to
+# the list-config entry points, which ignore anything they do not name.  A
+# `do.call()` onto a flat kernel has to be filtered through this, or a field
+# added for the list-config path becomes an unused-argument error there.
+.kernelConsFields <- c("consSplitMatrix", "consContrast", "consTipData",
+                       "consWeight", "consLevels", "consExpectedScore")
+
+.KernelConstraintArgs <- function(consArgs) {
+  consArgs[intersect(names(consArgs), .kernelConsFields)]
+}
+
+# Does `tree` display a split separating a constraint character's "1" group
+# from its "0" group?  This is the phyDat reading `constraint` is documented
+# in: tips ambiguous for the character sit on either side, so the test is
+# "some edge separates the two groups", not the stricter "the 1 group is
+# exactly a clade" that the search's locked-node machinery enforces
+# internally.  `consOne` / `consZero` are .PrepareConstraint()'s matrices, in
+# `tip_data` column order; `tree`'s tips must already be renumbered to match.
+#
+# The two groups are the character's extreme states, so this answers for
+# exactly what the engine enforces -- an intermediate state's taxa are in
+# neither group here and are unconstrained there too (.PrepareConstraint()
+# warns about that at input).
+.ConstraintViolated <- function(tree, consOne, consZero) {
+  edge <- Postorder(tree)[["edge"]]
+  parent <- edge[, 1L]
+  child <- edge[, 2L]
+  nTip <- ncol(consOne)
+  nRow <- nrow(consOne)
+  # One accumulation pass carries every group at once: rows 1..nRow are the
+  # "1" groups, the rest the "0" groups.  Nodes index the COLUMNS, so each
+  # accumulation touches one contiguous stretch of a column-major matrix.
+  counts <- matrix(0L, nrow = 2L * nRow, ncol = max(edge))
+  counts[, seq_len(nTip)] <- rbind(consOne, consZero)
+  for (i in seq_along(parent)) {
+    counts[, parent[i]] <- counts[, parent[i]] + counts[, child[i]]
+  }
+  # Postorder lists every node before its parent, so the first node holding a
+  # whole group is that group's MRCA; the groups are separated iff one MRCA
+  # holds none of the other group.
+  nodes <- c(child, parent[length(parent)])
+  for (r in seq_len(nRow)) {
+    one <- counts[r, ]
+    zero <- counts[nRow + r, ]
+    nOne <- sum(consOne[r, ])
+    nZero <- sum(consZero[r, ])
+    mrcaOne <- nodes[one[nodes] == nOne][1]
+    mrcaZero <- nodes[zero[nodes] == nZero][1]
+    displayed <- (!is.na(mrcaOne) && zero[mrcaOne] == 0L) ||
+      (!is.na(mrcaZero) && one[mrcaZero] == 0L)
+    if (!displayed) {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
 # Ratchet depth for implied weights under `thorough`/`large`, applied after the
@@ -520,7 +589,32 @@
     # through .IwRatchetDepth()'s targetHits/defaultHits escalation (capped at
     # .iwRatchetMaxCycles), which is a genuine reach lever the equal-weights
     # measurement above cannot see.
-    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
+    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L)),
+    # `enumMaxTrees` multiplier: the size of the returned MPT set, relative to
+    # `poolMaxSize`.  Doubling in step with the other two knobs, from rung 5, so
+    # that one notch keeps meaning "roughly twice the work" on this axis too.
+    #
+    # This scales the ENUMERATION ceiling only, never `poolMaxSize` itself, and
+    # the distinction is the whole point.  During the replicate loop the pool cap
+    # is the size of the working set the search reads -- fuse donors are the
+    # entire pool (uncapped, and taken under the pool mutex on the parallel
+    # path), conflict-guided sector selection reads the pool's split frequencies
+    # once per replicate, and `consensusConstrain` reads its consensus splits --
+    # so scaling it would change which trees the search VISITS.  The
+    # anytime-dominance argument that licenses raising `maxReplicates` above
+    # therefore does NOT transfer to `poolMaxSize`: a bigger pool can delay
+    # every later improvement rather than merely appending to the result.
+    # After the loop, the pool is pure output and a bigger ceiling can only
+    # append equal-score topologies, so the same argument DOES hold there.
+    #
+    # It is bounded in practice without needing a cap: enumeration shares the
+    # `maxSeconds * enumTimeFraction` reserve, and its loop exits as soon as the
+    # pool fills, so an over-generous ceiling costs enumeration time, never a
+    # worse tree.  As with `hitMultiplier` the doubling shape is an OPERATING
+    # POINT rather than a measurement -- what is measured is that the July 2026
+    # 182-tip runs returned exactly `poolMaxSize` trees in all four analyses,
+    # i.e. the ceiling bound the answer rather than the MPT count doing so.
+    enumMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
   )
 }
 
@@ -595,9 +689,13 @@
 #' most-parsimonious tree (\acronym{MPT}) is recovered.
 #' The size of the returned set is bounded by, in order:
 #' \enumerate{
-#'   \item **`poolMaxSize`** (default `100`) — a hard ceiling on the number of
-#'     trees retained.  Raise it (via [`SearchControl()`]) to keep more MPTs;
-#'     with the default you will never see more than 100.
+#'   \item **`enumMaxTrees`**, falling back to **`poolMaxSize`** (default `100`)
+#'     when `enumMaxTrees` is `0` — a hard ceiling on the number of trees
+#'     retained; with the default you will never see more than 100.  Prefer
+#'     raising `enumMaxTrees` (via [`SearchControl()`]): it applies only once the
+#'     search is over, so it cannot alter which trees are visited, whereas
+#'     `poolMaxSize` also sizes the working set that fusing and sectorial search
+#'     read.  From `effort` rung 5 the ladder raises `enumMaxTrees` for you.
 #'   \item **MPT-enumeration time.** After the main search, a TBR plateau walk
 #'     enumerates equal-score neighbours of each pool tree, within a time
 #'     reserve of `maxSeconds * enumTimeFraction`.  If this phase times out it
@@ -647,6 +745,12 @@
 #'   says so in a warning.  Raise `targetHits` as well as `maxReplicates` to
 #'   use more of it.
 #'   If unspecified, all replicates start from random Wagner trees.
+#'   A start tree that does not satisfy `constraint` is rearranged until it
+#'   does before the search begins, with a warning: `constraint` is a
+#'   guarantee about the trees returned, whereas `tree` only says where to
+#'   begin, so when the two conflict the guarantee wins.  A taxon coded `?`
+#'   for a constraint character is unconstrained by it and may start on
+#'   either side of that split.
 #'   Edge lengths are not supported and will be deleted.
 #'   Rooted and unrooted trees are both accepted; an unrooted tree is rooted
 #'   arbitrarily (on its first tip) before the search begins, which may
@@ -728,6 +832,9 @@
 #' in any output tree.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
+#' Each constraint character is enforced as a single split, so one with more
+#' than two states is read as the split between its first and last state
+#' alone: taxa in an intermediate state are left unconstrained, with a warning.
 #' @param effort Integer: how much search effort to spend, **relative to the
 #'   amount chosen automatically** for this dataset.  `0` (the default) accepts
 #'   the automatic choice; `1` asks for one notch more, `-1` one notch less.
@@ -752,9 +859,13 @@
 #'       TBR-disconnected islands that random restarts alone miss.}
 #'     \item{4, `large`}{`thorough`'s provisioning with `maxReplicates` raised
 #'       to 500, to suit the higher per-replicate cost of big trees.}
-#'     \item{5 and up}{`thorough`'s provisioning, with both the replicate budget
-#'       and the hit target doubling each notch (1000, 2000, 4000 ...
-#'       replicates), so that one notch always means roughly twice the work.
+#'     \item{5 and up}{`thorough`'s provisioning, with the replicate budget, the
+#'       hit target and the \acronym{MPT}-enumeration ceiling (`enumMaxTrees`)
+#'       all doubling each notch (1000, 2000, 4000 ... replicates), so that one
+#'       notch always means roughly twice the work.  `poolMaxSize` is
+#'       deliberately *not* scaled: it sizes the working set that fusing and
+#'       sectorial search read during the run, so raising it would change which
+#'       trees are visited rather than only how many are returned.
 #'       There is no policy ceiling: extra replicates cannot cost reach, only
 #'       wall, which is what you asked to spend.  The ladder stops only at rung
 #'       26, where the replicate budget outgrows R's integer type.}
@@ -1208,6 +1319,18 @@ MaximizeParsimony <- function(
         targetHits <- as.integer(targetHits * spec[["hitMultiplier"]])
       }
 
+      # Rung-scaled MPT-enumeration ceiling (rung 5 and up).  Keyed off the
+      # POST-merge `poolMaxSize`, so a user who raised the pool gets a
+      # proportionally larger returned set rather than having their value
+      # ignored.  Skipped when the user named `enumMaxTrees` themselves.
+      # `poolMaxSize` is deliberately not touched -- see .RungSpec().
+      if (!("enumMaxTrees" %in% union(names(controlDots),
+                                      attr(control, "explicit"))) &&
+          spec[["enumMultiplier"]] > 1L) {
+        control[["enumMaxTrees"]] <-
+          as.integer(control[["poolMaxSize"]] * spec[["enumMultiplier"]])
+      }
+
       # Implied-weights ratchet depth. Under implied weights the optimum often
       # sits in a small basin at fine score resolution, separated from an
       # easy-to-find near-optimum by a fraction of a step; character reweighting
@@ -1597,6 +1720,23 @@ MaximizeParsimony <- function(
     }
   }
 
+  # A start tree that breaks the constraint is not something the search can
+  # rearrange its way out of -- every constrained move from it is rejected, so
+  # it would freeze the replicate on a tree scoring better than any legal one.
+  # The engine repairs such a start before scoring it, but the conflict is the
+  # caller's to know about: either `tree` or `constraint` is not what they
+  # meant, and the tree they get back will not be the one they supplied.
+  if (userTree && length(consArgs) > 0L) {
+    violating <- vapply(startTrees, .ConstraintViolated, logical(1),
+                        consArgs[["consSplitMatrix"]], consArgs[["consZero"]])
+    if (any(violating)) {
+      warning(sum(violating), " of the ", length(startTrees),
+              " tree(s) supplied to `tree` do not satisfy `constraint`; ",
+              "they will be rearranged to comply before the search starts, ",
+              "or replaced if that fails.", call. = FALSE)
+    }
+  }
+
   # --- Profile parsimony: extract info_amounts ---
   profileArgs <- list()
   if (useProfile) {
@@ -1736,12 +1876,20 @@ MaximizeParsimony <- function(
     # matrix doesn't capture, so it stays visible even at zero length, while the
     # unsupported non-constraint branches still collapse.  consSplitMatrix rows
     # are the enforced bipartitions in tip_data order (see .PrepareConstraint).
+    # `consZero` names the tips the constraint places on the far side of the
+    # split; tips ambiguous for the character are in neither group.  Without it
+    # the kernel can only recognise a node whose tip set is the 1 group exactly,
+    # and a split realised by any wider node goes unprotected -- collapsing the
+    # enforced grouping out of the returned tree.
     consSplits <- if (!is.null(constraintConfig)) {
       constraintConfig[["consSplitMatrix"]]
     }
+    consZero <- if (!is.null(constraintConfig)) {
+      constraintConfig[["consZero"]]
+    }
     collapsed <- ts_collapse_pool(
       bestTrees, contrast, tip_data, weight, levels,
-      scoringConfig, hsjConfig, xformConfig, consSplits
+      scoringConfig, hsjConfig, xformConfig, consSplits, consZero
     )
     outTrees <- lapply(collapsed$trees, function(edgeMat) {
       tr <- list(
@@ -1775,6 +1923,18 @@ MaximizeParsimony <- function(
     }
   }
   if (length(outTrees) == 0L) {
+    # `treeTpl` is a starting tree, so under a constraint it is exactly what may
+    # not be handed back unchecked: an empty pool means no replicate produced a
+    # tree the constraint gate accepted -- or, benignly, that the time limit
+    # expired before the first one finished.  Check rather than assume, so a
+    # short budget still returns a tree when the fallback happens to comply.
+    if (!is.null(constraintConfig) &&
+        .ConstraintViolated(treeTpl, constraintConfig[["consSplitMatrix"]],
+                            constraintConfig[["consZero"]])) {
+      stop("The search returned no tree satisfying `constraint`. Check that ",
+           "the constraint is compatible with the data, and allow more search ",
+           "with `maxReplicates` or `maxSeconds`.")
+    }
     outTrees <- list(treeTpl)
     if (!isTRUE(collapse)) {
       attr(outTrees[[1]], "score") <- result$best_score
