@@ -22,3 +22,17 @@ test_that("WhenFirstHit()", {
   noInfo <- as.phylo(1:10, 8)
   expect_equal(WhenFirstHit(noInfo), noInfo)
 })
+
+test_that("WhenFirstHit() does not produce spurious labels from an unanchored match", {
+  library("TreeTools", quietly = TRUE)
+  # "notseed_01_extra" merely contains the "seed_\\d+" pattern; it should not
+  # be treated as a well-formed stage name.
+  trees <- list(
+    seed_00 = as.phylo(1, 8),
+    notseed_01_extra = as.phylo(2, 8)
+  )
+  result <- WhenFirstHit(trees)
+  # Not every name matches the anchored pattern, so firstHit stays unset
+  # rather than reporting a garbled "notseed_extra" stage.
+  expect_null(attr(result, "firstHit"))
+})

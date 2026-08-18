@@ -177,7 +177,19 @@ ClusteringConcordance <- function(
   dataset <- dataset[keep]
 
   # Prepare data
-  splits <- as.logical(as.Splits(tree))
+  # `tree` may carry tips absent from `dataset`; Subsplit restricts `splits` to the
+  # shared taxa without renumbering nodes.
+  splits <- as.logical(Subsplit(as.Splits(tree), keep))
+  # Recover each surviving split's original node number
+  if (is.null(rownames(splits))) {
+    fullRestricted <- as.logical(as.Splits(tree))[, TipLabels(tree) %in% keep,
+                                                  drop = FALSE]
+    rownames(splits) <- vapply(seq_len(nrow(splits)), function(i) {
+      row <- splits[i, ]
+      hit <- apply(fullRestricted, 1, function(r) all(r == row) || all(r != row))
+      rownames(fullRestricted)[which(hit)[1]]
+    }, character(1))
+  }
 
   at <- attributes(dataset)
   cont <- at[["contrast"]]
@@ -311,7 +323,7 @@ ClusteringConcordance <- function(
            zero <- if (isFALSE(normalize)) {
              0
            } else if (isTRUE(normalize)) {
-             apply(hh["miRand", , ], 2, max)
+             apply(.ConcSlice(hh, "miRand"), 2, max)
            } else {
              randMean
            }
@@ -534,10 +546,10 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
   cc <- ClusteringConcordance(tree, dataset, return = "all",
                               normalize = normalize)
   nodes <- seq_len(dim(cc)[[2]])
-  info <- cc["hBest", , ] * cc["n", , ]
+  info <- .ConcSlice(cc, "hBest") * .ConcSlice(cc, "n")
   amount <- info / max(info, na.rm = TRUE)
   amount[is.na(amount)] <- 0
-  quality <- cc["normalized", , ]
+  quality <- .ConcSlice(cc, "normalized")
   # Plot points with incalculable quality as black, not transparent.
   amount[is.na(quality)] <- 0
   quality[is.na(quality)] <- 0
@@ -589,7 +601,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
     n_chars <- dim(cc)[[3]]
 
     # Marginal concordance: hBest-weighted average of normalized MI
-    hBest_w <- cc["hBest", , ]
+    hBest_w <- .ConcSlice(cc, "hBest")
     hBest_w[is.na(hBest_w)] <- 0
     # `quality` already has NAs zeroed above
 
@@ -621,7 +633,7 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
       denom_e <- rowSums(hBest_w)
       edge_conc <- pmax(-1, pmin(1,
         ifelse(denom_e == 0, 0, rowSums(quality * hBest_w) / denom_e)))
-      edge_cols <- Col(edge_conc, rowMeans(cc["hSplit", , ]))
+      edge_cols <- Col(edge_conc, rowMeans(.ConcSlice(cc, "hSplit")))
       if (ms_bottom > 0L) {
         for (j in seq_len(ms_bottom)) ext_col[xi, ps_y_offset + j] <- edge_cols
       }
@@ -703,6 +715,8 @@ ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
 #' concordance of each character in `dataset` with `tree`.
 #' The attribute `weighted.mean` gives the mean value, weighted by the
 #' information content of each character.
+#' `NaN` is returned for a character that no split in `tree` is informative
+#' about (zero possible information, a 0 / 0 division).
 #' @importFrom TreeTools MatchStrings
 #' @importFrom TreeDist ClusteringEntropy MutualClusteringInfo
 #' @export
@@ -757,6 +771,9 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' Ambiguous and inapplicable tokens are treated as containing no grouping
 #' information (i.e. `(02)` or `-` are each treated as `?`).
 #'
+#' `return` is matched (case-insensitively, and partially) against `"edge"`
+#' and `"char"`; any other value raises an error.
+#'
 #' @return
 #' `QuartetConcordance(return = "edge")` returns a numeric vector giving the
 #' concordance index at each split across all sites; names specify the number of
@@ -764,6 +781,8 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #'
 #' `QuartetConcordance(return = "char")` returns a numeric vector giving the
 #' concordance index calculated at each site, averaged across all splits.
+#' Unlike the `"edge"` result, this vector is unnamed: characters retain no
+#' persistent identifier once collapsed to patterns.
 #'
 #' @param weight Logical specifying whether to weight sites according to the
 #' number of quartets they are decisive for.
@@ -799,8 +818,13 @@ QuartetConcordance <- function(
   contrast <- attr(dataset, "contrast")
   charLevels <- attr(dataset, "allLevels")
   
+  appCols <- colnames(contrast) != "-"
   isInapp <- charLevels == "-"
-  isAmbig <- rowSums(contrast[, colnames(contrast) != "-"]) > 1
+  # A level combining an applicable state with "-" (e.g. `{0,-}`) sets
+  # exactly one non-"-" column, so it would otherwise pass the `rowSums`
+  # check below as if it were a pure single-state (grouping) level.
+  combinesInapp <- rowSums(contrast[, !appCols, drop = FALSE] > 0) > 0 & !isInapp
+  isAmbig <- rowSums(contrast[, appCols, drop = FALSE]) > 1 | combinesInapp
   isGrouping <- !isAmbig & !isInapp
   
   # For each grouping level, which column of the contrast matrix does it uniquely set?
@@ -820,12 +844,15 @@ QuartetConcordance <- function(
 
   num <- raw_counts$concordant
   den <- raw_counts$decisive
-  options <- c("character", "site", "default")
-  return <- options[[pmatch(tolower(trimws(return)), options,
-                            nomatch = length(options))]]
-  
+  options <- c("edge", "char")
+  matched <- pmatch(tolower(trimws(return)), options, nomatch = NA_integer_)
+  if (is.na(matched)) {
+    stop("`return` must (partially) match one of ",
+         paste(sQuote(options), collapse = ", "))
+  }
+  return <- options[[matched]]
 
-  if (return == "default") {
+  if (return == "edge") {
     if (isTRUE(weight)) {
       # Sum numerator and denominator across sites (columns), then divide
       # This matches weighted.mean(num/den, den) == sum(num) / sum(den)
@@ -848,7 +875,6 @@ QuartetConcordance <- function(
     setNames(ret, names(splits))
   } else {
     # return = "char"
-    p <- num / den
     if (isTRUE(weight)) {
       vapply(
         seq_len(dim(num)[[2]]),
@@ -870,6 +896,16 @@ QuartetConcordance <- function(
 }
 
 .ExpectedMICache <- new.env(hash = TRUE, parent = emptyenv())
+# Bound on cache size: a session computing concordance for many differently
+# -sized trees/characters would otherwise grow this cache without limit.
+# Simplest possible bounded policy: wipe the whole cache once full, rather
+# than tracking per-entry recency for an LRU/LFU scheme.  The entry count is
+# tracked separately (`.ExpectedMICacheSize`) rather than read via `length()`
+# on every miss: `length()` on a hashed environment is O(n), which would make
+# filling the cache to its bound an O(limit^2) operation.
+.ExpectedMICacheLimit <- 100000L
+.ExpectedMICacheSize <- new.env(parent = emptyenv())
+.ExpectedMICacheSize$n <- 0L
 
 # @param a must be a vector of length <= 2
 # @param b may be longer
@@ -884,7 +920,13 @@ QuartetConcordance <- function(
       ret <- expected_mi(a, b)
 
       # Cache:
+      if (.ExpectedMICacheSize$n >= .ExpectedMICacheLimit) {
+        rm(list = ls(.ExpectedMICache, all.names = TRUE),
+           envir = .ExpectedMICache)
+        .ExpectedMICacheSize$n <- 0L
+      }
       .ExpectedMICache[[key]] <- ret
+      .ExpectedMICacheSize$n <- .ExpectedMICacheSize$n + 1L
       # Return:
       ret
     }
@@ -897,6 +939,15 @@ QuartetConcordance <- function(
 #' @keywords internal
 .Rezero <- function(value, zero) {
   (value - zero) / (1 - zero)
+}
+
+# Extract row `name` of a (measure x split x character) concordance array as
+# a (split x character) matrix, preserving dimnames.  Plain `[` silently
+# drops the split or character axis whenever it has extent one, corrupting
+# shape and rownames downstream (e.g. a single-split tree, or a
+# single-pattern dataset).
+.ConcSlice <- function(x, name) {
+  array(x[name, , , drop = FALSE], dim(x)[2:3], dimnames(x)[2:3])
 }
 
 #' @rdname SiteConcordance
@@ -922,6 +973,8 @@ QuartetConcordance <- function(
 #' @return `PhylogeneticConcordance()` returns a numeric vector giving the
 #' phylogenetic information of each split in `tree`, named according to the
 #' split's internal numbering.
+#' `NaN` is returned for a split that no character is informative about
+#' (zero possible information, a 0 / 0 division).
 #'
 #' @importFrom TreeTools as.multiPhylo CladisticInfo CompatibleSplits
 #' @importFrom TreeTools MatchStrings
@@ -973,6 +1026,8 @@ PhylogeneticConcordance <- function(tree, dataset) {
 #' concordance of each character in `dataset` with `tree`.
 #' The attribute `weighted.mean` gives the mean value, weighted by the
 #' information content of each character.
+#' `NaN` is returned for a character that no split in `tree` is informative
+#' about (zero possible information, a 0 / 0 division).
 #' @importFrom TreeTools as.multiPhylo MatchStrings
 #' @importFrom TreeDist ClusteringInfo SharedPhylogeneticInfo
 #' @export
@@ -1073,7 +1128,7 @@ ConcordantInformation <- function(tree, dataset) {
     kept <- sum(icA[index])
     discarded <- totalInfo - kept
     warning("Could not calculate signal for characters ",
-            paste0(match(which(na), index), collapse = ", "),
+            paste0(which(index %in% which(na)), collapse = ", "),
             "; discarded ", signif(discarded), " bits from totals.")
     totalNoise <- sum(noise[index], na.rm = TRUE)
     totalSignal <- sum(signal[index], na.rm = TRUE)
@@ -1095,7 +1150,6 @@ ConcordantInformation <- function(tree, dataset) {
     totalNoise <- sum(noise[index])
     totalSignal <- sum(signal[index])
     signalNoise <- totalSignal / totalNoise
-    discarded = 0
 
     infoNeeded <- Log2Unrooted(length(dataset))
     infoOverkill <- totalInfo / infoNeeded
