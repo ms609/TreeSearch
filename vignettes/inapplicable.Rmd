@@ -159,6 +159,7 @@ xform_trees <- MaximizeParsimony(dataset, hierarchy = hierarchy,
 | Hierarchy required | No | Yes | Yes |
 | Secondary char. variation | Not modelled | Penalised (via \U{03B1}) | Penalised (via Hamming) |
 | Gain/loss asymmetry | No | No | Yes (n+1 : 1) |
+| Rooting-invariant score | Yes | Yes | No |
 | Tuning parameter | None | `hsj_alpha` | None |
 | Speed | Fastest | Moderate | Moderate |
 

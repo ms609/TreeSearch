@@ -102,3 +102,77 @@ test_that("Adaptive search returns strategy_diagnostics attribute", {
   # At least one strategy should have been attempted
   expect_true(any(diag$attempts > 0))
 })
+
+test_that("Warm-started replicates do not vote in the strategy bandit", {
+  # A replicate handed a starting tree never reaches the strategy switch in
+  # run_single_replicate(), so no arm was pulled and none may be credited or
+  # blamed — otherwise a k-tree pool feeds k spurious WAGNER_RANDOM votes.
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Vinther2008"]]
+
+  set.seed(6112)
+  seed <- MaximizeParsimony(ds, maxReplicates = 3L, targetHits = 99L,
+                            verbosity = 0L)
+  pool <- seed[seq_len(min(3L, length(seed)))]
+  nPool <- length(pool)
+
+  # Every replicate warm-starts: the bandit must record nothing at all.
+  set.seed(6112)
+  allWarm <- MaximizeParsimony(
+    ds, tree = pool, maxReplicates = nPool, targetHits = 99L,
+    adaptiveStart = TRUE, verbosity = 0L
+  )
+  expect_equal(sum(attr(allWarm, "strategy_diagnostics")$attempts), 0L)
+
+  # Spare replicates build their own starts, and only those vote.
+  set.seed(6112)
+  mixed <- MaximizeParsimony(
+    ds, tree = pool, maxReplicates = nPool + 2L, targetHits = 99L,
+    adaptiveStart = TRUE, verbosity = 0L
+  )
+  expect_equal(sum(attr(mixed, "strategy_diagnostics")$attempts),
+               attr(mixed, "replicates") - nPool)
+})
+
+test_that("Warm-started replicates report no strategy at verbosity 2", {
+  # The per-replicate "Strategy: <arm>" line names the arm that was pulled;
+  # a warm-started rep pulled none, so naming one would misreport it.
+  data("inapplicable.phyData", package = "TreeSearch")
+  ds <- inapplicable.phyData[["Vinther2008"]]
+  armPattern <- "Strategy: *(wag_rand|wag_golob|wag_entropy|rand_tree)"
+
+  set.seed(4470)
+  seed <- MaximizeParsimony(ds, maxReplicates = 1L, targetHits = 99L,
+                            verbosity = 0L)
+
+  grabOutput <- function(expr) {
+    msgLines <- character()
+    outLines <- capture.output(
+      msgLines <- capture.output(expr, type = "message")
+    )
+    paste(c(msgLines, outLines), collapse = "\n")
+  }
+
+  # Sole replicate warm-starts: no arm line at all.
+  set.seed(4470)
+  warmOut <- grabOutput(
+    MaximizeParsimony(ds, tree = seed[[1L]], maxReplicates = 1L,
+                      targetHits = 99L, adaptiveStart = TRUE, verbosity = 2L)
+  )
+  expect_false(grepl(armPattern, warmOut))
+
+  # A cold replicate still reports its arm, so the line is not simply absent.
+  set.seed(4470)
+  coldOut <- grabOutput(
+    MaximizeParsimony(ds, maxReplicates = 1L, targetHits = 99L,
+                      adaptiveStart = TRUE, verbosity = 2L)
+  )
+  expect_true(grepl(armPattern, coldOut))
+})
+
+# NB the preset-name tests that used to live here (abbreviation resolution, and
+# the "Unknown strategy" warning) are gone with the `strategy` argument itself:
+# `effort` is a numeric offset, so there are no names to abbreviate and nothing
+# to mistype.  Its validation lives in test-MaximizeParsimony-features.R.
+# Everything above concerns the adaptive STARTING-TREE bandit, a different
+# concept that kept its name.

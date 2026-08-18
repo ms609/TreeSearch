@@ -27,6 +27,19 @@ data-structure invariants, no `skip_on_cran()`.
 (e.g. `test-tree_length.R`, `test-AdditionTree.R`, ...).
 These verify the public R interface against dependency changes.
 
+**Mixed-tier exception:** `test-MaximizeParsimony-features.R` and
+`test-SearchControl.R` cover the R-level `MaximizeParsimony()`/`SearchControl()`
+API (so they belong in the Tier 1 file list above and get no blanket
+`skip_on_cran()`), but most of their `test_that()` blocks drive a real search
+to convergence and cannot be made to fit the < ~2 s file budget individually.
+Each such block is gated with a per-test `skip_on_cran()` (T-362); only the
+validation-only blocks (input checks, error messages, pure-R helpers like
+`.AutoStrategy`) stay CRAN-run. This keeps the file's fast, dependency-facing
+checks on Tier 1 while the convergence-dependent ones get Tier 2 treatment
+in place, instead of relocating them out of the file that documents the
+feature they test. When adding a new test to either file, gate it with
+`skip_on_cran()` unless it completes in well under 0.1 s.
+
 ---
 
 ## Tier 2 — CI coverage tests (`skip_on_cran()`)

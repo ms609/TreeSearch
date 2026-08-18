@@ -1,10 +1,14 @@
-// DEAD CODE — This file is compiled but no functions are exported or called.
-// All [[Rcpp::export]] tags are commented out. None of these functions are
-// referenced by other C++ code. The C++ driven search engine (ts_*.cpp) has
-// replaced these R-level NNI/SPR/TBR implementations.
+// Legacy R-level NNI/SPR/TBR rearrangement, superseded for search by the driven
+// engine (ts_*.cpp) but NOT dead: `nni`, `spr` and `spr_moves` are still
+// registered and still called.
 //
-// Safe to remove if build time is a concern (~635 lines, ~2-3s compile).
-// Kept for reference until the package maintainer decides to delete it.
+// The commented-out [[Rcpp::export]] tags below are misleading. RcppExports.cpp
+// and TreeSearch-init.c were never regenerated after they were commented out, so
+// the generated wrappers persist, R/RcppExports.R:60-68 still binds them, and
+// three test files exercise them: test-NNI.R, test-zzz-tree-rearrange.R, and
+// test-rearrange.cpp.R (via all_spr). Deleting this file, or regenerating
+// attributes from the tags as they stand, breaks those tests and leaves dangling
+// registrations. Of the functions here only `tbr_moves` is genuinely unexported.
 
 #include <Rcpp.h>
 // [ [Rcpp::depends(TreeTools)]]
@@ -343,7 +347,7 @@ List all_spr (const IntegerMatrix edge,
   ;
   // ASAN reports stack-use-after-scope (false positive?) if we fail here.
   // So we test for these exceptions in R.
-  // # nocov begin
+  // # nocov start
   if (n_edge < 5) {
     Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
   }

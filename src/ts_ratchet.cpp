@@ -2,6 +2,7 @@
 #include "ts_tbr.h"
 #include "ts_fitch.h"
 #include "ts_rng.h"
+#include "ts_heartbeat.h"
 
 #include <random>
 #include <algorithm>
@@ -139,8 +140,12 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                              std::function<bool()> check_timeout) {
   const bool use_iw = std::isfinite(ds.concavity);
 
-  // No informative characters: nothing to perturb.
-  if (ds.total_words == 0) return {score_tree(tree, ds), 0, 0, 0, 0.0};
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
+  // when total_words == 0 (the initial/per-cycle tbr_search() calls below
+  // still search exactly; only the Fitch-block perturbation is inert then --
+  // T-378, out of scope here).
+  if (ds.topology_independent()) return {score_tree(tree, ds), 0, 0, 0, 0.0};
 
   // Initial TBR to get a baseline
   TBRParams search_params;
@@ -149,6 +154,18 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   search_params.max_hits = params.max_hits;
   search_params.tabu_size = params.tabu_size;
   search_params.clip_order = static_cast<ClipOrder>(params.clip_order);
+  // Whole tree under the real weights (this params set is used for the baseline
+  // TBR and for the post-restore search each cycle), so its running best is the
+  // user's objective and is safe to report.  ratchet_search() is only ever called
+  // on the whole tree -- never on a sector -- so this cannot leak a subtree score.
+  search_params.heartbeat_label = "Ratchet";
+  // No caller of ratchet_search reads an intermediate cycle's tree: a cycle that
+  // improves is superseded by the next perturbation, and one that does not is
+  // discarded outright (copy_topology(tree, best_tree) below).  So certifying
+  // that a cycle's tree is a true unrooted-TBR optimum buys nothing.  NB this
+  // params set is shared with the baseline TBR above the cycle loop -- also
+  // cleared, deliberately: 6-20 perturbation cycles follow it.
+  search_params.certify_unrooted = false;
 
   TBRResult initial = tbr_search(tree, ds, search_params, cd,
                                    nullptr, nullptr, check_timeout);
@@ -171,6 +188,7 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
   perturb_params.max_hits = 1;
   perturb_params.tabu_size = params.tabu_size;
   perturb_params.clip_order = static_cast<ClipOrder>(params.clip_order);
+  perturb_params.certify_unrooted = false;   // reweighted landscape; discarded
 
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
@@ -199,7 +217,12 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
         break;
     }
 
-    // 2. Short TBR on perturbed landscape
+    // 2. Short TBR on perturbed landscape.
+    // `perturb_params` deliberately carries no heartbeat_label: `ds` currently
+    // holds perturbed character weights, so this search's running best is on a
+    // different objective and can sit far below the true optimum (33 where the
+    // real optimum is 79, on Vinther2008).  Reporting it would read as wild
+    // progress.  The unperturbed search below is the one that reports.
     TBRResult perturb_result = tbr_search(tree, ds, perturb_params, cd,
                                            nullptr, nullptr, check_timeout);
     total_moves += perturb_result.n_accepted;
@@ -210,7 +233,17 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                                           nullptr, nullptr, check_timeout);
     total_moves += search_result.n_accepted;
 
-    if (search_result.best_score < best_score) {
+    // Negative (converse/Bremer) constraint defence-in-depth: ratchet perturbs
+    // only character WEIGHTS, so the topology moves solely through the two
+    // neg-guarded TBR searches above and the tree cannot acquire the forbidden
+    // clade.  Check explicitly anyway, so the clade-free invariant is enforced
+    // here as well -- matching the nni_perturb / prune_reinsert accept paths and
+    // staying robust to any future topology-touching perturbation mode.
+    bool accept = search_result.best_score < best_score;
+    if (accept && cd && cd->neg_active && displays_forbidden_clade(tree, *cd)) {
+      accept = false;
+    }
+    if (accept) {
       best_score = search_result.best_score;
       best_tree = tree;
       ++n_escapes;
@@ -241,6 +274,12 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
       }
       recent_escapes = 0;
     }
+
+    // Stride 1: a ratchet cycle is coarse (seconds to minutes on a large
+    // matrix), so checking the clock once per cycle costs nothing measurable,
+    // and a larger stride would silence the heartbeat entirely on the deep
+    // ratchets implied weights asks for.
+    ts::heartbeat("Ratchet", best_score, 1);
 
     if (ts::check_interrupt()) break;
     if (check_timeout && check_timeout()) break;

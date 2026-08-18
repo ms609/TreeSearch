@@ -2,6 +2,7 @@
 #include "ts_hsj.h"
 #include "ts_sankoff.h"
 #include <vector>
+#include <algorithm>
 #include <cassert>
 #include <R.h>
 #ifdef TS_AUDIT_PROBE
@@ -403,15 +404,21 @@ int fitch_indirect_length(const uint64_t* clip_prelim,
   //   Y = final(A) | final(D)
   // Extra steps = count of characters where clip_prelim & Y == 0.
   //
-  // NOTE: this is an APPROXIMATION, not exact.  The union of the two endpoints'
-  // final sets is a superset of the true directional Fitch edge set, so it makes
-  // more states appear "available" on the edge than any most-parsimonious
-  // reconstruction allows — hence it UNDER-counts the true insertion cost (never
-  // over-counts).  The exact cost uses the directional edge set
-  //   edge_set[D] = combine(prelim[D], up[D])   (per-character intersect-else-union)
-  // via compute_insertion_edge_sets() + fitch_indirect_length_cached(); see
-  // ts_fitch.h.  This cheaper union variant is retained for callers (temper) that
-  // rank candidates approximately and then re-score the chosen move exactly.
+  // NOTE: this is an APPROXIMATION, not exact.  final_ here is the simplified
+  // uppass_node up-pass (final(D) = final(anc) & prelim(D) if non-empty, else
+  // prelim(D)), which is a SUBSET of prelim(D) and of the true MPR set.  Hence the
+  // union final(A) | final(D) is a SUBSET of the true directional Fitch edge set
+  //   edge_set[D] = combine(prelim[D], up[D])  = MPR(D),
+  // so it makes FEWER states appear "available" on the edge than a most-
+  // parsimonious reconstruction allows — hence it OVER-counts the true insertion
+  // cost (never under-counts), i.e. it is an UPPER bound, NOT a sound lower bound.
+  // Do NOT use it as a pruning/rejection screen: it can discard genuinely improving
+  // moves.  (The superset/under-count argument would hold only for TRUE MPR finals,
+  // which uppass_node does not compute.)  The exact cost uses the directional edge
+  // set edge_set[D] via compute_insertion_edge_sets() + fitch_indirect_length_cached();
+  // see ts_fitch.h.  This cheaper union variant is retained ONLY for callers (temper)
+  // that rank candidates approximately and then re-score the chosen move exactly.
+  // Proof: dev/red-team/union-of-finals-bound-proof.md.
 
   int extra_steps = 0;
 
@@ -496,6 +503,26 @@ int fitch_indirect_length_cached(const uint64_t* clip_prelim,
   return extra_steps;
 }
 
+// Fitch combine (per-character intersect-else-union) of state sets `a` and `b`
+// into `dst`, over every block of `ds`.  Factored out of the two
+// compute_insertion_edge_sets combine loops so the incremental patch
+// (patch_insertion_edge_sets, L3b) produces BYTE-IDENTICAL edge_set / up words —
+// the per-clip oracle equality rests on the two paths sharing this one kernel.
+static inline void ts_fitch_combine(uint64_t* dst, const uint64_t* a,
+                                    const uint64_t* b, const DataSet& ds) {
+  const int nb = ds.n_blocks;
+  for (int bi = 0; bi < nb; ++bi) {
+    const CharBlock& blk = ds.blocks[bi];
+    int off = ds.block_word_offset[bi];
+    uint64_t any_isect = 0;
+    for (int s = 0; s < blk.n_states; ++s) any_isect |= a[off + s] & b[off + s];
+    uint64_t needs_union = ~any_isect & blk.active_mask;
+    for (int s = 0; s < blk.n_states; ++s)
+      dst[off + s] = ((a[off + s] & b[off + s]) & any_isect)
+                   | ((a[off + s] | b[off + s]) & needs_union);
+  }
+}
+
 // Exact per-node insertion edge sets via directional Fitch messages.
 // See the header for the formula.  O(n * chars): one preorder up-pass plus one
 // combine per node.
@@ -527,21 +554,7 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
 #endif
   const int n_tip = tree.n_tip;
   const int tw    = tree.total_words;
-  const int nb    = ds.n_blocks;
   const int root  = n_tip;
-
-  // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
-  // monotonically across calls, so after the first call no zero-fill happens
-  // (resize value-inits only NEW elements).  Every slot a downstream reader
-  // touches is edge_set[D] for a non-root in-tree node D, and the two combine
-  // loops below overwrite exactly those slots before any read; the stale
-  // contents of grown-but-unwritten slots (the root slot, and slots for
-  // clipped-out nodes that are not edges of the current tree) are never
-  // observed.  This removes the per-call assign() zero-fill and the per-call
-  // up/pre heap allocations that VTune flagged as ~27% of EW Fitch CPU.
-  const size_t N = static_cast<size_t>(tree.n_node) * tw;
-  if (edge_set.size() < N) edge_set.resize(N);
-  if (up.size() < N) up.resize(N);
 
   // Preorder over current in-tree nodes (parents before children).
   pre.clear();
@@ -559,18 +572,30 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
     }
   }
 
+  // T-373 (HSJ/XFORM with total_words == 0): there are no words to combine,
+  // and every `edge_set`/`up` slot a caller reads is indexed by tw, so with
+  // tw == 0 there is nothing to compute here -- and constructing
+  // `&tree.prelim[node * tw]` etc. below would take the address of element 0
+  // of an EMPTY vector (UB, aborts under _GLIBCXX_ASSERTIONS). `pre` above is
+  // unaffected by tw, so it is still returned correctly.
+  if (tw == 0) return;
+
+  // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
+  // monotonically across calls, so after the first call no zero-fill happens
+  // (resize value-inits only NEW elements).  Every slot a downstream reader
+  // touches is edge_set[D] for a non-root in-tree node D, and the two combine
+  // loops below overwrite exactly those slots before any read; the stale
+  // contents of grown-but-unwritten slots (the root slot, and slots for
+  // clipped-out nodes that are not edges of the current tree) are never
+  // observed.  This removes the per-call assign() zero-fill and the per-call
+  // up/pre heap allocations that VTune flagged as ~27% of EW Fitch CPU.
+  const size_t N = static_cast<size_t>(tree.n_node) * tw;
+  if (edge_set.size() < N) edge_set.resize(N);
+  if (up.size() < N) up.resize(N);
+
   // Fitch combine (per character intersect-else-union) of a & b into dst.
   auto combine = [&](uint64_t* dst, const uint64_t* a, const uint64_t* b) {
-    for (int bi = 0; bi < nb; ++bi) {
-      const CharBlock& blk = ds.blocks[bi];
-      int off = ds.block_word_offset[bi];
-      uint64_t any_isect = 0;
-      for (int s = 0; s < blk.n_states; ++s) any_isect |= a[off + s] & b[off + s];
-      uint64_t needs_union = ~any_isect & blk.active_mask;
-      for (int s = 0; s < blk.n_states; ++s)
-        dst[off + s] = ((a[off + s] & b[off + s]) & any_isect)
-                     | ((a[off + s] | b[off + s]) & needs_union);
-    }
+    ts_fitch_combine(dst, a, b, ds);
   };
 
   // Directional up-pass: up[D] = combine(up[parent], prelim[sibling]);
@@ -615,6 +640,254 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
            "compute_insertion_edge_sets: in-tree node left unwritten");
   }
 #endif
+}
+
+// --- L3b (lever #6): incremental patch-from-full edge-set maintenance ---
+//
+// compute_insertion_edge_sets recomputes the whole directional up-pass +
+// edge-set combine from scratch for EVERY clip (O(n_node) per clip).  But the
+// TBR clip loop RESTORES the tree to a fixed per-pass base after every clip, so
+// each clip is an independent perturbation of one intact tree.  The divided
+// (clipped) tree's edge_set[] differs from the intact base's only in a small
+// frontier around the clip (mean fp_ref ~0.18 at 482t; dev/profiling/
+// l3b-footprint-482.md).  patch_insertion_edge_sets patches the working
+// up[]/edge_set[] (== the intact base at entry, restored by the caller between
+// clips) to the divided-tree values, touching ONLY that frontier, and appends
+// every touched node id to `changed` (the caller's undo list: memcpy base->buf
+// over `changed` restores the base for the next clip).
+//
+// Correctness rests on: (1) sharing ts_fitch_combine with the from-scratch path
+// (byte-identical words); (2) discovery being value-based (recompute up[D],
+// stop where it equals the base = the combine-attenuation frontier), so it is
+// correct-by-construction and an over-reach only wastes work.  A per-clip oracle
+// (ts_tbr.cpp) asserts the result equals compute_insertion_edge_sets for the
+// full array.
+//
+// nz = clip grandparent (root of the changed-prelim path, from spr_clip), ns =
+// clip sibling (now a child of nz in the divided tree).  Requires: the divided
+// tree already downpassed (tree.prelim current, e.g. fitch_incremental_downpass
+// from nz); up/edge_set == the intact base at entry; up_base = the pristine
+// intact up-messages (kept read-only by the caller for the whole pass).
+void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
+                               int nz, int ns,
+                               const std::vector<uint64_t>& up_base,
+                               std::vector<uint64_t>& up,
+                               std::vector<uint64_t>& edge_set,
+                               std::vector<int>& changed,
+                               std::vector<int>& worklist) {
+  const int n_tip = tree.n_tip;
+  const int root  = n_tip;
+  const int tw    = tree.total_words;
+
+  changed.clear();
+  worklist.clear();
+
+  // T-373: as compute_insertion_edge_sets -- with tw == 0 there is nothing to
+  // patch (no words, no edge_set content), and `&tree.prelim[Sib * tw]` etc.
+  // below would take the address of element 0 of an EMPTY vector. An empty
+  // `changed` correctly tells the caller there is nothing to undo.
+  if (tw == 0) return;
+
+  // Recompute up[D] (divided) in place from the CURRENT (divided) topology and
+  // prelim, reading up[parent] from the working buffer (patched for ancestors
+  // already visited this call, == base otherwise).  Root degree-2 special case:
+  // up[child] = prelim[other child].  Identical to the compute_insertion_edge_
+  // sets up-pass, so a patched value equals the from-scratch value word-for-word.
+  auto recompute_up = [&](int D) {
+    size_t db = static_cast<size_t>(D) * tw;
+    int A   = tree.parent[D];
+    int ai  = A - n_tip;
+    int Sib = (tree.left[ai] == D) ? tree.right[ai] : tree.left[ai];
+    const uint64_t* pS = &tree.prelim[static_cast<size_t>(Sib) * tw];
+    if (A == root) {
+      for (int w = 0; w < tw; ++w) up[db + w] = pS[w];
+    } else {
+      ts_fitch_combine(&up[db], &up[static_cast<size_t>(A) * tw], pS, ds);
+    }
+  };
+
+  // Examine node D whose up-message may have changed: recompute up[D]; if it
+  // differs from the intact base, refresh edge_set[D], record D for undo, and
+  // enqueue it so its children are examined next.  If up[D] is unchanged the
+  // recompute leaves up[D] == base (a benign no-op write) and D's subtree is
+  // left untouched (the attenuation frontier — no further propagation).
+  auto examine = [&](int D) {
+    recompute_up(D);
+    size_t db = static_cast<size_t>(D) * tw;
+    bool diff = false;
+    for (int w = 0; w < tw; ++w)
+      if (up[db + w] != up_base[db + w]) { diff = true; break; }
+    if (!diff) return;
+    ts_fitch_combine(&edge_set[db], &tree.prelim[static_cast<size_t>(D) * tw],
+                     &up[db], ds);
+    changed.push_back(D);
+    worklist.push_back(D);
+  };
+
+  // Phase A: path nodes nz -> root.  Their prelim changed (incremental downpass)
+  // but their up-message is INVARIANT (up[path] depends only on up[ancestor]
+  // (invariant) and prelim[off-path sibling] (unchanged)), so only edge_set[]
+  // needs refreshing = combine(divided prelim[m], base up[m]).  Each path node's
+  // OFF-PATH sibling, in contrast, has up changed (its sibling m's prelim moved),
+  // so it is seeded via examine().  Walking the full path (even past the downpass
+  // early-stop frontier) is safe: unchanged prelim -> base edge_set, unchanged
+  // sibling up -> examine() no-ops.
+  {
+    int m = nz;
+    for (;;) {
+      if (m != root) {
+        size_t mb = static_cast<size_t>(m) * tw;
+        ts_fitch_combine(&edge_set[mb], &tree.prelim[mb], &up_base[mb], ds);
+        changed.push_back(m);
+        int A   = tree.parent[m];
+        int ai  = A - n_tip;
+        int sib = (tree.left[ai] == m) ? tree.right[ai] : tree.left[ai];
+        examine(sib);
+      }
+      if (m == root) break;
+      m = tree.parent[m];
+    }
+  }
+
+  // Phase B: the two children of nz whose up changed by the suppress-node
+  // topology move — ns (newly joined to nz) and W (nz's other child, sibling
+  // changed nx -> ns).  (When nz == root both are handled by the root special
+  // case in recompute_up.)
+  {
+    int nzi = nz - n_tip;
+    int W = (tree.left[nzi] == ns) ? tree.right[nzi] : tree.left[nzi];
+    examine(ns);
+    examine(W);
+  }
+
+  // Phase C: propagate each up-change down its subtree until it attenuates.
+  // FIFO ⇒ a node's parent is patched before the node is examined.  Each in-tree
+  // node has one parent and the seed subtrees are disjoint, so every node is
+  // examined at most once (no visited-set needed).
+  size_t head = 0;
+  while (head < worklist.size()) {
+    int X = worklist[head++];
+    if (X < n_tip) continue;               // tip: no children
+    int xi = X - n_tip;
+    examine(tree.left[xi]);
+    examine(tree.right[xi]);
+  }
+}
+
+// --- L3b base-incremental-update: refresh the per-pass intact base after an
+// accepted SPR move, instead of the full O(n_node) compute_insertion_edge_sets ---
+//
+// The per-pass base recompute is the fixed per-pass overhead that drowns the
+// clip-patch win in accept-dense (ratchet) passes (dev/profiling/l3b-land.md).
+// An accepted SPR move mutates the tree only locally: the subtree at clip_node
+// (parent nx, sibling ns, grandparent nz) relocates to edge (above, below), so
+// tree.prelim changed only on nz->root and nx->root (exactly what the accept's
+// fitch_dirty_downpass(nz,nx) already recomputed).  This patches up_base /
+// edge_set_base from the PRE-move tree (T0) to the POST-move tree (T1),
+// touching only the changed frontier, and records touched nodes in `changed`
+// (the caller syncs the working buffers over them).  Correct-by-construction +
+// value-based attenuation, like patch_insertion_edge_sets; oracle-asserted vs a
+// from-scratch recompute after each call.
+//
+// Decomposition (advisor): T1 = (T0 with the subtree clipped = a remove-leg at
+// nz) + (one regraft insertion = an insert-leg at above).  Unlike the clip, the
+// insert-leg's up is NOT invariant on its path: nx is EFFECTIVELY a fresh node
+// (its context changed wholesale) and `above` gains a new-sibling child, so the
+// A1 path nodes here have their up RECOMPUTED (not assumed invariant).  Runs
+// only for SPR accepts (reroot_parent < 0 / == clip_node); the caller falls back
+// to a full recompute for TBR-reroot accepts, reroots, and the first pass.
+//
+// tmp is caller-owned scratch (>= total_words).  NO O(n_node) work: A1 is the
+// two rootward paths (O(depth)), merged top-down in O(|A1|).
+void update_base_after_spr_move(const TreeState& tree, const DataSet& ds,
+                                int nz, int nx, int ns, int above, int below,
+                                std::vector<uint64_t>& up_base,
+                                std::vector<uint64_t>& edge_set_base,
+                                std::vector<int>& changed,
+                                std::vector<int>& worklist,
+                                std::vector<uint64_t>& tmp) {
+  const int n_tip = tree.n_tip;
+  const int root  = n_tip;
+  const int tw    = tree.total_words;
+  (void)nx; (void)ns; (void)above; (void)below;  // topology read via tree (T1)
+
+  changed.clear();
+  worklist.clear();
+  if (static_cast<int>(tmp.size()) < tw) tmp.resize(tw);
+
+  // Recompute up[D] (T1) into dst, reading up[parent] from up_base (already
+  // updated for A1 ancestors; == base for clean nodes).  Root degree-2 special.
+  auto recompute_up = [&](int D, uint64_t* dst) {
+    int A   = tree.parent[D];
+    int ai  = A - n_tip;
+    int Sib = (tree.left[ai] == D) ? tree.right[ai] : tree.left[ai];
+    const uint64_t* pS = &tree.prelim[static_cast<size_t>(Sib) * tw];
+    if (A == root) {
+      for (int w = 0; w < tw; ++w) dst[w] = pS[w];
+    } else {
+      ts_fitch_combine(dst, &up_base[static_cast<size_t>(A) * tw], pS, ds);
+    }
+  };
+
+  // Examine a node whose up MIGHT have changed (worklist propagation): recompute
+  // into tmp, compare to the OLD up_base (read-before-write — up_base is being
+  // mutated in place), and on change write up_base + edge_set_base, record, and
+  // enqueue.  Stops at the attenuation frontier (recompute == old).
+  auto examine = [&](int D) {
+    recompute_up(D, tmp.data());
+    size_t db = static_cast<size_t>(D) * tw;
+    bool diff = false;
+    for (int w = 0; w < tw; ++w)
+      if (tmp[w] != up_base[db + w]) { diff = true; break; }
+    if (!diff) return;
+    for (int w = 0; w < tw; ++w) up_base[db + w] = tmp[w];
+    ts_fitch_combine(&edge_set_base[db], &tree.prelim[static_cast<size_t>(D) * tw],
+                     &up_base[db], ds);
+    changed.push_back(D);
+    worklist.push_back(D);
+  };
+
+  // Collect A1 = (nz->root) UNION (nx->root) in T1, top-down (root-first) with no
+  // O(n_node) marker: gather each path bottom-up, then merge the shared root-ward
+  // prefix once.  `ordered` = common-prefix (root..merge) + nz-tail + nx-tail.
+  std::vector<int> nzUp, nxUp, ordered;
+  for (int m = nz; ; m = tree.parent[m]) { nzUp.push_back(m); if (m == root) break; }
+  for (int m = nx; ; m = tree.parent[m]) { nxUp.push_back(m); if (m == root) break; }
+  std::reverse(nzUp.begin(), nzUp.end());   // top-down: root .. nz
+  std::reverse(nxUp.begin(), nxUp.end());   // top-down: root .. nx
+  size_t k = 0;
+  while (k < nzUp.size() && k < nxUp.size() && nzUp[k] == nxUp[k]) ++k;
+  ordered.insert(ordered.end(), nzUp.begin(), nzUp.begin() + k);   // shared prefix
+  ordered.insert(ordered.end(), nzUp.begin() + k, nzUp.end());     // nz tail
+  ordered.insert(ordered.end(), nxUp.begin() + k, nxUp.end());     // nx tail
+
+  // A1 nodes: prelim changed => edge_set changes; up may ALSO change (insert-leg
+  // is not up-invariant), so recompute up top-down.  Record + enqueue children.
+  // The root itself has no up/edge_set, but MUST still be enqueued: its children
+  // read the OTHER root child's prelim (root degree-2 special), which changed, so
+  // a root child's up can change and must be examined.
+  for (int m : ordered) {
+    if (m != root) {
+      size_t mb = static_cast<size_t>(m) * tw;
+      recompute_up(m, tmp.data());
+      for (int w = 0; w < tw; ++w) up_base[mb + w] = tmp[w];
+      ts_fitch_combine(&edge_set_base[mb], &tree.prelim[mb], &up_base[mb], ds);
+      changed.push_back(m);
+    }
+    if (m >= n_tip) worklist.push_back(m);  // enqueue for child propagation
+  }
+
+  // Propagate down each A1 node's subtree (off-path siblings, relocated subtree,
+  // nz's new child ns, above's new sibling) until up attenuates.  examine()
+  // re-visiting an already-set A1 node is a benign no-op (recompute == current).
+  size_t head = 0;
+  while (head < worklist.size()) {
+    int X = worklist[head++];
+    if (X < n_tip) continue;
+    int xi = X - n_tip;
+    examine(tree.left[xi]);
+    examine(tree.right[xi]);
+  }
 }
 
 
@@ -757,6 +1030,10 @@ int fitch_na_indirect_cached_flat(const uint64_t* clip_prelim,
 // "wasted" = per-member blocks scanned AFTER that member individually crossed the
 // cutoff; frac = wasted / total-scanned. Measures the ceiling for a force-scalar
 // reroot (ILP-confounded, so a large frac still needs a wall A/B to settle sign).
+// T-338: worker-thread-reachable, unsynchronized file-static counters. Safe
+// only because TS_AUDIT_PROBE is never defined in CI/production builds
+// (requires explicit -DTS_AUDIT_PROBE); keep audit-probe profiling runs
+// serial if this is ever built with parallel resample. See T-338.
 static long long g_x4_waste = 0;
 static long long g_x4_total = 0;
 static unsigned long long g_x4_calls = 0;

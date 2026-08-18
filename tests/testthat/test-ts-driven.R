@@ -261,6 +261,44 @@ test_that("Zero replicates returns empty result", {
   expect_false(result$timed_out)
 })
 
+test_that("startEdge accepts a bare matrix or a list of matrices", {
+  # MaximizeParsimony() always sends a list; the flat compatibility wrapper
+  # passes a bare matrix straight through, so the engine must take both.
+  set.seed(5150)
+  starts <- lapply(1:3, function(i) Preorder(RandomTree(small_dataset,
+                                                        root = TRUE)))
+  starts <- lapply(starts, RenumberTips, names(small_dataset))
+  edges <- lapply(starts, `[[`, "edge")
+
+  Run <- function(startEdge) {
+    set.seed(2718)
+    ts_driven(small_ds, maxReplicates = 3L, targetHits = 99L,
+              ratchetCycles = 1L, startEdge = startEdge)
+  }
+  bare <- Run(edges[[1]])
+  listOfOne <- Run(edges[1])
+  pooled <- Run(edges)
+
+  expect_equal(bare$best_score, listOfOne$best_score)
+  expect_equal(bare$replicate_scores, listOfOne$replicate_scores)
+  expect_true(pooled$best_score > 0)
+  expect_equal(pooled$replicate_scores[[1]], bare$replicate_scores[[1]])
+
+  expect_error(
+    Run(list(edges[[1]], edges[[2]][-1, , drop = FALSE])),
+    "same number of edges"
+  )
+  expect_error(Run("not an edge matrix"),
+               "must be an edge matrix or a list")
+  # A hole or a wrong-shaped member would silently shift later replicates
+  # onto the wrong start, and an n x 1 matrix reads past the end of its data.
+  expect_error(Run(list(edges[[1]], NULL, edges[[3]])),
+               "element 2 is NULL")
+  expect_error(Run(list(edges[[1]][, 1, drop = FALSE])),
+               "exactly 2 columns")
+  expect_error(Run(list()), "supplies no edge matrices")
+})
+
 test_that("MaximizeParsimony() uses C++ engine", {
   data("inapplicable.phyData", package = "TreeSearch")
   dataset <- inapplicable.phyData[["Vinther2008"]]
@@ -329,4 +367,69 @@ test_that("perturbStopFactor=0 disables the rule", {
   result <- ts_driven(small_ds, maxReplicates = 3L, targetHits = 1L,
                       ratchetCycles = 1L, perturbStopFactor = 0L)
   expect_true(result$pool_size >= 1)
+})
+
+test_that("perturbStopFactor fires and sets perturb_stop attribute (public API)", {
+  # The :::-level test above covers the same mechanism cheaply; this checks
+  # the attribute actually reaches the public API. perturbStopFactor=1 on
+  # Vinther2008 (23 tips) means limit = 23 reps.
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  set.seed(4618)
+  result <- MaximizeParsimony(dataset, maxReplicates = 500L, targetHits = 500L,
+                               control = SearchControl(
+                                 perturbStopFactor = 1L,
+                                 ratchetCycles = 1L),
+                               verbosity = 0L)
+  expect_s3_class(result, "multiPhylo")
+  expect_lt(attr(result, "replicates"), 500L)
+  expect_true(attr(result, "perturb_stop"))
+  expect_false(attr(result, "timed_out"))
+})
+
+test_that("multiPhylo input warm-starts one replicate per tree", {
+  data("inapplicable.phyData", package = "TreeSearch")
+  dataset <- inapplicable.phyData[["Vinther2008"]]
+  set.seed(3571)
+  trees <- list(
+    RandomTree(dataset, root = TRUE),
+    RandomTree(dataset, root = TRUE),
+    RandomTree(dataset, root = TRUE)
+  )
+  class(trees) <- "multiPhylo"
+  trees <- Preorder(trees)
+
+  Search <- function(startTree) {
+    set.seed(8081)
+    MaximizeParsimony(dataset, tree = startTree, maxReplicates = 2L,
+                      targetHits = 99L, verbosity = 0L)
+  }
+
+  # A pool of one is exactly the single-tree warm start: only replicate 1
+  # differs from a cold start, so every reported quantity must agree.
+  single <- Search(trees[[1]])
+  oneTree <- Search(trees[1])
+  expect_s3_class(trees[1], "multiPhylo")
+  expect_equal(attr(oneTree, "replicate_scores"),
+               attr(single, "replicate_scores"))
+  expect_equal(attr(oneTree, "candidates_evaluated"),
+               attr(single, "candidates_evaluated"))
+  expect_equal(vapply(oneTree, ape::write.tree, character(1)),
+               vapply(single, ape::write.tree, character(1)))
+
+  # Shared-prefix discriminator.  Comparing a pool against a single tree only
+  # shows that *something* changed -- reusing tree 1 for every replicate would
+  # look the same.  These two pools agree in position 1 and differ only in
+  # position 2, so a difference can be attributed to tree 2 alone, and pins
+  # rep i -> tree i rather than "some supplied tree, repeatedly".
+  # Scores saturate at the optimum on this matrix, so count the work done:
+  # candidates_evaluated tracks the trajectory, not just its endpoint.
+  poolA <- Search(structure(trees[c(1, 2)], class = "multiPhylo"))
+  poolB <- Search(structure(trees[c(1, 3)], class = "multiPhylo"))
+  expect_false(identical(attr(poolA, "candidates_evaluated"),
+                         attr(poolB, "candidates_evaluated")))
+  # ...and order matters, so position is respected, not just membership.
+  poolBA <- Search(structure(trees[c(2, 1)], class = "multiPhylo"))
+  expect_false(identical(attr(poolA, "candidates_evaluated"),
+                         attr(poolBA, "candidates_evaluated")))
 })

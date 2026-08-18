@@ -17,9 +17,7 @@ test_that("Jackknife supports are correct", {
                "resampleFreq of 0.9 is too high")
 
   # Ensure reproducible RNG, restoring on exit
-  old_rng <- RNGkind()
-  on.exit(do.call(RNGkind, as.list(old_rng)), add = TRUE)
-  suppressWarnings(RNGversion("3.5.0"))
+  withr::local_rng_version("3.5.0")
   set.seed(0)
 
   strict <- TreeSearch(start_tree, preparedData, verbosity = 0)

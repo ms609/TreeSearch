@@ -33,18 +33,50 @@ test_that("User-supplied tree is used as starting topology", {
   expect_true(warm_score <= best_score)
 })
 
-test_that("multiPhylo input extracts first tree", {
+test_that("Unrooted, non-TreeTools start tree is accepted", {
+  # ape::rtree() + ape::unroot() yields a structurally valid unrooted binary
+  # tree (nrow(edge) == 2 * NTip - 3), distinct from the malformed trees
+  # ape::unroot() can produce from a TreeTools `order = "preorder"` tree
+  # (covered separately in test-MaximizeParsimony-features.R). Previously
+  # this shape reached MakeTreeBinary() before being rooted, which misread
+  # the unrooted root's legitimate degree-3 trifurcation as a polytomy,
+  # corrupting the tree and surfacing as "argument is of length zero".
+  set.seed(9)
+  tr <- ape::unroot(ape::rtree(NTip(dataset), tip.label = names(dataset)))
+  expect_false(TreeTools::TreeIsRooted(tr))
+  res <- MaximizeParsimony(
+    dataset, tree = tr, maxReplicates = 1L, targetHits = 1L, verbosity = 0L
+  )
+  expect_s3_class(res, "multiPhylo")
+  expect_true(attr(res, "score") > 0)
+})
+
+test_that("multiPhylo input warm-starts from the whole pool", {
   set.seed(2987)
   res <- MaximizeParsimony(
     dataset, maxReplicates = 2L, targetHits = 1L, verbosity = 0L
   )
-  # Pass multiPhylo directly — should extract [[1]]
+  # Pass a multiPhylo directly: the search resumes from a previous result.
+  # One replicate cannot consume a 50-odd tree pool, and the shortfall is
+  # reported rather than swallowed.
   set.seed(2987)
-  warm <- MaximizeParsimony(
-    dataset, tree = res,
-    maxReplicates = 1L, targetHits = 1L, verbosity = 0L
+  expect_warning(
+    warm <- MaximizeParsimony(
+      dataset, tree = res,
+      maxReplicates = 1L, targetHits = 1L, verbosity = 0L
+    ),
+    paste0("Used 1 of the ", length(res), " trees supplied")
   )
   expect_true(attr(warm, "score") <= attr(res, "score"))
+
+  # With replicates to spare, each pool tree seeds one of them
+  set.seed(2987)
+  pooled <- MaximizeParsimony(
+    dataset, tree = res[seq_len(min(3L, length(res)))],
+    maxReplicates = 3L, targetHits = 99L, verbosity = 0L
+  )
+  expect_true(attr(pooled, "score") <= attr(res, "score"))
+  expect_equal(attr(pooled, "replicates"), 3L)
 })
 
 test_that("Verbosity shows 'Starting tree' instead of 'Wagner'", {

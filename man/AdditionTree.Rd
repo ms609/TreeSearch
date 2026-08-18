@@ -13,14 +13,23 @@ AdditionTree(dataset, concavity = Inf, constraint, sequence)
 \item{concavity}{Determines the degree to which extra steps beyond the first
 are penalized.  Specify a numeric value to use implied weighting
 \insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
+\emph{k} / \emph{e} + \emph{k}. A value of 10 is recommended;
 TNT sets a default of 3, but this is too low in some circumstances
 \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
 Better still explore the sensitivity of results under a range of
 concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally.
-Specify \code{"profile"} to employ profile parsimony
-\insertCite{Faith2001}{TreeSearch}.}
+Specify \code{Inf} to weight each additional step equally,
+(which underperforms step weighting approaches
+\insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+Specify \code{"profile"} to employ an approximation of profile parsimony
+\insertCite{Faith2001}{TreeSearch}.
+Note that a numeric \code{concavity} value affects only the reported
+\verb{$score} of the tree returned by \code{AdditionTree()}: the tree topology
+has been observed to be identical whatever numeric value of \code{concavity}
+is specified (including \code{Inf}, i.e. equal weights).
+Specifying \code{concavity = "profile"} \emph{does} affect the returned topology,
+because the underlying character data are recoded before tree
+construction begins.}
 
 \item{constraint}{Either an object of class \code{phyDat}, in which case
 returned trees will be perfectly compatible with each character in
@@ -33,8 +42,14 @@ are filtered to respect the constraint topology.}
 taxa. Randomized if not provided.}
 }
 \value{
-\code{AdditionTree()} returns a tree of class \code{phylo}, rooted on
-\code{sequence[1]}.
+\code{AdditionTree()} returns a tree of class \code{phylo}. The tree carries a
+degree-two root, but its root position is an arbitrary by-product of the
+order in which taxa were added and is not necessarily \code{sequence[1]};
+parsimony scores are unaffected by rooting, so root the result yourself with
+\href{https://ms609.github.io/TreeTools/reference/RootTree}{\code{TreeTools::RootTree()}}
+if the position of the root matters to you. With fewer than four
+taxa there is nothing to optimise, and a pectinate tree of the dataset's taxa
+is returned without consulting \code{sequence} or \code{constraint}.
 }
 \description{
 Generates a starting tree by adding each taxon in turn to the most
@@ -42,6 +57,8 @@ parsimonious location.
 }
 \examples{
 data("inapplicable.phyData", package = "TreeSearch")
+# concavity = 10 affects the reported $score, but (empirically) not the
+# tree topology returned.
 AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 }
 \seealso{

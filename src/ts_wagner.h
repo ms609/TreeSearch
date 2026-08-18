@@ -16,6 +16,11 @@ namespace ts {
 
 struct WagnerResult {
   double score;
+  // Set when a constraint was supplied and the constructed tree does not
+  // display every constraint split.  Greedy addition never rearranges, so a
+  // taxon added early can strand a split beyond repair.  Reported by the
+  // caller: Rf_warning() is not safe from a search worker thread.
+  bool constraint_violated = false;
 };
 
 // Build a Wagner tree by greedy addition.

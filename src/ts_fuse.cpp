@@ -2,6 +2,7 @@
 #include "ts_fitch.h"
 #include "ts_splits.h"
 #include "ts_tbr.h"
+#include "ts_rng.h"
 #include <algorithm>
 #include <cstring>
 #include <unordered_map>
@@ -16,7 +17,8 @@ namespace ts {
 // never inside any non-root subtree), making split matching between
 // differently-rooted trees consistent.
 // Parsimony scores are rooting-invariant, so this is safe.
-static void reroot_at_tip0(TreeState& tree) {
+// Declared in ts_fuse.h: the constrained Wagner build needs the same invariant.
+void reroot_at_tip0(TreeState& tree) {
   int n_tip = tree.n_tip;
   int root = n_tip;
 
@@ -366,6 +368,7 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
 
   bool improved = true;
   while (improved && result.n_rounds < params.max_rounds) {
+    if (ts::check_interrupt()) break;
     improved = false;
     ++result.n_rounds;
 
@@ -389,6 +392,7 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
     }
 
     for (int di = 0; di < n_donors; ++di) {
+      if (ts::check_interrupt()) break;
       // Lazy initialization: prepare donor on first access
       if (!donor_ready[di]) {
         donor_trees[di] = copy_topology(entries[di].tree, ds);
@@ -529,6 +533,11 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
       TBRParams tbr_params;
       tbr_params.accept_equal = false;
       tbr_params.max_hits = 1;
+      // Post-fuse cleanup inside the fuse round loop; another fuse round or the
+      // driven pipeline's own polish follows.  Like the sector polishes, this
+      // site leaves tabu_size at 0, so on native-NA data it DOES reach
+      // exact_verify_sweep under the shipped presets.
+      tbr_params.certify_unrooted = false;
       TBRResult tbr_res = tbr_search(recipient, ds, tbr_params);
       score = tbr_res.best_score;
     }

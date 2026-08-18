@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
+#include <cstdlib>
 #include <random>
 #include <vector>
 
@@ -38,8 +39,11 @@ static void compute_subtree_sizes(const TreeState& tree,
 SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
                         std::function<bool()> check_timeout) {
   double best_score = score_tree(tree, ds);
-  // No informative characters: all trees have the same score.
-  if (ds.total_words == 0) return {best_score, 0, 0};
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): total_words == 0 alone does not imply this for HSJ/XFORM, whose
+  // hierarchy DP / Sankoff term stays topology-dependent after the Fitch
+  // blocks are gone -- see DataSet::topology_independent().
+  if (ds.topology_independent()) return {best_score, 0, 0};
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -195,10 +199,14 @@ static void collect_destination_edges(
 }
 
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
-                        std::function<bool()> check_timeout) {
+                        std::function<bool()> check_timeout,
+                        ConstraintData* cd) {
+  const bool constrained = cd && cd->active;
   double best_score = full_rescore(tree, ds);
-  // No informative characters: all trees have the same score.
-  if (ds.total_words == 0) return {best_score, 0, 0};
+  // No informative characters: all trees have the same score. Mode-aware
+  // (T-373): see DataSet::topology_independent() -- false for HSJ/XFORM even
+  // when total_words == 0.
+  if (ds.topology_independent()) return {best_score, 0, 0};
   int n_moves = 0;
   int n_iterations = 0;
   int hits = 1;
@@ -211,6 +219,24 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
   for (int b = 0; b < ds.n_blocks; ++b) {
     if (ds.blocks[b].has_inapplicable) { has_na = true; break; }
   }
+
+  // Pure-EW SPR uses the EXACT directional edge set (like tbr_search, 2b299e4b),
+  // NOT the union-of-finals approximation.  Union OVER-counts, inflating
+  // best_candidate so the `dominated` gate (line ~379) triggers too readily and
+  // HIDES improving moves -- and spr_search is a pure hill-climb with no
+  // exact-TBR phase to recover, so union converges catastrophically short
+  // (Zhu2013 best-of-25 starts 650 vs exact 625; ~25-70 steps, systematic; exact
+  // is also faster per start -- dev/profiling/drift-exactness-gate.md).  So exact
+  // is the DEFAULT here; `TS_SPR_UNION` restores the old union scorer (kill
+  // switch).  Read once (getenv ~2.4us on ucrt).  Only reaches EW spr_search
+  // (NA/IW keep their own scorers below); production use is the sprFirst warmup
+  // (OFF in all presets) + the standalone ts_spr_search binding.
+  const bool ew_exact = std::getenv("TS_SPR_UNION") == nullptr;
+  const int tw = tree.total_words;
+  const bool ew_path = !has_na && !use_iw;
+  const bool need_edge_set = ew_path && ew_exact;
+  std::vector<uint64_t> edge_set_buf, edge_set_up;
+  std::vector<int> edge_set_pre;
 
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
@@ -306,8 +332,21 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
         divided_length = best_score + delta - nx_cost;
       }
 
-      const uint64_t* clip_prelim =
-          &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words];
+      // Exact directional insertion edge sets for the pure-EW path (mirrors
+      // ts_tbr.cpp:1749); indexed by `below` in the candidate scan below.
+      if (need_edge_set) {
+        compute_insertion_edge_sets(tree, ds, edge_set_buf,
+                                    edge_set_up, edge_set_pre);
+      }
+
+      // T-373 (HSJ/XFORM, total_words == 0): tree.prelim is then EMPTY, so
+      // &tree.prelim[0] is UB (aborts under _GLIBCXX_ASSERTIONS). The value is
+      // never dereferenced in that case -- every consumer below indexes it
+      // only inside loops bounded by ds.n_blocks (== 0 here) -- so a null
+      // placeholder is behaviourally identical and avoids constructing it.
+      const uint64_t* clip_prelim = tree.total_words > 0
+          ? &tree.prelim[static_cast<size_t>(clip_node) * tree.total_words]
+          : nullptr;
 
       // IW: precompute base score and marginal deltas
       double base_iw = 0.0;
@@ -362,8 +401,17 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
           int cutoff = (best_candidate < HUGE_VAL)
               ? static_cast<int>(best_candidate - divided_length + 1)
               : INT_MAX;
-          int extra = fitch_indirect_length_bounded(
-              clip_prelim, tree, ds, above, below, cutoff);
+          // T-373: with tw == 0, compute_insertion_edge_sets() left
+          // edge_set_buf empty (need_edge_set was true, but there was
+          // nothing to compute) -- pass null, matching clip_prelim above;
+          // unused inside fitch_indirect_length_cached's ds.n_blocks-bounded
+          // loop (== 0 here).
+          const uint64_t* vroot = (ew_exact && tw > 0)
+              ? &edge_set_buf[static_cast<size_t>(below) * tw] : nullptr;
+          int extra = ew_exact
+              ? fitch_indirect_length_cached(clip_prelim, vroot, ds, cutoff)
+              : fitch_indirect_length_bounded(
+                    clip_prelim, tree, ds, above, below, cutoff);
           candidate_score = divided_length + extra;
         }
         ++n_iterations;
@@ -387,15 +435,31 @@ SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
         tree.build_postorder();
         double actual = full_rescore(tree, ds);
 
-        if (actual < best_score - eps) {
-          best_score = actual;
-          ++n_moves;
-          hits = 1;
-          accepted = true;
-          keep_going = true;
-        } else if (std::fabs(actual - best_score) <= eps
-                   && hits <= maxHits) {
-          ++hits;
+        bool would_accept = (actual < best_score - eps) ||
+            (std::fabs(actual - best_score) <= eps && hits <= maxHits);
+
+        // T-390: verify-and-reject, mirroring the post-hoc check in
+        // tbr_search and ts_nni_perturb.cpp (search "accept before
+        // capturing"). spr_search's own regraft candidates are screened
+        // against the pre-move constraint mapping only, so a regraft can
+        // still land a clip on the wrong side of a split; TBR afterwards
+        // cannot repair it (regraft_violates_constraint rejects all moves
+        // once a split is unmapped), so an unverified accept here would
+        // carry a constraint violation through to the final tree.
+        if (would_accept && constrained) {
+          map_constraint_nodes(tree, *cd);
+          for (int _s = 0; _s < cd->n_splits; ++_s) {
+            if (cd->constraint_node[_s] < 0) { would_accept = false; break; }
+          }
+        }
+
+        if (would_accept) {
+          if (actual < best_score - eps) {
+            best_score = actual;
+            hits = 1;
+          } else {
+            ++hits;
+          }
           ++n_moves;
           accepted = true;
           keep_going = true;

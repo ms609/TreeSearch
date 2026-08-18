@@ -31,8 +31,7 @@ MaddisonSlatkin_clear_cache <- function() {
 #' small or unbalanced partitions, where raw mutual information is appreciably
 #' inflated by chance agreement.
 #'
-#' The value is computed analytically \insertCite{Vinh2010}{TreeDist},
-#' summing over
+#' The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
 #' the hypergeometric distribution of cell overlaps, and is returned in bits
 #' (logarithms to base two).
 #'
@@ -41,7 +40,6 @@ MaddisonSlatkin_clear_cache <- function() {
 #' @param nj Integer vector giving the block sizes of the second partition
 #'   (also summing to `N`).
 #' @return The expected mutual information, in bits.
-#' @references \insertAllCited{}
 #' @seealso [`SiteConcordance`]
 #' @examples
 #' # Expected MI between a 3|4 split and a 2|5 split of 7 items:
@@ -227,8 +225,8 @@ ts_hsj_score <- function(edge, contrast, tip_data, weight, levels, hierarchy_blo
     .Call(`_TreeSearch_ts_hsj_score`, edge, contrast, tip_data, weight, levels, hierarchy_blocks_r, alpha, tip_labels_r, absent_state)
 }
 
-ts_sankoff_test <- function(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r) {
-    .Call(`_TreeSearch_ts_sankoff_test`, edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r)
+ts_sankoff_test <- function(edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r, combo_grids_r = NULL, tip_sec_known_r = NULL) {
+    .Call(`_TreeSearch_ts_sankoff_test`, edge, n_states_r, cost_matrices_r, tip_states_r, forced_root_r, combo_grids_r, tip_sec_known_r)
 }
 
 ts_wagner_bias_bench <- function(contrast, tip_data, weight, levels, min_steps, concavity, bias, temperature, n_reps, run_tbr) {

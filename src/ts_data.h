@@ -68,7 +68,12 @@ struct HierarchyBlock {
   int primary_char;               // original character index (0-based)
   std::vector<int> secondary_chars; // original character indices (0-based)
   int n_secondaries;              // = secondary_chars.size()
-  int absent_state;               // state index meaning "absent" in primary
+  // State (levels) index meaning "absent" in primary -- NOT a token/allLevels
+  // index. tip_labels (see DataSet::tip_labels) holds token indices, so a
+  // tip's label must be translated via DataSet::token_states before it can be
+  // compared to this field or to DataSet::inapp_state (T-375/T-376: the two
+  // index spaces were previously compared directly via `==`).
+  int absent_state = -1;
 };
 
 struct CharBlock {
@@ -85,6 +90,13 @@ struct CharBlock {
   // For IW: map each character back to its original pattern index
   // (multiple characters may share the same pattern after weight expansion)
   int pattern_index[MAX_CHARS_PER_BLOCK];
+
+  // Display label for each applicable plane: plane_state[p] is the global
+  // applicable state index occupying plane p. Identity (plane_state[p]==p)
+  // in the default global-alphabet layout; under TS_PACK_LOCAL plane p holds
+  // the p-th local-alphabet state, so this maps it back to its global label.
+  // Consumed by state/ancestral-state reconstruction (ts_rcpp.cpp).
+  int plane_state[MAX_STATES];
 };
 
 // Cache-friendly metadata for indirect scoring hot paths.
@@ -101,7 +113,11 @@ struct FlatBlock {
 struct DataSet {
   int n_tips;
   int n_blocks;
-  int total_words;          // sum of n_states across all blocks
+  int total_words;          // sum of n_states across all blocks, then rounded
+                            // UP to an even count (SIMD padding): the trailing
+                            // pad word is never owned by any block, so
+                            // block_word_offset[b] + blocks[b].n_states can be
+                            // < total_words for the last block.
 
   std::vector<CharBlock> blocks;
 
@@ -155,10 +171,26 @@ struct DataSet {
   // Populated by build_dataset(); used by HSJ scoring.
   int inapp_state = -1;
 
+  // Per-token (contrast-row / allLevels) state-set bitmask: bit s of
+  // token_states[t] is set iff the phyDat contrast matrix has contrast[t, s]
+  // > 0.5 (token t is compatible with state s). Populated by build_dataset()
+  // directly from the ORIGINAL, pre-simplification contrast matrix (T-375/
+  // T-376) -- do not apply state_remap to it. This is the translation HSJ
+  // scoring needs: tip_labels (below) holds TOKEN indices, but absent_state/
+  // inapp_state are STATE indices, so a tip's label must be looked up here
+  // before it can be compared to either. n_levels is the number of columns
+  // (states) these bitmasks range over -- deliberately not named n_states,
+  // which on CharBlock means something different (per-block, post-
+  // simplification).
+  std::vector<uint32_t> token_states;
+  int n_levels = 0;
+
   // HSJ scoring data (populated when scoring_mode == HSJ).
   // These are set by the Rcpp bridge after build_dataset().
   std::vector<HierarchyBlock> hierarchy_blocks;
-  // tip_labels: per-tip per-original-char state labels (0-based).
+  // tip_labels: per-tip per-original-char state labels (0-based TOKEN index,
+  //   i.e. an index into token_states above -- NOT directly comparable to
+  //   absent_state/inapp_state; see token_states' comment).
   //   Layout: tip_labels[tip * n_orig_chars + char]
   std::vector<int> tip_labels;
   int n_orig_chars = 0;
@@ -204,6 +236,39 @@ struct DataSet {
   mutable std::unordered_set<uint64_t> evs_false_cache;
   mutable uint64_t evs_last_fp = 0;
 
+  // --- NA cost decomposition (diagnostic; populated only when TS_NA_TIMING) ---
+  //
+  // Native inapplicable data costs 74-151x more per ratchet re-opt cycle than the
+  // same matrix recoded `-`->`?` (identical pattern and character counts), while
+  // evaluating only ~1.9x the candidates.  So most of that wall is NOT candidate
+  // scoring -- and none of it is visible to a candidate-based metric, because
+  // exact_verify_sweep's O(n^2) rescoring never touches n_candidates_evaluated.
+  // These brackets name the NA-only suspects so the remainder is small enough to
+  // be honest about.  `mutable` and single-thread-valid for the same reason as
+  // n_candidates_evaluated: each parallel worker owns a private ds_local copy, so
+  // never aggregate these across a parallel run.
+  mutable long long na_t_total_ns = 0;   // whole tbr_search
+  mutable long long na_t_evs_ns = 0;     // exact_verify_sweep, all calls
+  // na_n_evs / na_n_evs_hits / na_n_evs_skipped are counted ALWAYS, not only
+  // under TS_NA_TIMING: they are one increment per convergence, and the
+  // executed/skipped pair is the only evidence that the certify_unrooted gate
+  // reached a live call site (see na_n_evs_skipped below).
+  mutable long long na_n_evs = 0;        // calls
+  mutable long long na_n_evs_hits = 0;   // served from evs_false_cache
+  mutable long long na_n_evs_improved = 0;  // calls that found an improver
+  // Convergences where certification was SKIPPED because the caller cleared
+  // TBRParams::certify_unrooted (and TS_NA_NOCERTIFY enabled the gate).  A null
+  // wall result must not be confusable with "the flag never reached a live call
+  // site": do_reroot needs tabu_size == 0 and no mask/cd/pool, and the shipped
+  // presets set tabuSize = 100/200, so under the default recipe only the sector
+  // sub-searches and the fuse cleanup reach the certifier at all.
+  mutable long long na_n_evs_skipped = 0;
+  mutable long long na_t_below_ns = 0;   // below_actives_cache build (NA-only)
+  mutable long long na_n_below = 0;
+  mutable long long na_t_vroot_ns = 0;   // vroot_cache build / compute_from_above
+  mutable long long na_t_accept_ns = 0;  // accept-path NA dirty rescores
+  mutable long long na_n_accept = 0;
+
   // Per-pattern step scratch for the weighted (IW/profile) full-rescore path
   // (fitch_score_ew).  Lives on DataSet for the SAME reason as evs_false_cache
   // above, NOT a function-local `static thread_local`: MinGW tears a
@@ -214,6 +279,19 @@ struct DataSet {
   // same per-thread, cross-call capacity persistence the thread_local had.
   // `mutable` because the scorer takes `const DataSet&`; single-writer per copy.
   mutable std::vector<int> char_steps_scratch;
+
+  // True when NO scoring kernel can possibly distinguish between two
+  // topologies, i.e. it is safe for a search kernel to bail out entirely.
+  // total_words == 0 alone is NOT sufficient: HSJ's hierarchy a(n)/p(n) DP
+  // (hierarchy_blocks) and XFORM's Sankoff term (sankoff_n_chars) remain
+  // topology-dependent even after every Fitch block has been simplified away
+  // (T-373) -- .NonHierarchyWeights() zero-weights hierarchy-only patterns,
+  // and build_dataset() drops weight-0 patterns, so an all-hierarchy or
+  // all-Sankoff dataset reaches total_words == 0 while its objective still
+  // varies with topology.
+  bool topology_independent() const {
+    return total_words == 0 && hierarchy_blocks.empty() && sankoff_n_chars == 0;
+  }
 };
 
 // Build a DataSet from R-side data.

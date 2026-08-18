@@ -36,6 +36,16 @@ struct FuseResult {
 FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
                      const TreePool& pool, const FuseParams& params);
 
+// Re-root `tree` so that tip 0 is a child of the root, leaving the topology
+// otherwise untouched; a no-op when it already is.  Parsimony scores are
+// rooting-invariant, so this is safe to apply to a scored tree.
+//
+// Fuse needs it to compare differently-rooted trees; the constrained Wagner
+// build needs it because build_constraint() canonicalises split masks with tip 0
+// outside, so this rooting is the one in which map_constraint_nodes() can find
+// every split the tree displays.
+void reroot_at_tip0(TreeState& tree);
+
 } // namespace ts
 
 #endif // TS_FUSE_H

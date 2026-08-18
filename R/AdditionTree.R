@@ -6,12 +6,40 @@
 #' @inheritParams MaximizeParsimony
 #' @param sequence Character or numeric vector listing sequence in which to add
 #' taxa. Randomized if not provided.
+#' @param concavity Determines the degree to which extra steps beyond the first
+#' are penalized.  Specify a numeric value to use implied weighting
+#' \insertCite{Goloboff1993}{TreeSearch}; `concavity` specifies _k_ in
+#'  _k_ / _e_ + _k_. A value of 10 is recommended;
+#' TNT sets a default of 3, but this is too low in some circumstances
+#' \insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+#' Better still explore the sensitivity of results under a range of
+#' concavity values, e.g. `k = 2 ^ (1:7)`.
+#' Specify `Inf` to weight each additional step equally,
+#' (which underperforms step weighting approaches
+#' \insertCite{Goloboff2008,Goloboff2018,Goloboff2019,Smith2019}{TreeSearch}).
+#' Specify `"profile"` to employ an approximation of profile parsimony
+#' \insertCite{Faith2001}{TreeSearch}.
+#' Note that a numeric `concavity` value affects only the reported
+#' `$score` of the tree returned by `AdditionTree()`: the tree topology
+#' has been observed to be identical whatever numeric value of `concavity`
+#' is specified (including `Inf`, i.e. equal weights).
+#' Specifying `concavity = "profile"` _does_ affect the returned topology,
+#' because the underlying character data are recoded before tree
+#' construction begins.
 #' @examples
 #' data("inapplicable.phyData", package = "TreeSearch")
+#' # concavity = 10 affects the reported $score, but (empirically) not the
+#' # tree topology returned.
 #' AdditionTree(inapplicable.phyData[["Longrich2010"]], concavity = 10)
 #' @template MRS
-#' @return `AdditionTree()` returns a tree of class `phylo`, rooted on
-#' `sequence[1]`.
+#' @return `AdditionTree()` returns a tree of class `phylo`. The tree carries a
+#' degree-two root, but its root position is an arbitrary by-product of the
+#' order in which taxa were added and is not necessarily `sequence[1]`;
+#' parsimony scores are unaffected by rooting, so root the result yourself with
+#' [`TreeTools::RootTree()`](https://ms609.github.io/TreeTools/reference/RootTree)
+#' if the position of the root matters to you. With fewer than four
+#' taxa there is nothing to optimise, and a pectinate tree of the dataset's taxa
+#' is returned without consulting `sequence` or `constraint`.
 #' @importFrom TreeTools PectinateTree Renumber
 #' @family tree generation functions
 #' @seealso 
@@ -43,7 +71,7 @@ AdditionTree <- function(dataset, concavity = Inf, constraint, sequence) {
     # Reject non-positive, fractional, out-of-range or duplicated indices before
     # subsetting: R's `taxa[i]` would otherwise silently drop (`i <= 0`),
     # truncate (fractional) or recycle, yielding a tree that ignores the
-    # requested order rather than erroring.
+    # requested order rather than throwing an error.
     if (anyNA(sequence) || any(sequence != round(sequence)) ||
         any(sequence < 1L) || any(sequence > nTaxa) ||
         anyDuplicated(sequence)) {

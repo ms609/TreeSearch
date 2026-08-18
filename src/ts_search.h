@@ -9,6 +9,7 @@
 
 #include "ts_data.h"
 #include "ts_tree.h"
+#include "ts_constraint.h"
 #include <functional>
 
 namespace ts {
@@ -34,8 +35,13 @@ SearchResult nni_search(TreeState& tree, const DataSet& ds, int maxHits,
 // each destination edge. First-improvement with random clip order.
 // If `check_timeout` is non-null, it is polled periodically and the search
 // returns early if it returns true.
+// If `cd` is non-null and active (T-390), a move is accepted only if the
+// regrafted tree still displays every constraint split; a move that would
+// violate one is rejected exactly as if it had not improved the score, so
+// SPR can never hand TBR a constraint-violating tree that TBR cannot repair.
 SearchResult spr_search(TreeState& tree, const DataSet& ds, int maxHits,
-                        std::function<bool()> check_timeout = nullptr);
+                        std::function<bool()> check_timeout = nullptr,
+                        ConstraintData* cd = nullptr);
 
 } // namespace ts
 

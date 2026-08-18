@@ -209,6 +209,22 @@ test_that("Profile scoring is reported correctly", {
                tolerance = 1e-3)
 })
 
+test_that("TreeLength() scores an uninformative character under profile parsimony", {
+  # State `1` is a singleton, so `maxInformative < 2` and
+  # `PrepareDataProfile()` returns a zero-character phyDat (T-372): the
+  # `multiPhylo`/`TreeLength.list()` path previously errored converting
+  # `info.amounts` to a C++ `NumericMatrix` ("Not a matrix."), though the
+  # single-tree path already returned 0 for the same input.
+  library("TreeTools", quietly = TRUE)
+  char <- MatrixToPhyDat(matrix(c("0", "0", "0", "0", "1"), ncol = 1,
+                                dimnames = list(paste0("t", 1:5), NULL)))
+  tree <- PectinateTree(names(char))
+  trees <- RootTree(c(tree, tree), 1)
+
+  expect_equal(TreeLength(tree, char, "profile"), 0)
+  expect_equal(TreeLength(trees, char, "profile"), c(0, 0))
+})
+
 test_that("CharacterLength() fails gracefully", {
   expect_error(CharacterLength(as.phylo(1, 8), 1))
   

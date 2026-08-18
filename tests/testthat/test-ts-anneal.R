@@ -105,8 +105,7 @@ test_that("SearchControl defaults disable annealing", {
 # dominates on MPT-reach at large-tree scale.  So `large` now inherits
 # thorough (drift ON, annealing OFF), while remaining the auto pick for >=120t.
 test_that("Large preset is auto-selected for big trees and inherits thorough", {
-  presets <- TreeSearch:::.AutoStrategy(200L, 200L)
-  expect_equal(presets, "large")
+  expect_equal(TreeSearch:::.AutoRung(200L, 200L), 4L)   # the `large` rung
   p <- TreeSearch:::.StrategyPresets()
   expect_identical(p[["large"]], p[["thorough"]])
   expect_equal(p[["large"]]$annealCycles, 0L)

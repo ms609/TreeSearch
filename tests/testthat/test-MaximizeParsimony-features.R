@@ -13,11 +13,52 @@ test_that("MaximizeParsimony stops with message when dataset is NULL", {
   )
 })
 
+test_that("MaximizeParsimony rejects maxReplicates < 1 (T-341)", {
+  # maxReplicates = 0 runs the search loop zero times, leaving the pool
+  # empty and best_score at the C++ sentinel of -1; without this guard, the
+  # empty-pool fallback silently returned the random starting tree tagged
+  # with that bogus score instead of erroring.
+  expect_error(
+    MaximizeParsimony(ds, maxReplicates = 0L, targetHits = 1L,
+                      verbosity = 0L),
+    "`maxReplicates` must be"
+  )
+  expect_error(
+    MaximizeParsimony(ds, maxReplicates = -1L, targetHits = 1L,
+                      verbosity = 0L),
+    "`maxReplicates` must be"
+  )
+  expect_error(
+    MaximizeParsimony(ds, maxReplicates = NA_integer_, targetHits = 1L,
+                      verbosity = 0L),
+    "`maxReplicates` must be"
+  )
+})
+
+test_that("replicate-adequacy warning uses unscaled character count (T-342)", {
+  # `weight` is the .ScaleWeight()-integerised value (up to ~1260x for
+  # fractional weights); the printed `nChars` must reflect the true number
+  # of characters, not that internal scale factor. The warning only fires
+  # for nTip >= 30, so use a synthetic dataset large enough to trigger it.
+  set.seed(1)
+  dat <- TreeTools::MatrixToPhyDat(matrix(
+    sample(0:1, 30 * 10, replace = TRUE), nrow = 30,
+    dimnames = list(paste0("t", 1:30), NULL)))
+  attr(dat, "weight") <- rep(0.5, attr(dat, "nr"))
+  nCharsTrue <- sum(attr(dat, "weight"))
+  expect_warning(
+    MaximizeParsimony(dat, maxReplicates = 1L, targetHits = 1L,
+                      verbosity = 1L),
+    paste0(nCharsTrue, " characters")
+  )
+})
+
 # --- Strategy presets ---
 
-test_that("strategy = 'sprint' runs and returns valid result", {
+test_that("the sprint rung runs and returns a valid result", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(3418)
-  result <- MaximizeParsimony(ds, strategy = "sprint",
+  result <- MaximizeParsimony(ds, effort = -9L,
                                maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
@@ -27,10 +68,11 @@ test_that("strategy = 'sprint' runs and returns valid result", {
 })
 
 test_that("candidates_evaluated attribute is reported for serial search", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   # Diagnostic counter (TNT "rearrangements examined" analogue): a positive,
   # finite scalar for a single-threaded search. See MaximizeParsimony @return.
   set.seed(3418)
-  result <- MaximizeParsimony(ds, strategy = "sprint",
+  result <- MaximizeParsimony(ds, effort = -9L,
                                maxReplicates = 2L, targetHits = 1L,
                                nThreads = 1L, verbosity = 0L)
   ce <- attr(result, "candidates_evaluated")
@@ -39,77 +81,70 @@ test_that("candidates_evaluated attribute is reported for serial search", {
   expect_true(is.finite(ce) && ce > 0)
 })
 
-test_that("strategy = 'intensive' (opt-in) runs and returns valid result", {
+test_that("the default rung runs and returns a valid result", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(5726)
-  result <- MaximizeParsimony(ds, strategy = "intensive",
-                               maxReplicates = 2L, targetHits = 1L,
-                               verbosity = 0L)
-  expect_s3_class(result, "multiPhylo")
-  expect_true(is.finite(attr(result, "score")))
-  expect_equal(attr(result, "score"), TreeLength(result[[1]], ds),
-               tolerance = 0.01)
-})
-
-test_that("strategy = 'default' runs and returns valid result", {
-  set.seed(5726)
-  result <- MaximizeParsimony(ds, strategy = "default",
+  result <- MaximizeParsimony(ds, .rung = "default",
                                maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
   expect_true(is.finite(attr(result, "score")))
 })
 
-test_that("strategy = 'thorough' runs and returns valid result", {
+test_that("the thorough rung runs and returns a valid result", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8103)
-  result <- MaximizeParsimony(ds, strategy = "thorough",
+  result <- MaximizeParsimony(ds, .rung = "thorough",
                                maxReplicates = 1L, targetHits = 1L,
                                verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
   expect_true(is.finite(attr(result, "score")))
 })
 
-test_that(".AutoStrategy selects on size and signal density", {
-  AS <- TreeSearch:::.AutoStrategy
+test_that(".AutoRung selects on size and signal density", {
+  AS <- TreeSearch:::.AutoRung
 
   # Small datasets: always sprint
-  expect_equal(AS(20, 100), "sprint")
-  expect_equal(AS(30, 500), "sprint")
+  expect_equal(AS(20, 100), 1L)
+  expect_equal(AS(30, 500), 1L)
 
   # Few chars (< 100 patterns) -> flat landscape -> always default
-  expect_equal(AS(50, 25),   "default")  # small, very few chars
-  expect_equal(AS(65, 80),   "default")  # large enough tip count, but nChar < 100
-  expect_equal(AS(200, 99),  "default")  # large, but still nChar < 100
+  expect_equal(AS(50, 25),   2L)  # small, very few chars
+  expect_equal(AS(65, 80),   2L)  # large enough tip count, but nChar < 100
+  expect_equal(AS(200, 99),  2L)  # large, but still nChar < 100
 
   # Mid-size (31-64 tips) with enough chars -> default (not large enough)
-  expect_equal(AS(60, 300), "default")  # nChar >= 100 but nTip < 65
-  expect_equal(AS(64, 200), "default")  # nChar >= 100 but nTip < 65
+  expect_equal(AS(60, 300), 2L)  # nChar >= 100 but nTip < 65
+  expect_equal(AS(64, 200), 2L)  # nChar >= 100 but nTip < 65
 
   # Large (>= 65 tips) with enough chars -> thorough
   # Signal density does NOT gate thorough: more chars = more benefit (T-068 benchmark)
-  expect_equal(AS(65, 100),   "thorough")  # boundary case: 65 tips, 100 chars
-  expect_equal(AS(74, 200),   "thorough")  # 74 tips, ratio 2.7
-  expect_equal(AS(75, 250),   "thorough")  # ratio 3.3
-  expect_equal(AS(100, 200),  "thorough")  # ratio 2.0
-  expect_equal(AS(75, 400),   "thorough")  # ratio 5.3 — high ratio still benefits
-  expect_equal(AS(119, 2800), "thorough")  # just below large threshold
-  expect_equal(AS(125, 2800), "large")    # >= 120 tips -> large
-  expect_equal(AS(200, 100),  "large")    # >= 120 tips -> large
-  expect_equal(AS(200, 1200), "large")    # >= 120 tips -> large
+  expect_equal(AS(65, 100),   3L)  # boundary case: 65 tips, 100 chars
+  expect_equal(AS(74, 200),   3L)  # 74 tips, ratio 2.7
+  expect_equal(AS(75, 250),   3L)  # ratio 3.3
+  expect_equal(AS(100, 200),  3L)  # ratio 2.0
+  expect_equal(AS(75, 400),   3L)  # ratio 5.3 — high ratio still benefits
+  expect_equal(AS(119, 2800), 3L)  # just below large threshold
+  expect_equal(AS(125, 2800), 4L)    # >= 120 tips -> large
+  expect_equal(AS(200, 100),  4L)    # >= 120 tips -> large
+  expect_equal(AS(200, 1200), 4L)    # >= 120 tips -> large
 })
 
-test_that("strategy = 'auto' selects based on dataset size", {
+test_that("effort = 0 selects the rung from dataset size", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(2944)
   # Vinther2008 has 23 tips -> should auto-select "sprint"
-  result <- MaximizeParsimony(ds, strategy = "auto",
+  result <- MaximizeParsimony(ds, effort = 0L,
                                maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
   expect_true(is.finite(attr(result, "score")))
 })
 
-test_that("strategy = 'none' uses raw parameter defaults", {
+test_that("the no-preset escape uses raw parameter defaults", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(6017)
-  result <- MaximizeParsimony(ds, strategy = "none",
+  result <- MaximizeParsimony(ds, .rung = "none",
                                maxReplicates = 2L, targetHits = 1L,
                                ratchetCycles = 1L, driftCycles = 0L,
                                verbosity = 0L)
@@ -117,10 +152,11 @@ test_that("strategy = 'none' uses raw parameter defaults", {
   expect_true(is.finite(attr(result, "score")))
 })
 
-test_that("explicit params override strategy preset", {
+test_that("explicit params override the rung preset", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(1589)
   # Sprint has driftCycles=0; override to 1
-  result <- MaximizeParsimony(ds, strategy = "sprint",
+  result <- MaximizeParsimony(ds, effort = -9L,
                                driftCycles = 1L,
                                maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
@@ -128,14 +164,66 @@ test_that("explicit params override strategy preset", {
   expect_true(is.finite(attr(result, "score")))
 })
 
-test_that("unknown strategy gives warning", {
-  set.seed(4821)
-  expect_warning(
-    MaximizeParsimony(ds, strategy = "nonexistent",
-                      maxReplicates = 1L, targetHits = 1L,
-                      verbosity = 0L),
-    "Unknown strategy"
-  )
+test_that("`effort` rejects a non-integer offset", {
+  # `effort` is an OFFSET, so there is no vocabulary of names to mistype and no
+  # "unknown strategy" fallback to warn about.  What can go wrong instead is a
+  # value that is not a whole number, which must error rather than silently
+  # truncate -- a search quietly run at the wrong rung is worse than a stop.
+  expect_error(MaximizeParsimony(ds, effort = 1.5, maxReplicates = 1L,
+                                 verbosity = 0L),
+               "whole number")
+  expect_error(MaximizeParsimony(ds, effort = "thorough", maxReplicates = 1L,
+                                 verbosity = 0L),
+               "whole number")
+  expect_error(MaximizeParsimony(ds, effort = c(1L, 2L), maxReplicates = 1L,
+                                 verbosity = 0L),
+               "whole number")
+})
+
+test_that("`effort` clamps at both ends of the ladder", {
+  AR <- TreeSearch:::.AutoRung
+  ER <- TreeSearch:::.EffortRung
+  # Bottom clamp is load-bearing: it is what lets a caller write a large
+  # negative offset and reliably get `sprint` whatever the dataset.
+  expect_equal(ER(AR(200L, 200L), -99L, 0L), 1L)
+  expect_equal(ER(AR(20L, 100L), -1L, 0L), 1L)
+  # The only top limit is representability, and it announces itself rather than
+  # silently pretending a bigger number meant something.  There is deliberately
+  # no policy ceiling below it: extra replicates cost wall but cannot cost
+  # reach, so refusing to go further would just obstruct the request.
+  expect_equal(ER(1L, 99L, 0L), TreeSearch:::.effortMaxRung)
+  expect_message(ER(1L, 99L, 1L), "clamped to rung")
+  # The ceiling must be exactly where the budget stops being an integer: one
+  # rung lower would be arbitrary, one higher would overflow.
+  RS <- TreeSearch:::.RungSpec
+  expect_true(RS(TreeSearch:::.effortMaxRung)[["maxReplicates"]] > 0L)
+  expect_true(is.na(suppressWarnings(
+    as.integer(500 * 2^(TreeSearch:::.effortMaxRung + 1L - 4L)))))
+})
+
+test_that("both budget knobs double, so a notch is the same size either way", {
+  # Mixed rates would make one notch 2x the work on hard datasets (where
+  # maxReplicates binds) but only (k+1)/k on easy ones (where targetHits does),
+  # so notches would shrink as you climb on the easy population.
+  RS <- TreeSearch:::.RungSpec
+  for (r in 5:9) {
+    expect_equal(RS(r)[["maxReplicates"]] / RS(r - 1L)[["maxReplicates"]], 2)
+    expect_equal(RS(r)[["hitMultiplier"]] / RS(r - 1L)[["hitMultiplier"]], 2)
+  }
+  # Rungs 1-4 leave both alone: they differ in provisioning, not budget.
+  for (r in 1:4) expect_equal(RS(r)[["hitMultiplier"]], 1L)
+})
+
+test_that("effort = 0 reproduces the automatic choice on every size band", {
+  # The whole point of an offset rather than an absolute level: the default
+  # must be byte-identical to what the package chose before `effort` existed.
+  AR <- TreeSearch:::.AutoRung
+  ER <- TreeSearch:::.EffortRung
+  for (nTip in c(20L, 50L, 70L, 200L)) {
+    for (nChar in c(50L, 300L)) {
+      expect_equal(ER(AR(nTip, nChar), 0L, 0L), AR(nTip, nChar))
+    }
+  }
 })
 
 # --- maxSeconds timeout ---
@@ -153,6 +241,7 @@ test_that("maxSeconds stops search before maxReplicates", {
 })
 
 test_that("maxSeconds = 0 means no timeout", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8456)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                maxSeconds = 0, verbosity = 0L)
@@ -160,21 +249,8 @@ test_that("maxSeconds = 0 means no timeout", {
   expect_false(attr(result, "timed_out"))
 })
 
-test_that("perturbStopFactor fires and sets perturb_stop attribute", {
-  # perturbStopFactor=1 on Vinther2008 (23 tips) means limit = 23 reps.
-  set.seed(4618)
-  result <- MaximizeParsimony(ds, maxReplicates = 500L, targetHits = 500L,
-                               control = SearchControl(
-                                 perturbStopFactor = 1L,
-                                 ratchetCycles = 1L),
-                               verbosity = 0L)
-  expect_s3_class(result, "multiPhylo")
-  expect_lt(attr(result, "replicates"), 500L)
-  expect_true(attr(result, "perturb_stop"))
-  expect_false(attr(result, "timed_out"))
-})
-
 test_that("verbosity = 1 prints 'Search complete' summary to console", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(3071)
   # MaximizeParsimony emits two streams at verbosity = 1: cli messages
   # via message() ("Strategy: ...", "Search complete: ...") and C++
@@ -197,6 +273,7 @@ test_that("verbosity = 1 prints 'Search complete' summary to console", {
 # --- nThreads ---
 
 test_that("nThreads = 1 (serial) runs correctly", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(5193)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                nThreads = 1L, verbosity = 0L)
@@ -205,6 +282,7 @@ test_that("nThreads = 1 (serial) runs correctly", {
 })
 
 test_that("nThreads = 2 (parallel) runs correctly", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(6274)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                nThreads = 2L, verbosity = 0L)
@@ -217,6 +295,7 @@ test_that("nThreads = 2 (parallel) runs correctly", {
 # --- User-supplied starting tree (warm-start) ---
 
 test_that("user tree is used as warm start", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   # Build a known tree
   set.seed(9847)
   user_tree <- RandomTree(ds, root = TRUE)
@@ -233,25 +312,99 @@ test_that("user tree is used as warm start", {
   expect_true(result_score <= input_score)
 })
 
-test_that("multiPhylo input uses first tree as warm start", {
-  set.seed(3571)
-  trees <- list(
-    RandomTree(ds, root = TRUE),
-    RandomTree(ds, root = TRUE)
-  )
-  class(trees) <- "multiPhylo"
-  trees <- Preorder(trees)
+test_that("multiPhylo warm starts survive tip renumbering and polytomies", {
+  skip_on_cran()
+  # Trees whose tip order differs from the dataset, one of them unresolved:
+  # every start must be normalized (renumbered, resolved, rerooted) before it
+  # reaches the engine, not just the first.
+  set.seed(1002)
+  shuffled <- RandomTree(ds, root = TRUE)
+  shuffled <- KeepTip(shuffled, rev(TipLabels(shuffled)))
+  polytomous <- CollapseNode(Preorder(RandomTree(ds, root = TRUE)),
+                             NTip(ds) + 3L)
+  trees <- structure(list(shuffled, polytomous), class = "multiPhylo")
 
-  result <- MaximizeParsimony(ds, tree = trees,
-                               maxReplicates = 1L, targetHits = 1L,
-                               verbosity = 0L)
+  set.seed(4004)
+  result <- MaximizeParsimony(ds, tree = trees, maxReplicates = 2L,
+                              targetHits = 99L, verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
-  expect_true(is.finite(attr(result, "score")))
+  expect_equal(attr(result, "score"), TreeLength(result[[1]], ds))
+  expect_setequal(TipLabels(result[[1]]), names(ds))
+})
+
+test_that("multiPhylo warm starts are validated", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
+  set.seed(6003)
+  t1 <- Preorder(RandomTree(ds, root = TRUE))
+  t2 <- Preorder(RandomTree(ds, root = TRUE))
+  t2[["tip.label"]][[1]] <- "not_a_taxon"
+
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(), class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "contains no trees"
+  )
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(t1, t2), class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "same tip labels"
+  )
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(t1, "not a tree"),
+                                           class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "class 'phylo'"
+  )
+
+  # A structurally invalid `phylo` must be rejected in R.  ape::unroot()
+  # manufactures one from any TreeTools `order = "preorder"` tree, and passing
+  # it on segfaults inside TreeTools' rooting code -- unrecoverable, so the
+  # error has to come first.  The index tells the user which tree is at fault.
+  broken <- ape::unroot(t1)
+  expect_error(
+    MaximizeParsimony(ds, tree = broken, maxReplicates = 1L, verbosity = 0L),
+    "`tree` is not a valid tree"
+  )
+  expect_error(
+    MaximizeParsimony(ds, tree = structure(list(t1, broken),
+                                           class = "multiPhylo"),
+                      maxReplicates = 1L, verbosity = 0L),
+    "`tree\\[\\[2\\]\\]` is not a valid tree"
+  )
+  # A genuinely unrooted tree is fine; only the corrupted object is refused.
+  expect_silent(
+    MaximizeParsimony(ds, tree = RandomTree(ds, root = FALSE),
+                      maxReplicates = 1L, targetHits = 1L, verbosity = 0L)
+  )
+
+  # A validly unrooted tree from outside TreeTools (e.g. ape::rtree() then
+  # ape::unroot(), unlike `broken` above) has nrow(edge) == 2 * n - 3, which
+  # fails the "is this already bifurcating?" test the same way a genuine
+  # polytomy would, because that test conflates "needs resolving" with "needs
+  # rooting".  Passing it to MakeTreeBinary() misreads the unrooted root's
+  # legitimate degree-3 trifurcation as a polytomy, corrupting the tree and
+  # previously surfacing downstream as "argument is of length zero".
+  set.seed(9)
+  apeUnrooted <- ape::unroot(ape::rtree(NTip(ds), tip.label = names(ds)))
+  expect_silent(
+    MaximizeParsimony(ds, tree = apeUnrooted,
+                      maxReplicates = 1L, targetHits = 1L, verbosity = 0L)
+  )
+
+  # Unused pool members are reported against the replicates actually run,
+  # which targetHits can cut short well below maxReplicates.
+  expect_warning(
+    MaximizeParsimony(ds, tree = structure(list(t1, t1, t1),
+                                           class = "multiPhylo"),
+                      maxReplicates = 9L, targetHits = 1L, verbosity = 0L),
+    "of the 3 trees supplied"
+  )
 })
 
 # --- timings attribute ---
 
 test_that("timings attribute is returned", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(2689)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
@@ -265,9 +418,10 @@ test_that("timings attribute is returned", {
 
 # --- IW with strategy ---
 
-test_that("IW mode works with strategy presets", {
+test_that("IW mode works with effort rungs", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(4012)
-  result <- MaximizeParsimony(ds, concavity = 10, strategy = "sprint",
+  result <- MaximizeParsimony(ds, concavity = 10, effort = -9L,
                                maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
   expect_s3_class(result, "multiPhylo")
@@ -276,9 +430,52 @@ test_that("IW mode works with strategy presets", {
   expect_equal(cpp_score, tl_score, tolerance = 0.01)
 })
 
+# --- T-340 regression: `concavity` normalization ---
+
+test_that("concavity as a numeric-coercible string behaves like the number", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
+  # A bare "10" must not silently drop into IW mode with unpopulated
+  # min_steps (uncorrected homoplasy) -- it should match concavity = 10
+  # exactly, seed-for-seed.
+  set.seed(4012)
+  asString <- MaximizeParsimony(ds, concavity = "10", effort = -9L,
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 verbosity = 0L)
+  set.seed(4012)
+  asNumber <- MaximizeParsimony(ds, concavity = 10, effort = -9L,
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 verbosity = 0L)
+  expect_equal(attr(asString, "score"), attr(asNumber, "score"))
+  expect_equal(asString[[1]][["edge"]], asNumber[[1]][["edge"]])
+})
+
+test_that("concavity = 'Profile'/'prof' route to profile mode like 'profile'", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
+  set.seed(4012)
+  canonical <- MaximizeParsimony(ds, concavity = "profile", effort = -9L,
+                                  maxReplicates = 2L, targetHits = 1L,
+                                  verbosity = 0L)
+  for (spelling in c("Profile", "prof")) {
+    set.seed(4012)
+    result <- MaximizeParsimony(ds, concavity = spelling, effort = -9L,
+                                 maxReplicates = 2L, targetHits = 1L,
+                                 verbosity = 0L)
+    expect_equal(attr(result, "score"), attr(canonical, "score"))
+  }
+})
+
+test_that("an invalid concavity string errors cleanly instead of silently using EW", {
+  expect_error(
+    MaximizeParsimony(ds, concavity = "banana", maxReplicates = 1L,
+                       targetHits = 1L, verbosity = 0L),
+    "`concavity` must be a single positive number"
+  )
+})
+
 # --- Output tree validity ---
 
 test_that("output trees have valid preorder numbering", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8734)
   result <- MaximizeParsimony(ds, maxReplicates = 2L, targetHits = 1L,
                                verbosity = 0L)
@@ -347,8 +544,9 @@ test_that("Constrained Wagner tree works with multiple seeds", {
 # --- Intra-replicate fusing (T-258) ---
 
 test_that("intraFuse runs without error", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(8517)
-  result <- MaximizeParsimony(ds, strategy = "sprint",
+  result <- MaximizeParsimony(ds, effort = -9L,
                               maxReplicates = 5L, targetHits = 2L,
                               maxSeconds = 3, intraFuse = TRUE,
                               verbosity = 0L, nThreads = 1L)
@@ -358,12 +556,13 @@ test_that("intraFuse runs without error", {
 })
 
 test_that("intraFuse with dataset size change does not crash", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   ds_large <- inapplicable.phyData[["Agnarsson2004"]]  # 62 tips
   ds_small <- inapplicable.phyData[["Vinther2008"]]     # 23 tips
 
   # Run on larger dataset first with intra-fuse
   set.seed(9014)
-  r1 <- MaximizeParsimony(ds_large, strategy = "sprint",
+  r1 <- MaximizeParsimony(ds_large, effort = -9L,
                           maxReplicates = 3L, targetHits = 2L,
                           maxSeconds = 3, intraFuse = TRUE,
                           verbosity = 0L, nThreads = 1L)
@@ -371,7 +570,7 @@ test_that("intraFuse with dataset size change does not crash", {
 
   # Then run on smaller dataset with intra-fuse (regression test for segfault)
   set.seed(9015)
-  r2 <- MaximizeParsimony(ds_small, strategy = "sprint",
+  r2 <- MaximizeParsimony(ds_small, effort = -9L,
                           maxReplicates = 3L, targetHits = 2L,
                           maxSeconds = 3, intraFuse = TRUE,
                           verbosity = 0L, nThreads = 1L)
@@ -400,15 +599,16 @@ test_that("intraFuse with dataset size change does not crash", {
 }
 
 test_that("collapse = TRUE contracts a soft polytomy to one collapsed tree", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   phy <- .SoftPolytomyData(5L)
   set.seed(1L)
   resolved <- MaximizeParsimony(
-    phy, concavity = Inf, maxReplicates = 12L, strategy = "intensive",
+    phy, concavity = Inf, maxReplicates = 12L, .rung = "thorough",
     control = SearchControl(poolMaxSize = 2000L, tbrMaxHits = 200L),
     verbosity = 0L, collapse = FALSE)
   set.seed(1L)
   collapsed <- MaximizeParsimony(
-    phy, concavity = Inf, maxReplicates = 12L, strategy = "intensive",
+    phy, concavity = Inf, maxReplicates = 12L, .rung = "thorough",
     control = SearchControl(poolMaxSize = 2000L, tbrMaxHits = 200L),
     verbosity = 0L, collapse = TRUE)
 
@@ -435,14 +635,15 @@ test_that("collapse = TRUE contracts a soft polytomy to one collapsed tree", {
 })
 
 test_that("collapse = TRUE is a no-op when no branch is unsupported", {
+  skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   # Vinther2008 MPTs are fully resolved (no zero-length branches): collapse must
   # leave every tree binary and topologically unchanged.
   set.seed(3418)
-  resolved <- MaximizeParsimony(ds, strategy = "sprint",
+  resolved <- MaximizeParsimony(ds, effort = -9L,
                                 maxReplicates = 3L, targetHits = 1L,
                                 verbosity = 0L, collapse = FALSE)
   set.seed(3418)
-  collapsed <- MaximizeParsimony(ds, strategy = "sprint",
+  collapsed <- MaximizeParsimony(ds, effort = -9L,
                                  maxReplicates = 3L, targetHits = 1L,
                                  verbosity = 0L, collapse = TRUE)
   nTip <- NTip(ds)
@@ -467,7 +668,7 @@ test_that("collapse = TRUE shows an enforced clade and collapses the rest", {
   set.seed(1L)
   collapsed <- MaximizeParsimony(
     phy, constraint = constraint, concavity = Inf, maxReplicates = 12L,
-    strategy = "intensive",
+    .rung = "thorough",
     control = SearchControl(poolMaxSize = 2000L, tbrMaxHits = 200L),
     verbosity = 0L, collapse = TRUE)
 

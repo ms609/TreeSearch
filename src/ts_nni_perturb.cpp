@@ -66,6 +66,9 @@ NNIPerturbResult nni_perturb_search(
   search_params.max_accepted_changes = 0;
   search_params.max_hits = params.max_hits;
   search_params.tabu_size = params.tabu_size;
+  // Perturb-and-reconverge, same argument as the ratchet: every cycle's tree is
+  // either re-perturbed or reverted, so none of them is a reported result.
+  search_params.certify_unrooted = false;
 
   TBRResult initial = tbr_search(tree, ds, search_params, cd,
                                   nullptr, nullptr, check_timeout);
@@ -120,6 +123,15 @@ NNIPerturbResult nni_perturb_search(
       for (int _s = 0; _s < cd->n_splits; ++_s) {
         if (cd->constraint_node[_s] < 0) { accept = false; break; }
       }
+    }
+    // Negative (converse/Bremer) constraint: the blind NNI perturbation can
+    // rebuild a forbidden clade that the neg-guarded TBR could not climb back
+    // out of.  Reject such a tree even if it scores better, reverting to the
+    // (clade-free) best_tree -- otherwise the replicate can strand on the clade,
+    // needlessly right-censoring its Bremer value.  Soundness is guaranteed by
+    // the pool backstop regardless; this preserves reach.
+    if (accept && cd && cd->neg_active && displays_forbidden_clade(tree, *cd)) {
+      accept = false;
     }
 
     if (accept) {

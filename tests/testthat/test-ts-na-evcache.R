@@ -71,6 +71,29 @@ test_that("exact_verify cache key is sensitive to every weighting-regime field",
 })
 
 
+test_that("exact_verify cache key separates scoring regimes, not just weights", {
+  # The three flags above all vary a MASK or a FREQUENCY.  The scoring regime
+  # itself (concavity / scoring_mode) is a fourth axis they cannot detect: two
+  # concavities disagree about which topologies are optima while leaving every
+  # mask and pattern_freq identical.  Anything that rescores one DataSet under two
+  # regimes -- a concavity sweep, or a phase that swaps in a cheaper surrogate
+  # scorer -- would then be served a FALSE ("genuine optimum") verdict recorded
+  # under the other, suppressing a real improving move with no visible symptom
+  # beyond a slightly worse tree.
+  #
+  # This assertion is NOT vacuous: before concavity was mixed into
+  # weight_fingerprint, k=10 and k=40 both hashed to 2132fc2543dc37a9.
+  ds   <- make_na_ds()
+  edge <- as.phylo(42, 8)$edge
+
+  k10 <- ev_key(edge, ds, concavity = 10)
+  expect_identical(k10, ev_key(edge, ds, concavity = 10))   # deterministic
+  expect_false(identical(k10, ev_key(edge, ds, concavity = 40)))
+  # ... and equal weights must differ from implied weights.
+  expect_false(identical(k10, ev_key(edge, ds, concavity = -1)))
+})
+
+
 test_that("exact_verify cache key separates topologies and datasets", {
   ds   <- make_na_ds()
   edge <- as.phylo(42, 8)$edge
@@ -106,11 +129,7 @@ test_that("TS_EV_AUDIT re-verifies cache hits without false alarms on a clean ca
   ds   <- make_na_ds()
   edge <- as.phylo(42, 8)$edge
 
-  old <- Sys.getenv("TS_EV_AUDIT", unset = NA)
-  Sys.setenv(TS_EV_AUDIT = "1")
-  on.exit({
-    if (is.na(old)) Sys.unsetenv("TS_EV_AUDIT") else Sys.setenv(TS_EV_AUDIT = old)
-  }, add = TRUE)
+  withr::local_envvar(TS_EV_AUDIT = "1")
 
   r1 <- TreeSearch:::ts_tbr_diagnostics(
     edge, ds$contrast, ds$tip_data, ds$weight, ds$levels,

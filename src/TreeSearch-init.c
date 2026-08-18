@@ -50,7 +50,7 @@ extern SEXP _TreeSearch_ts_simplify_diag(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin(SEXP, SEXP);
 extern SEXP _TreeSearch_MaddisonSlatkin_clear_cache();
 extern SEXP _TreeSearch_ts_hsj_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_sankoff_test(SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_sankoff_test(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_mc_fitch_scores(SEXP, SEXP);
 extern SEXP _TreeSearch_ts_wagner_bias_bench(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 /* ts_stochastic_tbr and ts_parallel_temper removed — on feature/parallel-temper */
@@ -104,7 +104,7 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_MaddisonSlatkin", (DL_FUNC) &_TreeSearch_MaddisonSlatkin, 2},
   {"_TreeSearch_MaddisonSlatkin_clear_cache", (DL_FUNC) &_TreeSearch_MaddisonSlatkin_clear_cache, 0},
   {"_TreeSearch_ts_hsj_score", (DL_FUNC) &_TreeSearch_ts_hsj_score, 9},
-  {"_TreeSearch_ts_sankoff_test", (DL_FUNC) &_TreeSearch_ts_sankoff_test, 5},
+  {"_TreeSearch_ts_sankoff_test", (DL_FUNC) &_TreeSearch_ts_sankoff_test, 7},
   {"_TreeSearch_ts_wagner_bias_bench", (DL_FUNC) &_TreeSearch_ts_wagner_bias_bench, 10},
   /* ts_stochastic_tbr (9) and ts_parallel_temper (10) removed */
 

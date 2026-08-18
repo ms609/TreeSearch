@@ -103,7 +103,7 @@ test_that("Strategy preset overrides SearchControl defaults", {
   set.seed(8472)
   # sprint preset sets driftCycles=0, ratchetCycles=3
   r1 <- MaximizeParsimony(
-    ds, strategy = "sprint",
+    ds, effort = -9L,
     maxReplicates = 2L, targetHits = 1L, verbosity = 0L
   )
   expect_s3_class(r1, "multiPhylo")
@@ -113,7 +113,7 @@ test_that("Explicit control overrides strategy preset", {
   set.seed(8472)
   # sprint preset sets ratchetCycles=3; override to 1
   r1 <- MaximizeParsimony(
-    ds, strategy = "sprint",
+    ds, effort = -9L,
     maxReplicates = 2L, targetHits = 1L, verbosity = 0L,
     control = SearchControl(ratchetCycles = 1L)
   )
@@ -167,6 +167,38 @@ test_that("stallEscalateFactor is validated and stored", {
                "stallEscalateFactor.*>= 1")
   expect_error(SearchControl(stallEscalateFactor = c(1, 2)),
                "stallEscalateFactor.*>= 1")
+})
+
+test_that("out-of-range fractional/size parameters are rejected (T-343)", {
+  # enumTimeFraction documented range is [0, 0.5]
+  expect_error(SearchControl(enumTimeFraction = 0.6),
+               "enumTimeFraction.*0 and 0.5")
+  expect_error(SearchControl(enumTimeFraction = -0.1),
+               "enumTimeFraction.*0 and 0.5")
+  expect_equal(SearchControl(enumTimeFraction = 0.5)$enumTimeFraction, 0.5)
+  expect_equal(SearchControl(enumTimeFraction = 0)$enumTimeFraction, 0)
+
+  # nniPerturbFraction and ratchetPerturbProb are documented as [0, 1]
+  expect_error(SearchControl(nniPerturbFraction = 1.1),
+               "nniPerturbFraction.*0 and 1")
+  expect_error(SearchControl(nniPerturbFraction = -0.1),
+               "nniPerturbFraction.*0 and 1")
+  expect_equal(SearchControl(nniPerturbFraction = 1)$nniPerturbFraction, 1)
+
+  expect_error(SearchControl(ratchetPerturbProb = 1.1),
+               "ratchetPerturbProb.*0 and 1")
+  expect_error(SearchControl(ratchetPerturbProb = -0.1),
+               "ratchetPerturbProb.*0 and 1")
+  expect_equal(SearchControl(ratchetPerturbProb = 1)$ratchetPerturbProb, 1)
+
+  # sectorMinSize must not exceed sectorMaxSize
+  expect_error(
+    SearchControl(sectorMinSize = 60L, sectorMaxSize = 50L),
+    "sectorMinSize.*sectorMaxSize"
+  )
+  expect_equal(
+    SearchControl(sectorMinSize = 10L, sectorMaxSize = 10L)$sectorMinSize, 10L
+  )
 })
 
 test_that("SearchControl() records which fields the caller set explicitly", {

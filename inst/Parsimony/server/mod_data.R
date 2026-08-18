@@ -196,9 +196,15 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
         }
       } else {
         rangedTrees <- r$allTrees[r$treeRange[1]:r$treeRange[2]]
+        # Seed before WideSample() so its Grasp/exact tiers' tie-breaks are
+        # reproducible from the logged set.seed() call (T-360).
+        thinningSeed <- sample.int(.Machine$integer.max, 1L)
+        set.seed(thinningSeed)
         thinnedTrees <- WideSample(rangedTrees, r$nTree)
 
         if (!is.null(r$allTrees) && !identical(r$trees, thinnedTrees)) {
+          r$thinningSeed <- thinningSeed
+          LogCode(paste0("set.seed(", thinningSeed, ")"))
           LogCode(paste0(
             "trees <- WideSample(allTrees[",
             r$treeRange[1], ":", r$treeRange[2],

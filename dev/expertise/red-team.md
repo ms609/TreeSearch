@@ -14,7 +14,7 @@
 
 Red-teaming reviews code for (i) correctness bugs and (ii) performance issues. Fix
 trivial issues inline (and note them in the round log); file non-trivial, *verified*
-findings in `dev/red-team/findings.md` (and the dispatcher queue `to-do.md`).
+findings as issues in `agent-issues/TreeSearch`, labelled `red-team` + `sev:*` + `area:N`.
 
 The goal is **issues fixed per token spent**, not issues found in the abstract. Depth
 over breadth: one focused review that finds a real bug beats a broad "all green" sweep.
