@@ -60,12 +60,6 @@ NULL
 #' so that 1 corresponds to the maximum possible mutual information for each
 #' split–character pair (`hBest`).
 #'
-#' The `chanceCorrect` argument specifies how the zero point is defined.
-#' If `FALSE`, zero corresponds to *zero* MI. If `TRUE`, the expected MI is
-#' approximated: this quick estimate is generally accurate for large trees
-#' (~200+ taxa), but does not account for correlation between splits.
-#' If `chanceCorrect` is a positive integer `n`, the expected MI is estimated
-#' by Monte Carlo sampling from `n` uniformly random trees.
 #'
 #' @param return Character specifying the summary to return. Options are:
 #'   - `"edge"`: average concordance of each tree split across all characters;
@@ -75,29 +69,21 @@ NULL
 #'   - `"all"`: a full array of MI components and normalized values for every
 #'     split–character pair.
 #'
-#' @param chanceCorrect Controls the zero point of the concordance scale by
-#' subtracting the value expected under a chance (fixed-marginal) null, in which
-#' each character's tokens are reassigned at random across the leaves while its
-#' state frequencies and the split sizes are held fixed.
-#'   - `FALSE`: no chance correction; the measure is scaled only by its maximum,
-#'     so 1 marks a perfect match and 0 the measure's own (typically positive)
-#'     floor.
-#'   - `TRUE`: subtract the expected value under the null, so that 0 marks random
-#'     expectation and negative values fall below it. `ClusteringConcordance()`
-#'     uses an analytical approximation to the expected mutual information (fast
-#'     and generally accurate for large trees, ~200+ taxa, but neglecting
-#'     correlation between splits); `QuartetConcordance()` uses the exact
-#'     hypergeometric expectation (for either `unit`).
-#'   - a positive integer `n`: estimate that expectation by Monte Carlo.
-#'     `ClusteringConcordance()` fits each character to `n` random trees (and
-#'     returns Monte-Carlo standard errors, more accurate for small trees where
-#'     the analytical approximation is biased); `QuartetConcordance()` averages
-#'     over `n` random reassignments of each character's tokens.
-#'
-#'   In all cases 1 corresponds to the maximum attainable value.  For
-#'   `QuartetConcordance()` (either `unit`), chance-corrected values are returned
-#'   unclamped (they may fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before
-#'   plotting with [QCol()] / [QACol()].
+#' @param chanceCorrect Sets the zero point of the scale; 1 always marks the
+#' maximum attainable value.
+#' If `FALSE`, zero corresponds to *zero* MI.
+#' If `TRUE`, zero is the value expected when each character's tokens are
+#' reassigned at random across the leaves, holding its state frequencies and the
+#' split sizes fixed: `QuartetConcordance()` computes this expectation exactly,
+#' whereas `ClusteringConcordance()` approximates it, accurately for large trees
+#' (~200+ taxa) but neglecting correlation between splits.
+#' If a positive integer `n`, the expectation is instead sampled -- over `n`
+#' random reassignments of each character's tokens (`QuartetConcordance()`), or
+#' against `n` uniformly random trees (`ClusteringConcordance()`, which also
+#' returns Monte Carlo standard errors).
+#' `QuartetConcordance()` returns chance-corrected values unclamped (they may
+#' fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before plotting with [QCol()] /
+#' [QACol()].
 #' 
 #' @returns
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each

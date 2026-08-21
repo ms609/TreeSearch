@@ -44,31 +44,21 @@ split–character pair.
 
 Matching is case‑insensitive and partial.}
 
-\item{chanceCorrect}{Controls the zero point of the concordance scale by
-subtracting the value expected under a chance (fixed-marginal) null, in which
-each character's tokens are reassigned at random across the leaves while its
-state frequencies and the split sizes are held fixed.
-\itemize{
-\item \code{FALSE}: no chance correction; the measure is scaled only by its maximum,
-so 1 marks a perfect match and 0 the measure's own (typically positive)
-floor.
-\item \code{TRUE}: subtract the expected value under the null, so that 0 marks random
-expectation and negative values fall below it. \code{ClusteringConcordance()}
-uses an analytical approximation to the expected mutual information (fast
-and generally accurate for large trees, ~200+ taxa, but neglecting
-correlation between splits); \code{QuartetConcordance()} uses the exact
-hypergeometric expectation (for either \code{unit}).
-\item a positive integer \code{n}: estimate that expectation by Monte Carlo.
-\code{ClusteringConcordance()} fits each character to \code{n} random trees (and
-returns Monte-Carlo standard errors, more accurate for small trees where
-the analytical approximation is biased); \code{QuartetConcordance()} averages
-over \code{n} random reassignments of each character's tokens.
-}
-
-In all cases 1 corresponds to the maximum attainable value.  For
-\code{QuartetConcordance()} (either \code{unit}), chance-corrected values are returned
-unclamped (they may fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before
-plotting with \code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
+\item{chanceCorrect}{Sets the zero point of the scale; 1 always marks the
+maximum attainable value.
+If \code{FALSE}, zero corresponds to \emph{zero} MI.
+If \code{TRUE}, zero is the value expected when each character's tokens are
+reassigned at random across the leaves, holding its state frequencies and the
+split sizes fixed: \code{QuartetConcordance()} computes this expectation exactly,
+whereas \code{ClusteringConcordance()} approximates it, accurately for large trees
+(~200+ taxa) but neglecting correlation between splits.
+If a positive integer \code{n}, the expectation is instead sampled -- over \code{n}
+random reassignments of each character's tokens (\code{QuartetConcordance()}), or
+against \code{n} uniformly random trees (\code{ClusteringConcordance()}, which also
+returns Monte Carlo standard errors).
+\code{QuartetConcordance()} returns chance-corrected values unclamped (they may
+fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before plotting with
+\code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
 
 \item{weight}{Logical specifying whether to weight sites according to the
 quartet content that they share with each split.}
@@ -187,22 +177,6 @@ Characters and splits are treated as clusterings of taxa, and their agreement
 is quantified using mutual information (MI). All reported values are scaled
 so that 1 corresponds to the maximum possible mutual information for each
 split–character pair (\code{hBest}).
-
-The \code{chanceCorrect} argument specifies how the zero point is defined.
-\itemize{
-\item If \code{chanceCorrect = FALSE}, zero corresponds to \emph{zero} MI, without
-correcting for the positive bias that arises because MI is rarely exactly
-zero in finite samples.
-\item If \code{chanceCorrect = TRUE}, the expected MI is computed using an analytical
-approximation based on the distribution of character tokens. This is fast
-and generally accurate for large trees (~200+ taxa), but does not account
-for correlation between splits.
-\item If \code{chanceCorrect} is a positive integer \code{n}, the expected MI is estimated
-empirically by fitting each character to \code{n} uniformly random trees and
-averaging the resulting MI values. This Monte Carlo approach provides a
-more accurate baseline for small trees, for which the analytical
-approximation is biased. Monte Carlo standard errors are returned.
-}
 
 \code{MutualClusteringConcordance()} provides a character‑wise summary that
 emphasises each character’s best‑matching split(s). It treats each character
