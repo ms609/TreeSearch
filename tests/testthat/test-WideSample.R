@@ -1,6 +1,6 @@
 # Tier 1: runs on CRAN
 # Tests for WideSample() — Max-Min diversity (MMDP) tree subsampling
-skip_if_not_installed("MaxMin")
+skip_if_not_installed("Coreset")
 
 test_that("n >= length(trees) returns all trees", {
   trees <- as.phylo(0:9, nTip = 8)

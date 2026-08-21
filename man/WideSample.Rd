@@ -62,7 +62,7 @@ the likelihood or support for that topology.  A random draw over-represents
 topologies that sit on broad plateaux and under-represents isolated optima.
 \code{WideSample()} instead selects for topological \emph{spread}, density-blind, by
 dispatching to the appropriate Max-Min Diversity Problem solver from the
-\pkg{MaxMin} package:
+\pkg{Coreset} package:
 
 \describe{
 \item{\code{FarFirst()} (\code{effort = 1})}{Greedy farthest-first selection
@@ -111,17 +111,17 @@ which automatic selection reaches the exact tier (default \code{200}).}
 library("TreeTools")
 trees <- as.phylo(0:99, nTip = 8)
 
-# WideSample() needs the MaxMin package (Max-Min diversity solvers)
-if (requireNamespace("MaxMin", quietly = TRUE)) {
+# WideSample() needs the Coreset package (Max-Min diversity solvers)
+if (requireNamespace("Coreset", quietly = TRUE)) {
 
 # Fast FarFirst subsample (deterministic, matrix-free)
 sub10 <- WideSample(trees, 10, effort = 1)
 length(sub10)  # 10
 
-# The remaining tiers (DropAdd, Grasp, exact) all dispatch to 'MaxMin'/
+# The remaining tiers (DropAdd, Grasp, exact) all dispatch to 'Coreset'/
 # 'highs' solvers whose runtime is environment-dependent (e.g. a
 # from-source 'highs' build can be far slower than the CRAN binary) and
-# whose calling convention tracks 'MaxMin' development. Demonstrate them
+# whose calling convention tracks 'Coreset' development. Demonstrate them
 # interactively only.
 if (interactive()) {
 # Pre-computed distances

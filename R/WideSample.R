@@ -13,9 +13,9 @@
 #' topologies that sit on broad plateaux and under-represents isolated optima.
 #' `WideSample()` instead selects for topological *spread*, density-blind, by
 #' dispatching to the appropriate Max-Min Diversity Problem solver from the
-#' \pkg{MaxMin} package:
+#' \pkg{Coreset} package:
 #'
-#  TODO replace {TreeSearch} refs with {MaxMin} once package on CRAN and 
+#  TODO replace {TreeSearch} refs with {Coreset} once package on CRAN and 
 #  imported, and remove refs from inst/REFERENCES.bib (DRY)
 #' \describe{
 #'   \item{`FarFirst()` (`effort = 1`)}{Greedy farthest-first selection
@@ -93,17 +93,17 @@
 #' library("TreeTools")
 #' trees <- as.phylo(0:99, nTip = 8)
 #'
-#' # WideSample() needs the MaxMin package (Max-Min diversity solvers)
-#' if (requireNamespace("MaxMin", quietly = TRUE)) {
+#' # WideSample() needs the Coreset package (Max-Min diversity solvers)
+#' if (requireNamespace("Coreset", quietly = TRUE)) {
 #'
 #' # Fast FarFirst subsample (deterministic, matrix-free)
 #' sub10 <- WideSample(trees, 10, effort = 1)
 #' length(sub10)  # 10
 #'
-#' # The remaining tiers (DropAdd, Grasp, exact) all dispatch to 'MaxMin'/
+#' # The remaining tiers (DropAdd, Grasp, exact) all dispatch to 'Coreset'/
 #' # 'highs' solvers whose runtime is environment-dependent (e.g. a
 #' # from-source 'highs' build can be far slower than the CRAN binary) and
-#' # whose calling convention tracks 'MaxMin' development. Demonstrate them
+#' # whose calling convention tracks 'Coreset' development. Demonstrate them
 #' # interactively only.
 #' if (interactive()) {
 #' # Pre-computed distances
@@ -146,17 +146,17 @@ WideSample <- function(
     effort = NULL,
     maxSeconds = 60
 ) {
-  if (!requireNamespace("MaxMin", quietly = TRUE)) {
-    stop("`WideSample()` requires the 'MaxMin' package, which provides the ",
+  if (!requireNamespace("Coreset", quietly = TRUE)) {
+    stop("`WideSample()` requires the 'Coreset' package, which provides the ",
          "Max-Min diversity solvers; install it from ",
-         "https://github.com/ms609/MaxMin", call. = FALSE)
+         "https://github.com/ms609/Coreset", call. = FALSE)
   }
   # Build ceiling: largest N for which we materialize a dense N x N matrix from
   # a distance function. ~1.1 GB at 12,000; as.matrix.dist overflows near
   # 46,340 (the dist half-vector exceeds .Machine$integer.max).
   buildCeiling <- getOption("WideSample.buildCeiling", 12000L)
   # Exact ceiling: largest N at which auto-selection reaches the exact tier.
-  # MaxMin::ExactMaxMin() is now a sparse-matrix, heuristic-warm-started solver
+  # Coreset::ExactMaxMin() is now a sparse-matrix, heuristic-warm-started solver
   # (~20x faster than the dense form), practical to a few hundred trees at the
   # small `n` of interest; beyond that the node-packing IP wall bites (the
   # MaxMin optimum sits near the diameter, where the threshold graph is
@@ -256,13 +256,13 @@ WideSample <- function(
       } else {
         .WideSampleColumnOracle(dist, trees, nTrees)
       }
-      MaxMin::FarFirst(n, colFn, N = nTrees)
+      Coreset::FarFirst(n, colFn, N = nTrees)
     },
     # Tier 2: DropAdd returns the bare (sorted) index vector; it runs to its
     # deterministic plateau, with `maxSeconds` as a safety cap.
-    `2` = MaxMin::DropAdd(n, dmat, maxSeconds = maxSeconds),
+    `2` = Coreset::DropAdd(n, dmat, maxSeconds = maxSeconds),
     # Tier 3: Grasp likewise returns the bare index vector (RNG-dependent).
-    `3` = MaxMin::Grasp(n, dmat, maxSeconds = maxSeconds),
+    `3` = Coreset::Grasp(n, dmat, maxSeconds = maxSeconds),
     # Tier 4: exact solver returns the bare (ascending) index vector, like the
     # other tiers.
     `4` = {
@@ -272,7 +272,7 @@ WideSample <- function(
                 "or 3 (Grasp), or a larger `maxSeconds`.",
                 immediate. = TRUE)
       }
-      MaxMin::ExactMaxMin(k = n, dmat, maxSeconds = maxSeconds)
+      Coreset::ExactMaxMin(k = n, dmat, maxSeconds = maxSeconds)
     }
   )
 
@@ -331,7 +331,7 @@ WideSample <- function(
 #' distance to all others. Uses the distance matrix when one is available or
 #' affordable to build; when only a distance function is supplied for a set too
 #' large to build a matrix, the central medoid is not affordable, so the
-#' deterministic peripheral seed ([MaxMin::FarFirst()] with `k = 1`) is returned
+#' deterministic peripheral seed ([Coreset::FarFirst()] with `k = 1`) is returned
 #' as a matrix-free fallback.
 #' @return Integer index (1-based) of the selected tree.
 #' @keywords internal
@@ -347,7 +347,7 @@ WideSample <- function(
   } else {
     colFn <- .WideSampleColumnOracle(dist, trees, nTrees)
     # Return:
-    as.integer(MaxMin::FarFirst(colFn, k = 1L, N = nTrees))
+    as.integer(Coreset::FarFirst(colFn, k = 1L, N = nTrees))
   }
 }
 
@@ -355,7 +355,7 @@ WideSample <- function(
 #'
 #' Returns a function of one 1-based index `i` giving the distances from tree
 #' `i` to every tree, as required by the distance-column oracle path of
-#' [MaxMin::FarFirst()]. Probes
+#' [Coreset::FarFirst()]. Probes
 #' the `(tree, trees)` calling form once up front and fails clearly if the
 #' supplied `dist` function does not support it.
 #' @keywords internal

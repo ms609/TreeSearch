@@ -55,10 +55,10 @@ Imports:
   utils,
 Suggests:
   cluster,
+  Coreset,
   future,
   highs,
   knitr,
-  MaxMin,
   phangorn (>= 2.2.1),
   PlotTools,
   promises,
@@ -75,7 +75,7 @@ Suggests:
   vdiffr (>= 1.0.0),
   zip,
 Remotes:
-  ms609/MaxMin,
+  ms609/Coreset,
 Config/Needs/check:
   callr,
   pkgbuild,
