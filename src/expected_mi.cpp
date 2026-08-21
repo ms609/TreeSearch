@@ -46,7 +46,7 @@ inline double l2factorial(int n) {
 //' block sizes (marginals) of each partition are fixed but the items are
 //' associated at random.  Subtracting this baseline from an observed mutual
 //' information yields a chance-corrected ("adjusted") mutual information, as
-//' applied by [`SiteConcordance`]`(normalize = TRUE)`; it is most material for
+//' applied by [`SiteConcordance`]`(chanceCorrect = TRUE)`; it is most material for
 //' small or unbalanced partitions, where raw mutual information is appreciably
 //' inflated by chance agreement.
 //'
