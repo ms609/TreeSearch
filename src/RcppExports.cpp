@@ -31,6 +31,30 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// quartet_expect
+List quartet_expect(const LogicalMatrix splits, const IntegerMatrix characters);
+RcppExport SEXP _TreeSearch_quartet_expect(SEXP splitsSEXP, SEXP charactersSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const LogicalMatrix >::type splits(splitsSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type characters(charactersSEXP);
+    rcpp_result_gen = Rcpp::wrap(quartet_expect(splits, characters));
+    return rcpp_result_gen;
+END_RCPP
+}
+// nrqs_expect
+List nrqs_expect(const LogicalMatrix splits, const IntegerMatrix characters);
+RcppExport SEXP _TreeSearch_nrqs_expect(SEXP splitsSEXP, SEXP charactersSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const LogicalMatrix >::type splits(splitsSEXP);
+    Rcpp::traits::input_parameter< const IntegerMatrix >::type characters(charactersSEXP);
+    rcpp_result_gen = Rcpp::wrap(nrqs_expect(splits, characters));
+    return rcpp_result_gen;
+END_RCPP
+}
 // expected_mi
 double expected_mi(const IntegerVector& ni, const IntegerVector& nj);
 RcppExport SEXP _TreeSearch_expected_mi(SEXP niSEXP, SEXP njSEXP) {
