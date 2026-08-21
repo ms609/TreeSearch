@@ -763,7 +763,7 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' \eqn{(k - 1)(t - k - 1)} are non-redundant.
 #' `unit` selects which of the two is counted.  By default, agreement is
 #' measured against the non-redundant content, so that a character scores full
-#' marks only where it *displays* the split, rather than merely agreeing with a
+#' marks only where it displays the split, rather than merely agreeing with a
 #' large combinatorial volume of its quartets.
 #'
 #' By default, the reported value weights each site by the quartet content it
@@ -789,22 +789,9 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' `QuartetConcordance(return = "char")` returns a numeric vector giving the
 #' concordance index calculated at each site, averaged across all splits.
 #'
-#' With `unit = "nrqs"`, note that this average is taken over *every* split in
-#' `tree`.  A character can agree exactly with at most one split, and is merely
-#' compatible with -- that is, silent about -- the rest; because agreement is
-#' measured against each split's non-redundant content, silence counts as a
-#' failure to cover.  Per-character values are therefore much smaller than
-#' per-edge ones and **do not reach 1 even for a character identical to one of
-#' the tree's own splits** (0.49 for a 22|26 split of a 48-leaf tree, 0.25 for
-#' a 2|46 split).  The attainable maximum depends on the tree, so these values
-#' rank characters against one another but should not be read against an
-#' absolute ceiling of 1, nor compared across trees.  Where a per-character
-#' index bounded at 1 is wanted, use `unit = "quartet"`, whose per-character
-#' path attains 1 for a character identical to any split of the tree.
-#'
-#' With `unit = "quartet"` the same vectors are returned, but scored in the raw
-#' quartet currency: values are typically higher, as a character is credited
-#' with the full combinatorial volume of quartets that it resolves.
+#' With `unit = "nrqs"`, per-character values are much smaller than 1 even
+#' where a character perfectly matches a split in a tree. Values rank characters
+#' on a given tree, but are not comparable between trees.
 #'
 #' @param weight Logical specifying whether to weight sites according to the
 #' quartet content that they share with each split.
