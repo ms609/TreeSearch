@@ -36,31 +36,18 @@ at edges whose descendants are both contain more than \code{largeClade} leaves.}
 
 \item{ylab}{Character giving a label for the y axis.}
 
-\item{chanceCorrect}{Controls the zero point of the concordance scale by
-subtracting the value expected under a chance (fixed-marginal) null, in which
-each character's tokens are reassigned at random across the leaves while its
-state frequencies and the split sizes are held fixed.
-\itemize{
-\item \code{FALSE}: no chance correction; the measure is scaled only by its maximum,
-so 1 marks a perfect match and 0 the measure's own (typically positive)
-floor.
-\item \code{TRUE}: subtract the expected value under the null, so that 0 marks random
-expectation and negative values fall below it. \code{ClusteringConcordance()}
-uses an analytical approximation to the expected mutual information (fast
-and generally accurate for large trees, ~200+ taxa, but neglecting
-correlation between splits); \code{QuartetConcordance()} uses the exact
-hypergeometric expectation (for either \code{unit}).
-\item a positive integer \code{n}: estimate that expectation by Monte Carlo.
-\code{ClusteringConcordance()} fits each character to \code{n} random trees (and
-returns Monte-Carlo standard errors, more accurate for small trees where
-the analytical approximation is biased); \code{QuartetConcordance()} averages
-over \code{n} random reassignments of each character's tokens.
-}
-
-In all cases 1 corresponds to the maximum attainable value.  For
-\code{QuartetConcordance()} (either \code{unit}), chance-corrected values are returned
-unclamped (they may fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before
-plotting with \code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
+\item{chanceCorrect}{Sets the zero point of the scale.
+If \code{FALSE}, zero corresponds to zero MI.
+If \code{TRUE}, zero is the value expected when each character's tokens are
+reassigned at random across the leaves, holding its state frequencies and the
+split sizes fixed: \code{QuartetConcordance()} computes this expectation exactly,
+whereas \code{ClusteringConcordance()} approximates it, accurately for large trees
+(~200+ taxa) but neglecting correlation between splits.
+If a positive integer \code{n}, the expectation is sampled over \code{n} random reassignments
+of each character's tokens (\code{QuartetConcordance()}), or against \code{n} uniformly random
+trees (\code{ClusteringConcordance()}).
+\emph{Hint: Clamp chance-corrected values to \eqn{[-1, 1]} before plotting with \code{\link[=QCol]{QCol()}} /
+\code{\link[=QACol]{QACol()}}}.}
 
 \item{plot}{Logical specifying whether to draw the plot.}
 

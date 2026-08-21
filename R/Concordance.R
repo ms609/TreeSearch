@@ -786,7 +786,7 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' @param weight Logical specifying whether to weight sites according to the
 #' quartet content that they share with each split.
 #' @param unit Character specifying the currency in which quartets are counted:
-#'   - `"nrqs"` (default): non-redundant quartet statements (NRQS).
+#'   - `"nrqs"` (default): non-redundant quartet statements.
 #'     At a given split, only a character whose own split is identical scores
 #'     full marks; nested (compatible) characters receive partial support, and 
 #'     incompatible characters score lower still.
@@ -1014,7 +1014,7 @@ QuartetConcordance <- function(
 # (ab,cd) + (ab,ce) -> (ab,de) is GF(2) cycle addition, so only the cyclomatic
 # number (k - 1)(t - k - 1) of them are non-redundant (the NRQS).
 #
-# A multistate character is the disjoint union of its state-pairs: a quartet is
+# A multi-state character is the disjoint union of its state-pairs: a quartet is
 # decisive only when two taxa share one state and two share another, so every
 # decisive quartet lives in the K_{n_i, n_j} block between two states.  Those
 # blocks are edge-disjoint and the entailment never crosses them (it forces the
@@ -1119,7 +1119,7 @@ QuartetConcordance <- function(
       if (doNorm) {
         sBase <- ifelse(baseDenM > 0, baseNumEdge / baseDenM, NA_real_)
         # Average observed and baseline over the SAME (split, char) cells: a
-        # degenerate multistate pair can be dropped from one but not the other
+        # degenerate multi-state pair can be dropped from one but not the other
         # (observed wk = 0 yet E[m] > 0), which would otherwise re-zero mismatched
         # populations.
         naMask <- is.na(sEdge) | is.na(sBase)

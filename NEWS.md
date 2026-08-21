@@ -3,8 +3,8 @@
 - `QuartetConcordance()` gains `unit`, selecting the currency in which quartets
   are counted.  `unit = "nrqs"` (the new default) counts only non-redundant
   quartet statements: of the quartets resolved by a split of sizes
-  (_k_, _t_ − _k_), just (_k_ − 1)(_t_ − _k_ − 1) are non-redundant under the
-  Nelson–Ladiges entailment, so a character now scores full marks only where it
+  (_k_, _t_ − _k_), just (_k_ − 1)(_t_ − _k_ − 1) are non-redundant,
+  so a character now scores full marks only where it
   displays the split, rather than wherever it agrees with a large combinatorial
   volume of quartets.  Pass `unit = "quartet"` to recover the raw count.
 

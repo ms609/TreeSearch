@@ -40,9 +40,7 @@ by each character's information content;
 \item \code{"tree"}: an overall tree‑level concordance score;
 \item \code{"all"}: a full array of MI components and normalized values for every
 split–character pair.
-}
-
-Matching is case‑insensitive and partial.}
+}}
 
 \item{chanceCorrect}{Sets the zero point of the scale.
 If \code{FALSE}, zero corresponds to zero MI.
@@ -62,30 +60,12 @@ quartet content that they share with each split.}
 
 \item{unit}{Character specifying the currency in which quartets are counted:
 \itemize{
-\item \code{"nrqs"} (default): only non-redundant quartet statements (NRQS) are
-counted.  Of the \eqn{\binom{k}{2}\binom{t - k}{2}} quartets resolved by
-a split of sizes \eqn{(k, t - k)}, just \eqn{(k - 1)(t - k - 1)} are
-non-redundant under the entailment
-\eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)}
-\insertCite{Nelson1992}{TreeSearch}.  Measuring agreement against this
-reduced content means that, \emph{at a given split}, only a character whose
-own split is identical scores full marks; nested (compatible) characters
-receive genuine partial support, and crossing (incompatible) characters
-score lower still.  This bound applies to each split individually, and so
-to \code{return = "edge"}; it does not carry over to \code{return = "char"}, which
-averages across all splits -- see Value, above.
-A multistate character is scored in the same currency:
-NRQS are counted within each pair of states (sizes \eqn{n_i}, \eqn{n_j}
-give a per-state-pair weight of \eqn{4 / (n_i n_j)}) and summed across
-pairs, so multistate and binary characters remain directly comparable.
-Note that non-redundancy is a logical property: NRQS are not mutually
-independent in a statistical sense, so their count measures quartet
-content rather than information in bits.
-\item \code{"quartet"}: each resolved quartet counts once, so a character is
-credited with the full combinatorial volume of quartets it resolves.
-This recovers the measure reported by earlier versions of this package,
-the direct analogue of the site concordance factor
-\insertCite{Minh2020}{TreeSearch}.
+\item \code{"nrqs"} (default): non-redundant quartet statements.
+At a given split, only a character whose own split is identical scores
+full marks; nested (compatible) characters receive partial support, and
+incompatible characters score lower still.
+\item \code{"quartet"}: each resolved quartet counts once,
+analogous to the site concordance factor \insertCite{Minh2020}{TreeSearch}.
 }}
 }
 \value{
@@ -139,22 +119,9 @@ concordance index calculated at each site, averaged across all splits.
 Unlike the \code{"edge"} result, this vector is unnamed: characters retain no
 persistent identifier once collapsed to patterns.
 
-With \code{unit = "nrqs"}, note that this average is taken over \emph{every} split in
-\code{tree}.  A character can agree exactly with at most one split, and is merely
-compatible with -- that is, silent about -- the rest; because agreement is
-measured against each split's non-redundant content, silence counts as a
-failure to cover.  Per-character values are therefore much smaller than
-per-edge ones and \strong{do not reach 1 even for a character identical to one of
-the tree's own splits} (0.49 for a 22|26 split of a 48-leaf tree, 0.25 for
-a 2|46 split).  The attainable maximum depends on the tree, so these values
-rank characters against one another but should not be read against an
-absolute ceiling of 1, nor compared across trees.  Where a per-character
-index bounded at 1 is wanted, use \code{unit = "quartet"}, whose per-character
-path attains 1 for a character identical to any split of the tree.
-
-With \code{unit = "quartet"} the same vectors are returned, but scored in the raw
-quartet currency: values are typically higher, as a character is credited
-with the full combinatorial volume of quartets that it resolves.
+With \code{unit = "nrqs"}, per-character values are much smaller than 1 even
+where a character perfectly matches a split in a tree. Values rank characters
+on a given tree, but are not comparable between trees.
 
 \code{PhylogeneticConcordance()} returns a numeric vector giving the
 phylogenetic information of each split in \code{tree}, named according to the
@@ -209,7 +176,7 @@ resolves \eqn{\binom{k}{2}\binom{t - k}{2}} quartets, of which only
 \eqn{(k - 1)(t - k - 1)} are non-redundant.
 \code{unit} selects which of the two is counted.  By default, agreement is
 measured against the non-redundant content, so that a character scores full
-marks only where it \emph{displays} the split, rather than merely agreeing with a
+marks only where it displays the split, rather than merely agreeing with a
 large combinatorial volume of its quartets.
 
 By default, the reported value weights each site by the quartet content it
