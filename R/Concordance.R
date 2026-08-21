@@ -69,21 +69,18 @@ NULL
 #'   - `"all"`: a full array of MI components and normalized values for every
 #'     split–character pair.
 #'
-#' @param chanceCorrect Sets the zero point of the scale; 1 always marks the
-#' maximum attainable value.
-#' If `FALSE`, zero corresponds to *zero* MI.
+#' @param chanceCorrect Sets the zero point of the scale.
+#' If `FALSE`, zero corresponds to zero MI.
 #' If `TRUE`, zero is the value expected when each character's tokens are
 #' reassigned at random across the leaves, holding its state frequencies and the
 #' split sizes fixed: `QuartetConcordance()` computes this expectation exactly,
 #' whereas `ClusteringConcordance()` approximates it, accurately for large trees
 #' (~200+ taxa) but neglecting correlation between splits.
-#' If a positive integer `n`, the expectation is instead sampled -- over `n`
-#' random reassignments of each character's tokens (`QuartetConcordance()`), or
-#' against `n` uniformly random trees (`ClusteringConcordance()`, which also
-#' returns Monte Carlo standard errors).
-#' `QuartetConcordance()` returns chance-corrected values unclamped (they may
-#' fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before plotting with [QCol()] /
-#' [QACol()].
+#' If a positive integer `n`, the expectation is sampled over `n` random reassignments
+#' of each character's tokens (`QuartetConcordance()`), or against `n` uniformly random
+#' trees (`ClusteringConcordance()`).
+#' _Hint: Clamp chance-corrected values to \eqn{[-1, 1]} before plotting with [QCol()] /
+#' [QACol()]_.
 #' 
 #' @returns
 #' `ClusteringConcordance(return = "all")` returns a 3D array where each
