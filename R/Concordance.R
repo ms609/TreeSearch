@@ -796,30 +796,12 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' @param weight Logical specifying whether to weight sites according to the
 #' quartet content that they share with each split.
 #' @param unit Character specifying the currency in which quartets are counted:
-#'   - `"nrqs"` (default): only non-redundant quartet statements (NRQS) are
-#'     counted.  Of the \eqn{\binom{k}{2}\binom{t - k}{2}} quartets resolved by
-#'     a split of sizes \eqn{(k, t - k)}, just \eqn{(k - 1)(t - k - 1)} are
-#'     non-redundant under the entailment
-#'     \eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)}
-#'     \insertCite{Nelson1992}{TreeSearch}.  Measuring agreement against this
-#'     reduced content means that, *at a given split*, only a character whose
-#'     own split is identical scores full marks; nested (compatible) characters
-#'     receive genuine partial support, and crossing (incompatible) characters
-#'     score lower still.  This bound applies to each split individually, and so
-#'     to `return = "edge"`; it does not carry over to `return = "char"`, which
-#'     averages across all splits -- see Value, above.
-#'     A multistate character is scored in the same currency:
-#'     NRQS are counted within each pair of states (sizes \eqn{n_i}, \eqn{n_j}
-#'     give a per-state-pair weight of \eqn{4 / (n_i n_j)}) and summed across
-#'     pairs, so multistate and binary characters remain directly comparable.
-#'     Note that non-redundancy is a logical property: NRQS are not mutually
-#'     independent in a statistical sense, so their count measures quartet
-#'     content rather than information in bits.
-#'   - `"quartet"`: each resolved quartet counts once, so a character is
-#'     credited with the full combinatorial volume of quartets it resolves.
-#'     This recovers the measure reported by earlier versions of this package,
-#'     the direct analogue of the site concordance factor
-#'     \insertCite{Minh2020}{TreeSearch}.
+#'   - `"nrqs"` (default): non-redundant quartet statements (NRQS).
+#'     At a given split, only a character whose own split is identical scores
+#'     full marks; nested (compatible) characters receive partial support, and 
+#'     incompatible characters score lower still.
+#'   - `"quartet"`: each resolved quartet counts once,
+#'     analogous to the site concordance factor \insertCite{Minh2020}{TreeSearch}.
 #' @references \insertAllCited{}
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
