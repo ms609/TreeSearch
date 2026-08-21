@@ -139,10 +139,20 @@ TemperResult stochastic_tbr_phase(
 
   double score = temper_full_rescore(tree, ds);
   double best_score = score;
-  // No informative characters: all trees have the same score.  Skip the
-  // per-word clip/regraft scoring below, which would otherwise take the
-  // address of element 0 of the (empty, since total_words == 0) tree.prelim
-  // vector -- undefined behaviour (aborts under _GLIBCXX_ASSERTIONS).
+  // total_words == 0: for EW/IW/profile this genuinely means "all trees have
+  // the same score" (DataSet::topology_independent(), T-373). For HSJ/XFORM
+  // it does NOT -- the hierarchy DP / Sankoff term stays topology-dependent
+  // -- but unlike nni_search/spr_search/tbr_search/ratchet_search/drift_search
+  // (all of which either full-rescore every candidate or delegate outright to
+  // tbr_search), this phase's clip/regraft scan has no HSJ/XFORM-aware
+  // fallback: every candidate is scored via incremental Fitch/IW delta math
+  // that indexes tree.prelim/local_cost by total_words, so proceeding would
+  // take the address of element 0 of an EMPTY tree.prelim vector -- undefined
+  // behaviour (aborts under _GLIBCXX_ASSERTIONS). So this phase stays a
+  // guarded no-op for BOTH cases; the HSJ/XFORM sub-case additionally warns
+  // (raised once at the ts_driven_search entry point, not here -- this runs
+  // on worker threads under nThreads >= 2, and Rcpp::warning off the R thread
+  // is not safe).
   if (ds.total_words == 0) return {best_score, score, 0, 0, 0};
   const bool use_iw = std::isfinite(ds.concavity);
   const double eps = use_iw ? 1e-10 : 0.0;

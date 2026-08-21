@@ -21,8 +21,14 @@ void compute_collapsed_flags(
   // (all-zero flags == nothing collapses — the safe conservative outcome).
   // Falling back to the conservative flags is NOT sufficient: it is equally
   // blind to hierarchy/Sankoff support.  See red-team T-330.
-  if (ds.scoring_mode == ScoringMode::HSJ ||
-      ds.scoring_mode == ScoringMode::XFORM) return;
+  //
+  // Gate on whether hierarchy data actually EXISTS (T-408), not merely on
+  // scoring_mode: an HSJ/XFORM config with no hierarchy_blocks / sankoff_n_chars
+  // carries no topology-dependent support this kernel is blind to, so collapse
+  // is safe. Matches DataSet::topology_independent()'s predicate.
+  if ((ds.scoring_mode == ScoringMode::HSJ ||
+       ds.scoring_mode == ScoringMode::XFORM) &&
+      (!ds.hierarchy_blocks.empty() || ds.sankoff_n_chars > 0)) return;
 
   // If all characters were simplified away (total_words == 0), every binary
   // resolution ties at the same score: no internal branch carries support,
@@ -113,19 +119,25 @@ void compute_collapsed_flags(
     }
 
     // --- Condition 3: prelim[sibling] == prelim[parent] ---
-    // This full-row memcmp also reads words belonging to ratchet-zeroed
-    // blocks (active_mask == 0), which fitch_downpass leaves stale rather
-    // than updating. That staleness only ever makes equality *harder* to
-    // reach (a stale word is unlikely to coincidentally match), so its only
-    // effect is to under-flag collapsible edges — a lost optimisation, never
-    // a false collapse. One-sided safe; not worth a masked per-word compare.
-    // See red-team T-382.
+    // This full-row memcmp also spans words fitch_downpass does not write: the
+    // SIMD pad word, and the words of ratchet-zeroed blocks (active_mask == 0),
+    // which it skips. The pad word reads zero on both sides and so contributes
+    // nothing. A zeroed block's words are whatever the node last held, while a
+    // tip sibling always carries its real states — load_tip_states copies every
+    // word, active or not — so the two rows usually differ. That only makes
+    // equality *harder* to reach: it costs a collapse flag, never invents one.
+    // One-sided safe; not worth a masked per-word compare. See red-team T-382.
     size_t sb = static_cast<size_t>(s) * tw;
     size_t pb = static_cast<size_t>(p) * tw;
     if (std::memcmp(&tree.prelim[sb], &tree.prelim[pb], word_bytes) != 0)
       continue;
 
     // --- Conditions 4–5 (NA only): down2 and subtree_actives preservation ---
+    // Unlike condition 3, these rows are written only for NA blocks — even
+    // load_tip_states skips subtree_actives for the rest — so a non-NA block's
+    // words stay at the zeros the arrays were sized with and always compare
+    // equal, dropping out of a test that has nothing to say about them. Here
+    // the unwritten words make equality *easier*, not harder (T-411).
     if (has_na) {
       if (std::memcmp(&tree.down2[sb], &tree.down2[pb], word_bytes) != 0)
         continue;
@@ -150,8 +162,12 @@ void compute_collapsed_flags_aggressive(
   // modes (all-zero flags).  Guarded independently of compute_collapsed_flags:
   // the has_na delegation at the bottom of this block only reaches it on NA
   // data, not the general HSJ/XFORM case.  See red-team T-330.
-  if (ds.scoring_mode == ScoringMode::HSJ ||
-      ds.scoring_mode == ScoringMode::XFORM) {
+  //
+  // Gate on hierarchy data presence, not scoring_mode alone (T-408); see
+  // compute_collapsed_flags() above for the rationale.
+  if ((ds.scoring_mode == ScoringMode::HSJ ||
+       ds.scoring_mode == ScoringMode::XFORM) &&
+      (!ds.hierarchy_blocks.empty() || ds.sankoff_n_chars > 0)) {
     collapsed.assign(tree.n_node, 0);
     return;
   }
@@ -286,9 +302,11 @@ void compute_collapsed_regions(
   // parents visited before children. When a parent creates or joins a
   // region, its children inherit the same region_id.
   //
-  // The root itself is never collapsed (no parent edge) and root's children
-  // are excluded by compute_collapsed_flags(), so root always has
-  // region_id == -1.
+  // The root itself is never collapsed (no parent edge).  Root's children are
+  // excluded by compute_collapsed_flags() on every ordinary path, so root
+  // normally ends with region_id == -1 — but NOT in the total_words == 0
+  // star-collapse branch (T-331), which deliberately flags root's children too.
+  // Any future consumer of region_id must not assume region_id[root] == -1.
   const auto& po = tree.postorder;
   for (int idx = static_cast<int>(po.size()) - 1; idx >= 0; --idx) {
     int node = po[idx];

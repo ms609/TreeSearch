@@ -33,8 +33,7 @@ test_that("n = 1 returns the medoid deterministically", {
 
 test_that("n = 1 medoid falls back to a matrix-free seed past the ceiling", {
   skip_if_not_installed("TreeDist")
-  old <- options(TreeSearch.WideSample.buildCeiling = 5L)
-  on.exit(options(old))
+  withr::local_options(TreeSearch.WideSample.buildCeiling = 5L)
   trees <- as.phylo(0:9, nTip = 8)  # 10 > the (lowered) build ceiling of 5
   names(trees) <- paste0("t", seq_along(trees))
   result <- WideSample(trees, 1)    # function path, no matrix built
@@ -81,6 +80,33 @@ test_that("attributes are preserved", {
   result <- WideSample(trees, 3)
   expect_equal(attr(result, "score"), 123.4)
   expect_equal(attr(result, "hits_to_best"), 5L)
+})
+
+test_that("effort = 1 (FarFirst) preserves ascending input order", {
+  trees <- as.phylo(0:99, nTip = 8)
+  names(trees) <- paste0("tree", 0:99)
+  result <- WideSample(trees, 6, effort = 1)
+  idx <- match(names(result), names(trees))
+  expect_equal(idx, sort(idx))
+})
+
+test_that("firstHit is dropped rather than carried over stale", {
+  trees <- as.phylo(0:9, nTip = 8)
+  names(trees) <- paste0("tree", seq_along(trees))
+  attr(trees, "firstHit") <- table(rep("seed", length(trees)))
+  result <- WideSample(trees, 3, effort = 1)
+  expect_null(attr(result, "firstHit"))
+})
+
+test_that("a whole-object attribute is copied unsubsetted, even if its length coincides with n", {
+  trees <- as.phylo(0:9, nTip = 8)
+  # `replicate_scores` is indexed by search replicate, not by tree, so its
+  # length has no relationship to length(trees); here it coincides with the
+  # requested subset size (3) purely to check that coincidence isn't
+  # mistaken for a per-tree vector and scrambled.
+  attr(trees, "replicate_scores") <- c(50, 48, 45)
+  result <- WideSample(trees, 3, effort = 1)
+  expect_equal(attr(result, "replicate_scores"), c(50, 48, 45))
 })
 
 test_that("WideSample is deterministic on the RNG-free tiers", {
@@ -135,6 +161,24 @@ test_that("bad dist argument is caught", {
 })
 
 # Solver tiers ------------------------------------------------------------
+
+test_that("FarFirst() is called with named arguments, robust to formal order", {
+  # A stub with formals in a different order to Coreset::FarFirst()'s
+  # (k, d, N, ...): only fully-named call sites bind correctly regardless of
+  # the package's chosen formal order.
+  mockFarFirst <- function(d, k, N, ...) {
+    stopifnot(is.numeric(k), length(k) == 1, is.function(d), is.numeric(N))
+    seq_len(k)
+  }
+  testthat::local_mocked_bindings(FarFirst = mockFarFirst, .package = "Coreset")
+
+  trees <- as.phylo(0:9, nTip = 8)
+  expect_length(WideSample(trees, 3, effort = 1), 3)      # tier-1 selection
+  expect_length(TreeSearch:::.WideSampleMedoid(
+    dist = function(a, b) rep(0, length(trees)),
+    trees = trees, nTrees = length(trees), dmat = NULL, buildCeiling = 0L
+  ), 1)
+})
 
 test_that("effort 1/2/3 return valid diverse subsets", {
   skip_if_not_installed("TreeDist")

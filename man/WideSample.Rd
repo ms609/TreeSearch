@@ -45,7 +45,9 @@ Default \code{60}.}
 A \code{multiPhylo} object of length \code{min(n, length(trees))} containing
 a topologically diverse (Max-Min) subset of \code{trees}.
 If \code{n == 1}, the single most central tree (the medoid) is returned.
-Attributes of the input (e.g. \code{score}, \code{hits_to_best}) are preserved.
+Attributes of the input (e.g. \code{score}, \code{hits_to_best}) are preserved,
+except \code{firstHit}, which describes the pre-subset set of trees and is
+dropped; call \code{\link[=WhenFirstHit]{WhenFirstHit()}} on the result to recompute it.
 }
 \description{
 Selects \code{n} trees from a \code{multiPhylo} object that are as topologically

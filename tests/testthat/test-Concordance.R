@@ -172,14 +172,12 @@ test_that("QuartetConcordance() unit = 'nrqs' locks the contract", {
   expect_error(QuartetConcordance(tree, identChar, unit = "trits"),
                "should be one of")
 
-  # `return` aliases mirror the quartet path.
+  # `return` is matched partially, as on the quartet path.
   ByReturn <- function(r) {
     QuartetConcordance(tree, identChar, return = r, unit = "nrqs")
   }
-  expect_equal(ByReturn("edge"), ByReturn("default"))
-  cA <- ByReturn("char")
-  expect_equal(cA, ByReturn("character"))
-  expect_equal(cA, ByReturn("site"))
+  expect_equal(ByReturn("char"), ByReturn("ch"))
+  expect_error(ByReturn("site"), "must .* match")
 })
 
 test_that("QuartetConcordance() unit = 'nrqs' gives nested partial credit", {
@@ -554,6 +552,225 @@ test_that("ConcordantInformation() works", {
   expect_equal(c(noise = 3.1233824), ci["noise"], tolerance = 1e-5)
   expect_equal(c(ignored = 0), ci["ignored"])
   
+})
+
+test_that("ClusteringConcordance() aligns splits to dataset tips (#86)", {
+  # `tree` carries an extra tip (t8) absent from `dataset`; MatchStrings()
+  # drops it from `keep`, but the unpruned `splits` matrix previously kept
+  # all 8 tip-columns, so indexing it by the 7-taxon `aChar` mask recycled
+  # silently rather than raising an error -- length(keep) = 7 divides NTip(tree) = 8's
+  # neighbouring 4 non-trivial splits into 5, corrupting every value, not
+  # just misaligning a few.
+  tree <- ape::read.tree(text = "(((t1,t2),(t3,t4)),((t5,t6),(t7,t8)));")
+  m <- matrix(c(0, 0, 0, 0, 1, 1, 1,
+                0, 0, 1, 1, 0, 0, 1,
+                0, 1, 0, 1, 0, 1, 0,
+                1, 0, 1, 0, 1, 0, 1,
+                0, 0, 0, 1, 1, 1, 0), 7, 5,
+              dimnames = list(paste0("t", 1:7), NULL))
+  dat <- MatrixToPhyDat(m)
+
+  expect_warning(unalignedTip <- ClusteringConcordance(tree, dat),
+                 "Could not find 't8'")
+  # A 7-tip unrooted tree has 4 non-trivial splits, not the 8-tip tree's 5:
+  # a length-only check would pass on any value as long as there are 4 of
+  # them, so also check against an independently pre-pruned computation.
+  expect_length(unalignedTip, 4)
+  expect_equal(
+    unname(unalignedTip),
+    unname(ClusteringConcordance(KeepTip(tree, paste0("t", 1:7)), dat))
+  )
+  expect_equal(
+    unname(unalignedTip),
+    c(0.109967375127757, 0.033229499076686, 0.00282104205138079,
+      0.133541001846628),
+    tolerance = 1e-8
+  )
+  # Split names must stay keyed to `tree`'s OWN node numbering (not a pruned
+  # copy's renumbered nodes): ConcordanceTable() and PaintCharacters() later
+  # match these names against the caller's unpruned `tree$edge`, so a
+  # renumbering would silently misattribute values to the wrong edge.
+  expect_true(all(names(unalignedTip) %in% names(as.Splits(tree))))
+
+  # ConcordanceTable()'s paint feature and PaintCharacters() both re-derive
+  # `tree$edge`-based node lookups from ClusteringConcordance()'s split names;
+  # confirm they still run (rather than silently misattributing colours) when
+  # `tree` carries a tip absent from `dataset`.
+  pdf(NULL)
+  on.exit(dev.off())
+  expect_warning(
+    ConcordanceTable(tree, dat, paintSize = 1),
+    "Could not find 't8'"
+  )
+  expect_warning(cols <- PaintCharacters(dat, tree), "Could not find 't8'")
+  expect_length(cols, 5L)
+})
+
+test_that("ConcordanceTable() handles 1-split trees and 1-pattern datasets (#92)", {
+  tree4 <- BalancedTree(4)
+  dat3 <- MatrixToPhyDat(matrix(c(0, 0, 1, 1,
+                                  0, 1, 0, 1,
+                                  0, 0, 0, 1), 4, 3,
+                                dimnames = list(tree4$tip.label, NULL)))
+  # Previously: "non-numeric matrix extent" (cc["hBest", , ] drops to a
+  # vector once the split axis has extent 1).
+  pdf(NULL)
+  on.exit(dev.off())
+  ret <- ConcordanceTable(tree4, dat3)
+  expect_equal(dim(ret$quality), c(1L, 3L))
+
+  tree6 <- BalancedTree(6)
+  dat1 <- MatrixToPhyDat(matrix(c(0, 0, 1, 1, 0, 1), 6, 1,
+                                dimnames = list(tree6$tip.label, NULL)))
+  ret1 <- ConcordanceTable(tree6, dat1)
+  expect_equal(dim(ret1$quality), c(3L, 1L))
+  # rownames(info) feeds `largeClade`'s node lookup; must survive the drop.
+  expect_setequal(rownames(ret1$info), rownames(as.logical(as.Splits(tree6))))
+
+  # The margin-strip branch takes an independent `cc["hSplit", , ]` slice.
+  retMargin <- ConcordanceTable(tree6, dat1, marginSize = c(1, 1, 0, 0))
+  expect_equal(dim(retMargin$quality), c(3L, 1L))
+})
+
+test_that("ClusteringConcordance(return = 'char') handles 1-pattern data (#93)", {
+  tree <- BalancedTree(6)
+  dat1 <- MatrixToPhyDat(matrix(c(0, 0, 1, 1, 0, 1), 6, 1,
+                                dimnames = list(tree$tip.label, NULL)))
+  # Previously: "dim(X) must have a positive length"
+  # (apply(hh["miRand", , ], 2, max) drops to a vector when nPattern == 1).
+  ret <- ClusteringConcordance(tree, dat1, return = "char")
+  expect_length(ret, 1L)
+  expect_true(is.finite(ret))
+})
+
+test_that("QuartetConcordance() handles a {0,-} contrast level (#108)", {
+  # A level combining an applicable state with "-" (e.g. `{0-}`) sets exactly
+  # one non-"-" contrast column, so it was misclassified as a pure
+  # single-state (grouping) level; `which()` then returned two column
+  # indices for it, making `groupingCols` ragged and
+  # `as.integer(groupingCols)` fail.
+  tree <- BalancedTree(6)
+  m <- matrix(c("0", "1", "0", "1", "{0-}", "1",
+                "0", "0", "1", "1", "0",    "1"), 6, 2,
+              dimnames = list(tree$tip.label, NULL))
+  dat <- MatrixToPhyDat(m)
+  expect_no_error(ret <- QuartetConcordance(tree, dat))
+  expect_length(ret, length(as.Splits(tree)))
+  expect_true(all(is.na(ret) | (is.finite(ret) & ret <= 1)))
+
+  # `{0-}` must convey no grouping information, exactly like `?` -- not
+  # merely avoid crashing.
+  mAmbig <- m
+  mAmbig[mAmbig == "{0-}"] <- "?"
+  expect_equal(ret, QuartetConcordance(tree, MatrixToPhyDat(mAmbig)))
+})
+
+test_that("QuartetConcordance(return = ) rejects typos and finds 'edge' (#109)", {
+  tree <- BalancedTree(6)
+  dat <- MatrixToPhyDat(matrix(c(0, 0, 1, 1, 0, 1,
+                                 0, 1, 0, 1, 0, 1), 6, 2,
+                                dimnames = list(tree$tip.label, NULL)))
+  # Previously: `pmatch(nomatch = 3)` silently fell through to the "default"
+  # (edge) branch for both `"edge"` (the documented, default value) and any
+  # typo, so no input to `return` could ever raise an error.
+  edgeExplicit <- QuartetConcordance(tree, dat, return = "edge")
+  edgeDefault <- QuartetConcordance(tree, dat)
+  expect_equal(edgeExplicit, edgeDefault)
+
+  expect_error(QuartetConcordance(tree, dat, return = "typo"),
+               "must .* match")
+  expect_error(QuartetConcordance(tree, dat, return = "site"),
+               "must .* match")
+})
+
+test_that("Concordance functions document NaN for uninformative pairs (#110)", {
+  # No character is informative for any split (a single variable character,
+  # rest ambiguous), so `support[, 2]` (possible information) is zero: a
+  # 0 / 0 division that was returned but not documented as possible.
+  tree <- BalancedTree(8)
+  mataset <- matrix(c(0, 0, 0, 0, 0, 0, 0, 1,
+                      rep("?", 8)), 8,
+                    dimnames = list(paste0("t", 1:8), NULL))
+  dat <- MatrixToPhyDat(mataset)
+  expect_true(all(is.nan(PhylogeneticConcordance(tree, dat))))
+
+  # That behaviour is unchanged by design (#110 asks only that it be
+  # documented); check the documentation itself names the NaN case for all
+  # three affected functions.  Read from the installed Rd database, not
+  # `man/` in the source tree: under `R CMD check`, tests run from an
+  # isolated copy that does not include `man/` as a sibling directory.
+  rd <- tools::Rd_db("TreeSearch")[["SiteConcordance.Rd"]]
+  rdConn <- textConnection("rdLines", "w", local = TRUE)
+  tools::Rd2txt(rd, out = rdConn)
+  close(rdConn)
+  rdText <- gsub("\\s+", " ", paste(rdLines, collapse = " "))
+  expect_match(rdText, "NaN.*is returned for a character")
+  expect_match(rdText, "NaN.*is returned for a split")
+  # One mention for each of MutualClusteringConcordance, PhylogeneticConcordance
+  # and SharedPhylogeneticConcordance.
+  expect_length(regmatches(rdText, gregexpr("NaN", rdText))[[1]], 3L)
+})
+
+test_that("ConcordantInformation() warning names every affected character (#111)", {
+  # Characters 2 and 4 are identical, so they compress to the same pattern;
+  # mock `StepInformation()` to return a profile too short to index at the
+  # pattern's actual extra-step count, forcing `signal[i]` to go out of
+  # bounds (NA) for that pattern alone.  The warning previously used
+  # `match(which(na), index)`, which reports only the first character
+  # sharing an affected pattern (2), silently omitting the second (4).
+  tree <- PectinateTree(6)
+  m <- matrix(c(0, 0, 0, 0, 0, 0,
+                0, 1, 0, 1, 0, 1,
+                1, 1, 1, 1, 1, 1,
+                0, 1, 0, 1, 0, 1,
+                0, 0, 0, 0, 0, 0), 6, 5,
+              dimnames = list(tree$tip.label, NULL))
+  dataset <- MatrixToPhyDat(m)
+  index <- attr(dataset, "index")
+  extraSteps <- CharacterLength(tree, dataset, compress = TRUE) -
+    MinimumLength(dataset, compress = TRUE)
+  # Sanity-check the fixture: characters 2 & 4 share a pattern requiring
+  # extra steps; the other characters' patterns require none.
+  expect_equal(index, c(1L, 2L, 3L, 2L, 1L))
+  expect_equal(unname(extraSteps), c(0, 2, 0))
+
+  testthat::local_mocked_bindings(
+    StepInformation = function(...) c("0" = 0),
+    .package = "TreeSearch"
+  )
+  expect_warning(
+    suppressMessages(ConcordantInformation(tree, dataset)),
+    "characters 2, 4;"
+  )
+})
+
+test_that(".ExpectedMICache is bounded (#106)", {
+  # `mi_key()` sorts and encodes `b` as uint16_t (src/expected_mi.cpp), so a
+  # naive `i %% k`/`i %/% k` split can still collide: swapping the two parts
+  # sorts to the same key, and the parts' ranges must not overlap or two
+  # different `i` produce the same unordered pair.  Offsetting `hi` well
+  # clear of `lo`'s range keeps every (lo, hi) pair -- and so every key --
+  # distinct across `limit + 5` iterations, genuinely exercising eviction
+  # (rather than plateauing below `limit` on collisions and never firing it).
+  cache <- TreeSearch:::.ExpectedMICache
+  size <- TreeSearch:::.ExpectedMICacheSize
+  limit <- TreeSearch:::.ExpectedMICacheLimit
+  rm(list = ls(cache, all.names = TRUE), envir = cache)
+  size$n <- 0L
+  on.exit({
+    rm(list = ls(cache, all.names = TRUE), envir = cache)
+    size$n <- 0L
+  })
+
+  n <- limit + 5L
+  for (i in seq_len(n)) {
+    TreeSearch:::.ExpectedMI(c(1L, 2L), c(1L, 2L, i %% 320L, 1000L + i %/% 320L))
+  }
+  expect_lte(length(cache), limit)
+  expect_lte(size$n, limit)
+  # The policy wipes on overflow, so what's left is `n - limit` entries from
+  # after the (one) wipe -- not merely "some number under the limit".
+  expect_equal(size$n, n - limit)
 })
 
 test_that("QACol() handles input", {

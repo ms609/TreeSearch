@@ -104,7 +104,9 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
     xpiwe_max_f = as.double(xpiwe_max_f),
     obs_count = if (useXpiwe) obsCount else integer(0)
   )
-  result <- do.call(ts_successive_approx, c(searchArgs, consArgs, profileArgs))
+  result <- do.call(ts_successive_approx,
+                    c(searchArgs, .KernelConstraintArgs(consArgs),
+                      profileArgs))
 
   if (result$converged && verbosity > 0) {
     message("Successive approximations converged after ",

@@ -130,6 +130,8 @@ or meaningful measure.
 concordance of each character in \code{dataset} with \code{tree}.
 The attribute \code{weighted.mean} gives the mean value, weighted by the
 information content of each character.
+\code{NaN} is returned for a character that no split in \code{tree} is informative
+about (zero possible information, a 0 / 0 division).
 
 \code{QuartetConcordance(return = "edge")} returns a numeric vector giving the
 concordance index at each split across all sites; names specify the number of
@@ -137,6 +139,8 @@ each corresponding split in \code{tree}.
 
 \code{QuartetConcordance(return = "char")} returns a numeric vector giving the
 concordance index calculated at each site, averaged across all splits.
+Unlike the \code{"edge"} result, this vector is unnamed: characters retain no
+persistent identifier once collapsed to patterns.
 
 With \code{unit = "nrqs"}, note that this average is taken over \emph{every} split in
 \code{tree}.  A character can agree exactly with at most one split, and is merely
@@ -158,11 +162,15 @@ with the full combinatorial volume of quartets that it resolves.
 \code{PhylogeneticConcordance()} returns a numeric vector giving the
 phylogenetic information of each split in \code{tree}, named according to the
 split's internal numbering.
+\code{NaN} is returned for a split that no character is informative about
+(zero possible information, a 0 / 0 division).
 
 \code{SharedPhylogeneticConcordance()} returns the shared phylogenetic
 concordance of each character in \code{dataset} with \code{tree}.
 The attribute \code{weighted.mean} gives the mean value, weighted by the
 information content of each character.
+\code{NaN} is returned for a character that no split in \code{tree} is informative
+about (zero possible information, a 0 / 0 division).
 }
 \description{
 Concordance measures the strength of support that characters in a dataset
@@ -221,6 +229,9 @@ If \code{weight = FALSE}, the split concordance will be mean(75\%, 25\%) = 50\%.
 rather than a random subsample \insertCite{@cf. @Minh2020}{TreeSearch}.
 Ambiguous and inapplicable tokens are treated as containing no grouping
 information (i.e. \code{(02)} or \code{-} are each treated as \verb{?}).
+
+\code{return} is matched (case-insensitively, and partially) against \code{"edge"}
+and \code{"char"}; any other value raises an error.
 
 \code{PhylogeneticConcordance()} treats each character in \code{dataset} as a
 phylogenetic hypothesis and measures the extent to which it supports the

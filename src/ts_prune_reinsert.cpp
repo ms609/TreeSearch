@@ -638,6 +638,7 @@ PruneReinsertResult prune_reinsert_search(
       tp.max_accepted_changes = params.tbr_max_moves;
       tp.max_hits = params.tbr_max_hits;
       tp.tabu_size = params.tabu_size;
+      tp.certify_unrooted = false;   // reduced sub-tree; reinserted, then judged
       tbr_search(red_tree, red_ds, tp, nullptr, nullptr, nullptr,
                  check_timeout);
     }
@@ -670,12 +671,31 @@ PruneReinsertResult prune_reinsert_search(
       tp.max_accepted_changes = params.tbr_full_max_moves;  // 0 = converge
       tp.max_hits = params.tbr_max_hits;
       tp.tabu_size = params.tabu_size;
+      tp.certify_unrooted = false;   // candidate for step 7's accept-or-revert
       tbr_search(tree, ds, tp, cd, nullptr, nullptr, check_timeout);
     }
 
-    // 7. Accept or revert
+    // 7. Accept or revert.
+    // T-391: the reduced-tree TBR (step 4) runs with no ConstraintData at
+    // all, and expand_and_reinsert()'s greedy Wagner placement (step 5)
+    // never consults cd either — cd only reaches the full-tree TBR polish
+    // (step 6), which can refuse to further violate an already-broken
+    // constraint but cannot repair one (regraft_violates_constraint rejects
+    // moves once a split is unmapped). A cycle can therefore return a
+    // strictly-better-scoring tree that no longer displays every constraint
+    // split. Verify compliance before capturing, mirroring the accept check
+    // in ts_nni_perturb.cpp (:117-123), so a violating tree is rejected
+    // regardless of which upstream step actually destroyed the split.
     double new_score = score_tree(tree, ds);
-    if (new_score < current_score - 1e-10) {
+    bool accept = new_score < current_score - 1e-10;
+    if (accept && cd && cd->active) {
+      map_constraint_nodes(tree, *cd);
+      for (int s = 0; s < cd->n_splits; ++s) {
+        if (cd->constraint_node[s] < 0) { accept = false; break; }
+      }
+    }
+
+    if (accept) {
       current_score = new_score;
       result.best_score = new_score;
       ++result.n_improvements;

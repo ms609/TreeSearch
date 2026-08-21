@@ -121,15 +121,28 @@
 
   consContrast <- attr(constraint, "contrast")
   nConsStates <- ncol(consContrast)
-  if (nConsStates < 2L) return(list())
+  if (nConsStates < 2L) {
+    warning("Ignoring empty constraint", call. = FALSE)
+    return(list())
+  }
+
+  # Constraints are enforced as bipartitions, so only the two extreme states of
+  # a character are read: taxa carrying an intermediate state are in neither
+  # group and go unconstrained.  Say so rather than let the caller infer, from
+  # `@param constraint`'s "compatible with each character", that a third state
+  # groups its taxa too.
+  if (nConsStates > 2L) {
+    warning("`constraint` characters with more than two states are enforced ",
+            "as the split between their first and last state only; taxa in ",
+            "any intermediate state are left unconstrained.", call. = FALSE)
+  }
 
   consMat <- matrix(unlist(constraint, use.names = FALSE),
                     nrow = length(constraint), byrow = TRUE)
   # For each constraint character, record the tips unambiguously in the "1"
   # group (derived state present, ancestral absent) and, separately, those in
   # the "0" group (ancestral present, derived absent).  Tips ambiguous for the
-  # character ("?", or unconstrained taxa) belong to neither group and are free
-  # to plot on either side of the split.
+  # character ("?", or unconstrained taxa) may plot anywhere.
   consSplits <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
   consZero   <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
   for (ch in seq_len(ncol(consMat))) {
@@ -145,23 +158,20 @@
     }
   }
 
-  keep <- apply(consSplits, 1, function(row) {
-    s <- sum(row)
-    s >= 1 && s < length(constraint) - 1
-  })
+  # Ignore trivial constraints
+  nOne <- rowSums(consSplits)
+  nZero <- rowSums(consZero)
+  inert <- nOne < 2 | nZero < 2
+  if (any(inert)) {
+    warning("Ignoring trivial constraint character", if (sum(inert) > 1) "s" else "", " ",
+            paste(which(inert), collapse = ", "), call. = FALSE)
+  }
+  keep <- !inert
   consSplits <- consSplits[keep, , drop = FALSE]
   consZero   <- consZero[keep, , drop = FALSE]
   if (nrow(consSplits) == 0L) return(list())
 
   # Every returned tree must display all constraint splits simultaneously.
-  # Two splits are jointly displayable iff they are compatible in the
-  # four-gamete sense: treating each as a bipartition of the tips it
-  # constrains (its "1" group vs its "0" group, ambiguous tips excluded), the
-  # pair is compatible iff at least one of the four group intersections is
-  # empty.  A laminar (nested-or-disjoint) test alone is too strict: it rejects
-  # the case where the two "0" groups are disjoint -- i.e. the splits' "1"
-  # sides jointly cover the constrained tips -- which is perfectly displayable,
-  # e.g. ab | cef and abcd | ef coexist on ((a,b),(d,(c,(e,f)))).
   nSplits <- nrow(consSplits)
   if (nSplits > 1L) {
     for (i in seq_len(nSplits - 1L)) {
@@ -174,7 +184,7 @@
                       !any(aZero & bOne) || !any(aZero & bZero)
         if (!compatible) {
           stop("Constraint is impossible to satisfy: splits ", i, " and ", j,
-               " are incompatible (all four taxon groupings co-occur)")
+               " are incompatible")
         }
       }
     }
@@ -188,14 +198,86 @@
   consTipData <- matrix(unlist(constraint, use.names = FALSE),
                         nrow = length(constraint), byrow = TRUE)
 
+  # Fold the two groups into the single membership matrix the C++ engine reads:
+  # 1 = "together", 0 = "apart", NA = free to fall on either side.  A tip that
+  # is in neither group must not be coded 0, or the engine would enforce the
+  # stricter "the 1 group is an exact clade" reading and refuse to move a start
+  # tree that already satisfies the documented one (agent-issues/TreeSearch#54).
+  # build_constraint() (src/ts_constraint.cpp) treats any value that is neither
+  # 1 nor 0 as free, so a plain 0/1 matrix still means "no free tips".
+  consSplits[consSplits == 0L & consZero == 0L] <- NA_integer_
+
   list(
     consSplitMatrix = consSplits,
+    consZero = consZero,
     consContrast = consContrast,
     consTipData = consTipData,
     consWeight = as.integer(consWeight),
     consLevels = attr(constraint, "levels"),
     consExpectedScore = as.integer(consExpectedScore)
   )
+}
+
+# Constraint fields the flat `ts_*` kernels declare as formals, in contrast to
+# the list-config entry points, which ignore anything they do not name.  A
+# `do.call()` onto a flat kernel has to be filtered through this, or a field
+# added for the list-config path becomes an unused-argument error there.
+.kernelConsFields <- c("consSplitMatrix", "consContrast", "consTipData",
+                       "consWeight", "consLevels", "consExpectedScore")
+
+.KernelConstraintArgs <- function(consArgs) {
+  consArgs[intersect(names(consArgs), .kernelConsFields)]
+}
+
+# Does `tree` display a split separating a constraint character's "1" group
+# from its "0" group?  This is the phyDat reading `constraint` is documented
+# in: tips ambiguous for the character sit on either side, so the test is
+# "some edge separates the two groups", not the stricter "the 1 group is
+# exactly a clade" that the search's locked-node machinery enforces
+# internally.  `consOne` / `consZero` are .PrepareConstraint()'s matrices, in
+# `tip_data` column order; `tree`'s tips must already be renumbered to match.
+#
+# The two groups are the character's extreme states, so this answers for
+# exactly what the engine enforces -- an intermediate state's taxa are in
+# neither group here and are unconstrained there too (.PrepareConstraint()
+# warns about that at input).
+.ConstraintViolated <- function(tree, consOne, consZero) {
+  # `consOne` is the membership matrix the C++ kernels read, so it uses their
+  # coding: 1 = in the group, anything else -- including the NA that marks a
+  # free tip -- out of it.  Reduce it to 0/1 here rather than let an NA
+  # propagate through the accumulation below and turn every comparison NA.
+  consOne <- (!is.na(consOne) & consOne == 1L) * 1L
+  edge <- Postorder(tree)[["edge"]]
+  parent <- edge[, 1L]
+  child <- edge[, 2L]
+  nTip <- ncol(consOne)
+  nRow <- nrow(consOne)
+  # One accumulation pass carries every group at once: rows 1..nRow are the
+  # "1" groups, the rest the "0" groups.  Nodes index the COLUMNS, so each
+  # accumulation touches one contiguous stretch of a column-major matrix.
+  counts <- matrix(0L, nrow = 2L * nRow, ncol = max(edge))
+  counts[, seq_len(nTip)] <- rbind(consOne, consZero)
+  for (i in seq_along(parent)) {
+    counts[, parent[i]] <- counts[, parent[i]] + counts[, child[i]]
+  }
+  # Postorder lists every node before its parent, so the first node holding a
+  # whole group is that group's MRCA; the groups are separated iff one MRCA
+  # holds none of the other group.
+  nodes <- c(child, parent[length(parent)])
+  for (r in seq_len(nRow)) {
+    one <- counts[r, ]
+    zero <- counts[nRow + r, ]
+    nOne <- sum(consOne[r, ])
+    nZero <- sum(consZero[r, ])
+    mrcaOne <- nodes[one[nodes] == nOne][1]
+    mrcaZero <- nodes[zero[nodes] == nZero][1]
+    displayed <- (!is.na(mrcaOne) && zero[mrcaOne] == 0L) ||
+      (!is.na(mrcaZero) && one[mrcaZero] == 0L)
+    if (!displayed) {
+      return(TRUE)
+    }
+  }
+  FALSE
 }
 
 # Ratchet depth for implied weights under `thorough`/`large`, applied after the
@@ -344,7 +426,8 @@
   # 2026-06-25 two-island sweep (30 seeds) folded wagnerStarts = 5 (intensive's
   # sole distinguishing feature) into `thorough` together with driftCycles = 2;
   # ws5 showed no score gain over thorough while costing wall-clock, so the two
-  # presets are merged.  Kept as an alias so `strategy = "intensive"` still works.
+  # presets are merged.  Retained as an internal alias only: the effort ladder
+  # never names it, and there is no user-facing way to ask for it.
   presets$intensive <- presets$thorough
 
   # Large-tree preset (>=120 tips).  REBASED on `thorough` (2026-07-07).
@@ -374,10 +457,7 @@
   presets
 }
 
-# Select strategy preset based on dataset size and character count.
-# @param nTip Integer number of taxa
-# @param nChar Integer number of character patterns (unique columns)
-# @return Character name of the strategy preset
+# Calibration behind .AutoRung()'s size/character thresholds.
 # @details
 # Empirically calibrated on 15 neotrans matrices (61-86 tips) + 4
 # inapplicable.phyData datasets.  Key findings:
@@ -415,17 +495,149 @@
   control
 }
 
-.AutoStrategy <- function(nTip, nChar) {
-  if (nTip <= 30L) return("sprint")
+# --- The effort ladder -----------------------------------------------------
+#
+# Rungs 1-3 are the provisioning presets.  Rung 4 is `thorough`'s provisioning
+# with a raised replicate cap -- which is exactly what `large` already was
+# (`presets$large <- presets$thorough`, plus `maxReplicates = 500`).  So the
+# ladder generalises an axis the package was already using; it does not invent
+# one.  Above rung 4 only the BUDGET climbs, because provisioning saturates at
+# `thorough`: there is nothing further to provision.
+#
+# These names are internal labels for menu entries, not a user-facing argument.
+# Users ask for effort relative to the automatic choice; only the package (and
+# its tests) name a rung, via the internal `.rung` argument.
+.effortLadder <- c("sprint", "default", "thorough", "large")
+
+# A REPRESENTABILITY limit, not a policy one -- and the distinction matters.
+# `.iwRatchetMaxCycles = 115` caps at the largest ratchet depth actually tested,
+# because extra ratchet depth is not known to be free.  Extra replicates ARE:
+# raising the cap only appends later replicates and never delays an earlier
+# improvement, so reach is monotone non-decreasing in `maxReplicates` and the
+# only cost is wall -- which is exactly what someone raising `effort` is asking
+# to spend.  There is therefore no measured or principled level at which the
+# ladder should refuse to go further, and an arbitrary ceiling would just
+# obstruct the request.
+#
+# Rung 26 is where `500 * 2^(rung - 4)` stops fitting in R's integer type
+# (500 * 2^22 = 2 097 152 000; one more doubling overflows).  Requests beyond it
+# are clamped WITH A MESSAGE, so `effort = 40` announces that it means the same
+# as `effort = 26` rather than silently pretending otherwise.
+.effortMaxRung <- 26L
+
+# Everything a rung means, in ONE place.  `maxReplicates = NA` means "leave the
+# SearchControl default alone".
+.RungSpec <- function(rung) {
+  rung <- as.integer(rung)
+  list(
+    preset = .effortLadder[[min(rung, length(.effortLadder))]],
+    # 96 (the SearchControl default) through rung 3; 500 at rung 4 -- the value
+    # `large` already used -- then doubling.  Raising this cap ANYTIME-DOMINATES
+    # (a higher cap only appends later replicates; it never delays an earlier
+    # improvement) and easy datasets still stop early on `targetHits`, so the
+    # cost falls only on the genuinely hard tail that runs to the cap.  That is
+    # what licenses extrapolating this knob past the measured 500 when the
+    # ratchet depth may not be extrapolated.
+    maxReplicates = if (rung <= 3L) NA_integer_ else
+      as.integer(500 * 2^(rung - 4L)),
+    # `targetHits` multiplier: 1 through rung 4, then doubling in step with the
+    # replicate budget.
+    #
+    # BOTH knobs double, so that one notch means the same thing -- roughly twice
+    # the work -- whichever population a dataset falls in.  They govern disjoint
+    # populations (see below), so mixing rates would make a notch 2x the work on
+    # hard matrices but only (k+1)/k on easy ones, i.e. notches would shrink as
+    # you climb on precisely the population `targetHits` controls.  That is the
+    # only argument for the shape; it is an OPERATING POINT, not a fitted
+    # constant.  What is measured is that reach was still climbing at 500
+    # replicates with no knee (34-matrix 120-180t sweep, reach@96 = 0.68 ->
+    # reach@250 = 0.79) -- so more is better, and nothing measures where that
+    # stops or what shape the approach has.  A doubling grid over rungs 4-8 on
+    # the hard tail is what would replace this guess with a measurement.
+    #
+    # `maxReplicates` deliberately leads and `targetHits` follows, because the
+    # two bite on DISJOINT populations.  `targetHits` ends a run early on easy
+    # datasets, so raising it lengthens those; on hard datasets it is never
+    # reached and `maxReplicates` binds first.  Measured (array 18096945,
+    # equal weights): Zanol2014 ran the full 96 replicates at hits-to-best = 1
+    # against a target of 14, and tripling `targetHits` to 42 changed score,
+    # replicate count and wall not at all.  A rung that raised `targetHits`
+    # alone would therefore do nothing on precisely the datasets someone turns
+    # effort up for.
+    #
+    # It still earns its place from rung 5: it buys MPT completeness on easy
+    # data, and under IMPLIED weights it additionally deepens the ratchet
+    # through .IwRatchetDepth()'s targetHits/defaultHits escalation (capped at
+    # .iwRatchetMaxCycles), which is a genuine reach lever the equal-weights
+    # measurement above cannot see.
+    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L)),
+    # `enumMaxTrees` multiplier: the size of the returned MPT set, relative to
+    # `poolMaxSize`.  Doubling in step with the other two knobs, from rung 5, so
+    # that one notch keeps meaning "roughly twice the work" on this axis too.
+    #
+    # This scales the ENUMERATION ceiling only, never `poolMaxSize` itself, and
+    # the distinction is the whole point.  During the replicate loop the pool cap
+    # is the size of the working set the search reads -- fuse donors are the
+    # entire pool (uncapped, and taken under the pool mutex on the parallel
+    # path), conflict-guided sector selection reads the pool's split frequencies
+    # once per replicate, and `consensusConstrain` reads its consensus splits --
+    # so scaling it would change which trees the search VISITS.  The
+    # anytime-dominance argument that licenses raising `maxReplicates` above
+    # therefore does NOT transfer to `poolMaxSize`: a bigger pool can delay
+    # every later improvement rather than merely appending to the result.
+    # After the loop, the pool is pure output and a bigger ceiling can only
+    # append equal-score topologies, so the same argument DOES hold there.
+    #
+    # It is bounded in practice without needing a cap: enumeration shares the
+    # `maxSeconds * enumTimeFraction` reserve, and its loop exits as soon as the
+    # pool fills, so an over-generous ceiling costs enumeration time, never a
+    # worse tree.  As with `hitMultiplier` the doubling shape is an OPERATING
+    # POINT rather than a measurement -- what is measured is that the July 2026
+    # 182-tip runs returned exactly `poolMaxSize` trees in all four analyses,
+    # i.e. the ceiling bound the answer rather than the MPT count doing so.
+    enumMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
+  )
+}
+
+# Automatic rung, from dataset size and character count.  Returns an INDEX into
+# .effortLadder, so `effort = 0` reproduces the previous `strategy = "auto"`
+# choice exactly and the default stays size-aware.
+# @param nTip Integer number of taxa
+# @param nChar Integer number of character patterns (unique columns)
+.AutoRung <- function(nTip, nChar) {
+  if (nTip <= 30L) return(1L)                       # sprint
   # Few characters -> flat landscape; thorough search is pointless
-  if (nChar < 100L) return("default")
-  # Large trees (>=120 tips): `large` is now thorough's provisioning with a
-  # raised replicate default (2026-07-07 rebase; see .StrategyPresets).
-  if (nTip >= 120L) return("large")
+  if (nChar < 100L) return(2L)                      # default
+  # Large trees (>=120 tips): `large` is thorough's provisioning with a raised
+  # replicate cap (2026-07-07 rebase; see .StrategyPresets).
+  if (nTip >= 120L) return(4L)                      # large
   # Enough characters to have a structured landscape;
   # moderate-to-large datasets benefit from intensive search
-  if (nTip >= 65L) return("thorough")
-  "default"
+  if (nTip >= 65L) return(3L)                       # thorough
+  2L                                                # default
+}
+
+# Resolve the requested rung.  `effort` is an OFFSET from the automatic choice,
+# so that the default (0) is exactly what the package chose before this argument
+# existed, on every dataset size.  Clamped to [1, .effortMaxRung]; clamping at
+# the bottom means a large negative offset reliably selects `sprint` whatever
+# the dataset, which is what most callers wanting "just make it quick" mean.
+.EffortRung <- function(autoRung, effort, verbosity = 1L) {
+  if (length(effort) != 1L || is.na(effort) || !is.finite(effort) ||
+      effort != as.integer(effort)) {
+    stop("`effort` must be a single whole number (an offset from the ",
+         "automatic setting; 0 keeps it).")
+  }
+  wanted <- autoRung + as.integer(effort)
+  rung <- max(1L, min(.effortMaxRung, wanted))
+  if (wanted > .effortMaxRung && verbosity >= 1L) {
+    message("`effort` clamped to rung ", .effortMaxRung, " (",
+            .RungSpec(.effortMaxRung)[["maxReplicates"]],
+            " replicates): the largest replicate budget representable as an ",
+            "integer. Set `maxReplicates` and `targetHits` directly if you ",
+            "need more.")
+  }
+  rung
 }
 
 #' Find most parsimonious trees
@@ -458,9 +670,13 @@
 #' most-parsimonious tree (\acronym{MPT}) is recovered.
 #' The size of the returned set is bounded by, in order:
 #' \enumerate{
-#'   \item **`poolMaxSize`** (default `100`) — a hard ceiling on the number of
-#'     trees retained.  Raise it (via [`SearchControl()`]) to keep more MPTs;
-#'     with the default you will never see more than 100.
+#'   \item **`enumMaxTrees`**, falling back to **`poolMaxSize`** (default `100`)
+#'     when `enumMaxTrees` is `0` — a hard ceiling on the number of trees
+#'     retained; with the default you will never see more than 100.  Prefer
+#'     raising `enumMaxTrees` (via [`SearchControl()`]): it applies only once the
+#'     search is over, so it cannot alter which trees are visited, whereas
+#'     `poolMaxSize` also sizes the working set that fusing and sectorial search
+#'     read.  From `effort` rung 5 the ladder raises `enumMaxTrees` for you.
 #'   \item **MPT-enumeration time.** After the main search, a TBR plateau walk
 #'     enumerates equal-score neighbours of each pool tree, within a time
 #'     reserve of `maxSeconds * enumTimeFraction`.  If this phase times out it
@@ -510,6 +726,12 @@
 #'   says so in a warning.  Raise `targetHits` as well as `maxReplicates` to
 #'   use more of it.
 #'   If unspecified, all replicates start from random Wagner trees.
+#'   A start tree that does not satisfy `constraint` is rearranged until it
+#'   does before the search begins, with a warning: `constraint` is a
+#'   guarantee about the trees returned, whereas `tree` only says where to
+#'   begin, so when the two conflict the guarantee wins.  A taxon coded `?`
+#'   for a constraint character is unconstrained by it and may start on
+#'   either side of that split.
 #'   Edge lengths are not supported and will be deleted.
 #'   Rooted and unrooted trees are both accepted; an unrooted tree is rooted
 #'   arbitrarily (on its first tip) before the search begins, which may
@@ -568,7 +790,18 @@
 #'     \item{`"xform"`}{Step-matrix recoding approximating maximum homology
 #'       via x-transformations
 #'       \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-#'       `hierarchy`.}
+#'       `hierarchy`.  **Scores are rooting-sensitive**: the step matrix of
+#'       this recoding is asymmetric -- gaining the controlling character costs one more
+#'       than the number of secondaries it brings into existence, against 1 to
+#'       lose it -- so a tree's length depends on where its root sits, whereas
+#'       parsimony under the other methods does not.  Lengths are therefore
+#'       reported at a canonical rooting, on the first taxon of `dataset`, which
+#'       is the rooting the returned trees carry; `TreeLength()` canonicalises
+#'       identically, so it reproduces the reported score and one topology has
+#'       one length.  That value is an upper bound on the rooting-free minimum,
+#'       exceeding it by at most the total number of secondary characters across
+#'       hierarchy blocks, and attaining it for 87-98% of rootings in
+#'       simulation.}
 #'   }
 #' @param hsj_alpha Numeric in \[0, 1\]: scaling parameter for secondary-
 #'   character contributions under the HSJ method.  0 = secondaries ignored;
@@ -578,55 +811,99 @@
 #' returned trees will be perfectly compatible with each character in
 #' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
 #' in any output tree.
+#' A returned tree is compatible with a constraint character when some edge
+#' separates the taxa coded `1` from those coded `0`.  Taxa coded `?`, and taxa
+#' that `constraint` does not mention, are unconstrained: they may fall on
+#' either side of that edge, and are not required to join either group.
+#' A character whose `1` or `0` group contains fewer than two taxa therefore
+#' constrains nothing -- every tree separates such a group from the rest -- and
+#' is ignored with a warning.  To group taxa, code the taxa they must be
+#' separated from as `0` rather than leaving them `?`.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
-#' @param strategy Character: named strategy preset controlling the search
-#'   heuristic parameters. Presets:
+#' Each constraint character is enforced as a single split, so one with more
+#' than two states is read as the split between its first and last state
+#' alone: taxa in an intermediate state are left unconstrained, with a warning.
+#' @param effort Integer: how much search effort to spend, **relative to the
+#'   amount chosen automatically** for this dataset.  `0` (the default) accepts
+#'   the automatic choice; `1` asks for one notch more, `-1` one notch less.
+#'
+#'   The automatic choice is made from dataset size and character count, since
+#'   those predict how much search a matrix repays: `sprint` for <=30 taxa;
+#'   `large` for >=120 taxa with >=100 character patterns; `thorough` for
+#'   65-119 taxa with >=100 character patterns; `default` otherwise.  Because
+#'   `effort` is an offset rather than an absolute level, `effort = 0` gives a
+#'   30-taxon and a 300-taxon matrix quite different searches -- which is the
+#'   intent.
+#'
+#'   The rungs, in order:
 #'   \describe{
-#'     \item{`"auto"` (default)}{Selects automatically based on dataset size
-#'       and character count:
-#'       `"sprint"` for <=30 taxa; `"large"` for >=120 taxa with >=100
-#'       character patterns; `"thorough"` for 65-119 taxa with >=100
-#'       character patterns; `"default"` otherwise.}
-#'     \item{`"sprint"`}{Fast search: 3 ratchet cycles, no drift, minimal
-#'       sectorial. Good for small datasets or quick surveys.}
-#'     \item{`"default"`}{Balanced: 6 ratchet cycles, sectorial search and
+#'     \item{1, `sprint`}{Fast: 3 ratchet cycles, no drift, minimal sectorial.
+#'       Small datasets and quick surveys.}
+#'     \item{2, `default`}{Balanced: 6 ratchet cycles, sectorial search and
 #'       fusing.}
-#'     \item{`"thorough"`}{Intensive: 20 ratchet cycles, adaptive
-#'       perturbation, extra sectorial rounds, drift (2 cycles) and 5 Wagner
-#'       starts, outer cycle loop. Best for datasets with 65-119 tips and 100+
-#'       character patterns; the drift cycles also recover equal-score trees on
+#'     \item{3, `thorough`}{Intensive: 20 ratchet cycles, adaptive perturbation,
+#'       extra sectorial rounds, drift (2 cycles), 5 Wagner starts and an outer
+#'       cycle loop.  The drift cycles also recover equal-score trees on
 #'       TBR-disconnected islands that random restarts alone miss.}
-#'     \item{`"large"`}{Large-tree search (>=120 tips): the `"thorough"`
-#'       settings with `maxReplicates` raised to 500 to suit the higher
-#'       per-replicate cost.}
-#'     \item{`"intensive"`}{Deprecated alias of `"thorough"`, retained for
-#'       backward compatibility.  The extra Wagner starts (5) that once
-#'       distinguished it are now folded into `"thorough"`, so the two are
-#'       identical.}
-#'     \item{`"none"`}{Use only the explicitly supplied parameter values.}
+#'     \item{4, `large`}{`thorough`'s provisioning with `maxReplicates` raised
+#'       to 500, to suit the higher per-replicate cost of big trees.}
+#'     \item{5 and up}{`thorough`'s provisioning, with the replicate budget, the
+#'       hit target and the \acronym{MPT}-enumeration ceiling (`enumMaxTrees`)
+#'       all doubling each notch (1000, 2000, 4000 ... replicates), so that one
+#'       notch always means roughly twice the work.  `poolMaxSize` is
+#'       deliberately *not* scaled: it sizes the working set that fusing and
+#'       sectorial search read during the run, so raising it would change which
+#'       trees are visited rather than only how many are returned.
+#'       There is no policy ceiling: extra replicates cannot cost reach, only
+#'       wall, which is what you asked to spend.  The ladder stops only at rung
+#'       26, where the replicate budget outgrows R's integer type.}
 #'   }
-#'   Any unambiguous abbreviation is accepted: `"thoro"`, `"thor"` and `"t"` all
-#'   select `"thorough"`.  Every preset's initial differs, so a single letter is
-#'   always enough.  A value that matches nothing -- or matches ambiguously --
-#'   warns and falls back to the default parameters rather than throwing an
-#'   error.
-#'   Presets stop on `targetHits` and the `perturbStopFactor` no-improvement
-#'   rule; `consensusStableReps` (consensus-stability stopping) is off by default
-#'   and is not enabled by any preset.
-#'   Under implied weights only, `"sprint"` and `"default"` additionally stop on
-#'   a flat replicate patience (`stopPatience` 20 and 15 respectively) and deepen
-#'   the ratchet to match (`ratchetCycles` 12 and 20); the pair is a package,
-#'   since each half fails on its own.  Equal weights is unaffected.
-#'   Explicit `control` fields always override the preset; for example,
-#'   `strategy = "sprint", control = SearchControl(ratchetCycles = 10L)` uses
-#'   sprint defaults for everything except `ratchetCycles`.
+#'
+#'   Above rung 4 the **replicate budget** is what climbs first, because
+#'   `targetHits` cannot act once that budget is reached -- and on hard datasets
+#'   it always is.  Measured on 30 inapplicable-bearing matrices: tripling the
+#'   hit target bought 4409 extra replicates in total, but only 243 of them on
+#'   the six matrices that had anything left to find, and **none at all** on the
+#'   three hardest, where the replicate cap bound every run of both arms.  A
+#'   ladder that raised the hit target first would spend its effort almost
+#'   entirely on datasets that were already solved.
+#'
+#'   `targetHits` is raised in step all the same, for two reasons that are not
+#'   reach: it governs when *easy* runs stop, so without it a notch would be
+#'   inert on every dataset that finishes early; and under implied weights it
+#'   additionally deepens the ratchet (see `targetHits`), which the equal-weights
+#'   measurement above cannot see.  Read rungs 5+ as buying **confidence and
+#'   distinct trees on easy data, and reach on hard data** -- not as buying reach
+#'   uniformly.
+#'
+#'   The rung-4 budget of 500 is measured: a 34-matrix, 120--180-tip sweep found
+#'   the fraction of runs reaching the best score climbing from 0.68 at 96
+#'   replicates to 0.79 at 250, with the hard-matrix subset **still climbing at
+#'   500 and no knee**.  The doubling *above* that is an operating point rather
+#'   than a fitted constant: nothing measures where the reach curve flattens, so
+#'   the ladder simply keeps offering more in even steps.  Treat rungs 5+ as
+#'   "spend about twice as long again", not as calibrated levels.
+#'
+#'   Anything you set yourself wins: `maxReplicates` and `targetHits` you supply
+#'   are never rescaled by `effort`, and explicit `control` fields always
+#'   override the rung's preset -- for example
+#'   `effort = -2, control = SearchControl(ratchetCycles = 10L)` uses the lower
+#'   rung's settings for everything except `ratchetCycles`.
+#'
+#'   Every rung stops on `targetHits` and the `perturbStopFactor`
+#'   no-improvement rule; `consensusStableReps` (consensus-stability stopping) is
+#'   off by default and no rung enables it.  Under implied weights only, rungs 1
+#'   and 2 additionally stop on a flat replicate patience (`stopPatience` 20 and
+#'   15 respectively) and deepen the ratchet to match (`ratchetCycles` 12 and
+#'   20); the pair is a package, since each half fails on its own.  Equal weights
+#'   is unaffected.
 #' @param maxReplicates Integer: maximum number of independent search
 #'   replicates (default: 96).
 #'   The default is a multiple of 48 (= LCM(12, 16)) so that replicates
 #'   divide evenly across common 12- or 16-core machines when running in
 #'   parallel.
-#'   When `strategy` resolves to `"large"` (automatically selected for
+#'   When `effort` resolves to rung 4 (`large` -- chosen automatically for
 #'   datasets of \eqn{\ge}{>=} 120 tips and \eqn{\ge}{>=} 100 characters) and
 #'   `maxReplicates` is left at its default, the
 #'   cap is raised to 500: a 120--180-tip sweep showed the fraction of runs
@@ -644,9 +921,9 @@
 #' @param targetHits Integer: stop a replicate series once the best score has
 #'   been re-found this many times without further improvement
 #'   (default: `max(10, NTip / 5)`).  This is the main control over *how hard the
-#'   search tries to be sure it is finished*, and it is shared by every
-#'   `strategy` preset -- the presets differ in per-replicate effort, not in when
-#'   they stop.  It sets the balance between the two goals a user may bring to a
+#'   search tries to be sure it is finished*, and rungs 1-4 of `effort` all
+#'   share it -- they differ in per-replicate effort, not in when they stop.
+#'   (Rung 5 and above raise it, alongside the replicate budget.)  It sets the balance between the two goals a user may bring to a
 #'   search:
 #'   \describe{
 #'     \item{A single tree one can be reasonably confident is
@@ -667,8 +944,8 @@
 #'       run with no new topology is not proof that none remain, so completeness
 #'       is bought with search effort, never inferred.}
 #'   }
-#'   Under implied weights (finite `concavity`) with `strategy = "thorough"` or
-#'   `"large"`, raising `targetHits` above its default also deepens the ratchet
+#'   Under implied weights (finite `concavity`) at `effort` rung 3 (`thorough`)
+#'   or above, raising `targetHits` above its default also deepens the ratchet
 #'   in proportion, up to 115 cycles: no dataset property reliably predicts how
 #'   much character reweighting a matrix needs, so a raised `targetHits` is taken
 #'   as the user's own signal that this one needs more.  Lowering `targetHits`
@@ -743,8 +1020,15 @@
 #' the true optimum, so reporting them would look like erratic progress.  Any
 #' score the heartbeat prints is therefore directly comparable with the final
 #' tree score.
+#' @param .rung Internal.  Pins a named entry of the effort ladder
+#'   (`"sprint"`, `"default"`, `"thorough"`, `"large"`), or `"none"` to apply no
+#'   preset at all; `NULL` (default) selects the rung from `effort` and the
+#'   dataset's size, which is what every ordinary call should do.  Exists for
+#'   controlled experiments and the preset smoke tests, which need to name a rung
+#'   absolutely rather than relative to the automatic choice.  Not part of the
+#'   stable interface: prefer `effort`.
 #' @param control A [`SearchControl`] object (or a named list) of low-level
-#'   search parameters.  Most users can rely on the `strategy` presets and
+#'   search parameters.  Most users can rely on `effort` and
 #'   ignore this argument; see [`SearchControl()`] for full documentation
 #'   of individual fields.
 #' @param collapse Logical: if `TRUE` (default), contract zero-length
@@ -823,6 +1107,10 @@
 #' result
 #' attr(result, "score")
 #'
+#' # Ask for one notch less search than this dataset would get by default,
+#' # whatever its size:
+#' sprint <- MaximizeParsimony(dataset, effort = -1, maxReplicates = 12)
+#'
 #' @template MRS
 #' @family tree scoring
 #' @seealso [`Resample()`] for jackknife and bootstrap resampling.
@@ -845,7 +1133,7 @@ MaximizeParsimony <- function(
     inapplicable = "bgs",
     hsj_alpha = 1.0,
     constraint,
-    strategy = "auto",
+    effort = 0L,
     maxReplicates = 96L,
     targetHits = NULL,
     maxSeconds = 0,
@@ -854,6 +1142,7 @@ MaximizeParsimony <- function(
     progressCallback = NULL,
     control = SearchControl(),
     collapse = TRUE,
+    .rung = NULL,
     ...
 ) {
 
@@ -882,6 +1171,9 @@ MaximizeParsimony <- function(
   # implied-weights ratchet depth below scales with the user's *escalation*
   # (targetHits / defaultHits), not with the absolute value.
   defaultHits <- max(10L, as.integer(NTip(dataset) / 5))
+  # Captured before the assignment below, for the same reason as `userSetReps`:
+  # the effort ladder must not scale a hit target the user chose themselves.
+  userSetHits <- !is.null(targetHits)
   if (is.null(targetHits)) {
     targetHits <- defaultHits
   }
@@ -932,52 +1224,76 @@ MaximizeParsimony <- function(
             paste0(sQuote(names(otherDots)), collapse = ", "))
   }
 
-  # --- Resolve an abbreviated strategy to its canonical name ---
-  # Must run BEFORE the preset lookup below, and before `.IwRatchetDepth()` /
-  # `.IwStopPackage()`, both of which test `strategy %in% c("thorough", "large")`
-  # by exact string.  Resolving later would let `strategy = "thoro"` pick up
-  # `thorough`'s preset while silently skipping its implied-weights package --
-  # a worse failure than not matching at all, because it looks like it worked.
+  # --- Resolve the effort rung ---
+  # `effort` is an OFFSET from the automatic choice, not an absolute level, so
+  # `effort = 0` reproduces the size-aware selection exactly on every dataset
+  # size -- the previous `strategy = "auto"` behaviour, unchanged.
   #
-  # `pmatch()` rather than `match.arg()`: an unrecognised or ambiguous value must
-  # keep falling through to the existing "Unknown strategy" warning (leaving
-  # `strategy` as the user typed it, so the warning names it), not error.
-  if (length(strategy) == 1L && is.character(strategy) && !is.na(strategy)) {
-    strategyChoices <- c(names(.StrategyPresets()), "auto", "none")
-    if (!strategy %in% strategyChoices) {
-      matched <- pmatch(strategy, strategyChoices)
-      if (!is.na(matched)) {
-        strategy <- strategyChoices[[matched]]
-      }
+  # `.rung` is INTERNAL (leading dot): it pins a named menu entry, or "none" to
+  # apply no preset at all, which controlled experiments and the preset smoke
+  # tests need.  Deliberately not user-facing: users ask for effort relative to
+  # the automatic choice, and "no preset at all" must not be reachable by an
+  # accidentally-missing variable propagating in.
+  autoRung <- .AutoRung(NTip(dataset), sum(attr(dataset, "weight")))
+  if (is.null(.rung)) {
+    rung <- .EffortRung(autoRung, effort, verbosity)
+    rungName <- .RungSpec(rung)[["preset"]]
+  } else if (identical(.rung, "none")) {
+    rung <- NA_integer_
+    rungName <- "none"
+  } else {
+    rung <- match(.rung, .effortLadder)
+    if (is.na(rung)) {
+      stop("Internal `.rung` must be one of ",
+           paste(sQuote(.effortLadder), collapse = ", "), ", or \"none\".")
     }
+    rungName <- .rung
   }
 
-  # --- Apply strategy preset ---
-  if (!is.null(strategy) && !identical(strategy, "none")) {
-    if (identical(strategy, "auto")) {
-      strategy <- .AutoStrategy(NTip(dataset),
-                                sum(attr(dataset, "weight")))
-    }
+  # --- Apply the rung ---
+  if (!identical(rungName, "none")) {
+    spec <- .RungSpec(rung)
+    strategy <- spec[["preset"]]        # menu label, used by the IW packages below
     preset <- .StrategyPresets()[[strategy]]
-    if (!is.null(preset)) {
+    {
       control <- .ApplyStrategyPreset(control, preset, names(controlDots))
       if (verbosity >= 1L) {
-        cli::cli_alert_info("Strategy: {.strong {strategy}}")
+        cli::cli_alert_info(
+          "Effort {.strong {effort}}: {.emph {strategy}}, rung {rung}"
+        )
       }
-      # Strategy-scaled replicate cap. The `large` band (>=120 tips) needs many
-      # more independent restarts than the 96 default to reliably reach the
-      # optimum: a 34-matrix 120-180t sweep found reach@96 = 0.68 climbing to
-      # reach@250 = 0.79, with the hard-matrix subset still climbing at 500 and
-      # no knee. Raising the cap anytime-dominates (a higher cap only appends
-      # later replicates; it never delays an earlier improvement), and easy
-      # matrices still stop early on `targetHits`, so the cost falls only on the
-      # genuinely hard tail (which runs to the cap). Only override when the user
-      # did not set `maxReplicates` themselves.
-      if (!userSetReps) {
-        stratReps <- switch(strategy, large = 500L, NA_integer_)
-        if (!is.na(stratReps)) {
-          maxReplicates <- stratReps
-        }
+      # Rung-scaled replicate cap.  The value comes from .RungSpec() -- the ONE
+      # place a rung's replicate cap is defined -- rather than a switch on the
+      # preset name, so rung 4 cannot end up with two disagreeing sources.
+      # Rung 4 (the `large` band, >=120 tips) needs many more independent
+      # restarts than the 96 default to reliably reach the optimum: a 34-matrix
+      # 120-180t sweep found reach@96 = 0.68 climbing to reach@250 = 0.79, with
+      # the hard-matrix subset still climbing at 500 and no knee.  Only override
+      # when the user did not set `maxReplicates` themselves.
+      if (!userSetReps && !is.na(spec[["maxReplicates"]])) {
+        maxReplicates <- spec[["maxReplicates"]]
+      }
+
+      # Rung-scaled hit target (rung 5 and up).  Applied HERE, before
+      # .IwRatchetDepth() below, because that reads `targetHits / defaultHits`
+      # as the user's escalation signal -- so an effort-raised hit target also
+      # deepens the implied-weights ratchet, which is the point.  Skipped when
+      # the user named `targetHits` themselves: their number is a statement
+      # about this dataset and outranks the ladder.
+      if (!userSetHits && spec[["hitMultiplier"]] > 1L) {
+        targetHits <- as.integer(targetHits * spec[["hitMultiplier"]])
+      }
+
+      # Rung-scaled MPT-enumeration ceiling (rung 5 and up).  Keyed off the
+      # POST-merge `poolMaxSize`, so a user who raised the pool gets a
+      # proportionally larger returned set rather than having their value
+      # ignored.  Skipped when the user named `enumMaxTrees` themselves.
+      # `poolMaxSize` is deliberately not touched -- see .RungSpec().
+      if (!("enumMaxTrees" %in% union(names(controlDots),
+                                      attr(control, "explicit"))) &&
+          spec[["enumMultiplier"]] > 1L) {
+        control[["enumMaxTrees"]] <-
+          as.integer(control[["poolMaxSize"]] * spec[["enumMultiplier"]])
       }
 
       # Implied-weights ratchet depth. Under implied weights the optimum often
@@ -1064,8 +1380,6 @@ MaximizeParsimony <- function(
       for (.f in names(iwStop)) {
         control[[.f]] <- iwStop[[.f]]
       }
-    } else if (!identical(strategy, "auto")) {
-      warning("Unknown strategy '", strategy, "'; using default parameters.")
     }
   }
 
@@ -1350,6 +1664,23 @@ MaximizeParsimony <- function(
     cli_alert_info("Constraint: {nrow(consArgs$consSplitMatrix)} split{?s}")
   }
 
+  # A start tree that breaks the constraint is not something the search can
+  # rearrange its way out of -- every constrained move from it is rejected, so
+  # it would freeze the replicate on a tree scoring better than any legal one.
+  # The engine repairs such a start before scoring it, but the conflict is the
+  # caller's to know about: either `tree` or `constraint` is not what they
+  # meant, and the tree they get back will not be the one they supplied.
+  if (userTree && length(consArgs) > 0L) {
+    violating <- vapply(startTrees, .ConstraintViolated, logical(1),
+                        consArgs[["consSplitMatrix"]], consArgs[["consZero"]])
+    if (any(violating)) {
+      warning(sum(violating), " of the ", length(startTrees),
+              " tree(s) supplied to `tree` do not satisfy `constraint`; ",
+              "they will be rearranged to comply before the search starts, ",
+              "or replaced if that fails.", call. = FALSE)
+    }
+  }
+
   # --- Profile parsimony: extract info_amounts ---
   profileArgs <- list()
   if (useProfile) {
@@ -1366,8 +1697,9 @@ MaximizeParsimony <- function(
     hsjArgs$hierarchyBlocks <- .HierarchyToBlocks(hierarchy)
     hsjArgs$hsjTipLabels <- .BuildTipLabels(dataset)
     hsjArgs$hsjAlpha <- as.double(hsj_alpha)
-    # 0-based token index of the primary's "absent" state (depends on level
-    # ordering, so computed from the data rather than hard-coded).
+    # 0-based STATE (levels) index of the primary's "absent" state (depends on
+    # level ordering, so computed from the data rather than hard-coded; the
+    # C++ kernel translates tip token labels into this same index space).
     hsjArgs$hsjAbsentState <- .HSJAbsentState(dataset)
 
     # Adjust weights: subtract hierarchy characters so Fitch scores non-hierarchy
@@ -1459,7 +1791,11 @@ MaximizeParsimony <- function(
     # Contract zero-length (unsupported) branches into polytomies, à la TNT's
     # "collapse zero-length branches" -- done entirely in C++ (ts_collapse_pool)
     # to avoid a per-tree R surgery quagmire.  The kernel re-roots each tree on
-    # tip 0 (so root-adjacent edges are trivial -> rooting-invariant collapse),
+    # tip 0 (so root-adjacent edges are trivial -> rooting-invariant *contraction*;
+    # note the LENGTH is not rooting-invariant under XFORM, T-374, which is why
+    # the XFORM pool is rescored at this rooting below.  HSJ needs no rescore:
+    # since T-374 its secondary labelling is rooted canonically inside the
+    # kernel, so its length is a function of the unrooted topology),
     # flags aggressive (min-length-0) internal edges in the *search's* scoring
     # mode, contracts them, and deduplicates on the collapsed topology.
     #
@@ -1478,7 +1814,11 @@ MaximizeParsimony <- function(
     # enforced clade"): a constraint is external evidence for a grouping the
     # matrix doesn't capture, so it stays visible even at zero length, while the
     # unsupported non-constraint branches still collapse.  consSplitMatrix rows
-    # are the enforced bipartitions in tip_data order (see .PrepareConstraint).
+    # are the enforced bipartitions in tip_data order, carrying both groups
+    # (1 = together, 0 = apart, NA = free; see .PrepareConstraint).  The kernel
+    # needs both: a tree with free tips generally realises the split at a node
+    # whose tip set is wider than the 1 group, which no exact match reaches, so
+    # the enforced grouping would collapse out of the returned tree.
     consSplits <- if (!is.null(constraintConfig)) {
       constraintConfig[["consSplitMatrix"]]
     }
@@ -1505,7 +1845,63 @@ MaximizeParsimony <- function(
     })
   }
   if (length(outTrees) == 0L) {
+    # `treeTpl` is a starting tree, so under a constraint it is exactly what may
+    # not be handed back unchecked: an empty pool means no replicate produced a
+    # tree the constraint gate accepted -- or, benignly, that the time limit
+    # expired before the first one finished.  Check rather than assume, so a
+    # short budget still returns a tree when the fallback happens to comply.
+    if (!is.null(constraintConfig) &&
+        .ConstraintViolated(treeTpl, constraintConfig[["consSplitMatrix"]],
+                            constraintConfig[["consZero"]])) {
+      stop("The search returned no tree satisfying `constraint`. Check that ",
+           "the constraint is compatible with the data, and allow more search ",
+           "with `maxReplicates` or `maxSeconds`.")
+    }
     outTrees <- list(treeTpl)
+  }
+
+  # --- XFORM: report the score of the tree we are actually returning ---
+  # `result$best_score` is recorded mid-search at whatever rooting the replicate
+  # held.  XFORM's step matrix is asymmetric, so the score is rooting-dependent,
+  # and `ts_collapse_pool()` above hands back every tree re-rooted on tip 0.
+  # Reporting `best_score` therefore gives the user a number that `TreeLength()`
+  # of the returned tree does not reproduce -- measured at 178 reported against
+  # 183 returned (T-385; repro in dev/red-team/heavy-tests/).  Rescore the
+  # returned pool at the canonical rooting instead: |pool| evaluations, negligible
+  # against a search, and `TreeLength()` canonicalises identically, so the two
+  # agree by construction.
+  #
+  # This deliberately does NOT change what the search optimises.  The reported
+  # value stays a rooting-dependent upper bound on the min-over-rootings
+  # objective, exceeding it by at most the sum of `nSec` over hierarchy blocks
+  # (measured: attained by 87-98% of rootings, mean overstatement 0.02-0.17
+  # steps).
+  #
+  # Min-over-rootings reporting -- the variant the plan calls better -- is NOT used.
+  # It reports a quantity the search never compared, but the deciding objection is
+  # cost: evaluated naively it is (2 * nTip - 3) x on the Sankoff term, so a
+  # 4000-tip pool of 100 trees would need ~800k evaluations at the boundary.
+  # Doing it affordably needs an all-rootings up-down DP, which is its own piece
+  # of work (Option 4), not a line in a reporting fix.
+  # See dev/plans/2026-07-29-t374b-xform-rooting-policy.md (Option 3).
+  bestScore <- result$best_score
+  if (useXform && length(outTrees) > 0L) {
+    canonicalScores <- TreeLength(
+      structure(outTrees, class = "multiPhylo"),
+      dataset, inapplicable = "xform", hierarchy = hierarchy
+    )
+    bestScore <- min(canonicalScores)
+    if (diff(range(canonicalScores)) > sqrt(.Machine$double.eps)) {
+      # Pool membership is chosen on search-time scores taken at differing
+      # rootings (`result$scores` above), so trees held to be equally
+      # parsimonious can differ once scored at one rooting.  Not silently
+      # averaged away: this is the open residue of T-374, and staying quiet about
+      # it is what let the reporting gap survive this long.
+      warning("Returned trees do not share a length at a common rooting (",
+              paste(signif(range(canonicalScores), 8), collapse = " to "),
+              "); reporting the smallest.  The x-transformation's score is ",
+              "rooting-dependent -- see ?MaximizeParsimony.")
+    }
   }
 
   # --- Output ---
@@ -1516,7 +1912,7 @@ MaximizeParsimony <- function(
                    else if (isTRUE(result$perturb_stop)) "perturbation limit"
                    else "replicate limit"
     cli_alert_success(paste0(
-      "Search complete: score {.strong {signif(result$best_score, 7)}}, ",
+      "Search complete: score {.strong {signif(bestScore, 7)}}, ",
       "{result$replicates} replicate{?s} ",
       "(last improved: #{result$last_improved_rep}), ",
       "{result$hits_to_best} hit{?s} to best, ",
@@ -1527,7 +1923,7 @@ MaximizeParsimony <- function(
 
   structure(
     outTrees,
-    score = result$best_score,
+    score = bestScore,
     replicates = result$replicates,
     hits_to_best = result$hits_to_best,
     n_topologies = nTopologies,
@@ -1539,6 +1935,14 @@ MaximizeParsimony <- function(
     strategy_diagnostics = result$strategy_diagnostics,
     replicate_scores = result$replicate_scores,
     candidates_evaluated = result$candidates_evaluated,
+    # NA-certification counters (`exact_verify_sweep` calls executed vs skipped
+    # by `TBRParams::certify_unrooted`).  Diagnostic: `naDiag$n_evs_skipped` is
+    # the only way an A/B can prove the certification gate reached a live call
+    # site, since `do_reroot` needs `tabuSize == 0` -- which the shipped presets
+    # do not set.  Timing fields are populated only under `TS_NA_TIMING`, and a
+    # threaded run reports the main thread's copy only (each worker owns a
+    # private dataset), so read them from serial runs.
+    naDiag = result$na_diag,
     class = "multiPhylo"
   )
 }

@@ -94,7 +94,8 @@ bestTrees <- MaximizeParsimony(vinther)
 `MaximizeParsimony()` runs multiple independent search replicates, each
 starting from a random Wagner tree and refining with TBR rearrangements,
 sectorial search, ratchet perturbation, and tree drifting.
-It automatically selects a search strategy based on dataset size
+It automatically selects how hard to search, based on dataset size; the
+`effort` argument shifts that choice up or down
 (see `?MaximizeParsimony` for details).
 
 As it happens, the best tree for this dataset has a score of 79 under
@@ -258,29 +259,59 @@ More details on rogue taxon identification are available in the package
 `MaximizeParsimony()` uses sensible defaults, but offers parameters to control
 the search for users who need finer control.
 
-### Strategy presets
+### Search effort
 
-The `strategy` parameter selects a named preset that configures the search
-pipeline.
-The default, `"auto"`, selects a preset based on dataset size:
+`MaximizeParsimony()` chooses how hard to search from the dataset itself, since
+size and character count predict how much search a matrix repays.
+The rungs it chooses between are:
 
-- `"sprint"` (≤ 30 taxa): fast search with minimal ratchet.
+- `sprint` (≤ 30 taxa): fast search with minimal ratchet.
   Good for small or simple datasets.
-- `"default"` (31--64 taxa, or any dataset with < 100 character patterns):
+- `default` (31--64 taxa, or any dataset with < 100 character patterns):
   balanced ratchet and sectorial search.
-- `"thorough"` (≥ 65 taxa with ≥ 100 patterns): intensive search adding
+- `thorough` (≥ 65 taxa with ≥ 100 patterns): intensive search adding
   drift cycles, adaptive ratchet perturbation, more sectorial rounds, and an
   outer cycle loop.
-- `"large"` (≥ 120 taxa): the `"thorough"` settings with more replicates.
+- `large` (≥ 120 taxa): the `thorough` settings with more replicates.
 
-You can override the auto-selection:
+The `effort` parameter shifts that choice up or down.
+It is *relative*, not absolute: `effort = 0` (the default) accepts whatever the
+dataset warrants, and
 
 ```r
-MaximizeParsimony(vinther, strategy = "thorough")
+MaximizeParsimony(vinther, effort = 1)
 ```
 
-Any explicit parameter always overrides the preset.
-For example, `MaximizeParsimony(vinther, strategy = "sprint", ratchetCycles = 10L)` uses the "sprint" preset but overrides its ratchet setting.
+asks for one notch more than that — so the same call means "try harder than
+usual" whether the matrix has 20 taxa or 200, and you never have to know which
+rung it started on.
+Negative values search less; a large negative value reliably gives the quickest
+rung.
+
+Past `large`, further notches double both the replicate budget (1000, 2000,
+4000 ...) and the hit target, so one notch always means roughly twice the work.
+The rung-4 budget of 500 is measured — on 120–180-tip matrices the fraction of
+runs reaching the best score was still climbing at 500 with no knee — but the
+doubling above it is an operating point, not a calibrated level: nothing
+measures where that curve flattens.
+There is no policy ceiling, since extra replicates cost wall but cannot cost
+reach.
+Replicates are what buy reach; `targetHits` does not.
+On 30 inapplicable-bearing matrices, tripling the hit target changed the score
+reached on none of them while costing 2.6× the wall — on hard datasets the
+replicate cap binds before the hit target is reached, and on easy ones the
+optimum is already in hand.
+It is raised in step anyway because it governs when *easy* runs stop (without it
+a notch would do nothing on any dataset that finishes early), and because under
+implied weights it also deepens the ratchet.
+So read the higher rungs as buying confidence and distinct trees on easy data,
+and reach on hard data.
+
+Any explicit parameter always overrides the rung.
+For example, `MaximizeParsimony(vinther, effort = -9, ratchetCycles = 10L)`
+searches at the quickest rung but overrides its ratchet setting; a
+`maxReplicates` or `targetHits` you supply yourself is never rescaled by
+`effort`.
 
 ### Parallelism
 

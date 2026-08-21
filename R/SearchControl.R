@@ -2,7 +2,7 @@
 #'
 #' Construct a list of low-level search parameters for
 #' [`MaximizeParsimony()`].  Most users can ignore these and rely on the
-#' `strategy` presets (`"sprint"`, `"default"`, `"thorough"`); `SearchControl`
+#' `effort` rungs (`sprint`, `default`, `thorough`, `large`); `SearchControl`
 #' is provided for expert tuning.
 #'
 #' The parameters correspond to heuristics described by
@@ -123,8 +123,22 @@
 #'   within each replicate, after TBR polish.  This approximates TNT's
 #'   within-replicate fusing pattern. Default: `FALSE`.
 #' @param poolMaxSize Integer; maximum trees retained in the pool.
+#'   This governs the pool throughout the search, so it is not only a ceiling on
+#'   the trees returned: fuse draws its donors from the pool, and conflict-guided
+#'   sector selection and `consensusConstrain` both read it.  Raising it
+#'   therefore changes the trajectory as well as the output; to keep more
+#'   most-parsimonious trees without that side effect, use `enumMaxTrees`.
 #' @param poolSuboptimal Numeric; retain trees that are this many steps
 #'   worse than the best tree.  0 (default) keeps only optimal trees.
+#' @param enumMaxTrees Integer; retention ceiling applied to the
+#'   \acronym{MPT}-enumeration phase alone, which runs after the last replicate.
+#'   `0` (default) keeps `poolMaxSize` throughout, reproducing the behaviour
+#'   before this argument existed.  Because enumeration happens once the search
+#'   is over, a larger ceiling here only appends further equal-score topologies:
+#'   it cannot change which trees the search visits.  This is the knob
+#'   [`MaximizeParsimony()`]'s `effort` scales; `poolMaxSize` is deliberately
+#'   left alone.  Values below `poolMaxSize` are ignored (the ceiling is only
+#'   ever raised).
 #' @param consensusStableReps Integer; stop when the strict consensus of
 #'   best-score pool trees has been unchanged for this many consecutive
 #'   replicates.
@@ -377,7 +391,8 @@ SearchControl <- function(
     # sampling from {Wagner-random, Wagner-Goloboff, Wagner-entropy,
     # random-tree, pool-ratchet, pool-NNI-perturb}. Overrides wagnerBias.
     adaptiveStart = FALSE,
-    enumTimeFraction = 0.1
+    enumTimeFraction = 0.1,
+    enumMaxTrees = 0L
 ) {
   # Record which fields the caller set explicitly (by name or position;
   # `match.call()` normalises positional args to their names).  This lets
@@ -397,6 +412,14 @@ SearchControl <- function(
     if (length(.v) != 1L || is.na(.v) || .v < 1L) {
       stop("`", .p, "` must be a single positive integer")
     }
+  }
+  # `enumMaxTrees` takes 0 ("follow poolMaxSize") but never a negative: the
+  # kernel only ever RAISES the ceiling, so a negative would be silently inert
+  # rather than reported, hiding a sign typo.
+  .emt <- as.integer(enumMaxTrees)
+  if (length(.emt) != 1L || is.na(.emt) || .emt < 0L) {
+    stop("`enumMaxTrees` must be a single non-negative integer ",
+         "(0 follows `poolMaxSize`)")
   }
   # `stopPatience` is a replicate count, so a negative value is meaningless; the
   # kernel treats anything <= 0 as "off", which would silently ignore a typo
@@ -498,7 +521,8 @@ SearchControl <- function(
       annealTEnd = as.double(annealTEnd),
       annealMovesPerPhase = as.integer(annealMovesPerPhase),
       adaptiveStart = as.logical(adaptiveStart),
-      enumTimeFraction = as.double(enumTimeFraction)
+      enumTimeFraction = as.double(enumTimeFraction),
+      enumMaxTrees = .emt
     ),
     class = "SearchControl",
     explicit = .explicit
@@ -530,7 +554,7 @@ print.SearchControl <- function(x, ...) {
                      "sectorCombStarts", "sectorFuseRounds",
                      "postRatchetSectorial"),
     "Fuse/Pool" = c("fuseInterval", "fuseAcceptEqual", "intraFuse",
-                     "poolMaxSize", "poolSuboptimal"),
+                     "poolMaxSize", "poolSuboptimal", "enumMaxTrees"),
     "Stopping" = c("consensusStableReps", "perturbStopFactor", "stopPatience",
                     "adaptiveLevel",
                     "consensusConstrain", "adaptiveStart",

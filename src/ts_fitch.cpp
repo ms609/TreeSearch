@@ -240,11 +240,14 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
 
   // Use reverse postorder, but only visit nodes whose ancestor's final
   // may have changed. We track this with a "dirty" flag per node.
-  // Reusable per-thread scratch (S-PROF round 3 / Tier 1): this function runs
-  // once per clip in the TBR hot loop, so a fresh vector<bool> here was a
-  // per-clip heap allocation. thread_local keeps it per-thread-safe (each
-  // search thread owns its TreeState); char avoids vector<bool> proxy-bit
-  // access in the reverse scan below. assign() reuses capacity after warmup.
+  // `char` (not vector<bool>) avoids proxy-bit access in the reverse scan
+  // below.  NOTE: this was once `static thread_local` scratch (S-PROF round 3
+  // / Tier 1) to avoid a per-clip heap allocation in the TBR hot loop, but the
+  // thread_local was removed in d6fa51293 because MinGW tears down
+  // thread_local vectors via emutls when each std::thread worker exits, which
+  // corrupted the heap.  So the per-clip allocation + O(n_node) zero-fill is
+  // back; re-hoisting it needs a TreeState/DataSet-owned buffer (the
+  // char_steps_scratch / evs_false_cache pattern), NOT thread_local.
   std::vector<char> dirty;
   dirty.assign(tree.n_node, 0);
 
@@ -287,9 +290,15 @@ void fitch_incremental_uppass(TreeState& tree, const DataSet& ds,
 // each affected node exactly once in postorder, reading current children's
 // prelims — which are guaranteed correct because postorder processes
 // children before parents.
+//
+// A TBR rerooting additionally rewrites the children of every node on
+// clip_node..reroot_parent; passing clip_node as start_c covers them (see
+// ts_fitch.h).  Off-path nodes inside the moved fragment keep both their
+// children and their whole subtree, so their prelim and local_cost are
+// untouched and the returned delta stays exact.
 
 int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
-                         int start_a, int start_b) {
+                         int start_a, int start_b, int start_c) {
   std::vector<char> dirty(tree.n_node, 0);
 
   // Mark the rootward path from `node` up to (and including) the root.
@@ -304,6 +313,7 @@ int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
   };
   mark_path(start_a);
   mark_path(start_b);
+  if (start_c >= 0) mark_path(start_c);
 
   int length_delta = 0;
 
@@ -353,7 +363,7 @@ int fitch_dirty_downpass(TreeState& tree, const DataSet& ds,
 }
 
 void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
-                        int start_a, int start_b) {
+                        int start_a, int start_b, int start_c) {
   // Step 1: root final_ = prelim (root prelim may have changed in downpass).
   int root = tree.n_tip;
   size_t root_base = static_cast<size_t>(root) * tree.total_words;
@@ -375,6 +385,7 @@ void fitch_dirty_uppass(TreeState& tree, const DataSet& ds,
   };
   mark_path(start_a);
   mark_path(start_b);
+  if (start_c >= 0) mark_path(start_c);
 
   // Step 3: reverse postorder — visit any node whose parent is dirty_up.
   // If that node's final_ changes, propagate the flag to it.
@@ -556,19 +567,6 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
   const int tw    = tree.total_words;
   const int root  = n_tip;
 
-  // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
-  // monotonically across calls, so after the first call no zero-fill happens
-  // (resize value-inits only NEW elements).  Every slot a downstream reader
-  // touches is edge_set[D] for a non-root in-tree node D, and the two combine
-  // loops below overwrite exactly those slots before any read; the stale
-  // contents of grown-but-unwritten slots (the root slot, and slots for
-  // clipped-out nodes that are not edges of the current tree) are never
-  // observed.  This removes the per-call assign() zero-fill and the per-call
-  // up/pre heap allocations that VTune flagged as ~27% of EW Fitch CPU.
-  const size_t N = static_cast<size_t>(tree.n_node) * tw;
-  if (edge_set.size() < N) edge_set.resize(N);
-  if (up.size() < N) up.resize(N);
-
   // Preorder over current in-tree nodes (parents before children).
   pre.clear();
   {
@@ -584,6 +582,27 @@ void compute_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
       }
     }
   }
+
+  // T-373 (HSJ/XFORM with total_words == 0): there are no words to combine,
+  // and every `edge_set`/`up` slot a caller reads is indexed by tw, so with
+  // tw == 0 there is nothing to compute here -- and constructing
+  // `&tree.prelim[node * tw]` etc. below would take the address of element 0
+  // of an EMPTY vector (UB, aborts under _GLIBCXX_ASSERTIONS). `pre` above is
+  // unaffected by tw, so it is still returned correctly.
+  if (tw == 0) return;
+
+  // Non-zeroing size-ensure on caller-owned scratch.  `up` and `edge_set` grow
+  // monotonically across calls, so after the first call no zero-fill happens
+  // (resize value-inits only NEW elements).  Every slot a downstream reader
+  // touches is edge_set[D] for a non-root in-tree node D, and the two combine
+  // loops below overwrite exactly those slots before any read; the stale
+  // contents of grown-but-unwritten slots (the root slot, and slots for
+  // clipped-out nodes that are not edges of the current tree) are never
+  // observed.  This removes the per-call assign() zero-fill and the per-call
+  // up/pre heap allocations that VTune flagged as ~27% of EW Fitch CPU.
+  const size_t N = static_cast<size_t>(tree.n_node) * tw;
+  if (edge_set.size() < N) edge_set.resize(N);
+  if (up.size() < N) up.resize(N);
 
   // Fitch combine (per character intersect-else-union) of a & b into dst.
   auto combine = [&](uint64_t* dst, const uint64_t* a, const uint64_t* b) {
@@ -673,6 +692,12 @@ void patch_insertion_edge_sets(const TreeState& tree, const DataSet& ds,
 
   changed.clear();
   worklist.clear();
+
+  // T-373: as compute_insertion_edge_sets -- with tw == 0 there is nothing to
+  // patch (no words, no edge_set content), and `&tree.prelim[Sib * tw]` etc.
+  // below would take the address of element 0 of an EMPTY vector. An empty
+  // `changed` correctly tells the caller there is nothing to undo.
+  if (tw == 0) return;
 
   // Recompute up[D] (divided) in place from the CURRENT (divided) topology and
   // prelim, reading up[parent] from the working buffer (patched for ancestors

@@ -71,8 +71,19 @@ Specify \code{"profile"} to employ profile parsimony
 returned trees will be perfectly compatible with each character in
 \code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
 in any output tree.
+A returned tree is compatible with a constraint character when some edge
+separates the taxa coded \code{1} from those coded \code{0}.  Taxa coded \verb{?}, and taxa
+that \code{constraint} does not mention, are unconstrained: they may fall on
+either side of that edge, and are not required to join either group.
+A character whose \code{1} or \code{0} group contains fewer than two taxa therefore
+constrains nothing -- every tree separates such a group from the rest -- and
+is ignored with a warning.  To group taxa, code the taxa they must be
+separated from as \code{0} rather than leaving them \verb{?}.
 Constraint searches are supported natively: all tree rearrangements
-are filtered to respect the constraint topology.}
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
 more detail. Set to \code{0} to run silently.
@@ -124,7 +135,18 @@ hierarchy required.}
 \item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
 via x-transformations
 \insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-\code{hierarchy}.}
+\code{hierarchy}.  \strong{Scores are rooting-sensitive}: the step matrix of
+this recoding is asymmetric -- gaining the controlling character costs one more
+than the number of secondaries it brings into existence, against 1 to
+lose it -- so a tree's length depends on where its root sits, whereas
+parsimony under the other methods does not.  Lengths are therefore
+reported at a canonical rooting, on the first taxon of \code{dataset}, which
+is the rooting the returned trees carry; \code{TreeLength()} canonicalises
+identically, so it reproduces the reported score and one topology has
+one length.  That value is an upper bound on the rooting-free minimum,
+exceeding it by at most the total number of secondary characters across
+hierarchy blocks, and attaining it for 87-98\% of rootings in
+simulation.}
 }}
 
 \item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-

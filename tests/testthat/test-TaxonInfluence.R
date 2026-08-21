@@ -32,8 +32,7 @@ test_that("TaxonInfluence() saves intermediate trees", {
   dataset <- congreveLamsdellMatrices[[42]][1:5, ]
   tree <- BalancedTree(dataset)
   
-  testDir <- tempdir()
-  on.exit(unlink(testDir))
+  testDir <- withr::local_tempdir()
   inf <- TaxonInfluence(
     dataset, tree, maxReplicates = 2L, targetHits = 1L, verbosity = 0L,
     savePath = paste0(testDir, "/tmp-")
@@ -47,4 +46,33 @@ test_that("TaxonInfluence() saves intermediate trees", {
       TaxonInfluence(dataset, tree, savePath = paste0(testDir, "/tmp-"),
                      useCache = TRUE, verbosity = 1L)),
     inf)
+})
+
+test_that("TaxonInfluence() normalizes Distance() matrix orientation", {
+  library("TreeTools", quietly = TRUE)
+  tree <- as.phylo(1:2, nTip = 4)         # stands in for the reference trees
+  resultTrees <- as.phylo(1:3, nTip = 4)  # stands in for a leave-one-out re-search
+
+  # A `Distance` whose two-argument form returns dim(x) x dim(y) -- the
+  # "matched labels" convention -- rather than TaxonInfluence's real
+  # (mismatched-label) dim(y) x dim(x). Exercises the shape-normalization
+  # rather than assuming either orientation.
+  mockDistance <- function(x, y = NULL) {
+    if (is.null(y)) {
+      n <- length(x)
+      if (n == 2) return(matrix(c(1, 2, 0, 0), 2, 2))  # rowSums = c(1, 2)
+      if (n == 3) return(diag(c(1, 10, 100)))          # colSums = c(1, 10, 100)
+      stop("unexpected call")
+    }
+    matrix(seq_len(length(x) * length(y)), nrow = length(x), ncol = length(y))
+  }
+  testthat::local_mocked_bindings(
+    MaximizeParsimony = function(...) resultTrees, .package = "TreeSearch"
+  )
+
+  dataset <- list(a = 1, b = 2)
+  inf <- TaxonInfluence(dataset, tree = tree, Distance = mockDistance,
+                        calcWeighted = TRUE, verbosity = 0L)
+
+  expect_equal(unname(inf["dwMean", "a"]), 1815 / 333)
 })

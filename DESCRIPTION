@@ -73,9 +73,9 @@ Suggests:
   spelling,
   testthat (>= 3.0.0),
   vdiffr (>= 1.0.0),
+  withr,
   zip,
-Remotes:
-  ms609/Coreset,
+Additional_repositories: https://ms609.github.io/packages
 Config/Needs/check:
   callr,
   pkgbuild,

@@ -1,4 +1,16 @@
-# TreeSearch — Strategic Coordination
+# TreeSearch — Strategic Coordination (historical record)
+
+> **Moved from `coordination.md` and retired as a live file, 2026-08-04.**
+> Task state now lives in [`agent-issues/TreeSearch` issues](https://github.com/agent-issues/TreeSearch/issues);
+> nothing here is expected to be kept current, and **no agent should update it as part of
+> closing work**. That per-task update obligation was the churn the tracker move removed.
+>
+> It is kept, and kept in full, because it is the only narrative record of *why* the search
+> strategy went the way it did — 46 rounds of benchmark reasoning that no issue thread carries
+> and that a commit log cannot reconstruct. Read it as history: a claim here reflects what was
+> true when written, and later rounds may have superseded it.
+>
+> New strategic reasoning belongs in the relevant issue, or in a dated note under `dev/`.
 
 ## S-COORD Round 46 Summary (2026-03-29 07:40 BST, Agent E)
 
@@ -431,7 +443,7 @@ pre-T-214 state. Run 23547582438 (current HEAD) queued; will validate all. T-242
 **Task queue health:** 1 OPEN specific task (T-183), 6 PR-pending, 4 Shiny PARKED
 awaiting re-validation, 2 STALE (need decision). Standing tasks at P1.
 
-## Project State
+## Project State (as of 2026-03-23 — superseded; see the issue tracker)
 
 The C++ phylogenetic search engine is **v2.0.0** with a new
 `MaximizeParsimony()` API, driven C++ search, and fully modularized Shiny app.

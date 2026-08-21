@@ -94,8 +94,49 @@ Profile mode sets `ds.concavity = 1.0` (finite sentinel) so existing
 
 ## Constraint enforcement
 
+- A constraint split names **two disjoint groups** plus a FREE remainder. A tree
+  satisfies it iff some edge separates the groups; free tips may fall either
+  side. This is what `?MaximizeParsimony`'s `constraint` documents and, since
+  agent-issues/TreeSearch#54, what every entry point enforces. `ts::node_displays_split()`
+  (`ts_constraint.h`) is THE shared predicate — `map_constraint_nodes()`,
+  `wagner_tree_displays_constraint()` and `ts_collapse_pool()` all call it.
+  Reintroducing an exact-clade test at any one of them freezes replicates.
 - `build_constraint()` reads R split matrix with **column-major** indexing:
-  `split_matrix[s + n_splits * t]`.
+  `split_matrix[s + n_splits * t]`. Values: `1` = together-group, `0` =
+  apart-group, **anything else (`NA_INTEGER`) = free**. A hand-built 0/1 matrix
+  therefore means "no free tips" and reduces to the exact-clade behaviour, which
+  is what `build_constraint_from_bitsets()` (consensus constraints) relies on.
+- `ConstraintData` carries `split_zeros` (the apart-group) alongside
+  `split_tips`, and both ends of the displaying-node chain:
+  `constraint_node` (tightest, used for "must land outside") and
+  `constraint_node_hi` (highest, "must land inside"). Any writer of one must
+  write the other — `ts_wagner.cpp` pins hi to the tight anchor.
+- `.PrepareConstraint()` drops (and warns about) a character whose `1` **or**
+  `0` group holds fewer than two taxa: vacuous under the documented contract,
+  since every tree separates such a group from the rest.
+- A user constraint binds at three boundaries besides the per-move filter
+  (agent-issues/TreeSearch#59): the start tree is repaired by `impose_constraint()`
+  before it is scored, each replicate's finished tree is gated by
+  `capture_satisfies_constraint()` on its way into the pool, and the enforced
+  split is kept out of the final collapse. `impose_constraint()` is heuristic and
+  can fail, so every caller re-verifies. The collapse protects a realising node
+  only when no other realising node already survives — protecting
+  unconditionally would resolve a branch the constraint never asked for.
+- `random_constrained_tree()` (`ts_wagner.cpp`, the `RANDOM_TREE` start
+  strategy) has TWO samplers. No free tips → the old group-nesting backbone,
+  which is then complete and uniform. Any free tip → tip-at-a-time insertion:
+  rejection first (uniform when it lands), then legality-filtered insertion
+  (always lands), then unnamed tips unfiltered. The backbone alone reaches only
+  15 of 35 compliant trees on 6 taxa / 1 character, and 105 of 1155 on 8 taxa /
+  2 characters; insertion reaches all. The filter is
+  `regraft_violates_constraint()` with a one-tip clip, over masks restricted to
+  the placed tips — unrestricted masks make every edge look illegal. Probe via
+  `ts_random_constrained_tree()`, not `MaximizeParsimony()`: TBR rearranges the
+  start, so the returned tree says nothing about the generator. The rejection
+  pass is wasted work when it cannot land (agent-issues/TreeSearch#128).
+- A compliance checker built on `as.Splits()` MISSES pendant edges, so a
+  constraint whose group has one taxon reads as violated when every tree
+  satisfies it. Add the trivial splits before testing.
 - Wagner uses LCA-based constraint mapping (`wagner_map_constraint_nodes`)
   since splits aren't fully present during incremental construction.
 - Wagner has a posthoc retry loop (up to 100 random addition orders) as a

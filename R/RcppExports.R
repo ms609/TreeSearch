@@ -48,7 +48,6 @@ nrqs_expect <- function(splits, characters) {
 #' @param nj Integer vector giving the block sizes of the second partition
 #'   (also summing to `N`).
 #' @return The expected mutual information, in bits.
-#' @references \insertAllCited{}
 #' @seealso [`SiteConcordance`]
 #' @examples
 #' # Expected MI between a 3|4 split and a 2|5 split of 7 items:
@@ -252,5 +251,9 @@ ts_tbr_diagnostics <- function(edge, contrast, tip_data, weight, levels, maxHits
 
 ts_ev_cache_key_probe <- function(edge, contrast, tip_data, weight, levels, concavity = -1.0, zero_active = FALSE, set_upweight = FALSE, bump_pattern_freq = FALSE) {
     .Call(`_TreeSearch_ts_ev_cache_key_probe`, edge, contrast, tip_data, weight, levels, concavity, zero_active, set_upweight, bump_pattern_freq)
+}
+
+ts_random_constrained_tree <- function(contrast, tip_data, weight, levels, consSplitMatrix = NULL) {
+    .Call(`_TreeSearch_ts_random_constrained_tree`, contrast, tip_data, weight, levels, consSplitMatrix)
 }
 

@@ -95,7 +95,7 @@ nobody.
 `src/ts_prune_reinsert.cpp:353` — `expand_and_reinsert(…, ts::ConstraintData* cd)` takes a
 constraint pointer and **never references it**, which is why it shows up as a pre-existing
 `-Wunused-parameter` under `g++ -Wall -Wextra`. If that function genuinely re-inserts tips
-without consulting the constraint, it is a [`T-324`](findings.md)-shaped gap on a different
+without consulting the constraint, it is a [`T-324` = agent-issues/TreeSearch#1](https://github.com/agent-issues/TreeSearch/issues/1)-shaped gap on a different
 path — reinsertion producing a violating tree that only the downstream posthoc check might
 catch.
 
@@ -108,8 +108,75 @@ the fix, and the warning goes away).
 Two reasons it is worth someone's time rather than a shrug. It surfaced from a **compiler
 warning, not from reading** — nobody has read this function's constraint handling, so its
 silence is not evidence. And the same function is already the subject of
-[`T-366`](findings.md) (mixed-regime `prelim`), so a reader is going in there anyway; settling
+[`T-366`](findings-archive.md) (mixed-regime `prelim`, since **fixed** `d94d76b0` and archived),
+so a reader is going in there anyway; settling
 both in one pass costs barely more than settling one.
+
+### Item 7 — area 13 gets two filed constraint findings from an area-11 round, one of them sev:high
+
+**DO NOT PROMOTE THIS ROW TO A `needs-escalation` LABEL.** The 2026-08-04 area-12 round did
+promote it, on #18 and #19, and the orchestrator **reverted both the same round**. The rule it
+followed ("promote it to a label the moment it gets filed as an issue") is scoped to the class
+that rule is written about — *a high-severity finding a finder flagged but could not pin down*,
+where the ask is **more capability**. This row is the other class this file admits: a
+**cross-area-routed** residual, and its ask is a **sequencing decision**, as the heading below
+says in as many words.
+
+Two reasons the label is not merely redundant here but actively harmful:
+
+1. `needs-escalation` encodes exactly one thing — *the next dispatch on this area must be
+   `opus`+*. Area 13's `start_tier` is **already `opus`**, so the label changes no routing
+   decision that was not already made.
+2. *Normal run* step 3's label branch reads "if non-empty, dispatch this round at opus (or
+   higher) regardless of `start_tier`/last yield, **no further reading needed for this
+   check**." So a label hit can *suppress* reading this row — and this row is the only place
+   the actual ask exists. Labelling it converts a sequencing question into a tier answer and
+   then hides the question.
+
+**The generalisable defect** (filed 2026-08-04): the rotation's routing state is **tier-only**.
+There is no channel for a non-tier verdict, and two distinct ones are now on record — this
+row's sequencing ask, and the *work-shape* verdicts of areas 10 and 13 ("next visit is not a
+finder"). Mis-encoding either into the tier channel is worse than leaving it in prose, because
+prose is at least read as prose.
+
+Recorded 2026-08-04 by the area-11 round. **Cross-area class** (the second one this file admits):
+area 11 found them, area 13 owns them, and area 13's *recorded next-visit plan predates them*.
+
+Receiving-area check done as this file requires: area 13's most recent round is **2026-07-03**,
+and nothing later in `log.md` touches either finding. So this is genuinely open, not a re-queue
+of resolved work.
+
+**The two findings.** [`T-402` = #18](https://github.com/agent-issues/TreeSearch/issues/18) (**sev:high**) — a `constraint` is silently ignored when
+the caller supplies a violating start via `tree =`; the search freezes on it, reports a
+better-than-constrained score, and *evicts* every compliant tree other replicates find.
+[`T-403` = #19](https://github.com/agent-issues/TreeSearch/issues/19) (sev:med) — the "enforced splits are protected from collapse" promise is an
+exact-match test with no access to `consZero`, so under the **default** `collapse = TRUE` the
+returned trees can violate the constraint outright (20/20 seeds).
+
+**The ask is a sequencing decision, not a review.** Area 13's next visit was recorded as *"a
+bounded exhaustive harness, not a finder"* (the `topology_spr` / `build_postorder`-guard
+equivalence). That plan is orthogonal to these two and still stands on its merits — but it was
+set when area 13 had no filed sev:high finding. Whoever takes area 13 next should decide explicitly which
+comes first and record the reason, rather than defaulting to the older note.
+
+**Two things to read before patching anything in this class**, both already in the rows:
+
+1. **A verify-and-revert gate of the T-390/T-391 shape does not fix T-402.** `nni_perturb`
+   snapshots the violating start *before* repair and then rejects the repaired legal tree for
+   scoring worse, so the illegal score is an unbeatable baseline. Gating the pool capture alone
+   is worse than useless: the pool empties at `maxReplicates = 1` and
+   `R/MaximizeParsimony.R:1682-1684` returns the user's violating start anyway. The fix has to
+   act at the `startEdge` boundary.
+2. **T-324's row was amended on 2026-08-04** because its repair claim was over-optimistic in
+   exactly this regime. T-402 and T-324 share T-324's downstream half verbatim (ungated pool
+   capture, no downstream filter), so they should be fixed together — with T-402's deterministic
+   8-taxon repro as the standing regression test for the shared half. **T-402 does not settle
+   T-324's own reachability question**, and neither row should be read as if it does.
+
+**One part is a maintainer adjudication, not a fixer's call** (same shape as T-396): whether the
+`startEdge` boundary should *repair* a violating start, or *reject* it with an error/warning.
+Both satisfy the contract; they differ in whether `tree =` stays usable as a warm start under a
+constraint, which is a user-facing design choice.
 
 ### Not in this backlog (deliberately)
 

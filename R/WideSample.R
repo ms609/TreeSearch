@@ -87,7 +87,9 @@
 #' @return A `multiPhylo` object of length `min(n, length(trees))` containing
 #' a topologically diverse (Max-Min) subset of `trees`.
 #' If `n == 1`, the single most central tree (the medoid) is returned.
-#' Attributes of the input (e.g. `score`, `hits_to_best`) are preserved.
+#' Attributes of the input (e.g. `score`, `hits_to_best`) are preserved,
+#' except `firstHit`, which describes the pre-subset set of trees and is
+#' dropped; call [WhenFirstHit()] on the result to recompute it.
 #'
 #' @examples
 #' library("TreeTools")
@@ -256,7 +258,7 @@ WideSample <- function(
       } else {
         .WideSampleColumnOracle(dist, trees, nTrees)
       }
-      Coreset::FarFirst(n, colFn, N = nTrees)
+      Coreset::FarFirst(k = n, d = colFn, N = nTrees)
     },
     # Tier 2: DropAdd returns the bare (sorted) index vector; it runs to its
     # deterministic plateau, with `maxSeconds` as a safety cap.
@@ -279,7 +281,7 @@ WideSample <- function(
   # FarFirst returns farthest-first (selection) order; sort to ascending tree
   # order so the subset preserves the input ordering. A no-op for tiers 2-4,
   # which already return ascending indices.
-  .SubsetMultiPhylo(trees, as.integer(idx))
+  .SubsetMultiPhylo(trees, sort(as.integer(idx)))
 }
 
 #' Choose the `WideSample()` solver tier
@@ -347,7 +349,7 @@ WideSample <- function(
   } else {
     colFn <- .WideSampleColumnOracle(dist, trees, nTrees)
     # Return:
-    as.integer(Coreset::FarFirst(colFn, k = 1L, N = nTrees))
+    as.integer(Coreset::FarFirst(k = 1L, d = colFn, N = nTrees))
   }
 }
 
@@ -378,13 +380,20 @@ WideSample <- function(
 }
 
 #' Subset a multiPhylo preserving attributes
+#'
+#' Non-standard attributes describe the whole `multiPhylo` object (e.g.
+#' `score`, `hits_to_best`, `replicate_scores`) and are copied over
+#' unchanged, with one exception: `firstHit` is a per-*stage* tally computed
+#' from the (pre-subset) set of tree names, so it no longer describes the
+#' returned subset and is dropped rather than carried over stale.
+#' [WhenFirstHit()] can recompute it from the subset's own names if needed.
 #' @keywords internal
 .SubsetMultiPhylo <- function(trees, idx) {
   saved <- attributes(trees)
   result <- trees[idx]
-  # Restore non-standard attributes (e.g. score, hits_to_best)
   standard <- c("names", "class")
-  for (nm in setdiff(names(saved), standard)) {
+  invalidated <- "firstHit"
+  for (nm in setdiff(names(saved), c(standard, invalidated))) {
     attr(result, nm) <- saved[[nm]]
   }
   # Return:

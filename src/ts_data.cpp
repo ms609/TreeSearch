@@ -52,6 +52,11 @@ DataSet build_dataset(
       }
     }
   }
+  // Stored verbatim (pre-simplification, original global state space) for
+  // HSJ scoring, which must translate tip_labels' token indices into this
+  // same state space (T-375/T-376) -- do not apply state_remap to it.
+  ds.token_states = token_states;
+  ds.n_levels = n_states;
 
   // --- Character simplification ---
   SimplificationResult simpl = simplify_patterns(

@@ -69,7 +69,8 @@ SearchControl(
   annealTEnd = 0,
   annealMovesPerPhase = 0L,
   adaptiveStart = FALSE,
-  enumTimeFraction = 0.1
+  enumTimeFraction = 0.1,
+  enumMaxTrees = 0L
 )
 }
 \arguments{
@@ -258,7 +259,12 @@ TNT's interleaved sectorial pattern.  Default: \code{FALSE}.}
 within each replicate, after TBR polish.  This approximates TNT's
 within-replicate fusing pattern. Default: \code{FALSE}.}
 
-\item{poolMaxSize}{Integer; maximum trees retained in the pool.}
+\item{poolMaxSize}{Integer; maximum trees retained in the pool.
+This governs the pool throughout the search, so it is not only a ceiling on
+the trees returned: fuse draws its donors from the pool, and conflict-guided
+sector selection and \code{consensusConstrain} both read it.  Raising it
+therefore changes the trajectory as well as the output; to keep more
+most-parsimonious trees without that side effect, use \code{enumMaxTrees}.}
 
 \item{poolSuboptimal}{Numeric; retain trees that are this many steps
 worse than the best tree.  0 (default) keeps only optimal trees.}
@@ -393,6 +399,16 @@ equal-score topologies).  The main search loop exits at
 \code{maxSeconds * (1 - enumTimeFraction)}.  Set to 0 to disable the reserve
 (pre-v1.6 behaviour: enumeration skipped if the main loop times out).
 Default: \code{0.1} (10\%).}
+
+\item{enumMaxTrees}{Integer; retention ceiling applied to the
+\acronym{MPT}-enumeration phase alone, which runs after the last replicate.
+\code{0} (default) keeps \code{poolMaxSize} throughout, reproducing the behaviour
+before this argument existed.  Because enumeration happens once the search
+is over, a larger ceiling here only appends further equal-score topologies:
+it cannot change which trees the search visits.  This is the knob
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}}'s \code{effort} scales; \code{poolMaxSize} is deliberately
+left alone.  Values below \code{poolMaxSize} are ignored (the ceiling is only
+ever raised).}
 }
 \value{
 A named list of class \code{"SearchControl"}.
@@ -400,7 +416,7 @@ A named list of class \code{"SearchControl"}.
 \description{
 Construct a list of low-level search parameters for
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}}.  Most users can ignore these and rely on the
-\code{strategy} presets (\code{"sprint"}, \code{"default"}, \code{"thorough"}); \code{SearchControl}
+\code{effort} rungs (\code{sprint}, \code{default}, \code{thorough}, \code{large}); \code{SearchControl}
 is provided for expert tuning.
 }
 \details{

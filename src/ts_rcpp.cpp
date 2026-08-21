@@ -54,6 +54,33 @@ void validate_tip_data_values(const int* tip_data_r, int n_tips,
   }
 }
 
+// Validate `tip_labels`/`absent_state` VALUES at the Rcpp boundary: the HSJ
+// kernel treats each tip_labels entry as a 0-based index into
+// `DataSet::token_states` (size n_tokens) and `absent_state` as a bit
+// position within an `n_levels`-bit state-space mask, with no further
+// checking (T-375/T-376: before that fix, a bad value was merely a wrong
+// scalar comparison; now it is an out-of-bounds read / undefined shift).
+// Public wrappers always derive both from a validated phyDat via
+// `.BuildTipLabels()`/`.HSJAbsentState()`, so this only guards a direct
+// internal call (`TreeSearch:::`) with hand-crafted values -- but that
+// includes both `ts_hsj_score()` (the test bridge, below) and
+// `ts_driven_search()`/`ts_collapse_pool()` via their `hsjConfig` argument
+// (see `unpack_hsj()`), since `R/ts-driven-compat.R`'s legacy wrapper exposes
+// `hsjTipLabels`/`hsjAbsentState` as independent, hand-settable arguments.
+void validate_hsj_tip_labels(const IntegerMatrix& tip_labels_r,
+                              int absent_state, int n_tokens, int n_levels) {
+  if (absent_state < 0 || absent_state >= n_levels) {
+    Rcpp::stop("`absent_state` must be in [0, %d); found %d",
+               n_levels, absent_state);
+  }
+  for (int v : tip_labels_r) {
+    if (v < 0 || v >= n_tokens) {
+      Rcpp::stop("`tip_labels` values must be in [0, nrow(contrast)) (%d); "
+                 "found %d", n_tokens, v);
+    }
+  }
+}
+
 // Validate an `addition_order` VALUE vector at the Rcpp boundary:
 // wagner_tree() treats a non-empty `order` as a length-n_tips permutation of
 // 0..n_tips-1 and reads order[0..2] / order[i] for i in [3, n_tips) with no
@@ -192,9 +219,13 @@ IntegerMatrix tree_to_edge(const ts::TreeState& tree) {
 // collapsed[c] == 1 (c internal) means the edge c -> parent[c] is zero-length:
 // c is removed and its children reattach to c's nearest retained ancestor,
 // producing a polytomy.  Tips and the root pseudo-node are always retained;
-// compute_collapsed_flags[_aggressive] never flags the root or its children, so
-// when the tree is rooted on a tip (the precondition for a rooting-invariant
-// collapse) no informative edge is root-adjacent and the basal split survives.
+// compute_collapsed_flags[_aggressive] do not flag root's children on any
+// scoring path, so when the tree is rooted on a tip (the precondition for a
+// rooting-invariant collapse) no informative edge is root-adjacent and the
+// basal split survives.  The lone exception is the total_words == 0
+// star-collapse branch (T-331), which flags root's children deliberately; the
+// loop below then contracts them and yields the star, which is the intended
+// answer for fully-uninformative data.  See red-team T-409.
 IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
                                      const std::vector<uint8_t>& collapsed) {
   const int n_tip = tree.n_tip;
@@ -239,6 +270,15 @@ IntegerMatrix tree_to_collapsed_edge(const ts::TreeState& tree,
 // first-encountered child of each node goes left.
 ts::TreeState build_topology_tree(const IntegerMatrix& edge) {
   int n_edge = edge.nrow();
+  // Same derivation, and so the same out-of-bounds writes, as init_from_edge.
+  // ncol is checked first: the child column is read as edge(i, 1), which on an
+  // n x 1 matrix indexes past the end of the underlying vector.
+  if (edge.ncol() != 2) {
+    stop("`tree` edge matrix must have exactly 2 columns.");
+  }
+  if (n_edge < 2 || !ts::edge_list_is_binary(&edge(0, 0), &edge(0, 1), n_edge)) {
+    stop("`tree` must be binary");
+  }
   int n_tip = n_edge / 2 + 1;
 
   ts::TreeState tree;
@@ -893,7 +933,8 @@ List ts_tbr_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -954,7 +995,8 @@ List ts_ratchet_search(
     Named("na_t_vroot_ms") = ds.na_t_vroot_ns / 1e6,
     Named("na_t_accept_ms") = ds.na_t_accept_ns / 1e6,
     Named("na_n_accept") = static_cast<double>(ds.na_n_accept),
-    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated)
+    Named("n_candidates") = static_cast<double>(ds.n_candidates_evaluated),
+    Named("n_reroot_accepts") = static_cast<double>(ds.n_reroot_accepts)
   );
 }
 
@@ -997,6 +1039,19 @@ List ts_drift_search(
   );
 }
 
+// Report a constraint that greedy addition could not honour.  Raised here, on
+// the R thread, rather than inside the Wagner kernel, which also runs on search
+// worker threads where Rf_warning() is not safe.
+static void warn_if_constraint_violated(const ts::WagnerResult& result) {
+  if (!result.constraint_violated) return;
+  Rf_warning(
+    "AdditionTree(): the returned tree does not display every constraint "
+    "split. Greedy addition never rearranges, so a taxon added early can "
+    "strand a constraint beyond repair. Consider supplying a `sequence` that "
+    "adds constrained taxa earlier, or use MaximizeParsimony(), whose "
+    "rearrangement phase enforces the constraint.");
+}
+
 // [[Rcpp::export]]
 List ts_wagner_tree(
     NumericMatrix contrast,
@@ -1035,6 +1090,7 @@ List ts_wagner_tree(
 
   ts::TreeState tree;
   ts::WagnerResult result = ts::wagner_tree(tree, ds, order, cd_ptr);
+  warn_if_constraint_violated(result);
 
   return List::create(
     Named("edge") = tree_to_edge(tree),
@@ -1069,6 +1125,7 @@ List ts_random_wagner_tree(
 
   ts::TreeState tree;
   ts::WagnerResult result = ts::random_wagner_tree(tree, ds, cd_ptr);
+  warn_if_constraint_violated(result);
 
   return List::create(
     Named("edge") = tree_to_edge(tree),
@@ -1598,6 +1655,10 @@ static void unpack_search_control(List ctrl, ts::DrivenParams& params) {
   params.intra_fuse         = as<bool>(ctrl["intraFuse"]);
   params.pool_max_size      = as<int>(ctrl["poolMaxSize"]);
   params.pool_suboptimal    = as<double>(ctrl["poolSuboptimal"]);
+  // Absent in a control list built by an older caller: treat as 0 ("no separate
+  // enumeration ceiling") rather than letting as<int>() throw on R_NilValue.
+  params.enum_pool_max_size = ctrl.containsElementNamed("enumMaxTrees")
+    ? as<int>(ctrl["enumMaxTrees"]) : 0;
 
   // Stopping / adaptive
   params.consensus_stable_reps = as<int>(ctrl["consensusStableReps"]);
@@ -1669,6 +1730,15 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
     }
     {
       const int n_edge = mats[0].nrow();
+      // A zero-row matrix passes both checks below -- its ncol is 2, and
+      // every matrix agrees on nrow -- leaves `flat` empty, and then reaches
+      // `flat.data() + n_edge`: pointer arithmetic on a possibly-null
+      // pointer, undefined before C++20 and reported by neither UBSan's
+      // nonnull check nor hardened libstdc++.  No tree has zero edges, so
+      // reject it here alongside the other shape checks.
+      if (n_edge < 1) {
+        stop("Each `startEdge` matrix must describe at least one edge.");
+      }
       params.start_n_edge = n_edge;
       params.start_edges.reserve(mats.size());
       for (const IntegerMatrix& se : mats) {
@@ -1686,6 +1756,13 @@ static int unpack_runtime(List rt, ts::DrivenParams& params) {
         for (int i = 0; i < n_edge; ++i) {
           flat[i] = se(i, 0);
           flat[n_edge + i] = se(i, 1);
+        }
+        // init_from_edge refuses a non-binary tree by throwing, but under
+        // nThreads > 1 it runs on a worker thread, where an uncaught throw
+        // terminates the session.  Reject here, on the main thread.
+        if (!ts::edge_list_is_binary(flat.data(), flat.data() + n_edge,
+                                     n_edge)) {
+          stop("Each `startEdge` matrix must describe a binary tree.");
         }
         params.start_edges.push_back(std::move(flat));
       }
@@ -1804,11 +1881,44 @@ static void unpack_hsj(Nullable<List> hsjConfig, ts::DataSet& ds) {
     ds.hsj_alpha = as<double>(hc["hsjAlpha"]);
     ds.scoring_mode = ts::ScoringMode::HSJ;
 
-    if (hc.containsElementNamed("hsjTipLabels") &&
-        !Rf_isNull(hc["hsjTipLabels"])) {
+    // hsjTipLabels must be present and non-NULL whenever HSJ is enabled:
+    // score_hierarchy_block() reads ds.tip_labels unconditionally once
+    // scoring_mode == HSJ, and that field is only populated inside this
+    // branch. `list(hsjTipLabels = NULL)` keeps the element name, so
+    // containsElementNamed() alone does not catch an empty tip_labels (T-398).
+    if (!hc.containsElementNamed("hsjTipLabels") ||
+        Rf_isNull(hc["hsjTipLabels"])) {
+      Rcpp::stop("hsjConfig$hsjTipLabels must be provided (non-NULL) whenever "
+                 "hsjConfig is supplied (which enables HSJ scoring).");
+    }
+
+    {
       IntegerMatrix tl = as<IntegerMatrix>(hc["hsjTipLabels"]);
+      validate_hsj_tip_labels(tl, hsjAbsentState,
+                              static_cast<int>(ds.token_states.size()),
+                              ds.n_levels);
       int n_t = tl.nrow();
       int n_c = tl.ncol();
+      // hsjTipLabels must cover every block's primary/secondary character
+      // index: score_hierarchy_block() reads
+      // tip_labels[t * n_orig_chars + block.primary_char] (and likewise for
+      // secondaries) unconditionally once scoring_mode == HSJ, so a
+      // non-NULL but too-narrow matrix reads past ds.tip_labels the same
+      // way a NULL one did (T-398).
+      for (const ts::HierarchyBlock& block : ds.hierarchy_blocks) {
+        if (block.primary_char < 0 || block.primary_char >= n_c) {
+          Rcpp::stop("hsjConfig$hsjTipLabels has %d columns, but a hierarchy "
+                     "block's primary character index is %d",
+                     n_c, block.primary_char);
+        }
+        for (int sec : block.secondary_chars) {
+          if (sec < 0 || sec >= n_c) {
+            Rcpp::stop("hsjConfig$hsjTipLabels has %d columns, but a "
+                       "hierarchy block's secondary character index is %d",
+                       n_c, sec);
+          }
+        }
+      }
       ds.n_orig_chars = n_c;
       ds.tip_labels.resize(n_t * n_c);
       for (int t = 0; t < n_t; ++t) {
@@ -1851,6 +1961,16 @@ static void unpack_xform(Nullable<List> xformConfig,
       List rc = xf_list[ch];
       NumericMatrix cm = as<NumericMatrix>(rc["cost_matrix"]);
       int ns = ns_vec[ch];
+      // Validate cost matrix dimensions match the character's state count
+      // (mirrors the check ts_sankoff_test() already performs; T-397 —
+      // Rcpp's Matrix indexing never bounds-checks a mis-shaped-but-
+      // same-length matrix, so an unguarded read here silently scores
+      // garbage instead of erroring).
+      if (cm.nrow() != ns || cm.ncol() != ns) {
+        Rcpp::stop("xformChars[[%d]]$cost_matrix has dimensions %d x %d, but "
+                   "character %d has %d states (expected %d x %d)",
+                   ch + 1, cm.nrow(), cm.ncol(), ch + 1, ns, ns, ns);
+      }
       double* dst = ds.sankoff_cost_matrices.data() +
           static_cast<size_t>(ch) * max_ns * max_ns;
       for (int r = 0; r < ns; ++r)
@@ -1877,6 +1997,22 @@ static void unpack_xform(Nullable<List> xformConfig,
       IntegerMatrix combo_grid = as<IntegerMatrix>(rc["combo_grid"]);
       IntegerMatrix tip_sec = as<IntegerMatrix>(rc["tip_sec_known"]);
       int n_sec = combo_grid.ncol();
+      // combo_grid must carry one row per present state (states 1..ns-1);
+      // state == -2 below indexes it at (s - 1) for s up to ns - 1, so
+      // fewer rows than that reads out of bounds (T-397).
+      if (combo_grid.nrow() != ns - 1) {
+        Rcpp::stop("xformChars[[%d]]$combo_grid has %d rows, but character "
+                   "%d has %d states (expected %d rows)",
+                   ch + 1, combo_grid.nrow(), ch + 1, ns, ns - 1);
+      }
+      // tip_sec_known is read at (t, d) for t in [0, n_t), d in
+      // [0, n_sec) in the state == -2 branch below; a truncated matrix
+      // reads past the SEXP the same way an unguarded combo_grid would.
+      if (tip_sec.nrow() != n_t || tip_sec.ncol() != n_sec) {
+        Rcpp::stop("xformChars[[%d]]$tip_sec_known has dimensions %d x %d, "
+                   "but expected %d x %d (n_tips x n_secondaries)",
+                   ch + 1, tip_sec.nrow(), tip_sec.ncol(), n_t, n_sec);
+      }
       for (int t = 0; t < n_t; ++t) {
         int state = ts_r[t];
         double* tip_ptr = ds.sankoff_tip_costs.data() +
@@ -1901,6 +2037,15 @@ static void unpack_xform(Nullable<List> xformConfig,
           }
         } else if (state >= 0 && state < ns) {
           tip_ptr[state] = 0.0;
+        } else {
+          // Any other value (e.g. state >= ns) falls through every branch
+          // above, leaving tip_ptr all-INF; that INF then propagates through
+          // the pool sentinel (1e18) rather than a true Inf and passes
+          // is.finite(), silently corrupting the score instead of erroring
+          // (T-397).
+          Rcpp::stop("xformChars[[%d]]$tip_states[%d] = %d is out of range; "
+                     "must be -1, -2, or in [0, %d)",
+                     ch + 1, t + 1, state, ns);
         }
       }
     }
@@ -1942,12 +2087,45 @@ List ts_driven_search(
   unpack_search_control(searchControl, params);
   int nThreads = unpack_runtime(runtimeConfig, params);
 
+  // T-373: total_words == 0 with HSJ/XFORM active (hierarchy_blocks /
+  // sankoff_n_chars non-empty) means the Fitch blocks carried no signal but
+  // the hierarchy DP / Sankoff term is still topology-dependent. Every other
+  // search component below (NNI/SPR/TBR/ratchet/drift) still searches
+  // correctly in that state, but the annealing phase (stochastic_tbr_phase,
+  // ts_temper.cpp) has no HSJ/XFORM-aware fallback and stays a guarded
+  // no-op there. Warn here -- once, on the R thread, before any worker
+  // spawns -- rather than inside the kernels (which run on worker threads
+  // under nThreads >= 2, where Rcpp::warning is not safe).
+  if (params.anneal_cycles > 0 && ds.total_words == 0 &&
+      !ds.topology_independent()) {
+    Rcpp::warning(
+        "Simulated-annealing perturbation (annealCycles > 0) has no effect "
+        "on this dataset: every Fitch character has been simplified away "
+        "(total_words == 0), and the HSJ/XFORM hierarchy scoring term has no "
+        "annealing-phase implementation. NNI, SPR and TBR still run and "
+        "remain exact, and the ratchet and drift phases still call them -- "
+        "but their own perturbation steps are inert in this state (the "
+        "ratchet's Fitch-block reweighting, ts_ratchet.cpp; drift's "
+        "incremental phase, ts_drift.cpp), so those two reduce to repeated "
+        "TBR rather than perturbed search.");
+  }
+
   ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
   ts::DrivenResult result;
   if (nThreads != 1) {
     result = ts::parallel_driven_search(pool, ds, params, cd_ptr, nThreads);
   } else {
     result = ts::driven_search(pool, ds, params, cd_ptr);
+  }
+
+  // Reported here rather than where it is detected: the count accumulates on
+  // worker threads, and Rf_warning() is a main-thread-only call.
+  if (result.constraint_discards > 0) {
+    Rf_warning(
+      "%d replicate(s) ended on a tree that could not be made to satisfy "
+      "`constraint`, and were discarded. The remaining trees do satisfy it; "
+      "raise `maxReplicates` if too few trees were found.",
+      result.constraint_discards);
   }
 
   // Build timings as a NumericVector (lighter than List)
@@ -1986,6 +2164,25 @@ List ts_driven_search(
   NumericVector rep_scores(result.replicate_scores.begin(),
                            result.replicate_scores.end());
 
+  // NA certification diagnostics, on the PRODUCTION entry point.  ts_tbr_search
+  // and ts_ratchet_search already expose the TS_NA_TIMING brackets, but they run
+  // with TBRParams/RatchetParams defaults (tabu_size == 0), which is NOT the
+  // shipped recipe (tabuSize = 100 default / 200 thorough) -- and do_reroot, the
+  // gate on exact_verify_sweep, requires tabu_size == 0.  So a measurement taken
+  // there cannot say whether certification costs anything in production.  These
+  // fields answer that.  `n_skipped` is counted unconditionally (see ts_data.h),
+  // the timing fields only under TS_NA_TIMING.  Serial runs only: each parallel
+  // worker owns a private ds_local, so a threaded run reports its main-thread
+  // copy and undercounts.
+  List na_diag = List::create(
+    Named("n_evs") = static_cast<double>(ds.na_n_evs),
+    Named("n_evs_skipped") = static_cast<double>(ds.na_n_evs_skipped),
+    Named("n_evs_hits") = static_cast<double>(ds.na_n_evs_hits),
+    Named("n_evs_improved") = static_cast<double>(ds.na_n_evs_improved),
+    Named("t_evs_ms") = ds.na_t_evs_ns / 1e6,
+    Named("t_total_ms") = ds.na_t_total_ns / 1e6
+  );
+
   if (result.pool_size == 0) {
     return List::create(
       Named("trees") = List::create(),
@@ -2002,7 +2199,8 @@ List ts_driven_search(
       Named("timings") = timings,
       Named("strategy_diagnostics") = strategy_diag,
       Named("replicate_scores") = rep_scores,
-      Named("candidates_evaluated") = (double) result.candidates_evaluated
+      Named("candidates_evaluated") = (double) result.candidates_evaluated,
+      Named("na_diag") = na_diag
     );
   }
 
@@ -2030,7 +2228,8 @@ List ts_driven_search(
     Named("timings") = timings,
     Named("strategy_diagnostics") = strategy_diag,
     Named("replicate_scores") = rep_scores,
-    Named("candidates_evaluated") = (double) result.candidates_evaluated
+    Named("candidates_evaluated") = (double) result.candidates_evaluated,
+    Named("na_diag") = na_diag
   );
 }
 
@@ -2077,25 +2276,39 @@ List ts_collapse_pool(
   // must stay visible even when its branch is zero-length (it would otherwise be
   // contracted, leaving the result looking unconstrained).  We protect every
   // constraint split from collapse — the unsupported NON-constraint branches
-  // still collapse.  Store each constraint split as a canonical (tip-0-excluded)
-  // bitset: trees are re-rooted on tip 0 below, so every internal node's
-  // descendant set excludes tip 0 and is directly comparable to these.
+  // still collapse.
+  //
+  // Each split is stored as the pair of groups build_constraint() reads
+  // (1 = together, 0 = apart, anything else = free; see ts_constraint.cpp).
+  // Both come out of the one membership matrix, so the protection here cannot
+  // drift from the constraint the search enforced.  A pure 0/1 matrix gives
+  // apart == the complement, and the test below then fires on exactly the node
+  // an exact-match test would have found.
   const int n_tip = tip_data.nrow();
   const int wps = (n_tip + 63) / 64;
-  std::vector<std::vector<uint64_t>> cons_canon;
+  std::vector<std::vector<uint64_t>> cons_one, cons_zero;
   if (consSplitMatrix.isNotNull()) {
     IntegerMatrix cs(consSplitMatrix.get());
     for (int r = 0; r < cs.nrow(); ++r) {
-      std::vector<uint64_t> b(wps, 0);
+      std::vector<uint64_t> one(wps, 0), zero(wps, 0);
       for (int c = 0; c < n_tip && c < cs.ncol(); ++c) {
-        if (cs(r, c)) b[c >> 6] |= (1ULL << (c & 63));
+        const int v = cs(r, c);
+        if (v != 1 && v != 0) continue;                 // free tip
+        (v == 1 ? one : zero)[c >> 6] |= (1ULL << (c & 63));
       }
-      if (b[0] & 1ULL) {                       // canonicalize: exclude tip 0
-        for (int w = 0; w < wps; ++w) b[w] = ~b[w];
-        int rem = n_tip & 63;
-        if (rem) b[wps - 1] &= ((1ULL << rem) - 1);  // clear padding bits
-      }
-      cons_canon.push_back(std::move(b));
+      cons_one.push_back(std::move(one));
+      cons_zero.push_back(std::move(zero));
+    }
+  }
+  // Group sizes depend only on the constraint, so they are counted once here
+  // rather than per tree.  A group of fewer than two taxa is skipped below:
+  // such a split is realised by a terminal edge, never a collapse candidate.
+  std::vector<int> n_one_tips(cons_one.size(), 0);
+  std::vector<int> n_zero_tips(cons_one.size(), 0);
+  for (size_t r = 0; r < cons_one.size(); ++r) {
+    for (int w = 0; w < wps; ++w) {
+      n_one_tips[r] += ts::popcount64(cons_one[r][w]);
+      n_zero_tips[r] += ts::popcount64(cons_zero[r][w]);
     }
   }
 
@@ -2133,19 +2346,26 @@ List ts_collapse_pool(
     ts::TreeState tree;
     tree.init_from_edge(&edge(0, 0), &edge(0, 1), edge.nrow(), ds);
 
-    // Root on tip 0 so root-adjacent edges are trivial (rooting-invariant
-    // collapse), then refresh state arrays for the flag computation.
+    // Root on tip 0 so root-adjacent edges are trivial, then refresh state
+    // arrays for the flag computation.  This makes the CONTRACTION
+    // rooting-invariant, and it is also what fixes the rooting the returned
+    // trees are handed back at — which matters because XFORM lengths are NOT
+    // rooting-invariant (T-374).  MaximizeParsimony() rescores the XFORM pool
+    // at this same tip-0 rooting before reporting, so that the reported score
+    // is the score of the tree returned (T-385).  HSJ needs no such rescore:
+    // since T-374 its secondary labelling is itself rooted canonically at tip 0
+    // inside the kernel, so its length does not depend on the rooting at all.
     ts::reroot_at_tip(tree, 0);
     tree.reset_states(ds);
     ts::score_tree(tree, ds);
 
     ts::compute_collapsed_flags_aggressive(tree, ds, flags);
 
-    // Protect constraint splits: clear the collapse flag of any internal edge
-    // whose bipartition realises a constraint (keeps the enforced clade
-    // visible).  Per-node descendant tip sets via a postorder OR; rooted on
-    // tip 0, so every internal set excludes tip 0 == the canonical form above.
-    if (!cons_canon.empty()) {
+    // Protect constraint splits: keep an internal edge that realises each
+    // constraint out of the contraction, so the enforced grouping stays
+    // visible.  Per-node descendant tip sets via a postorder OR; rooted on
+    // tip 0, so every internal set excludes tip 0.
+    if (!cons_one.empty()) {
       std::vector<uint64_t> tb(static_cast<size_t>(tree.n_node) * wps, 0);
       for (int tp = 0; tp < n_tip; ++tp) {
         tb[static_cast<size_t>(tp) * wps + (tp >> 6)] = 1ULL << (tp & 63);
@@ -2159,16 +2379,44 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      for (int v = n_tip + 1; v < tree.n_node; ++v) {
-        if (v >= static_cast<int>(flags.size()) || !flags[v]) continue;
-        const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
-        for (const auto& cb : cons_canon) {
-          bool eq = true;
-          for (int w = 0; w < wps; ++w) {
-            if (nb[w] != cb[w]) { eq = false; break; }
+      // A node realises the split when it holds one whole group and none of the
+      // other -- ts::node_displays_split() (ts_constraint.h), the same predicate
+      // the search's mapping and the Wagner build read, so the branch protected
+      // here is the branch they enforce.  With free tips that node is generally
+      // NOT the 1 group exactly, and the exact-match test this replaced then
+      // protected nothing at all (agent-issues/TreeSearch#54).
+      //
+      // Protect one such node, and only when nothing else keeps the split
+      // visible: every realising node's own edge displays the split, so if any
+      // of them already survives the contraction there is nothing to do.
+      // Protecting unconditionally would instead force the resolution of a
+      // branch the constraint does not ask for, which is the "unsupported
+      // non-constraint branches still collapse" half of the promise.
+      //
+      // Where none survives, the MRCA of a group is the node protected: the
+      // postorder visits every node before its parent, so the first node to
+      // hold a whole group is its MRCA, and keeping that one edge suffices,
+      // since contracting an edge below it leaves its descendant set — and so
+      // the split it displays — unchanged.
+      for (size_t r = 0; r < cons_one.size(); ++r) {
+        if (n_one_tips[r] < 2 || n_zero_tips[r] < 2) continue;
+        const std::vector<uint64_t>* grp[2] = { &cons_one[r], &cons_zero[r] };
+
+        bool survives = false;
+        int to_protect = -1;
+        for (int side = 0; side < 2 && !survives; ++side) {
+          const uint64_t* in = grp[side]->data();
+          const uint64_t* out = grp[1 - side]->data();
+          for (size_t pi = 0; pi < tree.postorder.size(); ++pi) {
+            const int v = tree.postorder[pi];
+            if (v <= n_tip || v >= static_cast<int>(flags.size())) continue;
+            const uint64_t* nb = &tb[static_cast<size_t>(v) * wps];
+            if (!ts::node_displays_split(nb, in, out, wps)) continue;
+            if (!flags[v]) { survives = true; break; }
+            if (to_protect < 0) to_protect = v;  // the MRCA, in postorder
           }
-          if (eq) { flags[v] = 0; break; }
         }
+        if (!survives && to_protect >= 0) flags[to_protect] = 0;
       }
     }
 
@@ -2672,6 +2920,46 @@ List ts_bench_tbr_phases(
   }
   bool use_iw = std::isfinite(ds.concavity);
 
+  // A dataset can leave the Fitch kernel nothing to do -- every character
+  // constant or autapomorphic gives zero blocks -- so `total_words == 0` and
+  // `n_blocks == 0`, and `tree.prelim`, `vroot_cache` and the snapshot buffers
+  // are all empty.  The phase loops below would work them anyway:
+  // `&tree.prelim[sc_base]` and `&vroot_cache[ei * total_words]` take the
+  // address of element 0 of an empty vector (what `_GLIBCXX_ASSERTIONS`
+  // traps), and the snapshot benchmark's `memcpy` passes a null `.data()` to a
+  // parameter declared `nonnull` (what UBSan reports).  Both are undefined
+  // behaviour, and neither stops the function: it completes every clip and
+  // every snapshot iteration.
+  //
+  // Guard at entry rather than per site.  This is a benchmark harness, and
+  // with no Fitch words there is no per-phase work to time -- zero is the
+  // honest answer, where the numbers it used to report were timings of
+  // zero-byte copies.  Phase A above is safe at zero words (the HSJ search
+  // path scores that way by design), so the score is still real.
+  if (tree.total_words == 0) {
+    return List::create(
+      Named("n_tips") = tree.n_tip,
+      Named("n_node") = tree.n_node,
+      Named("n_blocks") = ds.n_blocks,
+      Named("total_words") = tree.total_words,
+      Named("total_chars") = 0,
+      Named("block_n_states") = IntegerVector(0),
+      Named("has_na") = has_na,
+      Named("use_iw") = use_iw,
+      Named("score") = score,
+      Named("time_full_rescore_us") = time_full_rescore_us,
+      Named("time_clip_incr_us") = 0.0,
+      Named("time_indirect_us") = 0.0,
+      Named("time_unclip_us") = 0.0,
+      Named("time_snapshot_save_us") = 0.0,
+      Named("time_snapshot_restore_us") = 0.0,
+      Named("snapshot_bytes") = 0.0,
+      Named("n_clips") = 0,
+      Named("n_candidates") = 0,
+      Named("n_snapshot_iters") = 0
+    );
+  }
+
   // Seed RNG
   std::mt19937 rng = ts::make_rng();
 
@@ -3062,6 +3350,9 @@ double ts_hsj_score(
     IntegerMatrix tip_labels_r,
     int absent_state)
 {
+  validate_hsj_tip_labels(tip_labels_r, absent_state, contrast.nrow(),
+                           contrast.ncol());
+
   // Build DataSet for non-hierarchy characters (weight already adjusted)
   ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
 
@@ -3561,4 +3852,31 @@ std::string ts_ev_cache_key_probe(
   char buf[17];
   std::snprintf(buf, sizeof(buf), "%016llx", (unsigned long long)key);
   return std::string(buf);
+}
+
+// Sample one start tree from the RANDOM_TREE strategy's constrained generator.
+//
+// A thin wrapper over random_constrained_tree() (ts_wagner.cpp) so that tests
+// can inspect the tree the search STARTS from.  Going through
+// MaximizeParsimony() cannot: TBR rearranges whatever it is handed, so the
+// returned tree says nothing about where the generator put the free tips.
+// Draws from R's RNG, so set.seed() reproduces a sample.
+// [[Rcpp::export]]
+IntegerMatrix ts_random_constrained_tree(
+    NumericMatrix contrast,
+    IntegerMatrix tip_data,
+    IntegerVector weight,
+    CharacterVector levels,
+    Nullable<IntegerMatrix> consSplitMatrix = R_NilValue)
+{
+  validate_tip_data_values(INTEGER(tip_data), tip_data.nrow(), tip_data.ncol(),
+                           contrast.nrow());
+  ts::DataSet ds = make_dataset(contrast, tip_data, weight, levels);
+  ts::ConstraintData cd = build_constraint_from_r(
+      tip_data.nrow(), consSplitMatrix, R_NilValue, R_NilValue,
+      R_NilValue, R_NilValue, 0);
+
+  ts::TreeState tree;
+  ts::random_constrained_tree(tree, ds, cd);
+  return tree_to_edge(tree);
 }

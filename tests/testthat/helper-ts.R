@@ -1,20 +1,6 @@
 # Shared helpers for ts-* test files.
 # testthat auto-sources helper-*.R files before running tests.
 
-#' Set environment variables for the duration of `code`, restoring (or
-#' unsetting) the prior values on exit. Minimal single-purpose stand-in for
-#' withr::with_envvar so the package doesn't need withr just for this.
-with_envvar <- function(vars, code) {
-  old <- Sys.getenv(names(vars), unset = NA, names = TRUE)
-  on.exit({
-    keep <- !is.na(old)
-    if (any(keep)) do.call(Sys.setenv, as.list(old[keep]))
-    if (any(!keep)) Sys.unsetenv(names(old)[!keep])
-  })
-  do.call(Sys.setenv, as.list(vars))
-  code
-}
-
 #' Skip a test unless TREESEARCH_EXTENDED_TESTS=true is set.
 #' Use inside test_that() or at file level for Tier 3 (stress/bench) tests.
 #' See tests/testing-strategy.md for full tiering documentation.
@@ -113,4 +99,25 @@ validate_result <- function(result, n_tip) {
   children <- edges[, 2]
   tips <- sort(children[children <= n_tip])
   testthat::expect_equal(tips, seq_len(n_tip))
+}
+
+#' Run a constrained driven search with NOTHING but TBR enabled.
+#'
+#' Every phase that could rescue a replicate that cannot rearrange its start is
+#' switched off, so `best_score` is what TBR alone achieved from `startEdge`:
+#' a Wagner start is re-rooted on tip 0 (796a29d3), fuse re-roots its recipient,
+#' and nni-perturb calls impose_constraint(), which repairs a start as a
+#' side-effect.  Used by the constraint tests that assert the search MOVES.
+tbrOnlyRun <- function(ds, startEdge, splitMatrix) {
+  TreeSearch:::ts_driven_search(
+    ds$contrast, ds$tip_data, ds$weight, ds$levels,
+    maxReplicates = 1L, targetHits = 99L, tbrMaxHits = 1L,
+    ratchetCycles = 0L, driftCycles = 0L, nniPerturbCycles = 0L,
+    xssRounds = 0L, rssRounds = 0L, cssRounds = 0L,
+    pruneReinsertCycles = 0L, fuseInterval = 0L,
+    outerCycles = 1L, maxOuterResets = 0L,
+    nniFirst = FALSE, sprFirst = FALSE,
+    poolMaxSize = 100L, poolSuboptimal = 0, maxSeconds = 0, verbosity = 0L,
+    nThreads = 1L, startEdge = startEdge, consSplitMatrix = splitMatrix
+  )
 }

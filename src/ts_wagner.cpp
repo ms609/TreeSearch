@@ -346,8 +346,8 @@ static int wagner_smallest_containing_node(
 // neither side is a clade, the partial tree does not display the split, and no
 // further insertion can make it.
 static int wagner_map_complement(
-    const TreeState& tree, int n_tip, int nw,
-    const std::vector<uint64_t>& node_tips, const uint64_t* split,
+    const TreeState& tree, int nw,
+    const std::vector<uint64_t>& node_tips, const uint64_t* split_out,
     const std::vector<uint64_t>& added_tips,
     WagnerConstraintScratch& scratch)
 {
@@ -355,12 +355,10 @@ static int wagner_map_complement(
   int n_out = 0;
   int lone_out = -1;
   for (int w = 0; w < nw; ++w) {
-    uint64_t outside_mask = ~split[w];
-    if (w == nw - 1) {
-      const int rem = n_tip % 64;
-      if (rem > 0) outside_mask &= (1ULL << rem) - 1;
-    }
-    const uint64_t owd = outside_mask & added_tips[w];
+    // #54: the outside group is cd.split_zeros, not ~split_tips.  A `?`-coded
+    // tip is in neither, so it never pulls this LCA about — which is what lets
+    // it be placed on either side of the constraint, as documented.
+    const uint64_t owd = split_out[w] & added_tips[w];
     needed_out[w] = owd;
     if (owd) {
       n_out += popcount64(owd);
@@ -369,7 +367,7 @@ static int wagner_map_complement(
   }
   const int on = wagner_smallest_containing_node(
       tree, nw, node_tips, needed_out, n_out, lone_out);
-  return (on == n_tip) ? -1 : on;
+  return (on == tree.n_tip) ? -1 : on;
 }
 
 // Wagner-specific constraint node mapping.
@@ -426,6 +424,8 @@ static void wagner_map_constraint_nodes(
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
         &cd.split_tips[static_cast<size_t>(s) * nw];
+    const uint64_t* split_out =
+        &cd.split_zeros[static_cast<size_t>(s) * nw];
 
     // Once the inside LCA has reached the root it can never come back down —
     // grafting a leaf preserves ancestor relations among existing nodes, so the
@@ -437,8 +437,17 @@ static void wagner_map_constraint_nodes(
     // the latch every latched split paid for two.
     if (scratch.use_complement[s]) {
       cd.constraint_node[s] = n_tip;
+      // Wagner's own polarity lives in scratch.use_complement / outside_node;
+      // keep ConstraintData's T-384 flag at its "names the split itself"
+      // default so a value left over from an earlier map_constraint_nodes()
+      // cannot reach regraft_violates_constraint() before the next full remap.
+      // constraint_node_hi is pinned to constraint_node for the same reason:
+      // Wagner's LCA mapping has no displaying-chain, so the tight end is the
+      // only anchor it can honestly offer (#54).
+      cd.constraint_complement[s] = 0;
+      cd.constraint_node_hi[s] = cd.constraint_node[s];
       scratch.outside_node[s] = wagner_map_complement(
-          tree, n_tip, nw, node_tips, split, added_tips, scratch);
+          tree, nw, node_tips, split_out, added_tips, scratch);
       continue;
     }
 
@@ -460,6 +469,8 @@ static void wagner_map_constraint_nodes(
     const int inside_node = wagner_smallest_containing_node(
         tree, nw, node_tips, needed, n_needed, lone_needed);
     cd.constraint_node[s] = inside_node;
+    cd.constraint_complement[s] = 0;  // see the latched branch above
+    cd.constraint_node_hi[s] = inside_node;
 
     // A split is an *unrooted* bipartition, but a clade is a rooted subtree, so
     // "inside is monophyletic" is only one of the two ways this tree can display
@@ -479,7 +490,7 @@ static void wagner_map_constraint_nodes(
     if (inside_node == n_tip) {
       scratch.use_complement[s] = 1;
       scratch.outside_node[s] = wagner_map_complement(
-          tree, n_tip, nw, node_tips, split, added_tips, scratch);
+          tree, nw, node_tips, split_out, added_tips, scratch);
     }
   }
 }
@@ -528,8 +539,18 @@ static void wagner_collect_active_splits(
   for (int s = 0; s < cd.n_splits; ++s) {
     const uint64_t* split =
         &cd.split_tips[static_cast<size_t>(s) * cd.n_words];
+    const uint64_t* split_out =
+        &cd.split_zeros[static_cast<size_t>(s) * cd.n_words];
 
-    bool tip_inside = (split[tw] >> tb) & 1;
+    const bool tip_inside = (split[tw] >> tb) & 1;
+    const bool tip_outside = (split_out[tw] >> tb) & 1;
+
+    // #54: a tip in neither group is FREE — the constraint says nothing
+    // about which side of the separating edge it belongs on, so no edge is
+    // barred to it.  Reading "outside" as ~split_tips, as this did before free
+    // tips were represented, forced every `?`-coded taxon out of the
+    // constrained group and could leave the filter with no legal edge at all.
+    if (!tip_inside && !tip_outside) continue;
 
     // Split constrains placement when the opposite side of the new tip
     // has at least one previously-added tip.  An inside tip is only
@@ -538,15 +559,10 @@ static void wagner_collect_active_splits(
     for (int w = 0; w < cd.n_words; ++w) {
       uint64_t prev = added_tips[w];
       if (prev & split[w]) has_prev_inside = true;
-      uint64_t outside_mask = ~split[w];
-      if (w == cd.n_words - 1) {
-        int rem = tree.n_tip % 64;
-        if (rem > 0) outside_mask &= (1ULL << rem) - 1;
-      }
-      if (prev & outside_mask) has_prev_outside = true;
+      if (prev & split_out[w]) has_prev_outside = true;
     }
     if (tip_inside && !has_prev_outside) continue;
-    if (!tip_inside && !has_prev_inside) continue;
+    if (tip_outside && !has_prev_inside) continue;
 
     // The constraint is active. constraint_node[s] is the LCA of
     // added inside tips (set by wagner_map_constraint_nodes).
@@ -576,6 +592,63 @@ static void wagner_collect_active_splits(
 
     active.push_back(WagnerActiveSplit{cn, tip_inside});
   }
+}
+
+// Does the finished tree display every constraint split?
+//
+// A split is displayed iff some edge separates its two groups, which is
+// node_displays_split() (ts_constraint.h) in one polarity or the other.  This
+// runs before any of map_constraint_nodes()'s machinery is valid, but it calls
+// the same predicate rather than restating it: this is the gate that decides
+// whether the caller reshuffles and rebuilds, and the stricter of the two entry
+// points would reject trees the other then searches happily (or, worse, accept
+// ones it will not move from).
+//
+// Every node is a candidate, tips and root alike.  Tips matter for a
+// single-taxon group, whose "clade" is the tip itself.  The root looks
+// redundant — it subtends every tip, and its two children already cover the
+// single edge the degree-two root sits on — but excluding it made this test
+// STRICTER than find_displaying_chain(), which scans tree.postorder and so
+// does reach the root: a split whose apart-group is empty maps there and
+// nowhere else, and the two entry points then disagreed about a tree that
+// every constraint is satisfied by.  Including it costs one comparison and
+// can never accept a violation, since the root displays a split only when the
+// apart-group is empty, and then so does every tree.
+// Orientation-agnostic by construction, so it stays correct however the tree
+// happens to be rooted.
+static bool wagner_tree_displays_constraint(const TreeState& tree,
+                                            const ConstraintData& cd) {
+  const int n_tip = tree.n_tip;
+  const int nw = cd.n_words;
+
+  std::vector<uint64_t> node_tips(
+      static_cast<size_t>(tree.n_node) * nw, 0ULL);
+  for (int t = 0; t < n_tip; ++t) {
+    node_tips[static_cast<size_t>(t) * nw + t / 64] = (1ULL << (t % 64));
+  }
+  for (int node : tree.postorder) {
+    int ni = node - n_tip;
+    uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
+    const uint64_t* lt = &node_tips[static_cast<size_t>(tree.left[ni]) * nw];
+    const uint64_t* rt = &node_tips[static_cast<size_t>(tree.right[ni]) * nw];
+    for (int w = 0; w < nw; ++w) nd[w] = lt[w] | rt[w];
+  }
+
+  for (int s = 0; s < cd.n_splits; ++s) {
+    const uint64_t* split = &cd.split_tips[static_cast<size_t>(s) * nw];
+    const uint64_t* split_out = &cd.split_zeros[static_cast<size_t>(s) * nw];
+    bool found = false;
+    for (int node = 0; node < tree.n_node && !found; ++node) {
+      const uint64_t* nd = &node_tips[static_cast<size_t>(node) * nw];
+      // Either group may be the clade side.
+      if (node_displays_split(nd, split, split_out, nw) ||
+          node_displays_split(nd, split_out, split, nw)) {
+        found = true;
+      }
+    }
+    if (!found) return false;
+  }
+  return true;
 }
 
 // Check if an edge (above, below) is legal under the constraint splits that
@@ -805,15 +878,26 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   tree.build_postorder();
   double score = score_tree(tree, ds);
 
-  if (constraint_fallback) {
-    Rf_warning(
-      "AdditionTree(): constraint could not be honoured for at least one "
-      "taxon insertion; the returned tree may violate the constraint. "
-      "Consider supplying a `sequence` that adds constrained taxa earlier.");
-  }
-
   WagnerResult result;
   result.score = score;
+
+  // Verify the finished tree rather than trusting the placement logic to have
+  // been exhaustive.  `constraint_fallback` alone is not enough: it only fires
+  // when the filter rejected *every* edge, which the T-364/T-370 leak never did
+  // -- it returned violating trees mutely.  Nor is the caller's post-hoc check
+  // enough: AdditionTree() reaches ts_wagner_tree(), which calls this function
+  // directly and so never runs random_wagner_tree()'s reshuffle loop.  (It does
+  // build the posthoc DataSet -- R/AdditionTree.R splices the whole
+  // .PrepareConstraint() list through -- but nothing on that path consults it.)
+  // So on that path there is no retry to fall back on, including for the
+  // both-sides-straddle case above.  This check holds for every cause, known or
+  // not.  The caller reports it: Rf_warning() is not safe from a search worker
+  // thread.
+  if (constrained) {
+    result.constraint_violated =
+        constraint_fallback || !wagner_tree_displays_constraint(tree, *cd);
+  }
+
   return result;
 }
 
@@ -846,6 +930,12 @@ std::vector<double> wagner_goloboff_scores(const DataSet& ds) {
 
       // tip_ambiguous: bit c is set when tip has ALL n_states for char c.
       // Compute as the AND of all per-state words masked to active chars.
+      // For an inapplicable-coded block, plane 0 is the NA indicator (see
+      // ts_data.cpp's tip_states fill), so this AND requires the NA bit too:
+      // a tip coded {0,1} -- every applicable state but not "-" -- has the
+      // NA bit clear and so is scored non-ambiguous (informative) here, even
+      // though it carries no information about which applicable state holds.
+      // Untested whether that should count as ambiguous (T-371); left as is.
       uint64_t tip_ambiguous = blk.active_mask;
       for (int s = 0; s < blk.n_states; ++s) {
         tip_ambiguous &= tip_base[offset + s];
@@ -1105,7 +1195,12 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
 // Random constrained tree
 // =========================================================================
 //
-// Algorithm:
+// Two samplers, chosen by whether the constraint leaves any tip free.
+//
+// WITH NO FREE TIPS every split names every tip, so the "together" groups nest
+// exactly as their clades must, and the clade of each split is exactly its
+// group.  random_constrained_backbone() builds that nesting directly:
+//
 // 1. Identify constraint splits ordered from largest to smallest (by
 //    popcount of the "inside" set). Larger splits enclose smaller ones.
 // 2. Assign each tip to its tightest (smallest) enclosing constraint
@@ -1116,12 +1211,52 @@ void random_topology_tree(TreeState& tree, const DataSet& ds) {
 // 4. Finally, wire all root-level items (unconstrained tips + top-level
 //    split roots) into the tree.
 //
-// The result is a uniformly random binary tree among those that satisfy
-// all constraint splits. (Uniform conditional on the split nesting
-// structure, which determines the partition of items across polytomy
-// resolution steps.)
+// Every compliant tree has those clades and no others, and each polytomy is
+// resolved by uniform random insertion, so the result is a uniformly random
+// tree among the compliant ones.  This is the path the pool/consensus caller
+// (build_constraint_from_bitsets) takes, and it is unchanged.
+//
+// WITH FREE TIPS -- `?`-coded, or unnamed by a character -- that reasoning
+// fails.  A clade may take on any tip the split does not name, two splits with
+// disjoint groups may nest either way round or not at all, and the backbone
+// above can build only one of those arrangements: of the 1155 compliant trees
+// on eight taxa constrained by two characters ({a,b}|{c,d} and {e,f}|{g,h}) it
+// reaches 105, and so did the pre-#121 code that also pinned the free tips
+// outside every group.  On six taxa with one character and two free tips, where
+// there is only one clade to arrange, the two differ: 35 of 35 against 15.
+// random_constrained_by_insertion() below drops the backbone and grows the tree
+// a tip at a time instead, each at a uniformly random edge among those that
+// keep the tree compliant -- which reaches all 1155.  See its own comment.
+//
+// Those counts are from exhaustive enumeration, checked against every edge
+// INCLUDING the pendant ones: a group of one taxon is separated from the rest
+// by its own pendant edge, so a checker that looks only at non-trivial splits
+// (as.Splits() omits them) reads such a character as unsatisfiable and
+// undercounts the compliant set.  An earlier revision of this comment quoted
+// figures measured that way; they were wrong.
+//
+// Making each together-group an exact clade is not always *possible*: the
+// R-side gate (.PrepareConstraint) admits four-gamete-compatible splits that
+// are not laminar, and those cannot all be clades at once.  That case is
+// handled by the collapse path below (a split that loses every tip to tighter
+// non-laminar splits gets split_root == -1 and is skipped, T-329) and caught
+// afterwards by the caller's post-hoc check, not by this comment's claim.
 
 namespace {
+
+// Fisher-Yates shuffle of a range of node indices, drawing from the search RNG.
+void shuffle_items(std::vector<int>::iterator first,
+                   std::vector<int>::iterator last) {
+  for (int i = static_cast<int>(last - first) - 1; i > 0; --i) {
+    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
+    if (j > i) j = i;  // guard the thread_safe_unif() == 1 corner
+    std::swap(first[i], first[j]);
+  }
+}
+
+void shuffle_items(std::vector<int>& items) {
+  shuffle_items(items.begin(), items.end());
+}
 
 // Randomly resolve a set of items into a binary subtree.
 // `items` are node indices (tips or internal subtree roots).
@@ -1132,12 +1267,7 @@ int resolve_randomly(TreeState& tree, std::vector<int>& items,
                      int& next_internal) {
   if (items.size() == 1) return items[0];
 
-  // Shuffle items
-  for (int i = static_cast<int>(items.size()) - 1; i > 0; --i) {
-    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
-    if (j > i) j = i;
-    std::swap(items[i], items[j]);
-  }
+  shuffle_items(items);
 
   if (items.size() == 2) {
     int nd = next_internal++;
@@ -1232,13 +1362,10 @@ bool tip_in_split(int t, const uint64_t* mask) {
 } // anonymous namespace
 
 
-void random_constrained_tree(TreeState& tree, const DataSet& ds,
-                             ConstraintData& cd) {
-  if (!cd.active || cd.n_splits == 0) {
-    random_topology_tree(tree, ds);
-    return;
-  }
-
+// Nesting-of-groups construction; correct only when no tip is free of a split.
+// See the block comment above for why, and for the step numbering.
+static void random_constrained_backbone(TreeState& tree, const DataSet& ds,
+                                        ConstraintData& cd) {
   int n_tip = ds.n_tips;
   check_wagner_precondition(n_tip);
   init_wagner_state(tree, ds);
@@ -1346,12 +1473,7 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
     }
   }
 
-  // Shuffle root items
-  for (int i = static_cast<int>(root_items.size()) - 1; i > 0; --i) {
-    int j = static_cast<int>(ts::thread_safe_unif() * (i + 1));
-    if (j > i) j = i;
-    std::swap(root_items[i], root_items[j]);
-  }
+  shuffle_items(root_items);
 
   if (root_items.size() >= 2) {
     // Wire first two items as root's children
@@ -1412,6 +1534,294 @@ void random_constrained_tree(TreeState& tree, const DataSet& ds,
 
   tree.build_postorder();
   update_constraint(tree, cd);
+}
+
+// =========================================================================
+// Random constrained tree, by legality-filtered tip insertion
+// =========================================================================
+//
+// Grow the tree one tip at a time, each at a uniformly random edge among those
+// that leave every constraint still displayed.  No backbone, so nothing about
+// the arrangement of the clades is decided in advance: two splits with disjoint
+// groups may come out nested either way round or as siblings, and a clade may
+// take on any tip its split does not name.
+//
+// EVERY compliant topology is reachable.  Two facts make that so:
+//
+//   * a partial tree that displays every split RESTRICTED to the tips placed so
+//     far can always be extended -- a new tip of the "together" group goes on
+//     the together side of the displaying edge, one of the "apart" group on the
+//     other side, a free one anywhere -- so filtering on that restricted
+//     condition never paints the construction into a corner; and
+//   * the filter rules out only edges that break it, so every compliant tree is
+//     built by whichever insertion order matches it.
+//
+// Uniformity needs more, because the number of legal edges varies with the
+// partial topology, which draws some trees more often than others.  So the
+// named tips get a rejection pass FIRST: an unconstrained random tree on them
+// is uniform, and keeping the first compliant one is uniform over the compliant
+// trees exactly.  That lands whenever a decent fraction of trees comply -- the
+// loose or small constraints a user typically writes -- and never for one that
+// pins down most of the tree, so it is bounded and falls through to the
+// filtered pass, which always lands.
+//
+// The tips no character names are inserted afterwards with no filter at all,
+// which keeps their placement exactly uniform whichever pass built the rest.
+// So a constraint on a handful of taxa in a large matrix -- the usual case --
+// is sampled uniformly end to end.
+//
+// Legality of inserting tip `t` at the edge above node `v`, per split s, in the
+// partial tree's own terms:
+//
+//   t in "together"  ->  v must be the highest node displaying s, or below it:
+//                        landing there leaves the together side still together.
+//   t in "apart"     ->  v must be the tightest displaying node, or outside it.
+//   t free of s      ->  anywhere.
+//
+// which is exactly what regraft_violates_constraint() already decides for a
+// TBR clip, so this reuses it with the "clip" being the single tip.  The masks
+// handed to map_constraint_nodes() are the constraint restricted to the placed
+// tips; without that restriction no node would cover a group whose tips have
+// not all arrived, and every edge would look illegal.
+static void random_constrained_by_insertion(TreeState& tree, const DataSet& ds,
+                                            ConstraintData& cd) {
+  const int n_tip = ds.n_tips;
+  check_wagner_precondition(n_tip);
+  init_wagner_state(tree, ds);
+
+  const int n_words = cd.n_words;
+  const int n_splits = cd.n_splits;
+  const int root = n_tip;
+
+  // Named tips first: they are the only ones an edge can be illegal for.  The
+  // rest go in afterwards, unfiltered, which is what keeps their placement
+  // exactly uniform.
+  std::vector<uint64_t> named(n_words, 0ULL);
+  for (int s = 0; s < n_splits; ++s) {
+    const size_t off = static_cast<size_t>(s) * n_words;
+    for (int w = 0; w < n_words; ++w) {
+      named[w] |= cd.split_tips[off + w] | cd.split_zeros[off + w];
+    }
+  }
+  std::vector<int> order, free_tips;
+  for (int t = 0; t < n_tip; ++t) {
+    (tip_in_split(t, named.data()) ? order : free_tips).push_back(t);
+  }
+  const int n_named = static_cast<int>(order.size());
+
+  ts::rng_state_begin();
+  shuffle_items(order);
+  shuffle_items(free_tips);
+  order.insert(order.end(), free_tips.begin(), free_tips.end());
+
+  // The constraint as it applies to the tips placed so far.  Rebuilt each
+  // insertion; everything else here is scratch that map_constraint_nodes() and
+  // regraft_violates_constraint() need.
+  ConstraintData pcd;
+  pcd.active = true;
+  pcd.n_splits = n_splits;
+  pcd.n_words = n_words;
+  pcd.split_tips.assign(static_cast<size_t>(n_splits) * n_words, 0ULL);
+  pcd.split_zeros.assign(static_cast<size_t>(n_splits) * n_words, 0ULL);
+  pcd.constraint_node.assign(n_splits, -1);
+  pcd.constraint_node_hi.assign(n_splits, -1);
+  pcd.constraint_complement.assign(n_splits, 0);
+  pcd.dfs_entry.assign(2 * n_tip - 1, 0);
+  pcd.dfs_exit.assign(2 * n_tip - 1, 0);
+  pcd.clip_zones.assign(n_splits, ClipZone::UNCONSTRAINED);
+  pcd.clip_tip_mask.assign(n_words, 0ULL);
+
+  std::vector<uint64_t> placed(n_words, 0ULL);
+  auto mark_placed = [&](int t) { placed[t / 64] |= 1ULL << (t % 64); };
+
+  // Nodes heading an edge.  The root's two children head the two halves of ONE
+  // unrooted edge, so only one is listed; `unlisted_half` is the other, and
+  // moves as insertions change the root's children.
+  std::vector<int> edges;
+  edges.reserve(static_cast<size_t>(2 * n_tip - 3));
+  int unlisted_half = -1;
+  int next_internal = n_tip + 1;
+
+  // Seed with the first two tips as the root's children.  Any tree on two tips
+  // displays every split it can see, so there is nothing to filter yet.
+  auto seed_two = [&]() {
+    std::fill(placed.begin(), placed.end(), 0ULL);
+    edges.clear();
+    next_internal = n_tip + 1;
+    tree.parent[root] = root;
+    tree.left[0] = order[0];
+    tree.right[0] = order[1];
+    tree.parent[order[0]] = root;
+    tree.parent[order[1]] = root;
+    mark_placed(order[0]);
+    mark_placed(order[1]);
+    edges.push_back(order[0]);
+    unlisted_half = order[1];
+  };
+
+  // Restrict the constraint to the placed tips and re-map.  Without the
+  // restriction no node would cover a group whose tips have not all arrived.
+  auto remap_partial = [&]() {
+    for (int s = 0; s < n_splits; ++s) {
+      const size_t off = static_cast<size_t>(s) * n_words;
+      for (int w = 0; w < n_words; ++w) {
+        pcd.split_tips[off + w] = cd.split_tips[off + w] & placed[w];
+        pcd.split_zeros[off + w] = cd.split_zeros[off + w] & placed[w];
+      }
+    }
+    tree.build_postorder();
+    update_constraint(tree, pcd);
+  };
+
+  // Insert `t` above `below`, keeping `edges` and the root-edge bookkeeping
+  // straight.
+  auto insert_at = [&](int t, int below) {
+    const int above = tree.parent[below];
+    const int new_nd = next_internal++;
+    const int new_ni = new_nd - n_tip;
+    tree.parent[new_nd] = above;
+    tree.left[new_ni] = t;
+    tree.right[new_ni] = below;
+    tree.parent[t] = new_nd;
+    tree.parent[below] = new_nd;
+
+    const int ai = above - n_tip;
+    if (tree.left[ai] == below) {
+      tree.left[ai] = new_nd;
+    } else {
+      tree.right[ai] = new_nd;
+    }
+
+    if (above == root && below == unlisted_half) {
+      // The new node takes over as the unlisted half of the root edge, and the
+      // edge below it -- which was that half -- becomes one in its own right.
+      unlisted_half = new_nd;
+      edges.push_back(below);
+    } else {
+      edges.push_back(new_nd);
+    }
+    edges.push_back(t);
+    mark_placed(t);
+  };
+
+  auto draw_edge = [&](const std::vector<int>& pool) {
+    const int n_edges = static_cast<int>(pool.size());
+    int idx = static_cast<int>(ts::thread_safe_unif() * n_edges);
+    if (idx >= n_edges) idx = n_edges - 1;
+    return pool[idx];
+  };
+
+  // ---- Pass 1: rejection, for exact uniformity where it is affordable ----
+  //
+  // An unconstrained random tree on the named tips is uniform, and keeping the
+  // first compliant one leaves it uniform over the compliant trees -- which the
+  // filtered pass below is not.  Whether that lands depends on how much of the
+  // tree the constraint pins down: it is most of the time for the loose or
+  // small constraints a user typically writes, and essentially never for a
+  // large one, hence the bounded try count and the fallback.
+  bool uniform = false;
+  if (n_named >= 2) {
+    for (int attempt = 0; attempt < 64 && !uniform; ++attempt) {
+      shuffle_items(order.begin(), order.begin() + n_named);
+      seed_two();
+      for (int k = 2; k < n_named; ++k) insert_at(order[k], draw_edge(edges));
+      remap_partial();
+      uniform = true;
+      for (int s = 0; s < n_splits && uniform; ++s) {
+        if (pcd.constraint_node[s] < 0) uniform = false;
+      }
+    }
+  }
+
+  // ---- Pass 2: legality-filtered insertion, which always lands ----
+  std::vector<int> legal;
+  if (!uniform) seed_two();
+  for (int k = uniform ? n_named : 2; k < n_tip; ++k) {
+    const int t = order[k];
+    const std::vector<int>* pool = &edges;
+
+    if (k < n_named) {
+      remap_partial();
+
+      // This tip as a one-node "clip": inside the split's group, outside it, or
+      // neither.  The polarity flip is regraft_violates_constraint()'s job.
+      //
+      // A split with no placed tip in one of its groups rules nothing out yet:
+      // once this tip arrives that group is a single tip, and a single tip is
+      // separated from everything by its own pendant edge.  Saying so here also
+      // keeps map_constraint_nodes()'s empty-group fallback -- which answers
+      // with the lowest tip outside the other group, placed or not -- from
+      // anchoring the test on a tip that is not in the tree.
+      for (int s = 0; s < n_splits; ++s) {
+        const size_t off = static_cast<size_t>(s) * n_words;
+        bool has_one = false, has_zero = false;
+        for (int w = 0; w < n_words; ++w) {
+          if (pcd.split_tips[off + w]) has_one = true;
+          if (pcd.split_zeros[off + w]) has_zero = true;
+        }
+        if (!has_one || !has_zero) {
+          pcd.clip_zones[s] = ClipZone::UNCONSTRAINED;
+        } else if (tip_in_split(t, &cd.split_tips[off])) {
+          pcd.clip_zones[s] = ClipZone::MUST_INSIDE;
+        } else if (tip_in_split(t, &cd.split_zeros[off])) {
+          pcd.clip_zones[s] = ClipZone::MUST_OUTSIDE;
+        } else {
+          pcd.clip_zones[s] = ClipZone::UNCONSTRAINED;
+        }
+      }
+
+      legal.clear();
+      for (int below : edges) {
+        bool ok = !regraft_violates_constraint(below, pcd);
+        // The two root children are one unrooted edge seen from its two ends,
+        // and the ancestry test answers for the end it is given: whichever end
+        // is listed, the edge is legal if EITHER end says so.
+        if (!ok && tree.parent[below] == root) {
+          ok = !regraft_violates_constraint(unlisted_half, pcd);
+        }
+        if (ok) legal.push_back(below);
+      }
+      // Never empty for a compatible constraint (see above); fall back rather
+      // than lose the tip if one slips past the R-side four-gamete gate.
+      if (!legal.empty()) pool = &legal;
+    }
+
+    insert_at(t, draw_edge(*pool));
+  }
+
+  ts::rng_state_end();
+
+  tree.build_postorder();
+  update_constraint(tree, cd);
+}
+
+void random_constrained_tree(TreeState& tree, const DataSet& ds,
+                             ConstraintData& cd) {
+  if (!cd.active || cd.n_splits == 0) {
+    random_topology_tree(tree, ds);
+    return;
+  }
+
+  // Does any split leave a tip free?  If not, the clades are pinned and the
+  // backbone construction samples them uniformly at a fraction of the cost.
+  const int n_words = cd.n_words;
+  const int rem = ds.n_tips % 64;
+  const uint64_t top = rem ? ((1ULL << rem) - 1ULL) : ~0ULL;
+  bool any_free = false;
+  for (int s = 0; s < cd.n_splits && !any_free; ++s) {
+    const size_t off = static_cast<size_t>(s) * n_words;
+    for (int w = 0; w < n_words; ++w) {
+      uint64_t unnamed = ~(cd.split_tips[off + w] | cd.split_zeros[off + w]);
+      if (w == n_words - 1) unnamed &= top;
+      if (unnamed) { any_free = true; break; }
+    }
+  }
+
+  if (any_free) {
+    random_constrained_by_insertion(tree, ds, cd);
+  } else {
+    random_constrained_backbone(tree, ds, cd);
+  }
 }
 
 } // namespace ts

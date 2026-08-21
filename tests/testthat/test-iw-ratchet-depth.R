@@ -76,12 +76,12 @@ test_that("A thorough implied-weights search honours ratchetCycles overrides", {
     a = c(0, 0, 0, 0), b = c(0, 0, 0, 1), c = c(1, 1, 0, 0),
     d = c(1, 1, 1, 0), e = c(1, 0, 1, 1), f = c(0, 1, 1, 1)
   ))
-  iw <- MaximizeParsimony(dataset, concavity = 10, strategy = "thorough",
+  iw <- MaximizeParsimony(dataset, concavity = 10, .rung = "thorough",
                           maxReplicates = 2L, verbosity = 0L)
   expect_s3_class(iw, "multiPhylo")
   expect_true(all(is.finite(attr(iw, "score"))))
 
-  pinned <- MaximizeParsimony(dataset, concavity = 10, strategy = "thorough",
+  pinned <- MaximizeParsimony(dataset, concavity = 10, .rung = "thorough",
                               ratchetCycles = 2L, maxReplicates = 2L,
                               verbosity = 0L)
   expect_s3_class(pinned, "multiPhylo")

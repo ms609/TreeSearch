@@ -36,7 +36,7 @@ test_that("Search log workflow produces expected outputs", {
   app$set_inputs(`search-concavity` = 1.1)
   app$set_inputs(`search-epsilon` = 1)
   app$set_inputs(`search-implied.weights` = "off")
-  app$set_inputs(`search-strategy` = "sprint")
+  app$set_inputs(`search-effort` = -3L)
   app$set_inputs(`search-maxReplicates` = 5)
   app$set_inputs(`search-targetHits` = 3)
   app$click("search-modalGo")
@@ -52,7 +52,7 @@ test_that("Search log workflow produces expected outputs", {
     'dataFile <- system.file("datasets/Wills2012.nex"',
     "Rogue::QuickRogue",
     "MaximizeParsimony(",
-    'strategy = "sprint"',
+    'effort = -3',
     "concavity = Inf",       # implied weights off
     "targetHits = 3"
   ))
@@ -60,7 +60,7 @@ test_that("Search log workflow produces expected outputs", {
 
   # --- IW search (implied weights on, default) ---
   app$set_inputs(`search-implied.weights` = "on")
-  app$set_inputs(`search-strategy` = "default")
+  app$set_inputs(`search-effort` = 0L)
   app$set_inputs(`search-maxReplicates` = 3)
   app$set_inputs(`search-targetHits` = 2)
   app$set_inputs(`search-epsilon` = 0)
@@ -70,7 +70,7 @@ test_that("Search log workflow produces expected outputs", {
                      timeout = 200000)
 
   expect_log_contains(c(
-    'strategy = "default"',
+    'effort = 0',
     "extended_iw = FALSE",   # implied weights on
     "targetHits = 2"
   ))

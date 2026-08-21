@@ -122,7 +122,7 @@ test_that("TS_CHAR_ORDER is score-invariant under EW, IW, XPIWE and profile", {
 
   for (treeSeed in c(101, 2749, 8123)) {
     tree <- Preorder(RenumberTips(as.phylo(treeSeed, nTip), names(orderDs)))
-    reference <- with_envvar(c(TS_CHAR_ORDER = "none"), ScoreAll(tree))
+    reference <- withr::with_envvar(c(TS_CHAR_ORDER = "none"), ScoreAll(tree))
     # Both guards matter: a NaN profile score would make every comparison
     # below trivially pass (waldo treats NaN as equal to NaN), which is the
     # same vacuous-green failure mode this test replaced.
@@ -130,7 +130,7 @@ test_that("TS_CHAR_ORDER is score-invariant under EW, IW, XPIWE and profile", {
     expect_true(all(reference > 0))
 
     for (ordering in c("min_steps", "minority", "entropy")) {
-      actual <- with_envvar(c(TS_CHAR_ORDER = ordering), ScoreAll(tree))
+      actual <- withr::with_envvar(c(TS_CHAR_ORDER = ordering), ScoreAll(tree))
       expect_equal(actual, reference,
                    label = paste0("TS_CHAR_ORDER=", ordering,
                                   " tree=", treeSeed))

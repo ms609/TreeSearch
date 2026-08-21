@@ -27,17 +27,13 @@ small or unbalanced partitions, where raw mutual information is appreciably
 inflated by chance agreement.
 }
 \details{
-The value is computed analytically \insertCite{Vinh2010}{TreeDist},
-summing over
+The value is computed analytically \insertCite{@Vinh2010}{TreeDist}, summing over
 the hypergeometric distribution of cell overlaps, and is returned in bits
 (logarithms to base two).
 }
 \examples{
 # Expected MI between a 3|4 split and a 2|5 split of 7 items:
 expected_mi(c(3L, 4L), c(2L, 5L))
-}
-\references{
-\insertAllCited{}
 }
 \seealso{
 \code{\link{SiteConcordance}}
