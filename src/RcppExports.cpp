@@ -43,15 +43,15 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// trit_expect
-List trit_expect(const LogicalMatrix splits, const IntegerMatrix characters);
-RcppExport SEXP _TreeSearch_trit_expect(SEXP splitsSEXP, SEXP charactersSEXP) {
+// nrqs_expect
+List nrqs_expect(const LogicalMatrix splits, const IntegerMatrix characters);
+RcppExport SEXP _TreeSearch_nrqs_expect(SEXP splitsSEXP, SEXP charactersSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const LogicalMatrix >::type splits(splitsSEXP);
     Rcpp::traits::input_parameter< const IntegerMatrix >::type characters(charactersSEXP);
-    rcpp_result_gen = Rcpp::wrap(trit_expect(splits, characters));
+    rcpp_result_gen = Rcpp::wrap(nrqs_expect(splits, characters));
     return rcpp_result_gen;
 END_RCPP
 }

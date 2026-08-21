@@ -60,18 +60,18 @@ NULL
 #' so that 1 corresponds to the maximum possible mutual information for each
 #' split–character pair (`hBest`).
 #'
-#' The `normalize` argument specifies how the zero point is defined.
+#' The `chanceCorrect` argument specifies how the zero point is defined.
 #'
-#' - If `normalize = FALSE`, zero corresponds to *zero* MI, without correcting
-#'   for the positive bias that arises because MI is rarely exactly zero in
-#'   finite samples.
+#' - If `chanceCorrect = FALSE`, zero corresponds to *zero* MI, without
+#'   correcting for the positive bias that arises because MI is rarely exactly
+#'   zero in finite samples.
 #'
-#' - If `normalize = TRUE`, the expected MI is computed using an analytical
+#' - If `chanceCorrect = TRUE`, the expected MI is computed using an analytical
 #'   approximation based on the distribution of character tokens. This is fast
 #'   and generally accurate for large trees (~200+ taxa), but does not account 
 #'   for correlation between splits.
 #'
-#' - If `normalize` is a positive integer `n`, the expected MI is estimated
+#' - If `chanceCorrect` is a positive integer `n`, the expected MI is estimated
 #'   empirically by fitting each character to `n` uniformly random trees and
 #'   averaging the resulting MI values. This Monte Carlo approach provides a
 #'   more accurate baseline for small trees, for which the analytical
@@ -87,7 +87,7 @@ NULL
 #' 
 #'   Matching is case‑insensitive and partial.
 #'
-#' @param normalize Controls the zero point of the concordance scale by
+#' @param chanceCorrect Controls the zero point of the concordance scale by
 #' subtracting the value expected under a chance (fixed-marginal) null, in which
 #' each character's tokens are reassigned at random across the leaves while its
 #' state frequencies and the split sizes are held fixed.
@@ -130,7 +130,7 @@ NULL
 #' corresponds to a split (an edge of the tree) and gives the normalized mutual
 #' information between that split and the character data, averaged across all
 #' characters.
-#' When `normalize = TRUE` (default), values are scaled relative to random
+#' When `chanceCorrect = TRUE` (default), values are scaled relative to random
 #' expectation; when `FALSE`, raw mutual information normalized by `hBest` is
 #' returned.
 #'
@@ -172,7 +172,7 @@ ClusteringConcordance <- function(
   tree,
   dataset,
   return = "edge",
-  normalize = TRUE
+  chanceCorrect = TRUE
 ) {
   # Check inputs
   if (is.null(dataset)) {
@@ -257,7 +257,7 @@ ClusteringConcordance <- function(
                        hh["hSplit", , , drop = FALSE] -
                        hh["hJoint", , , drop = FALSE], NULL)
   miRand <- `rownames<-`(hh["miRand", , , drop = FALSE], NULL)
-  norm <- if (isFALSE(normalize)) {
+  norm <- if (isFALSE(chanceCorrect)) {
     ifelse(hBest == 0, NA, mi / hBest)
   } else {
     ifelse(hBest == 0, NA, .Rezero(mi / hBest, miRand / hBest))
@@ -271,8 +271,8 @@ ClusteringConcordance <- function(
     charMax <- vapply(charSplits, ClusteringEntropy, double(1))[
       attr(dataset, "index")]
     charInfo <- MutualClusteringInfo(tree, charSplits)[at[["index"]]]
-    if (is.numeric(normalize)) {
-      rTrees <- replicate(normalize, RandomTree(tree), simplify = FALSE)
+    if (is.numeric(chanceCorrect)) {
+      rTrees <- replicate(chanceCorrect, RandomTree(tree), simplify = FALSE)
       # Score each random tree against `charSplits` separately: characters with
       # ambiguous tokens yield splits over different tip subsets, and the
       # vectorised `MutualClusteringInfo(<list of trees>, <list of splits>)`
@@ -285,12 +285,12 @@ ClusteringConcordance <- function(
         double(length(charSplits))
       ))[, attr(dataset, "index"), drop = FALSE]
       randMean <- colMeans(randInfo)
-      var <- rowSums((t(randInfo) - randMean) ^ 2) / (normalize - 1)
-      mcse <- sqrt(var / normalize)
+      var <- rowSums((t(randInfo) - randMean) ^ 2) / (chanceCorrect - 1)
+      mcse <- sqrt(var / chanceCorrect)
       randTreeInfo <- rowSums(randInfo)
       randTreeMean <- mean(randTreeInfo)
       treeVar <- var(randTreeInfo)
-      mcseTree <- sqrt(treeVar / normalize)
+      mcseTree <- sqrt(treeVar / chanceCorrect)
     }
   }
 
@@ -309,7 +309,7 @@ ClusteringConcordance <- function(
            best <- rowSums(hBest[1, , , drop = FALSE], dims = 2)
            ifelse(!is.na(best) & best == 0,
                   NA_real_,
-                  if (isTRUE(normalize)) {
+                  if (isTRUE(chanceCorrect)) {
                     .Rezero(
                       rowSums(mi[1, , , drop = FALSE], dims = 2) / best,
                       rowSums(miRand[1, , , drop = FALSE], dims = 2) / best
@@ -322,27 +322,28 @@ ClusteringConcordance <- function(
          
            # one <- hh["hChar", 1, , drop = TRUE] # All rows equal
            one <- charMax
-           zero <- if (isFALSE(normalize)) {
+           zero <- if (isFALSE(chanceCorrect)) {
              0
-           } else if (isTRUE(normalize)) {
+           } else if (isTRUE(chanceCorrect)) {
              apply(hh["miRand", , ], 2, max)
            } else {
              randMean
            }
            ret <- (charInfo - zero) / (one - zero)
-           if (is.numeric(normalize)) {
+           if (is.numeric(chanceCorrect)) {
              mcseInfo <- ((one - charInfo) / (one - zero) ^ 2) * mcse
              mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
              structure(ret, hMax = charMax, mcse = mcseInfo)
            } else {
              # The characterwise return is deliberately NOT random-expectation
-             # normalized for logical `normalize`: `charInfo` is
+             # normalized for logical `chanceCorrect`: `charInfo` is
              # MutualClusteringInfo() against the whole tree, whereas the
              # analytic `zero` baseline above is per-single-split expected MI, so
              # subtracting it would mix incompatible quantities (and the
              # entropy-weighted variant was abandoned -- see the note below the
-             # @return docs). Only the Monte-Carlo path (numeric `normalize`)
-             # offers a same-scale empirical baseline. So return charInfo scaled
+             # @return docs). Only the Monte-Carlo path (numeric
+             # `chanceCorrect`) offers a same-scale empirical baseline, so we
+             # return charInfo scaled
              # by its maximum (hBest-like), as shipped since the original
              # implementation (#205).
              structure(charInfo / charMax, hMax = charMax)
@@ -358,16 +359,16 @@ ClusteringConcordance <- function(
            idx <- cbind(1, bestMatch, seq_along(bestMatch))
            return(weighted.mean(norm[idx], hBest[idx]))
           
-           if (isFALSE(normalize)) {
+           if (isFALSE(chanceCorrect)) {
            } else {
              one <- sum(hh["hChar", 1, ])
-             zero <- if (isTRUE(normalize)) {
+             zero <- if (isTRUE(chanceCorrect)) {
                sum(apply(hh["miRand", , ], 2, max))
              } else {
                randTreeMean
              }
              ret <- (sum(charInfo) - zero) / (one - zero)
-             if (is.numeric(normalize)) {
+             if (is.numeric(chanceCorrect)) {
                mcseInfo <- ((one - sum(charInfo)) / (one - zero) ^ 2) * mcseTree
                mcseInfo[mcseInfo < sqrt(.Machine$double.eps)] <- 0
                structure(ret, mcse = mcseInfo)
@@ -542,11 +543,11 @@ QALegend <- function(where = c(0.1, 0.3, 0.1, 0.3), n = 5, Col = QACol,
 #' @export
 ConcordanceTable <- function(tree, dataset, Col = QACol, largeClade = 0,
                              xlab = "Edge", ylab = "Character",
-                             normalize = TRUE, plot = TRUE,
+                             chanceCorrect = TRUE, plot = TRUE,
                              marginSize = 0L, paintSize = 0L,
                              palette = "default", ...) {
   cc <- ClusteringConcordance(tree, dataset, return = "all",
-                              normalize = normalize)
+                              chanceCorrect = chanceCorrect)
   nodes <- seq_len(dim(cc)[[2]])
   info <- cc["hBest", , ] * cc["n", , ]
   amount <- info / max(info, na.rm = TRUE)
@@ -743,9 +744,9 @@ MutualClusteringConcordance <- function(tree, dataset) {
 
 #' @rdname SiteConcordance
 #' @details
-#' `QuartetConcordance()` is the proportion of quartets (sets of four leaves)
-#' that are decisive for a split which are also concordant with it
-#' For example, a quartet with the characters `0 0 0 1` is not decisive, as
+#' `QuartetConcordance()` measures the agreement between each character and each
+#' split in the currency of quartets (sets of four leaves).
+#' A quartet with the characters `0 0 0 1` is not decisive, as
 #' all relationships between those leaves are equally parsimonious.
 #' But a quartet with characters `0 0 1 1` is decisive, and is concordant
 #' with any tree that groups the first two leaves together to the exclusion
@@ -755,12 +756,21 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' quartets that are decisive for a branch.
 #' Doing so circumvents the criticisms of \insertCite{Goloboff2024;textual}{TreeSearch}.
 #'
-#' By default, the reported value weights each site by the number of quartets
-#' it is decisive for.  This value can be interpreted as the proportion of
-#' all decisive quartets that are concordant with a split.
+#' The quartets that a split resolves are not logically independent: because
+#' \eqn{(ab, cd)} and \eqn{(ab, ce)} jointly entail \eqn{(ab, de)}
+#' \insertCite{Nelson1992}{TreeSearch}, a split of sizes \eqn{(k, t - k)}
+#' resolves \eqn{\binom{k}{2}\binom{t - k}{2}} quartets, of which only
+#' \eqn{(k - 1)(t - k - 1)} are non-redundant.
+#' `unit` selects which of the two is counted.  By default, agreement is
+#' measured against the non-redundant content, so that a character scores full
+#' marks only where it *displays* the split, rather than merely agreeing with a
+#' large combinatorial volume of its quartets.
+#'
+#' By default, the reported value weights each site by the quartet content it
+#' shares with the split.
 #' If `weight = FALSE`, the reported value is the mean of the concordance
-#' value for each site. 
-#' Consider a split associated with two sites:
+#' value for each site.
+#' Consider a split associated with two sites (counting in `unit = "quartet"`):
 #' one that is concordant with 25&percnt; of 96 decisive quartets, and
 #' a second that is concordant with 75&percnt; of 4 decisive quartets.
 #' If `weight = TRUE`, the split concordance will be 24 + 3 / 96 + 4 = 27&percnt;.
@@ -779,30 +789,50 @@ MutualClusteringConcordance <- function(tree, dataset) {
 #' `QuartetConcordance(return = "char")` returns a numeric vector giving the
 #' concordance index calculated at each site, averaged across all splits.
 #'
-#' With `unit = "trit"` (see below) the same vectors are returned, but scored in
-#' redundancy-corrected currency: values are typically lower, and reach 1 only
-#' where a split is *displayed* by the character rather than merely concordant
-#' with many of its quartets.
+#' With `unit = "nrqs"`, note that this average is taken over *every* split in
+#' `tree`.  A character can agree exactly with at most one split, and is merely
+#' compatible with -- that is, silent about -- the rest; because agreement is
+#' measured against each split's non-redundant content, silence counts as a
+#' failure to cover.  Per-character values are therefore much smaller than
+#' per-edge ones and **do not reach 1 even for a character identical to one of
+#' the tree's own splits** (0.49 for a 22|26 split of a 48-leaf tree, 0.25 for
+#' a 2|46 split).  The attainable maximum depends on the tree, so these values
+#' rank characters against one another but should not be read against an
+#' absolute ceiling of 1, nor compared across trees.  Where a per-character
+#' index bounded at 1 is wanted, use `unit = "quartet"`, whose per-character
+#' path attains 1 for a character identical to any split of the tree.
+#'
+#' With `unit = "quartet"` the same vectors are returned, but scored in the raw
+#' quartet currency: values are typically higher, as a character is credited
+#' with the full combinatorial volume of quartets that it resolves.
 #'
 #' @param weight Logical specifying whether to weight sites according to the
-#' number of quartets they are decisive for.
+#' quartet content that they share with each split.
 #' @param unit Character specifying the currency in which quartets are counted:
-#'   - `"quartet"` (default): each resolved quartet counts once, so a character
-#'     is credited with the full combinatorial volume of quartets it resolves;
-#'   - `"trit"`: quartets are counted as the *independent* information they carry
-#'     \insertCite{Nelson1992}{TreeSearch}.  Because the quartets resolved by a
-#'     split of sizes \eqn{(k, t - k)} are logically redundant --
-#'     \eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)} -- only
-#'     \eqn{(k - 1)(t - k - 1)} of the \eqn{\binom{k}{2}\binom{t - k}{2}}
-#'     resolved quartets are independent.  Concordance is then measured against
-#'     this reduced (redundancy-corrected) content, so that only a character
-#'     whose split is *identical* to the tree split scores full marks; nested
-#'     (compatible) characters receive genuine partial support, and crossing
-#'     (incompatible) characters score lower still.  A multistate character is
-#'     scored in the same currency: trits are counted independently within each
-#'     pair of states (sizes \eqn{n_i}, \eqn{n_j} give a per-state-pair weight of
-#'     \eqn{4 / (n_i n_j)}) and summed across pairs, so multistate and binary
-#'     characters remain directly comparable.
+#'   - `"nrqs"` (default): only non-redundant quartet statements (NRQS) are
+#'     counted.  Of the \eqn{\binom{k}{2}\binom{t - k}{2}} quartets resolved by
+#'     a split of sizes \eqn{(k, t - k)}, just \eqn{(k - 1)(t - k - 1)} are
+#'     non-redundant under the entailment
+#'     \eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)}
+#'     \insertCite{Nelson1992}{TreeSearch}.  Measuring agreement against this
+#'     reduced content means that, *at a given split*, only a character whose
+#'     own split is identical scores full marks; nested (compatible) characters
+#'     receive genuine partial support, and crossing (incompatible) characters
+#'     score lower still.  This bound applies to each split individually, and so
+#'     to `return = "edge"`; it does not carry over to `return = "char"`, which
+#'     averages across all splits -- see Value, above.
+#'     A multistate character is scored in the same currency:
+#'     NRQS are counted within each pair of states (sizes \eqn{n_i}, \eqn{n_j}
+#'     give a per-state-pair weight of \eqn{4 / (n_i n_j)}) and summed across
+#'     pairs, so multistate and binary characters remain directly comparable.
+#'     Note that non-redundancy is a logical property: NRQS are not mutually
+#'     independent in a statistical sense, so their count measures quartet
+#'     content rather than information in bits.
+#'   - `"quartet"`: each resolved quartet counts once, so a character is
+#'     credited with the full combinatorial volume of quartets it resolves.
+#'     This recovers the measure reported by earlier versions of this package,
+#'     the direct analogue of the site concordance factor
+#'     \insertCite{Minh2020}{TreeSearch}.
 #' @references \insertAllCited{}
 #' @importFrom ape keep.tip
 #' @importFrom cli cli_progress_bar cli_progress_update
@@ -814,8 +844,8 @@ QuartetConcordance <- function(
   dataset = NULL,
   weight = TRUE,
   return = "edge",
-  unit = c("quartet", "trit"),
-  normalize = FALSE
+  unit = c("nrqs", "quartet"),
+  chanceCorrect = TRUE
 ) {
   if (is.null(dataset)) {
     warning("Cannot calculate concordance without `dataset`.")
@@ -825,11 +855,11 @@ QuartetConcordance <- function(
     stop("`dataset` must be a phyDat object.")
   }
   unit <- match.arg(unit)
-  if (!isFALSE(normalize)) {
-    if (!isTRUE(normalize)) {
-      if (!is.numeric(normalize) || length(normalize) != 1L ||
-          is.na(normalize) || normalize < 1) {
-        stop("`normalize` must be FALSE, TRUE, or a positive integer.")
+  if (!isFALSE(chanceCorrect)) {
+    if (!isTRUE(chanceCorrect)) {
+      if (!is.numeric(chanceCorrect) || length(chanceCorrect) != 1L ||
+          is.na(chanceCorrect) || chanceCorrect < 1) {
+        stop("`chanceCorrect` must be FALSE, TRUE, or a positive integer.")
       }
     }
   }
@@ -868,10 +898,10 @@ QuartetConcordance <- function(
   return <- options[[pmatch(tolower(trimws(return)), options,
                             nomatch = length(options))]]
 
-  if (unit == "trit") {
+  if (unit == "nrqs") {
     # Return:
-    return(.TritConcordance(logiSplits, charInt, weight, return, splits,
-                            normalize))
+    return(.NrqsConcordance(logiSplits, charInt, weight, return, splits,
+                            chanceCorrect))
   }
 
   raw_counts <- quartet_concordance(logiSplits, charInt)
@@ -881,16 +911,16 @@ QuartetConcordance <- function(
 
   # Chance correction (option): re-zero the observed concordant/decisive ratio
   # against the ratio expected under the same fixed-marginal null used for the
-  # trit currency.  Only `conc` and `dec` vary under the null (the split sizes
+  # NRQS currency.  Only `conc` and `dec` vary under the null (the split sizes
   # and state counts are fixed), so we need E[conc] and E[dec] per (split, char),
-  # computed exactly from the hypergeometric pmf (no floors here, unlike trits)
+  # computed exactly from the hypergeometric pmf (no floors here, unlike NRQS)
   # or by Monte-Carlo tip-shuffle, then re-zero the pooled ratio.
-  doNorm <- !isFALSE(normalize)
+  doNorm <- !isFALSE(chanceCorrect)
   if (doNorm) {
-    base <- if (isTRUE(normalize)) {
+    base <- if (isTRUE(chanceCorrect)) {
       .QuartetExpect(charInt, logiSplits)
     } else {
-      .QuartetMC(charInt, logiSplits, normalize)
+      .QuartetMC(charInt, logiSplits, chanceCorrect)
     }
     eNum <- base[["concordant"]]
     eDen <- base[["decisive"]]
@@ -1009,33 +1039,57 @@ QuartetConcordance <- function(
   list(concordant = accConc / nRelabel, decisive = accDec / nRelabel)
 }
 
-# Nelson-Ladiges fractional ("trit") currency for QuartetConcordance().
+# Nelson-Ladiges fractional ("nrqs") currency for QuartetConcordance().
 #
 # The quartets a bipartition of sizes (k, t - k) resolves are the 4-cycles of
 # the complete bipartite graph K_{k, t-k}; the Nelson-Ladiges entailment
 # (ab,cd) + (ab,ce) -> (ab,de) is GF(2) cycle addition, so only the cyclomatic
-# number (k - 1)(t - k - 1) of them are independent ("trits").
+# number (k - 1)(t - k - 1) of them are non-redundant (the NRQS).
 #
 # A multistate character is the disjoint union of its state-pairs: a quartet is
 # decisive only when two taxa share one state and two share another, so every
 # decisive quartet lives in the K_{n_i, n_j} block between two states.  Those
 # blocks are edge-disjoint and the entailment never crosses them (it forces the
-# shared "c, d, e" taxa into a single state), so trits add over state pairs:
+# shared "c, d, e" taxa into a single state), so NRQS add over state pairs:
 #   W_char = sum_{i<j} (n_i - 1)(n_j - 1),   A = sum_{i<j} A_ij
 # with a per state-pair weight of 4 / (n_i n_j).  (Verified by GF(2) rank of the
 # decisive / concordant quartet sets.)  Each state-pair is therefore an
 # independent binary sub-problem; a binary character is the single-pair case.
 #
-# Scoring uses coverage ("option b"): per pair, concordant trits over the
+# Scoring uses coverage ("option b"): per pair, concordant NRQS over the
 # *reported* unit's own content (Wk for edges, Wc for characters), so that
 # A_ij <= min(Wc, Wk) keeps each ratio in [0, 1] and only an identical
-# character-split scores 1.  Pairs are pooled by the shared information
+# character-split *pair* scores 1.
+#
+# That per-pair bound does NOT carry over to the value reported for
+# `return = "char"`.  The character score is the M-weighted mean of those
+# per-pair ratios across every split in the tree, and a character agrees
+# exactly with at most one split while merely being *compatible* with (silent
+# about) the rest.  Coverage scores silence as failure to cover, so even a
+# character identical to one of the tree's own splits averages well below 1:
+# 0.49 for a 22|26 split of a 48-leaf tree, 0.25 for a 2|46 split.  The
+# attainable maximum therefore depends on the tree, and character scores are
+# comparable to one another but not to an absolute ceiling of 1.
+#
+# There is no cheap repair.  Substituting the character's concordant NRQS with
+# respect to the whole tree would require counting a union of per-split
+# concordant sets, and those sets overlap heavily: summing A_ij across the 45
+# splits of the reference tree used in testing overshoots Wc by ~11x, so the
+# whole-tree count is not additive over splits and has no closed form here.
+# Taking max_e A_ij / Wc instead does attain 1, but best-match selection is
+# upward-biased in the absence of signal (see the `tree` return, which carries
+# the same warning) and E[max] is not available from the analytic per-split
+# expectations in `nrqs_expect()`, so `chanceCorrect = TRUE` could not support
+# it.  Callers who need a per-character score bounded at 1 should use
+# `unit = "quartet"`, whose char path reaches 1 for an identical character.
+#
+# Pairs are pooled by the shared information
 # M = min(Wc, Wk) (the hBest analogue), which is symmetric between character and
 # split so both `return`s pool by the same amount.  Ambiguous / inapplicable /
 # absent tokens drop out per character (treated as "?", as in the quartet path),
 # giving each character its own effective taxon count.
-.TritConcordance <- function(logiSplits, charInt, weight, return, splits,
-                             normalize = FALSE) {
+.NrqsConcordance <- function(logiSplits, charInt, weight, return, splits,
+                             chanceCorrect) {
   nSplit <- ncol(logiSplits)
   nChar <- ncol(charInt)
   pos <- function(z) {
@@ -1047,15 +1101,15 @@ QuartetConcordance <- function(
   # state-pairs; the chance baseline (if requested) uses the same accumulators
   # for the expected pools, so the re-zero divides like against like.
   numEdge <- numChar <- denM <- matrix(0, nSplit, nChar)
-  wcTot <- numeric(nChar)                    # character trit content (split-free)
-  doNorm <- !isFALSE(normalize)
+  wcTot <- numeric(nChar)                  # character NRQS content, split-free
+  doNorm <- !isFALSE(chanceCorrect)
   if (doNorm) {
     baseNumEdge <- baseNumChar <- baseDenM <- matrix(0, nSplit, nChar)
-    if (isTRUE(normalize)) {
+    if (isTRUE(chanceCorrect)) {
       # Exact hypergeometric expectation for all characters at once (C++;
-      # `trit_expect` in src/concordance_expect.cpp).  Uninformative characters
+      # `nrqs_expect` in src/concordance_expect.cpp).  Uninformative characters
       # yield zero pools, matching the observed loop's `wcTot > 0` guard.
-      be <- trit_expect(logiSplits, charInt)
+      be <- nrqs_expect(logiSplits, charInt)
       baseNumEdge <- be[["numEdge"]]
       baseNumChar <- be[["numChar"]]
       baseDenM <- be[["denM"]]
@@ -1064,13 +1118,14 @@ QuartetConcordance <- function(
 
   for (ci in seq_len(nChar)) {
     col <- charInt[, ci]
-    obs <- .CharTritContrib(col, logiSplits, pos)
+    obs <- .CharNrqsContrib(col, logiSplits, pos)
     numEdge[, ci] <- obs[["numEdge"]]
     numChar[, ci] <- obs[["numChar"]]
     denM[, ci] <- obs[["denM"]]
     wcTot[ci] <- obs[["wcTot"]]
-    if (doNorm && !isTRUE(normalize) && obs[["wcTot"]] > 0) {
-      base <- .CharTritMC(col, logiSplits, pos, normalize)  # Monte-Carlo shuffle
+    if (doNorm && !isTRUE(chanceCorrect) && obs[["wcTot"]] > 0) {
+      # Monte-Carlo shuffle
+      base <- .CharNrqsMC(col, logiSplits, pos, chanceCorrect)
       baseNumEdge[, ci] <- base[["numEdge"]]
       baseNumChar[, ci] <- base[["numChar"]]
       baseDenM[, ci] <- base[["denM"]]
@@ -1091,7 +1146,7 @@ QuartetConcordance <- function(
       }
     } else {
       # Mean per-site quality over informative characters; uninformative
-      # characters carry no trits and are dropped, as in the quartet path.
+      # characters carry no NRQS and are dropped, as in the quartet path.
       sEdge <- ifelse(denM > 0, numEdge / denM, NA_real_)
       if (doNorm) {
         sBase <- ifelse(baseDenM > 0, baseNumEdge / baseDenM, NA_real_)
@@ -1138,10 +1193,10 @@ QuartetConcordance <- function(
   }
 }
 
-# Observed per-character trit contributions, summed over the character's
+# Observed per-character NRQS contributions, summed over the character's
 # state-pairs, returned as per-split vectors.  Shared by the observed pass and
 # the Monte-Carlo baseline so the two use byte-identical arithmetic.
-.CharTritContrib <- function(col, logiSplits, pos) {
+.CharNrqsContrib <- function(col, logiSplits, pos) {
   nSplit <- ncol(logiSplits)
   numEdge <- numChar <- denM <- numeric(nSplit)
   wcTot <- 0
@@ -1161,7 +1216,7 @@ QuartetConcordance <- function(
         nJ <- aJ + bJ                        # n_j
         mA <- aI + aJ                        # taxa of this pair on side A
         tP <- nI + nJ                        # taxa scored in this pair
-        # Concordant trits; the (x - 1)_+ floors stop self-agreement exceeding 1.
+        # Concordant NRQS; the (x - 1)_+ floors stop self-agreement exceeding 1.
         aij <- pos(aI - 1) * pos(bJ - 1) + pos(bI - 1) * pos(aJ - 1)
         wc <- pos(nI - 1) * pos(nJ - 1)      # pair's character content
         wk <- pos(mA - 1) * pos(tP - mA - 1) # pair's split content
@@ -1176,16 +1231,17 @@ QuartetConcordance <- function(
   list(numEdge = numEdge, numChar = numChar, denM = denM, wcTot = wcTot)
 }
 
-# The exact trit expectation E[m], E[m*A/wk], E[m*A/wc] is computed in C++
-# (`trit_expect` in src/concordance_expect.cpp) for all characters at once, and
-# consumed directly by `.TritConcordance`; there is no per-character R exact
-# helper.  The Monte-Carlo baseline below is the opt-in `normalize = <int>` path.
+# The exact NRQS expectation E[m], E[m*A/wk], E[m*A/wc] is computed in C++
+# (`nrqs_expect` in src/concordance_expect.cpp) for all characters at once, and
+# consumed directly by `.NrqsConcordance`; there is no per-character R exact
+# helper.  The Monte-Carlo baseline below is the opt-in
+# `chanceCorrect = <int>` path.
 
-# Monte-Carlo baseline: average `.CharTritContrib` over `nRelabel` random
+# Monte-Carlo baseline: average `.CharNrqsContrib` over `nRelabel` random
 # reassignments of the character's tokens across its scored leaves (the split,
 # the scored set and the state counts are held fixed).  Averaging the pools
 # (rather than per-split ratios) mirrors the exact ratio-of-expectations path.
-.CharTritMC <- function(col, logiSplits, pos, nRelabel) {
+.CharNrqsMC <- function(col, logiSplits, pos, nRelabel) {
   nSplit <- ncol(logiSplits)
   scored <- !is.na(col)
   tokens <- col[scored]
@@ -1193,7 +1249,7 @@ QuartetConcordance <- function(
   for (i in seq_len(nRelabel)) {
     shuffled <- col
     shuffled[scored] <- sample(tokens)
-    cc <- .CharTritContrib(shuffled, logiSplits, pos)
+    cc <- .CharNrqsContrib(shuffled, logiSplits, pos)
     accEdge <- accEdge + cc[["numEdge"]]
     accChar <- accChar + cc[["numChar"]]
     accDen <- accDen + cc[["denM"]]

@@ -1,5 +1,5 @@
 # Validate the exact hypergeometric chance baseline used by
-# QuartetConcordance(unit = "trit", normalize = TRUE) against a Monte-Carlo
+# QuartetConcordance(unit = "nrqs", chanceCorrect = TRUE) against a Monte-Carlo
 # tip-shuffle oracle, at the level of a single (split, character, state-pair).
 #
 # Under the fixed-marginal null the character's tokens are reassigned across the

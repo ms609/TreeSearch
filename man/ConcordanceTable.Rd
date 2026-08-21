@@ -11,7 +11,7 @@ ConcordanceTable(
   largeClade = 0,
   xlab = "Edge",
   ylab = "Character",
-  normalize = TRUE,
+  chanceCorrect = TRUE,
   plot = TRUE,
   marginSize = 0L,
   paintSize = 0L,
@@ -36,7 +36,7 @@ at edges whose descendants are both contain more than \code{largeClade} leaves.}
 
 \item{ylab}{Character giving a label for the y axis.}
 
-\item{normalize}{Controls the zero point of the concordance scale by
+\item{chanceCorrect}{Controls the zero point of the concordance scale by
 subtracting the value expected under a chance (fixed-marginal) null, in which
 each character's tokens are reassigned at random across the leaves while its
 state frequencies and the split sizes are held fixed.

@@ -20,6 +20,11 @@ test_that("_Concordance() handles tip mismatch", {
 })
 
 test_that("QuartetConcordance() works", {
+  # This block locks the raw-quartet contract, so it names `unit` and
+  # `chanceCorrect` explicitly rather than relying on the (NRQS) defaults.
+  Naive <- function(...) {
+    QuartetConcordance(..., unit = "quartet", chanceCorrect = FALSE)
+  }
   tree <- BalancedTree(8)
   splits <- as.Splits(tree)
   mataset <- matrix(c(0, 0, 0, 0, 1, 1, 1, 1,  0,
@@ -32,15 +37,15 @@ test_that("QuartetConcordance() works", {
   expect_error(QuartetConcordance(tree, mataset),
                "`dataset` must be a phyDat object")
   dat <- MatrixToPhyDat(mataset)
-  expect_equal(unname(QuartetConcordance(tree, dat[, 1])), rep(1, 5))
+  expect_equal(unname(Naive(tree, dat[, 1])), rep(1, 5))
   # plot(tree); nodelabels();
-  expect_equal(QuartetConcordance(tree, dat[, 2]),
+  expect_equal(Naive(tree, dat[, 2]),
                c("10" = 1/9, "11" = 0, "12" = 0,
                  "13" = 1/9, "14" = 0, "15" = 0)[names(as.Splits(tree))])
   
   allQuartets <- combn(8, 4)
   for (charI in seq_len(ncol(mataset))) {
-    qc <- QuartetConcordance(tree, dat[, charI])
+    qc <- Naive(tree, dat[, charI])
     for (splitI in seq_along(splits)) {
       split <- splits[[splitI]]
       logiSplit <- as.logical(split)
@@ -68,7 +73,7 @@ test_that("QuartetConcordance() works", {
     }
   }
   
-  expect_equal(QuartetConcordance(tree, dat[, c(1:4, 6)]),
+  expect_equal(Naive(tree, dat[, c(1:4, 6)]),
                c("10" = (36 + 2 + 9 + 12) / (36 + 18 + 18 + 12 + 6),
                  "11" = ( 6 + 0 + 6 +  2) / ( 6 +  9 +  6 +  2 + 1),
                  "12" = ( 6 + 0 + 0 +  2) / ( 6 +  9 +  9 +  2 + 1),
@@ -133,30 +138,34 @@ test_that("QuartetConcordance() handles non-integer data", {
                QuartetConcordance(tree, MatrixToPhyDat(intSet)))
 })
 
-test_that("QuartetConcordance() unit = 'trit' locks the contract", {
+test_that("QuartetConcordance() unit = 'nrqs' locks the contract", {
   tree <- BalancedTree(8)
 
   # Character identical to the {t1..t4 | t5..t8} split: that split scores 1,
   # and it is the *only* split scoring 1 (nested/crossing get partial credit).
   identChar <- MatrixToPhyDat(matrix(
     c(0, 0, 0, 0, 1, 1, 1, 1), 8, dimnames = list(paste0("t", 1:8), NULL)))
-  qt <- QuartetConcordance(tree, identChar, unit = "trit")
+  qt <- QuartetConcordance(tree, identChar, unit = "nrqs",
+                           chanceCorrect = FALSE)
   expect_equal(max(qt, na.rm = TRUE), 1)
   expect_equal(sum(abs(qt - 1) < 1e-9, na.rm = TRUE), 1L)
   expect_true(all(qt >= 0 & qt <= 1, na.rm = TRUE))
 
-  # unit = "quartet" is the default and is byte-identical to omitting `unit`.
+  # `unit = "nrqs"` and `chanceCorrect = TRUE` are the defaults, so a bare call
+  # is byte-identical to naming them.
   expect_identical(QuartetConcordance(tree, identChar),
-                   QuartetConcordance(tree, identChar, unit = "quartet"))
-  # Coverage normalisation makes trit no laxer than quartet.
+                   QuartetConcordance(tree, identChar, unit = "nrqs",
+                                      chanceCorrect = TRUE))
+  # Coverage normalisation makes NRQS no laxer than quartet.
   expect_true(mean(qt, na.rm = TRUE) <=
-                mean(QuartetConcordance(tree, identChar, unit = "quartet"),
+                mean(QuartetConcordance(tree, identChar, unit = "quartet",
+                                        chanceCorrect = FALSE),
                      na.rm = TRUE))
 
-  # Uninformative characters (constant / autapomorphy) carry no trits -> NA.
+  # Uninformative characters (constant / autapomorphy) carry no NRQS -> NA.
   autap <- MatrixToPhyDat(matrix(
     c(0, 0, 0, 0, 0, 0, 0, 1), 8, dimnames = list(paste0("t", 1:8), NULL)))
-  expect_equal(unname(QuartetConcordance(tree, autap, unit = "trit")),
+  expect_equal(unname(QuartetConcordance(tree, autap, unit = "nrqs")),
                rep(NA_real_, 5))
 
   # `unit` is validated.
@@ -164,22 +173,22 @@ test_that("QuartetConcordance() unit = 'trit' locks the contract", {
                "should be one of")
 
   # `return` aliases mirror the quartet path.
-  expect_equal(QuartetConcordance(tree, identChar, return = "edge", unit = "trit"),
-               QuartetConcordance(tree, identChar, return = "default", unit = "trit"))
-  cA <- QuartetConcordance(tree, identChar, return = "char", unit = "trit")
-  expect_equal(cA,
-               QuartetConcordance(tree, identChar, return = "character", unit = "trit"))
-  expect_equal(cA,
-               QuartetConcordance(tree, identChar, return = "site", unit = "trit"))
+  ByReturn <- function(r) {
+    QuartetConcordance(tree, identChar, return = r, unit = "nrqs")
+  }
+  expect_equal(ByReturn("edge"), ByReturn("default"))
+  cA <- ByReturn("char")
+  expect_equal(cA, ByReturn("character"))
+  expect_equal(cA, ByReturn("site"))
 })
 
-test_that("QuartetConcordance() unit = 'trit' gives nested partial credit", {
+test_that("QuartetConcordance() unit = 'nrqs' gives nested partial credit", {
   # {t1..t5 | t6,t7,t8} split; state {t1,t2,t4} nested within side A but not a
   # clade, giving cells (p,q,r,s) = (3,0,2,3) -> A/Wk = 4/8 = 0.5 exactly.
   tree <- ape::read.tree(text = "(((((t1,t2),t3),t4),t5),(t6,(t7,t8)));")
   char <- MatrixToPhyDat(matrix(
     c(0, 0, 1, 0, 1, 1, 1, 1), 8, dimnames = list(paste0("t", 1:8), NULL)))
-  qt <- QuartetConcordance(tree, char, unit = "trit")
+  qt <- QuartetConcordance(tree, char, unit = "nrqs", chanceCorrect = FALSE)
 
   # The split isolating {t6,t7,t8} scores exactly the nested value 0.5.
   sp <- as.Splits(tree)
@@ -192,20 +201,20 @@ test_that("QuartetConcordance() unit = 'trit' gives nested partial credit", {
   expect_equal(unname(qt[member]), 0.5)
 })
 
-test_that("QuartetConcordance() unit = 'trit' supports multistate", {
-  # Multistate no longer errors: trits sum over state-pairs (same currency).
+test_that("QuartetConcordance() unit = 'nrqs' supports multistate", {
+  # Multistate no longer errors: NRQS sum over state-pairs (same currency).
   tree <- BalancedTree(8)
   ms <- MatrixToPhyDat(matrix(
     c(0, 0, 1, 1, 2, 2, 2, 0,      # 3 states
       0, 0, 0, 1, 1, 2, 3, 3), 8,  # 4 states
     dimnames = list(paste0("t", 1:8), NULL)))
-  qt <- QuartetConcordance(tree, ms, unit = "trit")
+  qt <- QuartetConcordance(tree, ms, unit = "nrqs", chanceCorrect = FALSE)
   expect_length(qt, 5L)
   expect_true(all(qt >= 0 & qt <= 1, na.rm = TRUE))
   expect_false(anyNA(qt))  # both characters are informative on this tree
 })
 
-test_that("QuartetConcordance() unit = 'trit' scores 1 iff split displayed", {
+test_that("QuartetConcordance() unit = 'nrqs' scores 1 iff split displayed", {
   # A multistate character need not be *identical* to a split to score 1: it
   # scores full marks for every split its own tree displays (each state block
   # wholly on one side; the split-orthogonal state-pair drops via M = 0).  This
@@ -215,7 +224,7 @@ test_that("QuartetConcordance() unit = 'trit' scores 1 iff split displayed", {
   char <- MatrixToPhyDat(matrix(
     c(0, 0, 0, 1, 1, 1, 2, 2, 2), 9,
     dimnames = list(paste0("t", 1:9), NULL)))
-  qt <- QuartetConcordance(tree, char, unit = "trit")
+  qt <- QuartetConcordance(tree, char, unit = "nrqs", chanceCorrect = FALSE)
   sp <- as.Splits(tree)
   tips <- TipLabels(sp)
   atSplit <- function(members) {
@@ -233,27 +242,61 @@ test_that("QuartetConcordance() unit = 'trit' scores 1 iff split displayed", {
   expect_true(atSplit(c("t1", "t2")) < 1)
 })
 
-test_that("QuartetConcordance() unit = 'trit' normalize contract", {
+test_that("QuartetConcordance() 'nrqs' return = 'char' has no ceiling of 1", {
+  # Documented limitation, not an oversight: the character score is the
+  # M-weighted mean across EVERY split, and a character agrees exactly with at
+  # most one of them while being merely compatible with -- silent about -- the
+  # rest.  Coverage scores silence as failure to cover, so even a character
+  # identical to a split of the tree falls short of 1.  `unit = "quartet"` is
+  # the per-character measure that does attain 1.
+  tree <- BalancedTree(8)
+  tips <- TipLabels(tree)
+  sp <- as.Splits(tree)
+  ByUnit <- function(u, r) {
+    QuartetConcordance(tree, char, return = r, unit = u, chanceCorrect = FALSE)
+  }
+  for (k in seq_along(sp)) {
+    char <- MatrixToPhyDat(matrix(
+      as.integer(as.logical(sp[[k]])), length(tips),
+      dimnames = list(tips, NULL)))
+
+    # Per-split bound holds: the character scores 1 at the split it duplicates
+    expect_equal(max(ByUnit("nrqs", "edge")), 1)
+
+    # Naive currency reaches 1 on the character path ...
+    expect_equal(ByUnit("quartet", "char")[[1]], 1)
+
+    # ... the NRQS currency does not, and must not be read against 1
+    nrqsChar <- ByUnit("nrqs", "char")[[1]]
+    expect_gt(nrqsChar, 0)
+    expect_lt(nrqsChar, 1)
+  }
+})
+
+test_that("QuartetConcordance() unit = 'nrqs' chanceCorrect contract", {
   tree <- ape::read.tree(text = "((((t1,t2),t3),(t4,(t5,t6))),(t7,(t8,t9)));")
   ident <- MatrixToPhyDat(matrix(
     c(0, 0, 0, 0, 0, 0, 1, 1, 1), 9,
     dimnames = list(paste0("t", 1:9), NULL)))
 
-  # normalize = FALSE is the default and leaves the measure untouched.
+  # chanceCorrect = TRUE is the default; re-zeroing can only lower the measure,
+  # since a non-negative baseline is subtracted.
   expect_identical(
-    QuartetConcordance(tree, ident, unit = "trit", normalize = FALSE),
-    QuartetConcordance(tree, ident, unit = "trit"))
+    QuartetConcordance(tree, ident, unit = "nrqs", chanceCorrect = TRUE),
+    QuartetConcordance(tree, ident, unit = "nrqs"))
+  expect_true(all(
+    QuartetConcordance(tree, ident, unit = "nrqs", chanceCorrect = TRUE) <=
+      QuartetConcordance(tree, ident, unit = "nrqs", chanceCorrect = FALSE),
+    na.rm = TRUE))
 
-  # Invalid normalize is rejected.
-  expect_error(QuartetConcordance(tree, ident, unit = "trit", normalize = 0),
-               "positive integer")
-  expect_error(QuartetConcordance(tree, ident, unit = "trit", normalize = -3),
-               "positive integer")
-  expect_error(QuartetConcordance(tree, ident, unit = "trit", normalize = "x"),
-               "positive integer")
+  # Invalid chanceCorrect is rejected.
+  for (bad in list(0, -3, "x")) {
+    expect_error(QuartetConcordance(tree, ident, chanceCorrect = bad),
+                 "positive integer")
+  }
 
   # Chance correction also works for the raw quartet currency.
-  qc <- QuartetConcordance(tree, ident, unit = "quartet", normalize = TRUE)
+  qc <- QuartetConcordance(tree, ident, unit = "quartet", chanceCorrect = TRUE)
   expect_type(qc, "double")
   expect_false(anyNA(qc))
 
@@ -267,11 +310,12 @@ test_that("QuartetConcordance() unit = 'trit' normalize contract", {
     setequal(side, c("t7", "t8", "t9")) ||
       setequal(setdiff(tips, side), c("t7", "t8", "t9"))
   }, logical(1)))
-  corrected <- QuartetConcordance(tree, ident, unit = "trit", normalize = TRUE)
+  corrected <- QuartetConcordance(tree, ident, unit = "nrqs",
+                                  chanceCorrect = TRUE)
   expect_equal(unname(corrected[col789]), 1)
 })
 
-test_that("QuartetConcordance() unit = 'trit' exact baseline matches MC", {
+test_that("QuartetConcordance() unit = 'nrqs' exact baseline matches MC", {
   tree <- ape::read.tree(text = "((((t1,t2),t3),(t4,(t5,t6))),(t7,(t8,t9)));")
   dat <- MatrixToPhyDat(matrix(
     c(0, 0, 0, 0, 0, 0, 1, 1, 1,      # displays {t7,t8,t9}
@@ -286,11 +330,11 @@ test_that("QuartetConcordance() unit = 'trit' exact baseline matches MC", {
   # pair's wk and M = min(w_c, w_k) are themselves random under the null.
   for (ret in c("edge", "char")) {
     for (w in c(TRUE, FALSE)) {
-      exact <- QuartetConcordance(tree, dat, unit = "trit", return = ret,
-                                  weight = w, normalize = TRUE)
+      exact <- QuartetConcordance(tree, dat, unit = "nrqs", return = ret,
+                                  weight = w, chanceCorrect = TRUE)
       set.seed(1)
-      mc <- QuartetConcordance(tree, dat, unit = "trit", return = ret,
-                               weight = w, normalize = 8000)
+      mc <- QuartetConcordance(tree, dat, unit = "nrqs", return = ret,
+                               weight = w, chanceCorrect = 8000)
       # Same cells resolve to NA under exact and MC (guards the cell-matching in
       # the weight = FALSE path), and the finite values agree within MC error.
       expect_identical(is.na(exact), is.na(mc))
@@ -314,25 +358,28 @@ test_that("QuartetConcordance() unit = 'quartet' exact baseline matches MC", {
   for (ret in c("edge", "char")) {
     for (w in c(TRUE, FALSE)) {
       exact <- QuartetConcordance(tree, dat, unit = "quartet", return = ret,
-                                  weight = w, normalize = TRUE)
+                                  weight = w, chanceCorrect = TRUE)
       set.seed(1)
       mc <- QuartetConcordance(tree, dat, unit = "quartet", return = ret,
-                               weight = w, normalize = 8000)
+                               weight = w, chanceCorrect = 8000)
       expect_identical(is.na(exact), is.na(mc))
       expect_lt(max(abs(exact - mc), na.rm = TRUE), 0.04)
     }
   }
 
-  # normalize = FALSE leaves the published raw measure untouched.
+  # The published raw measure is recovered by naming both non-default settings,
+  # and the default no longer returns it.
   for (ret in c("edge", "char")) for (w in c(TRUE, FALSE)) {
-    expect_identical(
-      QuartetConcordance(tree, dat, unit = "quartet", return = ret, weight = w),
-      QuartetConcordance(tree, dat, unit = "quartet", return = ret, weight = w,
-                         normalize = FALSE))
+    raw <- QuartetConcordance(tree, dat, unit = "quartet", return = ret,
+                              weight = w, chanceCorrect = FALSE)
+    expect_true(all(raw >= 0 & raw <= 1, na.rm = TRUE))
+    expect_false(identical(
+      raw,
+      QuartetConcordance(tree, dat, return = ret, weight = w)))
   }
 })
 
-test_that("QuartetConcordance() unit = 'trit' correction: conflict below random", {
+test_that("QuartetConcordance() 'nrqs' correction: conflict below random", {
   tree <- ape::read.tree(text = "((((t1,t2),t3),(t4,(t5,t6))),(t7,(t8,t9)));")
   support <- MatrixToPhyDat(matrix(   # agrees with the tree: displays {t7,t8,t9}
     c(0, 0, 0, 0, 0, 0, 1, 1, 1), 9,
@@ -341,11 +388,12 @@ test_that("QuartetConcordance() unit = 'trit' correction: conflict below random"
     c(0, 0, 1, 1, 0, 0, 1, 1, 0), 9,
     dimnames = list(paste0("t", 1:9), NULL)))
 
-  sChar <- QuartetConcordance(tree, support, return = "char", unit = "trit",
-                              normalize = TRUE)
-  cNone <- QuartetConcordance(tree, conflict, return = "char", unit = "trit")
-  cChar <- QuartetConcordance(tree, conflict, return = "char", unit = "trit",
-                              normalize = TRUE)
+  sChar <- QuartetConcordance(tree, support, return = "char", unit = "nrqs",
+                              chanceCorrect = TRUE)
+  cNone <- QuartetConcordance(tree, conflict, return = "char", unit = "nrqs",
+                              chanceCorrect = FALSE)
+  cChar <- QuartetConcordance(tree, conflict, return = "char", unit = "nrqs",
+                              chanceCorrect = TRUE)
   # A character that agrees with the tree scores above random expectation;
   # a crossing character is pulled below it, and below its uncorrected score.
   expect_gt(sChar, 0)
@@ -438,13 +486,15 @@ test_that("ClusteringConcordance() gives sensible values", {
   randomset <- matrix(sample(0:1, 8 * 1000, replace = TRUE), 8,
                       dimnames = list(letters[1:8], NULL))
   rat <- MatrixToPhyDat(randomset)
-  expect_equal(ClusteringConcordance(tree, rat, normalize = TRUE), c("10" = 0),
+  expect_equal(ClusteringConcordance(tree, rat, chanceCorrect = TRUE),
+               c("10" = 0),
                tolerance = 0.05)
 })
 
 test_that("ClusteringConcordance(return = 'char') Monte-Carlo handles ambiguity", {
   # Regression for T-330: characters whose ambiguous tokens drop different tips
-  # give `charSplits` over heterogeneous tip sets. The Monte-Carlo `normalize`
+  # give `charSplits` over heterogeneous tip sets. The Monte-Carlo
+  # `chanceCorrect`
   # path scored a *list* of random trees against that list in one call, which
   # could not reconcile a common label set ("Old and new labels must match").
   tree <- ape::read.tree(text = "((a, b, c, d, e), (f, g, h));")
@@ -458,7 +508,7 @@ test_that("ClusteringConcordance(return = 'char') Monte-Carlo handles ambiguity"
 
   set.seed(1)
   # Previously errored: "Old and new labels must match"
-  cc <- ClusteringConcordance(tree, dat, return = "char", normalize = 10L)
+  cc <- ClusteringConcordance(tree, dat, return = "char", chanceCorrect = 10L)
   nChar <- length(attr(dat, "index"))
   expect_length(cc, nChar)
   expect_length(attr(cc, "mcse"), nChar)
@@ -466,7 +516,8 @@ test_that("ClusteringConcordance(return = 'char') Monte-Carlo handles ambiguity"
   expect_equal(unname(cc[2]), 1)
   expect_equal(unname(attr(cc, "mcse")[2]), 0)
   # Monte-Carlo score never exceeds the un-normalized score (subtracts a baseline)
-  bare <- ClusteringConcordance(tree, dat, return = "char", normalize = FALSE)
+  bare <- ClusteringConcordance(tree, dat, return = "char",
+                                chanceCorrect = FALSE)
   finite <- is.finite(cc) & is.finite(bare)
   expect_true(all(cc[finite] <= bare[finite] + 1e-8))
 })

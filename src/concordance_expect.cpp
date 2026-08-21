@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // Expected concordance under the fixed-marginal (hypergeometric) null used by
-// QuartetConcordance(normalize = TRUE).  For one character each token is
+// QuartetConcordance(chanceCorrect = TRUE).  For one character each token is
 // reassigned at random across the scored leaves, holding the state counts and
 // the split sizes fixed.  For a state-pair (i, j) with counts nI, nJ over t
 // scored leaves, of which M are on side A of a split, the 2x2 cell vector
@@ -137,10 +137,10 @@ List quartet_expect(const LogicalMatrix splits, const IntegerMatrix characters) 
   return List::create(_["concordant"] = eConc, _["decisive"] = eDec);
 }
 
-// Exact E[m], E[m*A/wk], E[m*A/wc] for one trit state-pair over all side-A
+// Exact E[m], E[m*A/wk], E[m*A/wc] for one NRQS state-pair over all side-A
 // sizes.  wc = (nI-1)+ (nJ-1)+ is fixed; wk = (mA-1)+ (tP-mA-1)+ and
 // m = min(wc, wk) vary with mA = p + r.  Mirrors R `.ExpectedTrit`.
-static void expected_trit_by_M(int nI, int nJ, int tc,
+static void expected_nrqs_by_M(int nI, int nJ, int tc,
                                std::vector<double>& eM,
                                std::vector<double>& eMAwk,
                                std::vector<double>& eMAwc) {
@@ -186,7 +186,7 @@ static void expected_trit_by_M(int nI, int nJ, int tc,
 }
 
 // [[Rcpp::export]]
-List trit_expect(const LogicalMatrix splits, const IntegerMatrix characters) {
+List nrqs_expect(const LogicalMatrix splits, const IntegerMatrix characters) {
   const int n_splits = splits.ncol();
   const int n_chars = characters.ncol();
   NumericMatrix numEdge(n_splits, n_chars);
@@ -200,7 +200,7 @@ List trit_expect(const LogicalMatrix splits, const IntegerMatrix characters) {
     std::vector<double> eM, eWk, eWc;
     for (int a = 0; a < nStates - 1; ++a) {
       for (int b = a + 1; b < nStates; ++b) {
-        expected_trit_by_M(cc.cnt[a], cc.cnt[b], cc.tc, eM, eWk, eWc);
+        expected_nrqs_by_M(cc.cnt[a], cc.cnt[b], cc.tc, eM, eWk, eWc);
         for (int s = 0; s < n_splits; ++s) {
           const int M = cc.mSideA[s];
           denM(s, c) += eM[M];

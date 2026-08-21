@@ -1,5 +1,36 @@
 # To integrate into 2.0.0 notes
 
+- `QuartetConcordance()` gains `unit`, selecting the currency in which quartets
+  are counted.  `unit = "nrqs"` (the new default) counts only non-redundant
+  quartet statements: of the quartets resolved by a split of sizes
+  (_k_, _t_ − _k_), just (_k_ − 1)(_t_ − _k_ − 1) are non-redundant under the
+  Nelson–Ladiges entailment, so a character now scores full marks only where it
+  displays the split, rather than wherever it agrees with a large combinatorial
+  volume of quartets.  Pass `unit = "quartet"` to recover the raw count.
+
+  Note that "full marks where it displays the split" bounds each split
+  *individually*, and so applies to `return = "edge"`.  It does **not** apply to
+  `return = "char"`, which averages over every split in the tree: a character
+  agrees exactly with at most one split and is merely compatible with -- silent
+  about -- the rest, and coverage scores silence as a failure to cover.  A
+  character identical to one of the tree's own splits therefore scores well
+  below 1 (0.49 for a 22|26 split of a 48-leaf tree, 0.25 for a 2|46 split), and
+  the attainable maximum depends on the tree.  Per-character `unit = "nrqs"`
+  values rank characters within a tree but must not be read against a ceiling of
+  1 or compared across trees; use `unit = "quartet"` where a per-character index
+  bounded at 1 is wanted.  Documentation only -- no numeric behaviour changed.
+
+- The `normalize` argument of `ClusteringConcordance()`, `ConcordanceTable()`
+  and `QuartetConcordance()` is renamed `chanceCorrect`, which is what it
+  controls: the zero point is moved to the value expected under a fixed-marginal
+  null.  (The scaling to a maximum of 1 was never governed by this argument.)
+
+- `QuartetConcordance()` now applies that chance correction by default
+  (`chanceCorrect = TRUE`), matching `ClusteringConcordance()`.  Values may
+  therefore be negative, denoting agreement below chance expectation; pass
+  `chanceCorrect = FALSE` for the uncorrected measure reported by earlier
+  versions.
+
 - Fixed: `AdditionTree(constraint = )` silently returned a constraint-violating
   tree for around one addition order in eleven.  Taxa are added to a tree seeded
   from the first three of them, which is built before the constraint is

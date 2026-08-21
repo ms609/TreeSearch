@@ -1,5 +1,5 @@
 # Parity guard for the C++ chance-baseline kernels `quartet_expect` and
-# `trit_expect` (src/concordance_expect.cpp), which compute the exact expected
+# `nrqs_expect` (src/concordance_expect.cpp), which compute the exact expected
 # concordant/decisive quartet counts (raw) and the expected trit pools
 # (E[m], E[m*A/wk], E[m*A/wc]) under the fixed-marginal (hypergeometric) null.
 #
@@ -95,7 +95,7 @@ for (rep in 1:10) {
   io <- build_inputs(tree, MatrixToPhyDat(m))
   ls <- io$logiSplits; ci <- io$charInt
   R <- ref_expect(ci, ls)
-  cq <- quartet_expect(ls, ci); ct <- trit_expect(ls, ci)
+  cq <- quartet_expect(ls, ci); ct <- nrqs_expect(ls, ci)
   d <- max(abs(cq$concordant - R$eConc), abs(cq$decisive - R$eDec),
            abs(ct$numEdge - R$eWk), abs(ct$numChar - R$eWc),
            abs(ct$denM - R$eM))

@@ -9,7 +9,7 @@
 \alias{SharedPhylogeneticConcordance}
 \title{Concordance factors}
 \usage{
-ClusteringConcordance(tree, dataset, return = "edge", normalize = TRUE)
+ClusteringConcordance(tree, dataset, return = "edge", chanceCorrect = TRUE)
 
 MutualClusteringConcordance(tree, dataset)
 
@@ -18,8 +18,8 @@ QuartetConcordance(
   dataset = NULL,
   weight = TRUE,
   return = "edge",
-  unit = c("quartet", "trit"),
-  normalize = FALSE
+  unit = c("nrqs", "quartet"),
+  chanceCorrect = TRUE
 )
 
 PhylogeneticConcordance(tree, dataset)
@@ -44,7 +44,7 @@ split–character pair.
 
 Matching is case‑insensitive and partial.}
 
-\item{normalize}{Controls the zero point of the concordance scale by
+\item{chanceCorrect}{Controls the zero point of the concordance scale by
 subtracting the value expected under a chance (fixed-marginal) null, in which
 each character's tokens are reassigned at random across the leaves while its
 state frequencies and the split sizes are held fixed.
@@ -71,26 +71,34 @@ unclamped (they may fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before
 plotting with \code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
 
 \item{weight}{Logical specifying whether to weight sites according to the
-number of quartets they are decisive for.}
+quartet content that they share with each split.}
 
 \item{unit}{Character specifying the currency in which quartets are counted:
 \itemize{
-\item \code{"quartet"} (default): each resolved quartet counts once, so a character
-is credited with the full combinatorial volume of quartets it resolves;
-\item \code{"trit"}: quartets are counted as the \emph{independent} information they carry
-\insertCite{Nelson1992}{TreeSearch}.  Because the quartets resolved by a
-split of sizes \eqn{(k, t - k)} are logically redundant --
-\eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)} -- only
-\eqn{(k - 1)(t - k - 1)} of the \eqn{\binom{k}{2}\binom{t - k}{2}}
-resolved quartets are independent.  Concordance is then measured against
-this reduced (redundancy-corrected) content, so that only a character
-whose split is \emph{identical} to the tree split scores full marks; nested
-(compatible) characters receive genuine partial support, and crossing
-(incompatible) characters score lower still.  A multistate character is
-scored in the same currency: trits are counted independently within each
-pair of states (sizes \eqn{n_i}, \eqn{n_j} give a per-state-pair weight of
-\eqn{4 / (n_i n_j)}) and summed across pairs, so multistate and binary
-characters remain directly comparable.
+\item \code{"nrqs"} (default): only non-redundant quartet statements (NRQS) are
+counted.  Of the \eqn{\binom{k}{2}\binom{t - k}{2}} quartets resolved by
+a split of sizes \eqn{(k, t - k)}, just \eqn{(k - 1)(t - k - 1)} are
+non-redundant under the entailment
+\eqn{(ab, cd) + (ab, ce) \rightarrow (ab, de)}
+\insertCite{Nelson1992}{TreeSearch}.  Measuring agreement against this
+reduced content means that, \emph{at a given split}, only a character whose
+own split is identical scores full marks; nested (compatible) characters
+receive genuine partial support, and crossing (incompatible) characters
+score lower still.  This bound applies to each split individually, and so
+to \code{return = "edge"}; it does not carry over to \code{return = "char"}, which
+averages across all splits -- see Value, above.
+A multistate character is scored in the same currency:
+NRQS are counted within each pair of states (sizes \eqn{n_i}, \eqn{n_j}
+give a per-state-pair weight of \eqn{4 / (n_i n_j)}) and summed across
+pairs, so multistate and binary characters remain directly comparable.
+Note that non-redundancy is a logical property: NRQS are not mutually
+independent in a statistical sense, so their count measures quartet
+content rather than information in bits.
+\item \code{"quartet"}: each resolved quartet counts once, so a character is
+credited with the full combinatorial volume of quartets it resolves.
+This recovers the measure reported by earlier versions of this package,
+the direct analogue of the site concordance factor
+\insertCite{Minh2020}{TreeSearch}.
 }}
 }
 \value{
@@ -112,7 +120,7 @@ expectation. \code{NA} is returned when \code{hBest = 0} (no information potenti
 corresponds to a split (an edge of the tree) and gives the normalized mutual
 information between that split and the character data, averaged across all
 characters.
-When \code{normalize = TRUE} (default), values are scaled relative to random
+When \code{chanceCorrect = TRUE} (default), values are scaled relative to random
 expectation; when \code{FALSE}, raw mutual information normalized by \code{hBest} is
 returned.
 
@@ -140,10 +148,22 @@ each corresponding split in \code{tree}.
 \code{QuartetConcordance(return = "char")} returns a numeric vector giving the
 concordance index calculated at each site, averaged across all splits.
 
-With \code{unit = "trit"} (see below) the same vectors are returned, but scored in
-redundancy-corrected currency: values are typically lower, and reach 1 only
-where a split is \emph{displayed} by the character rather than merely concordant
-with many of its quartets.
+With \code{unit = "nrqs"}, note that this average is taken over \emph{every} split in
+\code{tree}.  A character can agree exactly with at most one split, and is merely
+compatible with -- that is, silent about -- the rest; because agreement is
+measured against each split's non-redundant content, silence counts as a
+failure to cover.  Per-character values are therefore much smaller than
+per-edge ones and \strong{do not reach 1 even for a character identical to one of
+the tree's own splits} (0.49 for a 22|26 split of a 48-leaf tree, 0.25 for
+a 2|46 split).  The attainable maximum depends on the tree, so these values
+rank characters against one another but should not be read against an
+absolute ceiling of 1, nor compared across trees.  Where a per-character
+index bounded at 1 is wanted, use \code{unit = "quartet"}, whose per-character
+path attains 1 for a character identical to any split of the tree.
+
+With \code{unit = "quartet"} the same vectors are returned, but scored in the raw
+quartet currency: values are typically higher, as a character is credited
+with the full combinatorial volume of quartets that it resolves.
 
 \code{PhylogeneticConcordance()} returns a numeric vector giving the
 phylogenetic information of each split in \code{tree}, named according to the
@@ -168,16 +188,16 @@ is quantified using mutual information (MI). All reported values are scaled
 so that 1 corresponds to the maximum possible mutual information for each
 split–character pair (\code{hBest}).
 
-The \code{normalize} argument specifies how the zero point is defined.
+The \code{chanceCorrect} argument specifies how the zero point is defined.
 \itemize{
-\item If \code{normalize = FALSE}, zero corresponds to \emph{zero} MI, without correcting
-for the positive bias that arises because MI is rarely exactly zero in
-finite samples.
-\item If \code{normalize = TRUE}, the expected MI is computed using an analytical
+\item If \code{chanceCorrect = FALSE}, zero corresponds to \emph{zero} MI, without
+correcting for the positive bias that arises because MI is rarely exactly
+zero in finite samples.
+\item If \code{chanceCorrect = TRUE}, the expected MI is computed using an analytical
 approximation based on the distribution of character tokens. This is fast
 and generally accurate for large trees (~200+ taxa), but does not account
 for correlation between splits.
-\item If \code{normalize} is a positive integer \code{n}, the expected MI is estimated
+\item If \code{chanceCorrect} is a positive integer \code{n}, the expected MI is estimated
 empirically by fitting each character to \code{n} uniformly random trees and
 averaging the resulting MI values. This Monte Carlo approach provides a
 more accurate baseline for small trees, for which the analytical
@@ -191,9 +211,9 @@ character‑tree and the supplied phylogeny. High values identify characters
 whose signal is well represented anywhere in the tree, even if concentrated
 on a single edge.
 
-\code{QuartetConcordance()} is the proportion of quartets (sets of four leaves)
-that are decisive for a split which are also concordant with it
-For example, a quartet with the characters \verb{0 0 0 1} is not decisive, as
+\code{QuartetConcordance()} measures the agreement between each character and each
+split in the currency of quartets (sets of four leaves).
+A quartet with the characters \verb{0 0 0 1} is not decisive, as
 all relationships between those leaves are equally parsimonious.
 But a quartet with characters \verb{0 0 1 1} is decisive, and is concordant
 with any tree that groups the first two leaves together to the exclusion
@@ -203,12 +223,21 @@ In contrast to the site concordance factor
 quartets that are decisive for a branch.
 Doing so circumvents the criticisms of \insertCite{Goloboff2024;textual}{TreeSearch}.
 
-By default, the reported value weights each site by the number of quartets
-it is decisive for.  This value can be interpreted as the proportion of
-all decisive quartets that are concordant with a split.
+The quartets that a split resolves are not logically independent: because
+\eqn{(ab, cd)} and \eqn{(ab, ce)} jointly entail \eqn{(ab, de)}
+\insertCite{Nelson1992}{TreeSearch}, a split of sizes \eqn{(k, t - k)}
+resolves \eqn{\binom{k}{2}\binom{t - k}{2}} quartets, of which only
+\eqn{(k - 1)(t - k - 1)} are non-redundant.
+\code{unit} selects which of the two is counted.  By default, agreement is
+measured against the non-redundant content, so that a character scores full
+marks only where it \emph{displays} the split, rather than merely agreeing with a
+large combinatorial volume of its quartets.
+
+By default, the reported value weights each site by the quartet content it
+shares with the split.
 If \code{weight = FALSE}, the reported value is the mean of the concordance
 value for each site.
-Consider a split associated with two sites:
+Consider a split associated with two sites (counting in \code{unit = "quartet"}):
 one that is concordant with 25\% of 96 decisive quartets, and
 a second that is concordant with 75\% of 4 decisive quartets.
 If \code{weight = TRUE}, the split concordance will be 24 + 3 / 96 + 4 = 27\%.

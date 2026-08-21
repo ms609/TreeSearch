@@ -1,4 +1,4 @@
-# Validation of the unit = "trit" path in QuartetConcordance().
+# Validation of the unit = "nrqs" path in QuartetConcordance().
 #
 # Ordering follows the advisor's priority:
 #   1. Cell extraction cross-checked against the verified C++ kernel (conc/dec).
@@ -161,7 +161,7 @@ data("congreveLamsdellMatrices", package = "TreeSearch")
 binDat <- congreveLamsdellMatrices[[1]]
 refTree <- TreeSearch::referenceTree
 for (w in c(TRUE, FALSE)) for (r in c("edge", "char")) {
-  pkg <- QuartetConcordance(refTree, binDat, weight = w, return = r, unit = "trit")
+  pkg <- QuartetConcordance(refTree, binDat, weight = w, return = r, unit = "nrqs", chanceCorrect = FALSE)
   rf  <- ref_trit(refTree, binDat, weight = w, return = r)
   ok(sprintf("binary  pkg==ref  weight=%s return=%s", w, r), same(pkg, rf))
 }
@@ -174,7 +174,7 @@ msMat <- matrix(c(0, 0, 1, 1, 2, 2, 2, 0,     # 3 states
 msDat <- MatrixToPhyDat(msMat)
 msTree <- BalancedTree(8)
 for (w in c(TRUE, FALSE)) for (r in c("edge", "char")) {
-  pkg <- QuartetConcordance(msTree, msDat, weight = w, return = r, unit = "trit")
+  pkg <- QuartetConcordance(msTree, msDat, weight = w, return = r, unit = "nrqs", chanceCorrect = FALSE)
   rf  <- ref_trit(msTree, msDat, weight = w, return = r)
   ok(sprintf("multi   pkg==ref  weight=%s return=%s", w, r), same(pkg, rf))
 }
@@ -186,17 +186,17 @@ naMat <- matrix(c(0, 0, 1, 1, "?", "?", 0, 1,
                 dimnames = list(paste0("t", 1:8), NULL))
 naDat <- MatrixToPhyDat(naMat)
 for (w in c(TRUE, FALSE)) for (r in c("edge", "char")) {
-  pkg <- QuartetConcordance(msTree, naDat, weight = w, return = r, unit = "trit")
+  pkg <- QuartetConcordance(msTree, naDat, weight = w, return = r, unit = "nrqs", chanceCorrect = FALSE)
   rf  <- ref_trit(msTree, naDat, weight = w, return = r)
   ok(sprintf("missing pkg==ref  weight=%s return=%s", w, r), same(pkg, rf))
 }
 
 # ---------- 5. `return` parsing mirrors the quartet path ----------
-e1 <- QuartetConcordance(refTree, binDat, return = "edge",      unit = "trit")
-e2 <- QuartetConcordance(refTree, binDat, return = "default",   unit = "trit")
-c1 <- QuartetConcordance(refTree, binDat, return = "char",      unit = "trit")
-c2 <- QuartetConcordance(refTree, binDat, return = "character", unit = "trit")
-c3 <- QuartetConcordance(refTree, binDat, return = "site",      unit = "trit")
+e1 <- QuartetConcordance(refTree, binDat, return = "edge",      unit = "nrqs", chanceCorrect = FALSE)
+e2 <- QuartetConcordance(refTree, binDat, return = "default",   unit = "nrqs", chanceCorrect = FALSE)
+c1 <- QuartetConcordance(refTree, binDat, return = "char",      unit = "nrqs", chanceCorrect = FALSE)
+c2 <- QuartetConcordance(refTree, binDat, return = "character", unit = "nrqs", chanceCorrect = FALSE)
+c3 <- QuartetConcordance(refTree, binDat, return = "site",      unit = "nrqs", chanceCorrect = FALSE)
 ok("return edge == default", same(e1, e2))
 ok("return char == character == site", same(c1, c2) && same(c1, c3))
 ok("edge length == n splits, char length == n chars",
@@ -204,8 +204,8 @@ ok("edge length == n splits, char length == n chars",
      length(c1) == sum(attr(binDat, "weight")))
 
 # ---------- 6. congreveLamsdell quartet -> trit movement + census ----------
-qEdge <- QuartetConcordance(refTree, binDat, unit = "quartet")
-tEdge <- QuartetConcordance(refTree, binDat, unit = "trit")
+qEdge <- QuartetConcordance(refTree, binDat, unit = "quartet", chanceCorrect = FALSE)
+tEdge <- QuartetConcordance(refTree, binDat, unit = "nrqs", chanceCorrect = FALSE)
 cat("\nEdge concordance, quartet vs trit (congreveLamsdell[[1]]):\n")
 print(round(rbind(quartet = qEdge, trit = tEdge, delta = tEdge - qEdge), 3))
 cat(sprintf("\nmean quartet = %.3f  mean trit = %.3f  (trit is stricter)\n",
