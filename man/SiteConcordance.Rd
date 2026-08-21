@@ -44,21 +44,18 @@ split–character pair.
 
 Matching is case‑insensitive and partial.}
 
-\item{chanceCorrect}{Sets the zero point of the scale; 1 always marks the
-maximum attainable value.
-If \code{FALSE}, zero corresponds to \emph{zero} MI.
+\item{chanceCorrect}{Sets the zero point of the scale.
+If \code{FALSE}, zero corresponds to zero MI.
 If \code{TRUE}, zero is the value expected when each character's tokens are
 reassigned at random across the leaves, holding its state frequencies and the
 split sizes fixed: \code{QuartetConcordance()} computes this expectation exactly,
 whereas \code{ClusteringConcordance()} approximates it, accurately for large trees
 (~200+ taxa) but neglecting correlation between splits.
-If a positive integer \code{n}, the expectation is instead sampled -- over \code{n}
-random reassignments of each character's tokens (\code{QuartetConcordance()}), or
-against \code{n} uniformly random trees (\code{ClusteringConcordance()}, which also
-returns Monte Carlo standard errors).
-\code{QuartetConcordance()} returns chance-corrected values unclamped (they may
-fall below \eqn{-1}); clamp to \eqn{[-1, 1]} before plotting with
-\code{\link[=QCol]{QCol()}} / \code{\link[=QACol]{QACol()}}.}
+If a positive integer \code{n}, the expectation is sampled over \code{n} random reassignments
+of each character's tokens (\code{QuartetConcordance()}), or against \code{n} uniformly random
+trees (\code{ClusteringConcordance()}).
+\emph{Hint: Clamp chance-corrected values to \eqn{[-1, 1]} before plotting with \code{\link[=QCol]{QCol()}} /
+\code{\link[=QACol]{QACol()}}}.}
 
 \item{weight}{Logical specifying whether to weight sites according to the
 quartet content that they share with each split.}
