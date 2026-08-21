@@ -61,21 +61,11 @@ NULL
 #' split–character pair (`hBest`).
 #'
 #' The `chanceCorrect` argument specifies how the zero point is defined.
-#'
-#' - If `chanceCorrect = FALSE`, zero corresponds to *zero* MI, without
-#'   correcting for the positive bias that arises because MI is rarely exactly
-#'   zero in finite samples.
-#'
-#' - If `chanceCorrect = TRUE`, the expected MI is computed using an analytical
-#'   approximation based on the distribution of character tokens. This is fast
-#'   and generally accurate for large trees (~200+ taxa), but does not account 
-#'   for correlation between splits.
-#'
-#' - If `chanceCorrect` is a positive integer `n`, the expected MI is estimated
-#'   empirically by fitting each character to `n` uniformly random trees and
-#'   averaging the resulting MI values. This Monte Carlo approach provides a
-#'   more accurate baseline for small trees, for which the analytical
-#'   approximation is biased. Monte Carlo standard errors are returned.
+#' If `FALSE`, zero corresponds to *zero* MI. If `TRUE`, the expected MI is
+#' approximated: this quick estimate is generally accurate for large trees
+#' (~200+ taxa), but does not account for correlation between splits.
+#' If `chanceCorrect` is a positive integer `n`, the expected MI is estimated
+#' by Monte Carlo sampling from `n` uniformly random trees.
 #'
 #' @param return Character specifying the summary to return. Options are:
 #'   - `"edge"`: average concordance of each tree split across all characters;
@@ -84,8 +74,6 @@ NULL
 #'   - `"tree"`: an overall tree‑level concordance score;
 #'   - `"all"`: a full array of MI components and normalized values for every
 #'     split–character pair.
-#' 
-#'   Matching is case‑insensitive and partial.
 #'
 #' @param chanceCorrect Controls the zero point of the concordance scale by
 #' subtracting the value expected under a chance (fixed-marginal) null, in which
