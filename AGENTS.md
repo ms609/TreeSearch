@@ -20,8 +20,8 @@ collaborators.
 |-------|---------|
 | `red-team` | Filed by `/red-team`. Also that skill's mode switch — don't delete it |
 | `sev:high` / `sev:med` / `sev:low` | Former P1 / P2 / P3 |
-| `area:1`…`area:15` | Which area **owns the code**, per `dev/red-team/focus-areas.md` — not which round found it; an issue may carry several |
-| `task` | Planned work migrated from the retired `to-do.md` |
+| `area:1`…`area:15` | Which area **owns the code**, per `dev/red-team/focus-areas.md` — not which round found it; an issue may carry several. **Count the rows, this range grows** |
+| `task` | Planned work, not a red-team finding |
 | `deferred` | Assessed and parked; not scheduled |
 | `chore` | Infrastructure / process work |
 | `in-progress` | Claimed; the claiming comment names the branch |
@@ -114,10 +114,9 @@ bash C:/Users/pjjg18/GitHub/gha-poll.sh <run_id>
 ```
 
 Both scripts resolve the target repo with `gh repo view --json nameWithOwner`, so they pick
-up whatever `gh repo set-default` points at — the fork. **Do not `cd ..` first** (as this
-recipe used to say): outside a git repo that lookup fails and the dispatch targets nothing.
-"Run these FROM the repo" means your `cwd` must be the git checkout/worktree doing the
-`gh repo view` lookup — it does not mean the scripts themselves must be found relatively.
+up whatever `gh repo set-default` points at — the fork. **Do not `cd ..` first**: outside a git repo that lookup fails and the
+dispatch targets nothing. Your `cwd` must be the git checkout or worktree — the scripts
+themselves are found by absolute path, not relatively.
 
 ### Local builds (targeted iteration only)
 
@@ -213,8 +212,7 @@ agent-issues/TreeSearch
 ### Rules
 
 - **Agents never push to the fork's `cpp-search` directly** — everything lands by reviewed
-  PR, documentation included. The old coordination-commit exception is gone with the files
-  that justified it.
+  PR, documentation included.
 - **`feature/*`** branches from `cpp-search`, owned by one agent at a time.
 - **Never commit directly to upstream `cpp-search`.** While upstream only ever *receives*
   the fork's trunk, every sync is a fast-forward — no merge, no conflict on
@@ -292,7 +290,8 @@ These recur; they are activities, not issues, and have no tracker entry:
 | File | Purpose |
 |------|---------|
 | **GitHub issues** (`agent-issues/TreeSearch`) | The task queue and the findings tracker |
-| `dev/red-team/` | Rotation state: `focus-areas.md`, `log.md`, frozen `findings-archive.md`, `migration-map*.tsv` |
+| **GitHub Discussions**, one category per `area:N` | Red-team round records. `dev/red-team/log.md` is **closed to new entries** — it keeps only the model-version legend and the frozen pre-2026-08 history |
+| `dev/red-team/` | Scope and tiers: `focus-areas.md`; frozen `log.md`, `findings-archive.md`, `migration-map*.tsv` |
 | `dev/strategy.md` | Historical strategic narrative (was `coordination.md`; **not** kept current) |
 | `completed-tasks.md` | **Frozen.** Pre-tracker decisions worth not re-litigating; still worth grepping |
 | `dev/expertise/*.md` | Standing-practice methodology references |
