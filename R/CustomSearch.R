@@ -59,7 +59,6 @@ EdgeListSearch <- function (edgeList, dataset,
   }
   hits <- 0L
   unimprovedSince <- 0L
-  iter <- 0L
 
   for (iter in seq_len(maxIter)) {
     candidateLists <- RearrangeEdges(edgeList[[1]], edgeList[[2]], 
@@ -108,7 +107,9 @@ EdgeListSearch <- function (edgeList, dataset,
   }
   if (verbosity > 0L) { #nocov start
     message("  - Final score ", bestScore, " found ", hits, " times after ",
-            iter, " rearrangements.", if (verbosity > 1L) "\n" else "")
+            # A zero-length loop leaves `iter` NULL rather than unset
+            if (is.null(iter)) 0L else iter,
+            " rearrangements.", if (verbosity > 1L) "\n" else "")
   } #nocov end
   
   edgeList[3:4] <- c(bestScore, hits)

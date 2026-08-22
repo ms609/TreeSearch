@@ -122,4 +122,11 @@ test_that("EdgeListSearch() performs no rearrangements when maxIter = 0", {
                              maxIter = 0, verbosity = 0L)
   expect_equal(searched[[3]], 99) # Starting score returned unchanged
   expect_equal(searched[[4]], 0L) # No hits recorded
+
+  # A zero-length `for` leaves the loop variable NULL, not 0
+  expect_message(EdgeListSearch(list(edge[, 1], edge[, 2], 99), dataset = NULL,
+                                TreeScorer = MustNotRun,
+                                EdgeSwapper = MustNotRun,
+                                maxIter = 0, verbosity = 1L),
+                 "after 0 rearrangements")
 })
