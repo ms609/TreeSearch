@@ -142,61 +142,35 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
   reading the backlog row that holds the actual ask (item 7 explains this at length). Whoever
   takes area 13 next must decide explicitly: harness first, or #18/#19 first — both are live,
   and the harness plan predates the two findings.
-- **14 Statistics & support metrics — MEASURED 2026-08-05, still yielding heavily.** Added
-  2026-08-05 from #42's scope-coverage diff: 5,553 lines across 14 files that were owned by no
-  area and therefore never reviewed at any tier. **The gap has already cost a finding** — the
-  arm64 `probe_slot()` hang in `src/MaddisonSlatkin.cpp` (fixed, PR #272,
-  cf. [[maddisonslatkin-arm64-profile-hang]]) was found incidentally, not by rotation. The code
-  is numerically dense — recursive DP, factorial caches, log-space arithmetic, Monte Carlo
-  fallbacks — the profile the tier doctrine normally reserves for `opus`, and #42 recommended
-  `opus` on that basis. **Deliberately starting at `sonnet` anyway** (maintainer decision,
-  2026-08-05): density is a prediction about where bugs *hide*, not evidence that cheap sweeps
-  are exhausted, and this area has no measured yield at all. **Overtaken by events:** the
-  first-ever review had already run at `opus` on 2026-08-05, before this row merged, and returned
-  **36 findings, 4 sev:high — the highest yield on record for this rotation** (see `log.md`).
-  `start_tier` is left at `sonnet` as decided, but it is now inert: the seam is measured and
-  yielding, so the routing rules keep the next visit at **opus** with a fresh agent.
-  **Next visit starts here** (the round's own leads, and the reason it stays opus): the
-  **array-dimension-drop pattern** — four independent instances in one round (`ConcordanceTable`,
-  `ClusteringConcordance`, `Consistency`, `ClusterStrings`, all missing `drop = FALSE`), so treat
-  it as a class and sweep for it rather than re-finding instances; and the **not-yet-examined
-  `R/PresentContra.R` forest/reference-tip-mismatch angle** — read but never exercised against a
-  forest whose trees have tips absent from the reference (it calls `KeepTip` first, which *should*
-  be safe, but that is unproven). Its own test convention
+- **14 Statistics & support metrics — MEASURED 2026-08-05, still yielding heavily.** 5,553
+  lines across 14 files. The code is numerically dense — recursive DP, factorial caches,
+  log-space arithmetic, Monte Carlo fallbacks — so brief for that: the first review returned
+  **36 findings, 4 sev:high, the highest yield on record for this rotation**. Next visit stays
+  at **opus** with a fresh agent.
+  **Next visit starts here:** the **array-dimension-drop pattern** — four independent instances
+  in one round (`ConcordanceTable`, `ClusteringConcordance`, `Consistency`, `ClusterStrings`,
+  all missing `drop = FALSE`), so sweep for it as a class rather than re-finding instances; and
+  the **not-yet-examined `R/PresentContra.R` forest/reference-tip-mismatch angle** — read but
+  never exercised against a forest whose trees have tips absent from the reference (it calls
+  `KeepTip` first, which *should* be safe, but that is unproven). Its own test convention
   (`test-MaddisonSlatkin.R`, `test-Concordance.R`, `test-ParsSim.R`, `test-Consistency.R`,
   `test-ScoreSpectrum.R`, `test-QuartetResolution.R`, `test-TaxonInfluence.R`,
   `test-WideSample.R`, `test-pp-*.R`) is a useful first read.
 - **15 Legacy pure-R search API — MEASURED 2026-08-05 at BOTH sonnet and opus; yielding
-  heavily. The `start_tier` column still reads `sonnet` — the maintainer's recorded choice on
-  #42 — but the experiment below falsifies the reasoning behind it. Left unchanged pending the
-  maintainer's call; it is inert either way, since routing governs a visited area.** Added
-  2026-08-05 from #42's scope-coverage diff: 2,183 lines across 9 files backing the
-  still-shipped pre-C++-engine search functions, owned by no area. #42 offered "review once as
-  frozen legacy, then deprioritise"; **the maintainer chose a full rotation area instead
-  (2026-08-05): keep revisiting until the seam stops yielding.** Legacy is not the same as
-  clean, and this code is still shipped and still the documented entry point for users who have
-  not moved to the C++ engine. Treat "it isn't growing" as a reason the seam should *exhaust*
+  heavily.** 2,183 lines across 9 files backing the still-shipped pre-C++-engine search
+  functions. Keep revisiting until the seam stops yielding: legacy is not the same as clean,
+  and this code is still shipped and still the documented entry point for users who have not
+  moved to the C++ engine. Treat "it isn't growing" as a reason the seam should *exhaust*
   quickly, not as a reason to stop early.
-  **The `#16`/`EdgeListScore()` urgency that originally justified this row is now discharged**
-  — #16 is closed, its guard landed in PR #50, and the first round measured the pure-R layer
-  above it as *doubly* guarded (`R/CustomSearch.R:209` and `R/Ratchet.R:96` both reject
-  non-bifurcating input independently of the C++ fix; a 600-iteration fuzz of the default
-  rearrangement path produced no non-binary trees). Do not spend a second round re-asking it;
-  reopen only if the C++ guard is relaxed or a new caller bypasses those entry checks.
-  **`src/rearrange.cpp` added 2026-08-06** while closing #147: `all_tbr()` had never broken the
-  root edge, so `TBRMoves()` returned a strict subset of `SPRMoves()` for six years. The bug is
-  instructive twice over. It was an **off-by-one propagated by copy**: `all_spr()` was created
-  in 2020 as a copy of `all_tbr()`, inherited its `break_seq` starting at edge 3, and had that
-  corrected in PR #65 (2021) — the parent never was. And two `dev/benchmarks/` scripts had
-  already *characterised* the omission and routed around it by enumerating at two rootings,
-  without anyone filing it. **A documented workaround for a package deficiency is a finding
-  that was never written down** — grep `dev/` for such comments when auditing a new file.
-  **This row carried the tier-economics experiment, and it settled the tier question for good.**
-  Paired passes over the identical scope on 2026-08-05: `sonnet` returned 5 candidates and **0
-  sev:high**; `opus`, handed sonnet's entire yield as off-limits, returned **26 candidates and 4
-  sev:high**, all 26 confirmed. The cheap pass removed no work from the expensive one. Sonnet
-  found broken *documented contracts*; opus found *silent wrong answers* — different classes,
-  not different amounts. See the log's two 2026-08-05 entries; **do not re-run this experiment.**
+  **Do not re-run the tier experiment.** Paired passes over identical scope, 2026-08-05:
+  `sonnet` returned 5 candidates and **0 sev:high**; `opus`, handed sonnet's entire yield as
+  off-limits, returned **26 candidates and 4 sev:high**, all confirmed. The cheap pass removed
+  no work from the expensive one. Sonnet found broken *documented contracts*, opus found
+  *silent wrong answers* — different classes, not different amounts.
+  **A documented workaround for a package deficiency is a finding that was never written
+  down** — grep `dev/` for such comments when auditing a new file. Two `dev/benchmarks/`
+  scripts had characterised `all_tbr()`'s missing root-edge break and routed around it by
+  enumerating at two rootings, and nobody filed it for six years (#147, `src/rearrange.cpp`).
   **Next visit starts here** (stay at `opus`, fresh agent, and prefer a targeted shape over
   another general finder): the **decayed custom-criterion façade** — #137 (`Ratchet()` never
   forwards `TreeScorer`), #126 (`SuccessiveApproximations()`'s undocumented capability gap) and
