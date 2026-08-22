@@ -51,12 +51,21 @@
 #' If zero (the default), the \acronym{RHI} is not calculated.
 #' @inheritParams CharacterLength
 #' 
-#' @return `Consistency()` returns a matrix with named columns specifying the 
+#' @return `Consistency()` returns a matrix with named columns specifying the
 #' consistency index (`ci`),
 #' retention index (`ri`),
 #' rescaled consistency index (`rc`) and
 #' relative homoplasy index (`rhi`).
-#' 
+#' `ci` is `NaN` for a constant character, for which both the observed and
+#' minimum length are zero.
+#' `ri` and `rc` are `NaN` when the maximum and minimum length coincide, as
+#' for a constant or an autapomorphic character.
+#' `rhi` is `NA` throughout if `nRelabel = 0`, as it is then not calculated.
+#' Otherwise `rhi` is `NaN` when the observed length already equals the
+#' minimum length and the median length under random leaf relabelling also
+#' equals the minimum; if only the median length equals the minimum, `rhi`
+#' is `Inf`.
+#'
 #' @examples 
 #' data(inapplicable.datasets)
 #' dataset <- inapplicable.phyData[[4]]
@@ -104,7 +113,7 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
   if (compress) {
     ret
   } else {
-    ret[attr(dataset, "index"), ]
+    ret[attr(dataset, "index"), , drop = FALSE]
   }
 }
 
@@ -131,7 +140,6 @@ Consistency <- function (dataset, tree, nRelabel = 0, compress = FALSE) {
 ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
   .CheckDataCharLen(dataset)
   .CheckTreeCharLen(tree)
-  tipLabel <- tree[["tip.label"]]
   tree <- .TreeForTaxa(tree, names(dataset))
   
   mat <- do.call(rbind, dataset)
@@ -148,10 +156,19 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     as.integer(intToBits(x)[1:nLevels])
   }, integer(nLevels)))
   
+  # Key on the unlabelled rooted shape
+  treeKey <- .ShapeKey(tree)
+  # Cache per shape, and within that per character
+  treeCache <- .CharLengthCache[[treeKey]]
+  if (is.null(treeCache)) {
+    treeCache <- new.env(hash = TRUE, parent = emptyenv())
+    .CharLengthCache[[treeKey]] <- treeCache
+  }
+
   .LengthForChar <- function(x) {
     key <- paste(c(nRelabel, x), collapse = ",")
-    if (!is.null(.CharLengthCache[[key]])) {
-      .CharLengthCache[[key]]
+    if (!is.null(treeCache[[key]])) {
+      treeCache[[key]]
     } else {
       patterns <- apply(unname(unique(t(
         as.data.frame(replicate(nRelabel, sample(rep(seq_along(x), x))))))),
@@ -168,7 +185,7 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
         contrast = rwContrast,
         class = "phyDat")
       ret <- median(FastCharacterLength(tree, phy))
-      .CharLengthCache[[key]] <- ret
+      treeCache[[key]] <- ret
       ret
     }
   }
@@ -186,6 +203,38 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
 
 .Bin <- function(x) {
   sum(2 ^ (seq_along(x)[as.logical(x)] - 1))
+}
+
+
+# Canonical identifier of a rooted tree's unlabelled shape, after
+# Aho, Hopcroft & Ullman: a leaf encodes as `01`, and an internal node wraps
+# its children's codes, sorted into a fixed order, in `0`...`1`.
+# @param tree A rooted, binary tree of class `phylo`.
+# @return A string identifying the shape of `tree`.
+#' @importFrom TreeTools NTip Postorder
+.ShapeKey <- function(tree) {
+  edge <- Postorder(tree)[["edge"]]
+  nTip <- NTip(tree)
+  code <- character(max(edge))
+  code[seq_len(nTip)] <- "01"
+  kids <- vector("list", max(edge))
+  # Postorder guarantees that a node's children are coded before the edge that
+  # subtends it is read, so a single pass suffices.
+  for (i in seq_len(dim(edge)[[1]])) {
+    parent <- edge[[i, 1]]
+    kids[[parent]] <- c(kids[[parent]], code[[edge[[i, 2]]]])
+    if (length(kids[[parent]]) == 2L) {
+      code[[parent]] <- paste0("0", paste(sort(kids[[parent]],
+                                               method = "radix"),
+                                          collapse = ""), "1")
+    }
+  }
+  bits <- as.integer(strsplit(code[[edge[[dim(edge)[[1]], 1]]]], "",
+                              fixed = TRUE)[[1]]) == 1L
+  # Pack to bytes for compactness.  Padding to a byte boundary could otherwise
+  # conflate shapes whose codes differ only in length, so the leaf count leads.
+  bits <- c(bits, rep(FALSE, (-length(bits)) %% 8))
+  paste0(nTip, ":", paste(as.character(packBits(bits, "raw")), collapse = ""))
 }
 
 
@@ -221,10 +270,19 @@ ExpectedLength <- function(dataset, tree, nRelabel = 1000, compress = FALSE) {
     2 ^ seq_along(tokensToSort)
   
   nAssigned <- log2(nWhole) + 1
-  wholes <- mapping[2 ^ (seq_len(nAssigned) - 1)]
-  
+  wholeBits <- 2 ^ (seq_len(nAssigned) - 1)
+  # A state that never occurs on its own -- only ever within an ambiguous
+  # (polymorphic) token -- has no row in `mapping` yet.  Give it its own
+  # unused code so that ambiguous tokens referencing it still sum to a
+  # meaningful value, rather than silently contributing zero.
+  unassigned <- wholeBits[mapping[wholeBits] == 0]
+  if (length(unassigned)) {
+    mapping[unassigned] <- 2 ^ (length(tokensToSort) + seq_along(unassigned))
+  }
+  wholes <- mapping[wholeBits]
+
   ambigTokens <- contr[ambig & seq_along(contr) %fin% char]
-  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(contr[ambig])), 32),
+  mapping[ambigTokens] <- apply(matrix(as.logical(intToBits(ambigTokens)), 32),
                                 2, function(x) sum(wholes[x]))
   
   # Return:

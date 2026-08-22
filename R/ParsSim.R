@@ -131,6 +131,9 @@ ParsSim <- function(tree,
 
   # --- Determine state counts per character ----------------------------------
   n_states_vec <- rep(seq_along(nChar) + 1L, times = nChar)
+  if (any(n_states_vec > 31L)) {
+    stop("ParsSim() supports at most 31 states per character.")
+  }
 
   # --- Validate and expand rootState ------------------------------------------
   rootState <- as.integer(rootState)
@@ -170,6 +173,12 @@ ParsSim <- function(tree,
   extra_steps <- integer(total_chars)
   steps_exhausted <- logical(total_chars)
 
+  # Cache of the last .pars_sim_legal_edges() result computed for each
+  # character, so the saturation check at return can reuse it instead of
+  # rescanning. Valid only until the character's state next changes.
+  legal_cache <- vector("list", total_chars)
+  legal_cache_valid <- logical(total_chars)
+
   if (nExtraSteps > 0L) {
     steps_placed <- 0L
     while (steps_placed < nExtraSteps) {
@@ -189,6 +198,11 @@ ParsSim <- function(tree,
       legal <- .pars_sim_legal_edges(char_states[[char_idx]], tree_info,
                                      char_scores[char_idx],
                                      n_states_vec[char_idx])
+      # `[char_idx] <- list(legal)`, not `[[char_idx]] <- legal`: assigning
+      # NULL via `[[<-` deletes the list element instead of storing NULL,
+      # shrinking legal_cache and misaligning it with char_idx.
+      legal_cache[char_idx] <- list(legal)
+      legal_cache_valid[char_idx] <- TRUE
 
       if (is.null(legal)) {
         steps_exhausted[char_idx] <- TRUE
@@ -206,6 +220,9 @@ ParsSim <- function(tree,
       char_scores[char_idx] <- char_scores[char_idx] + 1L
       extra_steps[char_idx] <- extra_steps[char_idx] + 1L
       steps_placed <- steps_placed + 1L
+      # The character's state just changed, so the cached legal-edges result
+      # no longer describes its current state.
+      legal_cache_valid[char_idx] <- FALSE
 
       # In profile mode, mark exhausted when info drops to 0
       if (use_profile) {
@@ -240,9 +257,15 @@ ParsSim <- function(tree,
   }
 
   # --- Calculate saturation for all characters --------------------------------
+  # Reuse the legal-edges result already computed during the step loop where
+  # still valid, instead of rescanning every character from scratch.
   saturated <- vapply(seq_len(total_chars), function(i) {
-    is.null(.pars_sim_legal_edges(char_states[[i]], tree_info,
-                                  char_scores[i], n_states_vec[i]))
+    if (legal_cache_valid[i]) {
+      is.null(legal_cache[[i]])
+    } else {
+      is.null(.pars_sim_legal_edges(char_states[[i]], tree_info,
+                                    char_scores[i], n_states_vec[i]))
+    }
   }, logical(1))
 
   attr(result, "saturated") <- saturated
@@ -505,6 +528,12 @@ ParsSim <- function(tree,
 #' @keywords internal
 #' @noRd
 .safe_sample_idx <- function(n, prob = NULL) {
+  if (n == 0L) {
+    stop("No candidate edges are available to place a new character state: ",
+         "the tree does not have enough unmarked structure left to host ",
+         "another distinct state. Reduce the number of states requested, ",
+         "or supply a larger tree.")
+  }
   if (n == 1L) return(1L)
   if (!is.null(prob)) {
     # Edge lengths drive the weights; a tree with all-zero (or absent /

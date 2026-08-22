@@ -20,7 +20,7 @@ collaborators.
 |-------|---------|
 | `red-team` | Filed by `/red-team`. Also that skill's mode switch — don't delete it |
 | `sev:high` / `sev:med` / `sev:low` | Former P1 / P2 / P3 |
-| `area:1`…`area:15` | Red-team focus area, per `dev/red-team/focus-areas.md` — **count the rows, this range grows** |
+| `area:1`…`area:15` | Which area **owns the code**, per `dev/red-team/focus-areas.md` — not which round found it; an issue may carry several. **Count the rows, this range grows** |
 | `task` | Planned work migrated from the retired `to-do.md` |
 | `deferred` | Assessed and parked; not scheduled |
 | `chore` | Infrastructure / process work |
@@ -38,6 +38,52 @@ Write cross-repo references fully qualified (`agent-issues/TreeSearch#42`) — a
 means this repo and upstream numbers separately. Pre-tracker `T-nnn` ids are **frozen, not
 retired**: they persist in shipped source comments and in `dev/red-team/log.md`, and
 `dev/red-team/migration-map*.tsv` resolve them.
+
+### Agent identity — commit and post as `ms609-agent`, never as the maintainer
+
+Agent work is attributed to the machine account **`ms609-agent`**, a collaborator on
+`agent-issues`. This is not cosmetic: GitHub will not let an account approve its own PR, so a
+PR opened as `ms609` **cannot be reviewed by `ms609`**. Posting as the machine account is what
+makes review possible at all.
+
+Two different mechanisms, both applied **per command** — never change the global git config or
+`gh auth`, which belong to the human and must keep working interactively.
+
+**Commits.** Author/committer is free text in the commit object; GitHub links it to an account
+by matching a verified email. Pass it inline:
+
+```bash
+git -c user.name="ms609-agent" -c user.email="313734811+ms609-agent@users.noreply.github.com" commit -F - <<'MSG'
+...
+MSG
+```
+
+**Issues, PRs, comments, labels.** A PR's author is *whichever account authenticated the API
+call* — there is no per-PR override, so this is the only way to change it. `gh` reads
+`GH_TOKEN` in preference to stored auth, so prefix the single call:
+
+```bash
+GH_TOKEN=$CLAUDE_GH_TOKEN gh pr create --base cpp-search --head feature/<name> --title "..." --body-file <file>
+```
+
+The same prefix goes on every `gh issue create`, `gh issue comment` and `gh issue edit`. Do
+**not** export `GH_TOKEN` for the session — that would silently re-identify anything the human
+runs in the same shell.
+
+**Pushes stay as the human's credentials.** Push identity has no bearing on PR authorship, so
+`git push` needs no change.
+
+**`gha-dispatch.sh` / `gha-poll.sh` stay as the human too** — dispatching a workflow needs an
+`actions: write` scope the agent token is not required to carry. Run them unprefixed.
+
+If `$CLAUDE_GH_TOKEN` is unset, **stop and say so** rather than silently falling back to the
+maintainer's identity — a PR that lands under the wrong account cannot be re-attributed
+afterwards, only closed and reopened.
+
+> **Other projects need their own answer.** This works because `agent-issues` is free to add
+> collaborators. An org billing a paid seat per member (e.g. StratoBayes) cannot absorb a
+> machine account this way; there the options are a GitHub App installation, which is not a
+> billable member, or accepting single-identity working without the review step.
 
 ### GHA dispatch (primary validation path)
 
@@ -195,7 +241,7 @@ agent-issues/TreeSearch
 5. On GHA success, open a PR — `Fixes #N` per issue, and `--base cpp-search` so the
    closing actually fires:
    ```bash
-   gh pr create --base cpp-search --head feature/<name> --title "<description>" --body "Fixes #N ..."
+   GH_TOKEN=$CLAUDE_GH_TOKEN gh pr create --base cpp-search --head feature/<name> --title "<description>" --body "Fixes #N ..."
    ```
 6. Human reviews and merges. The merge closes the issues; nothing to update by hand.
 7. After merge, clean up:

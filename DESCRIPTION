@@ -55,10 +55,10 @@ Imports:
   utils,
 Suggests:
   cluster,
+  Coreset,
   future,
   highs,
   knitr,
-  MaxMin,
   phangorn (>= 2.2.1),
   PlotTools,
   promises,

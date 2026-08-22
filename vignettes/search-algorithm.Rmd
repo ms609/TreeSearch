@@ -217,6 +217,81 @@ Per-strategy attempt and success counts are returned in the
 `strategy_diagnostics` attribute of the search result for post-hoc
 inspection.
 
+## Topological constraints
+
+A tree satisfies a constraint character when some edge separates the taxa
+coded `1` from those coded `0`.
+Taxa coded `?`, and taxa that the constraint does not mention at all, are
+*free*: the constraint says nothing about which side of that edge they belong
+on, and a tree is compliant however they fall.
+This is what `constraint` promises the user, and every part of the search reads
+it the same way -- the locked-node filter that screens individual
+rearrangements, the check that gates a finished replicate on its way into the
+pool, the constrained Wagner build, and the minimal-SPR repair that fixes a
+violating start.
+
+Reading a constraint more strictly -- as "the `1` group is a clade exactly",
+excluding the free taxa -- never returns a wrong answer, because every
+strictly-compliant tree also satisfies the user's constraint.
+It does, however, cost search: a tree that satisfies the constraint the user
+wrote, without making either group an exact clade, matches no node under the
+stricter reading, and is then treated exactly like a violating start (below) --
+frozen, or repaired to a topology it did not need to be moved to.
+Enforcing one reading everywhere is therefore a search-quality matter rather
+than a correctness one.
+
+The free-taxa reading also determines which rearrangements are legal, not just
+which trees are.
+A subtree made only of free taxa may be regrafted anywhere, since moving it
+cannot disturb the separating edge; and a subtree carrying `1`-group taxa may
+be regrafted anywhere within the largest clade that still covers the `1` group
+and excludes the `0` group, not merely within the smallest one.
+
+### Starting trees under a constraint
+
+Whatever its source -- a Wagner build, a random topology, or a tree supplied
+through `tree` -- a start that does not satisfy the constraint is repaired
+before the replicate scores it, by the same minimal-SPR routine that repairs
+fused trees.
+This has to happen at the start rather than by rejecting the tree afterwards.
+Constrained rearrangement cannot climb out of a violating tree: an unmapped
+constraint split makes every candidate regraft illegal, so the replicate
+freezes on the tree it began with.
+Nor can the violation be caught by comparison later, because a violating tree
+is drawn from a wider set of topologies than a legal one and so tends to score
+*better*; taken as a baseline, it makes the legal repair look like a
+regression, and no subsequent phase can accept it.
+Where the repair does not succeed, the start is discarded in favour of a fresh
+constrained Wagner build.
+The same check gates each replicate's finished tree on its way into the pool,
+so a tree that breaks the constraint is never returned; and the enforced splits
+are protected from the final collapse pass, whichever branch happens to realise
+them.
+
+A start that already separates the two groups is left alone, however its free
+taxa happen to fall; the repair fires only on a start that genuinely violates
+the constraint.
+
+The free-taxa reading also decides *which* legal starts a replicate can begin
+from.
+The random-topology strategy grows a tree one taxon at a time, each at a
+uniformly chosen edge among those that leave every constraint character still
+satisfied, so that every topology the constraint permits can be drawn.
+Building instead from a backbone of the constrained groups -- one clade per
+character, nested as their groups are nested -- also gives a compliant tree, but
+only ever one in which each group is an exact clade with the `?`-coded taxa
+outside it: 15 of the 35 compliant topologies on six taxa constrained by one
+character, and 105 of the 1155 on eight taxa constrained by two.
+A replicate would never begin at any of the rest.
+
+Sampling is uniform where it can be: the taxa a constraint does not name are
+inserted last and unfiltered, and the named ones are drawn by rejection when a
+workable fraction of trees comply, so a constraint on a handful of taxa is
+sampled uniformly end to end.
+A constraint that pins down most of a large tree falls back to filtered
+insertion, which still reaches every legal topology but favours some over
+others.
+
 
 ## The driven search pipeline
 

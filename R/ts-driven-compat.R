@@ -42,6 +42,7 @@ ts_driven_search <- function(
     fuseAcceptEqual = FALSE,
     poolMaxSize = 100L,
     poolSuboptimal = 0.0,
+    enumMaxTrees = 0L,
     maxSeconds = 0.0,
     verbosity = 0L,
     min_steps = integer(0),
@@ -140,7 +141,8 @@ ts_driven_search <- function(
     pruneReinsertDrop = as.double(pruneReinsertDrop),
     pruneReinsertSelection = as.integer(pruneReinsertSelection),
     adaptiveStart = as.logical(adaptiveStart),
-    enumTimeFraction = as.double(enumTimeFraction)
+    enumTimeFraction = as.double(enumTimeFraction),
+    enumMaxTrees = as.integer(enumMaxTrees)
   )
 
   # Anneal config: fold into SearchControl if provided

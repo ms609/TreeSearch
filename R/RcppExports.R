@@ -20,6 +20,14 @@ MaddisonSlatkin_clear_cache <- function() {
     invisible(.Call(`_TreeSearch_MaddisonSlatkin_clear_cache`))
 }
 
+quartet_expect <- function(splits, characters) {
+    .Call(`_TreeSearch_quartet_expect`, splits, characters)
+}
+
+nrqs_expect <- function(splits, characters) {
+    .Call(`_TreeSearch_nrqs_expect`, splits, characters)
+}
+
 #' Expected mutual information between two partitions
 #'
 #' Computes the mutual information expected purely by chance between two
@@ -27,7 +35,7 @@ MaddisonSlatkin_clear_cache <- function() {
 #' block sizes (marginals) of each partition are fixed but the items are
 #' associated at random.  Subtracting this baseline from an observed mutual
 #' information yields a chance-corrected ("adjusted") mutual information, as
-#' applied by [`SiteConcordance`]`(normalize = TRUE)`; it is most material for
+#' applied by [`SiteConcordance`]`(chanceCorrect = TRUE)`; it is most material for
 #' small or unbalanced partitions, where raw mutual information is appreciably
 #' inflated by chance agreement.
 #'
@@ -243,5 +251,9 @@ ts_tbr_diagnostics <- function(edge, contrast, tip_data, weight, levels, maxHits
 
 ts_ev_cache_key_probe <- function(edge, contrast, tip_data, weight, levels, concavity = -1.0, zero_active = FALSE, set_upweight = FALSE, bump_pattern_freq = FALSE) {
     .Call(`_TreeSearch_ts_ev_cache_key_probe`, edge, contrast, tip_data, weight, levels, concavity, zero_active, set_upweight, bump_pattern_freq)
+}
+
+ts_random_constrained_tree <- function(contrast, tip_data, weight, levels, consSplitMatrix = NULL) {
+    .Call(`_TreeSearch_ts_random_constrained_tree`, contrast, tip_data, weight, levels, consSplitMatrix)
 }
 

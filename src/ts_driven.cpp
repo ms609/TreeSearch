@@ -49,7 +49,60 @@ ProgressInfo make_progress(int rep, const DrivenParams& params,
   return pi;
 }
 
+// Does the tree satisfy the user constraint -- some edge separating the taxa
+// coded 1 for each constraint character from those coded 0?
+//
+// violates_constraint_posthoc() answers that directly, but builds a whole
+// TreeState and scores it.  For a BINARY constraint the locked-node mapping is
+// much cheaper and asks exactly the same question: since #54 it maps a split to
+// any node holding one whole group and none of the other, with the taxa coded
+// `?` free to fall on either side, which is the separating edge itself.  So a
+// full mapping settles the case the search puts us in almost every time --
+// every rearrangement it accepts is filtered on that same mapping -- and only
+// an unmapped split pays for Fitch.
+//
+// With a third state the two tests diverge -- its taxa belong to neither group,
+// so the character can sit above its minimum length with every split mapped --
+// and the mapping is the one to follow.  It is the standard the rest
+// of the engine enforces: the locked-node filter screens rearrangements on it,
+// and impose_constraint() repairs to it and nothing more, so judging a capture
+// by the stricter Fitch check would discard every replicate of a search that
+// cannot produce anything better.  The R layer warns at input that an
+// intermediate state goes unconstrained.
+//
+// update_constraint(), not map_constraint_nodes(): the DFS timestamps have to
+// move with the node ids, or a consumer that reads both without re-mapping
+// (spr_search) sees this tree's nodes against another tree's timestamps.
+bool constraint_satisfied(TreeState& tree, ConstraintData& cd) {
+  update_constraint(tree, cd);
+  for (int s = 0; s < cd.n_splits; ++s) {
+    if (cd.constraint_node[s] < 0) {
+      return !violates_constraint_posthoc(tree, cd);
+    }
+  }
+  return true;
+}
+
 } // anonymous namespace
+
+bool capture_satisfies_constraint(TreeState& tree, ConstraintData* cd,
+                                  const DataSet& ds, double& score)
+{
+  // Gate on the post-hoc DataSet, which only a *user* constraint carries.  The
+  // cross-replicate consensus constraint is a search heuristic, not a promise
+  // about the answer, so a tree that breaks it is not a wrong result and must
+  // not be thrown away.  The post-hoc check is also the right test even for a
+  // user constraint: a tree can map every constraint node and still fail the
+  // full Fitch check, which is the case the post-hoc DataSet exists for.
+  if (!cd || !cd->active || !cd->has_posthoc) return true;
+  if (constraint_satisfied(tree, *cd)) return true;
+
+  impose_constraint(tree, *cd);
+  tree.build_postorder();
+  tree.reset_states(ds);
+  score = score_tree(tree, ds);
+  return constraint_satisfied(tree, *cd);
+}
 
 // --- Single-replicate pipeline ---
 
@@ -149,6 +202,37 @@ ReplicateResult run_single_replicate(
         best_wag = trial_score;
       }
     }
+  }
+
+  // A start that breaks the constraint has to be repaired here, before anything
+  // takes its score as a baseline.  Constrained rearrangement cannot undo it:
+  // regraft_violates_constraint() reads an unmapped split as "already
+  // violating" and rejects every move, so the search freezes on the start and
+  // reports its unconstrained — and therefore unbeatably low — score.  Nor can
+  // a later verify-and-revert gate help, for the same reason: the repaired tree
+  // is legal and so necessarily scores worse than the violation it replaces.
+  // The R layer warns when a caller's `tree` is what arrived here violating.
+  if (cd && cd->active && cd->has_posthoc &&
+      !constraint_satisfied(result.tree, *cd)) {
+    impose_constraint(result.tree, *cd);
+    result.tree.build_postorder();
+    result.tree.reset_states(ds);
+    if (!constraint_satisfied(result.tree, *cd)) {
+      // impose_constraint() is heuristic.  Discard the start rather than search
+      // from a tree the constraint machinery cannot move: a constrained Wagner
+      // build, with its own post-hoc reshuffles, is the better bet.  It is not
+      // a guarantee either -- exhausting those reshuffles returns a violating
+      // tree -- so repair whatever it hands back rather than trusting it.
+      random_wagner_tree(result.tree, ds, cd);
+      result.tree.build_postorder();
+      result.tree.reset_states(ds);
+      if (!constraint_satisfied(result.tree, *cd)) {
+        impose_constraint(result.tree, *cd);
+        result.tree.build_postorder();
+        result.tree.reset_states(ds);
+      }
+    }
+    best_wag = score_tree(result.tree, ds);
   }
 
   result.timings.wagner_ms = ph_lap();
@@ -1055,24 +1139,48 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
 
     result.timings += rep_result.timings;
 
-    // Compute collapsed flags for collapsed-topology pool dedup.
-    // Trees that differ only in zero-length resolutions are treated
-    // as duplicates, improving pool diversity (Goloboff & Farris 2001).
-    std::vector<uint8_t> rep_collapsed;
-    compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
-
     if (rep_result.interrupted) {
-      if (rep_result.score < 1e18) {
+      // Tested but not repaired: the deadline has already passed, and
+      // impose_constraint() is an unbounded SPR loop with no interrupt check
+      // of its own, so repairing here would extend an overrun.
+      const bool keep = !cd || !cd->active || !cd->has_posthoc ||
+                        constraint_satisfied(rep_result.tree, *cd);
+      if (keep && rep_result.score < 1e18) {
+        std::vector<uint8_t> rep_collapsed;
+        compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
         pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
       }
       result.timed_out = true;
       goto finish;
     }
 
-    // Add to pool with collapsed-topology dedup
-    double prev_best = pool.best_score();
-    pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
-    bool score_improved = pool.best_score() < prev_best;
+    // A replicate can still finish on a constraint-violating tree: a Wagner
+    // start whose reshuffles all failed, or a phase that accepts on a looser
+    // check than the pool promises.  The pool is what the caller is handed, so
+    // gate it here, as the fuse capture below already does.
+    const bool rep_ok = capture_satisfies_constraint(rep_result.tree, cd, ds,
+                                                     rep_result.score);
+    if (!rep_ok) ++result.constraint_discards;
+
+    // A discarded replicate contributes its count and nothing else.  Its score
+    // is that of a violating tree, which beats any legal one, so letting it
+    // through would credit the strategy arm that produced it, bias the coverage
+    // estimate downwards and report a figure no returned tree attains.  The
+    // stopping rules at the foot of the loop still run: skipping them would
+    // outlive the deadline and swallow an interrupt.
+    bool score_improved = false;
+    if (rep_ok) {
+      // Compute collapsed flags for collapsed-topology pool dedup.
+      // Trees that differ only in zero-length resolutions are treated
+      // as duplicates, improving pool diversity (Goloboff & Farris 2001).
+      std::vector<uint8_t> rep_collapsed;
+      compute_collapsed_flags(rep_result.tree, ds, rep_collapsed);
+
+      // Add to pool with collapsed-topology dedup
+      double prev_best = pool.best_score();
+      pool.add_collapsed(rep_result.tree, rep_result.score, rep_collapsed);
+      score_improved = pool.best_score() < prev_best;
+    }
     if (score_improved) {
       result.last_improved_rep = rep1;
       unsuccessful_reps = 0;
@@ -1085,7 +1193,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // not use a fresh-start arm, so crediting/blaming one would corrupt the
     // bandit.  Together these two flags mean exactly `start_ptr == nullptr`;
     // any future warm-start source must be excluded here too.
-    if (params.adaptive_start && !pr_reseeded && !user_started) {
+    if (params.adaptive_start && !pr_reseeded && !user_started && rep_ok) {
       bool hit_best = (rep_result.score <= pool.best_score());
       strategy_tracker.update(rep_strategy, hit_best);
     }
@@ -1098,10 +1206,10 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     }
 
     ++result.replicates_completed;
-    result.replicate_scores.push_back(rep_result.score);
-
-    // Report end of replicate
-    report("replicate", 1, rep_result.score, rep1);
+    if (rep_ok) {
+      result.replicate_scores.push_back(rep_result.score);
+      report("replicate", 1, rep_result.score, rep1);
+    }
 
     // Periodic tree fusing
     if (params.fuse_interval > 0 &&
@@ -1328,6 +1436,10 @@ finish:
   //    one tree, so different TBR-connected islands are only discovered if
   //    different replicates landed on them.  We enumerate from each seed
   //    tree to explore its island, stopping when the pool is full.
+  //
+  //    The retention ceiling is raised HERE, not before the loop: past this
+  //    point the pool is pure output, so a larger cap only appends topologies.
+  pool.raise_max_size(params.enum_pool_max_size);
   if (pool.size() > 0 && pool.size() < pool.max_size) {
     TBRParams tp;
     tp.accept_equal = true;
