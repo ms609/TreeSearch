@@ -46,7 +46,7 @@ EdgeListSearch <- function (edgeList, dataset,
       bestScore <- edgeList[[3]]
     }
   }
-  if (verbosity > 0L) {
+  if (verbosity > 0L && maxIter > 0L) {
     message("  - Performing tree search.  Initial score: ", bestScore) #nocov
   }
   if (!is.null(stopAtScore) && bestScore < stopAtScore + epsilon) {
@@ -107,8 +107,8 @@ EdgeListSearch <- function (edgeList, dataset,
   }
   if (verbosity > 0L) { #nocov start
     message("  - Final score ", bestScore, " found ", hits, " times after ",
-            # A zero-length loop leaves `iter` NULL rather than unset
-            if (is.null(iter)) 0L else iter,
+            # `for` leaves the loop variable NULL when maxIter < 1
+            if (maxIter > 0L) iter else 0L,
             " rearrangements.", if (verbosity > 1L) "\n" else "")
   } #nocov end
   
