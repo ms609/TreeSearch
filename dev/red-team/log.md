@@ -1,13 +1,9 @@
 # Red-team round log — TreeSearch
 
-Append-only record of every red-team round. **Newest first.** Each invocation of
-`/red-team` adds one entry and updates `last_focus:` at the **bottom** of this file. The
-next area is `(last_focus mod N) + 1`, where `N` is the current row count in
-`focus-areas.md` (**15 as of 2026-08-05**, when areas 14 and 15 were added to close #42's
-scope-coverage gap — previously 13 as of 2026-07-03, and **not** the stale `10` this line
-said until then, which made areas 11-13 mathematically unreachable by normal rotation; see
-RT12-01, 2026-07-03 area-12 round below). **Count the rows; do not trust this number.**
-Recompute `N` whenever a row is added.
+**Closed to new entries.** A round's record is a GitHub Discussion, one post per round in
+that area's category, and rotation reads staleness from those posts — see the pointer block
+below. What this file still carries: the model-version legend, the `T-nnn` ids that shipped
+source comments cite, and the frozen pre-2026-08 history, **newest first**.
 
 **Entry format** (per round): `area`, `reviewed_by`, `date`, `tier` — **which now records the
 model *version* that ran, not just the rung** (`tier: opus (Opus 4.8)`) — `yield` (count of
