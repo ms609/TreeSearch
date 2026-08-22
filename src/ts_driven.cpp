@@ -54,16 +54,16 @@ ProgressInfo make_progress(int rep, const DrivenParams& params,
 //
 // violates_constraint_posthoc() answers that directly, but builds a whole
 // TreeState and scores it.  For a BINARY constraint the locked-node mapping is
-// much cheaper and is strictly the stronger test: it asks for the 1 group to be
-// a clade exactly, excluding the taxa coded `?`, and a tree that manages that
-// necessarily separates the two coded groups.  So a full mapping settles the
-// case the search puts us in almost every time -- every rearrangement it
-// accepts is filtered on that same mapping -- and only an unmapped split pays
-// for Fitch.
+// much cheaper and asks exactly the same question: since #54 it maps a split to
+// any node holding one whole group and none of the other, with the taxa coded
+// `?` free to fall on either side, which is the separating edge itself.  So a
+// full mapping settles the case the search puts us in almost every time --
+// every rearrangement it accepts is filtered on that same mapping -- and only
+// an unmapped split pays for Fitch.
 //
-// With a third state the two tests diverge -- its taxa belong to no split_tips
-// entry, so the character can sit above its minimum length with every split
-// mapped -- and the mapping is the one to follow.  It is the standard the rest
+// With a third state the two tests diverge -- its taxa belong to neither group,
+// so the character can sit above its minimum length with every split mapped --
+// and the mapping is the one to follow.  It is the standard the rest
 // of the engine enforces: the locked-node filter screens rearrangements on it,
 // and impose_constraint() repairs to it and nothing more, so judging a capture
 // by the stricter Fitch check would discard every replicate of a search that
@@ -1436,6 +1436,10 @@ finish:
   //    one tree, so different TBR-connected islands are only discovered if
   //    different replicates landed on them.  We enumerate from each seed
   //    tree to explore its island, stopping when the pool is full.
+  //
+  //    The retention ceiling is raised HERE, not before the loop: past this
+  //    point the pool is pure output, so a larger cap only appends topologies.
+  pool.raise_max_size(params.enum_pool_max_size);
   if (pool.size() > 0 && pool.size() < pool.max_size) {
     TBRParams tp;
     tp.accept_equal = true;

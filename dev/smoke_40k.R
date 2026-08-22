@@ -1,5 +1,5 @@
 # 40,000-tree matrix-free smoke test for WideSample() over the
-# MaxMin::FarFirst() distance-column oracle path.
+# Coreset::FarFirst() distance-column oracle path.
 suppressPackageStartupMessages({
   library(TreeTools)   # for as.phylo.numeric
   library(TreeSearch)

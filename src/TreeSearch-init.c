@@ -21,6 +21,8 @@ extern SEXP _TreeSearch_mi_key(SEXP, SEXP);
 
 // extern SEXP _TreeSearch_astar_search_r(SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_quartet_concordance(SEXP, SEXP);
+extern SEXP _TreeSearch_quartet_expect(SEXP, SEXP);
+extern SEXP _TreeSearch_nrqs_expect(SEXP, SEXP);
 extern SEXP _TreeSearch_ts_fitch_score(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_na_char_steps(SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_char_steps(SEXP, SEXP, SEXP, SEXP, SEXP);
@@ -60,7 +62,8 @@ extern SEXP _TreeSearch_ts_ev_cache_key_probe(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP
 extern SEXP _TreeSearch_ts_ls_fit(SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_ls_search(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 extern SEXP _TreeSearch_ts_collapsed_flags_debug(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
-extern SEXP _TreeSearch_ts_collapse_pool(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_collapse_pool(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP _TreeSearch_ts_random_constrained_tree(SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_nni",               (DL_FUNC) &_TreeSearch_nni, 3},
@@ -75,6 +78,8 @@ static const R_CallMethodDef callMethods[] = {
 
   // {"_TreeSearch_astar_search_r",    (DL_FUNC) &_TreeSearch_astar_search_r, 3},
   {"_TreeSearch_quartet_concordance",(DL_FUNC) &_TreeSearch_quartet_concordance, 2},
+  {"_TreeSearch_quartet_expect",    (DL_FUNC) &_TreeSearch_quartet_expect, 2},
+  {"_TreeSearch_nrqs_expect",       (DL_FUNC) &_TreeSearch_nrqs_expect, 2},
   {"_TreeSearch_ts_fitch_score",    (DL_FUNC) &_TreeSearch_ts_fitch_score, 12},
   {"_TreeSearch_ts_na_char_steps", (DL_FUNC) &_TreeSearch_ts_na_char_steps, 5},
   {"_TreeSearch_ts_char_steps", (DL_FUNC) &_TreeSearch_ts_char_steps, 5},
@@ -116,7 +121,8 @@ static const R_CallMethodDef callMethods[] = {
   {"_TreeSearch_ts_ls_fit", (DL_FUNC) &_TreeSearch_ts_ls_fit, 4},
   {"_TreeSearch_ts_ls_search", (DL_FUNC) &_TreeSearch_ts_ls_search, 6},
   {"_TreeSearch_ts_collapsed_flags_debug", (DL_FUNC) &_TreeSearch_ts_collapsed_flags_debug, 6},
-  {"_TreeSearch_ts_collapse_pool", (DL_FUNC) &_TreeSearch_ts_collapse_pool, 10},
+  {"_TreeSearch_ts_collapse_pool", (DL_FUNC) &_TreeSearch_ts_collapse_pool, 9},
+  {"_TreeSearch_ts_random_constrained_tree", (DL_FUNC) &_TreeSearch_ts_random_constrained_tree, 5},
   {NULL, NULL, 0}
 };
 

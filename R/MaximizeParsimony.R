@@ -121,7 +121,10 @@
 
   consContrast <- attr(constraint, "contrast")
   nConsStates <- ncol(consContrast)
-  if (nConsStates < 2L) return(list())
+  if (nConsStates < 2L) {
+    warning("Ignoring empty constraint", call. = FALSE)
+    return(list())
+  }
 
   # Constraints are enforced as bipartitions, so only the two extreme states of
   # a character are read: taxa carrying an intermediate state are in neither
@@ -139,8 +142,7 @@
   # For each constraint character, record the tips unambiguously in the "1"
   # group (derived state present, ancestral absent) and, separately, those in
   # the "0" group (ancestral present, derived absent).  Tips ambiguous for the
-  # character ("?", or unconstrained taxa) belong to neither group and are free
-  # to plot on either side of the split.
+  # character ("?", or unconstrained taxa) may plot anywhere.
   consSplits <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
   consZero   <- matrix(0L, nrow = ncol(consMat), ncol = length(constraint))
   for (ch in seq_len(ncol(consMat))) {
@@ -156,23 +158,20 @@
     }
   }
 
-  keep <- apply(consSplits, 1, function(row) {
-    s <- sum(row)
-    s >= 1 && s < length(constraint) - 1
-  })
+  # Ignore trivial constraints
+  nOne <- rowSums(consSplits)
+  nZero <- rowSums(consZero)
+  inert <- nOne < 2 | nZero < 2
+  if (any(inert)) {
+    warning("Ignoring trivial constraint character", if (sum(inert) > 1) "s" else "", " ",
+            paste(which(inert), collapse = ", "), call. = FALSE)
+  }
+  keep <- !inert
   consSplits <- consSplits[keep, , drop = FALSE]
   consZero   <- consZero[keep, , drop = FALSE]
   if (nrow(consSplits) == 0L) return(list())
 
   # Every returned tree must display all constraint splits simultaneously.
-  # Two splits are jointly displayable iff they are compatible in the
-  # four-gamete sense: treating each as a bipartition of the tips it
-  # constrains (its "1" group vs its "0" group, ambiguous tips excluded), the
-  # pair is compatible iff at least one of the four group intersections is
-  # empty.  A laminar (nested-or-disjoint) test alone is too strict: it rejects
-  # the case where the two "0" groups are disjoint -- i.e. the splits' "1"
-  # sides jointly cover the constrained tips -- which is perfectly displayable,
-  # e.g. ab | cef and abcd | ef coexist on ((a,b),(d,(c,(e,f)))).
   nSplits <- nrow(consSplits)
   if (nSplits > 1L) {
     for (i in seq_len(nSplits - 1L)) {
@@ -185,7 +184,7 @@
                       !any(aZero & bOne) || !any(aZero & bZero)
         if (!compatible) {
           stop("Constraint is impossible to satisfy: splits ", i, " and ", j,
-               " are incompatible (all four taxon groupings co-occur)")
+               " are incompatible")
         }
       }
     }
@@ -198,6 +197,15 @@
 
   consTipData <- matrix(unlist(constraint, use.names = FALSE),
                         nrow = length(constraint), byrow = TRUE)
+
+  # Fold the two groups into the single membership matrix the C++ engine reads:
+  # 1 = "together", 0 = "apart", NA = free to fall on either side.  A tip that
+  # is in neither group must not be coded 0, or the engine would enforce the
+  # stricter "the 1 group is an exact clade" reading and refuse to move a start
+  # tree that already satisfies the documented one (agent-issues/TreeSearch#54).
+  # build_constraint() (src/ts_constraint.cpp) treats any value that is neither
+  # 1 nor 0 as free, so a plain 0/1 matrix still means "no free tips".
+  consSplits[consSplits == 0L & consZero == 0L] <- NA_integer_
 
   list(
     consSplitMatrix = consSplits,
@@ -234,6 +242,11 @@
 # neither group here and are unconstrained there too (.PrepareConstraint()
 # warns about that at input).
 .ConstraintViolated <- function(tree, consOne, consZero) {
+  # `consOne` is the membership matrix the C++ kernels read, so it uses their
+  # coding: 1 = in the group, anything else -- including the NA that marks a
+  # free tip -- out of it.  Reduce it to 0/1 here rather than let an NA
+  # propagate through the accumulation below and turn every comparison NA.
+  consOne <- (!is.na(consOne) & consOne == 1L) * 1L
   edge <- Postorder(tree)[["edge"]]
   parent <- edge[, 1L]
   child <- edge[, 2L]
@@ -557,7 +570,32 @@
     # through .IwRatchetDepth()'s targetHits/defaultHits escalation (capped at
     # .iwRatchetMaxCycles), which is a genuine reach lever the equal-weights
     # measurement above cannot see.
-    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
+    hitMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L)),
+    # `enumMaxTrees` multiplier: the size of the returned MPT set, relative to
+    # `poolMaxSize`.  Doubling in step with the other two knobs, from rung 5, so
+    # that one notch keeps meaning "roughly twice the work" on this axis too.
+    #
+    # This scales the ENUMERATION ceiling only, never `poolMaxSize` itself, and
+    # the distinction is the whole point.  During the replicate loop the pool cap
+    # is the size of the working set the search reads -- fuse donors are the
+    # entire pool (uncapped, and taken under the pool mutex on the parallel
+    # path), conflict-guided sector selection reads the pool's split frequencies
+    # once per replicate, and `consensusConstrain` reads its consensus splits --
+    # so scaling it would change which trees the search VISITS.  The
+    # anytime-dominance argument that licenses raising `maxReplicates` above
+    # therefore does NOT transfer to `poolMaxSize`: a bigger pool can delay
+    # every later improvement rather than merely appending to the result.
+    # After the loop, the pool is pure output and a bigger ceiling can only
+    # append equal-score topologies, so the same argument DOES hold there.
+    #
+    # It is bounded in practice without needing a cap: enumeration shares the
+    # `maxSeconds * enumTimeFraction` reserve, and its loop exits as soon as the
+    # pool fills, so an over-generous ceiling costs enumeration time, never a
+    # worse tree.  As with `hitMultiplier` the doubling shape is an OPERATING
+    # POINT rather than a measurement -- what is measured is that the July 2026
+    # 182-tip runs returned exactly `poolMaxSize` trees in all four analyses,
+    # i.e. the ceiling bound the answer rather than the MPT count doing so.
+    enumMultiplier = if (rung <= 4L) 1L else as.integer(2^(rung - 4L))
   )
 }
 
@@ -632,9 +670,13 @@
 #' most-parsimonious tree (\acronym{MPT}) is recovered.
 #' The size of the returned set is bounded by, in order:
 #' \enumerate{
-#'   \item **`poolMaxSize`** (default `100`) — a hard ceiling on the number of
-#'     trees retained.  Raise it (via [`SearchControl()`]) to keep more MPTs;
-#'     with the default you will never see more than 100.
+#'   \item **`enumMaxTrees`**, falling back to **`poolMaxSize`** (default `100`)
+#'     when `enumMaxTrees` is `0` — a hard ceiling on the number of trees
+#'     retained; with the default you will never see more than 100.  Prefer
+#'     raising `enumMaxTrees` (via [`SearchControl()`]): it applies only once the
+#'     search is over, so it cannot alter which trees are visited, whereas
+#'     `poolMaxSize` also sizes the working set that fusing and sectorial search
+#'     read.  From `effort` rung 5 the ladder raises `enumMaxTrees` for you.
 #'   \item **MPT-enumeration time.** After the main search, a TBR plateau walk
 #'     enumerates equal-score neighbours of each pool tree, within a time
 #'     reserve of `maxSeconds * enumTimeFraction`.  If this phase times out it
@@ -769,6 +811,14 @@
 #' returned trees will be perfectly compatible with each character in
 #' `constraint`; or a tree of class `phylo`, all of whose nodes will occur
 #' in any output tree.
+#' A returned tree is compatible with a constraint character when some edge
+#' separates the taxa coded `1` from those coded `0`.  Taxa coded `?`, and taxa
+#' that `constraint` does not mention, are unconstrained: they may fall on
+#' either side of that edge, and are not required to join either group.
+#' A character whose `1` or `0` group contains fewer than two taxa therefore
+#' constrains nothing -- every tree separates such a group from the rest -- and
+#' is ignored with a warning.  To group taxa, code the taxa they must be
+#' separated from as `0` rather than leaving them `?`.
 #' Constraint searches are supported natively: all tree rearrangements
 #' are filtered to respect the constraint topology.
 #' Each constraint character is enforced as a single split, so one with more
@@ -798,9 +848,13 @@
 #'       TBR-disconnected islands that random restarts alone miss.}
 #'     \item{4, `large`}{`thorough`'s provisioning with `maxReplicates` raised
 #'       to 500, to suit the higher per-replicate cost of big trees.}
-#'     \item{5 and up}{`thorough`'s provisioning, with both the replicate budget
-#'       and the hit target doubling each notch (1000, 2000, 4000 ...
-#'       replicates), so that one notch always means roughly twice the work.
+#'     \item{5 and up}{`thorough`'s provisioning, with the replicate budget, the
+#'       hit target and the \acronym{MPT}-enumeration ceiling (`enumMaxTrees`)
+#'       all doubling each notch (1000, 2000, 4000 ... replicates), so that one
+#'       notch always means roughly twice the work.  `poolMaxSize` is
+#'       deliberately *not* scaled: it sizes the working set that fusing and
+#'       sectorial search read during the run, so raising it would change which
+#'       trees are visited rather than only how many are returned.
 #'       There is no policy ceiling: extra replicates cannot cost reach, only
 #'       wall, which is what you asked to spend.  The ladder stops only at rung
 #'       26, where the replicate budget outgrows R's integer type.}
@@ -1228,6 +1282,18 @@ MaximizeParsimony <- function(
       # about this dataset and outranks the ladder.
       if (!userSetHits && spec[["hitMultiplier"]] > 1L) {
         targetHits <- as.integer(targetHits * spec[["hitMultiplier"]])
+      }
+
+      # Rung-scaled MPT-enumeration ceiling (rung 5 and up).  Keyed off the
+      # POST-merge `poolMaxSize`, so a user who raised the pool gets a
+      # proportionally larger returned set rather than having their value
+      # ignored.  Skipped when the user named `enumMaxTrees` themselves.
+      # `poolMaxSize` is deliberately not touched -- see .RungSpec().
+      if (!("enumMaxTrees" %in% union(names(controlDots),
+                                      attr(control, "explicit"))) &&
+          spec[["enumMultiplier"]] > 1L) {
+        control[["enumMaxTrees"]] <-
+          as.integer(control[["poolMaxSize"]] * spec[["enumMultiplier"]])
       }
 
       # Implied-weights ratchet depth. Under implied weights the optimum often
@@ -1748,21 +1814,17 @@ MaximizeParsimony <- function(
     # enforced clade"): a constraint is external evidence for a grouping the
     # matrix doesn't capture, so it stays visible even at zero length, while the
     # unsupported non-constraint branches still collapse.  consSplitMatrix rows
-    # are the enforced bipartitions in tip_data order (see .PrepareConstraint).
-    # `consZero` names the tips the constraint places on the far side of the
-    # split; tips ambiguous for the character are in neither group.  Without it
-    # the kernel can only recognise a node whose tip set is the 1 group exactly,
-    # and a split realised by any wider node goes unprotected -- collapsing the
-    # enforced grouping out of the returned tree.
+    # are the enforced bipartitions in tip_data order, carrying both groups
+    # (1 = together, 0 = apart, NA = free; see .PrepareConstraint).  The kernel
+    # needs both: a tree with free tips generally realises the split at a node
+    # whose tip set is wider than the 1 group, which no exact match reaches, so
+    # the enforced grouping would collapse out of the returned tree.
     consSplits <- if (!is.null(constraintConfig)) {
       constraintConfig[["consSplitMatrix"]]
     }
-    consZero <- if (!is.null(constraintConfig)) {
-      constraintConfig[["consZero"]]
-    }
     collapsed <- ts_collapse_pool(
       bestTrees, contrast, tip_data, weight, levels,
-      scoringConfig, hsjConfig, xformConfig, consSplits, consZero
+      scoringConfig, hsjConfig, xformConfig, consSplits
     )
     outTrees <- lapply(collapsed$trees, function(edgeMat) {
       tr <- list(

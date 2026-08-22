@@ -3,10 +3,21 @@
 
 // Topological constraint enforcement (TNT-style locked nodes).
 //
-// A constraint is a set of splits (bipartitions). A tree satisfies the
-// constraint iff every constraint split is displayed — i.e., for each
-// split there is an internal node whose subtree tip set matches (after
-// accounting for unconstrained taxa that may sit on either side).
+// A constraint is a set of splits.  Each split names two disjoint groups of
+// tips — the "1" group and the "0" group of one constraint character — and any
+// remaining tips are FREE: coded `?`, or absent from the constraint phyDat
+// altogether.  A tree satisfies the split iff some edge separates the 1 group
+// from the 0 group, free tips falling on either side.  That is the contract
+// `?MaximizeParsimony`'s `constraint` argument documents, and since
+// agent-issues/TreeSearch#54 it is the one enforced here: a node DISPLAYS the
+// split when its descendant tip set is a superset of one group and disjoint
+// from the other.
+//
+// Requiring the tip set to EQUAL a group (the pre-#54 test) is strictly
+// stronger.  It never returned a wrong answer, but a start tree that satisfied
+// the documented contract without making either group an exact clade mapped to
+// no node at all, which regraft_violates_constraint() reads as "the tree
+// already violates" — freezing the replicate on its start.
 //
 // Implementation:
 //   1. At init: store constraint splits as tip bitmasks.
@@ -36,18 +47,37 @@ struct ConstraintData {
   int n_splits = 0;
   int n_words = 0;           // ceil(n_tips / 64)
 
-  // Tip bitmasks: split_tips[i * n_words .. (i+1) * n_words - 1]
+  // Tip bitmasks: split_tips[i * n_words .. (i+1) * n_words - 1].
+  // The tips that must end up TOGETHER, on one side of some edge.
   // Canonical: bit 0 (tip 0) is always on the "outside" (= 0).
   std::vector<uint64_t> split_tips;
 
-  // Current mapping: constraint_node[i] = the internal node whose
-  // subtree tips match split i in the current tree.
+  // The tips that must end up on the OTHER side of that edge, same layout.
+  // Disjoint from split_tips; the two need NOT be complements — a tip in
+  // neither mask is free to fall on either side (#54).  When the caller
+  // supplies no free tips this is exactly ~split_tips, and every check below
+  // reduces to the pre-#54 exact-clade test.
+  std::vector<uint64_t> split_zeros;
+
+  // Current mapping: constraint_node[i] = the TIGHTEST node (tip or internal)
+  // that displays split i in the current tree — its descendant tip set covers
+  // one of the two groups and avoids the other.
   // -1 if not yet mapped (or the tree does not display split i).
   std::vector<int> constraint_node;
 
+  // The HIGHEST node that displays split i, in the same polarity as
+  // constraint_node[i]; equal to it when no free tip sits directly above.
+  // The displaying nodes form an unbroken chain from constraint_node[i] up to
+  // this one (each step adds only free tips), so the two ends are all a
+  // regraft test needs — see regraft_violates_constraint(), which uses this
+  // end for "must land inside" and the tight end for "must land outside".
+  // -1 exactly when constraint_node[i] is.
+  std::vector<int> constraint_node_hi;
+
   // Polarity of constraint_node[i] (T-384).  0: the node's descendant tip set
-  // is split_tips[i] itself.  1: it is the *complement* of split_tips[i], i.e.
-  // the tip-0 side of the bipartition.  A constraint split is an UNROOTED
+  // covers split_tips[i] and avoids split_zeros[i].  1: the other way round —
+  // it covers split_zeros[i], the tip-0 side of the bipartition, and avoids
+  // split_tips[i].  A constraint split is an UNROOTED
   // bipartition, so a tree displays it whenever EITHER side is a rooted clade,
   // and which side that is depends on the rooting alone -- see
   // map_constraint_nodes().  Consumers that treat constraint_node[i] as "the
@@ -73,9 +103,18 @@ struct ConstraintData {
   std::vector<uint64_t> clip_tip_mask;       // [n_words]
 };
 
-// Build ConstraintData from R-side split bitmask matrix.
-// split_matrix: n_splits x n_tips, each row is 0/1 indicating split membership.
-// The matrix is canonicalized so tip 0 is always "outside" (= 0).
+// Build ConstraintData from R-side split membership matrix.
+// split_matrix: n_splits x n_tips, column-major.  Element [s, t] is
+//   1  tip t is in split s's "together" group;
+//   0  tip t is in split s's "apart" group;
+//   anything else (NA_INTEGER, as .PrepareConstraint() writes for a `?`-coded
+//      or unconstrained taxon) — tip t is FREE, and may fall on either side.
+// A pure 0/1 matrix therefore means "no free tips", i.e. the exact-clade
+// reading that predates #54; callers that build one by hand keep it.
+// The two groups are swapped where needed so that tip 0 is never in
+// split_tips ("outside" the canonical side) — the same invariant the Wagner
+// and pool paths have always relied on, and harmless because a split is an
+// unrooted bipartition whose two groups are interchangeable.
 ConstraintData build_constraint(
     const int* split_matrix, int n_splits, int n_tips);
 
@@ -89,6 +128,29 @@ void build_constraint_posthoc(
     int expected_score);
 
 // --- Node mapping and DFS timestamps ---
+
+// Does the edge above a node whose descendant tip set is `nd` separate
+// `together` from `apart`?  It does when the set covers every tip of
+// `together` and holds none of `apart`; the tips in neither group are free and
+// are not looked at.  With `apart` the exact complement of `together` the two
+// conditions force set equality, which is the exact-clade test this replaced.
+//
+// THE definition of "displays a constraint split", shared by every entry point
+// that has to decide it: the search/TBR mapping (map_constraint_nodes), the
+// Wagner build's own check (wagner_tree_displays_constraint, ts_wagner.cpp),
+// and the collapse pass's branch protection (ts_collapse_pool, ts_rcpp.cpp).
+// They must not drift apart: the stricter of any two would reject trees
+// another searches happily, or accept ones it will not move from.
+inline bool node_displays_split(
+    const uint64_t* nd, const uint64_t* together, const uint64_t* apart,
+    int n_words)
+{
+  for (int w = 0; w < n_words; ++w) {
+    if ((together[w] & ~nd[w]) != 0ULL) return false;  // a required tip missing
+    if ((apart[w] & nd[w]) != 0ULL) return false;      // an excluded tip present
+  }
+  return true;
+}
 
 // Find which internal node holds each constraint split in the current tree.
 // Must be called after each accepted move and at search init.

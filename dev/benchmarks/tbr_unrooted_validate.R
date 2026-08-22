@@ -25,8 +25,9 @@ runKernel <- function(tree, seed, unrooted) {
   list(tree = tr, len = TreeLength(tr, d$phy), sec = as.double(t["elapsed"]))
 }
 
-# Is `tree` canonical-unrooted-TBR clean? all_tbr at two rootings (covers all
-# break edges).  Expensive (~2x100k neighbours); call sparingly.
+# Is `tree` canonical-unrooted-TBR clean? all_tbr at two rootings; since #147
+# one rooting already covers every break edge, so the second is redundant but
+# harmless.  Expensive (~2x100k neighbours); call sparingly.
 isClean <- function(tree) {
   base <- TreeLength(tree, d$phy)
   best <- base

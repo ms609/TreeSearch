@@ -307,6 +307,55 @@ test_that("All characters saturated triggers warning", {
   expect_s3_class(result, "phyDat")
 })
 
+test_that("bitwShiftL overflow at >= 31 states errors clearly (#118)", {
+  # Pre-fix: bitwShiftL(1L, tip_states) silently returns NA for state codes
+  # >= 31, corrupting the Fitch score instead of erroring.
+  tree <- TreeTools::BalancedTree(8)
+  nChar <- c(rep(0L, 30), 1L) # a single 32-state character
+  expect_error(ParsSim(tree, nChar = nChar, nExtraSteps = 0L),
+               "at most 31 states")
+})
+
+test_that(".pars_sim_init_char() errors clearly when the tree cannot host the requested states (#99)", {
+  # Pre-fix: .safe_sample_idx(0) reached sample.int(0, 1), erroring
+  # opaquely ("invalid first argument" / "cannot take a sample larger than
+  # the population") instead of explaining why.
+  tree <- TreeTools::BalancedTree(2) # a single internal edge pair
+  expect_error(ParsSim(tree, nChar = c(0L, 0L, 1L), nExtraSteps = 0L),
+               "No candidate edges are available")
+})
+
+test_that("saturation caching reuses the step-loop result unchanged (#100)", {
+  # Pre-fix and post-fix must agree exactly: the fix only removes a
+  # redundant recompute, it must not change which characters are reported
+  # as saturated/exhausted or how many extra steps were placed.
+  tree <- TreeTools::BalancedTree(6)
+  set.seed(2024)
+  expect_warning(
+    result <- ParsSim(tree, nChar = c(6L), nExtraSteps = 12L),
+    "saturated"
+  )
+
+  expect_equal(attr(result, "saturated"), rep(TRUE, 6L))
+  expect_equal(attr(result, "steps_exhausted"), rep(TRUE, 6L))
+  expect_equal(attr(result, "extra_steps"), c(2L, 2L, 1L, 2L, 1L, 2L))
+})
+
+test_that("saturation caching invalidates on the character's last move (#100)", {
+  # A character whose most recent loop iteration APPLIED a move (rather than
+  # finding none) must not reuse a stale cached legal-edges result at
+  # return: its state changed after that result was computed. Deleting the
+  # `legal_cache_valid[char_idx] <- FALSE` invalidation line after applying
+  # a transition passes every other test in this file, but silently
+  # reports character 4 as unsaturated here when it is, in fact, saturated.
+  tree <- TreeTools::BalancedTree(6)
+  set.seed(2)
+  result <- ParsSim(tree, nChar = c(4L), nExtraSteps = 1L)
+
+  expect_equal(attr(result, "saturated"), c(FALSE, FALSE, FALSE, TRUE))
+  expect_equal(attr(result, "extra_steps"), c(0L, 0L, 0L, 1L))
+})
+
 # --- Profile parsimony tests ------------------------------------------------
 
 test_that("Profile mode produces valid phyDat", {

@@ -62,6 +62,21 @@ public:
   // Get all entries.
   const std::vector<PoolEntry>& all() const { return entries_; }
 
+  // Raise the retention ceiling; never lowers it, so entries already held can
+  // not be orphaned above the cap.
+  //
+  // Call this ONLY at the MPT-enumeration phase, where the pool is pure OUTPUT.
+  // During the replicate loop `max_size` is not a ceiling on what is *returned*
+  // but the size of the working set the search reads: fuse donors are
+  // `all().size()` (uncapped, and held under the pool mutex on the parallel
+  // path), conflict-guided sector selection calls compute_split_frequencies()
+  // over best-score entries once per replicate, and consensusConstrain calls
+  // extract_consensus_splits(). Raising it mid-loop would therefore change what
+  // the search DOES, not merely how much it keeps -- which is why the effort
+  // ladder raises it here, after the loop has finished, rather than scaling
+  // `poolMaxSize` itself.
+  void raise_max_size(int n) { if (n > max_size) max_size = n; }
+
   // Evict entries worse than best_score + suboptimal.
   void evict();
 

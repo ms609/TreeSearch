@@ -20,6 +20,14 @@ MaddisonSlatkin_clear_cache <- function() {
     invisible(.Call(`_TreeSearch_MaddisonSlatkin_clear_cache`))
 }
 
+quartet_expect <- function(splits, characters) {
+    .Call(`_TreeSearch_quartet_expect`, splits, characters)
+}
+
+nrqs_expect <- function(splits, characters) {
+    .Call(`_TreeSearch_nrqs_expect`, splits, characters)
+}
+
 #' Expected mutual information between two partitions
 #'
 #' Computes the mutual information expected purely by chance between two
@@ -27,7 +35,7 @@ MaddisonSlatkin_clear_cache <- function() {
 #' block sizes (marginals) of each partition are fixed but the items are
 #' associated at random.  Subtracting this baseline from an observed mutual
 #' information yields a chance-corrected ("adjusted") mutual information, as
-#' applied by [`SiteConcordance`]`(normalize = TRUE)`; it is most material for
+#' applied by [`SiteConcordance`]`(chanceCorrect = TRUE)`; it is most material for
 #' small or unbalanced partitions, where raw mutual information is appreciably
 #' inflated by chance agreement.
 #'
@@ -197,8 +205,8 @@ ts_driven_search <- function(contrast, tip_data, weight, levels, searchControl, 
     .Call(`_TreeSearch_ts_driven_search`, contrast, tip_data, weight, levels, searchControl, runtimeConfig, scoringConfig, constraintConfig, hsjConfig, xformConfig)
 }
 
-ts_collapse_pool <- function(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig = NULL, xformConfig = NULL, consSplitMatrix = NULL, consZero = NULL) {
-    .Call(`_TreeSearch_ts_collapse_pool`, edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix, consZero)
+ts_collapse_pool <- function(edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig = NULL, xformConfig = NULL, consSplitMatrix = NULL) {
+    .Call(`_TreeSearch_ts_collapse_pool`, edges, contrast, tip_data, weight, levels, scoringConfig, hsjConfig, xformConfig, consSplitMatrix)
 }
 
 ts_resample_search <- function(contrast, tip_data, weight, levels, bootstrap = FALSE, jackProportion = 2.0 / 3.0, maxReplicates = 5L, targetHits = 2L, tbrMaxHits = 1L, ratchetCycles = 3L, ratchetPerturbProb = 0.04, driftCycles = 0L, min_steps = integer(), concavity = -1.0, consSplitMatrix = NULL, consContrast = NULL, consTipData = NULL, consWeight = NULL, consLevels = NULL, consExpectedScore = 0L, infoAmounts = NULL, xpiwe = FALSE, xpiwe_r = 0.5, xpiwe_max_f = 5.0, obs_count = integer()) {
@@ -243,5 +251,9 @@ ts_tbr_diagnostics <- function(edge, contrast, tip_data, weight, levels, maxHits
 
 ts_ev_cache_key_probe <- function(edge, contrast, tip_data, weight, levels, concavity = -1.0, zero_active = FALSE, set_upweight = FALSE, bump_pattern_freq = FALSE) {
     .Call(`_TreeSearch_ts_ev_cache_key_probe`, edge, contrast, tip_data, weight, levels, concavity, zero_active, set_upweight, bump_pattern_freq)
+}
+
+ts_random_constrained_tree <- function(contrast, tip_data, weight, levels, consSplitMatrix = NULL) {
+    .Call(`_TreeSearch_ts_random_constrained_tree`, contrast, tip_data, weight, levels, consSplitMatrix)
 }
 

@@ -621,6 +621,11 @@ DrivenResult parallel_driven_search(
     return false;
   };
 
+  // Raise the retention ceiling for enumeration only.  `pool_out` is already
+  // the OUTPUT pool -- the shared search pool keeps its own `pool_max_size`, so
+  // fuse donors and sector selection are untouched by this.
+  pool_out.raise_max_size(params.enum_pool_max_size);
+
   if (pool_out.size() > 0 && pool_out.size() < pool_out.max_size) {
     TBRParams tp;
     tp.accept_equal = true;
