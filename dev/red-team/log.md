@@ -62,11 +62,9 @@ persistently-dry reputation leans on pre-tier rounds (areas 3 and 10 both do) ha
 
 ## ⚠ Round records have moved to GitHub Discussions — this file is closed to new entries
 
-**Area 15's three rounds of 2026-08-05/06 are deliberately NOT below.** They are the first
-records written under the new scheme, and they live in the repository's Discussions, one post
-per round under that area's category:
+Every round is now one post in its area's Discussions category, `NN-<area-name>`:
 
-<https://github.com/agent-issues/TreeSearch/discussions/categories/15-legacy-pure-r-search-api>
+<https://github.com/agent-issues/TreeSearch/discussions>
 
 Why the move: this file sits on a protected branch, so a finished round's record was hostage to
 a code review it has nothing to do with. Four completed rounds and 56 filed findings once sat
@@ -76,14 +74,19 @@ decouple the record from the merge.
 
 **Do not add new round entries here.** Post to the area's Discussions category instead. Title
 format `RT <date> - area <N> - <rung> (<Version>) - yield <n>`; first line of the body
-`<rung> (<Version>) | effort: <effort>`.
+`<rung> (<Version>) | effort: <effort> | <date>`.
 
-**`last_focus:` at the bottom is still live and still governs rotation.** Under the new scheme
-the next area is the *stalest* category rather than a pointer — but that ordering cannot be
-computed until every area has at least one discussion, and the backfill must post each area's
-most recent round **oldest-first** so `createdAt` reproduces true staleness. Only area 15 has
-been migrated. Until the rest are, `last_focus:` remains the rotation mechanism and must be
-kept current.
+**Migration complete as of 2026-08-06.** All 15 areas have a record: area 15's three rounds
+(#152-154), plus each other area's most recent round backfilled verbatim from this file
+(#158-171).
+
+**`last_focus:` is retired.** The next area is the one whose most recent Discussion has the
+oldest `createdAt`. That rests on an invariant — **creation order equals review-recency
+order** — which the backfill broke and discussion #184 restored: area 15's three records were
+posted before the other fourteen areas were backfilled, so by creation order the most recently
+reviewed area looked like the stalest one. Any future backfill or out-of-order re-post must
+restore the invariant the same way, with a marker record. The value below is left as a
+historical marker and is **not** to be updated.
 
 Everything below this line is the frozen historical record, newest first. **It stays**: eleven
 in-repo files and the `/red-team` skill cite `log.md` by path, and the `T-nnn` ids it carries
