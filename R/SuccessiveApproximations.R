@@ -108,12 +108,14 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
                     c(searchArgs, .KernelConstraintArgs(consArgs),
                       profileArgs))
 
-  if (result$converged && verbosity > 0) {
-    message("Successive approximations converged after ",
-            result$sa_iterations, " iteration(s).")
-  } else if (!result$converged) {
-    message("Stability not reached after ", result$sa_iterations,
-            " iteration(s).")
+  if (verbosity > 0) {
+    if (result$converged) {
+      message("Successive approximations converged after ",
+              result$sa_iterations, " iteration(s).")
+    } else {
+      message("Stability not reached after ", result$sa_iterations,
+              " iteration(s).")
+    }
   }
 
   # Reconstruct phylo from C++ edge matrix
