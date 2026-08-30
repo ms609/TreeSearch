@@ -286,7 +286,29 @@ much character reweighting a matrix needs, so a raised \code{targetHits} is take
 as the user's own signal that this one needs more.  Lowering \code{targetHits}
 does not make the ratchet shallower than its default depth (fewer cycles
 were slower to the optimum on every matrix tested), and setting
-\code{ratchetCycles} yourself overrides this entirely.}
+\code{ratchetCycles} yourself overrides this entirely.
+
+Setting \code{targetHits} yourself to at least twice its default goes one step
+further and, at \code{effort} rung 3 (\code{thorough}) or above, also deepens the
+per-replicate perturbation itself: more drifting, a larger reweighting kick,
+a second sectorial pass after the ratchet, and (internally) retention of
+near-optimal trees to fuse against.  Unlike the ratchet deepening above, this
+applies under any scoring regime, though it was measured only under equal
+weights.  It is aimed at datasets big or difficult enough that an ordinary
+search stops short of the optimum: in testing it found shorter trees on one
+4062-tip matrix, on all ten seeds tried across two runs, while from 20 to 173
+tips it found trees of the same length and simply took around 3.5 times as
+long -- so it is offered on this explicit signal rather than enabled by
+default.  It follows a \code{targetHits} that \emph{you} set, and only that: raising
+\code{effort} also raises \code{targetHits} from rung 5, but that is a change of budget
+rather than a statement about the dataset, and deepening the perturbation on
+top of it was measured to buy nothing.  Any of these values you set yourself
+is left untouched, and the trees returned are still only the best found.
+
+Note that the large-\code{targetHits} idiom for collecting the full set of
+most-parsimonious trees, above, therefore also engages this deeper search at
+those rungs; set \code{driftCycles}, \code{intraFuse} and so on yourself if you want
+the wider sampling without the extra per-replicate cost.}
 
 \item{maxSeconds}{Numeric: maximum wall-clock time in seconds for the
 search. When reached, the current replicate finishes and the search
