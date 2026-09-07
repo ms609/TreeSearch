@@ -11,7 +11,7 @@ ConcordanceTable(
   largeClade = 0,
   xlab = "Edge",
   ylab = "Character",
-  normalize = TRUE,
+  chanceCorrect = TRUE,
   plot = TRUE,
   marginSize = 0L,
   paintSize = 0L,
@@ -36,17 +36,20 @@ at edges whose descendants are both contain more than \code{largeClade} leaves.}
 
 \item{ylab}{Character giving a label for the y axis.}
 
-\item{normalize}{Controls how the \emph{expected} mutual information (the zero
-point of the scale) is determined.
+\item{chanceCorrect}{Sets the zero point of the scale.
 \itemize{
-\item \code{FALSE}: no chance correction; MI is scaled only by its maximum.
-\item \code{TRUE}: subtract the analytical expected MI for random association.
-\item \verb{<integer>}: subtract an empirical expected MI estimated from that
-number of random trees.
-}
-
-In all cases, 1 corresponds to the maximal attainable MI for the pair
-(\code{hBest}), and 0 corresponds to the chosen expectation.}
+\item If \code{FALSE}, zero corresponds to zero MI.
+\item If \code{TRUE}, zero is the value expected when each character's tokens are
+reassigned at random across the leaves, holding its state frequencies and the
+split sizes fixed: \code{QuartetConcordance()} computes this expectation exactly,
+whereas \code{ClusteringConcordance()} approximates it, accurately for large trees
+(~200+ taxa) but neglecting correlation between splits.
+\item If a positive integer \code{n}, the expectation is sampled over \code{n} random
+reassignments of each character's tokens (\code{QuartetConcordance()}), or against
+\code{n} uniformly random trees (\code{ClusteringConcordance()}).
+\emph{Hint: Clamp chance-corrected values to \eqn{[-1, 1]} before plotting with \code{\link[=QCol]{QCol()}} /
+\code{\link[=QACol]{QACol()}}}.
+}}
 
 \item{plot}{Logical specifying whether to draw the plot.}
 

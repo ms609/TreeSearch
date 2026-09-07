@@ -56,10 +56,10 @@ Imports:
   utils,
 Suggests:
   cluster,
+  Coreset,
   future,
   highs,
   knitr,
-  Coreset,
   phangorn (>= 2.2.1),
   pkgload,
   PlotTools,

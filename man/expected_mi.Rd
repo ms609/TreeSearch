@@ -22,7 +22,7 @@ partitions of the same \code{N} items, under the hypergeometric null in which th
 block sizes (marginals) of each partition are fixed but the items are
 associated at random.  Subtracting this baseline from an observed mutual
 information yields a chance-corrected ("adjusted") mutual information, as
-applied by \code{\link{SiteConcordance}}\code{(normalize = TRUE)}; it is most material for
+applied by \code{\link{SiteConcordance}}\code{(chanceCorrect = TRUE)}; it is most material for
 small or unbalanced partitions, where raw mutual information is appreciably
 inflated by chance agreement.
 }
