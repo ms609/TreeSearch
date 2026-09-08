@@ -107,11 +107,12 @@ SuboptimalTrees <- function(dataset, tree = NULL,
 #' @export
 Suboptimality <- function (trees, normalize = FALSE) {
   scores <- vapply(trees, attr, double(1), "score")
+  minScore <- min(scores)
   
   # Return:
   if (normalize) {
-    (scores - min(scores)) / min(scores)
+    (scores - minScore) / minScore
   } else {
-    scores - min(scores)
+    scores - minScore
   }
 }
