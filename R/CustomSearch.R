@@ -1,3 +1,21 @@
+# Tip labels for a `TreeSearch()`/`Ratchet()`/`Jackknife()` `dataset`, whether
+# it is a prepared `ParsimonyData` object or a raw `phyDat` dataset consumed
+# by a custom `TreeScorer`.
+.SearchTipLabels <- function(dataset) {
+  if (is.ParsimonyData(dataset)) dataset[["tip.label"]] else names(dataset)
+}
+
+# Shared deprecation notice for the `InitializeData`/`CleanUpData` hooks.
+.DeprecatedSearchHooks <- function(callingFn) {
+  .Deprecated(
+    msg = paste0(
+      "In `", callingFn, "()`: `InitializeData`/`CleanUpData` are deprecated ",
+      "and will be removed in a future release.  Prepare `dataset` yourself ",
+      "(e.g. with `PrepareData()`) before calling `", callingFn, "()`; if ",
+      "your `TreeScorer` holds an external resource that needs releasing, ",
+      "use your own `on.exit()`."))
+}
+
 #' @describeIn TreeSearch Tree search from edge lists
 #' @param edgeList a list containing the following:
 #' 
@@ -8,11 +26,12 @@
 #' - (optionally) score of the tree
 #' 
 #' - (optionally, if score provided) number of times this score has been hit
-#' @param dataset Data in format required by \code{InitializeData}.
+#' @param dataset Data in the format required by `TreeScorer`; the default
+#' [`EdgeListScore()`] requires a [`ParsimonyData`][PrepareData] object.
 #' @keywords internal
 #' @export
 EdgeListSearch <- function (edgeList, dataset,
-                            TreeScorer = MorphyLength,
+                            TreeScorer = EdgeListScore,
                             EdgeSwapper = RootedTBRSwap,
                             maxIter = 100, maxHits = 20, 
                             bestScore = NULL, stopAtScore = NULL, 
@@ -101,6 +120,8 @@ EdgeListSearch <- function (edgeList, dataset,
 #'
 #' Run standard search algorithms (\acronym{NNI}, \acronym{SPR} or \acronym{TBR})
 #' to search for a more parsimonious tree.
+#' For standard parsimony searches, [`MaximizeParsimony()`] is faster;
+#' use `TreeSearch()` when you need a custom `TreeScorer` or `EdgeSwapper`.
 #'  
 #' For detailed documentation of the "TreeSearch" package, including full
 #' instructions for loading phylogenetic data into R and initiating and
@@ -126,26 +147,30 @@ EdgeListSearch <- function (edgeList, dataset,
 #' Will be overridden if a passed function has an attribute `stopAtPlateau` set
 #' by `attr(FunctionName, "stopAtPlateau") <- TRUE`.
 #'
-#' @param InitializeData Function that sets up data object to prepare for tree search. 
-#'        The function will be passed the `dataset` parameter.
-#'        Its return value will be passed to `TreeScorer()` and `CleanUpData()`.
-#' @param CleanUpData Function to destroy data object on function exit.
-#'        The function will be passed the value returned by `InitializeData()`.
+#' @param InitializeData,CleanUpData Deprecated and will be removed in a
+#'        future release.  Prepare `dataset` yourself (e.g. with
+#'        [`PrepareData()`]) before
+#'        calling `TreeSearch()`, rather than supplying these hooks; and use
+#'        your own `on.exit()` if your `TreeScorer` holds an external resource
+#'        that needs releasing.
 #' @param TreeScorer function to score a given tree.
-#'        The function will be passed three parameters, corresponding to the 
-#'        `parent` and `child` entries of a tree's edge list, and a dataset.
+#'        The function will be passed three parameters, corresponding to the
+#'        `parent` and `child` entries of a tree's edge list, and `dataset`.
+#'        The default, [`EdgeListScore()`], requires `dataset` to be a
+#'        [`ParsimonyData`][PrepareData] object (equal weights, implied
+#'        weights or profile parsimony, according to how it was prepared).
 #'
-#' @param verbosity Numeric specifying level of detail to display in console: 
+#' @param verbosity Numeric specifying level of detail to display in console:
 #' larger numbers provide more verbose feedback to the user.
-#' @param \dots further arguments to pass to `TreeScorer()`, e.g. `dataset = `.
-#' 
+#' @param \dots further arguments to pass to `TreeScorer()`.
+#'
 #' @return
 #' `TreeSearch()` returns a tree, with an attribute `pscore` conveying its
 #' parsimony score.
 #' #" Note that the parsimony score will be inherited from the tree"s
 #' attributes, which is only valid if it was generated using the same
 #' `data` that is passed here.
-#' 
+#'
 #'
 #' @seealso
 #' \itemize{
@@ -158,35 +183,46 @@ EdgeListSearch <- function (edgeList, dataset,
 #' @examples
 #' data("Lobo", package="TreeTools")
 #' njtree <- TreeTools::NJTree(Lobo.phy)
+#' loboData <- PrepareData(Lobo.phy)
 #'
 #' ## Only run examples in interactive R sessions
 #' if (interactive()) {
-#'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = NNISwap)
-#'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = RootedSPRSwap)
-#'   TreeSearch(njtree, Lobo.phy, maxIter = 20, EdgeSwapper = TBRSwap)
+#'   TreeSearch(njtree, loboData, maxIter = 20, EdgeSwapper = NNISwap)
+#'   TreeSearch(njtree, loboData, maxIter = 20, EdgeSwapper = RootedSPRSwap)
+#'   TreeSearch(njtree, loboData, maxIter = 20, EdgeSwapper = TBRSwap)
+#'
+#'   # Implied weighting (concavity constant k = 10):
+#'   TreeSearch(njtree, PrepareData(Lobo.phy, concavity = 10), maxIter = 20)
 #' }
 #' @template MRS
 #' @family custom search functions
 #' @importFrom TreeTools RenumberTips
 #' @export
 TreeSearch <- function (tree, dataset,
-                        InitializeData = PhyDat2Morphy,
-                        CleanUpData    = UnloadMorphy,
-                        TreeScorer     = MorphyLength,
+                        InitializeData = NULL,
+                        CleanUpData    = NULL,
+                        TreeScorer     = EdgeListScore,
                         EdgeSwapper    = RootedTBRSwap,
                         maxIter = 100L, maxHits = 20L,
                         stopAtPeak = FALSE, stopAtPlateau = 0L,
                         verbosity = 1L, ...) {
-  # initialize tree and data
   if (dim(tree[["edge"]])[1] != 2 * tree[["Nnode"]]) {
     stop("tree must be bifurcating; try rooting with ape::root")
   }
-  tree <- RenumberTips(tree, names(dataset))
+  tree <- RenumberTips(tree, .SearchTipLabels(dataset))
   edgeList <- tree[["edge"]]
   edgeList <- RenumberEdges(edgeList[, 1], edgeList[, 2])
 
-  initializedData <- InitializeData(dataset)
-  on.exit(initializedData <- CleanUpData(initializedData))
+  if (!is.null(InitializeData) || !is.null(CleanUpData)) {
+    .DeprecatedSearchHooks("TreeSearch")
+    initializedData <- if (is.null(InitializeData)) dataset else
+      InitializeData(dataset)
+    if (!is.null(CleanUpData)) {
+      on.exit(initializedData <- CleanUpData(initializedData))
+    }
+  } else {
+    initializedData <- dataset
+  }
 
   bestScore <- attr(tree, "score")
   edgeList <- EdgeListSearch(edgeList, initializedData, TreeScorer = TreeScorer, 

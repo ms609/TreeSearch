@@ -20,9 +20,7 @@ on:
       - "**.R[dD]ata"
       - "**.Rpro*"
   pull_request:
-    branches:
-      - main
-      - master
+    branches: ["**"]
     paths-ignore:
       - "Meta**"
       - "memcheck**"
@@ -37,26 +35,157 @@ on:
 
 name: R-CMD-check
 
-jobs:
-  R-CMD-check:
-    runs-on: ${{ matrix.config.os }}
+# NB: there is deliberately NO workflow-level `concurrency`. Workflow-level
+# cancel-in-progress would kill the whole run (sense-check included) on every
+# new push. Instead, each EXPENSIVE job carries its own per-leg concurrency
+# group so superseded Windows/macOS work is cancelled, while the cheap
+# `sense-check` job has no concurrency and therefore always runs to completion
+# -- giving a per-commit "did this build?" signal even under rapid iteration.
 
+# Waves:
+#   sense-check -> arm (cheapest), always runs, never cancelled. Fast signal.
+#   core        -> Windows (+codecov) / R 4.1 / R devel; only if sense-check passed.
+#   shiny       -> EasyTrees shinytest2 suite, Windows; only if the app changed
+#                  and sense-check passed. Non-blocking (continue-on-error) until
+#                  its stability on CI is established.
+#   full        -> macOS x2 backstop; only once core is green.
+jobs:
+  # ---------------------------------------------------------------------------
+  # Wave 1: cheapest leg as a fail-fast sense-check. No concurrency group, so a
+  # rapid follow-up push does NOT cancel it -- each commit gets its own signal.
+  # ---------------------------------------------------------------------------
+  sense-check:
+    runs-on: ubuntu-24.04-arm
+    name: sense-check (ubuntu-24.04-arm, release)
+
+    env:
+      _R_CHECK_CRAN_INCOMING_: ${{ github.event_name == 'pull_request' }}
+      _R_CHECK_FORCE_SUGGESTS_: false # CRAN settings
+      R_COMPILE_AND_INSTALL_PACKAGES: 'never'
+      _R_CHECK_THINGS_IN_CHECK_DIR_: false
+      R_REMOTES_STANDALONE: true
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      R_REALLY_FORCE_SYMBOLS: true # Until R4.3
+      _R_CHECK_CRAN_INCOMING_USE_ASPELL_: false
+      # PINNED Posit PM snapshot, not `latest`.  The dependency cache key is a
+      # function of the resolved dependency versions, so `latest` misses the
+      # cache whenever any of ~110 dependencies gets a new CRAN release -- i.e.
+      # most days -- forcing a full re-download every time.  A fixed snapshot
+      # makes the cache stable for weeks, turning dependency setup into a
+      # restore.  Bleeding-edge dependencies are the R-devel leg's job (see
+      # `core`, which deliberately keeps `latest`); this leg exists to answer
+      # "did this commit build?" as fast as possible.  Bump the date when you
+      # want to pick up newer dependencies.
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/2026-07-30"
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Temporarily bump package version
+        run: |
+          old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
+          if [[ $(echo "$old_version" | tr -cd '.' | wc -c) -eq 2 ]]; then
+            new_version="${old_version}.9999"
+            sed -i "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+          fi
+        shell: bash
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      # No apt step: this leg needs no LaTeX.  `check-r-package@v2` defaults to
+      # args = c("--no-manual", "--as-cran") and build_args = "--no-manual", so
+      # the PDF manual is never built, and every vignette is
+      # `rmarkdown::html_vignette` (pandoc, already on the runner).  Installing
+      # texlive-latex-base + texlive-fonts-recommended cost ~45 s per run for
+      # nothing.  The `core` and `full` legs still install it, so a genuine
+      # LaTeX dependency would still be caught downstream.
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: |
+            check
+          # shinytest2 pulls chromote, whose declared system requirement is
+          # `chromium`.  On Linux that makes pak add the ppa:xtradeb/apps PPA,
+          # re-run `apt-get update`, and install Chromium and its GTK/X11
+          # dependency tree -- ~70 s on every run, including cache hits, since
+          # the sysreqs pass is not cached.  Nothing here needs it.
+          #
+          # Coreset isn't on CRAN, so without this pak fetches and compiles it
+          # from source on every cache miss -- ~67 s. The URL is a prebuilt
+          # binary for this exact platform/R combo (aarch64, release),
+          # published by ms609/packages' build-maxmin workflow.
+          # 
+          # Remove ms609/TreeTools when >=2.4.1 reaches CRAN (exptd 2026-09-16)
+          extra-packages: |
+            shinytest2=?ignore
+            url::https://ms609.github.io/packages/bin/linux/aarch64-release/Coreset_latest.tar.gz
+
+      - name: Check package
+        uses: r-lib/actions/check-r-package@v2
+
+      - name: Notify on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 186,
+              body: 'Scheduled workflow has failed: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            });
+
+  # ---------------------------------------------------------------------------
+  # Detect whether the EasyTrees app changed, to gate the (expensive) shiny job.
+  # Workflow-level `paths` cannot be combined with a job `needs:`, so filter here
+  # and expose the result as an output the shiny job reads in its `if:`.
+  # ---------------------------------------------------------------------------
+  changes:
+    runs-on: ubuntu-latest
+    name: detect app changes
+    outputs:
+      shiny: ${{ steps.filter.outputs.shiny }}
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            shiny:
+              - 'inst/Parsimony/**'
+              - '.github/workflows/R-CMD-check.yml'
+
+  # ---------------------------------------------------------------------------
+  # Wave 2: Windows (+codecov), R 4.1, R devel. Runs only if the sense-check
+  # passed. Per-leg concurrency so a superseding push cancels in-flight legs.
+  # ---------------------------------------------------------------------------
+  core:
+    needs: sense-check
+    runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    concurrency:
+      group: ${{ github.workflow }}-core-${{ matrix.config.os }}-${{ matrix.config.r }}-${{ github.ref }}
+      cancel-in-progress: true
 
     strategy:
       fail-fast: false
       matrix:
         config:
           - {os: windows-latest, r: 'release'}
-          - {os: macOS-latest, r: 'release'}
-          - {os: macos-15-intel, r: 'release'} # Until Intel architecture retired 2027-11
-          - {os: ubuntu-24.04-arm, r: "release", rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
           - {os: ubuntu-24.04, r: '4.1', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"} # Until TreeDist can slough phangorn
-          - {os: ubuntu-24.04, r: 'release', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
-          - {os: ubuntu-24.04, r: 'devel', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
+          - {os: ubuntu-24.04-arm, r: 'devel', rspm: "https://packagemanager.posit.co/cran/__linux__/noble/latest"}
 
     env:
-      _R_CHECK_CRAN_INCOMING_: true # Seemingly not set by --as-cran
+      _R_CHECK_CRAN_INCOMING_: ${{ github.event_name == 'pull_request' }}
       _R_CHECK_FORCE_SUGGESTS_: false # CRAN settings
       R_REALLY_FORCE_SYMBOLS: true # Until R4.3
       R_COMPILE_AND_INSTALL_PACKAGES: 'never'
@@ -67,8 +196,8 @@ jobs:
 
     steps:
       - name: Checkout git repo
-        uses: actions/checkout@v5
-        
+        uses: actions/checkout@v6
+
       - name: Temporarily bump package version
         run: |
           old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
@@ -87,25 +216,11 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
-        
+
       - name: Install apt packages
         if: runner.os == 'Linux'
         run: |
           sudo apt-get install texlive-latex-base texlive-fonts-recommended
-          
-      - name: Install brew packages
-        if: runner.os == 'macOS'
-        run: |
-          brew install libgit2 xquartz ghostscript
-
-      - name: Set up R dependencies
-        uses: r-lib/actions/setup-r-dependencies@v2
-        if: runner.os != 'Windows'
-        with:
-          needs: |
-            check
-          extra-packages: |
-            phangorn=?ignore-before-r=4.1.0
 
       - name: Set up R dependencies (covr)
         uses: r-lib/actions/setup-r-dependencies@v2
@@ -114,6 +229,43 @@ jobs:
           needs: |
             check
             coverage
+          # Coreset url:: -- this is the Windows leg, so it cannot use the Linux
+          # tarball the `runner.os != 'Windows'` step below selects. Without a
+          # url:: reference the solve fails outright ("Can't find package called
+          # Coreset"): pak does not read `Additional_repositories`, so the drat's
+          # indexed contrib/ layout is invisible to it. See ms609/packages'
+          # tools/publish-maxmin.R, which publishes this flat alias for exactly
+          # this purpose.
+          extra-packages: |
+            url::https://ms609.github.io/packages/bin/windows/Coreset_latest.zip
+          # install-pandoc must stay explicit -- see the long note in
+          # agent-check.yml's windows leg. Auto-detect runs a second, fresh
+          # `pak::pkg_deps(".")` solve that cannot see extra-packages, so it
+          # fails on Coreset by name; the branch only fires when pandoc is off
+          # PATH, which is why only the non-Linux legs hit it.
+          install-pandoc: true
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        if: runner.os != 'Windows'
+        with:
+          needs: |
+            check
+          # highs >= 1.13 calls base R's `%||%` (added in R 4.4.0) while still
+          # declaring `R (>= 4.0.0)`, so it errors on our R 4.1 leg with
+          # "could not find function '%||%'". Pin the last good version there
+          # until upstream fixes its declared R dependency (already done on
+          # their dev branch). Remove once a fixed highs reaches CRAN.
+          # shinytest2=?ignore: see the note on the sense-check leg -- its
+          # chromium sysreq costs ~70 s of apt per run and no Linux leg needs it.
+          # Coreset url:: -- see the note on the sense-check leg: a prebuilt
+          # binary from ms609/packages' build-maxmin workflow, picked per
+          # this matrix's (arch, R version) combo (x86_64+4.1 vs aarch64+devel).
+          extra-packages: |
+            phangorn=?ignore-before-r=4.1.0
+            shinytest2=?ignore
+            ${{ matrix.config.r == '4.1' && 'url::https://ms609.github.io/packages/bin/linux/x86_64-4.1/Coreset_latest.tar.gz' || 'url::https://ms609.github.io/packages/bin/linux/aarch64-devel/Coreset_latest.tar.gz' }}
+            ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
@@ -123,7 +275,163 @@ jobs:
         run: |
           covr::codecov()
         shell: Rscript {0}
-        
+
+      - name: Notify on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 186,
+              body: 'Scheduled workflow has failed: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            });
+
+  # ---------------------------------------------------------------------------
+  # EasyTrees shinytest2 suite. Runs on WINDOWS (the development platform) so the
+  # rendered-plot value snapshots stay consistent with the committed baselines --
+  # they hash the plot output, which is OS-dependent. Gated on both the app
+  # having changed AND the sense-check passing. `continue-on-error: true` keeps
+  # it NON-BLOCKING until its stability on CI is established (the AppDriver boot
+  # can flake, and Distribution/SearchLog run real, minutes-long computations).
+  # ---------------------------------------------------------------------------
+  shiny:
+    needs: [sense-check, changes]
+    if: needs.changes.outputs.shiny == 'true'
+    runs-on: windows-latest
+    name: EasyTrees shinytest2 (windows-latest)
+    continue-on-error: true
+
+    concurrency:
+      group: ${{ github.workflow }}-shiny-${{ github.ref }}
+      cancel-in-progress: true
+
+    env:
+      NOT_CRAN: true
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: |
+            check
+          # Coreset url:: -- same reason as the core Windows leg. Added
+          # pre-emptively: this job was skipped in the run that diagnosed the
+          # failure (it is gated on `detect app changes`), so unlike the core leg
+          # it is not yet observed failing -- but it resolves the same
+          # `needs: check` Suggests on the same platform, so it would.
+          extra-packages: |
+            local::.
+            url::https://ms609.github.io/packages/bin/windows/Coreset_latest.zip
+          # install-pandoc explicit for the same reason as the core Windows leg
+          # (auto-detect's `pak::pkg_deps(".")` solve cannot see extra-packages).
+          # `false` here: this job runs shinytest2, not vignettes.
+          install-pandoc: false
+
+      - name: Run EasyTrees shinytest2 suite
+        run: |
+          shinytest2::test_app("inst/Parsimony")
+        shell: Rscript {0}
+
+      - name: Upload snapshot diffs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shinytest2-snapshots
+          path: inst/Parsimony/tests/testthat/_snaps/**/*.new.*
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ---------------------------------------------------------------------------
+  # Wave 3 (backstop): the expensive macOS legs. Only runs once the core wave is
+  # green, which in practice is "about to merge". macOS is ~10x runner-minutes,
+  # so keeping it off every push is the big save.
+  # ---------------------------------------------------------------------------
+  full:
+    needs: core
+    runs-on: ${{ matrix.config.os }}
+    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+
+    concurrency:
+      group: ${{ github.workflow }}-full-${{ matrix.config.os }}-${{ matrix.config.r }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: macOS-latest, r: 'release'}
+          - {os: macos-15-intel, r: 'release'} # Until Intel architecture retired 2027-11
+
+    env:
+      _R_CHECK_CRAN_INCOMING_: ${{ github.event_name == 'pull_request' }}
+      _R_CHECK_FORCE_SUGGESTS_: false # CRAN settings
+      R_REALLY_FORCE_SYMBOLS: true # Until R4.3
+      R_COMPILE_AND_INSTALL_PACKAGES: 'never'
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      RSPM: ${{ matrix.config.rspm }}
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Temporarily bump package version
+        run: |
+          old_version=$(grep "Version:" DESCRIPTION | awk '{print $2}')
+          if [[ $(echo "$old_version" | tr -cd '.' | wc -c) -eq 2 ]]; then
+            new_version="${old_version}.9999"
+            if [[ "$RUNNER_OS" == "macOS" ]]; then
+              sed -i "" "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+            else
+              sed -i "s/Version: .*/Version: ${new_version}/" DESCRIPTION
+            fi
+          fi
+          echo "Current package version is now: $(grep "Version:" DESCRIPTION | awk '{print $2}')"
+        shell: bash
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+
+      - name: Install brew packages
+        run: |
+          brew install libgit2 xquartz ghostscript
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: |
+            check
+          # Coreset url:: -- same mechanism as the Windows and Linux legs, picked
+          # per architecture (macOS-latest is arm64; macos-15-intel is x86_64).
+          # Added pre-emptively and NOT yet observed failing: this job is
+          # `needs: core`, so it was skipped while the Windows leg was red.
+          # Fixing that leg unskips this one, which would then hit the identical
+          # unresolvable-Suggests error -- note `_R_CHECK_FORCE_SUGGESTS_: false`
+          # does not help, since it governs R CMD check, not pak's solve.
+          extra-packages: |
+            ${{ matrix.config.os == 'macos-15-intel' && 'url::https://ms609.github.io/packages/bin/macosx/big-sur-x86_64/Coreset_latest.tgz' || 'url::https://ms609.github.io/packages/bin/macosx/big-sur-arm64/Coreset_latest.tgz' }}
+          # install-pandoc explicit for the same reason as the Windows legs; also
+          # pre-emptive, since whether a macOS runner ships pandoc on PATH is
+          # exactly the condition that decides whether the bad branch fires.
+          install-pandoc: true
+
+      - name: Check package
+        uses: r-lib/actions/check-r-package@v2
+
       - name: Notify on failure
         if: failure() && github.event_name == 'schedule'
         uses: actions/github-script@v7

@@ -1,3 +1,7 @@
+# This script is retained to document how `profiles` was constructed.
+# preorder_morphy_by_char was deprecated in TreeSearch 2.0
+stopifnot(packageVersion("TreeSearch") < "2")
+
 library("TreeTools", quietly = TRUE)
 library("TreeSearch")
 nTip <- 9

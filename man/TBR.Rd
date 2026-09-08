@@ -77,8 +77,7 @@ to the rearranged \code{parent} and \code{child} parameters.
 \details{
 Branch lengths are not (yet) supported.
 
-All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
-\link[ape:multi2di]{ape::multi2di} may help.
+All nodes in a tree must be bifurcating; \link[TreeTools:MakeTreeBinary]{TreeTools::MakeTreeBinary} may help.
 }
 \section{Functions}{
 \itemize{
@@ -96,8 +95,8 @@ tree <- rtree(20, br=NULL)
 TBR(tree)
 }
 \references{
-The \acronym{TBR} algorithm is summarized in
-\insertRef{Felsenstein2004}{TreeSearch}
+\insertCite{Felsenstein2004}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
 \code{\link[=RootedTBR]{RootedTBR()}}: useful when the position of the root node should be retained.

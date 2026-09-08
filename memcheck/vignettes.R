@@ -1,4 +1,4 @@
-# Code to be run with  
-#   R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < tests/thisfile.R
-# First build and install the package.
-devtools::build_vignettes(install = FALSE)
+# Run with:
+#   R -d "valgrind --tool=memcheck --leak-check=full" --vanilla < memcheck/vignettes.R
+# Package must be installed first.
+pkgdown::build_articles(preview = FALSE)

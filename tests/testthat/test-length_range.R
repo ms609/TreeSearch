@@ -1,5 +1,6 @@
 test_that("Deprecation", {
-  expect_equal(MinimumLength(1:3), expect_warning(MinimumSteps(1:3)))
+  expect_warning(ms <- TreeSearch:::MinimumSteps(1:3))
+  expect_equal(MinimumLength(1:3), ms)
 })
 
 test_that("Step counts are correctly calculated", {
@@ -30,27 +31,13 @@ test_that("Step counts are correctly calculated", {
   dudTwo <- TreeTools::StringToPhyDat("{-1}{-2}{-3}2233", letters[1:7])
   expect_equal("{-1}{-2}{-3}2233", TreeTools::PhyDatToString(PrepareDataIW(dudTwo)))
   
-  morphyObj <- SingleCharMorphy("{-1}{-2}{-3}2233")
-  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
-  morphyObj <- UnloadMorphy(morphyObj)
-  
-  owch2 <- "{-1}{-2}22{-3}33"
-  tr2 <- ape::read.tree(text=("(a, ((b, (c, d)), (e, (f, g))));"))
-  # PlotCharacter(tr2, StringToPhyDat(owch2, letters[1:7]))
-  
-  
-  morphyObj <- SingleCharMorphy(owch2)
-  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(7), morphyObj), 1)
-  morphyObj <- UnloadMorphy(morphyObj)
-  
+  # {-,X} ambiguity-token TreeLength scoring is engine-internal correctness;
+  # it lives in test-ts-na-ambig.R (Tier 2), not this Tier-1 API file.
   owch3 <- "-1-222-333"
   tr3 <- ape::read.tree(text=("((a1, a2), (((b1, b2), (c, d)), ((e1, e2), (f, g))));"))
-  # PlotCharacter(tr3, StringToPhyDat(owch3, TipLabels(tr3)))
-  
-  morphyObj <- SingleCharMorphy(owch3)
-  expect_equal(MorphyTreeLength(TreeTools::PectinateTree(10), morphyObj), 2)
-  expect_equal(MorphyTreeLength(tr3, morphyObj), 2)
-  morphyObj <- UnloadMorphy(morphyObj)
+  owch3Dat <- TreeTools::StringToPhyDat(owch3, TipLabels(tr3))
+  expect_equal(2, TreeLength(TreeTools::PectinateTree(TipLabels(tr3)), owch3Dat))
+  expect_equal(2, TreeLength(tr3, owch3Dat))
   
   expect_equal(2, MinimumLength("-{-1}{-2}{-3}2233"))
   expect_equal(1, MinimumLength("--{-1}{-2}{-3}2233"))
@@ -94,6 +81,17 @@ test_that("MaximumLength() edge cases are handled correctly", {
   expect_equal(MaximumLength("001122{12}"), 4)
   expect_equal(MaximumLength("0123 0123 0123 ????"), 3 * 3)
   expect_equal(MaximumLength( "00112233{01}{23}{012}?"), 3 + 3 + 1)
+})
+
+test_that("MaximumLength() default matches MinimumLength (RTS-007)", {
+  # The generic's documented default was `compress = TRUE`, but S3 dispatch
+  # used the method default (`FALSE`), so the per-character (uncompressed)
+  # result was returned. Align the signature with the actual behaviour and
+  # with MinimumLength().
+  expect_identical(formals(MaximumLength)$compress, FALSE)
+  pd <- inapplicable.phyData[[1]]
+  expect_length(MaximumLength(pd), length(attr(pd, "index")))
+  expect_length(MaximumLength(pd), length(MinimumLength(pd)))
 })
 
 test_that("MaximumLength() handles inapplicable tokens", {
@@ -159,22 +157,22 @@ test_that("MaximumLength() handles many states (>8) without overflow", {
   # This should complete without error (the specific result is secondary)
   # 10 distinct character states (powers of 2 for bit representation)
   manyStates <- c(1, 2, 4, 8, 16, 32, 64, 128, 256, 512)
-  expect_silent(result <- MaximumLength.numeric(manyStates))
+  expect_silent(result <- TreeSearch:::MaximumLength.numeric(manyStates))
   expect_equal(result, 9)  # max steps for 10 distinct tokens
   
   # Test with combination of states including inapplicable (0)
   manyStatesWithInapp <- c(0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 0)
-  expect_silent(result <- MaximumLength.numeric(manyStatesWithInapp))
+  expect_silent(result <- TreeSearch:::MaximumLength.numeric(manyStatesWithInapp))
   expect_equal(result, 9)  # 9 steps + 0 extra for inapplicable regions
   
   # Test with large combined token value (all 10 states present in one tip)
   # This is the scenario that triggered #203
   # 1 = only state 0, 1023 = all states 0-9 combined (2^10 - 1)
   largeToken <- c(1, 1023)
-  expect_silent(result <- MaximumLength.numeric(largeToken))
+  expect_silent(result <- TreeSearch:::MaximumLength.numeric(largeToken))
   expect_equal(result, 0)  # state 0 is subset of 1023, so no extra steps needed
   
-  expect_error(expect_warning(MaximumLength.numeric(2 ^ (0:31))),
+  expect_error(expect_warning(TreeSearch:::MaximumLength.numeric(2 ^ (0:31))),
                "does not support more than 30 character states")
 })
 

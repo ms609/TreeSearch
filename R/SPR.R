@@ -64,16 +64,15 @@ SPRWarning <- function (parent, child, error) {
 #' \code{RootIrrelevantSPR} will search tree space more efficiently in these cases.
 #' Branch lengths are not (yet) supported.
 #'
-#' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
-#' [ape::multi2di] may help.
+#' All nodes in a tree must be bifurcating; [TreeTools::MakeTreeBinary] may help.
 #'
 #' @inheritParams TBR
 #' @param edgeToBreak the index of an edge to bisect, generated randomly if not specified.
 #' @param mergeEdge the index of an edge on which to merge the broken edge.
 #' @return This function returns a tree in \code{phyDat} format that has undergone one \acronym{SPR} iteration.
 #' 
-#' @references The \acronym{SPR} algorithm is summarized in
-#'  \insertRef{Felsenstein2004}{TreeSearch}
+#' @references \insertCite{Felsenstein2004}{TreeSearch}
+#' \insertAllCited{}
 #' 
 #' @author Martin R. Smith
 #' 
@@ -104,8 +103,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
     unique(unlist(lapply(which(notDuplicateRoot), AllSPR,
       parent = parent, child = child, nEdge = nEdge, 
       notDuplicateRoot = notDuplicateRoot),
-      recursive = FALSE)) # TODO the fact that we need to use `unique` indicates that 
-                         #      we're being inefficient here.
+      recursive = FALSE))
   } else {
     newEdge <- SPRSwap(parent, edge[, 2], edgeToBreak = edgeToBreak,
                        mergeEdge = mergeEdge)
@@ -116,7 +114,7 @@ SPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
 }
 
 #' @rdname SPR
-#' @return `TBRMoves()` returns a list of all trees one SPR move away from
+#' @return `SPRMoves()` returns a list of all trees one SPR move away from
 #'  `tree`, with edges and nodes in preorder, rooted on the first-labelled tip.
 #' @export
 SPRMoves <- function (tree, edgeToBreak = integer(0)) UseMethod("SPRMoves")
@@ -160,7 +158,6 @@ SPRMoves.matrix <- function (tree, edgeToBreak = integer(0)) {
   unique(.all_spr(tree, edgeToBreak))
 }
 
-## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @inheritParams RearrangeEdges
 #' @param nEdge (optional) integer specifying the number of edges of a tree of
@@ -174,7 +171,6 @@ SPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge / 2L,
                      edgeToBreak = NULL, mergeEdge = NULL) {
   
   if (nEdge < 5) {
-    # TODO we need to re-root this tree...
     return(list(parent, child))
   }
   
@@ -364,7 +360,6 @@ RootedSPR <- function(tree, edgeToBreak = NULL, mergeEdge = NULL) {
   return (tree)
 }
 
-## TODO Do edges need to be pre-ordered before coming here?
 #' @describeIn SPR faster version that takes and returns parent and child parameters
 #' @return a list containing two elements, corresponding in turn to the rearranged parent and child parameters
 #' @export
@@ -382,8 +377,7 @@ RootedSPRSwap <- function (parent, child, nEdge = length(parent), nNode = nEdge 
     notDuplicateRoot <- .NonDuplicateRoot(parent, child, nEdge)
     return(unique(unlist(lapply(which(breakable), AllSPR,
       parent=parent, child=child, nEdge=nEdge, notDuplicateRoot=notDuplicateRoot),
-      recursive=FALSE))) # TODO the fact that we need to use `unique` indicates that 
-                         #      we're being inefficient here.
+      recursive=FALSE)))
   }
   
   rightSide <- DescendantEdges(edge = 1, parent, child, nEdge = nEdge)

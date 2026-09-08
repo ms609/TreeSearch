@@ -18,10 +18,7 @@ TaxonInfluence(
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{Optimal tree or summary tree (of class "phylo") or list of trees
 (of class "list" or "multiPhylo") against which results should be evaluated.
@@ -84,7 +81,7 @@ but are biased towards areas of uncertainty.
 It is possible that a set of trees contains all possible resolutions of a
 particular clade, and a single other topology in which that clade does not
 exist – essentially two distinct solutions, one (\emph{a}) which could be
-summarised with a summary tree that contains a polytomy, and another (\emph{b})
+summarized with a summary tree that contains a polytomy, and another (\emph{b})
 which could be summarized by a perfectly resolved tree.
 Neither of these scenarios is preferable under the principles of parsimony;
 but summary statistics (e.g. mean, median) will be strongly influenced by the
@@ -100,16 +97,18 @@ representative summary of comparisons between sets of trees.
 }
 
 \examples{
-#' # Load data for analysis in R
+# Load data for analysis in R
 library("TreeTools")
 data("congreveLamsdellMatrices", package = "TreeSearch")
 
 # Small dataset for demonstration purposes
 dataset <- congreveLamsdellMatrices[[42]][1:8, ]
+
+\donttest{ # The tree searches below take a few seconds to run
 bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
 
 # Calculate tip influence
-influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
+influence <- TaxonInfluence(dataset, maxReplicates = 2, verbosity = 0)
 
 # Colour tip labels according to their influence
 upperBound <- 2 * TreeDist::ClusteringEntropy(
@@ -123,25 +122,36 @@ bin <- cut(
 palette <- hcl.colors(nBin, "inferno")
 
 plot(bestTree, tip.color = palette[bin])
-PlotTools::SpectrumLegend(
-  "bottomleft",
-  palette = palette,
-  title = "Tip influence / bits",
-  legend = signif(seq(upperBound, 0, length.out = 4), 3),
-  bty = "n"
-)
+# SpectrumLegend() needs the PlotTools package (a Suggests)
+if (requireNamespace("PlotTools", quietly = TRUE)) {
+  PlotTools::SpectrumLegend(
+    "bottomleft",
+    palette = palette,
+    title = "Tip influence / bits",
+    legend = signif(seq(upperBound, 0, length.out = 4), 3),
+    bty = "n"
+  )
+}
+}
 }
 \references{
 \insertAllCited{}
 }
 \seealso{
 Other tree scoring:
+\code{\link[=CharacterHierarchy]{CharacterHierarchy()}},
 \code{\link[=CharacterLength]{CharacterLength()}},
 \code{\link[=ExpectedLength]{ExpectedLength()}},
+\code{\link[=HierarchyFromNames]{HierarchyFromNames()}},
 \code{\link[=IWScore]{IWScore()}},
 \code{\link[=LengthAdded]{LengthAdded()}},
+\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MinimumLength]{MinimumLength()}},
-\code{\link[=MorphyTreeLength]{MorphyTreeLength()}}
+\code{\link[=ParsSim]{ParsSim()}},
+\code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}},
+\code{\link[=TreeScore]{TreeScore()}},
+\code{\link[=WideSample]{WideSample()}}
 }
 \author{
 \href{https://smithlabdurham.github.io/}{Martin R. Smith}

@@ -27,9 +27,8 @@
 #' @return Returns a tree with class \code{phylo} (if \code{returnAll = FALSE}) or 
 #'         a set of trees, with class \code{multiPhylo} (if \code{returnAll = TRUE}).
 #'
-#' @references
-#' The algorithm is summarized in
-#'  \insertRef{Felsenstein2004}{TreeSearch}
+#' @references \insertCite{Felsenstein2004}{TreeSearch}
+#' \insertAllCited{}
 #' 
 #' 
 #' @examples
@@ -140,7 +139,6 @@ NNISwap <- function (parent, child, nTips = (length(parent) / 2L) + 1L,
   RenumberEdges(parent, child)
 }
 
-## TODO use RenumberList
 #' Double NNI
 #' 
 #' Returns the edge parameter of the two trees consistent with the speficied \acronym{NNI} rearrangement

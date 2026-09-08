@@ -5,12 +5,14 @@
 #' 
 #' @param x Character vector.
 #' @param maxCluster Integer specifying maximum number of clusters to consider.
-#' @return `NameClusters()` returns an integer assigning each element of `x`
-#' to a cluster, with an attribute `med` specifying the median string in each 
+#' @return `ClusterStrings()` returns an integer assigning each element of `x`
+#' to a cluster, with an attribute `med` specifying the median string in each
 #' cluster, and `silhouette` reporting the silhouette coefficient of the optimal
-#' clustering.  Coefficients < 0.5 indicate weak structure, and no clusters are
-#' returned.  If the number of unique elements of `x` is less than `maxCluster`,
-#' all occurrences of each entry are assigned to an individual cluster.
+#' clustering.  Coefficients < 0.5 indicate weak structure, in which case all
+#' elements of `x` are assigned to a single cluster.  If the number of unique
+#' elements of `x` is less than `maxCluster`, all occurrences of each entry
+#' are assigned to an individual cluster instead, with `silhouette` reported
+#' as `NA`.
 #' 
 #' @examples
 #' ClusterStrings(c(paste0("FirstCluster ", 1:5),
@@ -18,8 +20,6 @@
 #'                  paste0("AnotherCluster_", letters[1:6])))
 #' @template MRS
 #' @importFrom utils adist
-#' @importFrom cluster pam silhouette
-#' @importFrom protoclust protoclust
 #' @importFrom stats as.dist cutree
 #' @family utility functions
 #' @export
@@ -27,34 +27,37 @@ ClusterStrings <- function (x, maxCluster = 12) {
   if (maxCluster < 2L) {
     stop("`maxCluster` must be at least two.")
   }
+  if (!requireNamespace("cluster", quietly = TRUE)) {
+    stop("Package \"cluster\" is required for ClusterStrings().\n", # nocov
+         "Install it with: install.packages(\"cluster\")", call. = FALSE) # nocov
+  }
+  if (!requireNamespace("protoclust", quietly = TRUE)) {
+    stop("Package \"protoclust\" is required for ClusterStrings().\n", # nocov
+         "Install it with: install.packages(\"protoclust\")", call. = FALSE) # nocov
+  }
   
   if (length(unique(x)) < maxCluster) {
     nom <- unique(x)
-    structure(match(x, nom), "med" = nom)
+    structure(match(x, nom), "med" = nom, silhouette = NA_real_)
   } else {
     possibleClusters <- 2:maxCluster
     hSil <- pamSil <- -99
     dists <- adist(x) # approximate string distance
-    
-    nMethodsChecked <- 2
-    methInc <- 1 / nMethodsChecked
-    nK <- length(possibleClusters)
-    kInc <- 1 / (nMethodsChecked * nK)
-    
+
     pamClusters <- lapply(possibleClusters, function (k) {
-      pam(dists, k = k)
+      cluster::pam(as.dist(dists), k = k)
     })
     pamSils <- vapply(pamClusters, function (pamCluster) {
-      mean(silhouette(pamCluster)[, 3])
+      mean(cluster::silhouette(pamCluster)[, 3])
     }, double(1))
     bestPam <- which.max(pamSils)
     pamSil <- pamSils[bestPam]
     pamCluster <- pamClusters[[bestPam]][["clustering"]]
     
-    hTree <- protoclust(as.dist(dists))
+    hTree <- protoclust::protoclust(as.dist(dists))
     hClusters <- lapply(possibleClusters, function (k) cutree(hTree, k = k))
     hSils <- vapply(hClusters, function (hCluster) {
-      mean(silhouette(hCluster, dists)[, 3])
+      mean(cluster::silhouette(hCluster, dists)[, 3])
     }, double(1))
     bestH <- which.max(hSils)
     hSil <- hSils[bestH]
@@ -62,12 +65,13 @@ ClusterStrings <- function (x, maxCluster = 12) {
     
     bestCluster <- c("none", "pam", "hmm")[which.max(c(0.5, pamSil, hSil))]
     
-    clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster, 1)
-    
+    clustering <- switch(bestCluster, pam = pamCluster, hmm = hCluster,
+                         rep(1L, length(x)))
+
     medians <- vapply(seq_len(max(clustering)),
                       function (i) {
                         these <- clustering == i
-                        x[these][which.min(colSums(dists[these, these]))]
+                        x[these][which.min(colSums(dists[these, these, drop = FALSE]))]
                       }, character(1))
     
     structure(clustering,

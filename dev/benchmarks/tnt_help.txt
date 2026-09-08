@@ -1,0 +1,431 @@
+
+PISH (Phylogenetic Inference SHell)
+
+Reading from C:\Users\pjjg18\GitHub\TreeSearch\dev\benchmarks\helpdump.run 
+Running C:\Users\pjjg18\GitHub\TreeSearch\dev\benchmarks\helpdump.run with argu
+ 
+ 
+XMULT
+    Run multiple replications, using sectorial searches, drifting,  ratchet 
+    and fusing combined.  Options are: 
+      hits N             produce N hits to best length and stop 
+      replications N     for each hit, search initially with N replications 
+      [no]targetscore N  search until score N found (only with fusing) 
+      [no]update         do not update targetscore 
+      [no]giveupscore N  give up search as soon as score N found 
+      [no]rss            use random sectorial searches (settings with 
+                         sectsch:options) 
+      [no]css            use constraint sectorial searches (settings with 
+                         sectsch:options) 
+      [no]xss            use exclusive sectorial searches (settings with 
+                         sectsch:options) 
+      [no]fuse           use fusing (settings with tfuse:options) 
+      [no]gfuse N        every N hits, fuse all trees (=score check) 
+      [no]dumpfuse       if fusing fails to produce trees of target score, 
+                         dump the trees produced by fusing (may prevent 
+                         "clogging" of subsequent fuses by keeping only the 
+                         most distinct trees) 
+      [no]rebuild N      use N cycles of rebuilding (other settings with  
+                         "rebuild: options;"). 
+      [no]drift N        use N cycles of drifting (settings with drif:options) 
+      [no]ratchet N      use N cycles of ratchet (settings with rat:options) 
+      hold N             for ratchet, drifting, or rebuilding, save up to N 
+                         trees per initial replication (default = 1). 
+      [no]autoconst N    use consensus of previous run and initial stages of 
+                         current as constraint for initial stages. 1=previous 
+                         and wagner, 2=previous and SPR, 3=previous and TBR.  
+                         The first replication of a new hit is never 
+                         constrained (i.e. hits are totally independent). 
+                         Note that level=2 defaults to 1 when "skipspr" 
+                         is on. 
+      [no]xmix           after unsuccesful fusing, start a new set of  
+                         replications as autoconstrained (otherwise, don't) 
+      [no]prvmix         if trees existed in memory before running xmult, use 
+                         last one to autoconstrain first xmult replication 
+      [no]consense N     consense untill consensus is stabilized N times 
+      conbase N          base hits to check for consensus stabilizations 
+                         (larger numbers make more reliable estimations) 
+      confactor N        factor to increase number of hits to check consensus 
+                         stabilization (10-100, larger numbers: more reliable) 
+      conmax N           maximum new hits to recheck consensus (default=12) 
+      [no]keepall        keep trees from all replications.  This has a differen
+                         meaning when "hits" is 1 (=default) and when "hits" >1
+                         When "hits" = 1, it is trees from each of the RAS + TB
+                         SS or DFT or RAT, in addition to the trees resulting f
+                         fusing those.  When "hits" > 1, then it means the tree
+                         resulting from fusing the initial starting trees for e
+                         of starting points.  Thus, to find N trees, each resul
+                         from S starting points (RAS+TBR+etc) and fusing, use 
+                         "xmult = hit N noupdate rep S keepall". 
+      [no]retouch N      before trying new replications, repeat sectorial 
+                         search and ratchet/drifting 
+      level N            set level of search (0-10). Use 0-2 for easy data 
+                         sets, 2-5 for medium, above 5 for difficult. If N  
+                         followed by a number T, set level for T taxa; otherwis
+                         set level for currently active taxa. 
+      chklevel N         check search parameters during run, every N hits. 
+                         The parameters are increased or decreased, starting 
+                         from user settings.  If N is preceded by +F (between 
+                         0 and 2), the entire level is changed by F. If N is 
+                         preceded by -, user settings are starting point 
+      [no]multiply       after hitting target score, find additional trees by 
+                         fusing suboptimal with optimal trees (default = yes). 
+      [no]verbose        produce verbose reports 
+      [no]hybrid         use hybridization; this can be used jointly with  
+                         tree-fusing.  Number of hybridizations, rounds, sample
+                         size, and unsuccesful rounds to stop, are set with 
+                         the "tfuse" command.  When combined with "picktype", 
+                         a number x F can follow "hybrid" --this is the factor 
+                         to multiply the number of replications if "hybrid" is 
+                         chosen instead of "fuse".  Fusing normally needs fewer
+                         trees as input (it is for more structured data sets), 
+                         when "pick" is used, genetic algorithm is determined a
+                         run time, thus user cant't predict ahead of time which
+                         genetic algorithm will be used.  As example, with "pic
+                         hybrid x4 repl 5", if fusing is picked, then it will u
+                         (initially, at least) 5 replications for fusing; if  
+                         hybridization is picked, then it will use 20 replicati
+      [no]picktype N     use either fusing or hybridization, choosing with  
+                         threshold N (see under "tfuse"). This uses only one 
+                         type of genetic algorithm; if you want both to be used
+                         just set them both.  If using "verbose", then choice i
+                         indicated on screen. 
+      [no]hfuse N        every N hits to minimum length, hybridize all resultin
+                         trees as an extra check for optimality. 
+      ras,cas,ias,       select type of addition sequence for the Wagner trees 
+          sas,fas        not specified, the one last used with "mult" is used).
+    Options are set with "xmult:options;" or "xmult=options;" (using 
+    ":" only settings are changed; "=" runs as well). With "xmult:;" 
+    current settings are displayed.  If consensing, / followed by a taxon list 
+    removes the specified taxa from the consensus (this must follow all the 
+    other options).  If css, rss, and xss are specified css is done first, 
+    then rss, and xss last.  Rebuilding, ratchet, and drifting (in that order) 
+    always follow sectorial searches.  Global hybridization and/or tree-fusing 
+    are done last (although they may be done as part of rebuilding, ratchet,  
+    or drifting). 
+ 
+SECTSCH
+    Do sectorial-search, starting from pre-existing trees. Options are: 
+    For determining choice of sectors: 
+      rss          do random sector selections 
+      css          do constraint-based selections 
+      [no]xss N+R  do N exclusive (i.e. non-overlapping) sector selections, 
+                   covering all tree, and analyze each; repeat process R 
+                   times or rounds (after the last one, do global TBR). 
+                   If R is followed by -G, then global TBR is done every 
+                   G rounds (and after last one).  Using B-E instead of N 
+                   division starts at B and ends at E (increasing or 
+                   decreasing, depending on whether E>B or B>E) 
+      dss N D      select nodes around node N, up to D (=diameter) branches 
+                   away from N, and analyze sector.  This requires specificatio
+                   of a tree; it never swaps at the end (as in noglobal) 
+      [no]xeven    for exclusive sectors, [don't] use sectors of as even 
+                   a size as possible (uneven sectors make it more likely 
+                   to find better trees if using several rounds 
+      minsize N    minimum size for random selections 
+      maxsize N    maximum size for random selections 
+      minfork N    minimum fork for constraint-based selections 
+      maxfork N    maximum fork for constraint-based selections 
+      increase N   factor to increase size if enough selections of current 
+                   size completed. New size is S = S + ( ( S * N ) / 100 )  
+      selfact N    factor to determine (under random selections) maximum number
+                   of selections of size S, for T (active) taxa.  Maximum 
+                   number, M, is determined as M = ( T * 100 ) / ( N * S ). 
+                   Alternatively, using "selfact = X Y Z" uses X for the 
+                   first selection, Y for the second, and so on (up to 30 
+                   values can be defined) 
+      moveon N     if N selections fail to produce a better score, move on 
+      rounds N     for constraint-based selections, cycle N times over groups 
+    For determining analysis: 
+      global N     for smaller selections, do global TBR every N replacements 
+      dglobal N    same, for larger selections (i.e. under drift and combined) 
+      noglobal     never swap globally. 
+      [no]equals   accept equally good subtrees 
+      [no]fuse N   when analyzing small sector (below drift size), keep 
+                   all trees and fuse (N rounds).  Note: for sectors above 
+                   drift size, the autofuse option of drift applies. 
+      godrift N    sector size above which tree-drifting (not RAS+TBR) is used 
+      drift N      for drifted sectors, use N cycles of drift 
+      gocomb N     for sector of size N or more, use combined analyses 
+                   (RAS+drift+fuse).  If N is smaller than the size to 
+                   use drift, drift is not done.  Number C of drift cycles 
+                   for each start is determined with drift C, number F of 
+                   fuses is determined with fuse F. 
+      starts N     for sectors below minsize, number of randaddseqs plus TBR 
+      combstarts N for sectors above size for combined analyses, use N starts 
+                   (if first N yield same score, stop, else do N more starts) 
+      findscore N  stop drifting on tree if score N found 
+      [no]keepall  keep only the best trees [don't] 
+    General options: 
+      [no]safesank for sankoff characters, use strict checking (=default) 
+                   to identify uninformative characters for reduced data set 
+                   (looser checking may produce small speedups, but may miss 
+                   better trees for complex transformation costs). 
+      slack N      make N percent extra memory for searches (prevents 
+                   memory errors during runs 
+      [no]xbuf     if memory is available, use independent matrix-buffer 
+                   for analysis of sectors (=faster updates, significant 
+                   time saved for small sectors in large data sets). 
+      recurse N    allow sectorial searches to recurse up to N levels 
+      tree N       select sectors for tree N (instead of all trees) 
+      track        allow tracking nodes between big tree and reduced 
+                   tree (valid only for sectorial searches with user 
+                   instructions).  This is to be used in combination 
+                   with macro expressions "nodtosect", "biginsect" 
+      chkroot      for XSS searches only, make sure the base of tree (which 
+                   often may be unselected) is included as well; this may 
+                   actually use one more selection than requested. 
+                   and "bignotsect". 
+    Options are set with "sectsch:options;" or "sectsch=options;" (using 
+    ":" only settings are changed; "=" runs as well). With "sect:;"  
+    current settings are displayed. 
+       It is also possible to determine specifically how to search for 
+    each sector generated, including the commands to search within square 
+    brackets (including sectsch itself, possibly with user instructions as well
+    Maximum level of recursion has to be determined with "sectsch: recurse N;" 
+    before reading data set.  When using user instructions for each sector, 
+    any settings changed for analyzing a subproblem will remain changed after 
+    concluding analysis of the sector (the only exception to this is settings 
+    for sectsch itself). 
+ 
+RATCHET
+    Ratchet, from trees in memory.  Options are:  
+       iter N           number of iterations 
+       [no]equal        periodic rounds with original weights [not] 
+       numsubs N        number of replacements (i.e. accepted tree 
+                        rearrangements) to do in perturbation phase 
+       upfactor N       probability of upweighting a character 
+       downfact N       same, for downweighting 
+       [no]autoconst N  number of auto-constrained cycles 
+       [no]giveup N     percentage of full swap to complete during perturbation
+       findscore N      if score N or better found, stop 
+       [no]fuse NxR     every N iterations, do R rounds of fusing to the N 
+                        trees 
+       [no]dumpfuse     if fusing fails to produce a better tree, [don't] 
+                        dump all the suboptimal trees 
+       [no]tradrat      [don't] run the original ratchet (i.e. noequal, 
+                        during perturbation swap to completion and don't 
+                        accept equally good rearrangements). 
+    Options are set with "ratchet:[options];" or "ratchet=[options];" 
+    (first case changes settings only, second case runs as well). With 
+    "ratchet:;" current settings are displayed 
+ 
+DRIFT
+    Do tree-drifting, from trees in memory.  Options are: 
+      iterations         number of cycles (=iterations) to do 
+      numsubs N          number of replacements (i.e. accepted tree 
+                         rearrangements) to do in perturbation phase 
+      xfactor N          larger values make acceptance of suboptimal 
+                         trees less likely 
+      [no]autoconst N    number of constrained cycles 
+      [no]giveup N       max. percentage of full swap to do in perturbation 
+                         phase.  This is an int, so 99 means don't give up 
+      fitdiff            max. difference in absolute fit 
+      rfitdiff           max. difference in relative fit 
+      findscore N        stop drifting when score N hit 
+      [no]equals         alternate perturbed and unperturbed drift cycles 
+                         (note: for landmark data, unperturbed cycles are  
+                          never done). 
+      [no]fuse NxR       every N iterations, do R rounds of fusing to the 
+                         N trees 
+      [no]dumpfuse       if fusing fails to produce a better tree, [don't] 
+                         dump all the suboptimal trees 
+      flat N             run the first N iterations using the relative 
+                         fit difference defined with rflat 
+      rflat N            max. difference in relative fit difference  
+                         for initial iterations 
+      flatnumsubs N      number of replacements to do for initial iterations 
+      [no]pert           never accept suboptimal rearrangements (i.e. "drift" 
+                         only wanders around in the island; this does force 
+                         unperturbed cycles in the case of landmark data). 
+    Options set with "drift:[options];" or "drift=[options];" (first  
+    case changes settings only, second case runs). Using "drift:;" current 
+    settings are displayed 
+ 
+TFUSE
+    /S C T; create a new tree from trees S ("source") and T ("target") 
+            inserting clade C of tree S into equivalent position of tree T 
+            (clade C must be present in both trees; trees must be complete 
+            and binary) 
+    N   combine set of trees N, and add resulting trees to existing set of 
+        trees. 
+    Options (possibly preceded by "no" and defaults in parentheses):  
+    For tree-fusing: 
+       [no]equals       accept exchanges of equal score (don't) 
+       [no]beststart    use best tree to start (use it) 
+       [no]choose       choose only those exchanges that improve best score 
+                        found so far (don't) 
+       [no]repeat       for every individual fuse, re-fuse trees until  
+                        no exchanges improve it 
+       [no]swap         after exchanging clades, do TBR swap (swap) 
+           minfork N    if node is less than an N-polytomy in consensus of 
+                        both trees, skip exchanges (3) 
+           rounds N     use N rounds (5) 
+       [no]keepall      keep all trees found instead of best only (all) 
+       [no]xroot N      for each fuse, try N different (random) rootings 
+                        (N=0 is the default; it uses only outgroup as root) 
+    For tree-hybridization: 
+       [no]hybrid N*R/S instead of tree-fusing, use hybridization (as in  
+                        "hybrid" command).  Hybridize randomly chosen pairs 
+                        of trees, N times, for each round R.  Every round uses 
+                        the best S trees from previous round to continue hybri-
+                        dizing.  Defaults: N 1000, R 1, S 50 (S = 0 uses as man
+                        trees as initially input, when doing several rounds.   
+                        Works better than fusing for very unstructured data set
+                        (e.g. random). 
+       [no]autostop N   if N successive rounds of hybridization fail to improve
+                        score, stop (default = 3). 
+       [no]replace      if hybridizing two trees produces a better tree, then 
+                        replace source tree(s) with the better tree(s) 
+                        (default = yes). 
+       [no]clog N       If initial tree set increased to contain N times more 
+                        trees than the initial input, retain best 1/N trees 
+                        (default = 15). 
+    For selecting type of genetic algorithm: 
+       [no]picktype N   calculate a score for the expected outcome of fusing; 
+                        this score counts the proportion of groups that could 
+                        be exchanged between different pairs of trees in the  
+                        input trees (when few or no groups can be exchanged,  
+                        as is often the case for random data sets, tree-fusing 
+                        produces very poor results). If the score so calculated
+                        is above N, use fusing, if below, use hybridization. 
+                        The default is "nopicktype"; if "picktype" specified 
+                        without a number, it uses the default threshold (1.5) 
+                        Large thresholds preferentially choose hybridization, 
+                        and viceversa. 
+    Options are set with "tfuse:options;" or "tfuse=options;" (using 
+    ":" only settings are changed; "=" runs as well). With "tfuse:;" 
+    current settings are displayed. 
+ 
+RSEED
+      N    set random seed as N ( 0 = time ; default = 1 )  
+      +N   increase random seed by N 
+      *;   set a new random seed, at random 
+      [;   in wagner trees, randomize insertion sequence 
+      ];   in wagner trees, try insertions for new taxa from 
+           top to bottom or from bottom up (=default) 
+      >    in wagner trees, also randomize outgroup.  This  
+           cannot be done when there are constraints or  
+           asymmetric Sankoff characters (randomization is 
+           skipped). Note that some "xmult" options use 
+           internal constraints (and then skip randomization) 
+      <    in wagner trees, outgroup is always the first taxon 
+           placed in the tree (=default) 
+      :N;  in multiple randomizations, instead of making sure 
+           that each new seed is different from the ones used 
+           before, increase the seed by N.  This may save time 
+           in very extensive randomizations (where checking 
+           previous seeds takes time).  When N=0, checks previous 
+           seeds (this the default). 
+      !    use quick approximation for randomization (faster) 
+      -    use careful randomizations (slower, more random; default) 
+ 
+MULT
+    do N random addition sequences, followed by rearrangements. 
+    Options are: 
+      wagner       no branch-swapping 
+      spr          use SPR branch swapping 
+      tbr          use TBR branch swapping 
+      [no]keepall  keep the trees from all replications 
+      replic N     do N replications  
+      hold N       save up to N trees per replication (only if swapping) 
+      [no]ratchet  do ratchet as well (settings with "ratchet" command) 
+      [no]drift    do drift as well (settings with "drift" command) 
+      [no]wclus N  after adding N taxa to the wagner tree, start using 
+                   node clusters (of size defined with "bbreak:clus SIZE"). 
+                   Useful only for very large data sets (several K-taxa). 
+      outfreq N    frequency for which reports are produced during branch 
+                   swapping (default is every N=10 clips, but for large data 
+                   sets this implies reports take too long to be produced). 
+      ras          use randomized addition sequences for Wagner trees  
+                   [default, works best for most data sets] 
+      cas N        use closest-addition sequence for Wagner trees (ties in 
+                   the addition sequence broken randomly), looking ahead up 
+                   N taxa (no N = all taxa). Tends to work best on data sets 
+                   with a lot of incongruence. 
+      fas N        as previous one, but using furthest addition sequence 
+      ias N        as previous one, but select first those taxa which make 
+                   the largest number of characters informative (N.B. only  
+                   additive/nonadditive characters considered for this; the 
+                   other character types have no influence on the sequence). 
+                   Tends to work best on data sets with many missing entries 
+                   and non-overlapping blocks of data. 
+      sas N        as previous one, but select first those taxa with the  
+                   largest difference in score for best/worst locations (N.B. 
+                   all character types are considered). Works best for the 
+                   same data sets as the previous one ("ias"), but it is 
+                   more thorough and slower 
+    Usage: "mult:options;" changes settings only; "mult=options;" runs 
+    as well.  Entering "mult:;" current settings are reported.  Setting 
+    the type of addition sequence also determines the sequence to be used 
+    in other commands (e.g. "xmult", "pfijo").  The insertion sequence 
+    is always random for "cas", "sas", and "fas"; it can be changed (see 
+    under "rseed") to be random or non-random for "ras" and "ias" 
+ 
+BBREAK
+    Perform branch-swapping, using pre-existing trees as starting point. 
+    Use "bbreak=options;" (change settings and run) or "bbreak:options;" 
+    (change settings, don't run).  This swaps according to current settings 
+    of suboptimal, constraints, and collapsing. 
+      
+    Basic options are: 
+      tbr         use TBR 
+      spr         use SPR 
+     [no]fillonly swap until tree-buffer is filled, and then stop. 
+     [no]mulpars  save multiple trees. 
+      
+    Fine-tuning options are: 
+     [no]safe     The "safe" option uses a slower (but safer) method for 
+                  updating buffers when finding a better tree under TBR 
+                  (default is "nosafe"). 
+     [no]skipspr skips the SPR phase on a single tree when doing multiple 
+                  RAS+TBR saving several trees per replication; "skipspr" 
+                  is useful in conjunction with "nosafe", but not so much 
+                  with "safe" because then the initial portion of TBR 
+                  (when better trees are being found often) gets slowed down 
+                  and SPR doesn't.  The "nosafe" option only makes a  
+                  difference for very large data sets; note that "skipspr" 
+                  modifies the behaviour of both "mult" and "xmult". 
+     [no]int N    There are two options, "int 1" and "int 2" (both options 
+                  identify most relevant characters for a series of swaps, 
+                  option 2 also reorders characters to try to save time). 
+                  These options useful only for large matrices (>10,000) with 
+                  large numbers of characters; otherwise they tend to produce 
+                  slower swapping. 
+     [no]randclip randomize clipping sequence (with current random seed). 
+     [no]preproc  with "preproc" the program tries to identify and effect 
+                   first the clippings that would improve the tree the most; 
+                  this has effect only on "mult" searches with hold=1 (and 
+                  only when skipping the SPR phase), and TBR swapping from  
+                  existing trees with mulpars off.  This may save a little  
+                  time in the initial stages of the search for very large 
+                  data sets, although the end gain is small. 
+     clusters N   use node-clusters of N nodes.  As the data set becomes  
+                  larger, clusters of more nodes produce faster TBR-swapping. 
+                  When using clusters also for wagner trees, the same size as 
+                  defined here is used. 
+     [no]strat    for landmarks only; use a "stratified" error margin (i.e. 
+                  begin low, increase as swapping advances, as set with "lmark 
+                  errmarg") for the first tree swapped, final error for the  
+                  last one.  Otherwise, use the final error margin from the 
+                  the beginning of the swapping (intended for trees that are  
+                  already optimal or near-optimal). 
+      
+    Included for comparability with PAUP*: 
+     [no]limit N  when doing TBR, only use destinations and rerooting no more  
+                  than N nodes away from the original.  Using a narrow limit  
+                  in large trees makes it look at only a tiny fraction of the 
+                  rearrangements, thus speeding up the search, but also making 
+                  it much less likely to find the optimal tree.  Using a large 
+                  limit increases the chances of finding the optimal trees, but
+                  when using this, shortcuts used in the absence of a limit are
+                  not applicable, with the result that swapping with large 
+                  limits (probably above 1/4 to 1/3 of the taxa) produces a  
+                  slower TBR than swapping with no limit at all.  Thus, the use
+                  of this option is discouraged, except to make comparisons wit
+                  other software using this option. N.B.: the use of limits is 
+                  compatible with constraints, but when using constraints with 
+                  limited TBR, only the rearrangements effectively done are  
+                  counted (in contrast to the default, unlimited  TBR, which 
+                  counts rearrangements violating constraints as done and  
+                  rejected). 
