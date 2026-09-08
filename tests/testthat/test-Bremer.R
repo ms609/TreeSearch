@@ -245,7 +245,7 @@ test_that("Bremer warns (does not error) on an inconsistent optimalScore, then p
     con <- Bremer(ref, dat, method = "constraint",
                   optimalScore = attr(mpts, "score") - 3,
                   maxReplicates = 20L, verbosity = 0L),
-    "differs from the reference")
+    "(3) differs from 6, the score of `tree`")
   expect_type(con, "double")
 })
 
