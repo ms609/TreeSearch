@@ -2,7 +2,7 @@
 % Please edit documentation in R/Bremer.R
 \name{Bremer}
 \alias{Bremer}
-\title{Bremer (decay) support}
+\title{Bremer support (decay index)}
 \usage{
 Bremer(
   tree,
@@ -119,9 +119,10 @@ is ignored (exact values are computed).}
 computed by search.  Supplying it (or a scored \code{multiPhylo}) avoids a
 redundant search.}
 
-\item{format}{Character specifying return format, as in \code{\link[=JackLabels]{JackLabels()}}:
-\code{"numeric"} (default) returns named numeric values for further analysis;
-\code{"character"} returns a vector shaped for \code{phylo$node.label}.}
+\item{format}{Character specifying return format.
+\code{"character"} returns a character string suitable to add to the \code{node.labels}
+attribute of a tree;
+"numeric" returns numeric values suitable for further analysis.}
 
 \item{cl}{Optional \pkg{parallel} cluster (e.g. from
 \code{\link[parallel:makeCluster]{parallel::makeCluster()}}) over which to distribute the per-clade converse

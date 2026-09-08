@@ -1,4 +1,4 @@
-#' Bremer (decay) support
+#' Bremer support (decay index)
 #'
 #' `Bremer()` calculates the Bremer support (decay index)
 #' \insertCite{Bremer1988,Bremer1994}{TreeSearch} of each clade in a reference
@@ -26,6 +26,7 @@
 #' Ensure that search options (`concavity`, `inapplicable`, ...) match those
 #' used to find `tree`.
 #'
+#' @inheritParams JackLabels
 #' @param tree A tree of class `phylo` whose clades are to be evaluated. If a
 #' `multiPhylo` object is provided, its strict consensus will be evaluated.
 #' @param dataset A phylogenetic data matrix of class `phyDat`.
@@ -39,9 +40,6 @@
 #' `NULL` (default) it is taken from `attr(tree, "score")` when available, or
 #' computed by search.  Supplying it (or a scored `multiPhylo`) avoids a
 #' redundant search.
-#' @param format Character specifying return format, as in [`JackLabels()`]:
-#' `"numeric"` (default) returns named numeric values for further analysis;
-#' `"character"` returns a vector shaped for `phylo$node.label`.
 #' @param cl Optional \pkg{parallel} cluster (e.g. from
 #' [`parallel::makeCluster()`]) over which to distribute the per-clade converse
 #' searches of `method = "constraint"`.  Each clade is an independent search, so
@@ -181,14 +179,8 @@ Bremer <- function(tree, dataset,
 }
 
 # Sanity-check a SUPPLIED optimal score L* against the reference's length under
-# the scoring arguments now in effect.  A decay of "extra steps" is only
-# meaningful when L* and L(not C) are measured with the same ruler, so a
-# difference usually means the reference's L* was computed under different
-# scoring arguments (e.g. `Bremer()` left at the default equal weights for trees
-# found under implied weights).  We trust the user to keep the scoring mode
-# consistent, so this only WARNS (never errors) and Bremer proceeds with the
-# supplied score -- the warning is a safety net for a forgotten scoring argument,
-# not a veto on a deliberately different analysis.
+# the scoring arguments now in effect. We trust the user to keep the scoring mode
+# consistent; in case of disagreement we proceed as instructed, with a warning.
 #' @importFrom TreeTools MakeTreeBinary
 .BremerCheckScoring <- function(tree, dataset, scoringArgs, optimalScore) {
   # Exact check: a MaximizeParsimony() result records the scoring conditions it
@@ -222,6 +214,8 @@ Bremer <- function(tree, dataset,
   # Length of the reference under the CURRENT scoring arguments.
   # TreeLength requires binary trees, so resolve zero-length polytomies first;
   # take a minimum over arbitrary resolutions to find best.
+  # TODO verify that there's no non-binary configuration that could result in 
+  # a higher score when resolved arbitrarily, and thus throw a warning.
   resolved <- MakeTreeBinary(tree)
   refLen <- min(suppressWarnings(
     do.call(TreeLength, c(list(tree = resolved, dataset = dataset), scoringArgs))))
