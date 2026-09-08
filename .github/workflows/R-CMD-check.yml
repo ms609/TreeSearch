@@ -129,6 +129,8 @@ jobs:
           extra-packages: |
             shinytest2=?ignore
             url::https://ms609.github.io/packages/bin/linux/aarch64-release/Coreset_latest.tar.gz
+          extra-repositories: |
+            https://ms609.github.io/packages
           # cache-version bumped to 2: the v1 caches were built while a
           # project-level .Rprofile shadowed ~/.Rprofile, so every package
           # in them was compiled from source.  Retire them once.
