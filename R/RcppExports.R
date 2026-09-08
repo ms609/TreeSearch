@@ -10,8 +10,8 @@
 #' exp(logp) * TreeTools::NUnrooted(7)
 #' 
 #' @export
-MaddisonSlatkin <- function(steps, states) {
-    .Call(`_TreeSearch_MaddisonSlatkin`, steps, states)
+MaddisonSlatkin <- function(steps, states, maxSeconds = 2.0) {
+    .Call(`_TreeSearch_MaddisonSlatkin`, steps, states, maxSeconds)
 }
 
 #' @export
@@ -91,7 +91,7 @@ all_tbr <- function(edge, break_order) {
 
 #' Monte Carlo Fitch scores for a single character
 #'
-#' Generates `n_mc` random trees and scores each with a Fitch parsimony
+#' Generates `mcSamples` random trees and scores each with a Fitch parsimony
 #' downpass for a single character defined by `state_counts`.
 #' Tree generation and scoring are done entirely in C with no R object
 #' allocation per tree, making this very fast (~0.01 ms per tree).
@@ -100,13 +100,13 @@ all_tbr <- function(edge, break_order) {
 #'   state.  Length determines the number of states (k); sum determines
 #'   the number of tips (n).  For example, `c(13, 13, 12)` defines a
 #'   3-state character with 38 tips.
-#' @param n_mc Number of random trees to generate and score.
-#' @return Integer vector of length `n_mc` containing the Fitch parsimony
+#' @param mcSamples Number of random trees to generate and score.
+#' @return Integer vector of length `mcSamples` containing the Fitch parsimony
 #'   score (number of state changes) for each random tree.
 #' @keywords internal
 #' @export
-mc_fitch_scores <- function(state_counts, n_mc) {
-    .Call(`_TreeSearch_mc_fitch_scores`, state_counts, n_mc)
+mc_fitch_scores <- function(state_counts, mcSamples) {
+    .Call(`_TreeSearch_mc_fitch_scores`, state_counts, mcSamples)
 }
 
 ts_fitch_score <- function(edge, contrast, tip_data, weight, levels, min_steps = integer(), concavity = -1.0, infoAmounts = NULL, xpiwe = FALSE, xpiwe_r = 0.5, xpiwe_max_f = 5.0, obs_count = integer()) {

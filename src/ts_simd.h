@@ -44,7 +44,7 @@ namespace simd {
 //
 // Cached flag: evaluated once on first call.  On non-x86, always false.
 
-// AVX2 dispatch workaround for unoptimised builds (covr / gcov).
+// AVX2 dispatch workaround for unoptimized builds (covr / gcov).
 //
 // Under covr on Windows (rtools45 GCC 14 + `-O0 --coverage`) any call
 // into the `__attribute__((target("avx2")))` helpers crashes the R

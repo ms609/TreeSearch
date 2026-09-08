@@ -46,7 +46,7 @@ spNb  <- TreeTools::as.Splits(nb,  tipLabels = TipLabels(opt))
 # Count splits in one but not the other (RF-style raw difference).
 inOpt <- apply(as.logical(spOpt), 1, function(r) paste(as.integer(r), collapse = ""))
 inNb  <- apply(as.logical(spNb),  1, function(r) paste(as.integer(r), collapse = ""))
-# Normalise complement (a split and its complement are the same bipartition).
+# Normalize complement (a split and its complement are the same bipartition).
 canon <- function(s) { v <- as.integer(strsplit(s, "")[[1]])
   if (v[1] == 1) paste(1L - v, collapse = "") else s }
 inOptC <- vapply(inOpt, canon, ""); inNbC <- vapply(inNb, canon, "")

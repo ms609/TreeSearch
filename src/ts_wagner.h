@@ -39,15 +39,15 @@ WagnerResult random_wagner_tree(TreeState& tree, const DataSet& ds,
 // Criterion for biasing taxon addition order.
 //
 // RANDOM   — uniform random (existing behaviour)
-// GOLOBOFF — prioritise taxa with more non-ambiguous parsimony-informative
+// GOLOBOFF — prioritize taxa with more non-ambiguous parsimony-informative
 //            characters (Goloboff 2014 "informative" addition sequence)
-// ENTROPY  — prioritise taxa with more specific (lower-entropy) state codings;
+// ENTROPY  — prioritize taxa with more specific (lower-entropy) state codings;
 //            score(t) = Σ_c (n_states_c - |state_set of t at c|)
 //
 // Both scored criteria use softmax-weighted sampling WITHOUT replacement so
 // that multiple starts are diverse while biasing toward better basins.
 // temperature controls selectivity: 0 → greedy argmax; large → near-uniform.
-// Temperature is applied to scores normalised to [0, 1] so that behaviour
+// Temperature is applied to scores normalized to [0, 1] so that behaviour
 // is consistent across datasets regardless of character count.
 enum class WagnerBias { RANDOM = 0, GOLOBOFF = 1, ENTROPY = 2 };
 

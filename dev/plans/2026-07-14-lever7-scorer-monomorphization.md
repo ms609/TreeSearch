@@ -7,7 +7,7 @@
 Land an EXACT (byte-identical) per-candidate speedup in the TBR scorer by lifting per-candidate
 **criterion-flavour dispatch out of the hot loop** — instantiate one monomorphic candidate-scan loop
 per flavour, chosen once at dispatch, so the dead branches compile away and the compiler can inline /
-pick a specialised kernel.
+pick a specialized kernel.
 
 - **Measured ceiling:** a *runtime* branch-strip alone ≈ **5% whole-search**; the **template** version
   additionally unlocks a weight-aware "flat" kernel worth **~17% of the SPR scan** on unit-weight data
@@ -26,8 +26,8 @@ pick a specialised kernel.
   toggle)**. A first A/B falsely read ~0% because the fast path never fired (the collapsed-vector is
   always sized, so the `!use_collapsed` gate was BASE-vs-BASE) — a fire-counter + a deliberately-wrong
   mode caught it. **Replicate that positive control.**
-- Prototype to generalise from: the `TS_EW_STRIP` runtime probe (default-OFF, uncommitted) in
-  `src/ts_tbr.cpp` on that worktree branch — a specialised branch-free plain-EW SPR loop, proven
+- Prototype to generalize from: the `TS_EW_STRIP` runtime probe (default-OFF, uncommitted) in
+  `src/ts_tbr.cpp` on that worktree branch — a specialized branch-free plain-EW SPR loop, proven
   byte-identical (BASE==STRIP==307). #7 turns this from a runtime toggle into compile-time specialisation.
 
 ## 2. The lever (design — this is the user's framing, and it's the right one)
@@ -58,7 +58,7 @@ Monomorphization is a pure reorganization ⇒ final `score` AND `attr(result,"ca
 per-pass `n_candidates_evaluated` MUST be **BYTE-IDENTICAL** vs baseline on Wortley2006 / Zhu2013 /
 Zanol2014 × ≥2 seeds (EW: gaps `-`→`?`), via BOTH `TreeSearch:::ts_tbr_diagnostics` (kernel-level) AND
 full `MaximizeParsimony` (exercises the ratchet `use_flat=false` + `sector_mask` regimes the kernel
-oracle can't reach). **Replicate the positive control:** a fire-counter proving the specialised path
+oracle can't reach). **Replicate the positive control:** a fire-counter proving the specialized path
 actually executed, plus a deliberately-wrong instantiation that DIVERGES — otherwise a no-op passes the
 gate falsely (the agent's ~0% trap). Any drift = bug: STOP, do not proceed to timing.
 

@@ -24,7 +24,7 @@ local({
 # when content changes).  Patching here intercepts every caller — devtools,
 # pkgbuild, RStudio auto-build — not just our manual wrapper script.
 local({
-  .normalise_lf <- function(pkgdir) {
+  .normalize_lf <- function(pkgdir) {
     for (f in file.path(pkgdir, c("src/RcppExports.cpp", "R/RcppExports.R"))) {
       if (!file.exists(f)) next
       lines <- readLines(f, warn = FALSE)
@@ -42,7 +42,7 @@ local({
     if (isTRUE(attr(orig, ".lf_patched"))) return()
     patched <- function(pkgdir = ".", verbose = getOption("verbose")) {
       result <- orig(pkgdir = pkgdir, verbose = verbose)
-      .normalise_lf(pkgdir)
+      .normalize_lf(pkgdir)
       invisible(result)
     }
     attr(patched, ".lf_patched") <- TRUE

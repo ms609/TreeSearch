@@ -181,7 +181,7 @@ probability that a better score exists is bounded by $(1 - K/R)^R$.
 **Thompson sampling.**
 Each arm $i$ maintains a Beta-distributed estimate of its success
 probability, parameterized by success count $\alpha_i$ and failure count
-$\beta_i$ (both initialised to 1, giving a uniform prior).
+$\beta_i$ (both initialized to 1, giving a uniform prior).
 The _random tree_ arm receives a pessimistic prior $\text{Beta}(1, 2)$
 reflecting the expectation that random topologies are usually worse.
 
@@ -265,7 +265,7 @@ Where the repair does not succeed, the start is discarded in favour of a fresh
 constrained Wagner build.
 The same check gates each replicate's finished tree on its way into the pool,
 so a tree that breaks the constraint is never returned; and the enforced splits
-are protected from the final collapse pass, whichever branch happens to realise
+are protected from the final collapse pass, whichever branch happens to realize
 them.
 
 A start that already separates the two groups is left alone, however its free
@@ -378,12 +378,12 @@ minimum, and in simulation 87--98% of rootings attain that minimum exactly, with
 the excess never exceeding the total number of secondary characters across
 hierarchy blocks.
 It is not, however, reproducible from the returned tree, whose rooting the
-output stage has since canonicalised.
+output stage has since canonicalized.
 `MaximizeParsimony()` therefore re-scores the returned trees at that same
 canonical rooting -- the first taxon of the dataset -- before reporting, and
-`TreeLength()` canonicalises identically, so a reported x-transformation score
+`TreeLength()` canonicalizes identically, so a reported x-transformation score
 is the length of the tree in hand, and one topology has one length.
-This affects reporting only: the quantity the search optimises is unchanged.
+This affects reporting only: the quantity the search optimizes is unchanged.
 
 Because pool membership is still decided on scores taken at differing rootings,
 the returned trees need not all share that canonical length;

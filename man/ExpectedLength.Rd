@@ -46,6 +46,7 @@ Other tree scoring:
 \code{\link[=MinimumLength]{MinimumLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
 \code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}},
 \code{\link[=TaxonInfluence]{TaxonInfluence()}},
 \code{\link[=TreeScore]{TreeScore()}},
 \code{\link[=WideSample]{WideSample()}}

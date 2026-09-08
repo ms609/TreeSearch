@@ -23,8 +23,7 @@ TBRWarning <- function (parent, child, error) {
 #'
 #' Branch lengths are not (yet) supported.
 #' 
-#' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
-#' [ape::multi2di] may help.
+#' All nodes in a tree must be bifurcating; [TreeTools::MakeTreeBinary] may help.
 #' 
 #' @param tree A bifurcating tree of class \code{\link[ape]{phylo}}, with all nodes resolved;
 #' @param edgeToBreak (optional) integer specifying the index of an edge to bisect/prune,

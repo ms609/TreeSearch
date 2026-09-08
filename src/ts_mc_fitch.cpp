@@ -14,7 +14,7 @@ using namespace Rcpp;
 
 //' Monte Carlo Fitch scores for a single character
 //'
-//' Generates `n_mc` random trees and scores each with a Fitch parsimony
+//' Generates `mcSamples` random trees and scores each with a Fitch parsimony
 //' downpass for a single character defined by `state_counts`.
 //' Tree generation and scoring are done entirely in C with no R object
 //' allocation per tree, making this very fast (~0.01 ms per tree).
@@ -23,17 +23,17 @@ using namespace Rcpp;
 //'   state.  Length determines the number of states (k); sum determines
 //'   the number of tips (n).  For example, `c(13, 13, 12)` defines a
 //'   3-state character with 38 tips.
-//' @param n_mc Number of random trees to generate and score.
-//' @return Integer vector of length `n_mc` containing the Fitch parsimony
+//' @param mcSamples Number of random trees to generate and score.
+//' @return Integer vector of length `mcSamples` containing the Fitch parsimony
 //'   score (number of state changes) for each random tree.
 //' @keywords internal
 //' @export
 // [[Rcpp::export]]
-IntegerVector mc_fitch_scores(IntegerVector state_counts, int n_mc) {
+IntegerVector mc_fitch_scores(IntegerVector state_counts, int mcSamples) {
   int k = state_counts.size();
   int n = 0;
   for (int i = 0; i < k; i++) n += state_counts[i];
-  if (n < 2) return IntegerVector(n_mc, 0);
+  if (n < 2) return IntegerVector(mcSamples, 0);
 
   // Seed the random-tree MWC generator from R's RNG so that profile parsimony
   // (whose Monte Carlo information estimate scores random trees via this path)
@@ -61,8 +61,8 @@ IntegerVector mc_fitch_scores(IntegerVector state_counts, int n_mc) {
   std::vector<int> stack;
   stack.reserve(n_internal);
 
-  IntegerVector scores(n_mc);
-  for (int rep = 0; rep < n_mc; rep++) {
+  IntegerVector scores(mcSamples);
+  for (int rep = 0; rep < mcSamples; rep++) {
     random_tree(parent.data(), left.data(), right.data(), &n);
 
     // Build postorder: collect preorder via DFS, then process in reverse.

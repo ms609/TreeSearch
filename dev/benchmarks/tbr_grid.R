@@ -36,7 +36,7 @@ buildStartLadder <- function(d) {
     w <- TreeSearch:::ts_random_wagner_tree(d$contrast, d$tip_data, d$weight, d$levels)
     ladder[[paste0("wagner", i)]] <- norm(asPhylo(w$edge, d))
   }
-  # 1 partially-TBR-optimised tree (medium): a Wagner pushed ~15 accepted moves
+  # 1 partially-TBR-optimized tree (medium): a Wagner pushed ~15 accepted moves
   set.seed(3001)
   w <- TreeSearch:::ts_random_wagner_tree(d$contrast, d$tip_data, d$weight, d$levels)
   partial <- TsTbr(d, norm(asPhylo(w$edge, d)), seed = 3001,

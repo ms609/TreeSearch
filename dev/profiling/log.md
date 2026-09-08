@@ -13,7 +13,7 @@ at the bottom of the file before saving.
 - Build:         .vtune-lib mtime YYYY-MM-DD HH:MM (vs src/ HH:MM)
 - profvis:       <2 % R overhead | top R line / [Port] finding>
 - VTune top 3:   <fn1 X %>, <fn2 Y %>, <fn3 Z %>   (module=TreeSearch.dll)
-- Finding:       [Port|Optimise|AT-LIMIT] short — verified Δ via micro-bench
+- Finding:       [Port|Optimize|AT-LIMIT] short — verified Δ via micro-bench
 - Filed:         T-NNN row(s) in findings.md
 - Cleanup:       result_<area>_<date> removed; .vtune-lib <kept|deleted>
 - Next reviewer: <what to look at next time on this area>
@@ -63,7 +63,7 @@ at the bottom of the file before saving.
     - ⚠ Caveat: 19.2 % is self-time only. fitch_na_score has SIMD callees (any_hit_reduce_avx2 0.309s, 9.6 %) that are shared with the incremental evaluation path — unknown fraction comes from full_rescore vs incremental. [Unknown source file] 2.076 s (39 %) includes inlined code from both paths. Full_rescore **inclusive time** is plausibly 22–30 %. The prior S-PROF round 7 estimate of 28 % was likely inclusive time and is not contradicted by the 19.2 % self-time measurement — they measure different things.
     - full_rescore at line 1138 (acceptance) >> line 563 (entry): ratchet-driven TBR accepts ~100–200 moves per call from perturbed trees vs 1 entry call, so ~99% of full_rescore time is the acceptance-path T-300 target
     - Source-line attribution for lines 1138/1283 not available via software sampling (inlined into [Unknown]).
-- Finding:       [Optimise] T-300 is confirmed: full_rescore after accepted move ≥ 19.2 % of DLL time (inclusive estimate 22–30 %). Incremental path (fitch_na_pass3_score + incr_uppass + incr_downpass = 12.2 % self) already costs less per call. T-300 (in-flight by parallel agent) is justified — predicted gain 15–30 % of DLL time.
+- Finding:       [Optimize] T-300 is confirmed: full_rescore after accepted move ≥ 19.2 % of DLL time (inclusive estimate 22–30 %). Incremental path (fitch_na_pass3_score + incr_uppass + incr_downpass = 12.2 % self) already costs less per call. T-300 (in-flight by parallel agent) is justified — predicted gain 15–30 % of DLL time.
 - Filed:         T-300 row in findings.md (unverified — micro-bench pending T-300 implementation)
 - Cleanup:       result_tbr-rescore_20260519/ removed; .vtune-lib-20260519061049 deleted
 - Next reviewer: After T-300 lands — re-run this driver to verify fitch_na_score drops from 18.2 % toward the incremental path baseline. Also look at ts::simd::any_hit_reduce_avx2 (9.6 %) as next T-300-independent target.
@@ -107,7 +107,7 @@ path the TNT benchmark actually compares against.
       bit-identical (value+changed flag) but only **1.22×** at n_states=4, and the
       4-wide path does NOT trigger for 2-state (binary) morph chars → ~1 % wall,
       not worth the incremental-uppass correctness risk.
-    [Optimise, modest] Per-clip/accept allocation churn (~3-4 %): compute_from_above,
+    [Optimize, modest] Per-clip/accept allocation churn (~3-4 %): compute_from_above,
       collect_main_edges/collect_subtree_edges, validate_topology heap-alloc
       std::vector scratch per call (_M_realloc_append 1.1 %). Extend existing
       prealloc pattern (work_stack/saved_postorder/clip_actives_buf). Low risk.
@@ -269,7 +269,7 @@ last_focus: 13
 Focus: the still-open T-P5c (ratchet internals). Lead: the ratchet
 perturbed-weight search runs on the scalar scorer path (ts_tbr.cpp:2129) because
 MIXED-mode upweight_mask disables use_flat+x4 — the one hot path the whole
-flat/x4/edge-set/getenv program never optimised. thorough/intensive/large use
+flat/x4/edge-set/getenv program never optimized. thorough/intensive/large use
 ratchetPerturbMode=2 (MIXED); .AutoStrategy routes the >=65t,>=100char roster there.
 
 Method: env-gated std::chrono (TS_RATCHET_TIMING) around ratchet_search's 3

@@ -89,7 +89,7 @@ test_that("PrepareDataProfile()", {
 
 
   data("Lobo", package = "TreeTools")
-  prep <- suppressMessages(PrepareDataProfile(Lobo.phy, n_mc = 1000L))
+  prep <- suppressMessages(PrepareDataProfile(Lobo.phy, mcSamples = 1000L))
   info_dims <- dim(attr(prep, "info.amounts"))
   expect_equal(info_dims[2], attr(prep, "nr"))
   expect_true(info_dims[1] >= 1)

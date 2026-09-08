@@ -169,7 +169,7 @@ mixed-state case col-reduce helps). Default stays `0L`. Recorded in the switches
 
 ## Why this reframe
 
-The previous round optimised "the expensive phase of the current recipe"
+The previous round optimized "the expensive phase of the current recipe"
 (ratchet, ~60%). That produced a real recipe win — `ratchetCycles` 12→6 is
 ~20–38% wall with no quality loss (findings T-P5d) — **but recipe tuning only
 reshuffles component *proportions*; it cannot address the core belief that TNT

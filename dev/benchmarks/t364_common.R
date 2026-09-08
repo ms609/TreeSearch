@@ -4,7 +4,7 @@
 # Deliberately free of TreeSearch calls so it can be sourced against any arm.
 #
 # ROOTING VOCABULARY, used throughout.  A constraint split is an *unrooted*
-# bipartition.  build_constraint() (ts_constraint.cpp) canonicalises every mask
+# bipartition.  build_constraint() (ts_constraint.cpp) canonicalizes every mask
 # so that dataset tip 0 -- R tip names(dataset)[1] -- is OUTSIDE it, and the
 # pre-T-384 map_constraint_nodes() then demanded a node whose descendant tip set
 # EQUALS that canonical mask.  So a tree can display the constraint yet still be
@@ -169,7 +169,7 @@ tip_depths_from <- function(tree, focal) {
 # want_tip0 STRATIFIES on which SIDE of the bipartition holds dataset tip 0, and
 # that is the axis that decides whether arm 2 can express its pathology at all.
 # The reasoning, which is worth not re-deriving:
-#   * build_constraint() canonicalises the mask so tip 0 is OUTSIDE it, so the
+#   * build_constraint() canonicalizes the mask so tip 0 is OUTSIDE it, so the
 #     canonical mask is ALWAYS the tip-0-excluding side -- which of the two sides
 #     I hand in as the "1" group is immaterial, it gets flipped anyway.
 #   * The pre-T-384 mapping needs that canonical side to be a rooted CLADE.  It

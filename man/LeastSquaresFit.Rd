@@ -28,7 +28,7 @@ fitted branch lengths and an attribute \code{"RSS"} giving the residual sum of
 squares.
 }
 \description{
-Fits branch lengths on a fixed tree topology that minimise the (optionally
+Fits branch lengths on a fixed tree topology that minimize the (optionally
 weighted) least-squares discrepancy between the tree's patristic distances
 and a target distance matrix, using the package's C++ kernel.  This is the
 fixed-topology counterpart of \code{\link[=LeastSquaresTree]{LeastSquaresTree()}}, and the direct analogue

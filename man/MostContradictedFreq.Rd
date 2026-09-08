@@ -36,12 +36,14 @@ contradicted" score.
 \code{PresCont()} calculates the "groups present / contradicted" score.
 
 Other split support functions:
+\code{\link[=Bremer]{Bremer()}},
 \code{\link[=ConcordanceTable]{ConcordanceTable()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
 \code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
 \code{\link[=Resample]{Resample()}},
-\code{\link{SiteConcordance}}
+\code{\link{SiteConcordance}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }
 \concept{split support functions}

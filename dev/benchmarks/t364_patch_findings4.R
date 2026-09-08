@@ -10,7 +10,7 @@ raw <- paste(readLines(f, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
 old <- paste0(
   "Cumulative per-phase totals do rise (ratchet 1.20x, xss 1.50x, final_tbr 1.24x, ",
   "arm 2 vs pre-fix), but those totals are summed over however many replicates ran, ",
-  "and a blocked arm runs MORE of them. Normalised PER REPLICATE, arm 2 is CHEAPER ",
+  "and a blocked arm runs MORE of them. Normalized PER REPLICATE, arm 2 is CHEAPER ",
   "in nearly every phase \u2014 tbr 0.61x, wagner 0.70x, ratchet 0.83x, fuse 0.45x ",
   "\u2014 which is what rejected moves must do: less work per replicate, not more. ",
   "Measured from the engine's own `timings` attribute (microsecond resolution, so ",

@@ -76,7 +76,7 @@ test_that("applicability tie breaks toward applicable, not the cheaper -", {
   library(TreeTools)
   # (t1,(t2,(t3,(t4,t5)))); 1 2 1 {-,2} - : making t4 applicable vs inapplicable
   # is EQUALLY parsimonious on the applicability character (a genuine tie), so
-  # BGS takes the applicable resolution (maximise homology) -> t4 = 2 is counted
+  # BGS takes the applicable resolution (maximize homology) -> t4 = 2 is counted
   # -> length 2, even though resolving t4 = "-" would score 1.  This is the
   # deliberate consequence of Fitch-optimising applicability first.
   tree <- read.tree(text = "(t1, (t2, (t3, (t4, t5))));")

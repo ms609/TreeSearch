@@ -194,7 +194,7 @@ returns on ascend):
 - **Ascend** child c → parent p: inverse — re-remove that chunk.
 - **Suppress-node** (clip parent nx removed, sibling ns joined to grandparent nz):
   the single most bug-prone step — `up[]` at ns's new position and everything it
-  newly exposes must be refreshed (advisor). The amortised total over a full DFS
+  newly exposes must be refreshed (advisor). The amortized total over a full DFS
   is O(N) (each node exposed/hidden O(1) times).
 
 **Gate (hard, non-negotiable):** under `-DNDEBUG`-off, assert the incrementally-

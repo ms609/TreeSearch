@@ -17,7 +17,9 @@
 #' When the Maddison & Slatkin computation would be infeasible (exponential
 #' in the number of tips for a given number of tokens), behaviour depends on
 #' the `approx` argument.  With `"auto"` (default), the exact solver is used
-#' where feasible and the Monte Carlo approximation is used otherwise.
+#' where feasible and the Monte Carlo approximation is used otherwise; the
+#' exact solver is allowed a time budget of `maxSeconds`, past which the
+#' calculation falls back to the Monte Carlo approximation.
 #' With `"mc"`, the Monte Carlo approximation is always used.
 #' The MC approximation computes the exact
 #' minimum-steps probability analytically, uses random trees for the
@@ -27,18 +29,21 @@
 #' beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
 #' ~9 tips trigger the approximation.
 #' With `"exact"`, the full Maddison & Slatkin recursion is forced regardless
-#' of cost (may be very slow for large or complex characters).
+#' of the feasibility gate (may be very slow for large or complex
+#' characters), still subject to `maxSeconds`.
 #'
 #' @param char Vector of tokens listing states for the character in question.
 #' @param ambiguousTokens Vector specifying which tokens, if any, correspond to
 #' the ambiguous token (`?`).
-#' @param approx Character string controlling the computation method:
-#'   `"auto"` (default) uses exact computation when feasible, falling back to
-#'   Monte Carlo for large or complex characters (see Details);
+#' @param approx Character string specifying the computation method:
 #'   `"mc"` always uses the Monte Carlo approximation;
-#'   `"exact"` forces exact computation regardless of cost (may be very slow
-#'   for large or complex characters).
-#' @param n_mc Integer.  Number of random trees used by the MC approximation.
+#'   `"exact"` forces exact computation regardless of the feasibility gate;
+#'   `"auto"` (default) uses exact computation when feasible, falling back to
+#'   Monte Carlo for large or complex characters (see Details).
+#' @param maxSeconds Non-negative numeric giving the time budget, in seconds,
+#'   allowed to the exact solver (under `"auto"` or `"exact"`) before falling
+#'   back to the Monte Carlo approximation.
+#' @param mcSamples Integer.  Number of random trees used by the MC approximation.
 #'   Larger values improve accuracy but increase computation time.
 #'   Default: 100 000.
 #' 
@@ -58,8 +63,9 @@
 #' @importFrom TreeTools Log2Unrooted LnUnrooted NUnrooted NUnrootedMult
 #' @family profile parsimony functions
 #' @export
-StepInformation <- function (char, ambiguousTokens = c("-", "?"),
-                             approx = "auto", n_mc = 100000L) {
+StepInformation <- function(char, ambiguousTokens = c("-", "?"),
+                            approx = c("auto", "mc", "exact"), maxSeconds = 2,
+                            mcSamples = 1e5L) {
   NIL <- c("0" = 0)
   char <- char[!char %fin% ambiguousTokens]
   if (length(char) == 0) {
@@ -81,16 +87,21 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
   
   k <- length(split)
   nTips <- sum(split)
-  
+  method <- match.arg(approx)
+  if (!is.numeric(maxSeconds) || length(maxSeconds) != 1L ||
+      is.na(maxSeconds) || !is.finite(maxSeconds) || maxSeconds < 0) {
+    stop("`maxSeconds` must be a non-negative, finite, numeric value.")
+  }
+
   # Exact MaddisonSlatkin is only instantiated for k <= 5; larger k always
   # uses MC (bitmask Fitch in mc_fitch_scores supports up to 32 states).
   # For k <= 5, use partition-aware split_count to decide feasibility.
   infeasible <- k > 5L || (k >= 3L &&
     .MSSplitCount(split) > .MS_SC_THRESHOLD[k])
   
-  if (identical(approx, "mc") ||
-      (infeasible && !identical(approx, "exact"))) {
-    return(.ApproxStepInformation(split, n_mc = n_mc,
+  if (identical(method, "mc") ||
+      (infeasible && !identical(method, "exact"))) {
+    return(.ApproxStepInformation(split, mcSamples = mcSamples,
                                   nSingletons = nSingletons))
   }
   
@@ -111,12 +122,12 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
     reducedMinSteps <- k - 1L
     maxSteps <- nTips - 1L
     logP <- tryCatch(
-      MaddisonSlatkin(reducedMinSteps:maxSteps, states),
+      MaddisonSlatkin(reducedMinSteps:maxSteps, states, maxSeconds),
       error = function(e) NULL
     )
     if (is.null(logP) || anyNA(logP)) {
       # Exact solver hit capacity limit or timed out; fall back to MC
-      return(.ApproxStepInformation(split, n_mc = n_mc,
+      return(.ApproxStepInformation(split, mcSamples = mcSamples,
                                     nSingletons = nSingletons))
     }
   }
@@ -146,11 +157,11 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #
 # @param split Integer vector of informative token frequencies (sorted
 #   decreasing, singletons removed).
-# @param n_mc Integer. Number of Monte Carlo trees to score.
+# @param mcSamples Integer. Number of Monte Carlo trees to score.
 # @param nSingletons Integer. Number of singleton tokens (for step offset).
 # @return Named numeric vector of IC (bits) by step count.
 # @keywords internal
-.ApproxStepInformation <- function(split, n_mc = 100000L, nSingletons = 0L) {
+.ApproxStepInformation <- function(split, mcSamples = 100000L, nSingletons = 0L) {
   k <- length(split)
   n <- sum(split)
   s_min <- k - 1L
@@ -161,7 +172,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 
   # 2. MC: generate and score random trees via compiled Fitch downpass.
   #    No R object allocation per tree; ~0.01 ms per tree.
-  mc_scores <- mc_fitch_scores(split, n_mc)
+  mc_scores <- mc_fitch_scores(split, mcSamples)
 
   mu_hat <- mean(mc_scores)
   sd_hat <- sd(mc_scores)
@@ -186,7 +197,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
     # Fill MC body: all bins from s_lo onward
     for (i in s_lo_idx:length(mc_tab)) {
       if (mc_tab[i] > 0L) {
-        log_p[i] <- log(mc_tab[i] / n_mc)
+        log_p[i] <- log(mc_tab[i] / mcSamples)
       } else {
         # Right tail: normal extrapolation (negligible IC contribution)
         log_p[i] <- dnorm(s_min + i - 1L, mu_hat, sd_hat, log = TRUE)
@@ -231,7 +242,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
       s <- steps[i]
       cnt <- mc_tab[i]
       log_p[i] <- if (cnt > 0L) {
-        log(cnt / n_mc)
+        log(cnt / mcSamples)
       } else {
         dnorm(s, mu_hat, sd_hat, log = TRUE)
       }
@@ -319,7 +330,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #' **binary** characters, where _a_ leaves bear one state and _b_ bear the
 #' other.
 #' 
-#' `MaddisonSlatkin()` generalises this result to characters with multiple
+#' `MaddisonSlatkin()` generalizes this result to characters with multiple
 #' states using the recursive approach of
 #' \insertCite{Maddison1991;textual}{TreeSearch}.
 #' It returns the **log-probability** (i.e. log of the fraction of unrooted
@@ -336,6 +347,8 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #'   entry 3 = ambiguous state `{1,2}` (binary `011`), and so on.
 #'   Only observed singleton states need non-zero counts; polymorphic entries
 #'   are typically zero.
+#' @param maxSeconds Numeric giving maximum computation time in seconds.
+#'   `NA` is returned when the budget is exceeded.
 #' 
 #' @return `Carter1()` returns the number of unrooted binary trees on which a
 #' binary character with `a` leaves in one state and `b` in the other can be

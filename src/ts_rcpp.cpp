@@ -319,7 +319,8 @@ static ts::ConstraintData build_constraint_from_r(
     Nullable<IntegerMatrix> consTipData,
     Nullable<IntegerVector> consWeight,
     Nullable<CharacterVector> consLevels,
-    int consExpectedScore);
+    int consExpectedScore,
+    Nullable<IntegerMatrix> consNegSplitMatrix = R_NilValue);
 
 // [[Rcpp::export]]
 double ts_fitch_score(
@@ -1522,7 +1523,8 @@ static ts::ConstraintData build_constraint_from_r(
     Nullable<IntegerMatrix> consTipData,
     Nullable<IntegerVector> consWeight,
     Nullable<CharacterVector> consLevels,
-    int consExpectedScore)
+    int consExpectedScore,
+    Nullable<IntegerMatrix> consNegSplitMatrix)
 {
   ts::ConstraintData cd;
   if (consSplitMatrix.isNotNull()) {
@@ -1559,6 +1561,25 @@ static ts::ConstraintData build_constraint_from_r(
       }
     }
   }
+
+  // Negative (converse) constraints: forbidden clades (Bremer support).  May be
+  // supplied alone (cd otherwise empty) or alongside positive splits.
+  if (consNegSplitMatrix.isNotNull()) {
+    IntegerMatrix nsm(consNegSplitMatrix.get());
+    int n_neg = nsm.nrow();
+    if (n_neg > 0) {
+      // A column-count mismatch would otherwise silently drop the negative
+      // constraint, running an UNCONSTRAINED converse search and reporting a
+      // clade's Bremer support as 0 -- a silent wrong answer.  Fail loudly.
+      if (nsm.ncol() != n_tips) {
+        Rcpp::stop("consNegSplitMatrix has %d column(s) but the dataset has %d "
+                   "tip(s); a negative-constraint matrix needs one column per "
+                   "tip.", nsm.ncol(), n_tips);
+      }
+      ts::add_negative_constraint(cd, INTEGER(nsm), n_neg, n_tips);
+    }
+  }
+
   return cd;
 }
 
@@ -1848,6 +1869,9 @@ static ts::ConstraintData unpack_constraint(int n_tips,
     if (cc.containsElementNamed("consExpectedScore"))
       consExpectedScore = as<int>(cc["consExpectedScore"]);
 
+    SEXP nsm = cc.containsElementNamed("consNegSplitMatrix")
+                   ? SEXP(cc["consNegSplitMatrix"]) : R_NilValue;
+
     return build_constraint_from_r(
         n_tips,
         Nullable<IntegerMatrix>(csm),
@@ -1855,7 +1879,8 @@ static ts::ConstraintData unpack_constraint(int n_tips,
         Nullable<IntegerMatrix>(ctd),
         Nullable<IntegerVector>(cw),
         Nullable<CharacterVector>(cl),
-        consExpectedScore);
+        consExpectedScore,
+        Nullable<IntegerMatrix>(nsm));
   }
   return ts::ConstraintData{};
 }
@@ -2112,7 +2137,14 @@ List ts_driven_search(
 
   ts::TreePool pool(params.pool_max_size, params.pool_suboptimal);
   ts::DrivenResult result;
-  if (nThreads != 1) {
+  // The parallel driven search has no negative-constraint (forbidden-clade)
+  // backstop: its shared pool is never set_forbidden and tree_fuse is
+  // constraint-blind, so it could return a tree that displays a forbidden clade.
+  // The R layer already forces nThreads = 1 (with a warning) whenever a negative
+  // constraint is set; force it here too, so a direct C++ caller cannot silently
+  // reach the unguarded path and report an unsound converse-search best.
+  const bool has_neg_constraint = cd_ptr && cd_ptr->neg_active;
+  if (nThreads != 1 && !has_neg_constraint) {
     result = ts::parallel_driven_search(pool, ds, params, cd_ptr, nThreads);
   } else {
     result = ts::driven_search(pool, ds, params, cd_ptr);
@@ -2302,7 +2334,7 @@ List ts_collapse_pool(
   }
   // Group sizes depend only on the constraint, so they are counted once here
   // rather than per tree.  A group of fewer than two taxa is skipped below:
-  // such a split is realised by a terminal edge, never a collapse candidate.
+  // such a split is realized by a terminal edge, never a collapse candidate.
   std::vector<int> n_one_tips(cons_one.size(), 0);
   std::vector<int> n_zero_tips(cons_one.size(), 0);
   for (size_t r = 0; r < cons_one.size(); ++r) {
@@ -2361,7 +2393,7 @@ List ts_collapse_pool(
 
     ts::compute_collapsed_flags_aggressive(tree, ds, flags);
 
-    // Protect constraint splits: keep an internal edge that realises each
+    // Protect constraint splits: keep an internal edge that realizes each
     // constraint out of the contraction, so the enforced grouping stays
     // visible.  Per-node descendant tip sets via a postorder OR; rooted on
     // tip 0, so every internal set excludes tip 0.
@@ -2379,7 +2411,7 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      // A node realises the split when it holds one whole group and none of the
+      // A node realizes the split when it holds one whole group and none of the
       // other -- ts::node_displays_split() (ts_constraint.h), the same predicate
       // the search's mapping and the Wagner build read, so the branch protected
       // here is the branch they enforce.  With free tips that node is generally
@@ -3575,7 +3607,7 @@ List ts_sankoff_test(
 // callers can compare average starting-tree quality across criteria.
 //
 // bias:        0 = RANDOM, 1 = GOLOBOFF, 2 = ENTROPY
-// temperature: softmax temperature (0 = greedy; applied to [0,1]-normalised
+// temperature: softmax temperature (0 = greedy; applied to [0,1]-normalized
 //              scores so the parameter is dataset-independent)
 // n_reps:      number of trees to build
 // run_tbr:     if TRUE, run TBR convergence and record its score too

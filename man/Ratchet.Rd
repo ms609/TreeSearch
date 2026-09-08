@@ -184,7 +184,8 @@ near-optimal, within \code{suboptimal}) trees encountered, each carrying its own
 
 \code{MultiRatchet()} returns a list of optimal trees
 produced by \code{nSearch} \code{Ratchet()} searches, from which a consensus tree can
-be generated using \code{\link[ape:consensus]{ape::consensus()}} or \code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
+be generated using \code{\link[TreeTools:Consensus]{TreeTools::Consensus()}} or
+\code{\link[TreeTools:ConsensusWithout]{TreeTools::ConsensusWithout()}}.
 }
 \description{
 \code{Ratchet()} uses the parsimony ratchet \insertCite{Nixon1999}{TreeSearch}

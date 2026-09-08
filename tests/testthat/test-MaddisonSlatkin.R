@@ -194,17 +194,11 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
   # (observed as a 6 h --run-donttest CI timeout).  The solver must now detect
   # the impending overflow and fall back to the MC approximation instead.
   #
-  # This character no longer overflows a memo table -- its peak demand is ~12k
-  # entries, within the capacity the tables now reserve -- but neither does it
-  # fit the 2 s budget, so it still falls back, now by the clock rather than by
-  # the table.  Which guard wins is deliberately not asserted, nor that one
-  # wins at all: that is a property of how fast the machine is, and a quick
-  # enough one will simply finish.  A fallback warning is likewise NOT
-  # required; requiring one would fail on exactly the machines that need no
-  # fallback.  What the hang violated -- terminates, with usable values -- is
-  # what is asserted.
-  char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
-  si <- StepInformation(char, n_mc = 1000L)
+  # This character does not overflow a memo table, but takes more than 2 s
+  # (on some machines!), so may succeed or fall back to mc by the clock.
+  # The assertion simply requires that the call terminates without hanging.
+  char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == Agnarsson2004 col 83
+  si <- suppressWarnings(StepInformation(char, maxSeconds = 0.01, mcSamples = 24L))
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
 })
@@ -229,7 +223,7 @@ test_that("An oversized exact recursion falls back rather than running away", {
   char <- rep(c("0", "1", "2"), c(60L, 12L, 3L))
   si <- NULL
   warningsSeen <- capture_warnings(
-    si <- StepInformation(char, approx = "exact", n_mc = 1000L))
+    si <- StepInformation(char, approx = "exact", mcSamples = 1000L))
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
   expect_match(paste(warningsSeen, collapse = "\n"), "exceeded")

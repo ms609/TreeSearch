@@ -66,7 +66,7 @@ test_that("Ratchet does not worsen score vs starting tree", {
 
   tree <- as.phylo(1, 15)
   # The guaranteed invariant is that ratchet never exceeds the initial
-  # (unoptimised) starting score. Comparing against a separate ts_tbr() call
+  # (unoptimized) starting score. Comparing against a separate ts_tbr() call
   # is not valid: both TBR and ratchet's internal TBR use different R RNG
   # states and can converge to different local optima.
   initial_score <- ts_score(tree, ds)

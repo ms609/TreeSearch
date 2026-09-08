@@ -41,7 +41,7 @@ FuseResult tree_fuse(TreeState& recipient, const DataSet& ds,
 // rooting-invariant, so this is safe to apply to a scored tree.
 //
 // Fuse needs it to compare differently-rooted trees; the constrained Wagner
-// build needs it because build_constraint() canonicalises split masks with tip 0
+// build needs it because build_constraint() canonicalizes split masks with tip 0
 // outside, so this rooting is the one in which map_constraint_nodes() can find
 // every split the tree displays.
 void reroot_at_tip0(TreeState& tree);

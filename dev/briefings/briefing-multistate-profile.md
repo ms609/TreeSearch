@@ -253,10 +253,10 @@ the existing "keep top 5" heuristic as an option.
 #'
 #' @param split Integer vector of token frequencies (sorted decreasing,
 #'   singletons removed).
-#' @param n_mc Number of Monte Carlo trees to sample (default 50000).
+#' @param mcSamples Number of Monte Carlo trees to sample (default 50000).
 #' @return Named numeric vector of information content (bits) per step count.
 #' @keywords internal
-.ApproxStepInformation <- function(split, n_mc = 50000L) {
+.ApproxStepInformation <- function(split, mcSamples = 50000L) {
   k <- length(split)
   n <- sum(split)
   s_min <- k - 1L
@@ -273,7 +273,7 @@ the existing "keep top 5" heuristic as an option.
     matrix(char_vec, ncol = 1, dimnames = list(labels, "c1"))
   )
   mc_scores <- vapply(
-    seq_len(n_mc),
+    seq_len(mcSamples),
     function(i) RandomTreeScore(dat),
     double(1)
   )
@@ -297,7 +297,7 @@ the existing "keep top 5" heuristic as an option.
       mc_count <- sum(mc_scores == s)
       if (mc_count > 0) {
         # Direct empirical estimate
-        log_p[i] <- log(mc_count / n_mc)
+        log_p[i] <- log(mc_count / mcSamples)
       } else {
         # Normal extrapolation for unobserved step counts
         log_p[i] <- dnorm(s, mu_hat, sd_hat, log = TRUE)

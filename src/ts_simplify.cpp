@@ -190,7 +190,7 @@ SimplificationResult simplify_patterns(
     // skip the transforms entirely. This also prevents Transform 2 from turning
     // an all-autapomorphy character (e.g. states 0..7, each in one tip) into a
     // wildcard-bearing token that the conservative ambiguous check can no
-    // longer recognise as uninformative — the score would stay correct, but the
+    // longer recognize as uninformative — the score would stay correct, but the
     // character would be needlessly rescored per tree. Informative unambiguous
     // characters fall through so genuine singleton autapomorphies are still
     // removed by Transform 2.
@@ -289,7 +289,7 @@ SimplificationResult simplify_patterns(
           // reconstruction may resolve an ambiguous neighbour TO s to form a
           // cost-free clade (e.g. tip {s} beside {s,x} join at zero cost), so
           // removing s and charging +1 over-counts. The previous `has_dominant`
-          // guard only proved another state EXISTED, not that the optimiser
+          // guard only proved another state EXISTED, not that the optimizer
           // would avoid s — an unsound test that over-counted multistate
           // ambiguity. Ambiguity resolution is topology-dependent;
           // simplification must be topology-independent.

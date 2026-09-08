@@ -233,7 +233,17 @@ RatchetResult ratchet_search(TreeState& tree, DataSet& ds,
                                           nullptr, nullptr, check_timeout);
     total_moves += search_result.n_accepted;
 
-    if (search_result.best_score < best_score) {
+    // Negative (converse/Bremer) constraint defence-in-depth: ratchet perturbs
+    // only character WEIGHTS, so the topology moves solely through the two
+    // neg-guarded TBR searches above and the tree cannot acquire the forbidden
+    // clade.  Check explicitly anyway, so the clade-free invariant is enforced
+    // here as well -- matching the nni_perturb / prune_reinsert accept paths and
+    // staying robust to any future topology-touching perturbation mode.
+    bool accept = search_result.best_score < best_score;
+    if (accept && cd && cd->neg_active && displays_forbidden_clade(tree, *cd)) {
+      accept = false;
+    }
+    if (accept) {
       best_score = search_result.best_score;
       best_tree = tree;
       ++n_escapes;

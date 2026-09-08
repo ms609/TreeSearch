@@ -39,7 +39,7 @@
 # and the code does not implement it" -- was wrong, and cost a round of work.
 # `score_hierarchy_block()`'s a(n)/p(n) recurrences ARE Algorithm 1 lines 6-7,
 # term for term. The two-state DP was already there and was already
-# rooting-invariant: its branch costs are symmetric and it minimises over the
+# rooting-invariant: its branch costs are symmetric and it minimizes over the
 # root's own state. The defect was never in the DP; it was that `d(u, v)` was
 # read off `fitch_label_char()`'s directional resolution.
 #

@@ -23,7 +23,7 @@ verified by brute-force enumeration / GF(2) rank (scratch scripts, this session)
 - **`weight` (TRUE/FALSE) is retained and orthogonal to `unit`.** It controls the
   *pooling amount*, not the per-pair quality. See §5.
 - **`return` (edge/char/tree) retained;** it selects which unit is "reported" and
-  therefore which weight normalises. See §4–5.
+  therefore which weight normalizes. See §4–5.
 - This slots into the package's existing **quality × amount** decomposition
   (`ConcordanceTable()` / `QACol()`): quality = per-pair coverage ratio, amount =
   N&L fractional weight (trit content).
@@ -264,7 +264,7 @@ char FQ(c) = Σ_k  M(k,c)·Q(k,c)  /  Σ_k  M(k,c)
     edge/char × weight × binary/multistate (`test-Concordance.R`), and
     `normalize = FALSE` is byte-identical to the published raw measure. The flat
     `1/3` baseline stays rejected (it does not adapt to marginals; the
-    fixed-marginal null generalises it).
+    fixed-marginal null generalizes it).
 - **`M = min(W_c,W_k)`** (settled): the pooling amount is the *shared*
   information, so it must be symmetric between character and split (both
   `return`s pool by the same `M`); `M = W_k` would make the char return weight a

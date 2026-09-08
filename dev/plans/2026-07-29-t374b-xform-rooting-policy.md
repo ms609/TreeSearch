@@ -10,11 +10,11 @@
 
 ## Recommendation, up front
 
-**Option 3: document XFORM as an approximation whose reported score is a rooting-dependent upper bound, canonicalise the rooting at the single place the user-visible discrepancy is produced, and do not pin `sankoff_forced_root`.**
+**Option 3: document XFORM as an approximation whose reported score is a rooting-dependent upper bound, canonicalize the rooting at the single place the user-visible discrepancy is produced, and do not pin `sankoff_forced_root`.**
 
 Concretely, and in priority order:
 
-1. **Fix the reported-score/`TreeLength()` discrepancy, which is the actual P1 user-visible defect**, by making the report path and `TreeLength()` agree on one rooting — not by making the objective rooted. This is the lead evidence (Q-E): the quantity the search already optimises is a **valid upper bound** on the well-defined unrooted objective (min over rootings), it is **tight for 87–98% of rootings**, mean overstatement 0.02–0.17 steps, and the worst case is bounded by `nSec` per hierarchy block (Q-B). So agreement at the boundary is cheap and provably close, and nothing about the search needs to change to get it.
+1. **Fix the reported-score/`TreeLength()` discrepancy, which is the actual P1 user-visible defect**, by making the report path and `TreeLength()` agree on one rooting — not by making the objective rooted. This is the lead evidence (Q-E): the quantity the search already optimizes is a **valid upper bound** on the well-defined unrooted objective (min over rootings), it is **tight for 87–98% of rootings**, mean overstatement 0.02–0.17 steps, and the worst case is bounded by `nSec` per hierarchy block (Q-B). So agreement at the boundary is cheap and provably close, and nothing about the search needs to change to get it.
 2. **Do not set `forced_root_state = 0` as a standalone change.** This was the attractive cheap fix, and it is **incoherent on its own** — not merely suboptimal. Pinning the root *state* makes the root meaningful while leaving the root *position* arbitrary and, at four sites, actively moving (Q3). Measured: the pinned-state criterion's value varies across root positions on **84–117/120** random 9-tip topologies, with spread up to 5 — so the one-liner does not remove root-sensitivity from a rerooting pipeline, it relocates and enlarges it. **Read that number correctly** (Q-C): `forced_root_state = 0` defines a *different, explicitly rooted* criterion, perfectly well-defined at any fixed rooting, so this is not evidence that a rooted criterion is wrong. It is evidence that pinning the state is only meaningful **together with** pinning the position — i.e. it is Option 2, not a one-line fix.
 3. **Do not "rethink TBR", and do not run the rooting-pinned A/B.** See Q3 and §"The A/B" — TBR's fragment reroot is not in conflict with a pinned root, the whole-tree rerooting sites are a short enumerable list, and the already-filed **T-377** is a first-order defect upstream that makes any second-order rooting measurement uninterpretable (see the "Blocker" section).
 4. **Document XFORM as rooting-sensitive** in `?MaximizeParsimony` and `?RecodeHierarchy`, stating the bound.
@@ -67,7 +67,7 @@ Asymmetric whenever `nSec ≥ 1`; **symmetric when `nSec = 0`** (gain = loss = 1
 **But "the maths is asymmetric" is not "the user's tree is rooted".** The engine's rooting is an *artefact*, not a hypothesis:
 
 - `MaximizeParsimony` supplies `TreeTools::RandomTree(nTip, root = TRUE)` when no start tree is given (`R/MaximizeParsimony.R:1219`) — the root position is whatever the RNG produced.
-- `TreeLength()` scores at whatever rooting the user's `phylo` happens to carry (`R/tree_length.R:198-204`, `:347-354`); it does not canonicalise.
+- `TreeLength()` scores at whatever rooting the user's `phylo` happens to carry (`R/tree_length.R:198-204`, `:347-354`); it does not canonicalize.
 - Wagner addition, sector search, fusing and `ts_collapse_pool` all move the root freely, on the stated premise that length is root-invariant (`ts_tbr.cpp:123-124`, `:2999`, and the already-recorded `ts_collapse_pool` comment).
 - `forced_root_state` is `-1` for every block (`R/recode_hierarchy.R:176`), i.e. "min over root states" — a deliberate attempt to *neutralise* the rooting rather than to honour it.
 
@@ -105,9 +105,9 @@ Three code comments assert root-invariance and are false for HSJ/XFORM: `ts_tbr.
 
 ## Q4. If unrooted: is min-over-root-states enough?
 
-**No.** `ts_sankoff.cpp:74-87` minimises over the root's own *state* at a fixed root *position*. That removes one degree of freedom out of two; the position remains, and the position is what varies.
+**No.** `ts_sankoff.cpp:74-87` minimizes over the root's own *state* at a fixed root *position*. That removes one degree of freedom out of two; the position remains, and the position is what varies.
 
-What *would* restore invariance is **min over rootings as well as root states**: for an unrooted topology, minimise the total over all `2n − 3` placements of the root and all root states. This is a well-defined unrooted objective, and the oracle shows the current single-rooting score is always an **upper bound** on it (Q-E) — an overstatement, never an understatement. That matters: it means the existing kernel is a *sound but sometimes loose* evaluator of the correct unrooted objective, and it is tight for 87–98% of rootings.
+What *would* restore invariance is **min over rootings as well as root states**: for an unrooted topology, minimize the total over all `2n − 3` placements of the root and all root states. This is a well-defined unrooted objective, and the oracle shows the current single-rooting score is always an **upper bound** on it (Q-E) — an overstatement, never an understatement. That matters: it means the existing kernel is a *sound but sometimes loose* evaluator of the correct unrooted objective, and it is tight for 87–98% of rootings.
 
 For an asymmetric matrix that satisfies the triangle inequality this is the standard construction (equivalently: attach a hypothetical ancestor of unspecified state, and let the DP place it). Its cost is a factor `2n − 3` on the Sankoff term, which is why it belongs on the **report path only**, not in the search loop.
 
@@ -115,7 +115,7 @@ For an asymmetric matrix that satisfies the triangle inequality this is the stan
 
 Yes, and it is the recommendation. The **actual P1 defect** in T-374 is not "the objective is rooting-dependent" — it is "`MaximizeParsimony` reports a best score that `TreeLength()` of its own returned trees does not reproduce", and "4 of 6 trees in one MPT set do not share a score under a common rooting". Both are *reporting* defects, and both are fixed by making one rooting authoritative at the boundary:
 
-- Have the report path and `TreeLength()` agree — either both canonicalise (tip-0 rooting, as `ts_collapse_pool` already does) or, better, both evaluate the min-over-rootings objective for the returned pool only (`|pool| × (2n − 3)` Sankoff evaluations, negligible against a search).
+- Have the report path and `TreeLength()` agree — either both canonicalize (tip-0 rooting, as `ts_collapse_pool` already does) or, better, both evaluate the min-over-rootings objective for the returned pool only (`|pool| × (2n − 3)` Sankoff evaluations, negligible against a search).
 - The min-over-rootings variant additionally makes the MPT set internally consistent by construction, since the score no longer depends on the representation.
 - Document the bound: for a single block the search-time score can exceed the min-over-rootings objective by at most `nSec` (measured, below), and does so for 2–13% of rootings.
 - Do **not** error out on unrooted input. XFORM has no root to demand, and requiring one would ask users to supply a hypothesis the criterion does not actually use.
@@ -171,7 +171,7 @@ total  =  Σ_edges s(u,v)  −  Σ_{internal} f(u)  −  f(root)  +  Σ_tips f
 
 **Option 2 — full rooted criterion: require a rooted input tree, pin state and position, gate the four whole-tree reroot sites.** *Rejected on cost/benefit, not feasibility.* Q3 shows the mechanical cost is moderate. But it (i) asks users for a root the criterion does not need, (ii) makes the root position an unsearched nuisance parameter whose choice changes the answer by up to `Σ nSec_b`, (iii) shrinks the reachable move set at the four gated sites — including fusing, whose whole value is topological diversity, and `ts_collapse_pool`, whose canonicalisation the collapse logic depends on, and (iv) delivers no user-visible benefit over Option 3, because Option 3 already removes the reported discrepancy. Reconsider only if a user presents a hierarchy where the root state is genuinely known *and* the tree genuinely rooted.
 
-**Option 3 — recommended: unrooted reading, canonicalised reporting, documented bound.** Keep `forced_root_state = -1`. Keep the search as-is (an upper-bound evaluator). Make `MaximizeParsimony`'s reported score and `TreeLength()` agree on one rooting; prefer min-over-rootings on the returned pool, which additionally makes the MPT set self-consistent. Document XFORM as rooting-sensitive with the `nSec`-per-block bound. Fix the three false root-invariance comments as part of whatever touches those files.
+**Option 3 — recommended: unrooted reading, canonicalized reporting, documented bound.** Keep `forced_root_state = -1`. Keep the search as-is (an upper-bound evaluator). Make `MaximizeParsimony`'s reported score and `TreeLength()` agree on one rooting; prefer min-over-rootings on the returned pool, which additionally makes the MPT set self-consistent. Document XFORM as rooting-sensitive with the `nSec`-per-block bound. Fix the three false root-invariance comments as part of whatever touches those files.
 
 **Option 4 — implement min-over-rootings inside the search.** Correct but `(2n−3)×` on the Sankoff term. Not warranted while the Sankoff term is absent from the candidate screen (blocker). Revisit only after that is fixed and only if measurement shows the loose bound misleads the search.
 

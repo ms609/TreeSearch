@@ -1,4 +1,5 @@
 #include "ts_pool.h"
+#include "ts_constraint.h"  // displays_forbidden_clade (negative-constraint filter)
 #include <algorithm>
 #include <stdexcept>
 #include <cstring>
@@ -19,6 +20,11 @@ bool TreePool::is_duplicate(uint64_t hash, const SplitSet& ss) const {
 bool TreePool::add(const TreeState& tree, double score) {
   // Reject if worse than threshold (when pool is non-empty)
   if (!entries_.empty() && score > best_score_ + suboptimal) {
+    return false;
+  }
+
+  // Reject any tree displaying a forbidden clade (converse-constraint search).
+  if (forbidden_ && displays_forbidden_clade(tree, *forbidden_)) {
     return false;
   }
 
@@ -102,6 +108,11 @@ bool TreePool::add_collapsed(const TreeState& tree, double score,
 
   // Reject if worse than threshold
   if (!entries_.empty() && score > best_score_ + suboptimal) {
+    return false;
+  }
+
+  // Reject any tree displaying a forbidden clade (converse-constraint search).
+  if (forbidden_ && displays_forbidden_clade(tree, *forbidden_)) {
     return false;
   }
 

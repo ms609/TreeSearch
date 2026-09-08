@@ -288,7 +288,7 @@ bound.**
   ("skip candidates whose bound $\ge$ current best"): being an upper bound, it can discard genuinely
   improving moves. Its only safe use is the current one — a heuristic *ranker* whose chosen move is
   **re-scored exactly** afterwards (the `temper` caller); even there it systematically
-  over-penalises attachment points where the simplified final dropped an MPR state.
+  over-penalizes attachment points where the simplified final dropped an MPR state.
 - Not exact on binary/unambiguous data (S4): explicit all-singleton, two-state, fully-resolved
   counterexample; the gate independently found over-counts on 34.8% and true-finals under-counts on
   27.6% of binary candidates.

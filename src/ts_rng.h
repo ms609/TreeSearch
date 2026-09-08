@@ -40,7 +40,7 @@ bool check_interrupt();
 // Direct random draws for algorithms that use unif_rand() directly
 // (e.g., Fisher-Yates in Wagner tree and resampling).
 // - Serial mode: calls unif_rand() (caller must manage RNG state)
-// - Parallel mode: draws from *thread_rng (normalised to [0, 1))
+// - Parallel mode: draws from *thread_rng (normalized to [0, 1))
 double thread_safe_unif();
 
 // Begin RNG state access (serial mode: calls GetRNGstate())

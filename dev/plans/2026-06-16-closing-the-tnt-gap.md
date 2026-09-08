@@ -175,7 +175,7 @@ targets wall-clock.
 - The cited StateSnapshot ~23% comes from a VTune doc that **predates T-261** (it *recommended* the
   fill removal T-261 then made) and likely T-300's incremental-SPR accept path — so the figure is
   **stale and the share has probably shrunk**. The remaining lever (selective `StateSnapshot`
-  save/restore) is intricate, correctness-critical surgery on the most-optimised code in the repo.
+  save/restore) is intricate, correctness-critical surgery on the most-optimized code in the repo.
 - **Decision:** it must be **re-profiled in a fresh `/profile` (VTune) round** to confirm it is still a
   meaningful hotspot *before* the surgery — not done on stale data at the tail of this round. Verification
   when pursued: behaviour-neutral via **candidate-identity** (a correct timing optimisation must leave
@@ -223,7 +223,7 @@ fair reference; scores / rearrangement counts are. R0-vs-R12 wall-clock is compa
 
 ## Methodology guardrails
 
-- **Optimise against candidates-per-improvement** (continuous, low-variance), not
+- **Optimize against candidates-per-improvement** (continuous, low-variance), not
   score-at-fixed-time (±2-step lottery on a small panel).
 - **Authoritative wall-clock**: Hamilton 64-bit Linux TNT (matches the on-disk
   `t264`/`t249` reference scores). The local `tnt.exe` is **32-bit** (PE32/i386) —

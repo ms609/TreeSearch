@@ -68,7 +68,7 @@ run_tnt <- function(phy, seed, timeout_s) {
   # as a run-file argument.  `tnt run.run;` makes 64-bit TNT try to EXECUTE the
   # filename as a command ("Must read data before generating random trees") and
   # `proc` never runs; piping commands to stdin is the canonical non-interactive
-  # mode.  No curses is initialised when stdin is not a TTY, so TERM=dumb (set in
+  # mode.  No curses is initialized when stdin is not a TTY, so TERM=dumb (set in
   # the sbatch) suffices — the earlier TERM=xterm / `log`-only theory was wrong.
   out <- tryCatch(
     system2(TNT_EXE, stdin = basename(runfile),

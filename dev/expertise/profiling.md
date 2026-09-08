@@ -388,7 +388,7 @@ VTune top functions (TreeSearch.dll self, total 2.70 s; names via `nm`):
 **Conclusion:** per-candidate scoring is at the AVX2/compiler limit. Standard-Fitch
 is **bookkeeping- + strategy-bound**: per-clip O(n) work (postorder rebuild +
 incremental passes + edge/from_above/vroot construction ≈ 18%) and ratchet (63%)
-are the levers — exactly what TNT minimises (Goloboff 1996). This corroborates
+are the levers — exactly what TNT minimizes (Goloboff 1996). This corroborates
 `.positai/plans/2026-03-21-tnt-outperformance-analysis.md` (strategy > code).
 
 **Two build gotchas for VTune on this MinGW/Windows toolchain** (cost an hour):

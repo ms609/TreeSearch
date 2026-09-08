@@ -14,7 +14,7 @@ anything you already measure.
 
 TreeSearch's tree-fusing (`tree_fuse`) recombines clades between pool trees, but
 in the production driven search it does **zero productive recombination**: the
-recipient is hard-wired to `pool.best()` (the already-optimised global best) and
+recipient is hard-wired to `pool.best()` (the already-optimized global best) and
 acceptance requires a *strict* improvement, so a clade swap from a suboptimal
 donor can never strictly improve it (root cause:
 `dev/plans/2026-06-22-tree-fuse-zero-exchanges.md`). The **pairwise-fuse**

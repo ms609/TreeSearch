@@ -284,7 +284,8 @@ Ratchet <- function(tree, dataset,
 #' @rdname Ratchet 
 #' @return `MultiRatchet()` returns a list of optimal trees 
 #' produced by `nSearch` `Ratchet()` searches, from which a consensus tree can
-#' be generated using [`ape::consensus()`] or [`TreeTools::ConsensusWithout()`].
+#' be generated using [`TreeTools::Consensus()`] or
+#' [`TreeTools::ConsensusWithout()`].
 #' @param nSearch Number of Ratchet searches to conduct
 #' (for `RatchetConsensus()`)
 #' @export
@@ -301,7 +302,11 @@ MultiRatchet <- function (tree, dataset, ratchHits = 10,
   })
   scores <- vapply(trees, function (x) attr(x, "score"), double(1))
   trees <- .UniqueExceptHits(trees[scores == min(scores)])
-  message("Found ", length(trees), " unique trees from ", nSearch, " searches.")
+  
+  if (verbosity > 0L) {
+    message("Found ", length(trees), " unique trees from ", nSearch,
+            " searches.")
+  }
   
   # Return:
   structure(trees, class = "multiPhylo")

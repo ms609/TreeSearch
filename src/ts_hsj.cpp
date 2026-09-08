@@ -33,7 +33,7 @@ std::vector<int> partition_weights(
 // of SYMMETRIC dissimilarities over the branches of an UNROOTED tree (Hopkins
 // & St John 2021, p.3, p.6), so it may not depend on where the tree happens to
 // be rooted.  The a(n)/p(n) DP below satisfies that already -- its branch
-// costs are symmetric and it minimises over the root's own state.  The
+// costs are symmetric and it minimizes over the root's own state.  The
 // secondary labelling did not: fitch_label_char() resolves ambiguous nodes
 // with a DELTRAN-style uppass whose direction, and with subtree support counts
 // whose subtrees, are both properties of the INPUT rooting.  Two rootings of
@@ -43,7 +43,7 @@ std::vector<int> partition_weights(
 // topology and the data alone.  Tip indices come from the dataset, not from
 // the rooting, so this is canonical.  Note this is NOT the reporting-boundary
 // canonicalisation PR #278 applied to XFORM: this sits inside the kernel, so
-// the objective the SEARCH optimises is itself rooting-invariant, and
+// the objective the SEARCH optimizes is itself rooting-invariant, and
 // MaximizeParsimony()'s reported score agrees with TreeLength() of the trees
 // it returns by construction rather than by re-scoring at the boundary.
 //
@@ -180,7 +180,7 @@ static int fitch_label_char(
   }
 
   // --- Downpass, in the canonical (tip-0-rooted) postorder ---
-  // Generalised over arity: the kernel's own root becomes an ordinary degree-2
+  // Generalized over arity: the kernel's own root becomes an ordinary degree-2
   // node here, which Fitch passes through unchanged, and the canonical root is
   // tip 0, which has one child AND an observation of its own to honour.
   int steps = 0;

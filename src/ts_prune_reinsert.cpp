@@ -438,7 +438,7 @@ void expand_and_reinsert(
   std::vector<int> sa_pre;
   // Cumulative across all expand_and_reinsert() calls this session.  thread_local:
   // expand_and_reinsert runs concurrently on parallel-search workers, so plain
-  // `static` would be an unsynchronised data race on these counters.  thread_local
+  // `static` would be an unsynchronized data race on these counters.  thread_local
   // gives each worker its own tally (per-thread partials on multi-thread runs); the
   // probe is a diagnostic normally run single-threaded, where this is exact.
   thread_local static long long sa_placements = 0, sa_delta_pos = 0, sa_delta_sum = 0,
@@ -694,13 +694,21 @@ PruneReinsertResult prune_reinsert_search(
         if (cd->constraint_node[s] < 0) { accept = false; break; }
       }
     }
+    // Negative (converse/Bremer) constraint: the reduced-backbone TBR (step 4)
+    // runs cd-blind, so expand_and_reinsert can rebuild a forbidden clade.
+    // Reject such a tree even if it scores better, reverting to the (clade-free)
+    // pre-prune backup -- otherwise the replicate can strand on the clade.
+    // Soundness is already guaranteed by the pool backstop; this preserves reach.
+    if (accept && cd && cd->neg_active && displays_forbidden_clade(tree, *cd)) {
+      accept = false;
+    }
 
     if (accept) {
       current_score = new_score;
       result.best_score = new_score;
       ++result.n_improvements;
     } else {
-      tree = backup;  // revert
+      tree = backup;  // revert (worse, or would display the forbidden clade)
       // Re-sync constraint metadata after topology revert.
       // Same bug class as F-015 (ratchet), F-016 (NNI-perturb).
       if (cd) update_constraint(tree, *cd);

@@ -153,7 +153,7 @@ test_that("MaximizeParsimony honours and searches under a `?` constraint", {
 test_that("the collapse pass keeps the enforced grouping visible", {
   # The one place the strict reading did return a wrong answer.  A constraint
   # is external evidence for a grouping, so ts_collapse_pool() protects the
-  # branch that realises it from contraction — but it identified that branch by
+  # branch that realizes it from contraction — but it identified that branch by
   # matching a node's tip set to the `1` group EXACTLY.  With free taxa the
   # realising node is generally not that set, so nothing was protected and the
   # separating edge was contracted away: the returned tree broke the documented

@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# A/B: original (converging reduced-TBR) vs optimised (5-move limit + code fixes)
+# A/B: original (converging reduced-TBR) vs optimized (5-move limit + code fixes)
 # Both libraries must already be installed.
 #   orig_lib = .vtune-lib  (tbr_max_moves=0, no build_postorder fix)
 #   opt_lib  = .agent-Eopt (tbr_max_moves=5, build_postorder deferred)

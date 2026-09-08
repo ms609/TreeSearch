@@ -33,7 +33,7 @@ struct SplitFrequencyTable;
 //               where the tip is fully ambiguous or inapplicable.
 //               High-missingness taxa are hardest to score and most likely
 //               to be trapped in suboptimal positions.
-// COMBINED    — product of INSTABILITY and MISSING scores (normalised):
+// COMBINED    — product of INSTABILITY and MISSING scores (normalized):
 //               w(t) = instability(t) * (1 + miss_fraction(t)).
 //               Targets taxa that are both unstably placed and data-poor.
 //               Falls back to INSTABILITY when pool has < 2 trees, and to

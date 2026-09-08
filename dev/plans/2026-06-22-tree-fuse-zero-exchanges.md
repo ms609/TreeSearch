@@ -13,7 +13,7 @@ all pool sizes 2..10. No crash; not size-specific.
 preset (`fuseAcceptEqual = FALSE`) requires a **strict score improvement**
 (`new_score < score`, `ts_fuse.cpp:466`/`481-484`). On this dataset class a clade
 swap **never strictly improves** the recipient, because the recipient is always
-`pool.best().tree` (the already-TBR-optimised global best) and the donors are
+`pool.best().tree` (the already-TBR-optimized global best) and the donors are
 within `poolSuboptimal` steps. So every trial lands in one of three rejected
 buckets and `n_exchanges` stays 0.
 

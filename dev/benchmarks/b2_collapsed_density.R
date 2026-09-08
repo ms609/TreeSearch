@@ -26,7 +26,7 @@
 # of zero-length edges => the active merging captures ~nothing and there is no
 # wall-clock win in B2's main mechanism for this class.  If it is substantial,
 # the win is already being CAPTURED (merging is on) => still nothing new to build,
-# but worth confirming the trajectory benefit is realised.
+# but worth confirming the trajectory benefit is realized.
 #
 # Usage: TS_LIB=.agent-fuse Rscript dev/benchmarks/b2_collapsed_density.R
 

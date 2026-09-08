@@ -45,7 +45,7 @@ The best-fitting tree found, returned \strong{unrooted}, with fitted
 Searches tree topologies for the one whose patristic distances best fit a
 target distance matrix under a least-squares criterion, fitting branch
 lengths on each candidate and minimising the residual sum of squares.  The
-heuristic uses the package's optimised C++ kernel, alternating \acronym{NNI}
+heuristic uses the package's optimized C++ kernel, alternating \acronym{NNI}
 and \acronym{SPR} rearrangements, exactly as the parsimony search does — but
 driven by the least-squares score rather than tree length.
 }

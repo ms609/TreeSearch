@@ -10,7 +10,7 @@
 #   PR enabled in large preset: c=5, d=5%, sel=MISSING
 #
 # Stage 4 goals:
-#   1. Verify PR benefit generalises across 5 independent large matrices
+#   1. Verify PR benefit generalizes across 5 independent large matrices
 #      spanning 131-206 tips.
 #   2. Check whether benefit persists or baseline catches up at 120s budget.
 #
