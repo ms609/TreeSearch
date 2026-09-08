@@ -55,8 +55,10 @@ test_that("Ratchet(stopAtScore=) met mid-search returns a consistent tree", {
 })
 
 test_that("MultiRatchet() survives an already-met stopAtScore", {
-  result <- MultiRatchet(startTree, preparedData, stopAtScore = startScore,
-                         nSearch = 2, verbosity = 0)
+  expect_silent(result <- MultiRatchet(startTree, preparedData,
+                                       stopAtScore = startScore,
+                                       nSearch = 2, verbosity = 0)
+  )
   expect_s3_class(result, "multiPhylo")
   for (phy in result) {
     expect_equal(TreeLength(phy, dataset), attr(phy, "score"))
