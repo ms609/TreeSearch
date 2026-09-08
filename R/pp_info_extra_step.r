@@ -58,8 +58,8 @@
 #' @importFrom TreeTools Log2Unrooted LnUnrooted NUnrooted NUnrootedMult
 #' @family profile parsimony functions
 #' @export
-StepInformation <- function (char, ambiguousTokens = c("-", "?"),
-                             approx = "auto", n_mc = 100000L) {
+StepInformation <- function(char, ambiguousTokens = c("-", "?"),
+                            approx = "auto", n_mc = 100000L) {
   NIL <- c("0" = 0)
   char <- char[!char %fin% ambiguousTokens]
   if (length(char) == 0) {
