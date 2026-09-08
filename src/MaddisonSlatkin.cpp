@@ -921,29 +921,14 @@ class SolverT {
   //
   // This is a latency promise, and it is deliberately the binding one.  It
   // caps what a caller waits per character; `.MS_SC_THRESHOLD` only skips work
-  // that is hopeless enough to be worth not starting.  The two could be
-  // arranged the other way round -- gate on the character's shape, which is a
-  // machine-independent quantity, and let the clock recede to a backstop --
-  // and that would buy exactness that reproduces across machines.  It is not
-  // worth its price.  A dataset is hundreds of characters; a budget generous
-  // enough for the slowest one the gate admits (k=3 (9,9,9), sc=75, measured
-  // at 12.7 s on a 2021 desktop) is an hour of unresponsiveness in the bad
-  // case, for a caller who mostly wants a number back.  Exactness here is a
-  // refinement over an already-documented approximation, so it yields.
+  // that is hopeless enough to be worth not starting.
   //
-  // The consequence, accepted knowingly: whether a given character is scored
-  // exactly or by Monte Carlo depends on how fast the machine is.  The
-  // fallback is a sampling estimate in any case, so its value was never
-  // machine-invariant either.  `approx = "mc"` is the escape hatch that is
-  // stable by construction; note that `approx = "exact"` is not one, since it
-  // waives the gate but is still stopped by this budget.
+  // Consequently, whether a given character is scored exactly or by Monte Carlo
+  // depends on how fast the machine is.
   //
   // An instrumented build runs one to two orders of magnitude slower, so the
   // budget would fire there on anything at all -- leaving the sanitizer
   // checking the bailout path instead of the algorithm it was pointed at.
-  // Scale by that slowdown rather than disabling, so a genuine blowup is still
-  // bounded; there is no responsiveness to protect in a sanitizer run, which
-  // is a nightly check and not a user sitting at a prompt.
   // GCC announces ASan through __SANITIZE_ADDRESS__ and clang through
   // __has_feature; TS_SANITIZER_BUILD is the manual escape hatch for the
   // instrumented builds that announce themselves through neither (valgrind).
