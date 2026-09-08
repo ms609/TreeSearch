@@ -51,7 +51,7 @@ Imports:
   Rdpack (>= 0.7),
   stats,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 2.3.0.9002),
+  TreeTools (>= 2.4.0.9002),
   utils,
 Suggests:
   cluster,
