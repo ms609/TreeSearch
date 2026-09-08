@@ -47,7 +47,7 @@ implement theorem 1 of \insertCite{Carter1990;textual}{TreeTools} for
 \strong{binary} characters, where \emph{a} leaves bear one state and \emph{b} bear the
 other.
 
-\code{MaddisonSlatkin()} generalises this result to characters with multiple
+\code{MaddisonSlatkin()} generalizes this result to characters with multiple
 states using the recursive approach of
 \insertCite{Maddison1991;textual}{TreeSearch}.
 It returns the \strong{log-probability} (i.e. log of the fraction of unrooted

@@ -42,7 +42,7 @@ test_that("scaling knobs are OFF by default (deterministic baseline)", {
 
 test_that("TS_SECT_GROW=0 kill-switch is identical to default-off", {
   set.seed(1); base <- ts_rss(scal_tree, scal_ds)
-  # Growth knobs are supplied but the kill-switch must neutralise them entirely.
+  # Growth knobs are supplied but the kill-switch must neutralize them entirely.
   set.seed(1)
   off <- withr::with_envvar(c(TS_SECT_GROW = "0", TS_SECT_GROW_INC = "50",
                     TS_SECT_GROW_SELFACT = "40", TS_SECT_GROW_START = "6"),

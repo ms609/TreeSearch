@@ -1338,7 +1338,7 @@ class SolverT {
         }
       }
 
-      // Subtract denom (LogB normaliser)
+      // Subtract denom (LogB normalizer)
       for (int s = 0; s < c_size; ++s) {
         if ((outerVec[s] > NEG_INF)) outerVec[s] -= denom;
       }

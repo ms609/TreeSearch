@@ -40,7 +40,7 @@
 #' @seealso
 #' [`MaximizeParsimony()`] performs the underlying search;
 #' [`Bremer()`][Bremer] uses this pool for approximate decay indices;
-#' [`Suboptimality()`] summarises the excess length of each tree.
+#' [`Suboptimality()`] summarizes the excess length of each tree.
 #' @template MRS
 #' @family split support functions
 #' @family tree scoring

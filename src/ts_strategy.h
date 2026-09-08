@@ -61,7 +61,7 @@ inline bool strategy_is_wagner(StartStrategy s) {
 
 class StrategyTracker {
 public:
-  // Initialise with default priors.
+  // Initialize with default priors.
   // RANDOM_TREE gets Beta(1,2) = pessimistic prior.
   // All others get Beta(1,1) = uniform.
   StrategyTracker() {

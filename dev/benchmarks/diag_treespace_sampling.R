@@ -38,7 +38,7 @@ wd <- file.path(tempdir(), "tntsamp"); dir.create(wd, showWarnings = FALSE, recu
   if (length(trees) == 1L) return(trees[[1]])
   ape::consensus(trees, p = 1)
 }
-.asMP <- function(tr) {        # normalise to multiPhylo list of phylo
+.asMP <- function(tr) {        # normalize to multiPhylo list of phylo
   if (is.null(tr)) return(list())
   if (inherits(tr, "phylo")) return(list(tr))
   unclass(tr)

@@ -4,7 +4,7 @@
 // Least-squares (LS) branch-length fitting and topology search.
 //
 // Given a target symmetric dissimilarity matrix D over the tips and a fixed
-// topology, fit branch lengths v that minimise the (optionally weighted)
+// topology, fit branch lengths v that minimize the (optionally weighted)
 // residual sum of squares
 //
 //   RSS = sum_{i<j} w_ij * ( d_tree(i,j) - D_ij )^2
@@ -67,7 +67,7 @@ LSFit ls_fit(const TreeState& tree, const LSData& ls, LSMethod method);
 double ls_score(const TreeState& tree, const LSData& ls, LSMethod method);
 
 // NNI hill-climbing search minimising LS RSS.  Modifies `tree` in place to the
-// best topology found.  First-improvement over a randomised edge order; repeats
+// best topology found.  First-improvement over a randomized edge order; repeats
 // passes until no NNI improves the score (beyond `max_hits` equal-score moves).
 struct LSSearchResult {
   double rss = 0.0;

@@ -261,7 +261,7 @@ documented +1..+3 EW gap, so this install behaves as the gap reports describe.
 - Hypothesis: even rebuild-alone is null from a converged T0, but rebuild is a
   *precondition* for D1 — you cannot exploit a floated HTU without re-resolving the
   sector. With the HTU frozen, `rasStarts=3` is null (already shown). With the HTU
-  floated (D1), `rasStarts>=3` becomes necessary to realise the joint move, and the
+  floated (D1), `rasStarts>=3` becomes necessary to realize the joint move, and the
   "+3 extra starts on score disagreement" (`combstarts`) matters. So D2 is *coupled*
   to D1: the only meaningful test of D2 is rasStarts>=3 *with* a floating HTU.
 - Experiment: factorial on `bench_sectorial_shared.R` — {HTU frozen, HTU floated} ×

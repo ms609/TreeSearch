@@ -41,7 +41,7 @@ To rebuild `zhu2013_2island_ref.rds` from scratch:
 1. Run TreeSearch (`inapplicable = "missing"`, `concavity = Inf`) and TNT
    (`mult = replic 100 tbr; bbreak = tbr;`, gaps→missing) on
    `zhu2013_2island.nex`; keep the unique length-598 topologies from each.
-2. Canonicalise every tree as `write.tree(SortTree(RootTree(t, outgroup)))`.
+2. Canonicalize every tree as `write.tree(SortTree(RootTree(t, outgroup)))`.
 3. `island2` = the TNT-only set; confirm it is one disconnected component by
    seeding TreeSearch from any one of them with ratchet/sector/drift/fuse
    disabled (`accept_equal` TBR walk only) and checking the closure contains

@@ -319,7 +319,7 @@ StepInformation <- function (char, ambiguousTokens = c("-", "?"),
 #' **binary** characters, where _a_ leaves bear one state and _b_ bear the
 #' other.
 #' 
-#' `MaddisonSlatkin()` generalises this result to characters with multiple
+#' `MaddisonSlatkin()` generalizes this result to characters with multiple
 #' states using the recursive approach of
 #' \insertCite{Maddison1991;textual}{TreeSearch}.
 #' It returns the **log-probability** (i.e. log of the fraction of unrooted

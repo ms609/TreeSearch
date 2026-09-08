@@ -22,7 +22,7 @@
 #   0 = RANDOM       uniform random
 #   1 = INSTABILITY  weighted by positional instability in pool
 #   2 = MISSING      weighted by ambiguous/inapplicable character count
-#   3 = COMBINED     instability × (1 + normalised missingness)
+#   3 = COMBINED     instability × (1 + normalized missingness)
 #
 # Usage:
 #   Rscript bench_pr_stage3_mbank.R [timeout_s] [output_dir]

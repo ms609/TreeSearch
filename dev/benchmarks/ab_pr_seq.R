@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-# Sequential A/B: original vs optimised PR, run in subprocesses one at a time
+# Sequential A/B: original vs optimized PR, run in subprocesses one at a time
 
 orig_lib <- "C:/Users/pjjg18/GitHub/TreeSearch-a/.vtune-lib"
 opt_lib  <- "C:/Users/pjjg18/GitHub/TreeSearch-a/.agent-Eopt"

@@ -56,7 +56,7 @@ table(Suboptimality(trees))   # excess over the optimum
 \seealso{
 \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} performs the underlying search;
 \code{\link[=Bremer]{Bremer()}} uses this pool for approximate decay indices;
-\code{\link[=Suboptimality]{Suboptimality()}} summarises the excess length of each tree.
+\code{\link[=Suboptimality]{Suboptimality()}} summarizes the excess length of each tree.
 
 Other split support functions:
 \code{\link[=Bremer]{Bremer()}},

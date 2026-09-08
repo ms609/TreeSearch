@@ -174,7 +174,7 @@
   `attr(result, "score")` did not match `TreeLength()` of the very tree returned
   (measured: 178 reported against 183 returned on a 36-taxon matrix), and
   re-rooting a returned tree changed its length again.  Both boundaries now
-  canonicalise on the first taxon of `dataset`, so one topology has one length
+  canonicalize on the first taxon of `dataset`, so one topology has one length
   and the two agree by construction.
 
   **X-transformation scores may therefore differ slightly from previous
@@ -183,7 +183,7 @@
   upper bound on the rooting-free minimum, exceeding it by at most the total
   number of secondary characters across hierarchy blocks (attained exactly by
   87--98% of rootings in simulation).  This changes reporting only -- what the
-  search optimises is untouched.
+  search optimizes is untouched.
 
   `MaximizeParsimony()` now also warns when the trees it returns do not share a
   length at that common rooting, which can happen because pool membership is
@@ -223,7 +223,7 @@
   scores 7 and 5.
 
   Unlike the x-transformation change above, this one alters what the search
-  optimises: the criterion is now a function of the unrooted tree, so
+  optimizes: the criterion is now a function of the unrooted tree, so
   `MaximizeParsimony()`'s reported score matches `TreeLength()` of the trees it
   returns without any re-scoring, and every tree in a returned set shares that
   length.  A secondary character is treated as unconstrained only at taxa whose
@@ -285,7 +285,7 @@
 
   The rungs are the former presets — `sprint`, `default`, `thorough`, and
   `large` (which was only ever `thorough` with `maxReplicates = 500`) — so the
-  ladder generalises an axis the package already had.  Beyond `large`, each
+  ladder generalizes an axis the package already had.  Beyond `large`, each
   further notch doubles BOTH the replicate budget (1000, 2000, 4000 ...) and
   the hit target, so one notch always means roughly twice the work whichever
   bound a dataset is under.  There is no policy ceiling: extra replicates cost
@@ -334,7 +334,7 @@
   returned or searched from.  The topology and score are unchanged -- the rooting
   of an addition tree is an arbitrary artefact of the order taxa were added in,
   as `?AdditionTree` notes -- but it is the rooting in which the rest of the
-  constraint machinery can recognise every split the tree displays.  Without it,
+  constraint machinery can recognize every split the tree displays.  Without it,
   a constrained search took several times longer to reach the same score.
 
 - Fix `TreeLength()` and `LengthAdded()` errors when scoring, under profile
@@ -594,7 +594,7 @@
 
 - New functions `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
   fit branch lengths to, the tree that best matches a target distance matrix
-  under a least-squares criterion, reusing the optimised C++ rearrangement
+  under a least-squares criterion, reusing the optimized C++ rearrangement
   kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
   (`method = "nnls"`) least squares are supported, with optional
   Fitch-Margoliash (`weight = "fm"`) or custom weighting.
@@ -797,7 +797,7 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
   same and neighbouring score plateaus, up to `poolMaxSize`.
 - `LeastSquaresTree()` and `LeastSquaresFit()` search for, and
   fit branch lengths to, the tree that best matches a target distance matrix
-  under a least-squares criterion, reusing the optimised C++ rearrangement
+  under a least-squares criterion, reusing the optimized C++ rearrangement
   kernel (NNI + SPR).  Ordinary (`method = "ols"`) and non-negative
   (`method = "nnls"`) least squares are supported, with optional
   Fitch-Margoliash (`weight = "fm"`) or custom weighting.  This provides the
@@ -853,7 +853,7 @@ faster; inapplicable character handling (Brazeau _et al._ 2019) is built in.
   converged searches at no score cost.
 - `pruneReinsertCycles`, `pruneReinsertDrop`, `pruneReinsertSelection` —
   taxon pruning-reinsertion perturbation: drop a fraction of leaves, let
-  the backbone re-optimise with TBR, then reinsert taxa greedily.
+  the backbone re-optimize with TBR, then reinsert taxa greedily.
   Complementary to the ratchet (which perturbs character weights).
 - `nniPerturbCycles`, `nniPerturbFraction` — stochastic NNI-perturbation:
   randomly apply NNI swaps to a fraction of internal branches and

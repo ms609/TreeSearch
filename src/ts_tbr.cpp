@@ -133,7 +133,7 @@ static double full_rescore(TreeState& tree, const DataSet& ds) {
 // now rooted canonically at tip 0 inside the kernel (ts_hsj.cpp), so HSJ scores
 // are a function of the unrooted topology.  Rebuilds postorder; does NOT refresh
 // Fitch state arrays, so the caller must full_rescore() afterwards.
-// Generalises reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
+// Generalizes reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
 // Declared in ts_tbr.h (used by the output-collapse kernel in ts_rcpp.cpp).
 void reroot_at_tip(TreeState& tree, int t) {
   const int n_tip = tree.n_tip;
@@ -1347,7 +1347,7 @@ static void order_clips(
 
     case ClipOrder::ANTI_TIP: {
       // Non-tip clips (shuffled) first, tip clips (shuffled) last.
-      // Hypothesis: tips are under-productive; deprioritise them.
+      // Hypothesis: tips are under-productive; deprioritize them.
       // Inverse of TIPS_FIRST.
       auto tip_start = std::partition(clips.begin(), clips.end(),
           [n_tip](int node) { return node >= n_tip; }); // non-tips first
@@ -1388,7 +1388,7 @@ static void order_clips(
 // collapsed / b2_ceiling). This template lifts that dispatch out of the hot
 // loop: it is instantiated ONCE per weight-class at dispatch (a runtime switch
 // in tbr_search selects the instantiation), so the dead-in-plain-EW branches
-// compile away and the compiler picks a specialised kernel.
+// compile away and the compiler picks a specialized kernel.
 //
 // The template is called ONLY in the plain-EW regime (no NA, no IW, no sector /
 // constraint / collapsed / b2), so keeping only the identity skip + scorer +
@@ -1409,7 +1409,7 @@ static void order_clips(
 // Wrong is a positive-control ONLY: the <..,true> instantiations are emitted
 // solely under -DTS_EW_MONO_WRONG (see the dispatch), so a production binary
 // has NO code path — and no env var — that can corrupt the scorer. Under that
-// build flag it corrupts the output so a live specialised path provably changes
+// build flag it corrupts the output so a live specialized path provably changes
 // the result, distinguishing "path fired + output used" from a no-op that
 // passes the gate falsely (the false-0% trap documented in s7-fastpath-sizing).
 template<bool UseFlat, bool Wrong>
@@ -1562,7 +1562,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // getenv). t_clip_ns = the bail-INDEPENDENT per-clip IW precompute
   // (extract_char_steps + compute_iw base + iw_delta; no EW analog); t_scan_ns
   // = the bail-DEPENDENT per-candidate scan (EW x4-flat/popcount vs IW
-  // scalar-gather), normalised by n_evaluated. No-op unless the var is set.
+  // scalar-gather), normalized by n_evaluated. No-op unless the var is set.
   const bool iw_timing = std::getenv("TS_IW_TIMING") != nullptr;
   long long t_clip_ns = 0, t_spr_ns = 0, t_rer_ns = 0;
   long long n_clips_t = 0, n_spr_t = 0, n_rer_t = 0;
@@ -1745,7 +1745,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // path to a corrupted scorer in a production binary — the same discipline as
   // the removed TS_EW_MONO_ASSERT probe). Rebuild with -DTS_EW_MONO_WRONG in
   // PKG_CPPFLAGS, then TS_EW_MONO_WRONG=1 selects the corrupted instantiation
-  // (must DIVERGE — proves the specialised path's output drives the search).
+  // (must DIVERGE — proves the specialized path's output drives the search).
   const bool ew_mono_wrong = std::getenv("TS_EW_MONO_WRONG") != nullptr;
 #endif
   // Positive-control fire counters, split by weight class: proving A fast path
@@ -2515,7 +2515,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               // cutoff is maintained across the clip (recomputed only on
               // improvement); byte-identical to the old per-batch recompute.
               int cutoff_b = cutoff;
-              // Initialise to cutoff_b so partial-batch trailing slots
+              // Initialize to cutoff_b so partial-batch trailing slots
               // never accidentally improve best_candidate.
               int scores[4] = {cutoff_b, cutoff_b, cutoff_b, cutoff_b};
 
@@ -3135,7 +3135,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       // Piggyback the existing per-clip poll rather than adding a clock read to
       // the candidate loop: the profiling campaign left the hot path at-limit,
-      // and a per-candidate chrono::now() would reopen it.  Stride 64 amortises
+      // and a per-candidate chrono::now() would reopen it.  Stride 64 amortizes
       // the clock read across clips, which are individually cheap.
       // Silent unless the caller labelled this search -- see TBRParams.
       if (params.heartbeat_label != nullptr) {

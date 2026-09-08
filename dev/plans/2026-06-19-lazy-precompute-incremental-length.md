@@ -156,7 +156,7 @@ Two viable designs — pick the simpler that M1 supports:
 - **On-demand single-pass:** the scorer requests block `b` of candidate `D`; a
   per-clip "is block b's full-tree up-pass done?" bitmap triggers a one-time O(N)
   up-pass+combine for block `b` across all nodes the first time any candidate needs
-  it. Subsequent candidates reuse it. (This is the clean version — amortises each
+  it. Subsequent candidates reuse it. (This is the clean version — amortizes each
   consumed block's up-pass once per clip.)
 
 The on-demand single-pass is preferred: it makes the saving exactly "skip the
@@ -290,7 +290,7 @@ cpp-search), I created my OWN worktree:
   blocks (the up-pass + the edge-set pass). Called once per clip at
   `src/ts_tbr.cpp:1504` (gated `use_directional = !has_na`).
 - **THE CRUX (kills design (a) a priori, pending measurement):** the SPR
-  candidate loop at `src/ts_tbr.cpp:1537` initialises `best_candidate = HUGE_VAL`
+  candidate loop at `src/ts_tbr.cpp:1537` initializes `best_candidate = HUGE_VAL`
   (ts_tbr.cpp:1529), so the **FIRST SPR candidate every clip is scored with
   `cutoff = INT_MAX`** (ts_tbr.cpp:1578-1580) → it never bails → it walks ALL
   blocks. The TBR reroot loop (ts_tbr.cpp:1819) and all later SPR candidates are
@@ -329,7 +329,7 @@ instrumentation (M1).
 **Advisor (pre-build):** crux holds; gate on the RAW union (the spec's literal
 metric); bounded-union is a diagnostic only; do NOT build M2 even if bounded-union
 is small (a bit-identical-trajectory lazy prototype still eats the full
-first-candidate scan); minimise build surface (avoid RcppExports/init.c codegen);
+first-candidate scan); minimize build surface (avoid RcppExports/init.c codegen);
 run Zanol first; document the "seed best_candidate" spin-off but don't implement.
 
 **Built (worktree `claude/lazy-precompute-m46`, off cpp-search da0f203f):**

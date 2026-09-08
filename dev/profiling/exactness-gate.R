@@ -151,7 +151,7 @@ fitchUpEngine <- function(tree, prelim) {
 
 # Regraft subtree S onto the edge above node D of `base` (a new node w splits
 # that edge; w's children = D and S's root).  Explicit edge-matrix surgery, then
-# normalise numbering via write/read newick.  Branch lengths dropped (Fitch is
+# normalize numbering via write/read newick.  Branch lengths dropped (Fitch is
 # length-invariant).  Returns a phylo.
 regraft <- function(base, S, D) {
   nTb <- length(base$tip.label); nTs <- length(S$tip.label)

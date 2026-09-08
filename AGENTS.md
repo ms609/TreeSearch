@@ -224,7 +224,7 @@ whose comment names a worktree is being worked there — often by the human deve
 Closing **without** a fix (not-a-bug, superseded design, negative result) needs more: close
 as *not planned* with `deferred`/`wontfix` **and** a comment carrying the reasoning and
 **what would make it live again**. A stated reopening condition is what let a later round
-recognise T-377 firing rather than re-hunt it. Long reasoning goes in `dev/benchmarks/*.md`,
+recognize T-377 firing rather than re-hunt it. Long reasoning goes in `dev/benchmarks/*.md`,
 linked.
 
 **Blocked on GHA, Hamilton or review?** Comment what you await, its reference, and the
@@ -261,7 +261,7 @@ Run these before committing whenever the trigger applies:
 |---------|---------|
 | Function signature or roxygen block changed | `Rscript -e "devtools::check_man()"` |
 | Documentation prose changed | `Rscript -e "spelling::spell_check_package()"` |
-| C++ signature changed | `Rscript .claude/tools/compile-attrs.R` (normalises LF + verifies `ts_rcpp.cpp` / `TreeSearch-init.c` arg counts) |
+| C++ signature changed | `Rscript .claude/tools/compile-attrs.R` (normalizes LF + verifies `ts_rcpp.cpp` / `TreeSearch-init.c` arg counts) |
 | Search behaviour changed (heuristics, scoring, stopping, pool) | Update `vignettes/search-algorithm.Rmd` |
 
 Full details: `.AGENTS/memory/r-package-conventions.md`.

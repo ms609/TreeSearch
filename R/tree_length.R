@@ -311,7 +311,7 @@ TreeLength.list <- function(tree, dataset, concavity = Inf,
   tree[] <- lapply(tree, function(tr) if (TreeIsRooted(tr)) tr else RootTree(tr, 1))
   if (useXform) {
     # XFORM's score is rooting-dependent (asymmetric step matrix), so an
-    # *already*-rooted tree must be canonicalised too, not just an unrooted one:
+    # *already*-rooted tree must be canonicalized too, not just an unrooted one:
     # otherwise the same topology gets different lengths from different rootings
     # and no length agrees with what `MaximizeParsimony()` reports.  See the
     # single-tree method above for the full rationale.  No warning here -- unlike

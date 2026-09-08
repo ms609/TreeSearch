@@ -1,7 +1,7 @@
 # Profiling focus areas
 
 Ranked by `(estimated wall-time share) × (remaining fixability)`. Areas at the
-memory-bandwidth ceiling or already optimised drop to the bottom but remain
+memory-bandwidth ceiling or already optimized drop to the bottom but remain
 visible so the rotation knows to skip them.
 
 Signals used to build this list:
@@ -31,7 +31,7 @@ further wins — skip unless code changes), `SKIPPED` (out of rotation).
 | 11 | Per-candidate indirect scoring      | `src/ts_driven.cpp`, `src/ts_fitch.cpp`, `src/ts_fitch_na_incr.h`      | At memory-bandwidth ceiling (~23 ns / 75 tips). T-075 confirmed no further wins.              | 23 ns / candidate (75 t)                         | 2026-03-18    | AT-LIMIT   |
 | 12 | R-loop search engine (`MaxParsi`)   | `R/MaximizeParsimony.R`, `R/TreeSearch.R`                              | < 0.5 % of wall time (Rprof, 2026-03-18). R is a passenger, not a bottleneck on hot path.     | < 0.5 %                                          | 2026-03-18    | AT-LIMIT   |
 | 13 | **Standard-Fitch path (TNT-parity)** | `src/ts_tbr.cpp`, `src/ts_fitch.cpp`, `src/ts_simd.h`, `src/ts_tree.cpp` | The `-`→`?` path (has_na=FALSE) the TNT benchmark uses; ~20× faster/rep than NA. tbr_search self 25 %, SIMD 21 %, uppass 13 %, per-clip bookkeeping 18 % | Zhu2013 627 in 0.56 s/rep; total DLL 2.70 s/8rep | 2026-06-16 (r3) | PROFILED |
-| 13a| → per-clip bookkeeping              | `ts_tbr.cpp` (build_postorder, collect_*, compute_from_above), `ts_tree.cpp` | postorder rebuilt every clip+accept (5.2 %) + incremental down/uppass (6.4 %) — TNT minimises exactly this | — | 2026-06-16 | NEW (top code lever) |
+| 13a| → per-clip bookkeeping              | `ts_tbr.cpp` (build_postorder, collect_*, compute_from_above), `ts_tree.cpp` | postorder rebuilt every clip+accept (5.2 %) + incremental down/uppass (6.4 %) — TNT minimizes exactly this | — | 2026-06-16 | NEW (top code lever) |
 | 13b| → SIMD reduce / uppass arithmetic   | `ts_simd.h`, `ts_fitch.cpp:54`                                        | any_hit_reduce 21 % (compiler-optimal); uppass scalar loop 1.22× only | — | 2026-06-16 | AT-LIMIT |
 
 ## Notes on the ranking

@@ -438,7 +438,7 @@ void expand_and_reinsert(
   std::vector<int> sa_pre;
   // Cumulative across all expand_and_reinsert() calls this session.  thread_local:
   // expand_and_reinsert runs concurrently on parallel-search workers, so plain
-  // `static` would be an unsynchronised data race on these counters.  thread_local
+  // `static` would be an unsynchronized data race on these counters.  thread_local
   // gives each worker its own tally (per-thread partials on multi-thread runs); the
   // probe is a diagnostic normally run single-threaded, where this is exact.
   thread_local static long long sa_placements = 0, sa_delta_pos = 0, sa_delta_sum = 0,

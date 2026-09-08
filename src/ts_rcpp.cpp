@@ -2334,7 +2334,7 @@ List ts_collapse_pool(
   }
   // Group sizes depend only on the constraint, so they are counted once here
   // rather than per tree.  A group of fewer than two taxa is skipped below:
-  // such a split is realised by a terminal edge, never a collapse candidate.
+  // such a split is realized by a terminal edge, never a collapse candidate.
   std::vector<int> n_one_tips(cons_one.size(), 0);
   std::vector<int> n_zero_tips(cons_one.size(), 0);
   for (size_t r = 0; r < cons_one.size(); ++r) {
@@ -2393,7 +2393,7 @@ List ts_collapse_pool(
 
     ts::compute_collapsed_flags_aggressive(tree, ds, flags);
 
-    // Protect constraint splits: keep an internal edge that realises each
+    // Protect constraint splits: keep an internal edge that realizes each
     // constraint out of the contraction, so the enforced grouping stays
     // visible.  Per-node descendant tip sets via a postorder OR; rooted on
     // tip 0, so every internal set excludes tip 0.
@@ -2411,7 +2411,7 @@ List ts_collapse_pool(
         const uint64_t* R = &tb[static_cast<size_t>(tree.right[ni]) * wps];
         for (int w = 0; w < wps; ++w) dst[w] = L[w] | R[w];
       }
-      // A node realises the split when it holds one whole group and none of the
+      // A node realizes the split when it holds one whole group and none of the
       // other -- ts::node_displays_split() (ts_constraint.h), the same predicate
       // the search's mapping and the Wagner build read, so the branch protected
       // here is the branch they enforce.  With free tips that node is generally
@@ -3607,7 +3607,7 @@ List ts_sankoff_test(
 // callers can compare average starting-tree quality across criteria.
 //
 // bias:        0 = RANDOM, 1 = GOLOBOFF, 2 = ENTROPY
-// temperature: softmax temperature (0 = greedy; applied to [0,1]-normalised
+// temperature: softmax temperature (0 = greedy; applied to [0,1]-normalized
 //              scores so the parameter is dataset-independent)
 // n_reps:      number of trees to build
 // run_tbr:     if TRUE, run TBR convergence and record its score too

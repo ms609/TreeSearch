@@ -223,7 +223,7 @@ sequential sector replacements before the next global cleanup, matching the
 tips) above which a sector is solved by tree-drifting (\code{sectorGoDrift}) or by
 combined analysis (\code{sectorGoComb}) instead of plain
 \acronym{RAS}+\acronym{TBR}, following \acronym{TNT}'s \code{sectsch}
-\code{godrift}/\code{gocomb}.  Small sectors are cheap to optimise exhaustively; large
+\code{godrift}/\code{gocomb}.  Small sectors are cheap to optimize exhaustively; large
 sectors have more reach but need drift to escape their own local optima.
 \code{sectorGoComb} solves the sector with \code{sectorCombStarts} \acronym{RAS}+drift
 starts and then \emph{fuses} them (recombines shared clades across the starts over
@@ -346,7 +346,7 @@ falls back to random otherwise.
 characters are preferentially dropped.  High-missingness taxa are
 hardest to score correctly and most likely to be trapped in suboptimal
 positions.
-\item \code{3} = combined: weight = instability × (1 + normalised missingness).
+\item \code{3} = combined: weight = instability × (1 + normalized missingness).
 Targets taxa that are both unstably placed and data-poor.
 }}
 

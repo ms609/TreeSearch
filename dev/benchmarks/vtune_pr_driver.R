@@ -27,7 +27,7 @@ for (ds_name in names(datasets)) {
   ds <- datasets[[ds_name]]
   cat(sprintf("Running %s ...\n", ds_name))
 
-  # Maximise PR time share: high cycle count, no ratchet/drift/NNI-perturb,
+  # Maximize PR time share: high cycle count, no ratchet/drift/NNI-perturb,
   # enough time for ~100+ replicates worth of PR work.
   set.seed(7531)
   MaximizeParsimony(

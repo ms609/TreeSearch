@@ -36,7 +36,7 @@ test_that("MaximizeParsimony rejects maxReplicates < 1 (T-341)", {
 })
 
 test_that("replicate-adequacy warning uses unscaled character count (T-342)", {
-  # `weight` is the .ScaleWeight()-integerised value (up to ~1260x for
+  # `weight` is the .ScaleWeight()-integerized value (up to ~1260x for
   # fractional weights); the printed `nChars` must reflect the true number
   # of characters, not that internal scale factor. The warning only fires
   # for nTip >= 30, so use a synthetic dataset large enough to trigger it.

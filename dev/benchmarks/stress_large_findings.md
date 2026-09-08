@@ -19,7 +19,7 @@ Agent F, 2026-03-18
 | `indirect_us`  | **n^2.73** | — |
 | `clip_incr_us` | **n^1.50** | — |
 
-Candidate count scales slightly super-quadratically (larger pruned subtrees give more valid regraft positions). Indirect scoring tracks candidates closely. Clip/incremental is sub-linear relative to candidates — incremental state amortises well.
+Candidate count scales slightly super-quadratically (larger pruned subtrees give more valid regraft positions). Indirect scoring tracks candidates closely. Clip/incremental is sub-linear relative to candidates — incremental state amortizes well.
 
 Both exponents are consistent with the existing AGENTS.md note (~n^2.8 TBR cost).
 

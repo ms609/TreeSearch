@@ -1067,7 +1067,7 @@ DrivenResult driven_search(TreePool& pool, DataSet& ds,
     // supplies the cross-replicate memory the per-replicate ratchet lacks,
     // letting the search discover the right perturbation strength for THIS
     // dataset at runtime instead of baking in a constant (which the
-    // benchmarks show does not generalise across datasets). Reset is implicit:
+    // benchmarks show does not generalize across datasets). Reset is implicit:
     // an improvement zeroes unsuccessful_reps below, so the next iteration
     // takes the else branch and restores base. stall_escalate_factor == 1.0
     // (default) makes the whole rule inert — a true no-op. Authoritative over

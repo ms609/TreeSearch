@@ -81,7 +81,7 @@ but are biased towards areas of uncertainty.
 It is possible that a set of trees contains all possible resolutions of a
 particular clade, and a single other topology in which that clade does not
 exist – essentially two distinct solutions, one (\emph{a}) which could be
-summarised with a summary tree that contains a polytomy, and another (\emph{b})
+summarized with a summary tree that contains a polytomy, and another (\emph{b})
 which could be summarized by a perfectly resolved tree.
 Neither of these scenarios is preferable under the principles of parsimony;
 but summary statistics (e.g. mean, median) will be strongly influenced by the

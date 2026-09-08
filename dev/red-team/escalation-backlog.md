@@ -243,8 +243,8 @@ missing-data correction, `R/tree_length.R:144-156`: `f = 1 + r·(nTaxa−obs)/ob
 called the kernel via `ts_fitch_score(..., min_steps, concavity)` — plain IW, no XPIWE args. Two
 different objectives by construction. The round further confirmed (i) `TreeLength(extended_iw =
 FALSE)` == kernel plain IW exactly, and (ii) kernel XPIWE == an independent `TreeLength()` XPIWE
-rescore of a real `MaximizeParsimony(concavity = 10)` result, exactly — so production optimises
-and reports the *same* objective in both modes. There is no optimise-vs-report mismatch.
+rescore of a real `MaximizeParsimony(concavity = 10)` result, exactly — so production optimizes
+and reports the *same* objective in both modes. There is no optimize-vs-report mismatch.
 
 **The arithmetic, re-confirmed independently 2026-07-28.** The 2026-07-27 re-queue treated the
 "non-rational" `0.16573` as its strongest evidence, reasoning that inverting `x/(x+10) = 0.16573`

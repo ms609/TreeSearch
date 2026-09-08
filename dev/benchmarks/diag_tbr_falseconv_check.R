@@ -1,7 +1,7 @@
 # Is our default TBR's "convergence" genuine, on the SHIPPING cpp-search build
 # (post directional-vroot fix, commit 2b299e4b)?  We run TBR to convergence via
 # ts_tbr_diagnostics, then enumerate the FULL unrooted canonical-TBR neighbourhood
-# of the result with the SEPARATE, unoptimised enumerator TBRMoves (-> all_tbr in
+# of the result with the SEPARATE, unoptimized enumerator TBRMoves (-> all_tbr in
 # rearrange.cpp, a different code path).  >0 improving neighbour => the kernel
 # falsely declared convergence (the competent-chaum move-incompleteness finding).
 #
@@ -26,7 +26,7 @@ d <- list(phy = phy, contrast = at$contrast,
           weight = at$weight, levels = at$levels, nTip = length(phy))
 norm <- function(tr) Preorder(RenumberTips(tr, names(d$phy)))
 
-# Run our default (rooted, optimised) TBR to convergence from a warm start.
+# Run our default (rooted, optimized) TBR to convergence from a warm start.
 tsTbr <- function(start, seed) {
   set.seed(seed)
   res <- TreeSearch:::ts_tbr_diagnostics(norm(start)[["edge"]], d$contrast, d$tip_data,

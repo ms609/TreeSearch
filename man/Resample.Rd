@@ -141,7 +141,7 @@ than the number of secondaries it brings into existence, against 1 to
 lose it -- so a tree's length depends on where its root sits, whereas
 parsimony under the other methods does not.  Lengths are therefore
 reported at a canonical rooting, on the first taxon of \code{dataset}, which
-is the rooting the returned trees carry; \code{TreeLength()} canonicalises
+is the rooting the returned trees carry; \code{TreeLength()} canonicalizes
 identically, so it reproduces the reported score and one topology has
 one length.  That value is an upper bound on the rooting-free minimum,
 exceeding it by at most the total number of secondary characters across

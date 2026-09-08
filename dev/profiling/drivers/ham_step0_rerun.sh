@@ -13,7 +13,7 @@ export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1
 # THE FIX (verified 2026-06-19): the earlier "curses needs TERM" theory was WRONG.
 # 64-bit TNT starts fine headless; it died because `tnt run.run;` makes TNT try to
 # EXECUTE the filename as a command and `proc` never runs.  framing.R now feeds the
-# script via STDIN (the canonical non-interactive mode); no curses is initialised
+# script via STDIN (the canonical non-interactive mode); no curses is initialized
 # when stdin is not a TTY, so TERM=dumb suffices.  Results land in the `log` file.
 export TERM=dumb
 LIB=/nobackup/$USER/TreeSearch/lib

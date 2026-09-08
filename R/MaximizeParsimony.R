@@ -532,7 +532,7 @@
 # Rungs 1-3 are the provisioning presets.  Rung 4 is `thorough`'s provisioning
 # with a raised replicate cap -- which is exactly what `large` already was
 # (`presets$large <- presets$thorough`, plus `maxReplicates = 500`).  So the
-# ladder generalises an axis the package was already using; it does not invent
+# ladder generalizes an axis the package was already using; it does not invent
 # one.  Above rung 4 only the BUDGET climbs, because provisioning saturates at
 # `thorough`: there is nothing further to provision.
 #
@@ -828,7 +828,7 @@
 #'       lose it -- so a tree's length depends on where its root sits, whereas
 #'       parsimony under the other methods does not.  Lengths are therefore
 #'       reported at a canonical rooting, on the first taxon of `dataset`, which
-#'       is the rooting the returned trees carry; `TreeLength()` canonicalises
+#'       is the rooting the returned trees carry; `TreeLength()` canonicalizes
 #'       identically, so it reproduces the reported score and one topology has
 #'       one length.  That value is an upper bound on the rooting-free minimum,
 #'       exceeding it by at most the total number of secondary characters across
@@ -1360,7 +1360,7 @@ MaximizeParsimony <- function(
       # all plateau above the optimum that a deeper ratchet reaches.  A 36-matrix
       # grid over
       # `ratchetCycles` in {6, 12, 20, 48, 96} (implied weights, k = 10) found
-      # expected wall-clock-to-optimum minimised at 48: on the 4 cycle-sensitive
+      # expected wall-clock-to-optimum minimized at 48: on the 4 cycle-sensitive
       # matrices the mean fell 1435 s -> 709 s, while the 32 others paid a median
       # +0.2 s with reach unchanged.  The curve is flat from ~20 to ~96 and rises
       # steeply below 20, so 48 is a broad optimum rather than a knife-edge --
@@ -1693,7 +1693,7 @@ MaximizeParsimony <- function(
   # Derived from T-069 benchmarks: at 225 taxa / 748 chars a single rep takes
   # ~40s and at least ~34 reps are needed to fill the tree pool reliably.
   if (userSetReps && nTip >= 30L && verbosity > 0L) {
-    # `weight` here is the .ScaleWeight()-integerised value used by the C++
+    # `weight` here is the .ScaleWeight()-integerized value used by the C++
     # engine (up to ~1260x the original for fractional weights); the
     # recommendation formula is about the number of characters in the
     # dataset, so it must read `at$weight` (pre-scaling) rather than `weight`.
@@ -1898,7 +1898,7 @@ MaximizeParsimony <- function(
     # unsupported non-constraint branches still collapse.  consSplitMatrix rows
     # are the enforced bipartitions in tip_data order, carrying both groups
     # (1 = together, 0 = apart, NA = free; see .PrepareConstraint).  The kernel
-    # needs both: a tree with free tips generally realises the split at a node
+    # needs both: a tree with free tips generally realizes the split at a node
     # whose tip set is wider than the 1 group, which no exact match reaches, so
     # the enforced grouping would collapse out of the returned tree.
     consSplits <- if (!is.null(constraintConfig)) {
@@ -1967,10 +1967,10 @@ MaximizeParsimony <- function(
   # of the returned tree does not reproduce -- measured at 178 reported against
   # 183 returned (T-385; repro in dev/red-team/heavy-tests/).  Rescore the
   # returned pool at the canonical rooting instead: |pool| evaluations, negligible
-  # against a search, and `TreeLength()` canonicalises identically, so the two
+  # against a search, and `TreeLength()` canonicalizes identically, so the two
   # agree by construction.
   #
-  # This deliberately does NOT change what the search optimises.  The reported
+  # This deliberately does NOT change what the search optimizes.  The reported
   # value stays a rooting-dependent upper bound on the min-over-rootings
   # objective, exceeding it by at most the sum of `nSec` over hierarchy blocks
   # (measured: attained by 87-98% of rootings, mean overstatement 0.02-0.17

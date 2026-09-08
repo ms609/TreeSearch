@@ -59,7 +59,7 @@ oracleBremerNA <- function(reference, dataset) {
 }
 
 # --- method = "pool" (approximate engine) ---
-# A multiPhylo of several MPTs is summarised by its strict consensus; support
+# A multiPhylo of several MPTs is summarized by its strict consensus; support
 # is calculated for the consensus's resolved clades only.
 
 test_that("Bremer(method = 'pool') returns node-keyed non-negative support", {

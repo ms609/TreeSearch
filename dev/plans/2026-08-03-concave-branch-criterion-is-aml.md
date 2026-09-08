@@ -50,10 +50,10 @@ which also fails. Prior art for the general programme: Wheeler & Varón 2025,
 ## 1. The criterion
 
 Give every edge its own free substitution probability under a symmetric
-$m$-state (Mk) process, maximise the likelihood over topology, edge
+$m$-state (Mk) process, maximize the likelihood over topology, edge
 probabilities **and ancestral states**, and take negative log-likelihood:
 
-$$\text{minimise}\quad \Phi(T) \;=\; \min_{\text{reconstruction}} \sum_{e \in E(T)} f_m(d_e)$$
+$$\text{minimize}\quad \Phi(T) \;=\; \min_{\text{reconstruction}} \sum_{e \in E(T)} f_m(d_e)$$
 
 where $d_e$ is the number of characters changing on edge $e$, $k$ the number of
 characters, and
@@ -61,7 +61,7 @@ characters, and
 $$f_m(d) \;=\; \begin{cases} k\,H_b\!\left(\dfrac{d}{k}\right) + d\log(m-1), & \dfrac{d}{k} \le \dfrac{m-1}{m}\\[2ex] k\log m, & \text{otherwise}\end{cases}$$
 
 with $H_b$ the binary entropy in nats. Verified: $f_m(d)$ equals the negated
-maximised log-likelihood of a symmetric Mk edge whose change probability is
+maximized log-likelihood of a symmetric Mk edge whose change probability is
 constrained to the identifiable range $p \le (m-1)/m$, to
 $\mathbf{5.7\times10^{-14}}$ across 30 $(m,k,d)$ cells.
 
@@ -153,7 +153,7 @@ one, so MM freezes and can never move a change onto an empty edge.
 Krichevsky–Trofimov / Jeffreys smoothing $\hat p = (d+\frac12)/(k+1)$ removes the
 singularity ($\lambda(0)=\log(2k+1)$), is the proper MDL two-part code rather
 than a hack, and adds a $\frac12\log k$ per-edge parameter cost that correctly
-penalises resolution. **This is not merely an algorithmic detail — it is the
+penalizes resolution. **This is not merely an algorithmic detail — it is the
 mechanism of the published shrinkage pathology** (§2), so the smoothed variant
 was tested as a candidate repair (§5).
 
@@ -232,7 +232,7 @@ not a package feature.
 The chain runs: NS-2026 information metric → chance-corrected agreement →
 weighted parsimony → concave-branch penalty → **AML** → NP-hard *and*
 statistically inconsistent → and the principled repair for inconsistency is to
-*integrate out* ancestral states rather than maximise over them, which lands on
+*integrate out* ancestral states rather than maximize over them, which lands on
 ordinary Mk ML, already implemented consistently elsewhere. The incidental-
 parameters problem (Neyman–Scott 1948) is structural here: the number of
 ancestral states grows with $k$, so no amount of smoothing makes joint

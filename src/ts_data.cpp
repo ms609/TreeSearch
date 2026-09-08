@@ -420,8 +420,8 @@ DataSet build_dataset(
           // bit AND the applicable-state bit(s).  Under BGS the applicability
           // character (binary Fitch, 0=inapplicable/1=applicable) is
           // reconstructed parsimoniously — resolving each {-,X} tip in tree
-          // context, applicable-preferred on ties (De Laet: maximise homology,
-          // not minimise homoplasy) — and the three passes then count state
+          // context, applicable-preferred on ties (De Laet: maximize homology,
+          // not minimize homoplasy) — and the three passes then count state
           // steps.
           //   pure inapplicable -> {NA};      {-,X} -> {NA, X};
           //   missing {-,all}   -> {NA, all applicable} (full wildcard);

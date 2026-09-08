@@ -870,7 +870,7 @@ static ReducedDataset build_reduced_dataset_collapsed(const TreeState& tree,
 // Rebuild the sector's content topology from scratch by RAS Wagner: a random
 // taxon ORDER with greedy (best-edge) PLACEMENT, keeping the HTU anchored at
 // the synthetic root AND present throughout, so placements account for the
-// rest-of-tree state it summarises. This is the operation
+// rest-of-tree state it summarizes. This is the operation
 // TNT performs per sector (3 RAS+TBR restarts): it reaches sector topologies a
 // TBR on the *existing* sector subtree cannot, because TBR only locally
 // rearranges a tree the global TBR has already converged.
@@ -1042,10 +1042,10 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
 // _free_htu_probe), NOT namespace-scope statics: a namespace-scope dynamic
 // initializer runs at DLL load, before R can Sys.setenv() after library(), so the
 // kill switch / stats would silently ignore an env var set from R. Function-local
-// statics initialise on the first search_sector call, after any Sys.setenv.
+// statics initialize on the first search_sector call, after any Sys.setenv.
 // Engagement instrumentation counters (drift solves / HTU-float reverts). A high
 // revert rate means anchored drift is inert -- the signal that motivates pinning
-// the HTU (sector_mask). The ++ is unsynchronised across parallel workers, which
+// the HTU (sector_mask). The ++ is unsynchronized across parallel workers, which
 // is acceptable for the opt-in serial trajectory-diff run.
 static long long g_sect_drift_solves = 0;
 static long long g_sect_drift_reverts = 0;
@@ -1344,7 +1344,7 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
   // start -- and only via the SAME reduced
   // score + root_ok gate + reinsert path as the drift starts (no reduced-score
   // shortcut: the reduced length is an HTU APPROXIMATION, so a lower reduced score
-  // is necessary but the full-tree gain is realised through reinsertion exactly as
+  // is necessary but the full-tree gain is realized through reinsertion exactly as
   // for godrift). Requires >= 2 distinct donors; on converged starts fuse is a
   // no-op and best-of-starts stands.
   if (do_fuse && fuse_pool.size() >= 2) {

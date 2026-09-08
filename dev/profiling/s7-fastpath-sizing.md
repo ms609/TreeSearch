@@ -20,7 +20,7 @@ Two linked measurements:
   bookkeeping strip (category (iii): the flat scorer drops CharBlock deref + weight-multiply +
   `active_mask` check — byte-identical on unit-weight data) roughly triples the SPR saving to
   **~17% of the SPR scan ≈ 4.7% whole-search** (Zhu2013). The SPR scan is only ~19–23% of
-  candidates, and the dominant reroot path is *already* specialised (branch-free x4 kernel when
+  candidates, and the dominant reroot path is *already* specialized (branch-free x4 kernel when
   `all_weight_one`; a skip-predicate-hoisted scalar loop otherwise). Because branch/bookkeeping cost
   is **fixed** (data-/size-independent) while the scorer's gather grows with n_tips, this fraction
   *shrinks* at 5432 scale. **Not a per-move lever (~1.05×, not 10×).** The residual per-candidate
@@ -73,7 +73,7 @@ a **per-clip**, platform-specific cost, not per-candidate orchestration.
 
 ### Experiment — controlled A/B, trajectory-identical by construction
 
-Runtime toggle `TS_EW_STRIP` (uncommitted probe in `ts_tbr.cpp`, default OFF) selects a specialised
+Runtime toggle `TS_EW_STRIP` (uncommitted probe in `ts_tbr.cpp`, default OFF) selects a specialized
 SPR loop keeping only the identity skip + **the same** `fitch_indirect_length_cached` scorer +
 accept, removing all (ii) branches. Because the removed branches never fire in plain EW, the
 candidate sequence and every strict-`<` accept are identical → **score + `candidates_evaluated`

@@ -33,7 +33,7 @@ engines and running TBR to convergence. (The Wagner half is a separate task.)
 ## Method & comparability controls
 
 - Datasets are EW-Fitch-converted (inapplicable tokens → `?`), so **both engines
-  optimise the identical Fitch objective**; `TreeLength` (TS) and TNT `length`
+  optimize the identical Fitch objective**; `TreeLength` (TS) and TNT `length`
   are directly comparable. Verified: T0 round-trips at 1271 in both.
 - **TS entry point:** `TreeSearch:::ts_tbr_diagnostics(edge, ...)` — runs TBR to
   convergence from a warm-start edge matrix, returns final score + per-pass
@@ -41,7 +41,7 @@ engines and running TBR to convergence. (The Wagner half is a separate task.)
   optimum; `acceptEqual=TRUE` = single-tree plateau-walk.
 - **TNT entry point:** `bbreak = tbr [no]randclip [no]mulpars;` with `tread` of
   the shared start tree and `rseed N`. `bbreak` swaps the *in-memory* tree — it
-  does **not** re-randomise (verified: bbreak from T0=1271 stays 1271).
+  does **not** re-randomize (verified: bbreak from T0=1271 stays 1271).
 - **Two modes:**
   - **Mode A — strict single tree:** TS `acceptEqual=F`; TNT `nomulpars hold 1`.
   - **Mode B — buffer / plateau:** TS `acceptEqual=T`; TNT `mulpars hold 1000`.
@@ -69,7 +69,7 @@ engines and running TBR to convergence. (The Wagner half is a separate task.)
 
 Final length over **6 seeds** per (start tree × engine), from the IDENTICAL
 shared start. Six start trees per dataset spanning a quality ladder (two random
-topologies, two RAS Wagner, one partially-TBR-optimised, one near-optimal
+topologies, two RAS Wagner, one partially-TBR-optimized, one near-optimal
 anchor). `gap` = median(TS) − median(TNT). Raw rows:
 `dev/benchmarks/tbr_results/tbr_grid_raw.csv`; shared starts:
 `<dataset>_starts.nwk`.

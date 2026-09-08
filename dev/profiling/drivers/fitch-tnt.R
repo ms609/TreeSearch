@@ -1,7 +1,7 @@
 # Standard-Fitch TNT-parity profiling driver — Area #5
 # GOAL: profile the *standard Fitch* path that the TNT-parity benchmark uses.
 #   TNT-parity replaces inapplicable "-" with missing "?" so both engines
-#   optimise the identical Fitch objective (no Brazeau-Guillerme-Smith NA
+#   optimize the identical Fitch objective (no Brazeau-Guillerme-Smith NA
 #   handling).  Removing the "-" level makes the C++ engine take has_na=FALSE
 #   and use the flat / 4-wide (T-245) kernels — a code path NEVER profiled
 #   before (all prior rounds used the NA path on raw inapplicable.phyData).

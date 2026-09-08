@@ -4,7 +4,7 @@ skip_on_cran()
 ## T-384: constraint mapping must not depend on the tree's rooting.
 ##
 ## A constraint split is an *unrooted* bipartition, so a tree displays it
-## whenever EITHER side is a rooted clade.  build_constraint() canonicalises
+## whenever EITHER side is a rooted clade.  build_constraint() canonicalizes
 ## every split mask to exclude tip 0, and map_constraint_nodes() used to accept
 ## only that side as a clade — true of a tip-0-rooted tree and of no other.  In
 ## any other rooting the mapping returned -1, which regraft_violates_constraint()
@@ -56,7 +56,7 @@ test_that("T-384: constrained TBR searches from every rooting of one tree", {
   ds <- make_ts_data(dataset)
 
   # One constraint split; which side is stored is immaterial, as
-  # build_constraint() canonicalises it to exclude tip 0.
+  # build_constraint() canonicalizes it to exclude tip 0.
   inGroup <- labels[1:6]
   splitMatrix <- matrix(as.integer(labels %in% inGroup), nrow = 1)
 

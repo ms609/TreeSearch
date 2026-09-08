@@ -22,7 +22,7 @@ skip_on_cran()
 # (inapplicable) or an applicable state, so their applicability is fixed: this
 # is the regime in which the criterion is tie-break-free.  With partially
 # ambiguous {-,X} tips BGS additionally prefers the APPLICABLE resolution on a
-# tie (maximise homology; see test-ts-na-ambig.R), so the engine may
+# tie (maximize homology; see test-ts-na-ambig.R), so the engine may
 # legitimately exceed this minimum there -- hence the second test asserts only
 # the one-sided bound that holds in every regime.
 

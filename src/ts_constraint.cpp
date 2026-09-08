@@ -337,7 +337,7 @@ void map_constraint_nodes(const TreeState& tree, ConstraintData& cd)
   // a rooted subtree, so the split is displayed whenever EITHER side is a
   // clade.  Exactly one of the two is, except when the split is the root's own
   // bipartition (then both are): for an edge (parent(v), v) with v != root the
-  // two sides are desc(v) and its complement.  build_constraint() canonicalises
+  // two sides are desc(v) and its complement.  build_constraint() canonicalizes
   // A so that tip 0 is outside it, which makes A the clade side only when tip 0
   // sits on the root's own edge -- true of a tip-0-rooted tree and of nothing
   // else.  Testing the complement as well is what makes this mapping

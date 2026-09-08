@@ -80,7 +80,7 @@ struct HeartbeatScope {
 };
 
 // Call from inside a long-running phase.  `label` names the phase ("TBR",
-// "Ratchet"); `score` is the phase's current best.  `stride` amortises the clock
+// "Ratchet"); `score` is the phase's current best.  `stride` amortizes the clock
 // read: only every `stride`-th call consults the clock, so pass a large stride
 // from tight loops (per-clip) and 1 from coarse ones (per-ratchet-cycle).
 inline void heartbeat(const char* label, double score, int stride = 64) {

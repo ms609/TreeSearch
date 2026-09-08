@@ -134,7 +134,7 @@ library(dplyr)
 summary_tbl <- results_df |>
   filter(!is.na(best_score)) |>
   group_by(dataset, n_taxa, condition) |>
-  summarise(median_score = median(best_score),
+  summarize(median_score = median(best_score),
             median_reps  = median(replicates),
             .groups = "drop") |>
   tidyr::pivot_wider(names_from = condition,

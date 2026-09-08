@@ -41,7 +41,7 @@ budget, +3 to +66 steps. Absence from one MP tree was *not* the acceptance test 
 split absent from one MP tree can sit in another tree of the same island at zero cost.
 
 **Stratified on which side holds dataset tip 0**, because that is what decides
-whether arm 2 can fail at all: `build_constraint()` canonicalises the mask so tip 0
+whether arm 2 can fail at all: `build_constraint()` canonicalizes the mask so tip 0
 is outside, so the canonical side is always the tip-0-excluding one, and the
 pre-T-384 mapping needs *that* side to be a rooted clade — which fails exactly when
 the root position lies inside it.

@@ -33,7 +33,7 @@ rctSplits <- function(tree, tips) {
 
 ## Does some edge put all of `together` on one side and all of `apart` on the
 ## other?  This is the documented contract, stated without reference to which
-## group the machinery happens to canonicalise as "inside".
+## group the machinery happens to canonicalize as "inside".
 ##
 ## Both groups must hold at least two taxa, and that is checked rather than
 ## assumed.  A group of one is separated from everything by its own pendant
@@ -125,7 +125,7 @@ test_that("random_constrained_tree samples every legal topology", {
 })
 
 ## The user-facing route in: `?`-coded taxa in a constraint phyDat, through
-## .PrepareConstraint(), with the group the machinery canonicalises as "inside"
+## .PrepareConstraint(), with the group the machinery canonicalizes as "inside"
 ## chosen by tip 0's coding rather than by the test.
 test_that("`?` taxa start inside a constrained group as well as outside", {
   tips <- letters[1:8]
@@ -243,7 +243,7 @@ test_that("a constraint with no free taxa still builds exact clades", {
 ## (n_tip - 1 internal nodes, none allocated twice, none left dangling) is worth
 ## pinning: an over-run would corrupt the tree rather than fail loudly.
 ## Two splits, and a free tip 0 -- the tip whose position build_constraint()
-## canonicalises the split masks around.
+## canonicalizes the split masks around.
 test_that("scattered free tips leave a well-formed tree", {
   tips <- paste0("t", 1:9)
   ds <- rctDataset(tips)
