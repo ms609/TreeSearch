@@ -49,8 +49,8 @@ dataset <- inapplicable.phyData[["Vinther2008"]]
 set.seed(0)
 trees <- SuboptimalTrees(dataset, maxSuboptimal = 3, maxReplicates = 5,
                          nThreads = 1, maxPool = 100L, verbosity = 0)
-table(attr(trees, "scores"))  # parsimony lengths of retained trees
-table(Suboptimality(trees))   # excess over the optimum
+table(attr(trees, "scores"))  # Parsimony lengths of retained trees
+table(Suboptimality(trees))   # Excess over the optimum
 }
 }
 \seealso{
