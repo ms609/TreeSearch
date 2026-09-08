@@ -1,54 +1,41 @@
 #' Collect suboptimal trees for landscape analysis
 #'
 #' `SuboptimalTrees()` performs a parsimony search with [`MaximizeParsimony()`]
-#' and returns *every* tree retained within a specified number of steps of the
-#' optimum, each annotated with its parsimony score.  This exposes the shape of
-#' the parsimony landscape near the optimum -- for example to visualise the
-#' distribution of near-optimal scores, to measure tree-to-tree distances among
-#' competing resolutions, or as input to a fast approximate
-#' [`Bremer()`][Bremer] support calculation (`method = "pool"`).
+#' and returns every retained tree within a specified number of steps of the
+#' optimum, each annotated with its parsimony score.
 #'
-#' The retained trees are the search engine's internal tree pool.  Its size is
-#' bounded by `maxPool`, so memory use is capped even when many trees fall
-#' within `maxSuboptimal` steps; once the pool is full the engine evicts trees
-#' to preserve topological diversity.  The pool therefore reflects the islands
-#' the search actually visited, and is not an exhaustive enumeration of every
-#' tree within `maxSuboptimal` steps: raise `maxReplicates` / `maxSeconds`
-#' (passed via `...`) for a denser sample.
+#' The retained trees represent the search engine's internal tree pool, whose
+#' size is bounded by `maxPool`. Once the pool is filled, trees are chosen for
+#' eviction so as to preserve topological diversity.
 #'
-#' @param dataset A phylogenetic data matrix of class `phyDat`, as accepted by
-#' [`MaximizeParsimony()`].
+#' @inheritParams MaximizeParsimony
 #' @param tree Optional starting tree (of class `phylo`) or `multiPhylo`; if
-#' `NULL` (default) the search begins from random addition sequence trees.
-#' @param maxSuboptimal Numeric: retain trees scoring up to this many steps
-#' worse than the best tree found (in the search's optimality units -- integer
-#' steps under equal weights, fractional under implied weights or profile
-#' parsimony).  Sets `poolSuboptimal` in [`SearchControl()`].
-#' @param maxPool Integer: maximum number of trees to retain in the pool.  Sets
-#' `poolMaxSize` in [`SearchControl()`]; raised from the search default (100)
-#' so that a suboptimal sample is not prematurely truncated.
+#' `NULL`, the search begins from random addition sequence trees.
+#' @param maxSuboptimal Numeric: only trees whose score is within
+#' `maxSuboptimal` of the best score found will be retained.
+#' Corresponds to `poolSuboptimal` in [`SearchControl()`].
+#' @param maxPool Integer: maximum number of trees to retain in the pool.
+#' Corresponds to `poolMaxSize` in [`SearchControl()`].
 #' @param \dots Further arguments passed to [`MaximizeParsimony()`], including
-#' scoring options (`concavity`, `inapplicable`, ...) and search effort
-#' (`maxReplicates`, `maxSeconds`, `effort`, `nThreads`, `verbosity`).
-#' Named [`SearchControl()`] fields may also be passed here to override the
-#' constructed control.
+#' scoring options (`concavity`, `inapplicable`, ...), search effort
+#' (`maxReplicates`, `maxSeconds`, `effort`, `nThreads`, `verbosity`),
+#' and [`SearchControl()`] fields.
 #'
-#' @return A `multiPhylo` object listing the retained trees, best tree(s)
-#' first.  Each tree carries a `score` attribute giving its parsimony length,
-#' and the object carries a `scores` attribute: a numeric vector of those
-#' lengths aligned with the returned trees.  [`Suboptimality()`] reports each
-#' tree's excess over the optimum.
+#' @return `SuboptimalTrees()` returns a `multiPhylo` object listing the
+#' retained trees, each supplied with a `score` attribute of each tree that
+#' records the score it attained. The global `scores` attribute compiles these
+#' scores in a numeric vector.
+#' [`Suboptimality()`] reports each tree's excess over the optimum.
 #'
 #' @examples
 #' data("inapplicable.phyData", package = "TreeSearch")
 #' dataset <- inapplicable.phyData[["Vinther2008"]]
 #' \donttest{
-#' # `set.seed()` with `nThreads = 1` makes the heuristic search reproducible
 #' set.seed(0)
-#' trees <- SuboptimalTrees(dataset, maxSuboptimal = 3, maxReplicates = 8,
-#'                          nThreads = 1, verbosity = 0)
-#' attr(trees, "scores")        # parsimony length of each retained tree
-#' Suboptimality(trees)         # excess over the optimum
+#' trees <- SuboptimalTrees(dataset, maxSuboptimal = 3, maxReplicates = 5,
+#'                          nThreads = 1, maxPool = 100L, verbosity = 0)
+#' table(attr(trees, "scores"))  # parsimony lengths of retained trees
+#' table(Suboptimality(trees))   # excess over the optimum
 #' }
 #' @seealso
 #' [`MaximizeParsimony()`] performs the underlying search;
@@ -107,4 +94,24 @@ SuboptimalTrees <- function(dataset, tree = NULL,
   do.call(MaximizeParsimony,
           c(list(dataset = dataset, tree = tree, control = control,
                  collapse = FALSE), dots))
+}
+
+#' Compare scores of suboptimal trees
+#'
+#' @param trees List of trees, perhaps generated through `SuboptimalTrees()`,
+#' each of which must bear a numeric attribute `score` giving its score.
+#' @param normalize Logical stating whether to normalize results to lowest
+#' score.
+#' @return `Suboptimality()` returns a numeric vector listing, for each tree,
+#' its difference in score from the optimal (lowest) within `trees`.
+#' @export
+Suboptimality <- function (trees, normalize = FALSE) {
+  scores <- vapply(trees, attr, double(1), "score")
+  
+  # Return:
+  if (normalize) {
+    (scores - min(scores)) / min(scores)
+  } else {
+    scores - min(scores)
+  }
 }
