@@ -400,7 +400,7 @@ confirmed zero benefit on score, MPT count, or topological diversity, with
 
 **GHA fixes committed to cpp-search:**
 - Spelling wordlist: added LCM, TREE's, speedup; removed 28 stale entries
-- PrepareDataProfile/StepInformation codoc: `n_mc` 5000→100000 (stale Rd
+- PrepareDataProfile/StepInformation codoc: `mcSamples` 5000→100000 (stale Rd
   from devtools::check_man() loading old installed version)
 - test-ts-parallel.R:85 flaky timeout: Vinther→Agnarsson (fast ARM64
   completed 23-tip replicates before 1s timeout)

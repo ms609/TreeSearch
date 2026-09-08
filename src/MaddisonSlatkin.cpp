@@ -917,33 +917,8 @@ class SolverT {
   // Global s_max for this solver instance (set at first run() call)
   int s_max_global = 0;
 
-  // Time budget: abort if computation exceeds this many seconds.
-  //
-  // This is a latency promise, and it is deliberately the binding one.  It
-  // caps what a caller waits per character; `.MS_SC_THRESHOLD` only skips work
-  // that is hopeless enough to be worth not starting.
-  //
-  // Consequently, whether a given character is scored exactly or by Monte Carlo
-  // depends on how fast the machine is.
-  //
-  // An instrumented build runs one to two orders of magnitude slower, so the
-  // budget would fire there on anything at all -- leaving the sanitizer
-  // checking the bailout path instead of the algorithm it was pointed at.
-  // GCC announces ASan through __SANITIZE_ADDRESS__ and clang through
-  // __has_feature; TS_SANITIZER_BUILD is the manual escape hatch for the
-  // instrumented builds that announce themselves through neither (valgrind).
-#if defined(__SANITIZE_ADDRESS__) || defined(TS_SANITIZER_BUILD)
-#  define TS_MS_SLOW_BUILD 1
-#elif defined(__has_feature)
-#  if __has_feature(address_sanitizer) || __has_feature(memory_sanitizer)
-#    define TS_MS_SLOW_BUILD 1
-#  endif
-#endif
-#ifdef TS_MS_SLOW_BUILD
-  static constexpr double TIME_BUDGET_S = 200.0;
-#else
-  static constexpr double TIME_BUDGET_S = 2.0;
-#endif
+  // Per-call time budget, supplied by StepInformation().
+  double maxSeconds;
   std::chrono::steady_clock::time_point start_time;
   bool budget_exceeded = false;
   // Set when we bail because a memo table reached its reserved capacity (as
@@ -1060,7 +1035,7 @@ class SolverT {
       if (budget_exceeded) return NEG_INF;
       {
         auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration<double>(now - start_time).count() > TIME_BUDGET_S) {
+        if (std::chrono::duration<double>(now - start_time).count() > maxSeconds) {
           budget_exceeded = true;
           return NEG_INF;
         }
@@ -1170,7 +1145,7 @@ class SolverT {
       if (budget_exceeded) return bailout_vec;
       {
         auto now = std::chrono::steady_clock::now();
-        if (std::chrono::duration<double>(now - start_time).count() > TIME_BUDGET_S) {
+        if (std::chrono::duration<double>(now - start_time).count() > maxSeconds) {
           budget_exceeded = true;
           return bailout_vec;
         }
@@ -1336,8 +1311,9 @@ class SolverT {
     
 public:
   SolverT(const Downpass& D_, const TokenPairs& p, int presentBits_,
-          LnRootedCache& lnr)
-    : D(D_), pairs(p), presentBits(presentBits_), lnRooted(lnr) {
+          LnRootedCache& lnr, double maxSeconds_)
+    : D(D_), pairs(p), presentBits(presentBits_), maxSeconds(maxSeconds_),
+      lnRooted(lnr) {
 
     // Sized against the worst character `.MS_SC_THRESHOLD` admits to this
     // solver, measured at the entry high-water mark rather than guessed:
@@ -1385,9 +1361,9 @@ public:
                       "capacity; results will be NA (the caller falls back to "
                       "the Monte Carlo approximation).");
       } else {
-        Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+        Rcpp::warning("MaddisonSlatkin: computation exceeded %.3g s time budget; "
                       "results will be NA. Consider reducing to binary.",
-                      TIME_BUDGET_S);
+                      maxSeconds);
       }
       for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
       return;
@@ -1412,9 +1388,9 @@ public:
                       "capacity; results will be NA (the caller falls back to "
                       "the Monte Carlo approximation).");
       } else {
-        Rcpp::warning("MaddisonSlatkin: computation exceeded %.0f s time budget; "
+        Rcpp::warning("MaddisonSlatkin: computation exceeded %.3g s time budget; "
                       "results will be NA. Consider reducing to binary.",
-                      TIME_BUDGET_S);
+                      maxSeconds);
       }
       for (int i = 0; i < (int)steps_vec.size(); ++i) out[i] = NA_REAL;
       return;
@@ -1679,7 +1655,11 @@ static double logCarter1_cpp(int m, int a, int b) {
 //' 
 //' @export
 // [[Rcpp::export]]
-NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
+NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states,
+                              double maxSeconds = 2.0) {
+  if (!std::isfinite(maxSeconds) || maxSeconds < 0.0) {
+    stop("`maxSeconds` must be a non-negative finite number.");
+  }
   int len = states.size();
   if (len <= 0) stop("`states` must have positive length.");
   
@@ -1785,19 +1765,19 @@ NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states) {
   // DISPATCH based on nTokens — call runAll() once for all step counts
   if (nTokens == 2) {
     StateKeyT<2> rootKey(leavesVec);
-    SolverT<2> solver(D, pairs, presentBits, lnRooted);
+    SolverT<2> solver(D, pairs, presentBits, lnRooted, maxSeconds);
     solver.runAll(valid_steps, rootKey, results.data());
   } else if (nTokens == 3) {
     StateKeyT<3> rootKey(leavesVec);
-    SolverT<3> solver(D, pairs, presentBits, lnRooted);
+    SolverT<3> solver(D, pairs, presentBits, lnRooted, maxSeconds);
     solver.runAll(valid_steps, rootKey, results.data());
   } else if (nTokens == 4) {
     StateKeyT<4> rootKey(leavesVec);
-    SolverT<4> solver(D, pairs, presentBits, lnRooted);
+    SolverT<4> solver(D, pairs, presentBits, lnRooted, maxSeconds);
     solver.runAll(valid_steps, rootKey, results.data());
   } else { // nTokens == 5
     StateKeyT<5> rootKey(leavesVec);
-    SolverT<5> solver(D, pairs, presentBits, lnRooted);
+    SolverT<5> solver(D, pairs, presentBits, lnRooted, maxSeconds);
     solver.runAll(valid_steps, rootKey, results.data());
   }
 

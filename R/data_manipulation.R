@@ -14,18 +14,14 @@
 #   k=5: n=9  (2,2,2,2,1) sc=35  logB 142  logPVec  4990  <- threshold
 #
 # This gate is not the latency control, and should not be tuned as one.  It
-# skips work hopeless enough not to be worth starting; what a caller actually
-# waits is capped by `TIME_BUDGET_S` in MaddisonSlatkin.cpp, which stops the
-# recursion mid-flight and falls back to Monte Carlo.  Admitting a character
-# here therefore costs at most that budget, not the figures below.
+# skips work hopeless enough not to be worth starting; callers can set a
+# per-character time budget with `maxSeconds` in `StepInformation()`, which
+# stops the recursion mid-flight and falls back to Monte Carlo.
 #
-# Consequently these thresholds may be generous without hurting anyone, and
-# raising one does not make the package less responsive.  Timings, for scale
-# only, on a 2021-vintage desktop: (9,9,9) ~12.7 s, (8,7,5) ~1.9 s -- i.e. most
-# of the k=3 range is stopped by the clock, not finished.  Earlier revisions of
-# this comment quoted sub-second figures for the same characters and are
-# superseded; they were ~13x optimistic, which is how a 2 s budget came to look
-# like a backstop when it was in fact the operative limit.
+# Consequently these thresholds may be generous without forcing callers to
+# wait: they can select a shorter budget for approximation or a longer one for
+# exact results.  Timings, for scale only, on a 2021-vintage desktop:
+# (9,9,9) ~12.7 s and (8,7,5) ~1.9 s.
 .MS_SC_THRESHOLD <- c(Inf, Inf, 75L, 50L, 35L)
 
 .MSSplitCount <- function(state_counts) {
@@ -65,15 +61,19 @@
 #'   (i.e. `{02}` \ifelse{html}{\out{&rarr;}}{\eqn{\rightarrow}{-->}} `?`).
 #' 
 #' @param dataset dataset of class \code{phyDat}
-#' @param approx Character string controlling how profile information amounts
-#'   are computed for multi-state characters with many tips.
+#' @param approx Character string controlling how profile information
+#'   amounts are computed for multi-state characters with many tips.
 #'   `"auto"` (default) uses the exact Maddison & Slatkin calculation when
 #'   feasible, falling back to a Monte Carlo approximation for large or
 #'   complex characters.
 #'   `"mc"` always uses the Monte Carlo approximation;
-#'   `"exact"` always uses the exact calculation (may be very slow).
-#' @param n_mc Integer; number of Monte Carlo samples for the MC
-#'   approximation.  Default 100 000.
+#'   `"exact"` always uses the exact calculation regardless of the feasibility
+#'   gate.
+#' @param maxSeconds Non-negative numeric giving the time budget, in seconds,
+#'   allowed to the exact solver (under `"auto"` or `"exact"`) before falling
+#'   back to the Monte Carlo approximation.
+#' @param mcSamples Integer specifying number of Monte Carlo samples for the MC
+#'   approximation.
 #'
 #' @return An object of class `phyDat`, with additional attributes.
 #' `PrepareDataProfile` adds the attributes:
@@ -103,7 +103,8 @@
 #' @family profile parsimony functions
 #' @encoding UTF-8
 #' @export
-PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
+PrepareDataProfile <- function (dataset, approx = "auto", maxSeconds = 2,
+                                mcSamples = 1e5L) {
   if ("info.amounts" %fin% names(attributes(dataset))) {
     # Already prepared
     return(dataset)
@@ -225,7 +226,7 @@ PrepareDataProfile <- function (dataset, approx = "auto", n_mc = 100000L) {
   # --- Compute StepInformation per unique pattern ---
   info <- lapply(seq_along(mataset[1, ]), function (i) 
     StepInformation(mataset[, i], ambiguousTokens = AMBIG_TOKEN,
-                    approx = approx, n_mc = n_mc))
+                    approx = approx, maxSeconds = maxSeconds, mcSamples = mcSamples))
   
   
   maxSteps <- max(vapply(info,

@@ -7,7 +7,7 @@
 \alias{LogCarter1}
 \title{Number of trees with \emph{m} steps}
 \usage{
-MaddisonSlatkin(steps, states)
+MaddisonSlatkin(steps, states, maxSeconds = 2)
 
 Carter1(m, a, b)
 
@@ -22,6 +22,9 @@ Entry 1 = state \code{1} (binary \code{001}), entry 2 = state \code{2} (binary \
 entry 3 = ambiguous state \verb{\{1,2\}} (binary \code{011}), and so on.
 Only observed singleton states need non-zero counts; polymorphic entries
 are typically zero.}
+
+\item{maxSeconds}{Numeric giving maximum computation time in seconds.
+\code{NA} is returned when the budget is exceeded.}
 
 \item{m, steps}{Number of steps.}
 

@@ -197,8 +197,8 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
   # This character does not overflow a memo table, but takes more than 2 s
   # (on some machines!), so may succeed or fall back to mc by the clock.
   # The assertion simply requires that the call terminates without hanging.
-  char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
-  si <- suppressWarnings(StepInformation(char, approx = "auto", n_mc = 24L))
+  char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == Agnarsson2004 col 83
+  si <- suppressWarnings(StepInformation(char, maxSeconds = 0.01, mcSamples = 24L))
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
 })
@@ -223,7 +223,7 @@ test_that("An oversized exact recursion falls back rather than running away", {
   char <- rep(c("0", "1", "2"), c(60L, 12L, 3L))
   si <- NULL
   warningsSeen <- capture_warnings(
-    si <- StepInformation(char, approx = "exact", n_mc = 1000L))
+    si <- StepInformation(char, approx = "exact", mcSamples = 1000L))
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
   expect_match(paste(warningsSeen, collapse = "\n"), "exceeded")
