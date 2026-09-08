@@ -204,12 +204,13 @@ test_that("the user-facing API survives zero Fitch words", {
     dataset <- zeroWordSets[[nm]]
     tree <- FixedTree(dataset, 1L)
     for (concavity in list(Inf, 10, "profile")) {
-      trees <- suppressWarnings(
+      trees <- suppressMessages(suppressWarnings(
         MaximizeParsimony(dataset, tree = tree, concavity = concavity,
-                          maxReplicates = 2L, verbosity = 0L))
+                          maxReplicates = 2L, verbosity = 0L)))
       expect_s3_class(trees[[1]], "phylo")
       expect_setequal(trees[[1]]$tip.label, names(dataset))
-      expect_true(is.numeric(TreeLength(tree, dataset, concavity = concavity)))
+      expect_true(is.numeric(
+        suppressMessages(TreeLength(tree, dataset, concavity = concavity))))
     }
     # One length per character, not per distinct pattern.
     expect_length(CharacterLength(tree, dataset),
