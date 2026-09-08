@@ -6,22 +6,32 @@
 \alias{PrepareDataIW}
 \title{Prepare data for Profile Parsimony}
 \usage{
-PrepareDataProfile(dataset, approx = "auto", n_mc = 100000L)
+PrepareDataProfile(
+  dataset,
+  approx = "auto",
+  maxSeconds = 2,
+  mcSamples = 100000L
+)
 
 PrepareDataIW(dataset)
 }
 \arguments{
 \item{dataset}{dataset of class \code{phyDat}}
 
-\item{approx}{Character string controlling how profile information amounts
-are computed for multi-state characters with many tips.
+\item{approx}{Character string controlling how profile information
+amounts are computed for multi-state characters with many tips.
 \code{"auto"} (default) uses the exact Maddison & Slatkin calculation when
 feasible, falling back to a Monte Carlo approximation for large or
 complex characters.
 \code{"mc"} always uses the Monte Carlo approximation;
-\code{"exact"} always uses the exact calculation (may be very slow).}
+\code{"exact"} always uses the exact calculation regardless of the feasibility
+gate.}
 
-\item{n_mc}{Integer; number of Monte Carlo samples for the MC
+\item{maxSeconds}{Non-negative numeric giving the time budget, in seconds,
+allowed to the exact solver (under \code{"auto"} or \code{"exact"}) before falling
+back to the Monte Carlo approximation.  Default: two seconds.}
+
+\item{mcSamples}{Integer; number of Monte Carlo samples for the MC
 approximation.  Default 100 000.}
 }
 \value{

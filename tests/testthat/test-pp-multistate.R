@@ -53,7 +53,7 @@ test_that("infeasible multi-state uses MC preserving all states", {
 
   # k=3 n=38 (13,13,12): sc=140 >> 75
   char3 <- rep(c("a", "b", "c"), c(13, 13, 12))
-  info3 <- StepInformation(char3, n_mc = 5000L)
+  info3 <- StepInformation(char3, mcSamples = 5000L)
   expect_true(length(info3) >= 1)
   # MC preserves 3 states: min steps = k - 1 = 2
 
@@ -63,14 +63,14 @@ test_that("infeasible multi-state uses MC preserving all states", {
 
   # k=4 n=24 (7,6,6,5): sc=224 >> 50
   char4 <- rep(c("x", "y", "z", "w"), c(7, 6, 6, 5))
-  info4 <- StepInformation(char4, n_mc = 5000L)
+  info4 <- StepInformation(char4, mcSamples = 5000L)
   expect_true(length(info4) >= 1)
   expect_equal(as.integer(names(info4)[1L]), 3L)
   expect_true(all(info4 >= 0))
 
   # k=5 n=15 (4,3,3,3,2): sc=143 >> 35
   char5 <- rep(c("0", "1", "2", "3", "4"), c(4, 3, 3, 3, 2))
-  info5 <- StepInformation(char5, n_mc = 5000L)
+  info5 <- StepInformation(char5, mcSamples = 5000L)
   expect_true(length(info5) >= 1)
   expect_equal(as.integer(names(info5)[1L]), 4L)
   expect_true(all(info5 >= 0))
@@ -82,7 +82,7 @@ test_that("approx='mc' matches exact within 1 bit for feasible character", {
   
   set.seed(4412)
   info_exact <- StepInformation(char, approx = "exact")
-  info_mc    <- StepInformation(char, approx = "mc", n_mc = 10000L)
+  info_mc    <- StepInformation(char, approx = "mc", mcSamples = 10000L)
   
   common <- intersect(names(info_exact), names(info_mc))
   expect_true(length(common) >= 1L)
@@ -101,7 +101,7 @@ test_that("approx='mc' returns multi-state step range for infeasible char", {
   char <- rep(c("0", "1", "2"), c(13, 13, 12))
   
   set.seed(7731)
-  info_mc <- StepInformation(char, approx = "mc", n_mc = 2000L)
+  info_mc <- StepInformation(char, approx = "mc", mcSamples = 2000L)
   
   expect_true(length(info_mc) >= 1L)
   # Min steps = k - 1 = 2 (not 1 as binary fallback would give)
@@ -128,8 +128,8 @@ test_that("PrepareDataProfile preserves multi-state patterns", {
   # Step ranges may differ (exact has the true distribution; MC estimates
   # via sampling and log-quadratic tail interpolation), so we don't
   # compare dimensions — just check both produce valid, finite output.
-  info_auto <- PrepareDataProfile(dat, approx = "auto", n_mc = 5000L)
-  info_mc   <- PrepareDataProfile(dat, approx = "mc", n_mc = 5000L)
+  info_auto <- PrepareDataProfile(dat, approx = "auto", mcSamples = 5000L)
+  info_mc   <- PrepareDataProfile(dat, approx = "mc", mcSamples = 5000L)
 
   expect_true(all(is.finite(attr(info_auto, "info.amounts"))))
   expect_true(all(is.finite(attr(info_mc,   "info.amounts"))))
@@ -140,7 +140,7 @@ test_that("PrepareDataProfile preserves multi-state patterns", {
 test_that(">5 state characters handled via MC without truncation", {
   char <- rep(c("a", "b", "c", "d", "e", "f"), c(4, 3, 3, 2, 2, 2))
   # No warning: >5 states now route to MC directly instead of truncating
-  info <- StepInformation(char, n_mc = 5000L)
+  info <- StepInformation(char, mcSamples = 5000L)
 
   expect_true(length(info) >= 1)
   expect_true(all(info >= 0))
@@ -203,7 +203,7 @@ test_that("multi-state info is always >= 0", {
   )
 
   for (i in seq_along(test_chars)) {
-    info <- suppressWarnings(StepInformation(test_chars[[i]], n_mc = 5000L))
+    info <- suppressWarnings(StepInformation(test_chars[[i]], mcSamples = 5000L))
     expect_true(all(info >= 0), label = paste("test char", i))
     expect_true(all(is.finite(info)), label = paste("finite char", i))
   }
@@ -232,7 +232,7 @@ test_that("MC approximation matches exact within 2 bits at boundary", {
   info_exact <- StepInformation(char, approx = "exact")
 
   set.seed(5072)
-  info_mc <- StepInformation(char, approx = "mc", n_mc = 50000L)
+  info_mc <- StepInformation(char, approx = "mc", mcSamples = 50000L)
 
   common <- intersect(names(info_exact), names(info_mc))
   expect_true(length(common) >= 1L)
@@ -252,7 +252,7 @@ test_that("log-quadratic interpolation produces monotone IC", {
   # decreasing IC (non-increasing).
   set.seed(2849)
   char <- rep(c("0", "1", "2"), c(13, 13, 12))
-  info <- StepInformation(char, n_mc = 10000L)
+  info <- StepInformation(char, mcSamples = 10000L)
 
   expect_true(length(info) >= 1L)
   expect_true(all(info >= 0))
@@ -280,7 +280,7 @@ test_that("Monte Carlo step information is reproducible under set.seed()", {
   # The same property must hold one level up, through StepInformation()'s MC
   # path (infeasible 3-state character forces approx = "mc").
   char <- rep(c("0", "1", "2"), c(13, 13, 12))
-  set.seed(123L); s1 <- StepInformation(char, approx = "mc", n_mc = 20000L)
-  set.seed(123L); s2 <- StepInformation(char, approx = "mc", n_mc = 20000L)
+  set.seed(123L); s1 <- StepInformation(char, approx = "mc", mcSamples = 20000L)
+  set.seed(123L); s2 <- StepInformation(char, approx = "mc", mcSamples = 20000L)
   expect_identical(s1, s2)
 })

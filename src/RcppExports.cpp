@@ -11,14 +11,15 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // MaddisonSlatkin
-NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states);
-RcppExport SEXP _TreeSearch_MaddisonSlatkin(SEXP stepsSEXP, SEXP statesSEXP) {
+NumericVector MaddisonSlatkin(IntegerVector steps, IntegerVector states, double maxSeconds);
+RcppExport SEXP _TreeSearch_MaddisonSlatkin(SEXP stepsSEXP, SEXP statesSEXP, SEXP maxSecondsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type steps(stepsSEXP);
     Rcpp::traits::input_parameter< IntegerVector >::type states(statesSEXP);
-    rcpp_result_gen = Rcpp::wrap(MaddisonSlatkin(steps, states));
+    Rcpp::traits::input_parameter< double >::type maxSeconds(maxSecondsSEXP);
+    rcpp_result_gen = Rcpp::wrap(MaddisonSlatkin(steps, states, maxSeconds));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -164,14 +165,14 @@ BEGIN_RCPP
 END_RCPP
 }
 // mc_fitch_scores
-IntegerVector mc_fitch_scores(IntegerVector state_counts, int n_mc);
-RcppExport SEXP _TreeSearch_mc_fitch_scores(SEXP state_countsSEXP, SEXP n_mcSEXP) {
+IntegerVector mc_fitch_scores(IntegerVector state_counts, int mcSamples);
+RcppExport SEXP _TreeSearch_mc_fitch_scores(SEXP state_countsSEXP, SEXP mcSamplesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type state_counts(state_countsSEXP);
-    Rcpp::traits::input_parameter< int >::type n_mc(n_mcSEXP);
-    rcpp_result_gen = Rcpp::wrap(mc_fitch_scores(state_counts, n_mc));
+    Rcpp::traits::input_parameter< int >::type mcSamples(mcSamplesSEXP);
+    rcpp_result_gen = Rcpp::wrap(mc_fitch_scores(state_counts, mcSamples));
     return rcpp_result_gen;
 END_RCPP
 }
