@@ -47,8 +47,8 @@ test_that("replicate-adequacy warning uses unscaled character count (T-342)", {
   attr(dat, "weight") <- rep(0.5, attr(dat, "nr"))
   nCharsTrue <- sum(attr(dat, "weight"))
   expect_warning(
-    MaximizeParsimony(dat, maxReplicates = 1L, targetHits = 1L,
-                      verbosity = 1L),
+    suppressMessages(MaximizeParsimony(dat, maxReplicates = 1L,
+                                       targetHits = 1L, verbosity = 1L)),
     paste0(nCharsTrue, " characters")
   )
 })
