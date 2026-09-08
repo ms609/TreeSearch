@@ -174,28 +174,22 @@ trees <- MaximizeParsimony(dataset, maxReplicates = 8, nThreads = 1,
                            verbosity = 0)
 
 # A fast, approximate decay index read from the suboptimal-tree pool.
-# `maxBremer` caps the pool's suboptimality depth -- and hence how many trees
-# it retains and how long it searches; `maxReplicates` / `maxSeconds` bound
-# the underlying search so the preview stays quick.  Without these, the pool
-# search runs the full default budget (96 replicates, depth 10, no time
-# limit), which can take hours on a dataset of this size.
-decay <- Bremer(trees, dataset, method = "pool", maxBremer = 3,
-                maxReplicates = 4, maxSeconds = 20, nThreads = 1,
-                verbosity = 0)
+decay <- Bremer(trees, dataset, method = "pool", maxBremer = 4,
+                maxSeconds = 20, nThreads = 1, verbosity = 1)
 decay
 
 # Annotate the reference tree (the strict consensus of the optimal trees,
 # whose node numbers key `decay`)
 reference <- TreeTools::Consensus(trees, p = 1)
 plot(reference)
-TreeTools::LabelSplits(reference, decay)
-}
+TreeTools::LabelSplits(reference, decay, adj = c(0, -0.5))
 
-\dontrun{
-# The default `method = "constraint"` is rigorous but much slower: it runs
-# one converse-constraint search per clade.  Bound each search with
-# `maxSeconds`.
-Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 10, verbosity = 0)
+# `method = "constraint"` is rigorous but may be slower.
+# Bounding each search with `maxSeconds` increases both speed, and the chance
+# of missing a better score and thus over-estimating support.
+slower <- Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 2,
+                 verbosity = 0)
+TreeTools::LabelSplits(reference, slower, bg = "gold", adj = c(0, 1.5))
 }
 }
 \references{
