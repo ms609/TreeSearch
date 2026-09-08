@@ -1,13 +1,7 @@
 # To integrate into 2.0.0 notes
 
 - New `Bremer()` calculates Bremer (decay) support for each clade of a reference
-  tree.  The default `method = "constraint"` runs a rigorous converse-constraint
-  search per clade -- the shortest tree forced to *lack* the clade -- giving
-  trustworthy decay indices with bounded memory.  A fast, approximate
-  `method = "pool"` instead reads a pool of suboptimal trees (an upper bound,
-  right-censored at the sampling depth).  Both engines match an exhaustive
-  brute-force oracle on small datasets, including under implied weights and
-  inapplicable ("bgs") data.
+  tree.
 
 - New `SuboptimalTrees()` returns every tree the search retained within a given
   number of steps of the optimum, each annotated with its parsimony score, for
