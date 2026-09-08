@@ -29,10 +29,10 @@ gate.}
 
 \item{maxSeconds}{Non-negative numeric giving the time budget, in seconds,
 allowed to the exact solver (under \code{"auto"} or \code{"exact"}) before falling
-back to the Monte Carlo approximation.  Default: two seconds.}
+back to the Monte Carlo approximation.}
 
-\item{mcSamples}{Integer; number of Monte Carlo samples for the MC
-approximation.  Default 100 000.}
+\item{mcSamples}{Integer specifying number of Monte Carlo samples for the MC
+approximation.}
 }
 \value{
 An object of class \code{phyDat}, with additional attributes.

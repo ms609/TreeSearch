@@ -7,6 +7,10 @@
 Bremer(
   tree,
   dataset,
+  method = c("constraint", "pool"),
+  maxBremer = Inf,
+  optimalScore = NULL,
+  format = "numeric",
   concavity = Inf,
   extended_iw = TRUE,
   xpiwe_r = 0.5,
@@ -14,10 +18,6 @@ Bremer(
   hierarchy = NULL,
   inapplicable = "bgs",
   hsj_alpha = 1,
-  method = c("constraint", "pool"),
-  maxBremer = Inf,
-  optimalScore = NULL,
-  format = "numeric",
   ...
 )
 }
@@ -25,116 +25,41 @@ Bremer(
 \item{tree}{A tree of class \code{phylo} whose clades are to be evaluated. If a
 \code{multiPhylo} object is provided, its strict consensus will be evaluated.}
 
-\item{dataset}{A phylogenetic data matrix of class \code{phyDat}.}
+\item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
-\item{concavity}{Determines the degree to which extra steps beyond the first
-are penalized.  Specify a numeric value to use implied weighting
-\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
-\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
-TNT sets a default of 3, but this is too low in some circumstances
-\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
-Better still explore the sensitivity of results under a range of
-concavity values, e.g. \code{k = 2 ^ (1:7)}.
-Specify \code{Inf} to weight each additional step equally.
-Specify \code{"profile"} to employ profile parsimony
-\insertCite{Faith2001}{TreeSearch}.}
+\item{method}{Character: \code{"constraint"} for negative-constraint searches,
+or \code{"pool"} for approximation via the suboptimal pool.}
 
-\item{extended_iw}{Logical: if \code{TRUE} (default) and \code{concavity} is finite,
-apply the missing-entries correction of
-\insertCite{Goloboff2014;textual}{TreeSearch}.
-Characters with missing data receive a reduced effective concavity
-\emph{k_c} = \emph{k} / \emph{f_c}, making their weights drop off faster.
-This compensates for the artificially low homoplasy of poorly sampled
-characters.  Set \code{FALSE} for legacy Goloboff (1993) behaviour.
-Ignored when \code{concavity = Inf} (equal weights) or \code{"profile"}.}
+\item{maxBremer}{Numeric specifying the largest decay value to resolve when
+\code{method = "pool"}. Ignored under \code{method = "constraint"}.}
 
-\item{xpiwe_r}{Numeric in (0, 1]: proportion of observed homoplasy
-expected in unobserved (missing) entries.  Default 0.5 (following TNT).
-Only used when \code{extended_iw = TRUE}.}
-
-\item{xpiwe_max_f}{Numeric >= 1: maximum extrapolation factor.
-Characters with very few observed entries are clamped so that the
-extrapolation factor does not exceed this value.  Default 5 (following
-TNT).  Only used when \code{extended_iw = TRUE}.}
-
-\item{hierarchy}{A \code{\link{CharacterHierarchy}} object specifying which
-characters are controlling primaries and which are their dependent
-secondaries.  Required when \code{inapplicable} is \code{"hsj"} or \code{"xform"};
-ignored when \code{inapplicable = "bgs"} (the default).
-See \code{\link[=CharacterHierarchy]{CharacterHierarchy()}} for how to construct one, and
-\code{\link[=HierarchyFromNames]{HierarchyFromNames()}} for automated construction from
-TNT-style character names.}
-
-\item{inapplicable}{Character: method for handling inapplicable characters.
-Case-insensitive.
-See \code{vignette("inapplicable", package = "TreeSearch")} for details.
-\describe{
-\item{\code{"bgs"} (default)}{Three-pass algorithm of
-\insertCite{Brazeau2019;textual}{TreeSearch}, inferring applicability
-regions from the \code{"-"} token.  No hierarchy required.}
-\item{\code{"missing"}}{Pure Fitch parsimony
-\insertCite{Fitch1971}{TreeSearch}: the inapplicable (\code{"-"}) state is
-treated as missing data, so any token that includes a gap is recoded
-as fully ambiguous (\code{"?"}) and contributes no steps -- including
-polymorphisms such as \verb{\{0,-\}}, which become \verb{?}.  Reproduces standard
-Fitch analyses (e.g. PAUP*, or TNT with gaps read as missing) that do
-not use the Brazeau-Gardner-Smith inapplicable algorithm.  No
-hierarchy required.}
-\item{\code{"hsj"}}{Dissimilarity-metric scoring of
-\insertCite{Hopkins2021;textual}{TreeSearch}.  Requires a
-\code{hierarchy}; controlled by \code{hsj_alpha}.}
-\item{\code{"xform"}}{Step-matrix recoding approximating maximum homology
-via x-transformations
-\insertCite{Goloboff2021;textual}{TreeSearch}.  Requires a
-\code{hierarchy}.  \strong{Scores are rooting-sensitive}: the step matrix of
-this recoding is asymmetric -- gaining the controlling character costs one more
-than the number of secondaries it brings into existence, against 1 to
-lose it -- so a tree's length depends on where its root sits, whereas
-parsimony under the other methods does not.  Lengths are therefore
-reported at a canonical rooting, on the first taxon of \code{dataset}, which
-is the rooting the returned trees carry; \code{TreeLength()} canonicalizes
-identically, so it reproduces the reported score and one topology has
-one length.  That value is an upper bound on the rooting-free minimum,
-exceeding it by at most the total number of secondary characters across
-hierarchy blocks, and attaining it for 87-98\% of rootings in
-simulation.}
-}}
-
-\item{hsj_alpha}{Numeric in [0, 1]: scaling parameter for secondary-
-character contributions under the HSJ method.  0 = secondaries ignored;
-1 (default) = secondaries contribute up to 1 per branch per hierarchy
-block.  Only used when \code{inapplicable = "hsj"}.}
-
-\item{method}{Character: \code{"constraint"} (default) for rigorous converse-
-constraint searches, or \code{"pool"} for the fast suboptimal-pool approximation.}
-
-\item{maxBremer}{Numeric: the largest decay value to resolve.  Under
-\code{method = "pool"} this is the pool's suboptimality depth (defaults to \code{10});
-clades not broken within it are censored.  Under \code{method = "constraint"} it
-is ignored (exact values are computed).}
-
-\item{optimalScore}{Numeric: the optimal tree length \eqn{L^*}{L*}.  If
-\code{NULL} (default) it is taken from \code{attr(tree, "score")} when available, or
-computed by search.  Supplying it (or a scored \code{multiPhylo}) avoids a
-redundant search.}
+\item{optimalScore}{Optional numeric: the score of the optimal tree,
+\eqn{L^*}{L*}. If \code{NULL}, it is read from \code{attr(tree, "score")}, or computed
+by search.}
 
 \item{format}{Character specifying return format.
 \code{"character"} returns a character string suitable to add to the \code{node.labels}
 attribute of a tree;
 "numeric" returns numeric values suitable for further analysis.}
 
+\item{concavity, extended_iw, xpiwe_r, xpiwe_max_f, hierarchy, hsj_alpha, inapplicable}{Tree
+scoring parameters passed to \code{MaximizeParsimony()}.
+These will usually match the parameters used to obtain \code{tree}.}
+
 \item{\dots}{Further arguments passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} /
 \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, e.g. \code{maxReplicates}, \code{maxSeconds}, \code{effort},
 \code{nThreads}, \code{verbosity}.}
 }
 \value{
-A numeric vector (or, if \code{format = "character"}, a
+\code{Bremer()} returns a numeric vector (or, if \code{format = "character"}, a
 \code{phylo$node.label}-shaped character vector) giving the Bremer support of each
 resolved clade in \code{tree}, named by node number (the row names of
-\code{\link[TreeTools:as.Splits]{TreeTools::as.Splits()}}).  Annotate a plot with
-\code{\link[TreeTools:LabelSplits]{TreeTools::LabelSplits()}}, or assign to \code{tree$node.label}.  Under
-\code{method = "pool"} the numeric result carries a logical \code{censored} attribute
-marking clades whose support exceeds \code{maxBremer}.
+\code{\link[TreeTools:as.Splits]{TreeTools::as.Splits()}}).
+Annotate a plot with \code{\link[TreeTools:LabelSplits]{TreeTools::LabelSplits()}}, or assign to
+\code{tree$node.label}.
+Under \code{method = "pool"} the numeric result carries a logical \code{censored}
+attribute marking clades whose support exceeds \code{maxBremer}.
 }
 \description{
 \code{Bremer()} calculates the Bremer support (decay index)
@@ -142,8 +67,8 @@ marking clades whose support exceeds \code{maxBremer}.
 tree: the number of extra steps required before the clade is no longer
 present in an optimal tree.  Formally, for a clade \emph{C},
 \deqn{\textrm{Bremer}(C) = L(\neg C) - L^\star}{Bremer(C) = L(not C) - L\*}
-where \eqn{L(\neg C)}{L(not C)} is the length of the shortest tree that does
-not contain \emph{C} and \eqn{L^\star}{L\*} is the length of the most-parsimonious
+where \eqn{L(\neg C)}{L(not C)} is the score of the shortest tree that does
+not contain \emph{C} and \eqn{L^\star}{L\*} is the score of the most-parsimonious
 tree.  Larger values indicate better-supported clades.
 }
 \details{
@@ -173,20 +98,20 @@ set.seed(0)
 trees <- MaximizeParsimony(dataset, maxReplicates = 8, nThreads = 1,
                            verbosity = 0)
 
-# A fast, approximate decay index read from the suboptimal-tree pool.
+# Fast, approximate decay index for the strict consensus topology,
+# from the suboptimal-tree pool.
 decay <- Bremer(trees, dataset, method = "pool", maxBremer = 4,
                 maxSeconds = 20, nThreads = 1, verbosity = 1)
 decay
 
-# Annotate the reference tree (the strict consensus of the optimal trees,
-# whose node numbers key `decay`)
+# Annotate the reference tree
 reference <- TreeTools::Consensus(trees, p = 1)
 plot(reference)
 TreeTools::LabelSplits(reference, decay, adj = c(0, -0.5))
 
 # `method = "constraint"` is rigorous but may be slower.
 # Bounding each search with `maxSeconds` increases both speed, and the chance
-# of missing a better score and thus over-estimating support.
+# of over-estimating support through missing a better score.
 slower <- Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 2,
                  verbosity = 0)
 TreeTools::LabelSplits(reference, slower, bg = "gold", adj = c(0, 1.5))

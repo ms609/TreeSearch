@@ -5,8 +5,8 @@
 #' tree: the number of extra steps required before the clade is no longer
 #' present in an optimal tree.  Formally, for a clade _C_,
 #' \deqn{\textrm{Bremer}(C) = L(\neg C) - L^\star}{Bremer(C) = L(not C) - L\*}
-#' where \eqn{L(\neg C)}{L(not C)} is the length of the shortest tree that does
-#' not contain _C_ and \eqn{L^\star}{L\*} is the length of the most-parsimonious
+#' where \eqn{L(\neg C)}{L(not C)} is the score of the shortest tree that does
+#' not contain _C_ and \eqn{L^\star}{L\*} is the score of the most-parsimonious
 #' tree.  Larger values indicate better-supported clades.
 #'
 #' Two engines are available:
@@ -29,29 +29,29 @@
 #' @inheritParams JackLabels
 #' @param tree A tree of class `phylo` whose clades are to be evaluated. If a
 #' `multiPhylo` object is provided, its strict consensus will be evaluated.
-#' @param dataset A phylogenetic data matrix of class `phyDat`.
-#' @param method Character: `"constraint"` (default) for rigorous converse-
-#' constraint searches, or `"pool"` for the fast suboptimal-pool approximation.
-#' @param maxBremer Numeric: the largest decay value to resolve.  Under
-#' `method = "pool"` this is the pool's suboptimality depth (defaults to `10`);
-#' clades not broken within it are censored.  Under `method = "constraint"` it
-#' is ignored (exact values are computed).
-#' @param optimalScore Numeric: the optimal tree length \eqn{L^*}{L*}.  If
-#' `NULL` (default) it is taken from `attr(tree, "score")` when available, or
-#' computed by search.  Supplying it (or a scored `multiPhylo`) avoids a
-#' redundant search.
+#' @param method Character: `"constraint"` for negative-constraint searches,
+#' or `"pool"` for approximation via the suboptimal pool.
+#' @param maxBremer Numeric specifying the largest decay value to resolve when
+#' `method = "pool"`. Ignored under `method = "constraint"`.
+#' @param optimalScore Optional numeric: the score of the optimal tree,
+#' \eqn{L^*}{L*}. If `NULL`, it is read from `attr(tree, "score")`, or computed
+#' by search.
 #' @inheritParams MaximizeParsimony
+#' @param concavity,extended_iw,xpiwe_r,xpiwe_max_f,hierarchy,hsj_alpha,inapplicable Tree
+#' scoring parameters passed to `MaximizeParsimony()`.
+#' These will usually match the parameters used to obtain `tree`.
 #' @param \dots Further arguments passed to [`MaximizeParsimony()`] /
 #' [`SuboptimalTrees()`], e.g. `maxReplicates`, `maxSeconds`, `effort`,
 #' `nThreads`, `verbosity`.
 #'
-#' @return A numeric vector (or, if `format = "character"`, a
+#' @return `Bremer()` returns a numeric vector (or, if `format = "character"`, a
 #' `phylo$node.label`-shaped character vector) giving the Bremer support of each
 #' resolved clade in `tree`, named by node number (the row names of
-#' [`TreeTools::as.Splits()`]).  Annotate a plot with
-#' [`TreeTools::LabelSplits()`], or assign to `tree$node.label`.  Under
-#' `method = "pool"` the numeric result carries a logical `censored` attribute
-#' marking clades whose support exceeds `maxBremer`.
+#' [`TreeTools::as.Splits()`]).
+#' Annotate a plot with [`TreeTools::LabelSplits()`], or assign to
+#' `tree$node.label`.
+#' Under `method = "pool"` the numeric result carries a logical `censored`
+#' attribute marking clades whose support exceeds `maxBremer`.
 #'
 #' @examples
 #' data("inapplicable.phyData", package = "TreeSearch")
@@ -62,20 +62,20 @@
 #' trees <- MaximizeParsimony(dataset, maxReplicates = 8, nThreads = 1,
 #'                            verbosity = 0)
 #'
-#' # A fast, approximate decay index read from the suboptimal-tree pool.
+#' # Fast, approximate decay index for the strict consensus topology,
+#' # from the suboptimal-tree pool.
 #' decay <- Bremer(trees, dataset, method = "pool", maxBremer = 4,
 #'                 maxSeconds = 20, nThreads = 1, verbosity = 1)
 #' decay
 #'
-#' # Annotate the reference tree (the strict consensus of the optimal trees,
-#' # whose node numbers key `decay`)
+#' # Annotate the reference tree
 #' reference <- TreeTools::Consensus(trees, p = 1)
 #' plot(reference)
 #' TreeTools::LabelSplits(reference, decay, adj = c(0, -0.5))
 #'
 #' # `method = "constraint"` is rigorous but may be slower.
 #' # Bounding each search with `maxSeconds` increases both speed, and the chance
-#' # of missing a better score and thus over-estimating support.
+#' # of over-estimating support through missing a better score.
 #' slower <- Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 2,
 #'                  verbosity = 0)
 #' TreeTools::LabelSplits(reference, slower, bg = "gold", adj = c(0, 1.5))
@@ -89,12 +89,13 @@
 #' @importFrom TreeTools as.Splits NTip SplitFrequency TipLabels
 #' @export
 Bremer <- function(tree, dataset,
+                   method = c("constraint", "pool"),
+                   maxBremer = Inf, optimalScore = NULL,
+                   format = "numeric", 
                    concavity = Inf, extended_iw = TRUE, xpiwe_r = 0.5,
                    xpiwe_max_f = 5, hierarchy = NULL, inapplicable = "bgs",
                    hsj_alpha = 1.0,
-                   method = c("constraint", "pool"),
-                   maxBremer = Inf, optimalScore = NULL,
-                   format = "numeric", ...) {
+                   ...) {
   method <- match.arg(method)
 
   # `optimalScore = NULL` is "not supplied" sentinel.
