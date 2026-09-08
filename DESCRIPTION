@@ -53,6 +53,7 @@ Imports:
   TreeDist (>= 2.6.3),
   TreeTools (>= 2.4.0.9002),
   utils,
+Remotes: ms609/TreeTools,
 Suggests:
   cluster,
   Coreset,
