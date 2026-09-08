@@ -198,7 +198,7 @@ decay
 
 # Annotate the reference tree (the strict consensus of the optimal trees,
 # whose node numbers key `decay`)
-reference <- ape::consensus(trees, p = 1)
+reference <- TreeTools::Consensus(trees, p = 1)
 plot(reference)
 TreeTools::LabelSplits(reference, decay)
 }

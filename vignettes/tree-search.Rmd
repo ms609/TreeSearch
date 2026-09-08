@@ -106,7 +106,7 @@ We can plot the best tree(s) that we've found, and check its parsimony score
 
 ```{r plot-tree}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(ape::consensus(bestTrees))
+plot(TreeTools::Consensus(bestTrees))
 TreeLength(bestTrees[[1]], vinther)
 ```
 
@@ -117,7 +117,7 @@ sampled most-parsimonious trees:
 
 ```{r plot-label-nodes}
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-majCons <- ape::consensus(bestTrees, p = 0.5)
+majCons <- TreeTools::Consensus(bestTrees, p = 0.5)
 splitFreqs <- TreeTools::SplitFrequency(majCons, bestTrees) / length(bestTrees)
 plot(majCons)
 TreeTools::LabelSplits(majCons, round(splitFreqs * 100), unit = "%",

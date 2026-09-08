@@ -88,7 +88,7 @@
 #'
 #' # Annotate the reference tree (the strict consensus of the optimal trees,
 #' # whose node numbers key `decay`)
-#' reference <- ape::consensus(trees, p = 1)
+#' reference <- TreeTools::Consensus(trees, p = 1)
 #' plot(reference)
 #' TreeTools::LabelSplits(reference, decay)
 #' }
@@ -116,10 +116,8 @@ Bremer <- function(tree, dataset,
                    format = "numeric", cl = NULL, ...) {
   method <- match.arg(method)
 
-  # `optimalScore = NULL` is the documented "not supplied" sentinel.  A non-NULL
-  # value must be a single finite number: NA_real_ in particular would otherwise
-  # slip past the is.null() checks and crash the one-sided scoring guard with
-  # "missing value where TRUE/FALSE needed".
+  # `optimalScore = NULL` is "not supplied" sentinel.
+  # A non-NULL value must be a single finite number.
   if (!is.null(optimalScore) &&
       (length(optimalScore) != 1L || !is.numeric(optimalScore) ||
        !is.finite(optimalScore))) {
@@ -159,7 +157,7 @@ Bremer <- function(tree, dataset,
 }
 
 # Resolve reference tree + clades (Splits) + optimal score L*.
-#' @importFrom TreeTools as.Splits NTip
+#' @importFrom TreeTools as.Splits Consensus NTip
 .BremerReference <- function(tree, dataset, optimalScore) {
   Lstar <- optimalScore
   if (inherits(tree, "multiPhylo")) {
@@ -167,7 +165,7 @@ Bremer <- function(tree, dataset,
       s <- attr(tree, "score")
       if (!is.null(s) && is.finite(s)) Lstar <- s
     }
-    reference <- if (length(tree) == 1L) tree[[1L]] else ape::consensus(tree, p = 1)
+    reference <- if (length(tree) == 1L) tree[[1L]] else Consensus(tree, p = 1)
   } else if (inherits(tree, "phylo")) {
     reference <- tree
   } else {
@@ -191,39 +189,24 @@ Bremer <- function(tree, dataset,
 # consistent, so this only WARNS (never errors) and Bremer proceeds with the
 # supplied score -- the warning is a safety net for a forgotten scoring argument,
 # not a veto on a deliberately different analysis.
+#' @importFrom TreeTools MakeTreeBinary
 .BremerCheckScoring <- function(tree, dataset, scoringArgs, optimalScore) {
   # Exact check: a MaximizeParsimony() result records the scoring conditions it
   # is optimal under (attr "scoring").  When present, compare that signature
-  # DIRECTLY to the arguments now in effect -- the meaningful test, since a saved
-  # optimal score is only interpretable alongside the conditions it was found
-  # under.  It needs no re-scoring, so it has neither the resolution-slop nor the
-  # near-equal-length blind spot of the length fallback below.
+  # DIRECTLY to the arguments now in effect.
   recorded <- attr(tree, "scoring", exact = TRUE)
   if (!is.null(recorded)) {
     current <- do.call(.ScoringSignature, scoringArgs)
     if (!.ScoringSignatureMatch(recorded, current)) {
       warning("The reference trees were found under ", .DescribeScoring(recorded),
-              " but Bremer() is scoring with ", .DescribeScoring(current),
-              ". The decay values mix two optimality criteria and are ",
-              "meaningless unless you pass the same scoring arguments ",
-              "(`concavity`, `inapplicable`, ...) used to find the trees. ",
-              "Proceeding with the supplied score.")
-      # The mode mismatch already conveys that the criteria differ; the numeric
-      # length check below would only restate it, so stop here.
+              " but Bremer() is scoring with ", .DescribeScoring(current), ".")
       return(invisible(NULL))
     }
-    # A matching signature validates the scoring MODE, but not the numeric VALUE
-    # of a user-supplied `optimalScore` (which can be stale or from another
-    # dataset), nor a `hierarchy` whose CONTENTS differ (the signature records
-    # only its presence).  Fall through to the length check so a contradictory
-    # supplied L* is caught rather than silently inflating every decay value.
+    # A matching signature validates the scoring MODE, but not the VALUE.
   }
 
-  # Fallback (no recorded signature: a bare optimalScore, a single-tree reference,
-  # or a tree built outside MaximizeParsimony; or a signature that matched the
-  # scoring mode but whose L* value still merits a numeric cross-check).  Compare
-  # the supplied optimal score to the reference's length under the current
-  # scoring arguments.
+  # Compare the supplied optimal score to the reference's length under the 
+  # current scoring arguments.
   suppliedLstar <- if (!is.null(optimalScore)) {
     optimalScore
   } else if (inherits(tree, "multiPhylo")) {
@@ -236,40 +219,24 @@ Bremer <- function(tree, dataset,
     return(invisible(NULL))
   }
 
-  # Length of the reference under the CURRENT scoring arguments -- cheap (scoring,
-  # not searching).  TreeLength requires binary trees and collapse = TRUE can
-  # return multifurcating ones, so resolve the zero-length polytomies first; an
-  # arbitrary resolution only ever LENGTHENS a tree, and we take the minimum over
-  # the supplied trees, so refLen is a tight estimate of the reference's
-  # achievable length (== L* whenever the reference is optimal under these
-  # arguments -- as an MPT set is, when the scoring modes match).
-  resolve <- function(t) ape::multi2di(t, random = FALSE)
-  resolved <- if (inherits(tree, "multiPhylo")) {
-    structure(lapply(tree, resolve), class = "multiPhylo")
-  } else {
-    resolve(tree)
-  }
+  # Length of the reference under the CURRENT scoring arguments.
+  # TreeLength requires binary trees, so resolve zero-length polytomies first;
+  # take a minimum over arbitrary resolutions to find best.
+  resolved <- MakeTreeBinary(tree)
   refLen <- min(suppressWarnings(
     do.call(TreeLength, c(list(tree = resolved, dataset = dataset), scoringArgs))))
   if (!is.finite(refLen)) {
     return(invisible(NULL))
   }
 
-  # A material difference in EITHER direction signals a probable scoring-mode
-  # mismatch: a supplied L* ABOVE an achievable length cannot be the optimum
-  # here, and one well BELOW it means the reference is far from optimal under
-  # these arguments (e.g. an implied-weights optimum scored under equal weights).
-  # Unlike the previous one-sided 5%-of-length heuristic, a tight tolerance also
-  # catches a small but genuine mismatch that two criteria happen to place close
-  # together.  Accept and proceed regardless (trusting the user's choice).
+  # A material difference signals a probable scoring-mode mismatch.
+  # Warn and proceed.
   tol <- 1e-6 * max(1, abs(refLen), abs(suppliedLstar))
   if (abs(suppliedLstar - refLen) > tol) {
-    warning("The supplied optimal score (", signif(suppliedLstar, 7),
-            ") differs from the reference tree length under the supplied scoring ",
-            "arguments (", signif(refLen, 7), "). If you did not pass the same ",
-            "scoring arguments (`concavity`, `inapplicable`, ...) used to find ",
-            "the trees, the decay values mix two optimality criteria and are ",
-            "meaningless. Proceeding with the supplied score.")
+    warning("`optimalScore` (", signif(suppliedLstar, 7),
+            ") differs from ", signif(refLen, 7), ", the score of the ",
+            "reference tree under the supplied arguments (`concavity`, ",
+            "`inapplicable`, ...).")
   }
   invisible(NULL)
 }
