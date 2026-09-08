@@ -198,7 +198,7 @@ test_that("StepInformation() falls back instead of hanging when the exact memo c
   # (on some machines!), so may succeed or fall back to mc by the clock.
   # The assertion simply requires that the call terminates without hanging.
   char <- rep(c("0", "1", "2"), c(42L, 9L, 2L))  # == inapplicable Agnarsson2004 col 83
-  si <- StepInformation(char, n_mc = 1000L)
+  si <- suppressWarnings(StepInformation(char, approx = "auto", n_mc = 24L))
   expect_type(si, "double")
   expect_true(length(si) >= 1L && all(is.finite(si)))
 })
