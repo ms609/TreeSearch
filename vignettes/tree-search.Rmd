@@ -158,7 +158,7 @@ parallel threads:
 nReplicates <- 10
 jackTrees <- Resample(vinther, bestTrees, nReplicates = nReplicates)
 
-strict <- ape::consensus(bestTrees, p = 1)
+strict <- TreeTools::Consensus(bestTrees, p = 1)
 
 par(mar = rep(0, 4), cex = 0.8)
 # Take the strict consensus of all trees for each replicate
@@ -231,7 +231,7 @@ The most informative single summary tree is thus provided by:
 if (rogueInstalled) {
   par(mar = rep(0, 4), cex = 0.8)
   noWiwaxia <- lapply(bestTrees, TreeTools::DropTip, "Wiwaxia")
-  plot(ape::consensus(noWiwaxia),
+  plot(TreeTools::Consensus(noWiwaxia),
        tip.color = Rogue::ColByStability(noWiwaxia))
 } else {
   message("Install the 'Rogue' package to render this block.")
@@ -373,7 +373,7 @@ constant, _k_:
 ```{r iw-search, message = FALSE}
 iwTrees <- MaximizeParsimony(vinther, concavity = 10)
 par(mar = rep(0.25, 4), cex = 0.75) # make plot easier to read
-plot(ape::consensus(iwTrees))
+plot(TreeTools::Consensus(iwTrees))
 ```
 
 Note that we recommend a default value of 10, somewhat higher than the default 
