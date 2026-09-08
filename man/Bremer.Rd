@@ -23,10 +23,8 @@ Bremer(
 )
 }
 \arguments{
-\item{tree}{A most-parsimonious tree (\code{phylo}) whose clades are to be
-evaluated, or a \code{multiPhylo} whose strict consensus provides them.  A
-\code{multiPhylo} returned by \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} additionally supplies the
-optimal score \eqn{L^*}{L*} via its \code{score} attribute.}
+\item{tree}{A tree of class \code{phylo} whose clades are to be evaluated. If a
+\code{multiPhylo} object is provided, its strict consensus will be evaluated.}
 
 \item{dataset}{A phylogenetic data matrix of class \code{phyDat}.}
 
@@ -155,35 +153,28 @@ marking clades whose support exceeds \code{maxBremer}.
 \insertCite{Bremer1988,Bremer1994}{TreeSearch} of each clade in a reference
 tree: the number of extra steps required before the clade is no longer
 present in an optimal tree.  Formally, for a clade \emph{C},
-\deqn{Bremer(C) = L(\neg C) - L^*}{Bremer(C) = L(not C) - L*}
+\deqn{\textrm{Bremer}(C) = L(\neg C) - L^\star}{Bremer(C) = L(not C) - L\*}
 where \eqn{L(\neg C)}{L(not C)} is the length of the shortest tree that does
-\emph{not} contain \emph{C} and \eqn{L^*}{L*} is the length of the most-parsimonious
+not contain \emph{C} and \eqn{L^\star}{L\*} is the length of the most-parsimonious
 tree.  Larger values indicate better-supported clades.
 }
 \details{
 Two engines are available:
 
 \describe{
-\item{\code{method = "constraint"} (default, rigorous)}{Runs one \emph{converse-
-constraint} search per clade, forcing that clade to be absent and taking
-the length of the shortest resulting tree.  This directly targets
-\eqn{L(\neg C)}{L(not C)} and needs only bounded memory (one tree per
-clade).  It is the reliable choice for reported support values.}
-\item{\code{method = "pool"} (fast, approximate)}{Collects a pool of suboptimal
-trees with \code{\link[=SuboptimalTrees]{SuboptimalTrees()}} and, for each clade, takes the shortest
-retained tree that lacks it.  This is quick but \strong{over-estimates}
-support (the minimum over a sampled subset can only exceed the true
-minimum) and is \strong{right-censored} at the sampling depth \code{maxBremer}: a
-clade broken by no retained tree is reported as \code{Inf} and flagged in the
-\code{censored} attribute.  Use it as a preview, not for publication values.}
+\item{\code{method = "constraint"} (default, rigorous)}{For each clade, runs
+a tree search under the constraint that that clade is absent, taking
+the score of the shortest resulting tree.}
+\item{\code{method = "pool"} (fast, loose)}{Runs a single search and collects
+a pool of suboptimal trees with \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, then for each
+clade, take the best score found in a tree that lacks that clade.
+Provides an upper bound on the support: better trees that lack the clade
+may exist outside the sampled trees. Useful for exploration, but not
+recommended for publication values.}
 }
 
-The reference \code{tree} supplies the clades to be evaluated.  Pass a single
-\code{phylo} (e.g. one most-parsimonious tree) or a \code{multiPhylo} search result, in
-which case the strict consensus is used and support is calculated only for
-its resolved bipartitions.  Scoring options (\code{concavity}, \code{inapplicable},
-...) \strong{must match those used to find the trees}, or the extra-step counts
-will be meaningless; they default to equal-weights Fitch parsimony.
+Ensure that search options (\code{concavity}, \code{inapplicable}, ...) match those
+used to find \code{tree}.
 }
 \examples{
 data("inapplicable.phyData", package = "TreeSearch")
