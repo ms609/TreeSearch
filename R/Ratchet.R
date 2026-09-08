@@ -284,7 +284,8 @@ Ratchet <- function(tree, dataset,
 #' @rdname Ratchet 
 #' @return `MultiRatchet()` returns a list of optimal trees 
 #' produced by `nSearch` `Ratchet()` searches, from which a consensus tree can
-#' be generated using [`ape::consensus()`] or [`TreeTools::ConsensusWithout()`].
+#' be generated using [`TreeTools::Consensus()`] or
+#' [`TreeTools::ConsensusWithout()`].
 #' @param nSearch Number of Ratchet searches to conduct
 #' (for `RatchetConsensus()`)
 #' @export

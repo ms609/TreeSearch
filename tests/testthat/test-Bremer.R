@@ -1,7 +1,7 @@
 library("TreeTools", quietly = TRUE)
 
 data("inapplicable.phyData", package = "TreeSearch")
-ds <- inapplicable.phyData[["Vinther2008"]]
+vinther <- inapplicable.phyData[["Vinther2008"]]
 
 # Exact Bremer by exhaustive enumeration of every binary tree on the taxa
 # (feasible for <= 7 tips): the minimum length among trees LACKING each
@@ -64,18 +64,22 @@ oracleBremerNA <- function(reference, dataset) {
 
 test_that("Bremer(method = 'pool') returns node-keyed non-negative support", {
   set.seed(3418)
-  trees <- MaximizeParsimony(ds, maxReplicates = 6L, targetHits = 2L,
+  trees <- MaximizeParsimony(vinther, maxReplicates = 6L, targetHits = 2L,
                              verbosity = 0L)
-  refCons <- if (length(trees) == 1L) trees[[1]] else ape::consensus(trees, p = 1)
+  refCons <- if (length(trees) == 1L) {
+      trees[[1]]
+    } else {
+      TreeTools::Consensus(trees, p = 1)
+    }
 
-  decay <- Bremer(trees, ds, method = "pool", maxBremer = 6,
+  decay <- Bremer(trees, vinther, method = "pool", maxBremer = 6,
                   maxReplicates = 6L, targetHits = 2L, verbosity = 0L)
 
   expect_type(decay, "double")
   # One value per resolved clade of the consensus reference.
   expect_length(decay, NSplits(refCons))
   # Names are internal node numbers.
-  expect_true(all(as.integer(names(decay)) > NTip(ds)))
+  expect_true(all(as.integer(names(decay)) > NTip(vinther)))
 
   # Finite (uncensored) support values are non-negative.
   expect_true(all(decay[is.finite(decay)] >= 0))
@@ -89,12 +93,17 @@ test_that("Bremer(method = 'pool') returns node-keyed non-negative support", {
 
 test_that("Bremer(format = 'character') yields a node.label-shaped vector", {
   set.seed(3418)
-  trees <- MaximizeParsimony(ds, maxReplicates = 6L, targetHits = 2L,
+  trees <- MaximizeParsimony(vinther, maxReplicates = 6L, targetHits = 2L,
                              verbosity = 0L)
-  refCons <- if (length(trees) == 1L) trees[[1]] else ape::consensus(trees, p = 1)
+  refCons <- if (length(trees) == 1L) {
+    trees[[1]]
+  } else {
+    TreeTools::Consensus(trees, p = 1)
+  }
 
-  lab <- Bremer(trees, ds, method = "pool", maxBremer = 6, format = "character",
-                maxReplicates = 6L, targetHits = 2L, verbosity = 0L)
+  lab <- Bremer(trees, vinther, method = "pool", maxBremer = 6,
+                format = "character", maxReplicates = 6L, targetHits = 2L,
+                verbosity = 0L)
   expect_type(lab, "character")
   expect_length(lab, refCons[["Nnode"]])
   # Assignable straight onto the reference tree.
@@ -104,10 +113,10 @@ test_that("Bremer(format = 'character') yields a node.label-shaped vector", {
 
 test_that("Bremer accepts a single phylo reference with an explicit L*", {
   set.seed(3418)
-  trees <- MaximizeParsimony(ds, maxReplicates = 6L, targetHits = 2L,
+  trees <- MaximizeParsimony(vinther, maxReplicates = 6L, targetHits = 2L,
                              verbosity = 0L)
   Lstar <- attr(trees, "score")
-  decay <- Bremer(trees[[1]], ds, method = "pool", maxBremer = 6,
+  decay <- Bremer(trees[[1]], vinther, method = "pool", maxBremer = 6,
                   optimalScore = Lstar,
                   maxReplicates = 6L, targetHits = 2L, verbosity = 0L)
   expect_type(decay, "double")
@@ -117,7 +126,7 @@ test_that("Bremer accepts a single phylo reference with an explicit L*", {
 })
 
 test_that("Bremer errors on a bad reference type", {
-  expect_error(Bremer("not a tree", ds, method = "pool"),
+  expect_error(Bremer("not a tree", vinther, method = "pool"),
                "must be a `phylo` or `multiPhylo`")
 })
 
@@ -236,16 +245,12 @@ test_that("Bremer warns (does not error) on an inconsistent optimalScore, then p
   set.seed(1)
   mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
   ref <- mpts[[1]]
-  # A supplied L* inconsistent with the reference length under these scoring
-  # arguments is WARNED, not errored: Bremer trusts the user's scoring choice and
-  # proceeds (they may deliberately want a different analysis).  A value BELOW the
-  # reference length exercises the warning without triggering the adopt-shorter-L*
-  # path (which would add a second, unrelated warning).
+  # A supplied L* inconsistent with the reference length -> single WARNING.
   expect_warning(
     con <- Bremer(ref, dat, method = "constraint",
                   optimalScore = attr(mpts, "score") - 3,
                   maxReplicates = 20L, verbosity = 0L),
-    "(3) differs from 6, the score of `tree`")
+    "3. differs from 6, the score of `tree`")
   expect_type(con, "double")
 })
 
@@ -257,13 +262,12 @@ test_that("a contradictory optimalScore warns even with a matching signature (B-
   mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
   # The whole multiPhylo carries a "scoring" signature.  A matching signature
   # validates the scoring MODE but not the numeric VALUE of a supplied L*, so a
-  # contradictory optimalScore must STILL warn -- it silently inflated every
-  # decay value before the signature branch fell through to the length check.
+  # contradictory optimalScore must STILL warn.
   expect_warning(
     con <- Bremer(mpts, dat, method = "constraint",
                   optimalScore = attr(mpts, "score") - 2,
                   maxReplicates = 20L, verbosity = 0L),
-    "differs from the reference")
+    "4. differs from 6, the score of `tree`")
   expect_type(con, "double")
   # Control: the default (correct L*, matching signature) does not false-warn.
   set.seed(1)
@@ -358,14 +362,11 @@ test_that("the scoring-mismatch warning catches a small gap the 5% band missed (
   mpts <- MaximizeParsimony(dat, maxReplicates = 8L, verbosity = 0L)
   ref <- mpts[[1]]
   Lstar <- attr(mpts, "score")
-  # A gap of 0.3 is < 5% of the reference length, so the old one-sided
-  # 5%-of-length heuristic would NOT have warned (the P1 blind spot two criteria
-  # placing L* close together); the tight two-sided tolerance now does.  Below
-  # the reference length, so the adopt-shorter-L* path does not add a 2nd warning.
+  # A gap of 0.3 is still a gap and should warn once.
   expect_warning(
     Bremer(ref, dat, method = "constraint", optimalScore = Lstar - 0.3,
            maxReplicates = 15L, verbosity = 0L),
-    "differs from the reference")
+    "7.7. differs from 8, the score of `tree`")
 })
 
 test_that("Bremer ignores (with a warning) drift/anneal args in a converse search", {

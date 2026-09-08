@@ -234,9 +234,8 @@ Bremer <- function(tree, dataset,
   tol <- 1e-6 * max(1, abs(refLen), abs(suppliedLstar))
   if (abs(suppliedLstar - refLen) > tol) {
     warning("`optimalScore` (", signif(suppliedLstar, 7),
-            ") differs from ", signif(refLen, 7), ", the score of the ",
-            "reference tree under the supplied arguments (`concavity`, ",
-            "`inapplicable`, ...).")
+            ") differs from ", signif(refLen, 7), ", the score of `tree` ",
+            "under the supplied arguments (`concavity`, `inapplicable`, ...).")
   }
   invisible(NULL)
 }
