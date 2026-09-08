@@ -591,7 +591,7 @@ test_that(".BremerConstraint emits the aggregate NA warning (VF-4/TA-3)", {
   stubNA <- function(negSplit) list(score = -1, tree = NULL)
   expect_warning(
     res <- TreeSearch:::.BremerConstraint(ref, dat, sa, Inf, list(),
-                                          cl = NULL, .runConverse = stubNA),
+                                          .runConverse = stubNA),
     "returned NA")
   expect_length(res$bremer, length(ref$splitNames))
   expect_true(all(is.na(res$bremer)))

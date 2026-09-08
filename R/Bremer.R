@@ -40,17 +40,6 @@
 #' `NULL` (default) it is taken from `attr(tree, "score")` when available, or
 #' computed by search.  Supplying it (or a scored `multiPhylo`) avoids a
 #' redundant search.
-#' @param cl Optional \pkg{parallel} cluster (e.g. from
-#' [`parallel::makeCluster()`]) over which to distribute the per-clade converse
-#' searches of `method = "constraint"`.  Each clade is an independent search, so
-#' this gives a near-linear speed-up for trees with many clades; workers must
-#' have \pkg{TreeSearch} loaded.  `NULL` (default) runs serially.  Ignored by
-#' `method = "pool"`.  Parallel runs are reproducible under `set.seed()` (each
-#' clade is seeded independently); because that seeding differs from the serial
-#' run's stream, a parallel result may differ from a serial one wherever a
-#' converse search does not reach its true optimum -- exactly as re-running
-#' serially with a different seed would -- with both remaining valid upper bounds
-#' on the decay.
 #' @inheritParams MaximizeParsimony
 #' @param \dots Further arguments passed to [`MaximizeParsimony()`] /
 #' [`SuboptimalTrees()`], e.g. `maxReplicates`, `maxSeconds`, `effort`,
@@ -94,7 +83,7 @@
 #' \dontrun{
 #' # The default `method = "constraint"` is rigorous but much slower: it runs
 #' # one converse-constraint search per clade.  Bound each search with
-#' # `maxSeconds`, and/or distribute the searches over a cluster with `cl`.
+#' # `maxSeconds`.
 #' Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 10, verbosity = 0)
 #' }
 #' @references \insertAllCited{}
@@ -111,7 +100,7 @@ Bremer <- function(tree, dataset,
                    hsj_alpha = 1.0,
                    method = c("constraint", "pool"),
                    maxBremer = Inf, optimalScore = NULL,
-                   format = "numeric", cl = NULL, ...) {
+                   format = "numeric", ...) {
   method <- match.arg(method)
 
   # `optimalScore = NULL` is "not supplied" sentinel.
@@ -143,12 +132,9 @@ Bremer <- function(tree, dataset,
   .BremerCheckScoring(tree, dataset, scoringArgs, optimalScore)
 
   res <- if (method == "pool") {
-    if (!is.null(cl)) {
-      warning("`cl` is ignored for method = \"pool\" (a single pooled search).")
-    }
     .BremerPool(ref, dataset, scoringArgs, maxBremer, list(...))
   } else {
-    .BremerConstraint(ref, dataset, scoringArgs, maxBremer, list(...), cl = cl)
+    .BremerConstraint(ref, dataset, scoringArgs, maxBremer, list(...))
   }
 
   .BremerFormat(res$bremer, res$censored, ref$reference, format)
@@ -366,7 +352,7 @@ Bremer <- function(tree, dataset,
 # otherwise wander onto the clade and, being worse-accepting, report it as
 # unsupported.  Runs serially: the pool guard is on the serial search path.
 .BremerConstraint <- function(ref, dataset, scoringArgs, maxBremer, dots,
-                              cl = NULL, .runConverse = NULL) {
+                              .runConverse = NULL) {
   disabled <- list(
     driftCycles = 0L, sectorGoDrift = 0L, sectorDriftCycles = 0L,
     annealCycles = 0L
@@ -438,25 +424,24 @@ Bremer <- function(tree, dataset,
 
   splitNames <- ref$splitNames
 
-  # Per-clade work unit (also the unit of parallelism for the cluster fan-out).
+  # Per-clade work unit.
   processConverse <- function(i) {
     .BremerProcessResult(runConverse(ref$splits[[i]]), ref$reference,
                          splitNames[i])
   }
 
-  # Per-clade searches are independent; fan them out over `cl` when supplied.
-  # The default (cl = NULL) keeps the original serial vapply, bit-for-bit.
-  scores <- if (is.null(cl)) {
-    vapply(seq_along(splitNames), processConverse, double(1))
-  } else {
-    .BremerConverseScores(length(splitNames), processConverse, cl = cl)
-  }
+  # Per-clade searches are independent, but each converse search must itself
+  # run with `nThreads = 1` (the negative-constraint pool guard is on the
+  # serial search path only), so there is currently no parallelism to fan
+  # them out over.
+  scores <- vapply(seq_along(splitNames), processConverse, double(1))
 
   if (anyNA(scores)) {
     # Two causes map to NA: no clade-free tree was found (a budget shortfall), or
     # a returned tree unexpectedly displayed the clade (an engine regression the
-    # BR-6 check caught).  The per-clade warning that distinguishes them is lost
-    # on cluster workers, so keep the aggregate message honest about both.
+    # BR-6 check caught).  The per-clade warning that distinguishes them
+    # already fired above, so this aggregate keeps the summary honest about
+    # both.
     warning(sum(is.na(scores)), " converse-constraint search(es) returned NA: ",
             "either no tree lacking the clade was found (increase `maxReplicates`)",
             ", or a returned tree still displayed the clade (an engine bug worth ",

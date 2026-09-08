@@ -18,7 +18,6 @@ Bremer(
   maxBremer = Inf,
   optimalScore = NULL,
   format = "numeric",
-  cl = NULL,
   ...
 )
 }
@@ -124,18 +123,6 @@ redundant search.}
 attribute of a tree;
 "numeric" returns numeric values suitable for further analysis.}
 
-\item{cl}{Optional \pkg{parallel} cluster (e.g. from
-\code{\link[parallel:makeCluster]{parallel::makeCluster()}}) over which to distribute the per-clade converse
-searches of \code{method = "constraint"}.  Each clade is an independent search, so
-this gives a near-linear speed-up for trees with many clades; workers must
-have \pkg{TreeSearch} loaded.  \code{NULL} (default) runs serially.  Ignored by
-\code{method = "pool"}.  Parallel runs are reproducible under \code{set.seed()} (each
-clade is seeded independently); because that seeding differs from the serial
-run's stream, a parallel result may differ from a serial one wherever a
-converse search does not reach its true optimum -- exactly as re-running
-serially with a different seed would -- with both remaining valid upper bounds
-on the decay.}
-
 \item{\dots}{Further arguments passed to \code{\link[=MaximizeParsimony]{MaximizeParsimony()}} /
 \code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, e.g. \code{maxReplicates}, \code{maxSeconds}, \code{effort},
 \code{nThreads}, \code{verbosity}.}
@@ -207,7 +194,7 @@ TreeTools::LabelSplits(reference, decay)
 \dontrun{
 # The default `method = "constraint"` is rigorous but much slower: it runs
 # one converse-constraint search per clade.  Bound each search with
-# `maxSeconds`, and/or distribute the searches over a cluster with `cl`.
+# `maxSeconds`.
 Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 10, verbosity = 0)
 }
 }

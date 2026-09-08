@@ -7,9 +7,7 @@
   `method = "pool"` instead reads a pool of suboptimal trees (an upper bound,
   right-censored at the sampling depth).  Both engines match an exhaustive
   brute-force oracle on small datasets, including under implied weights and
-  inapplicable ("bgs") data.  Because each clade's constraint search is
-  independent, they can be distributed over a `parallel` cluster with `cl =`
-  for a near-linear speed-up on trees with many clades.
+  inapplicable ("bgs") data.
 
 - New `SuboptimalTrees()` returns every tree the search retained within a given
   number of steps of the optimum, each annotated with its parsimony score, for
