@@ -302,7 +302,11 @@ MultiRatchet <- function (tree, dataset, ratchHits = 10,
   })
   scores <- vapply(trees, function (x) attr(x, "score"), double(1))
   trees <- .UniqueExceptHits(trees[scores == min(scores)])
-  message("Found ", length(trees), " unique trees from ", nSearch, " searches.")
+  
+  if (verbosity > 0L) {
+    message("Found ", length(trees), " unique trees from ", nSearch,
+            " searches.")
+  }
   
   # Return:
   structure(trees, class = "multiPhylo")
