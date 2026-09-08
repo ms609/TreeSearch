@@ -505,14 +505,20 @@ test_that("concavity as a numeric-coercible string behaves like the number", {
 test_that("concavity = 'Profile'/'prof' route to profile mode like 'profile'", {
   skip_on_cran() # mixed-tier exception, see tests/testing-strategy.md
   set.seed(4012)
-  canonical <- MaximizeParsimony(vinther, concavity = "profile", effort = -9L,
-                                  maxReplicates = 2L, targetHits = 1L,
-                                  verbosity = 0L)
+  expect_message(
+    canonical <- MaximizeParsimony(vinther, concavity = "profile", effort = -9L,
+                                    maxReplicates = 2L, targetHits = 1L,
+                                    verbosity = 0L),
+    "Inapplicable .* treated as ambiguous"
+  )
   for (spelling in c("Profile", "prof")) {
     set.seed(4012)
-    result <- MaximizeParsimony(vinther, concavity = spelling, effort = -9L,
-                                 maxReplicates = 2L, targetHits = 1L,
-                                 verbosity = 0L)
+    expect_message(
+      result <- MaximizeParsimony(vinther, concavity = spelling, effort = -9L,
+                                   maxReplicates = 2L, targetHits = 1L,
+                                   verbosity = 0L),
+      "Inapplicable .* treated as ambiguous"
+    )
     expect_equal(attr(result, "score"), attr(canonical, "score"))
   }
 })
