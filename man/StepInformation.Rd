@@ -7,8 +7,9 @@
 StepInformation(
   char,
   ambiguousTokens = c("-", "?"),
-  approx = "auto",
-  n_mc = 100000L
+  approx = c("auto", "mc", "exact"),
+  maxSeconds = 2,
+  mcSamples = 100000L
 )
 }
 \arguments{
@@ -17,14 +18,17 @@ StepInformation(
 \item{ambiguousTokens}{Vector specifying which tokens, if any, correspond to
 the ambiguous token (\verb{?}).}
 
-\item{approx}{Character string controlling the computation method:
-\code{"auto"} (default) uses exact computation when feasible, falling back to
-Monte Carlo for large or complex characters (see Details);
+\item{approx}{Character string specifying the computation method:
 \code{"mc"} always uses the Monte Carlo approximation;
-\code{"exact"} forces exact computation regardless of cost (may be very slow
-for large or complex characters).}
+\code{"exact"} forces exact computation regardless of the feasibility gate;
+\code{"auto"} (default) uses exact computation when feasible, falling back to
+Monte Carlo for large or complex characters (see Details).}
 
-\item{n_mc}{Integer.  Number of random trees used by the MC approximation.
+\item{maxSeconds}{Non-negative numeric giving the time budget, in seconds,
+allowed to the exact solver (under \code{"auto"} or \code{"exact"}) before falling
+back to the Monte Carlo approximation.}
+
+\item{mcSamples}{Integer.  Number of random trees used by the MC approximation.
 Larger values improve accuracy but increase computation time.
 Default: 100 000.}
 }
@@ -55,7 +59,9 @@ back to a Monte Carlo approximation for large or complex characters.
 When the Maddison & Slatkin computation would be infeasible (exponential
 in the number of tips for a given number of tokens), behaviour depends on
 the \code{approx} argument.  With \code{"auto"} (default), the exact solver is used
-where feasible and the Monte Carlo approximation is used otherwise.
+where feasible and the Monte Carlo approximation is used otherwise; the
+exact solver is allowed a time budget of \code{maxSeconds}, past which the
+calculation falls back to the Monte Carlo approximation.
 With \code{"mc"}, the Monte Carlo approximation is always used.
 The MC approximation computes the exact
 minimum-steps probability analytically, uses random trees for the
@@ -65,7 +71,8 @@ The exact feasibility threshold depends on the partition shape
 beyond ~27 tips, 4-state beyond ~13 tips, and 5-state beyond
 ~9 tips trigger the approximation.
 With \code{"exact"}, the full Maddison & Slatkin recursion is forced regardless
-of cost (may be very slow for large or complex characters).
+of the feasibility gate (may be very slow for large or complex
+characters), still subject to \code{maxSeconds}.
 }
 \examples{
 character <- rep(c(0:3, "?", "-"), c(8, 5, 1, 1, 2, 2))

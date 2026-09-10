@@ -64,8 +64,7 @@ SPRWarning <- function (parent, child, error) {
 #' \code{RootIrrelevantSPR} will search tree space more efficiently in these cases.
 #' Branch lengths are not (yet) supported.
 #'
-#' All nodes in a tree must be bifurcating; [ape::collapse.singles] and
-#' [ape::multi2di] may help.
+#' All nodes in a tree must be bifurcating; [TreeTools::MakeTreeBinary] may help.
 #'
 #' @inheritParams TBR
 #' @param edgeToBreak the index of an edge to bisect, generated randomly if not specified.

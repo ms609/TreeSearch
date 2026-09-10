@@ -4,7 +4,7 @@
 # TNT 1.6 from IDENTICAL starting trees.  Loaded by the pilot and the full
 # grid driver.  See dev/plans/2026-06-18-tbr-shared-start.md for the design.
 #
-# Both engines optimise the SAME Fitch objective because the matrices have
+# Both engines optimize the SAME Fitch objective because the matrices have
 # inapplicable tokens replaced by '?'.  Lengths are therefore directly
 # comparable (TreeLength vs TNT `length`).
 
@@ -49,7 +49,7 @@ ToTntTree <- function(tr) {
 }
 
 # Run a TNT script (character vector of lines) in a fresh temp dir that
-# already contains a data.tnt for `phy`.  Returns sanitised stdout lines.
+# already contains a data.tnt for `phy`.  Returns sanitized stdout lines.
 # `files` is a named list of extra files to write into the working dir
 # (name = filename, value = character vector of lines).
 RunTnt <- function(phy, scriptLines, tag = "tnt", files = list()) {
@@ -76,7 +76,7 @@ GrepNum <- function(out, pat) {
 # Run TNT TBR (bbreak) from `startTree`, save result, read it back, score in
 # R with TreeLength.  Returns a one-row data.frame.
 #   mulpars/hold : equal-tree buffer controls (Mode A: FALSE/1; Mode B: TRUE/1000)
-#   randclip     : randomise clip order using rseed (the stochasticity knob)
+#   randclip     : randomize clip order using rseed (the stochasticity knob)
 TntTbr <- function(d, startTree, seed, mulpars, hold, randclip = TRUE) {
   swap <- paste0("bbreak = tbr ",
                  if (randclip) "randclip " else "norandclip ",

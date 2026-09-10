@@ -16,7 +16,7 @@
 
 pos <- function(z) { z[z < 0] <- 0; z }
 
-# Observed per-pair triple for one realised cell vector.
+# Observed per-pair triple for one realized cell vector.
 pairTriple <- function(p, q, r, s) {
   nI <- p + q; nJ <- r + s
   mA <- p + r; tP <- nI + nJ

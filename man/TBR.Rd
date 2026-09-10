@@ -77,8 +77,7 @@ to the rearranged \code{parent} and \code{child} parameters.
 \details{
 Branch lengths are not (yet) supported.
 
-All nodes in a tree must be bifurcating; \link[ape:collapse.singles]{ape::collapse.singles} and
-\link[ape:multi2di]{ape::multi2di} may help.
+All nodes in a tree must be bifurcating; \link[TreeTools:MakeTreeBinary]{TreeTools::MakeTreeBinary} may help.
 }
 \section{Functions}{
 \itemize{

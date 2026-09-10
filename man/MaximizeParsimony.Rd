@@ -16,6 +16,7 @@ MaximizeParsimony(
   inapplicable = "bgs",
   hsj_alpha = 1,
   constraint,
+  .negativeConstraint = NULL,
   effort = 0L,
   maxReplicates = 96L,
   targetHits = NULL,
@@ -126,7 +127,7 @@ than the number of secondaries it brings into existence, against 1 to
 lose it -- so a tree's length depends on where its root sits, whereas
 parsimony under the other methods does not.  Lengths are therefore
 reported at a canonical rooting, on the first taxon of \code{dataset}, which
-is the rooting the returned trees carry; \code{TreeLength()} canonicalises
+is the rooting the returned trees carry; \code{TreeLength()} canonicalizes
 identically, so it reproduces the reported score and one topology has
 one length.  That value is an upper bound on the rooting-free minimum,
 exceeding it by at most the total number of secondary characters across
@@ -156,6 +157,10 @@ are filtered to respect the constraint topology.
 Each constraint character is enforced as a single split, so one with more
 than two states is read as the split between its first and last state
 alone: taxa in an intermediate state are left unconstrained, with a warning.}
+
+\item{.negativeConstraint}{Internal.  A splits object (or \code{NULL}) naming
+clades that returned trees must \emph{not} display; used by \code{\link[=Bremer]{Bremer()}} to run
+converse-constraint searches.  Not intended for direct use.}
 
 \item{effort}{Integer: how much search effort to spend, \strong{relative to the
 amount chosen automatically} for this dataset.  \code{0} (the default) accepts
@@ -374,6 +379,16 @@ A \code{multiPhylo} object containing the best tree(s) found, with
 attributes:
 \describe{
 \item{\code{score}}{Best parsimony score.}
+\item{\code{scoring}}{A list recording the scoring conditions the score is
+optimal under (\code{concavity}, \code{inapplicable}, ...), so a saved score
+remains interpretable.  \code{\link[=Bremer]{Bremer()}} checks it against its own
+scoring arguments and warns on a mismatch.}
+\item{\code{scores}}{Present only when \code{collapse = FALSE}: a numeric vector of
+the parsimony score of each returned tree, aligned with the returned
+\code{multiPhylo} (the same values are attached as a \code{score} attribute on
+each individual tree).  With \code{poolSuboptimal > 0} this exposes the
+retained suboptimal pool for landscape analysis (see
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}, \code{\link[=Suboptimality]{Suboptimality()}}).}
 \item{\code{replicates}}{Number of replicates completed.}
 \item{\code{hits_to_best}}{Number of independent discoveries of the best
 score.}
@@ -545,6 +560,7 @@ Other tree scoring:
 \code{\link[=MinimumLength]{MinimumLength()}},
 \code{\link[=ParsSim]{ParsSim()}},
 \code{\link[=RecodeHierarchy]{RecodeHierarchy()}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}},
 \code{\link[=TaxonInfluence]{TaxonInfluence()}},
 \code{\link[=TreeScore]{TreeScore()}},
 \code{\link[=WideSample]{WideSample()}}

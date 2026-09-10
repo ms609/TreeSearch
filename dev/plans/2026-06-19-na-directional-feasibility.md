@@ -77,7 +77,7 @@ richer than a single set:
 - the region term *can* be charged locally in a **directed/rooted** formulation
   (charge +1 at each applicable node whose parent is inapplicable = one charge
   per region's top), which is fixed-size;
-- combine at a join would re-optimise the boundary in O(table²).
+- combine at a join would re-optimize the boundary in O(table²).
 
 **But three things make this research-grade, not a quick win:**
 

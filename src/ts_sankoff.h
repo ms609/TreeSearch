@@ -92,7 +92,7 @@ double sankoff_score_char(
 // optimal_states: output, length n_node.  optimal_states[node] = chosen state.
 //
 // The uppass assigns root = argmin(node_costs[root][s]) (or forced_root_state),
-// then propagates to children choosing the state that minimises
+// then propagates to children choosing the state that minimizes
 // cost_matrix[parent_state][child_state] + node_costs[child][child_state].
 void sankoff_uppass(
     const int* left, const int* right,

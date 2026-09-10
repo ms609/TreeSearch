@@ -2,7 +2,7 @@
 # from an IDENTICAL Wagner start. Answers "does TNT reach the optimum in fewer
 # reweight cycles?" Unit = rearrangements (TS total_tbr_moves <-> TNT "Total
 # rearrangements examined"); score-parity = validity gate; seed distributions.
-# Both optimise the same Fitch objective (inapplicable -> '?').
+# Both optimize the same Fitch objective (inapplicable -> '?').
 #
 # Env (tbr_shared_start_lib.R reads TS_LIB / TNT_EXE / T0_DIR): SHARED_LIB (path
 #   to tbr_shared_start_lib.R), RACE_DATASETS, RACE_SEEDS, RACE_WAGSEED,

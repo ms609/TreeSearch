@@ -371,7 +371,7 @@ ts_replicate_trajectory <- function(ts_result) {
   library(dplyr)
   traj |>
     group_by(replicate) |>
-    summarise(
+    summarize(
       rep_score = last(score),
       total_phase_ms = sum(phase_ms),
       n_phases = n(),
@@ -401,7 +401,7 @@ ts_phase_effectiveness <- function(ts_result) {
     ungroup() |>
     filter(phase != "Wagner", phase != "Reset") |>
     group_by(phase) |>
-    summarise(
+    summarize(
       n = n(),
       n_improved = sum(improved),
       hit_rate = round(mean(improved), 3),

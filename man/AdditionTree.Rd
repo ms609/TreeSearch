@@ -61,7 +61,7 @@ order in which taxa were added and is not necessarily \code{sequence[1]};
 parsimony scores are unaffected by rooting, so root the result yourself with
 \href{https://ms609.github.io/TreeTools/reference/RootTree}{\code{TreeTools::RootTree()}}
 if the position of the root matters to you. With fewer than four
-taxa there is nothing to optimise, and a pectinate tree of the dataset's taxa
+taxa there is nothing to optimize, and a pectinate tree of the dataset's taxa
 is returned without consulting \code{sequence} or \code{constraint}.
 }
 \description{

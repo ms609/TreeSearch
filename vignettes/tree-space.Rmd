@@ -267,7 +267,7 @@ nClusters <- length(unique(clustering))
 
 ## Mapping tree space
 
-Now we can map tree space into a few dimensions and visualise the distribution
+Now we can map tree space into a few dimensions and visualize the distribution
 of trees:
 
 ```{r map-space, fig.keep = "none"}

@@ -133,7 +133,7 @@ static double full_rescore(TreeState& tree, const DataSet& ds) {
 // now rooted canonically at tip 0 inside the kernel (ts_hsj.cpp), so HSJ scores
 // are a function of the unrooted topology.  Rebuilds postorder; does NOT refresh
 // Fitch state arrays, so the caller must full_rescore() afterwards.
-// Generalises reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
+// Generalizes reroot_at_tip0() in ts_fuse.cpp to an arbitrary tip.
 // Declared in ts_tbr.h (used by the output-collapse kernel in ts_rcpp.cpp).
 void reroot_at_tip(TreeState& tree, int t) {
   const int n_tip = tree.n_tip;
@@ -1347,7 +1347,7 @@ static void order_clips(
 
     case ClipOrder::ANTI_TIP: {
       // Non-tip clips (shuffled) first, tip clips (shuffled) last.
-      // Hypothesis: tips are under-productive; deprioritise them.
+      // Hypothesis: tips are under-productive; deprioritize them.
       // Inverse of TIPS_FIRST.
       auto tip_start = std::partition(clips.begin(), clips.end(),
           [n_tip](int node) { return node >= n_tip; }); // non-tips first
@@ -1388,7 +1388,7 @@ static void order_clips(
 // collapsed / b2_ceiling). This template lifts that dispatch out of the hot
 // loop: it is instantiated ONCE per weight-class at dispatch (a runtime switch
 // in tbr_search selects the instantiation), so the dead-in-plain-EW branches
-// compile away and the compiler picks a specialised kernel.
+// compile away and the compiler picks a specialized kernel.
 //
 // The template is called ONLY in the plain-EW regime (no NA, no IW, no sector /
 // constraint / collapsed / b2), so keeping only the identity skip + scorer +
@@ -1409,7 +1409,7 @@ static void order_clips(
 // Wrong is a positive-control ONLY: the <..,true> instantiations are emitted
 // solely under -DTS_EW_MONO_WRONG (see the dispatch), so a production binary
 // has NO code path — and no env var — that can corrupt the scorer. Under that
-// build flag it corrupts the output so a live specialised path provably changes
+// build flag it corrupts the output so a live specialized path provably changes
 // the result, distinguishing "path fired + output used" from a no-op that
 // passes the gate falsely (the false-0% trap documented in s7-fastpath-sizing).
 template<bool UseFlat, bool Wrong>
@@ -1542,6 +1542,10 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
   // Initialize constraint mapping if active
   bool constrained = cd && cd->active;
+  // Negative (converse) constraint: reject any accepted move whose result
+  // displays a forbidden clade, directing the hill-climb into the space of
+  // trees that lack it (used for Bremer support).
+  bool neg_constrained = cd && cd->neg_active;
   if (constrained) {
     update_constraint(tree, *cd);
   }
@@ -1558,7 +1562,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // getenv). t_clip_ns = the bail-INDEPENDENT per-clip IW precompute
   // (extract_char_steps + compute_iw base + iw_delta; no EW analog); t_scan_ns
   // = the bail-DEPENDENT per-candidate scan (EW x4-flat/popcount vs IW
-  // scalar-gather), normalised by n_evaluated. No-op unless the var is set.
+  // scalar-gather), normalized by n_evaluated. No-op unless the var is set.
   const bool iw_timing = std::getenv("TS_IW_TIMING") != nullptr;
   long long t_clip_ns = 0, t_spr_ns = 0, t_rer_ns = 0;
   long long n_clips_t = 0, n_spr_t = 0, n_rer_t = 0;
@@ -1741,7 +1745,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
   // path to a corrupted scorer in a production binary — the same discipline as
   // the removed TS_EW_MONO_ASSERT probe). Rebuild with -DTS_EW_MONO_WRONG in
   // PKG_CPPFLAGS, then TS_EW_MONO_WRONG=1 selects the corrupted instantiation
-  // (must DIVERGE — proves the specialised path's output drives the search).
+  // (must DIVERGE — proves the specialized path's output drives the search).
   const bool ew_mono_wrong = std::getenv("TS_EW_MONO_WRONG") != nullptr;
 #endif
   // Positive-control fire counters, split by weight class: proving A fast path
@@ -2511,7 +2515,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
               // cutoff is maintained across the clip (recomputed only on
               // improvement); byte-identical to the old per-batch recompute.
               int cutoff_b = cutoff;
-              // Initialise to cutoff_b so partial-batch trailing slots
+              // Initialize to cutoff_b so partial-batch trailing slots
               // never accidentally improve best_candidate.
               int scores[4] = {cutoff_b, cutoff_b, cutoff_b, cutoff_b};
 
@@ -2924,7 +2928,11 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
         // clip phase (the rerooting changes which constraint tips
         // end up on which side of the attachment edge).  Reject
         // any move that introduces a constraint violation.
-        if (constrained) {
+        // `cd->n_splits > 0`: a negative-only constraint (Bremer converse
+        // search) has `active == true` but zero positive splits, so this whole
+        // block is a no-op -- skip it to avoid a redundant compute_node_tips
+        // sweep on top of the displays_forbidden_clade sweep just below.
+        if (constrained && cd->n_splits > 0) {
           map_constraint_nodes(tree, *cd);
           bool violation = false;
           for (int _s = 0; _s < cd->n_splits; ++_s) {
@@ -2941,6 +2949,21 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
             compute_dfs_timestamps(tree, *cd);
             continue;
           }
+        }
+
+        // Negative-constraint guard: reject any move whose resulting tree
+        // displays a forbidden clade.  Mirrors the positive post-hoc block
+        // above (revert the applied move and skip), keeping every accepted
+        // tree -- and hence best_score and the pool -- free of the clade.
+        if (neg_constrained && displays_forbidden_clade(tree, *cd)) {
+          restore_topology(tree, snap);
+          state_snap.restore(tree);
+          score_fresh = true;
+          if (constrained && cd->n_splits > 0) {
+            map_constraint_nodes(tree, *cd);
+            compute_dfs_timestamps(tree, *cd);
+          }
+          continue;
         }
 
         // Compute topology hash for tabu checking
@@ -3112,7 +3135,7 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
 
       // Piggyback the existing per-clip poll rather than adding a clock read to
       // the candidate loop: the profiling campaign left the hot path at-limit,
-      // and a per-candidate chrono::now() would reopen it.  Stride 64 amortises
+      // and a per-candidate chrono::now() would reopen it.  Stride 64 amortizes
       // the clock read across clips, which are individually cheap.
       // Silent unless the caller labelled this search -- see TBRParams.
       if (params.heartbeat_label != nullptr) {
@@ -3160,6 +3183,17 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
     // fast additive for EW / apply+rescore for IW).  NA: the indirect scan is
     // only approximate, so an EXACT full-neighbourhood sweep is required to
     // certify a true unrooted-TBR optimum (see exact_verify_sweep).
+    // Negative (converse) constraint: the root-edge / full-neighbourhood
+    // sweep below is NOT constraint-guarded (unlike the inner clip loop), so
+    // its best move can introduce a forbidden clade (a root-edge TBR move
+    // changes the unrooted topology).  Snapshot the clade-free tree first; if
+    // the improved tree displays the clade, keep the snapshot and stop.  We
+    // are then at a local optimum within the space of trees lacking the clade
+    // -- conservative (an improving clade-free root-edge move is forgone,
+    // costing reach) but never unsound (the pool backstop already guarantees
+    // soundness; this keeps best_score consistent with a ¬C tree).
+    TopoSnapshot neg_pre_snap;
+    if (neg_constrained) save_topology(tree, neg_pre_snap);
     bool improved;
     if (has_na && !certify_na) {
       // This caller does not need a certified optimum (see
@@ -3193,6 +3227,13 @@ TBRResult tbr_search(TreeState& tree, const DataSet& ds,
       if (na_timing) ds.na_t_evs_ns += ns_since(_t_evs);
     } else {
       improved = try_root_edge_moves(tree, ds, best_score, ew_directional);
+    }
+    if (neg_constrained && improved && displays_forbidden_clade(tree, *cd)) {
+      restore_topology(tree, neg_pre_snap);
+      tree.build_postorder();
+      best_score = full_rescore(tree, ds);  // pre-sweep score; refreshes states
+      score_fresh = true;
+      break;
     }
     if (!improved) break;
     score_fresh = true;

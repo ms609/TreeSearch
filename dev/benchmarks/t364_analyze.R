@@ -253,7 +253,7 @@ if (length(tm_files)) {
 
 # ---- Budget exhaustion: the budget-INDEPENDENT statement of arm 2's cost.
 # A wall ratio partly reflects maxReplicates, which is a chosen setting; "did the
-# search recognise convergence at all" does not.
+# search recognize convergence at all" does not.
 ex <- M
 ex$exhausted <- ex$reps_done >= ex$maxrep
 cat("\n-- replicate-budget exhaustion (reps_done >= maxReplicates) --\n")

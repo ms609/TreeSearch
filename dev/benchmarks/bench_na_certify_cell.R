@@ -33,7 +33,7 @@
 # sub-searches and the fuse cleanup reach the certifier; at tabuSize = 0
 # (the `sprint` preset, and every raw ts_tbr_search / ts_ratchet_search call,
 # which is how the 97.7% was measured) every whole-tree search does.  Running
-# both is what makes the result generalise beyond one preset.
+# both is what makes the result generalize beyond one preset.
 #
 # `naDiag` is recorded per run.  A null result with n_evs_skipped == 0 means the
 # flag never fired, which is a different finding from "it fired and bought

@@ -16,6 +16,11 @@ test_that("StepInformation() works", {
                                             ambiguousTokens = 3))))
   expect_true(all(is.finite(StepInformation(
     char = rep.int(1:2, times = c(600, 600))))))
+  expect_true(all(is.finite(StepInformation(rep.int(1:3, 2L), maxSeconds = 200))))
+  expect_error(StepInformation(rep.int(1:3, 2L), maxSeconds = -1),
+               "non-negative")
+  expect_error(StepInformation(rep.int(1:3, 2L), maxSeconds = Inf),
+               "non-negative")
 })
 
 test_that("Carter1() matches profile counts", {

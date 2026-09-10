@@ -1,6 +1,6 @@
 # Least-squares distance tree fitting and search.
 #
-# A sibling to MaximizeParsimony() that optimises a least-squares fit to a
+# A sibling to MaximizeParsimony() that optimizes a least-squares fit to a
 # target distance matrix instead of a parsimony score, using the same fast
 # C++ rearrangement kernel (NNI + SPR).  Built for Lapointe & Cucumel's (1997)
 # average consensus procedure, where the averaged patristic distance matrix is
@@ -96,7 +96,7 @@
 
 #' Fit branch lengths to a distance matrix on a fixed topology
 #'
-#' Fits branch lengths on a fixed tree topology that minimise the (optionally
+#' Fits branch lengths on a fixed tree topology that minimize the (optionally
 #' weighted) least-squares discrepancy between the tree's patristic distances
 #' and a target distance matrix, using the package's C++ kernel.  This is the
 #' fixed-topology counterpart of [`LeastSquaresTree()`], and the direct analogue
@@ -155,7 +155,7 @@ LeastSquaresFit <- function(tree, dist, method = c("nnls", "ols"),
 #' Searches tree topologies for the one whose patristic distances best fit a
 #' target distance matrix under a least-squares criterion, fitting branch
 #' lengths on each candidate and minimising the residual sum of squares.  The
-#' heuristic uses the package's optimised C++ kernel, alternating \acronym{NNI}
+#' heuristic uses the package's optimized C++ kernel, alternating \acronym{NNI}
 #' and \acronym{SPR} rearrangements, exactly as the parsimony search does — but
 #' driven by the least-squares score rather than tree length.
 #'

@@ -38,11 +38,11 @@ That doc is the spec; summary:
   refresh `up[]`/`edge_set[]` at ns's new position + everything newly exposed.
 - Re-materialise only the O(changed) `edge_set` entries per move; score this clip's regrafts immediately
   in place; do **NOT** cache all clips' arrays (that is O(n²) memory/copy and kills the win).
-- Amortised **O(N) total** directional work per pass (vs O(N²)); each node exposed/hidden O(1)× over a
+- Amortized **O(N) total** directional work per pass (vs O(N²)); each node exposed/hidden O(1)× over a
   full DFS.
 
 ## 3. Obstacles (from the design doc — plan for them)
-- **Abandon restore-between-clips + the clip SHUFFLE.** `order_clips` randomises clip order to seed tight
+- **Abandon restore-between-clips + the clip SHUFFLE.** `order_clips` randomizes clip order to seed tight
   cutoffs early; DFS order is the opposite → cutoffs may loosen → MORE candidates scored. The B-vs-A
   kill-test measured **~1.2× candidate cost** (acceptable; inherited by both B and C).
 - **Feature interactions:** gate the new path to plain EW (`use_directional && !has_na` + no

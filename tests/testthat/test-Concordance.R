@@ -216,7 +216,7 @@ test_that("QuartetConcordance() unit = 'nrqs' scores 1 iff split displayed", {
   # A multistate character need not be *identical* to a split to score 1: it
   # scores full marks for every split its own tree displays (each state block
   # wholly on one side; the split-orthogonal state-pair drops via M = 0).  This
-  # generalises "only identical scores 1" from binary to multistate -- a cleanly
+  # generalizes "only identical scores 1" from binary to multistate -- a cleanly
   # refining reproductive character fully supports the clade it refines.
   tree <- ape::read.tree(text = "((((t1,t2),t3),((t4,t5),t6)),((t7,t8),t9));")
   char <- MatrixToPhyDat(matrix(

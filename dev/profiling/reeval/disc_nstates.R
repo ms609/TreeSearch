@@ -120,4 +120,4 @@ cat(sprintf("       ratio totns(nStates=%d)/totns(nStates=%d) = %.2fx  (proporti
             max(states) / min(states)))
 saveRDS(res, file.path("dev/profiling/reeval",
                        sprintf("disc_nstates_%dt.rds", nTip)))
-cat("* SPR/9 col = totns normalised to n_states=9 (flat if ~equal across rows).\n")
+cat("* SPR/9 col = totns normalized to n_states=9 (flat if ~equal across rows).\n")

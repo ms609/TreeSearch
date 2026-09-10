@@ -40,7 +40,7 @@ prep_ds <- function(phyDat) {
        n_taxa = length(phyDat), n_chars = ncol(tip_data))
 }
 
-# ---- Section 1: Load matrices and summarise ---------------------------------
+# ---- Section 1: Load matrices and summarize ---------------------------------
 
 cat("=== T-069 Large-Matrix Stress Test ===\n\n")
 cat("=== Section 1: Dataset summary ===\n\n")

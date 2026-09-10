@@ -468,8 +468,8 @@ test_that("TreeLength xform is rooting-invariant (T-385)", {
   }, numeric(1))
   expect_equal(diff(range(lengths)), 0)
 
-  # The multiPhylo method must canonicalise identically to the single-tree one:
-  # it previously rooted only trees that arrived unrooted.
+  # The multiPhylo method must canonicalize identically to the single-tree one:
+  # rooting trees whether they arrive rooted or unrooted.
   multi <- TreeLength(
     structure(lapply(taxa, function(taxon) RootTree(tree, taxon)),
               class = "multiPhylo"),

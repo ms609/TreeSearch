@@ -14,7 +14,7 @@ ts_score <- function(...) TreeSearch:::ts_fitch_score(...)
 # 8 taxa, 6 characters.
 # Chars 1-3: fully observed; Chars 4-6: taxa G,H are "?".
 # Tree chosen so chars 4-6 have homoplasy > 1 (needed for XPIWE to differ,
-# since Φ-rescaling normalises the first step identically).
+# since Φ-rescaling normalizes the first step identically).
 make_missing_data <- function() {
   mat <- matrix(c(
     # C1 C2 C3 C4 C5 C6

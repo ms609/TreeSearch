@@ -146,28 +146,6 @@ SuccessiveApproximations <- function (tree, dataset, outgroup = NULL, k = 3,
   )
 }
 
-#' Tree suboptimality
-#'
-#' How suboptimal is a tree?
-#'
-#' @param trees list of trees, to include an optimal tree
-#' @param proportional logical stating whether to normalise results to lowest
-#' score
-#' @return `Suboptimality()` returns a vector listing, for each tree, how much
-#' its score differs from the optimal (lowest) score.
-#' @keywords internal
-#' @export
-Suboptimality <- function (trees, proportional = FALSE) {
-  scores <- vapply(trees, attr, double(1), "score")
-  
-  # Return:
-  if (proportional) {
-    (scores - min(scores)) / min(scores)
-  } else {
-    scores - min(scores)
-  }
-}
-
 #' @rdname SuccessiveApproximations
 #' @return `SuccessiveWeights()` returns the score of a tree, given the
 #' weighting instructions specified in the attributes of the dataset.

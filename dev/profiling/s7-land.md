@@ -88,7 +88,7 @@ Wortley2006 / Zanol2014 / Zhu2013, gaps `-`→`?`, ≥2 seeds (EW) / 3 seeds (IW
   instantiation actually executed — `flat=450/450` (Wortley), `flat=803/803` (Zhu), `cached=1220/1220`
   (Zanol); i.e. Wortley2006 AND Zhu2013 are `all_weight_one` and drive `UseFlat=true`. A deliberately-
   wrong instantiation (data-dependent always-≥1 corruption) DIVERGES on all three (flat and cached),
-  proving the specialised path's output drives the search — not a no-op that passes the gate falsely
+  proving the specialized path's output drives the search — not a no-op that passes the gate falsely
   (the false-0% trap from the sizing doc). The wrong instantiations are emitted ONLY under a compile
   flag (`-DTS_EW_MONO_WRONG`), so a PRODUCTION binary has no env-var path to a corrupted scorer:
   verified that `TS_EW_MONO_WRONG=1` is INERT on the default build, and the divergence reproduces only

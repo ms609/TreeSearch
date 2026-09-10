@@ -101,7 +101,7 @@ void TreeState::load_tip_states(const DataSet& ds) {
     std::memcpy(final_.data(), ds.tip_states.data(), tip_bytes);
   }
 
-  // Initialise tip subtree_actives: applicable states only (NA word = 0).
+  // Initialize tip subtree_actives: applicable states only (NA word = 0).
   // For {-,X} tips, applicable state bits are preserved here; the
   // tip uppass (Pass 2) will clear them if the tip resolves as NA.
   for (int tip = 0; tip < n_tip; ++tip) {

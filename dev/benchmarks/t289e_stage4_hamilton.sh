@@ -9,7 +9,7 @@
 
 # T-289e: Prune-reinsert Stage 4 — multi-dataset validation
 #
-# Validates that PR (c=5, d=5%, MISSING) benefit generalises across 5 large-tree
+# Validates that PR (c=5, d=5%, MISSING) benefit generalizes across 5 large-tree
 # matrices (131-206 tips) and persists at 120s budget.
 #
 # Grid: 5 datasets × 2 configs × 2 budgets × 10 seeds = 200 runs

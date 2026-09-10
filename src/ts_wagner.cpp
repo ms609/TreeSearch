@@ -854,7 +854,7 @@ WagnerResult wagner_tree(TreeState& tree, const DataSet& ds,
   }
 
   // Hand the tree on in the rooting the rest of the constraint machinery
-  // assumes.  build_constraint() canonicalises every split mask so that tip 0 is
+  // assumes.  build_constraint() canonicalizes every split mask so that tip 0 is
   // *outside* it, and map_constraint_nodes() then looks for a node whose subtree
   // is exactly that mask.  Rooting on tip 0 makes the non-tip-0 side of every
   // displayed split a clade, so that search always succeeds when the tree really
@@ -989,7 +989,7 @@ std::vector<double> wagner_entropy_scores(const DataSet& ds) {
 }
 
 // Softmax-weighted sampling without replacement.
-// Scores are normalised to [0, 1] before applying temperature so that
+// Scores are normalized to [0, 1] before applying temperature so that
 // the parameter is dataset-independent.  temperature == 0 → greedy argmax.
 // Returns a permutation of 0..n_tip-1 in the sampled addition order.
 static std::vector<int> softmax_sample_order(
@@ -1009,7 +1009,7 @@ static std::vector<int> softmax_sample_order(
     return idx;
   }
 
-  // Normalise scores to [0, 1] so temperature is dataset-independent
+  // Normalize scores to [0, 1] so temperature is dataset-independent
   double mn = *std::min_element(scores.begin(), scores.end());
   double mx = *std::max_element(scores.begin(), scores.end());
   double rng = mx - mn;

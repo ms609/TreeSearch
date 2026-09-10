@@ -78,7 +78,7 @@ Reliability splits by **difficulty, not size**. Untuned ε ~ U(0.05, 0.30) vs tu
 730 s default vs 695 s seeded. **A better start tree buys nothing.** See the follow-up
 lead below.
 
-## Does it transfer to parsimony? No — and the reason generalises
+## Does it transfer to parsimony? No — and the reason generalizes
 
 Everything above is a least-squares objective, where the decoder and the objective are
 natively aligned (NJ *is* a distance method; the objective *is* distance fit), so the
@@ -90,7 +90,7 @@ perturbed-NJ (pNJ) vs random-addition-sequence Wagner as the start generator in
 16 sectors (8–37 tips) carved as clades from parsimony trees of Sansom2010,
 Wortley2006, OLeary1999, Griswold1999; K = 5 restarts; identical fixed TBR budget
 (`maxIter = 100`); equal weights. Excess = steps above the best score known for that
-sector; diversity = mean pairwise normalised clustering-information distance across
+sector; diversity = mean pairwise normalized clustering-information distance across
 restarts.
 
 | generator | start excess | post-TBR excess | best-of-5 | P(hit sector best) | start diversity |
@@ -143,7 +143,7 @@ winning topology, rescored under NNLS, is **worse than the untouched NJ start** 
 
 Mathematically expected — OLS admits negative branch lengths, so the search chases
 topologies that only fit well if lengths may go negative (on one target the OLS winner
-reached RSS = 0.00000, an exact signed fit). Not a code defect; the function optimises
+reached RSS = 0.00000, an exact signed fit). Not a code defect; the function optimizes
 what it is asked to. But the documented purpose is Lapointe & Cucumel average consensus,
 which is NNLS/Fitch–Margoliash, so a user switching to `"ols"` for speed silently gets a
 topology worse than doing nothing. Worth a sentence in `?LeastSquaresTree`.

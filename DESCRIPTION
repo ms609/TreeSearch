@@ -51,8 +51,9 @@ Imports:
   Rdpack (>= 0.7),
   stats,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 2.3.0.9002),
+  TreeTools (>= 2.4.0.9002),
   utils,
+Remotes: ms609/TreeTools,
 Suggests:
   cluster,
   Coreset,
@@ -60,6 +61,7 @@ Suggests:
   highs,
   knitr,
   phangorn (>= 2.2.1),
+  pkgload,
   PlotTools,
   promises,
   protoclust,
@@ -90,11 +92,12 @@ Config/Needs/website:
   pkgdown,
   remotes,
   shinylive,
-Config/roxygen2/version: 8.0.0
+Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3
 Collate:
   'AdditionTree.R'
   'Bootstrap.R'
+  'Bremer.R'
   'CharacterHierarchy.R'
   'ClusterStrings.R'
   'Concordance.R'
@@ -122,6 +125,7 @@ Collate:
   'recode_hierarchy.R'
   'SPR.R'
   'ScoreSpectrum.R'
+  'SuboptimalTrees.R'
   'SuccessiveApproximations.R'
   'TBR.R'
   'TaxonInfluence.R'

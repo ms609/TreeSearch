@@ -29,7 +29,7 @@ full `edge_set[below]` gather + reduce over all `total_words = n_blocks × n_sta
 - The high-payoff targets are **(a) reducing words gathered/reduced per candidate** (incremental
   cross-candidate update so successive rerootings don't re-gather the full edge set; or a compacter
   edge_set footprint to cut cache misses) and **(b) the equal-length plateau processing** — an
-  equal-length candidate could perhaps be recognised/short-circuited without a full scan.
+  equal-length candidate could perhaps be recognized/short-circuited without a full scan.
 - ns/word grows with total_words (0.23 → 0.34 → 0.44 ns/word for 823 → 1227 → 1844 chars) =
   cache-miss pressure as the edge_set buffer outgrows cache. Footprint reduction cuts this directly.
 

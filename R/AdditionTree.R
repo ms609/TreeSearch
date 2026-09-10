@@ -40,7 +40,7 @@
 #' parsimony scores are unaffected by rooting, so root the result yourself with
 #' [`TreeTools::RootTree()`](https://ms609.github.io/TreeTools/reference/RootTree)
 #' if the position of the root matters to you. With fewer than four
-#' taxa there is nothing to optimise, and a pectinate tree of the dataset's taxa
+#' taxa there is nothing to optimize, and a pectinate tree of the dataset's taxa
 #' is returned without consulting `sequence` or `constraint`.
 #' @importFrom TreeTools PectinateTree Renumber
 #' @family tree generation functions

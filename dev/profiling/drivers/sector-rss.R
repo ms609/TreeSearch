@@ -5,7 +5,7 @@
 # (dev/plans/2026-06-19-component-isolation-profiling.md) and the advisor:
 #   * Crank rssPicks HIGH and use FEW calls so the trailing global TBR and the
 #     per-call make_dataset/init_from_edge marshaling (a DRIVER ARTIFACT) are
-#     amortised — otherwise the profile is mostly TBR, not sectorial.
+#     amortized — otherwise the profile is mostly TBR, not sectorial.
 #   * EW-Fitch only ('-' -> '?'); the NA path is owned by another workstream.
 #
 # Start tree: a Wagner addition tree (non-optimal) so many sectors improve and

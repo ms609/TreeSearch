@@ -347,7 +347,10 @@ test_that("LengthAdded(concavity = 'profile') handles an uninformative character
   char <- ProfileChar(c("0", "0", "0", "0", "1"))
   trees <- ProfileTrees(paste0("t", 1:5))
 
-  expect_no_error(added <- LengthAdded(trees, char, concavity = "profile"))
+  expect_message(expect_message(
+    expect_no_error(added <- LengthAdded(trees, char, concavity = "profile")),
+    "No informative characters"),
+    "No informative characters")
   expect_named(added, names(char))
   expect_equal(unname(added), rep(0, length(char)))
 })

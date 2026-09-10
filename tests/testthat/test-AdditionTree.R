@@ -52,7 +52,7 @@ test_that("ts_wagner_tree: real min_steps changes score, not topology (#5, T-369
   concavity <- 10
 
   # Exercises the C++ engine directly (not AdditionTree(), which discards
-  # `result$score`) to characterise what a `min_steps` of 0 versus the
+  # `result$score`) to characterize what a `min_steps` of 0 versus the
   # dataset's real per-character minimum corrupts.
   at <- attributes(ds)
   tipData <- matrix(unlist(ds, use.names = FALSE), nrow = length(taxa),
@@ -363,7 +363,7 @@ test_that("AdditionTree() verifies its own output against the constraint", {
   # when the filter rejected *every* edge, which the T-364/T-370 leak never did,
   # so violating trees came back mutely -- and AdditionTree() never sets
   # `has_posthoc`, so unlike the search path it has no reshuffle to fall back
-  # on.  Disabling complement enforcement makes 425 of 1334 randomised cases
+  # on.  Disabling complement enforcement makes 425 of 1334 randomized cases
   # violate; the check caught all 425 and warned on none of the other 909.
   #
   # The risk of adding a verifier is spurious warnings, so sweep for silence.

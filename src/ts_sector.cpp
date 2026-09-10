@@ -870,7 +870,7 @@ static ReducedDataset build_reduced_dataset_collapsed(const TreeState& tree,
 // Rebuild the sector's content topology from scratch by RAS Wagner: a random
 // taxon ORDER with greedy (best-edge) PLACEMENT, keeping the HTU anchored at
 // the synthetic root AND present throughout, so placements account for the
-// rest-of-tree state it summarises. This is the operation
+// rest-of-tree state it summarizes. This is the operation
 // TNT performs per sector (3 RAS+TBR restarts): it reaches sector topologies a
 // TBR on the *existing* sector subtree cannot, because TBR only locally
 // rearranges a tree the global TBR has already converged.
@@ -1042,10 +1042,10 @@ static void build_ras_sector(ReducedDataset& rd, std::mt19937& rng) {
 // _free_htu_probe), NOT namespace-scope statics: a namespace-scope dynamic
 // initializer runs at DLL load, before R can Sys.setenv() after library(), so the
 // kill switch / stats would silently ignore an env var set from R. Function-local
-// statics initialise on the first search_sector call, after any Sys.setenv.
+// statics initialize on the first search_sector call, after any Sys.setenv.
 // Engagement instrumentation counters (drift solves / HTU-float reverts). A high
 // revert rate means anchored drift is inert -- the signal that motivates pinning
-// the HTU (sector_mask). The ++ is unsynchronised across parallel workers, which
+// the HTU (sector_mask). The ++ is unsynchronized across parallel workers, which
 // is acceptable for the opt-in serial trajectory-diff run.
 static long long g_sect_drift_solves = 0;
 static long long g_sect_drift_reverts = 0;
@@ -1344,7 +1344,7 @@ static double search_sector(ReducedDataset& rd, const SectorParams& params,
   // start -- and only via the SAME reduced
   // score + root_ok gate + reinsert path as the drift starts (no reduced-score
   // shortcut: the reduced length is an HTU APPROXIMATION, so a lower reduced score
-  // is necessary but the full-tree gain is realised through reinsertion exactly as
+  // is necessary but the full-tree gain is realized through reinsertion exactly as
   // for godrift). Requires >= 2 distinct donors; on converged starts fuse is a
   // no-op and best-of-starts stands.
   if (do_fuse && fuse_pool.size() >= 2) {
@@ -1527,6 +1527,16 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
   // (T-S6c micro-bank).
   static const bool _sect_debug = std::getenv("TS_SECT_DEBUG") != nullptr;
   bool constrained = cd && cd->active && cd->has_posthoc;
+  // Negative (converse/Bremer) constraint: the sector-internal reduced-dataset
+  // solve (search_sector/reinsert_sector) is constraint-blind, so a reinsertion
+  // can rebuild a forbidden clade even though the pre-sector tree lacked it.
+  // Reject such a reinsertion post-hoc (mirrors `constrained` above), keeping the
+  // live tree -- and hence every downstream phase -- in the space of trees
+  // lacking the clade.  Soundness is already guaranteed by the pool backstop;
+  // this preserves REACH (an un-reverted reinsertion can strand the replicate on
+  // the clade with no improving escape move).  Not covered by the <=7-tip oracle
+  // (sectors need >=12 tips).
+  bool neg_constrained = cd && cd->neg_active;
   // Seed RNG (from R in serial mode, from thread-local in parallel mode)
   std::mt19937 rng = ts::make_rng();
 
@@ -1772,6 +1782,16 @@ SectorResult rss_search(TreeState& tree, DataSet& ds,
         score_tree(tree, ds);
         continue;
       }
+      // Post-hoc negative (converse) constraint check: reject a reinsertion that
+      // rebuilt a forbidden clade.  restore_clade undoes only the sector clade,
+      // which is the sole change since the pre-sector tree, so the reverted tree
+      // is clade-free.
+      if (neg_constrained && displays_forbidden_clade(tree, *cd)) {
+        restore_clade(tree, snap);
+        tree.build_postorder();
+        score_tree(tree, ds);
+        continue;
+      }
 
       bool kept;
       if (new_score < result.best_score) {
@@ -1918,6 +1938,11 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
   }
 
   bool constrained = cd && cd->active && cd->has_posthoc;
+  // Negative (converse/Bremer) constraint: the reduced-dataset sector solve is
+  // constraint-blind, so reject post-hoc any reinsertion that rebuilds a
+  // forbidden clade (see rss_search for the full rationale).  REACH-preserving;
+  // soundness is already guaranteed by the pool backstop.
+  bool neg_constrained = cd && cd->neg_active;
 
   for (int round = 0; round < params.xss_rounds; ++round) {
     double score_before_round = result.best_score;
@@ -1971,6 +1996,13 @@ SectorResult xss_search(TreeState& tree, DataSet& ds,
 
         // Post-hoc constraint check
         if (constrained && violates_constraint_posthoc(tree, *cd)) {
+          restore_clade(tree, snap);
+          tree.build_postorder();
+          score_tree(tree, ds);
+          continue;
+        }
+        // Post-hoc negative (converse) constraint check (see rss_search).
+        if (neg_constrained && displays_forbidden_clade(tree, *cd)) {
           restore_clade(tree, snap);
           tree.build_postorder();
           score_tree(tree, ds);

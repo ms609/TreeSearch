@@ -221,8 +221,10 @@ test_that("TreeLength() scores an uninformative character under profile parsimon
   tree <- PectinateTree(names(char))
   trees <- RootTree(c(tree, tree), 1)
 
-  expect_equal(TreeLength(tree, char, "profile"), 0)
-  expect_equal(TreeLength(trees, char, "profile"), c(0, 0))
+  expect_message(expect_equal(TreeLength(tree, char, "profile"), 0),
+                 "No informative characters")
+  expect_message(expect_equal(TreeLength(trees, char, "profile"), c(0, 0)),
+                 "No informative characters")
 })
 
 test_that("CharacterLength() fails gracefully", {

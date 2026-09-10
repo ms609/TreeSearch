@@ -96,7 +96,7 @@
 #'   tips) above which a sector is solved by tree-drifting (`sectorGoDrift`) or by
 #'   combined analysis (`sectorGoComb`) instead of plain
 #'   \acronym{RAS}+\acronym{TBR}, following \acronym{TNT}'s `sectsch`
-#'   `godrift`/`gocomb`.  Small sectors are cheap to optimise exhaustively; large
+#'   `godrift`/`gocomb`.  Small sectors are cheap to optimize exhaustively; large
 #'   sectors have more reach but need drift to escape their own local optima.
 #'   `sectorGoComb` solves the sector with `sectorCombStarts` \acronym{RAS}+drift
 #'   starts and then *fuses* them (recombines shared clades across the starts over
@@ -212,7 +212,7 @@
 #'     characters are preferentially dropped.  High-missingness taxa are
 #'     hardest to score correctly and most likely to be trapped in suboptimal
 #'     positions.
-#'   - `3` = combined: weight = instability × (1 + normalised missingness).
+#'   - `3` = combined: weight = instability × (1 + normalized missingness).
 #'     Targets taxa that are both unstably placed and data-poor.
 #' @param pruneReinsertTbrMoves Integer; maximum number of TBR moves accepted
 #'   during the reduced-tree backbone optimisation phase of each
@@ -395,7 +395,7 @@ SearchControl <- function(
     enumMaxTrees = 0L
 ) {
   # Record which fields the caller set explicitly (by name or position;
-  # `match.call()` normalises positional args to their names).  This lets
+  # `match.call()` normalizes positional args to their names).  This lets
   # `MaximizeParsimony()` distinguish a user-supplied `control` field from a
   # default, so a partial `control = SearchControl(...)` merges correctly with
   # a `strategy` preset instead of silently overriding every preset field.

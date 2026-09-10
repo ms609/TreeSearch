@@ -27,7 +27,7 @@ b2 <- TntTbr(d, wagTree, seed=2, mulpars=FALSE, hold=1, randclip=TRUE)
 cat("randclip seed1:", b1$final_len, " seed2:", b2$final_len, "\n")
 
 # (3) Sanity: TNT bbreak from the OPTIMAL T0 (1271) must NOT do RAS (stay <=1271).
-cat("\n--- TNT bbreak from T0=1271 (must not re-randomise) ---\n")
+cat("\n--- TNT bbreak from T0=1271 (must not re-randomize) ---\n")
 t0 <- ape::read.tree(file.path(T0_DIR, "Zanol2014.tre"))
 c1 <- TntTbr(d, t0, seed=1, mulpars=FALSE, hold=1, randclip=TRUE)
 cat("T0 start:", c1$start_len, " final:", c1$final_len, "\n")
