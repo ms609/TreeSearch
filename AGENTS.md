@@ -20,8 +20,8 @@ collaborators.
 |-------|---------|
 | `red-team` | Filed by `/red-team`. Also that skill's mode switch — don't delete it |
 | `sev:high` / `sev:med` / `sev:low` | Former P1 / P2 / P3 |
-| `area:1`…`area:15` | Which area **owns the code**, per `dev/red-team/focus-areas.md` — not which round found it; an issue may carry several |
-| `task` | Planned work migrated from the retired `to-do.md` |
+| `area:1`…`area:15` | Which area **owns the code**, per `dev/red-team/focus-areas.md` — not which round found it; an issue may carry several. **Count the rows, this range grows** |
+| `task` | Planned work, not a red-team finding |
 | `deferred` | Assessed and parked; not scheduled |
 | `chore` | Infrastructure / process work |
 | `in-progress` | Claimed; the claiming comment names the branch |
@@ -38,6 +38,52 @@ Write cross-repo references fully qualified (`agent-issues/TreeSearch#42`) — a
 means this repo and upstream numbers separately. Pre-tracker `T-nnn` ids are **frozen, not
 retired**: they persist in shipped source comments and in `dev/red-team/log.md`, and
 `dev/red-team/migration-map*.tsv` resolve them.
+
+### Agent identity — commit and post as `ms609-agent`, never as the maintainer
+
+Agent work is attributed to the machine account **`ms609-agent`**, a collaborator on
+`agent-issues`. This is not cosmetic: GitHub will not let an account approve its own PR, so a
+PR opened as `ms609` **cannot be reviewed by `ms609`**. Posting as the machine account is what
+makes review possible at all.
+
+Two different mechanisms, both applied **per command** — never change the global git config or
+`gh auth`, which belong to the human and must keep working interactively.
+
+**Commits.** Author/committer is free text in the commit object; GitHub links it to an account
+by matching a verified email. Pass it inline:
+
+```bash
+git -c user.name="ms609-agent" -c user.email="313734811+ms609-agent@users.noreply.github.com" commit -F - <<'MSG'
+...
+MSG
+```
+
+**Issues, PRs, comments, labels.** A PR's author is *whichever account authenticated the API
+call* — there is no per-PR override, so this is the only way to change it. `gh` reads
+`GH_TOKEN` in preference to stored auth, so prefix the single call:
+
+```bash
+GH_TOKEN=$CLAUDE_GH_TOKEN gh pr create --base cpp-search --head feature/<name> --title "..." --body-file <file>
+```
+
+The same prefix goes on every `gh issue create`, `gh issue comment` and `gh issue edit`. Do
+**not** export `GH_TOKEN` for the session — that would silently re-identify anything the human
+runs in the same shell.
+
+**Pushes stay as the human's credentials.** Push identity has no bearing on PR authorship, so
+`git push` needs no change.
+
+**`gha-dispatch.sh` / `gha-poll.sh` stay as the human too** — dispatching a workflow needs an
+`actions: write` scope the agent token is not required to carry. Run them unprefixed.
+
+If `$CLAUDE_GH_TOKEN` is unset, **stop and say so** rather than silently falling back to the
+maintainer's identity — a PR that lands under the wrong account cannot be re-attributed
+afterwards, only closed and reopened.
+
+> **Other projects need their own answer.** This works because `agent-issues` is free to add
+> collaborators. An org billing a paid seat per member (e.g. StratoBayes) cannot absorb a
+> machine account this way; there the options are a GitHub App installation, which is not a
+> billable member, or accepting single-identity working without the review step.
 
 ### GHA dispatch (primary validation path)
 
@@ -68,10 +114,9 @@ bash C:/Users/pjjg18/GitHub/gha-poll.sh <run_id>
 ```
 
 Both scripts resolve the target repo with `gh repo view --json nameWithOwner`, so they pick
-up whatever `gh repo set-default` points at — the fork. **Do not `cd ..` first** (as this
-recipe used to say): outside a git repo that lookup fails and the dispatch targets nothing.
-"Run these FROM the repo" means your `cwd` must be the git checkout/worktree doing the
-`gh repo view` lookup — it does not mean the scripts themselves must be found relatively.
+up whatever `gh repo set-default` points at — the fork. **Do not `cd ..` first**: outside a git repo that lookup fails and the
+dispatch targets nothing. Your `cwd` must be the git checkout or worktree — the scripts
+themselves are found by absolute path, not relatively.
 
 ### Local builds (targeted iteration only)
 
@@ -167,8 +212,7 @@ agent-issues/TreeSearch
 ### Rules
 
 - **Agents never push to the fork's `cpp-search` directly** — everything lands by reviewed
-  PR, documentation included. The old coordination-commit exception is gone with the files
-  that justified it.
+  PR, documentation included.
 - **`feature/*`** branches from `cpp-search`, owned by one agent at a time.
 - **Never commit directly to upstream `cpp-search`.** While upstream only ever *receives*
   the fork's trunk, every sync is a fast-forward — no merge, no conflict on
@@ -195,7 +239,7 @@ agent-issues/TreeSearch
 5. On GHA success, open a PR — `Fixes #N` per issue, and `--base cpp-search` so the
    closing actually fires:
    ```bash
-   gh pr create --base cpp-search --head feature/<name> --title "<description>" --body "Fixes #N ..."
+   GH_TOKEN=$CLAUDE_GH_TOKEN gh pr create --base cpp-search --head feature/<name> --title "<description>" --body "Fixes #N ..."
    ```
 6. Human reviews and merges. The merge closes the issues; nothing to update by hand.
 7. After merge, clean up:
@@ -246,7 +290,8 @@ These recur; they are activities, not issues, and have no tracker entry:
 | File | Purpose |
 |------|---------|
 | **GitHub issues** (`agent-issues/TreeSearch`) | The task queue and the findings tracker |
-| `dev/red-team/` | Rotation state: `focus-areas.md`, `log.md`, frozen `findings-archive.md`, `migration-map*.tsv` |
+| **GitHub Discussions**, one category per `area:N` | Red-team round records. `dev/red-team/log.md` is **closed to new entries** — it keeps only the model-version legend and the frozen pre-2026-08 history |
+| `dev/red-team/` | Scope and tiers: `focus-areas.md`; frozen `log.md`, `findings-archive.md`, `migration-map*.tsv` |
 | `dev/strategy.md` | Historical strategic narrative (was `coordination.md`; **not** kept current) |
 | `completed-tasks.md` | **Frozen.** Pre-tracker decisions worth not re-litigating; still worth grepping |
 | `dev/expertise/*.md` | Standing-practice methodology references |

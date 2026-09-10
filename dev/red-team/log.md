@@ -1,13 +1,9 @@
 # Red-team round log — TreeSearch
 
-Append-only record of every red-team round. **Newest first.** Each invocation of
-`/red-team` adds one entry and updates `last_focus:` at the **bottom** of this file. The
-next area is `(last_focus mod N) + 1`, where `N` is the current row count in
-`focus-areas.md` (**15 as of 2026-08-05**, when areas 14 and 15 were added to close #42's
-scope-coverage gap — previously 13 as of 2026-07-03, and **not** the stale `10` this line
-said until then, which made areas 11-13 mathematically unreachable by normal rotation; see
-RT12-01, 2026-07-03 area-12 round below). **Count the rows; do not trust this number.**
-Recompute `N` whenever a row is added.
+**Closed to new entries.** A round's record is a GitHub Discussion, one post per round in
+that area's category, and rotation reads staleness from those posts — see the pointer block
+below. What this file still carries: the model-version legend, the `T-nnn` ids that shipped
+source comments cite, and the frozen pre-2026-08 history, **newest first**.
 
 **Entry format** (per round): `area`, `reviewed_by`, `date`, `tier` — **which now records the
 model *version* that ran, not just the rung** (`tier: opus (Opus 4.8)`) — `yield` (count of
@@ -57,6 +53,40 @@ cannot be reconstructed, so they are *not* stamped. Consequence: **a pre-tier dr
 count toward the "two consecutive dry versions" dormancy bar.** Any area whose
 persistently-dry reputation leans on pre-tier rounds (areas 3 and 10 both do) has at most
 *one* version-scoped dry verdict on record.
+
+---
+
+## ⚠ Round records have moved to GitHub Discussions — this file is closed to new entries
+
+Every round is now one post in its area's Discussions category, `NN-<area-name>`:
+
+<https://github.com/agent-issues/TreeSearch/discussions>
+
+Why the move: this file sits on a protected branch, so a finished round's record was hostage to
+a code review it has nothing to do with. Four completed rounds and 56 filed findings once sat
+stranded on an unmerged PR while this file still named a stale `last_focus:` — so the next
+dispatch would have re-swept an area that had already been reviewed twice that day. Discussions
+decouple the record from the merge.
+
+**Do not add new round entries here.** Post to the area's Discussions category instead. Title
+format `RT <date> - area <N> - <rung> (<Version>) - yield <n>`; first line of the body
+`<rung> (<Version>) | effort: <effort> | <date>`.
+
+**Migration complete as of 2026-08-06.** All 15 areas have a record: area 15's three rounds
+(#152-154), plus each other area's most recent round backfilled verbatim from this file
+(#158-171).
+
+**`last_focus:` is retired.** The next area is the one whose most recent Discussion has the
+oldest `createdAt`. That rests on an invariant — **creation order equals review-recency
+order** — which the backfill broke and discussion #184 restored: area 15's three records were
+posted before the other fourteen areas were backfilled, so by creation order the most recently
+reviewed area looked like the stalest one. Any future backfill or out-of-order re-post must
+restore the invariant the same way, with a marker record. The value below is left as a
+historical marker and is **not** to be updated.
+
+Everything below this line is the frozen historical record, newest first. **It stays**: eleven
+in-repo files and the `/red-team` skill cite `log.md` by path, and the `T-nnn` ids it carries
+are frozen, not retired.
 
 ---
 
@@ -1376,4 +1406,4 @@ tier: n/a (directed single-finding fix)
 yield: 1 filed-and-fixed same session (T-366, P3)
 notes: Handed a pre-verified finding for `expand_and_reinsert` (`ts_prune_reinsert.cpp:396`): it scored the rebuilt backbone with `score_tree()`, which on `has_inapplicable` data falls through to `fitch_na_score` and writes NA-regime `prelim`, while the insertion loop's `wagner_incremental_rescore` (`ts_wagner.cpp:131-166`) only maintains standard-Fitch `prelim` with no NA branch — `compute_insertion_edge_sets` then reads this mixed-regime array to choose reinsertion edges. The two sibling backbone-scoring call sites (`ts_wagner.cpp:449`, `ts_sector.cpp:917`) both already use the EW-proxy `fitch_score`, so this one call site reads as an oversight. **Fix applied:** swapped to `fitch_score(tree, ds)`. **Verification performed this session:** built clean; ran an NA repro (`Vinther2008`, then `Dikow2009` for a stronger test) with `pruneReinsertCycles` forced nonzero (default is `0L`, fully inert otherwise) — confirmed the path was actually exercised via `prune_reinsert_ms` timing (0ms before forcing the params right, ~1.3s after). Direct A/B (temporarily reverted the fix, rebuilt, re-ran identical seeds): on `Dikow2009` with 6 fixed RNG seeds, 5/6 gave byte-identical final score AND topology (`write.tree` hash) before vs. after; seed 4 diverged (1614 before → 1616 after) — confirms the fix changes search trajectory on this now-live path, exactly as the finding predicted, with no crash and no corrupted score in either arm. Existing `test-ts-prune-reinsert.R` (52 tests) and `test-ts-sector.R` (52 tests) both still pass. **Not done, flagged as a separate follow-up (do not conflate with this fix):** `fitch_na_score`'s `local_cost` is only written on its non-NA branch, which independently corrupts `wagner_incremental_rescore`'s `old_cost` subtraction for NA blocks — this changes placement further and needs its own A/B before landing. **This entry was not independently re-verified by a second reviewer** (no red-team-verifier pass) — the A/B above is empirical evidence, not a peer confirmation; a future round should sanity-check the reasoning, not just re-trust this note. This was a directed fix task, not a rotation round, so `last_focus` is left untouched.
 
-last_focus: 14
+last_focus: 15
