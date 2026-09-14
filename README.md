@@ -14,6 +14,7 @@ visualization,
 [rogue taxon detection](https://ms609.github.io/Rogue) (Smith 2022a),
 [tree space mapping](https://ms609.github.io/TreeDist/articles/treespace.html)
 (Smith 2022b),
+mapping character support (Smith 2026),
 and cluster consensus trees.
 
 Inapplicable character states are handled using the algorithm of Brazeau,
@@ -130,8 +131,13 @@ Smith, M. R. (2022a).
 Smith, M. R. (2022b).
   Robust analysis of phylogenetic tree space.
   _Systematic Biology_, 71(5), 1255–1270.
-  doi: [10.1093/sysbio/syab100](https://dx.doi.org/10.1093/sysbio/syab100)
+  doi: [10.1093/sysbio/syab100](https://dx.doi.org/10.1093/sysbio/syab
 
 Smith, M. R. (2023).
   TreeSearch: morphological phylogenetic analysis in R.
-  _R Journal_, 14(4), 305-315. doi: [10.32614/RJ-2023-019](https://doi.org/10.32614/RJ-2023-019)
+  _R Journal_, 14(4), 305-315. doi: [10.32614/RJ-2023-019](https://doi.org/10.32614/RJ-2023-019)100)
+
+Smith, M. R. (2026).
+  Which characters support which clades? Exploring the distribution of phylogenetic signal using mutual information.
+  _Systematic Biology_, online ahead of print.
+  doi: [10.1093/sysbio/syag071](https://doi.org/10.1093/sysbio/syag071)
