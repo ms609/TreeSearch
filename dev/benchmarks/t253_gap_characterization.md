@@ -1,5 +1,37 @@
 # T-253: Gap Characterization by Dataset Features
 
+> # ⛔ RETRACTED 2026-08-03 — DO NOT CITE THE MorphoBank HALF OF THIS DOCUMENT
+>
+> The `t252_mbank_*` half of this analysis is built on an engine whose Wagner addition was
+> **worse on every matrix in the sample**, so its "convergence proxy" measures the addition
+> bug, not dataset difficulty.
+>
+> **Measured** (Hamilton job 18183151, `t253_wagner_era_probe.R`; bare `AdditionTree`, no
+> search, identical preprocessing, 3 seeds, every tree re-scored by ONE scorer;
+> `t253_wagner_era_decision.csv`):
+>
+> | | |
+> |---|---|
+> | matrices where the March engine built a **longer** tree | **25 of 25** |
+> | matrices >10% longer | **23 of 25** |
+> | median ratio (March ÷ current) | **1.365** |
+> | range | 1.050 (project561) → **3.232** (project4284) |
+>
+> This was run to decide *annotate one row* vs *retract*, and it answers **retract**:
+> `project4284` is the extreme of a **universal** effect, not a special case. A per-matrix
+> "did it converge in 30 s" proxy derived from start trees that are 5–223% too long cannot
+> support the ρ values quoted below.
+>
+> **What does NOT fall with it:** the `t265` half (8 named datasets, TNT vs TreeSearch at
+> 120 s) is independent of the t252 engine and is untouched. The *conclusion* that ntax
+> predicts difficulty is also corroborated elsewhere and is not being called false — only
+> **this document's evidence for it** is withdrawn. `t253_conv_gap_mbank.csv` carries the
+> same defect; `headtohead_phase0.csv` was checked and contains no project4284 row, so no
+> canonical target was contaminated.
+>
+> Cf. `reach_escalation_FINDINGS.md`; the archived-library technique that made this
+> measurable at all is the reusable part.
+
 **Date:** 2026-03-27  
 **Agent:** F  
 **Data sources:**
