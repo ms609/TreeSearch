@@ -1,8 +1,15 @@
 # Red-team escalation backlog — TreeSearch
 
-Seams that are **re-eligible now** but are not next in the rotation. The `/red-team` skill
-reopens entries here when a rung's model version moves on (`/red-team revisit`); a normal
-rotation round may also pull an item from here when it reaches that area.
+> **FROZEN 2026-09-18 — read-only, never append.** No issue-shaped work goes in a
+> git-tracked file. A specific defect is a GitHub issue; a routing or sequencing ask is a
+> post in that area's Discussion category, beside the round records. This file is kept for
+> its resolved-history narrative and is drained by the `/red-team tidy` pass — a row naming
+> an open issue whose ask is a tier escalation becomes a `needs-escalation` label; anything
+> else migrates to a Discussion. As a live queue it drifted, which is why it is closed.
+
+Seams that were **re-eligible** but not next in the rotation. Historically the `/red-team`
+skill reopened entries here when a rung's model version moved on (`/red-team revisit`); that
+now happens by filing an issue or posting to the area's Discussion category.
 
 This file does **not** advance `last_focus:` and does not replace `log.md` — each item is a
 pointer back to the round that recorded the residual. Full context stays in `log.md`; only
