@@ -108,3 +108,25 @@ test_that("Profile parsimony works in tree search", {
 test_that("Ratchet fails gracefully", {
   expect_error(Ratchet(unrooted11, data11))
 })
+
+test_that("EdgeListSearch() performs no rearrangements when maxIter = 0", {
+  # `1:maxIter` evaluates to c(1, 0) when maxIter is zero, so the loop silently
+  # ran two rearrangement iterations; seq_len() is empty, as intended.
+  edge <- PectinateTree(letters[1:6])[["edge"]]
+  MustNotRun <- function (...) {
+    stop("No rearrangement should be attempted when maxIter = 0")
+  }
+  searched <- EdgeListSearch(list(edge[, 1], edge[, 2], 99), dataset = NULL,
+                             TreeScorer = MustNotRun,
+                             EdgeSwapper = MustNotRun,
+                             maxIter = 0, verbosity = 0L)
+  expect_equal(searched[[3]], 99) # Starting score returned unchanged
+  expect_equal(searched[[4]], 0L) # No hits recorded
+
+  # A zero-length `for` leaves the loop variable NULL, not 0
+  expect_message(EdgeListSearch(list(edge[, 1], edge[, 2], 99), dataset = NULL,
+                                TreeScorer = MustNotRun,
+                                EdgeSwapper = MustNotRun,
+                                maxIter = 0, verbosity = 1L),
+                 "after 0 rearrangements")
+})

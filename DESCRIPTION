@@ -51,9 +51,8 @@ Imports:
   Rdpack (>= 0.7),
   stats,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 2.4.0.9002),
+  TreeTools (>= 2.4.1),
   utils,
-Remotes: ms609/TreeTools,
 Suggests:
   cluster,
   Coreset,
