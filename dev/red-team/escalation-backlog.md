@@ -15,9 +15,9 @@ This file does **not** advance `last_focus:` and does not replace `log.md` — e
 pointer back to the round that recorded the residual. Full context stays in `log.md`; only
 the *ask* and the *rung* live here.
 
-**Rung rule.** Version bump before rung bump: `opus-4.8 dry → opus-5 → fable`. A dry verdict
-is evidence about the version that ran, not about the rung. See the model-version legend at
-the top of `log.md`.
+**Rung rule.** A dry verdict is evidence about the model that ran; a more capable model on any
+rung reopens it. `fable` is suspended (2026-09-23), so every row below routes to `opus`. See the
+model-version legend at the top of `log.md`.
 
 ---
 
@@ -26,7 +26,7 @@ the top of `log.md`.
 The **five table rows** were reopened 2026-07-27 by the `opus` 4.8 → 5 version bump. Each was
 recorded on 2026-07-24 (or earlier) as **"escalate to FABLE"**; the opus bump makes the same-rung
 step available and cheaper, so each is re-queued at **`opus` (Opus 5) with a fresh-angle brief**.
-Fable remains the step after Opus 5 *also* runs dry. The residuals themselves are unchanged —
+The residuals themselves are unchanged —
 only the rung aimed at them.
 
 **Item 5(a) was retired 2026-07-28** — the bug claim it carried had already been refuted, in

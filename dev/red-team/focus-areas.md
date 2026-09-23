@@ -17,11 +17,10 @@ The rotation still adjusts per recorded yield — a dry round escalates one tier
 round re-visits at the same tier with a fresh agent, a high-severity signal escalates
 immediately. Treat these as the starting point, not a ceiling.
 
-**A tier is a rung, not a model.** A dry verdict is scoped to the *version* that produced it,
-and a version bump at the same rung is a cheaper step than a rung bump — so `opus-4.8 dry` goes
-to **Opus 5**, not to fable. The alias→version mapping lives in the model-version legend at the
-top of `log.md`; seams that a version bump has made re-eligible are queued in
-`escalation-backlog.md`.
+**A tier is a rung, not a model.** A dry verdict is scoped to the *model* that produced it, and
+a more capable model on any rung reopens it. `opus` is the only finder rung: `fable` is
+suspended while Opus 5.5 outclasses it (2026-09-23). The alias→version mapping lives in the
+model-version legend at the top of `log.md`.
 
 | # | Area | Files | start_tier | Key questions |
 |---|------|-------|-----------|---------------|
@@ -44,9 +43,7 @@ top of `log.md`; seams that a version bump has made re-eligible are queued in
 ### Maturity / tier rationale (one line each)
 
 - **1 Fitch correctness — opus.** Crown jewel; T-300 (systematic delta=−3) and T-306 were
-  opus-class subtle bugs. Dry at **opus-4.8** (2026-07-24) ⇒ next visit is **opus (Opus 5)**,
-  fresh-angle; **fable** is the escalation only once Opus 5 *also* runs dry (version bump before
-  rung bump — see the model-version legend at the top of `log.md`).
+  opus-class subtle bugs.
 - **2 Topology invariants — opus.** Deep state-restore subtleties; T-235 (SPR stale state),
   T-316 (P1 stale constraint metadata after tabu rejection).
 - **3 Ratchet & perturbation — opus.** Mature, but the `build_reduced_dataset` /

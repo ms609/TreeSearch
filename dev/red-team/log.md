@@ -37,7 +37,9 @@ whenever a rung moves, and reopen whatever the bump makes re-eligible in
 | `sonnet` | **Sonnet 4.6** | every tier-era round through 2026-07-24 | All `tier: sonnet` entries below ran on 4.6. |
 | `sonnet` | **Sonnet 5** | current, from 2026-07-27 | Supersedes 4.6. |
 | `fable` | *version unconfirmed* | 2026-07-24 area-6 dual-tier round | Not captured at dispatch. The cost observation in that round (fable ≈ opus tokens, not 2×) is scoped to that unknown version. |
-| `fable` | **Fable 5** | current, from 2026-07-27 | |
+| `fable` | **Fable 5** | 2026-07-27 → 2026-09-22 | |
+| `opus` | **Opus 5.5** | current, from 2026-09-23 | Outclasses Fable 5.1 at ~1/5 the price ⇒ every `dry`/`dormant` verdict at Opus 4.8, Opus 5 **or fable** is re-eligible at `opus`. |
+| `fable` | **Fable 5.1** — **suspended** | from 2026-09-23 | Outclassed by Opus 5.5; not dispatched for finders, verifiers or chips until the maintainer re-enables it. |
 | `haiku` | **Haiku 4.5** | every round (verifier tier) | One version across the whole log; no bump to date. |
 
 **Version bump before rung bump.** The ladder *within* a rung comes first:

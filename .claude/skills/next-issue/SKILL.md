@@ -107,7 +107,8 @@ condition* rather than live work.
 - **Sonnet** — guard clauses, dead code, R-level fixes, tests, local refactors.
 - **Opus** — `src/` kernels, scoring semantics (Fitch/IW/profile/HSJ/XFORM), constraint
   machinery, parallelism and RNG, `NAMESPACE`, cross-file mechanism fixes.
-- **Fable** — only after an Opus chip in this tranche has stalled twice.
+- **Fable** — suspended while Opus 5.5 outclasses it (2026-09-23); never dispatch it. An Opus
+  chip that stalls twice is reported back, not escalated.
 
 Effort — **reasoning depth, not task size**:
 
