@@ -2,8 +2,9 @@
 
 **Closed to new entries.** A round's record is a GitHub Discussion, one post per round in
 that area's category, and rotation reads staleness from those posts — see the pointer block
-below. What this file still carries: the model-version legend, the `T-nnn` ids that shipped
-source comments cite, and the frozen pre-2026-08 history, **newest first**.
+below. What this file still carries: the `T-nnn` ids that shipped
+source comments cite, and the frozen pre-2026-08 history, **newest first**. The model-version
+legend that used to open it is archived in [discussion #189](https://github.com/agent-issues/TreeSearch/discussions/189).
 
 **Entry format** (per round): `area`, `reviewed_by`, `date`, `tier` — **which now records the
 model *version* that ran, not just the rung** (`tier: opus (Opus 4.8)`) — `yield` (count of
@@ -17,44 +18,6 @@ carried the full 2026-05-26 rotation) and extended with the 2026-06-15 CRAN run 
 as **GitHub issues** in [`agent-issues/TreeSearch`](https://github.com/agent-issues/TreeSearch/issues?q=label%3Ared-team)
 (since 2026-08-04 — `findings.md` is deleted, `findings-archive.md` frozen, `migration-map.tsv`
 maps every historical `T-nnn`); version-bump re-eligible seams in `escalation-backlog.md`.
-
----
-
-## Model-version legend (alias → version)
-
-A tier is a **rung, not a model**. `sonnet` / `opus` / `fable` / `haiku` are Agent-tool
-aliases that always resolve to the *newest* model at that rung; the version behind each moves
-under us. Every backward-looking verdict in this log (`ran dry`, `dormant`, `retire`) is
-therefore evidence about **the version that ran**, never about the rung forever. This table is
-the project-local mapping the `/red-team` skill's *Model versions* rule points at: add a row
-whenever a rung moves, and reopen whatever the bump makes re-eligible in
-`escalation-backlog.md`.
-
-| Alias | Version | Period | Notes |
-|-------|---------|--------|-------|
-| `opus` | **Opus 4.8** | every tier-era round through 2026-07-24 | All `tier: opus` entries below ran on 4.8. |
-| `opus` | **Opus 5** | current, from 2026-07-27 | Supersedes 4.8 ⇒ every `dry at opus-4.8` verdict is re-eligible at this same rung. |
-| `sonnet` | **Sonnet 4.6** | every tier-era round through 2026-07-24 | All `tier: sonnet` entries below ran on 4.6. |
-| `sonnet` | **Sonnet 5** | current, from 2026-07-27 | Supersedes 4.6. |
-| `fable` | *version unconfirmed* | 2026-07-24 area-6 dual-tier round | Not captured at dispatch. The cost observation in that round (fable ≈ opus tokens, not 2×) is scoped to that unknown version. |
-| `fable` | **Fable 5** | 2026-07-27 → 2026-09-22 | |
-| `opus` | **Opus 5.5** | current, from 2026-09-23 | Outclasses Fable 5.1 at ~1/5 the price ⇒ every `dry`/`dormant` verdict at Opus 4.8, Opus 5 **or fable** is re-eligible at `opus`. |
-| `fable` | **Fable 5.1** — **suspended** | from 2026-09-23 | Outclassed by Opus 5.5; not dispatched for finders, verifiers or chips until the maintainer re-enables it. |
-| `haiku` | **Haiku 4.5** | every round (verifier tier) | One version across the whole log; no bump to date. |
-
-**Version bump before rung bump.** The ladder *within* a rung comes first:
-`opus-4.8 dry → opus-5 → fable`, not `opus dry → fable`. The 2026-07-27 opus bump therefore
-re-targets every "escalates to FABLE" verdict recorded on 2026-07-24 to **opus (Opus 5) with a
-fresh-angle brief**; fable remains the step after Opus 5 also runs dry. The residuals those
-rounds identified are unchanged — only the rung that attacks them next is (see
-`escalation-backlog.md`).
-
-**Pre-tier rounds are version-unrecorded.** The 2026-05-19 / 2026-05-26 rounds tagged
-`tier: n/a (pre-tier)` predate both the tier system and this legend; the model behind them
-cannot be reconstructed, so they are *not* stamped. Consequence: **a pre-tier dry round cannot
-count toward the "two consecutive dry versions" dormancy bar.** Any area whose
-persistently-dry reputation leans on pre-tier rounds (areas 3 and 10 both do) has at most
-*one* version-scoped dry verdict on record.
 
 ---
 
