@@ -1,3 +1,15 @@
+// Legacy R-level NNI/SPR/TBR rearrangement, superseded for search by the driven
+// engine (ts_*.cpp) but NOT dead: `nni`, `spr` and `spr_moves` are still
+// registered and still called.
+//
+// The commented-out [[Rcpp::export]] tags below are misleading. RcppExports.cpp
+// and TreeSearch-init.c were never regenerated after they were commented out, so
+// the generated wrappers persist, R/RcppExports.R:60-68 still binds them, and
+// three test files exercise them: test-NNI.R, test-zzz-tree-rearrange.R, and
+// test-rearrange.cpp.R (via all_spr). Deleting this file, or regenerating
+// attributes from the tags as they stand, breaks those tests and leaves dangling
+// registrations. Of the functions here only `tbr_moves` is genuinely unexported.
+
 #include <Rcpp.h>
 // [ [Rcpp::depends(TreeTools)]]
 #include <TreeTools/renumber_tree.h> /* for preorder_edges_and_nodes */
@@ -320,8 +332,59 @@ inline IntegerMatrix fuse(const IntegerMatrix& tree_bits,
   return TreeTools::preorder_edges_and_nodes(new_tree(_, 0), new_tree(_, 1));
 }
 
+// Append every move that bisects the root edge -- i.e. tip 1's pendant edge,
+// which the tip-1-rooted representation splits into edges 1 and 2.
+//
+// Bisecting it leaves tip 1 alone on one side.  A single vertex admits no
+// re-rooting, so the only freedom is where to re-root the fragment, and each
+// choice gives the tree in which tip 1 attaches there.  SPR and TBR therefore
+// coincide on this one edge, and all_spr() and all_tbr() share this code so
+// that they cannot silently diverge again (agent-issues/TreeSearch#147).
+inline void push_root_edge_moves(List &ret,
+                                 const IntegerMatrix &two_bits,
+                                 const int16 break_child,
+                                 const int16 fragment_root,
+                                 const int16 fragment_min_edge,
+                                 const int16 fragment_max_edge,
+                                 unique_ptr<int16[]> &left_edge,
+                                 unique_ptr<int16[]> &parent_edge,
+                                 const int16 n_tip) {
+  const int16
+    fragment_base_right = 2,
+    fragment_base_left = get_child(left_edge, fragment_root, n_tip)
+  ;
 
-// Assumptions: 
+  for (int16 insertion_point = fragment_min_edge + 2;
+       insertion_point != fragment_max_edge + 1; insertion_point++) {
+    if (insertion_point == fragment_base_left) {
+      continue;
+    }
+
+    int16 invert_next = insertion_point;
+    IntegerMatrix rerooted = clone(two_bits);
+
+    rerooted(invert_next, 0) = break_child; // Borrow fragment-root node id
+    rerooted(invert_next, 1) = two_bits(invert_next, 0);
+
+    do {
+      invert_next = edge_above(two_bits(invert_next, 0), parent_edge);
+      rerooted(invert_next, 0) = two_bits(invert_next, 1);
+      rerooted(invert_next, 1) = two_bits(invert_next, 0);
+    } while (two_bits(invert_next, 0) != fragment_root);
+
+    const bool new_root_on_right = invert_next == fragment_base_right;
+    const int16 repurposed_edge = new_root_on_right ?
+      fragment_base_left :
+      fragment_base_right;
+    rerooted(invert_next, 1) = two_bits(repurposed_edge, 1);
+    rerooted(repurposed_edge, 1) = two_bits(insertion_point, 1);
+    rerooted = TreeTools::preorder_edges_and_nodes(rerooted(_, 0), rerooted(_, 1));
+    ret.push_back(rerooted);
+  }
+}
+
+
+// Assumptions:
 //  * Tree is bifurcating, in preorder; first two edges have root as parent.
 //  [[Rcpp::export]]
 List all_spr (const IntegerMatrix edge,
@@ -335,7 +398,7 @@ List all_spr (const IntegerMatrix edge,
   ;
   // ASAN reports stack-use-after-scope (false positive?) if we fail here.
   // So we test for these exceptions in R.
-  // # nocov begin
+  // # nocov start
   if (n_edge < 5) {
     Rcpp::stop("No SPR rearrangements possible on a tree with < 5 edges");
   }
@@ -421,43 +484,14 @@ List all_spr (const IntegerMatrix edge,
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
     if (break_edge == 1) {
-      const int16
-        fragment_base_right = 2,
-        fragment_base_left = get_child(left_edge, fragment_root, n_tip);
-      ;
-      
-      for (int16 insertion_point = fragment_min_edge + 2;
-           insertion_point != fragment_max_edge + 1; insertion_point++) {
-        if (insertion_point == fragment_base_left) {
-          continue;
-        }
-        
-        int16 invert_next = insertion_point;
-        IntegerMatrix rerooted = clone(two_bits);
-        
-        rerooted(invert_next, 0) = break_child; // Borrow fragment-root node id
-        rerooted(invert_next, 1) = two_bits(invert_next, 0);
-        
-        do {
-          invert_next = edge_above(two_bits(invert_next, 0), parent_edge);
-          rerooted(invert_next, 0) = two_bits(invert_next, 1);
-          rerooted(invert_next, 1) = two_bits(invert_next, 0);
-        } while (two_bits(invert_next, 0) != fragment_root);
-        
-        const bool new_root_on_right = invert_next == fragment_base_right;
-        const int16 repurposed_edge = new_root_on_right ?
-          fragment_base_left :
-          fragment_base_right;
-        rerooted(invert_next, 1) = two_bits(repurposed_edge, 1);
-        rerooted(repurposed_edge, 1) = two_bits(insertion_point, 1);
-        rerooted = TreeTools::preorder_edges_and_nodes(rerooted(_, 0), rerooted(_, 1));
-        ret.push_back(rerooted);
-      }
+      push_root_edge_moves(ret, two_bits, break_child, fragment_root,
+                           fragment_min_edge, fragment_max_edge, left_edge,
+                           parent_edge, n_tip);
     } else {
       for (int16 graft_edge = n_edge - 1; graft_edge; graft_edge--) {
         if (graft_edge == fragment_max_edge) {
           graft_edge = fragment_min_edge;
-          continue; 
+          continue;
         } else if (broken_on_left && graft_edge == get_child(right_edge, break_parent, n_tip)) {
           graft_edge = edge_above(break_parent, parent_edge);
           continue;
@@ -495,10 +529,14 @@ List all_tbr (const IntegerMatrix edge,
   if (break_order.length()) {
     break_seq = clone(break_order);
   } else {
-    IntegerVector tmp (n_edge - 2);
+    // Edges 1 and 2 are the two halves of tip 1's pendant edge in the
+    // tip-1-rooted representation, so breaking edges 2..n_edge visits each of
+    // the 2n-3 edges of the unrooted tree exactly once.  Starting at 3 would
+    // skip that pendant edge -- and with it every move that relocates tip 1.
+    IntegerVector tmp (n_edge - 1);
     break_seq = tmp;
-    for (int16 i = n_edge - 2; i--; ) {
-      break_seq[i] = i + 3;
+    for (int16 i = n_edge - 1; i--; ) {
+      break_seq[i] = i + 2;
     }
   }
 
@@ -562,11 +600,20 @@ List all_tbr (const IntegerMatrix edge,
     two_bits(edge_above(break_parent, parent_edge), 1) = broken_on_left ?
       get_child(right_node, break_parent, n_tip) :
       get_child(left_node, break_parent, n_tip);
-    if (fragment_leaves < 3) {
+    if (break_edge == 1) {
+      // TBR on the root edge is SPR on the root edge: the severed tip 1 has no
+      // re-rooting freedom.  Handled before the fragment_leaves test, which
+      // would otherwise route this break into the general TBR branch, where
+      // the fragment spans every edge but the first and the graft loop
+      // consequently finds nowhere to reattach.
+      push_root_edge_moves(ret, two_bits, break_child, fragment_root,
+                           fragment_min_edge, fragment_max_edge, left_edge,
+                           parent_edge, n_tip);
+    } else if (fragment_leaves < 3) {
       for (int16 graft_edge = n_edge - 1; graft_edge; graft_edge--) {
         if (graft_edge == fragment_max_edge) {
           graft_edge = fragment_min_edge;
-          continue; 
+          continue;
         } else if (broken_on_left && graft_edge == get_child(right_edge, break_parent, n_tip)) {
           graft_edge = edge_above(break_parent, parent_edge);
           continue;

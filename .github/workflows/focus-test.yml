@@ -1,0 +1,140 @@
+# Fast, standalone run of a SINGLE testthat file on ONE OS, bypassing the
+# R-CMD-check wave gating.
+#
+# Why this exists: in R-CMD-check the macOS `full` job is `needs: core`, and
+# `core` is `needs: sense-check`. macOS therefore only starts once the
+# ubuntu/windows `core` legs are green -- so a flake on another OS keeps the
+# macOS run from ever building. When you're iterating to get *macOS* passing you
+# don't want to re-clear the whole ubuntu/windows chain first. This gives a
+# direct macOS (or any-OS) signal for the one test you're working on, with no
+# full R CMD check.
+#
+# Two ways to trigger:
+#   * Actions tab -> "focus-test" -> "Run workflow": pick OS, filter, R version.
+#   * Push a commit whose message contains  [focus-test]  -- runs on macOS-latest.
+#     Add a filter with  [focus-test: <name>]  (e.g. [focus-test: ts-ratchet-opt]);
+#     a bare [focus-test] runs the whole testthat suite. Feature-branch pushes do
+#     NOT trigger R-CMD-check (it only pushes on main/master), so on a branch
+#     without an open PR this is the ONLY workflow that runs.
+#
+# The `filter` is a testthat file filter: the file basename with the leading
+# `test-` and trailing `.R` removed (regex-matched). "ts-ratchet-opt" -> only
+# tests/testthat/test-ts-ratchet-opt.R.
+
+name: focus-test
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: Runner OS
+        type: choice
+        default: macOS-latest
+        options:
+          - macOS-latest
+          - macos-15-intel
+          - ubuntu-latest
+          - windows-latest
+      filter:
+        description: "testthat filter (file basename without 'test-'/'.R'); blank = all tests"
+        type: string
+        default: ts-ratchet-opt
+      r:
+        description: R version
+        type: string
+        default: release
+  push:
+    branches-ignore:
+      - main
+      - master
+
+concurrency:
+  group: focus-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focus:
+    # On push, only run when the head commit opts in via [focus-test].
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[focus-test]')
+    runs-on: ${{ github.event.inputs.os || 'macOS-latest' }}
+    name: focus-test (${{ github.event.inputs.os || 'macOS-latest' }})
+
+    env:
+      NOT_CRAN: true
+      R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+      R_COMPILE_AND_INSTALL_PACKAGES: 'never'
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      COMMIT_MSG: ${{ github.event.head_commit.message }}
+      INPUT_FILTER: ${{ github.event.inputs.filter }}
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Resolve test filter
+        id: cfg
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            filter="$INPUT_FILTER"
+          else
+            # [focus-test: <filter>] -> <filter>  (empty for a bare [focus-test])
+            filter=$(printf '%s' "$COMMIT_MSG" \
+              | sed -n 's/.*\[focus-test:[[:space:]]*\([^]]*\)\].*/\1/p' \
+              | head -n1 \
+              | sed 's/[[:space:]]*$//')
+          fi
+          echo "filter=$filter" >> "$GITHUB_OUTPUT"
+          echo "Focus filter: '${filter:-<all tests>}'"
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ github.event.inputs.r || 'release' }}
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+          extra-packages: |
+            local::.
+
+      - name: Run focused tests
+        env:
+          FOCUS_FILTER: ${{ steps.cfg.outputs.filter }}
+        shell: Rscript {0}
+        run: |
+          Sys.setenv(NOT_CRAN = "true")
+          library(TreeSearch)
+          library(testthat)
+          filter <- Sys.getenv("FOCUS_FILTER")
+          if (!nzchar(filter)) filter <- NULL
+          message("Running tests/testthat with filter = ",
+                  if (is.null(filter)) "<all tests>" else filter)
+          # ListReporter, not the "summary"/"progress" console reporters, which
+          # can segfault under `Rscript` on some toolchains; we tally results and
+          # set the exit status ourselves so a failure fails the job.
+          rep <- testthat::ListReporter$new()
+          testthat::test_dir("tests/testthat", filter = filter,
+                             package = "TreeSearch", reporter = rep,
+                             stop_on_failure = FALSE)
+          results <- rep$results$as_list()
+          is_bad <- function(e) inherits(e, c("expectation_failure", "expectation_error"))
+          is_ok  <- function(e) inherits(e, "expectation_success")
+          nfail <- 0L; nok <- 0L
+          for (r in results) {
+            bad <- sum(vapply(r$results, is_bad, logical(1)))
+            ok  <- sum(vapply(r$results, is_ok,  logical(1)))
+            nfail <- nfail + bad; nok <- nok + ok
+            message(sprintf("[%4s] %s (ok=%d, bad=%d)",
+                            if (bad > 0) "FAIL" else "ok", r$test, ok, bad))
+          }
+          message(sprintf("== %d test blocks | %d passing expectations | %d failures ==",
+                          length(results), nok, nfail))
+          if (length(results) == 0L) {
+            message("No tests matched the filter '", Sys.getenv("FOCUS_FILTER"), "'.")
+            quit(status = 1L)
+          }
+          if (nfail > 0L) quit(status = 1L)

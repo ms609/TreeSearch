@@ -28,7 +28,7 @@ TreeTools::NUnrooted(8) * 2 ^ profile3.5
 }
 \seealso{
 Other profile parsimony functions:
-\code{\link[=Carter1]{Carter1()}},
+\code{\link[=MaddisonSlatkin]{MaddisonSlatkin()}},
 \code{\link[=PrepareDataProfile]{PrepareDataProfile()}},
 \code{\link[=StepInformation]{StepInformation()}},
 \code{\link[=WithOneExtraStep]{WithOneExtraStep()}}

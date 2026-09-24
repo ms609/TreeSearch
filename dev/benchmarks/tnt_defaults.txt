@@ -1,0 +1,72 @@
+
+PISH (Phylogenetic Inference SHell)
+
+Reading from C:\Users\pjjg18\GitHub\TreeSearch\dev\benchmarks\dumpdefaults.run 
+Running C:\Users\pjjg18\GitHub\TreeSearch\dev\benchmarks\dumpdefaults.run with 
+ 
+ 
+Sectorial search settings: 
+     * Using separate matrix-buffer for sectors
+     * Recursion (user-defined searches) disabled
+     * Random sector selections
+        - Min. size 0, max. size 0
+        - Max. selections for size S is M = ( T/S * 100 ) / ( 100 - 50 )
+        - Increasing size in 100% when M selections made
+     * Sectors of size below 75 analyzed with 3 RAS+TBR
+       (and extra 3 starts if the first 3 produce score differences).
+       Not fusing starting trees for small sectors.
+     * Doing global TBR every 10 substitutions in small sectors,
+       and every 10 substitutions in large sectors.
+     * Not accepting equally good subtrees 
+ 
+ 
+Extra search settings: 
+     * Using 4 replications as starting point for each hit
+     * Each replication initially autoconstrained (previous and wagner)
+     * Each replication with constraint and random sectorial searches,
+       with no ratchet, with drifting (5 iters.), no hybridization, and
+       fusing (1 rounds) 
+     * Finding best score 1 times (=hits)
+     * Not consensing trees during search
+     * Multiplying trees by fusing after hitting best score
+     * Saving no more than 1 trees per replication 
+ 
+ 
+Ratchet settings:
+     * 50 iterations
+     * 40 substitutions (no more than 40 tree-rearrangements
+       accepted in perturbation phase)
+     * equally weighted cycle: yes
+     * Probability of up-weighting: 4
+     * Probability of down-weighting: 4
+     * Autoconstrained cycles: 0
+     * Stopping when 99% of perturbation phase completed 
+ 
+ 
+Settings for tree-drifting:
+     * 30 iterations
+     * 60 substitutions (no more than 60 tree-rearrangements
+       accepted in perturbation phase)
+     * Max. absolute fit diff.: 1
+     * Max. relative fit diff.: 0.20
+     * Rejection factor for suboptimal trees: 3.00
+     * Autoconstrained cycles: 0
+     * Stopping when 99% of perturbation phase completed
+ 
+
+Tree-fusing settings:
+     * Not accepting exchanges of equal score
+     * Using 5 rounds of fusing
+     * Starting from best tree
+     * Keeping all the trees
+     * Accepting all exchanges that improve initial score (not repeating)
+     * Swapping trees with TBR after fusion 
+
+Tree-hybridization settings:
+     * 1 rounds of 1000 hybridizations each
+     * Replacing original tree(s) if hybrids are better
+     * If initial tree set increased to contain 15 times more 
+       trees than input, retain best 1/15 trees
+ 
+Genetic algorithm in effect: tree-fusing 
+ 

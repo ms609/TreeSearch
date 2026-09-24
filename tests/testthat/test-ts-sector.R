@@ -1,0 +1,330 @@
+# Tier 2: skipped on CRAN; see tests/testing-strategy.md
+skip_on_cran()
+# Helper: run TBR search
+# Helpers from helper-ts.R: make_ts_data, ts_score, validate_result
+
+ts_tbr <- function(tree, ds, maxHits = 1L) {
+  TreeSearch:::ts_tbr_search(tree$edge, ds$contrast, ds$tip_data,
+                              ds$weight, ds$levels, maxHits = maxHits)
+}
+
+# Helper: run RSS search
+ts_rss <- function(tree, ds, minSize = 6L, maxSize = 50L,
+                   acceptEqual = FALSE, rssPicks = 0L,
+                   ratchetCycles = 6L, maxHits = 1L) {
+  TreeSearch:::ts_rss_search(tree$edge, ds$contrast, ds$tip_data,
+                              ds$weight, ds$levels,
+                              minSectorSize = minSize,
+                              maxSectorSize = maxSize,
+                              acceptEqual = acceptEqual,
+                              rssPicks = rssPicks,
+                              ratchetCycles = ratchetCycles,
+                              maxHits = maxHits)
+}
+
+# Helper: run XSS search
+ts_xss <- function(tree, ds, nPartitions = 4L, xssRounds = 3L,
+                   acceptEqual = FALSE, ratchetCycles = 6L,
+                   maxHits = 1L) {
+  TreeSearch:::ts_xss_search(tree$edge, ds$contrast, ds$tip_data,
+                              ds$weight, ds$levels,
+                              nPartitions = nPartitions,
+                              xssRounds = xssRounds,
+                              acceptEqual = acceptEqual,
+                              ratchetCycles = ratchetCycles,
+                              maxHits = maxHits)
+}
+
+# ---------- Test datasets ----------
+
+# Small dataset: 10 tips, 4 characters
+small_mat <- matrix(c(
+  0, 0, 0, 0, 0, 1, 1, 1, 1, 1,
+  0, 0, 1, 1, 1, 0, 0, 1, 1, 1,
+  0, 1, 0, 1, 1, 0, 1, 0, 1, 1,
+  1, 0, 0, 0, 1, 1, 1, 1, 0, 0
+), nrow = 10, dimnames = list(paste0("t", 1:10), NULL))
+small_dataset <- MatrixToPhyDat(small_mat)
+small_ds <- make_ts_data(small_dataset)
+
+# Medium dataset: 30 tips with more conflict
+set.seed(5471)
+med_mat <- matrix(sample(0:1, 30 * 15, replace = TRUE),
+                  nrow = 30,
+                  dimnames = list(paste0("t", 1:30), NULL))
+med_dataset <- MatrixToPhyDat(med_mat)
+med_ds <- make_ts_data(med_dataset)
+
+
+test_that("RSS returns valid structure", {
+  tree <- as.phylo(42, 10)
+  result <- ts_rss(tree, small_ds, minSize = 4L, maxSize = 8L,
+                   rssPicks = 3L, ratchetCycles = 0L)
+
+  expect_true(is.list(result))
+  expect_true("edge" %in% names(result))
+  expect_true("score" %in% names(result))
+  expect_true("n_sectors_searched" %in% names(result))
+  expect_true("n_sectors_improved" %in% names(result))
+  expect_true("total_steps_saved" %in% names(result))
+})
+
+test_that("XSS returns valid structure", {
+  tree <- as.phylo(42, 10)
+  result <- ts_xss(tree, small_ds, nPartitions = 2L, xssRounds = 1L,
+                   ratchetCycles = 0L)
+
+  expect_true(is.list(result))
+  expect_true("edge" %in% names(result))
+  expect_true("score" %in% names(result))
+  expect_true("n_sectors_searched" %in% names(result))
+})
+
+test_that("RSS score matches independent verification", {
+  tree <- as.phylo(100, 10)
+  result <- ts_rss(tree, small_ds, minSize = 4L, maxSize = 8L,
+                   rssPicks = 5L, ratchetCycles = 0L)
+
+  result_tree <- tree
+  result_tree$edge <- result$edge
+  expected_score <- ts_score(result_tree, small_ds)
+  expect_equal(result$score, expected_score)
+})
+
+test_that("XSS score matches independent verification", {
+  tree <- as.phylo(100, 10)
+  result <- ts_xss(tree, small_ds, nPartitions = 2L, xssRounds = 1L,
+                   ratchetCycles = 0L)
+
+  result_tree <- tree
+  result_tree$edge <- result$edge
+  expected_score <- ts_score(result_tree, small_ds)
+  expect_equal(result$score, expected_score)
+})
+
+test_that("RSS does not worsen score", {
+  tree <- as.phylo(42, 10)
+  initial_score <- ts_score(tree, small_ds)
+
+  result <- ts_rss(tree, small_ds, minSize = 4L, maxSize = 8L,
+                   rssPicks = 5L, ratchetCycles = 0L)
+
+  expect_true(result$score <= initial_score)
+})
+
+test_that("XSS does not worsen score", {
+  tree <- as.phylo(42, 10)
+  initial_score <- ts_score(tree, small_ds)
+
+  result <- ts_xss(tree, small_ds, nPartitions = 2L, xssRounds = 1L,
+                   ratchetCycles = 0L)
+
+  expect_true(result$score <= initial_score)
+})
+
+test_that("RSS on 30-tip data produces valid result", {
+  tree <- as.phylo(1234, 30)
+  initial_score <- ts_score(tree, med_ds)
+
+  rss_result <- ts_rss(tree, med_ds, minSize = 6L, maxSize = 20L,
+                       rssPicks = 10L, ratchetCycles = 0L)
+
+  # RSS should not worsen compared to start (includes global TBR)
+  expect_true(rss_result$score <= initial_score)
+  expect_true(rss_result$score > 0)
+
+  # Verify returned tree matches reported score
+  result_tree <- tree
+  result_tree$edge <- rss_result$edge
+  expect_equal(rss_result$score, ts_score(result_tree, med_ds))
+})
+
+test_that("XSS on 30-tip data produces valid result", {
+  tree <- as.phylo(1234, 30)
+  initial_score <- ts_score(tree, med_ds)
+
+  xss_result <- ts_xss(tree, med_ds, nPartitions = 3L, xssRounds = 2L,
+                       ratchetCycles = 0L)
+
+  expect_true(xss_result$score <= initial_score)
+  expect_true(xss_result$score > 0)
+
+  result_tree <- tree
+  result_tree$edge <- xss_result$edge
+  expect_equal(xss_result$score, ts_score(result_tree, med_ds))
+})
+
+test_that("RSS works with various tree sizes", {
+  set.seed(4715)
+  for (n in c(8, 15, 20)) {
+    mat <- matrix(sample(0:1, n * 5, replace = TRUE),
+                  nrow = n,
+                  dimnames = list(paste0("t", seq_len(n)), NULL))
+    dat <- MatrixToPhyDat(mat)
+    ds <- make_ts_data(dat)
+    tree <- as.phylo(1, n)
+
+    result <- ts_rss(tree, ds, minSize = 4L,
+                     maxSize = min(n - 2L, 12L),
+                     rssPicks = 3L, ratchetCycles = 0L)
+
+    expect_true(result$score > 0)
+
+    result_tree <- tree
+    result_tree$edge <- result$edge
+    expect_equal(result$score, ts_score(result_tree, ds))
+  }
+})
+
+test_that("XSS works with various partition counts", {
+  tree <- as.phylo(100, 20)
+  set.seed(6928)
+  mat <- matrix(sample(0:1, 20 * 8, replace = TRUE),
+                nrow = 20,
+                dimnames = list(paste0("t", 1:20), NULL))
+  dat <- MatrixToPhyDat(mat)
+  ds <- make_ts_data(dat)
+
+  for (p in c(2, 3, 4)) {
+    result <- ts_xss(tree, ds, nPartitions = p, xssRounds = 1L,
+                     ratchetCycles = 0L)
+    expect_true(result$score > 0)
+    expect_true(result$n_sectors_searched >= 1)
+  }
+})
+
+# ---------- Inapplicable character tests ----------
+
+# Dataset with inapplicable characters (20 tips)
+na_mat <- matrix(c(
+  0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1,
+  0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 1,
+  "-", "-", 0, 1, 1, 0, 1, "-", "-", 1, 0, 1, 0, 1, "-", 0, 1, 0, 1, 0,
+  0, 1, 0, 1, "-", "-", 0, 1, 0, 1, "-", "-", 1, 0, 1, 0, 1, 0, 0, 1,
+  0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0
+), nrow = 20, dimnames = list(paste0("t", 1:20), NULL))
+na_dataset <- MatrixToPhyDat(na_mat)
+na_ds <- make_ts_data(na_dataset)
+
+test_that("RSS with inapplicable characters produces valid result", {
+  tree <- as.phylo(42, 20)
+  initial_score <- ts_score(tree, na_ds)
+
+  result <- ts_rss(tree, na_ds, minSize = 4L, maxSize = 12L,
+                   rssPicks = 3L, ratchetCycles = 0L)
+
+  expect_true(result$score > 0)
+  expect_true(result$score <= initial_score)
+
+  result_tree <- tree
+  result_tree$edge <- result$edge
+  expect_equal(result$score, ts_score(result_tree, na_ds))
+})
+
+test_that("XSS with inapplicable characters produces valid result", {
+  tree <- as.phylo(100, 20)
+  initial_score <- ts_score(tree, na_ds)
+
+  result <- ts_xss(tree, na_ds, nPartitions = 3L, xssRounds = 2L,
+                   ratchetCycles = 0L)
+
+  expect_true(result$score > 0)
+  expect_true(result$score <= initial_score)
+
+  result_tree <- tree
+  result_tree$edge <- result$edge
+  expect_equal(result$score, ts_score(result_tree, na_ds))
+})
+
+test_that("sector_diag with NA characters returns consistent scores", {
+  tree <- as.phylo(42, 20)
+  diag <- TreeSearch:::ts_sector_diag(tree$edge, na_ds$contrast,
+                                       na_ds$tip_data, na_ds$weight,
+                                       na_ds$levels,
+                                       sector_root_1based = 22L)
+  expect_true(diag$full_score >= 0)
+  expect_true(diag$sector_score >= 0)
+  expect_true(diag$clade_size >= 2)
+  expect_true(diag$n_sector_tips == diag$clade_size + 1L)
+})
+
+# ===== All-uninformative EW data: zero Fitch words (regression) =============
+# When every equal-weights character is constant or an autapomorphy (no state
+# shared by >1 taxon), simplify_patterns removes every character, leaving
+# DataSet::total_words == 0 and empty per-word state vectors (tip_states,
+# tree.prelim, edge_set).  Several sectorial code paths took the address of
+# element 0 of these empty vectors -- undefined behaviour that aborts under
+# hardened libstdc++ assertions / ASan -- including build_ras_sector() (the
+# RAS-restart start-tree builder, only reached when rasStarts > 1) and
+# compute_from_above_for_sector()/build_reduced_dataset_collapsed() (reached
+# via ordinary rss_search/xss_search).  40 tips clears the sectorMinSize*2
+# gate (default sectorMinSize = 6) so a sector is always extracted.
+
+make_uninformative_ew <- function(n, n_char = 5L, seed) {
+  set.seed(seed)
+  mkchar <- function() {
+    states <- rep(1L, n)
+    # 6 tips get unique singleton states (2..7): no state is shared by more
+    # than one taxon, so every character is parsimony-uninformative.
+    states[sample(seq_len(n), 6L)] <- seq(2L, 7L)
+    states
+  }
+  mat <- vapply(seq_len(n_char), function(i) mkchar(), integer(n))
+  rownames(mat) <- paste0("t", seq_len(n))
+  MatrixToPhyDat(mat)
+}
+
+test_that("Sectorial search handles all-uninformative EW data (zero Fitch words)", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("build_ras_sector handles zero Fitch words (rasStarts > 1)", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(rasStarts = 3L)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("build_reduced_dataset_collapsed handles zero Fitch words", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(sectorCollapseTarget = 6L)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("expand_and_reinsert (prune-reinsert) handles zero Fitch words", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(pruneReinsertCycles = 1L)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})
+
+test_that("stochastic_tbr_phase (annealing) handles zero Fitch words", {
+  ds <- make_uninformative_ew(40L, seed = 1)
+  tree <- PectinateTree(names(ds))
+  ctrl <- SearchControl(annealCycles = 1L, annealPhases = 2L,
+                         annealTStart = 5, annealTEnd = 0)
+
+  res <- MaximizeParsimony(ds, tree = tree, maxReplicates = 2L,
+                            targetHits = 1L, verbosity = 0L, control = ctrl)
+  expect_s3_class(res[[1]], "phylo")
+  expect_equal(length(res[[1]]$tip.label), 40L)
+})

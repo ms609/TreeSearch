@@ -1,0 +1,457 @@
+#' Bremer support (decay index)
+#'
+#' `Bremer()` calculates the Bremer support (decay index)
+#' \insertCite{Bremer1988,Bremer1994}{TreeSearch} of each clade in a reference
+#' tree: the number of extra steps required before the clade is no longer
+#' present in an optimal tree.  Formally, for a clade _C_,
+#' \deqn{\textrm{Bremer}(C) = L(\neg C) - L^\star}{Bremer(C) = L(not C) - L\*}
+#' where \eqn{L(\neg C)}{L(not C)} is the score of the shortest tree that does
+#' not contain _C_ and \eqn{L^\star}{L\*} is the score of the most-parsimonious
+#' tree.  Larger values indicate better-supported clades.
+#'
+#' Two engines are available:
+#'
+#' \describe{
+#'   \item{`method = "constraint"` (default, rigorous)}{For each clade, runs
+#'   a tree search under the constraint that that clade is absent, taking
+#'   the score of the shortest resulting tree.}
+#'   \item{`method = "pool"` (fast, loose)}{Runs a single search and collects
+#'    a pool of suboptimal trees with [`SuboptimalTrees()`], then for each
+#'    clade, take the best score found in a tree that lacks that clade.
+#'    Provides an upper bound on the support: better trees that lack the clade
+#'    may exist outside the sampled trees. Useful for exploration, but not
+#'    recommended for publication values.}
+#' }
+#'
+#' Ensure that search options (`concavity`, `inapplicable`, ...) match those
+#' used to find `tree`.
+#'
+#' @inheritParams JackLabels
+#' @param tree A tree of class `phylo` whose clades are to be evaluated. If a
+#' `multiPhylo` object is provided, its strict consensus will be evaluated.
+#' @param method Character: `"constraint"` for negative-constraint searches,
+#' or `"pool"` for approximation via the suboptimal pool.
+#' @param maxBremer Numeric specifying the largest decay value to resolve when
+#' `method = "pool"`. Ignored under `method = "constraint"`.
+#' @param optimalScore Optional numeric: the score of the optimal tree,
+#' \eqn{L^*}{L*}. If `NULL`, it is read from `attr(tree, "score")`, or computed
+#' by search.
+#' @inheritParams MaximizeParsimony
+#' @param concavity,extended_iw,xpiwe_r,xpiwe_max_f,hierarchy,hsj_alpha,inapplicable Tree
+#' scoring parameters passed to `MaximizeParsimony()`.
+#' These will usually match the parameters used to obtain `tree`.
+#' @param \dots Further arguments passed to [`MaximizeParsimony()`] /
+#' [`SuboptimalTrees()`], e.g. `maxReplicates`, `maxSeconds`, `effort`,
+#' `nThreads`, `verbosity`.
+#'
+#' @return `Bremer()` returns a numeric vector (or, if `format = "character"`, a
+#' `phylo$node.label`-shaped character vector) giving the Bremer support of each
+#' resolved clade in `tree`, named by node number (the row names of
+#' [`TreeTools::as.Splits()`]).
+#' Annotate a plot with [`TreeTools::LabelSplits()`], or assign to
+#' `tree$node.label`.
+#' Under `method = "pool"` the numeric result carries a logical `censored`
+#' attribute marking clades whose support exceeds `maxBremer`.
+#'
+#' @examples
+#' data("inapplicable.phyData", package = "TreeSearch")
+#' dataset <- inapplicable.phyData[["Vinther2008"]]
+#' \donttest{
+#' # `set.seed()` with `nThreads = 1` makes the heuristic search reproducible
+#' set.seed(0)
+#' trees <- MaximizeParsimony(dataset, maxReplicates = 8, nThreads = 1,
+#'                            verbosity = 0)
+#'
+#' # Fast, approximate decay index for the strict consensus topology,
+#' # from the suboptimal-tree pool.
+#' decay <- Bremer(trees, dataset, method = "pool", maxBremer = 4,
+#'                 maxSeconds = 20, nThreads = 1, verbosity = 1)
+#' decay
+#'
+#' # Annotate the reference tree
+#' reference <- TreeTools::Consensus(trees, p = 1)
+#' plot(reference)
+#' TreeTools::LabelSplits(reference, decay, adj = c(0, -0.5))
+#'
+#' # `method = "constraint"` is rigorous but may be slower.
+#' # Bounding each search with `maxSeconds` increases both speed, and the chance
+#' # of over-estimating support through missing a better score.
+#' slower <- Bremer(trees, dataset, maxReplicates = 8, maxSeconds = 2,
+#'                  verbosity = 0)
+#' TreeTools::LabelSplits(reference, slower, bg = "gold", adj = c(0, 1.5))
+#' }
+#' @references \insertAllCited{}
+#' @template MRS
+#' @seealso
+#' Other clade support measures: [`JackLabels()`], [`SiteConcordance`];
+#' [`SuboptimalTrees()`] collects the pool used by `method = "pool"`.
+#' @family split support functions
+#' @importFrom TreeTools as.Splits NTip SplitFrequency TipLabels
+#' @export
+Bremer <- function(tree, dataset,
+                   method = c("constraint", "pool"),
+                   maxBremer = Inf, optimalScore = NULL,
+                   format = "numeric", 
+                   concavity = Inf, extended_iw = TRUE, xpiwe_r = 0.5,
+                   xpiwe_max_f = 5, hierarchy = NULL, inapplicable = "bgs",
+                   hsj_alpha = 1.0,
+                   ...) {
+  method <- match.arg(method)
+
+  # `optimalScore = NULL` is "not supplied" sentinel.
+  # A non-NULL value must be a single finite number.
+  if (!is.null(optimalScore) &&
+      (length(optimalScore) != 1L || !is.numeric(optimalScore) ||
+       !is.finite(optimalScore))) {
+    stop("`optimalScore` must be a single finite number, or NULL.")
+  }
+
+  scoringArgs <- list(concavity = concavity, extended_iw = extended_iw,
+                      xpiwe_r = xpiwe_r, xpiwe_max_f = xpiwe_max_f,
+                      hierarchy = hierarchy, inapplicable = inapplicable,
+                      hsj_alpha = hsj_alpha)
+
+  # --- Resolve the reference tree, its clades, and L* ---
+  ref <- .BremerReference(tree, dataset, optimalScore)
+
+  if (length(ref$splitNames) == 0L) {
+    warning("Reference tree has no resolved internal clades; ",
+            "nothing to calculate.")
+    return(.BremerFormat(setNames(numeric(0), character(0)),
+                         logical(0), ref$reference, format))
+  }
+
+  # Scoring-units guard: L* must be measured with the same scoring arguments as
+  # the converse searches / pool re-scores, or the decay mixes two optimality
+  # criteria (e.g. an equal-weights length minus an implied-weights optimum).
+  .BremerCheckScoring(tree, dataset, scoringArgs, optimalScore)
+
+  res <- if (method == "pool") {
+    .BremerPool(ref, dataset, scoringArgs, maxBremer, list(...))
+  } else {
+    .BremerConstraint(ref, dataset, scoringArgs, maxBremer, list(...))
+  }
+
+  .BremerFormat(res$bremer, res$censored, ref$reference, format)
+}
+
+# Resolve reference tree + clades (Splits) + optimal score L*.
+#' @importFrom TreeTools as.Splits Consensus NTip
+.BremerReference <- function(tree, dataset, optimalScore) {
+  Lstar <- optimalScore
+  if (inherits(tree, "multiPhylo")) {
+    if (is.null(Lstar)) {
+      s <- attr(tree, "score")
+      if (!is.null(s) && is.finite(s)) Lstar <- s
+    }
+    reference <- if (length(tree) == 1L) tree[[1L]] else Consensus(tree, p = 1)
+  } else if (inherits(tree, "phylo")) {
+    reference <- tree
+  } else {
+    stop("`tree` must be a `phylo` or `multiPhylo` object.")
+  }
+
+  splits <- as.Splits(reference, tipLabels = names(dataset))
+  splitNames <- rownames(as.matrix(splits))
+  if (is.null(splitNames)) splitNames <- character(0)
+
+  list(reference = reference, splits = splits, splitNames = splitNames,
+       Lstar = Lstar)
+}
+
+# Sanity-check a SUPPLIED optimal score L* against the reference's length under
+# the scoring arguments now in effect. We trust the user to keep the scoring mode
+# consistent; in case of disagreement we proceed as instructed, with a warning.
+#' @importFrom TreeTools MakeTreeBinary
+.BremerCheckScoring <- function(tree, dataset, scoringArgs, optimalScore) {
+  # Exact check: a MaximizeParsimony() result records the scoring conditions it
+  # is optimal under (attr "scoring").  When present, compare that signature
+  # DIRECTLY to the arguments now in effect.
+  recorded <- attr(tree, "scoring", exact = TRUE)
+  if (!is.null(recorded)) {
+    current <- do.call(.ScoringSignature, scoringArgs)
+    if (!.ScoringSignatureMatch(recorded, current)) {
+      warning("The reference trees were found under ", .DescribeScoring(recorded),
+              " but Bremer() is scoring with ", .DescribeScoring(current), ".")
+      return(invisible(NULL))
+    }
+    # A matching signature validates the scoring MODE, but not the VALUE.
+  }
+
+  # Compare the supplied optimal score to the reference's length under the 
+  # current scoring arguments.
+  suppliedLstar <- if (!is.null(optimalScore)) {
+    optimalScore
+  } else if (inherits(tree, "multiPhylo")) {
+    s <- attr(tree, "score")
+    if (!is.null(s) && is.finite(s)) s else NULL
+  } else {
+    NULL
+  }
+  if (is.null(suppliedLstar)) {
+    return(invisible(NULL))
+  }
+
+  # Length of the reference under the CURRENT scoring arguments.
+  # TreeLength requires binary trees, so resolve zero-length polytomies first;
+  # take a minimum over arbitrary resolutions to find best.
+  # TODO verify that there's no non-binary configuration that could result in 
+  # a higher score when resolved arbitrarily, and thus throw a warning.
+  resolved <- MakeTreeBinary(tree)
+  refLen <- min(suppressWarnings(
+    do.call(TreeLength, c(list(tree = resolved, dataset = dataset), scoringArgs))))
+  if (!is.finite(refLen)) {
+    return(invisible(NULL))
+  }
+
+  # A material difference signals a probable scoring-mode mismatch.
+  # Warn and proceed.
+  tol <- 1e-6 * max(1, abs(refLen), abs(suppliedLstar))
+  if (abs(suppliedLstar - refLen) > tol) {
+    warning("`optimalScore` (", signif(suppliedLstar, 7),
+            ") differs from ", signif(refLen, 7), ", the score of `tree` ",
+            "under the supplied arguments (`concavity`, `inapplicable`, ...).")
+  }
+  invisible(NULL)
+}
+
+# Format a node-indexed numeric result, mirroring JackLabels().
+#' @importFrom TreeTools NTip
+.BremerFormat <- function(values, censored, reference, format) {
+  numericFmt <- c("numeric", "number", "double")
+  characterFmt <- c("character", "text")
+  returnMode <- c(rep("numeric", length(numericFmt)),
+                  rep("character", length(characterFmt)))[
+                    pmatch(tolower(format), c(numericFmt, characterFmt))]
+  if (is.na(returnMode)) returnMode <- "numeric"
+
+  switch(returnMode,
+    "character" = {
+      ret <- character(reference[["Nnode"]])
+      if (length(values)) {
+        idx <- as.integer(names(values)) - NTip(reference)
+        ret[idx] <- as.character(values)
+        # Inf renders as the literal "Inf"; preserve the censoring flag as an
+        # attribute so pool-method callers can still distinguish "> maxBremer"
+        # (censored) from a genuine value.  Attach it whenever there ARE entries
+        # (not only when something is censored), so the character format carries
+        # the same fixed-length `censored` attribute the numeric format does --
+        # otherwise downstream code assuming its presence breaks on the character
+        # path whenever no clade happens to be censored.
+        if (length(censored)) {
+          censVec <- logical(reference[["Nnode"]])
+          censVec[idx] <- as.logical(censored)
+          attr(ret, "censored") <- censVec
+        }
+      }
+      ret
+    },
+    {
+      if (length(censored)) attr(values, "censored") <- censored
+      values
+    })
+}
+
+# Approximate Bremer from a pool of suboptimal trees.
+# Returns list(bremer = named numeric, censored = logical).
+#' @importFrom TreeTools SplitFrequency
+.BremerPool <- function(ref, dataset, scoringArgs, maxBremer, dots) {
+  poolK <- if (is.finite(maxBremer)) maxBremer else 10
+  if (!is.finite(maxBremer)) {
+    message("method = \"pool\": using maxBremer = ", poolK,
+            " for the pool depth (set `maxBremer` to control it).")
+  }
+
+  pool <- do.call(SuboptimalTrees,
+                  c(list(dataset = dataset, maxSuboptimal = poolK),
+                    scoringArgs, dots))
+  poolScores <- attr(pool, "scores")
+  if (is.null(poolScores)) {
+    poolScores <- do.call(TreeLength,
+                          c(list(tree = pool, dataset = dataset), scoringArgs))
+  }
+  poolBest <- min(poolScores)
+
+  Lstar <- ref$Lstar
+  tol <- 1e-8
+  if (is.null(Lstar)) {
+    Lstar <- poolBest
+  } else if (poolBest < Lstar - tol) {
+    warning("Pool search found a tree (length ", signif(poolBest, 7),
+            ") shorter than the supplied optimalScore (", signif(Lstar, 7),
+            "); adopting the shorter length as L*.")
+    Lstar <- poolBest
+  }
+
+  # Per-clade displaying matrix: refFreq gives the node names; then test each
+  # pool tree individually (SplitFrequency of a length-1 forest is 0/1).
+  refFreq <- SplitFrequency(ref$reference, pool)
+  nSplits <- length(refFreq)
+  displayMat <- vapply(seq_along(pool), function(j) {
+    SplitFrequency(ref$reference, pool[j])
+  }, double(nSplits))
+  dim(displayMat) <- c(nSplits, length(pool))
+
+  bremer <- numeric(nSplits)
+  censored <- logical(nSplits)
+  for (i in seq_len(nSplits)) {
+    nonDisplaying <- displayMat[i, ] < 0.5
+    if (any(nonDisplaying)) {
+      bremer[i] <- min(poolScores[nonDisplaying]) - Lstar
+    } else {
+      bremer[i] <- Inf
+      censored[i] <- TRUE
+    }
+  }
+  names(bremer) <- names(refFreq)
+  names(censored) <- names(refFreq)
+  list(bremer = bremer, censored = censored)
+}
+
+# Convert one converse-search result `out` = list(score, tree) to a decay-
+# eligible score, or NA.  Two ways to NA: a non-finite/negative score is the
+# engine's "no tree lacking the clade found" sentinel (empty pool -> budget
+# shortfall); a returned tree that STILL displays the clade is an engine
+# regression the C++ guard + pool backstop should preclude -- surface it as NA +
+# a warning rather than a silently deflated decay (the worst outcome for a
+# published statistic).
+#' @importFrom TreeTools SplitFrequency
+.BremerProcessResult <- function(out, refReference, splitName) {
+  s <- out$score
+  if (!is.finite(s) || s < 0) {
+    return(NA_real_)
+  }
+  if (!is.null(out$tree)) {
+    disp <- SplitFrequency(refReference,
+                           structure(list(out$tree), class = "multiPhylo"))
+    # Index by the reference node number (robust to split ordering).
+    if (isTRUE(unname(disp[splitName]) >= 0.5)) {
+      warning("The converse search for clade ", splitName,
+              " returned a tree that still displays it; reported as NA.")
+      return(NA_real_)
+    }
+  }
+  s
+}
+
+# Rigorous Bremer by converse-constraint search: for each clade, the shortest
+# tree forced to LACK it.  Uses the negative-constraint engine wired into
+# MaximizeParsimony() via the internal `.negativeConstraint` argument.
+#
+# The converse search keeps the full search machinery -- Wagner starts, TBR,
+# ratchet, sectorial search and NNI perturbation -- which all re-optimize
+# through the negative-constraint-guarded TBR and so stay in the space of trees
+# lacking the clade; the tree pool additionally rejects any tree that displays
+# it.  Only the phases that accept score-worsening moves through an unguarded
+# path (drift, in-sector drift, simulated annealing) are disabled -- they would
+# otherwise wander onto the clade and, being worse-accepting, report it as
+# unsupported.  Runs serially: the pool guard is on the serial search path.
+.BremerConstraint <- function(ref, dataset, scoringArgs, maxBremer, dots,
+                              .runConverse = NULL) {
+  disabled <- list(
+    driftCycles = 0L, sectorGoDrift = 0L, sectorDriftCycles = 0L,
+    annealCycles = 0L
+  )
+  # The worse-accepting phases (drift, in-sector drift, annealing) reach trees
+  # through a path the negative-constraint hill-climb does not guard, so they
+  # are ALWAYS disabled here.  A user value would only reintroduce the
+  # unsoundness the converse search exists to avoid, so warn rather than honour
+  # it (previously `modifyList` let the user win, silently emptying the pool).
+  reenabled <- intersect(names(dots), names(disabled))
+  if (length(reenabled)) {
+    warning("Ignoring ", paste(reenabled, collapse = ", "),
+            " in the converse-constraint search: drift, in-sector drift and ",
+            "annealing are always disabled here for soundness.")
+  }
+  converseFixed <- disabled
+  # `collapse` and `.negativeConstraint` are managed by Bremer(): the converse
+  # search fixes both, so a user copy arriving through `...` would collide with
+  # the explicit argument in do.call ("matched by multiple actual arguments").
+  # Strip them with a warning, mirroring SuboptimalTrees()'s handling of its own
+  # managed arguments.  `nThreads` is forced to 1 (the negative-constraint pool
+  # guard is on the serial search path only); everything else flows through.
+  managed <- intersect(names(dots), c("collapse", ".negativeConstraint"))
+  if (length(managed)) {
+    warning("Ignoring `", paste(managed, collapse = "`, `"),
+            "`: Bremer() manages ", if (length(managed) > 1L) "these" else "this",
+            " to run the converse-constraint search.")
+  }
+  passthrough <- dots[setdiff(names(dots),
+                              c(names(disabled), "nThreads", "collapse",
+                                ".negativeConstraint"))]
+
+  # L* (the unconstrained optimum) is found by a full-strength search -- the
+  # worse-accepting phases are safe here because there is no forbidden clade.
+  Lstar <- ref$Lstar
+  if (is.null(Lstar)) {
+    res0 <- do.call(MaximizeParsimony,
+                    c(list(dataset = dataset, collapse = TRUE, nThreads = 1L),
+                      scoringArgs, passthrough))
+    Lstar <- attr(res0, "score")
+  }
+
+  # One converse-constraint search: the shortest tree forced to lack `negSplit`.
+  # Returns the score AND the tree, so the caller can verify the clade really is
+  # absent (defence in depth around the C++ move-guard + pool backstop).
+  runConverse <- function(negSplit) {
+    args <- c(list(dataset = dataset, collapse = TRUE, nThreads = 1L,
+                   .negativeConstraint = negSplit),
+              scoringArgs, converseFixed, passthrough)
+    res <- do.call(MaximizeParsimony, args)
+    # MaximizeParsimony() may return a single `phylo` or a `multiPhylo`; take the
+    # first tree either way (never `res[[1L]]` on a bare phylo, which would grab
+    # its `edge` matrix).
+    tree <- if (inherits(res, "phylo")) {
+      res
+    } else if (inherits(res, "multiPhylo") && length(res) >= 1L) {
+      res[[1L]]
+    } else {
+      NULL
+    }
+    list(score = attr(res, "score"), tree = tree)
+  }
+  # Test seam: an injected search function (same `(negSplit) -> list(score, tree)`
+  # contract) bypasses the real engine, so the NA / displays-clade handling and
+  # the aggregate NA warning can be exercised deterministically.
+  if (!is.null(.runConverse)) {
+    runConverse <- .runConverse
+  }
+
+  splitNames <- ref$splitNames
+
+  # Per-clade work unit.
+  processConverse <- function(i) {
+    .BremerProcessResult(runConverse(ref$splits[[i]]), ref$reference,
+                         splitNames[i])
+  }
+
+  # Per-clade searches are independent, but each converse search must itself
+  # run with `nThreads = 1` (the negative-constraint pool guard is on the
+  # serial search path only), so there is currently no parallelism to fan
+  # them out over.
+  scores <- vapply(seq_along(splitNames), processConverse, double(1))
+
+  if (anyNA(scores)) {
+    # Two causes map to NA: no clade-free tree was found (a budget shortfall), or
+    # a returned tree unexpectedly displayed the clade (an engine regression the
+    # BR-6 check caught).  The per-clade warning that distinguishes them
+    # already fired above, so this aggregate keeps the summary honest about
+    # both.
+    warning(sum(is.na(scores)), " converse-constraint search(es) returned NA: ",
+            "either no tree lacking the clade was found (increase `maxReplicates`)",
+            ", or a returned tree still displayed the clade (an engine bug worth ",
+            "reporting).")
+  }
+
+  trueBest <- suppressWarnings(min(c(Lstar, scores), na.rm = TRUE))
+  if (is.finite(trueBest) && trueBest < Lstar - 1e-8) {
+    warning("A converse-constraint search found a tree (length ",
+            signif(trueBest, 7), ") shorter than the optimal score (",
+            signif(Lstar, 7), "); the original search was suboptimal. ",
+            "Adopting the shorter length as L*.")
+    Lstar <- trueBest
+  }
+
+  bremer <- setNames(scores - Lstar, splitNames)
+  list(bremer = bremer, censored = logical(length(bremer)))
+}

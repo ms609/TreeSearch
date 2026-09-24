@@ -11,9 +11,11 @@ ConcordanceTable(
   largeClade = 0,
   xlab = "Edge",
   ylab = "Character",
-  normalize = TRUE,
+  chanceCorrect = TRUE,
   plot = TRUE,
   marginSize = 0L,
+  paintSize = 0L,
+  palette = "default",
   ...
 )
 }
@@ -21,10 +23,7 @@ ConcordanceTable(
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{Col}{Function that takes vectors \code{amount} and \code{quality} and returns
 a vector of colours. \link{QCol} colours by data quality (concordance);
@@ -37,17 +36,20 @@ at edges whose descendants are both contain more than \code{largeClade} leaves.}
 
 \item{ylab}{Character giving a label for the y axis.}
 
-\item{normalize}{Controls how the \emph{expected} mutual information (the zero
-point of the scale) is determined.
+\item{chanceCorrect}{Sets the zero point of the scale.
 \itemize{
-\item \code{FALSE}: no chance correction; MI is scaled only by its maximum.
-\item \code{TRUE}: subtract the analytical expected MI for random association.
-\item \verb{<integer>}: subtract an empirical expected MI estimated from that
-number of random trees.
-}
-
-In all cases, 1 corresponds to the maximal attainable MI for the pair
-(\code{hBest}), and 0 corresponds to the chosen expectation.}
+\item If \code{FALSE}, zero corresponds to zero MI.
+\item If \code{TRUE}, zero is the value expected when each character's tokens are
+reassigned at random across the leaves, holding its state frequencies and the
+split sizes fixed: \code{QuartetConcordance()} computes this expectation exactly,
+whereas \code{ClusteringConcordance()} approximates it, accurately for large trees
+(~200+ taxa) but neglecting correlation between splits.
+\item If a positive integer \code{n}, the expectation is sampled over \code{n} random
+reassignments of each character's tokens (\code{QuartetConcordance()}), or against
+\code{n} uniformly random trees (\code{ClusteringConcordance()}).
+\emph{Hint: Clamp chance-corrected values to \eqn{[-1, 1]} before plotting with \code{\link[=QCol]{QCol()}} /
+\code{\link[=QACol]{QACol()}}}.
+}}
 
 \item{plot}{Logical specifying whether to draw the plot.}
 
@@ -57,11 +59,22 @@ strip are added, each \code{marginSize} grid cells wide/tall.
 If a vector (length > 1), each entry controls one side following the usual
 \code{par(mar)} order — \code{c(bottom, left, top, right)} — where a positive value
 enables that strip with the given width/height and \code{NA} or \code{0} suppresses it.
-Currently only the bottom (entry 1) and left (entry 2) strips are
-implemented; further entries are accepted but ignored.
-The left strip is coloured by the characterwise concordance (weighted mean
-across edges); the bottom strip by the edgewise concordance (weighted mean
-across characters). One blank cell separates each strip from the main grid.}
+The left and right strips are coloured by the characterwise concordance
+(weighted mean across edges); the bottom and top strips by the edgewise
+concordance (weighted mean across characters).
+One blank cell separates each strip from the main grid.}
+
+\item{paintSize}{Integer scalar or vector.  Adds a painted strip OUTSIDE any
+\code{marginSize} strip, using hue from \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}} (edges) and the
+\code{\link[=PaintCharacters]{PaintCharacters()}} algorithm (characters).  A scalar \verb{> 0} adds a right
+strip (characters) and a top strip (edges), each \code{paintSize} cells wide/tall.
+A length-4 vector follows \code{c(bottom, left, top, right)} like \code{marginSize};
+\code{NA} or \code{0} suppresses that side.  One blank cell separates each paint strip
+from the adjacent margin strip (or main grid if no margin exists on that side).}
+
+\item{palette}{Palette specification passed to \code{\link[TreeTools:PaintTree]{TreeTools::PaintTree()}}.
+Either a character string (\code{"default"}, \code{"protanopia"}, \code{"tritanopia"}) or
+a function \verb{function(h, s)}.  Ignored when \code{paintSize} is zero on all sides.}
 
 \item{\dots}{Arguments to \code{abline}, to control the appearance of vertical
 lines marking important edges.}
@@ -87,7 +100,8 @@ tree <- referenceTree
 
 # Plot tree and identify nodes
 library("TreeTools", quietly = TRUE)
-plot(tree)
+paint <- PaintTree(tree)
+plot(tree, edge.col = paint$edgeCol, tip.col = paint$tipCol, edge.width = 2)
 nodeIndex <- as.integer(rownames(as.Splits(tree)))
 nodelabels(seq_along(nodeIndex), nodeIndex, adj = c(2, 1),
            frame = "none", bg = NULL)
@@ -95,7 +109,7 @@ QALegend(where = c(0.1, 0.4, 0.1, 0.3))
 
 # View information shared by characters and edges
 ConcordanceTable(tree, dataset, largeClade = 3, col = 2, lwd = 3,
-                 marginSize = 1:4)
+                 marginSize = c(0, 0, 1, 2), paintSize = c(1, 2, 0, 0))
 axis(1)
 axis(2)
 
@@ -112,11 +126,14 @@ image(t(`mode<-`(PhyDatToMatrix(dataset), "numeric")), axes = FALSE,
 }
 
 Other split support functions:
+\code{\link[=Bremer]{Bremer()}},
 \code{\link[=JackLabels]{JackLabels()}},
 \code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=MaximizeParsimony]{MaximizeParsimony()}},
 \code{\link[=MostContradictedFreq]{MostContradictedFreq()}},
+\code{\link[=PaintCharacters]{PaintCharacters()}},
 \code{\link[=PresCont]{PresCont()}},
-\code{\link{SiteConcordance}}
+\code{\link[=Resample]{Resample()}},
+\code{\link{SiteConcordance}},
+\code{\link[=SuboptimalTrees]{SuboptimalTrees()}}
 }
 \concept{split support functions}

@@ -12,12 +12,14 @@ ClusterStrings(x, maxCluster = 12)
 \item{maxCluster}{Integer specifying maximum number of clusters to consider.}
 }
 \value{
-\code{NameClusters()} returns an integer assigning each element of \code{x}
+\code{ClusterStrings()} returns an integer assigning each element of \code{x}
 to a cluster, with an attribute \code{med} specifying the median string in each
 cluster, and \code{silhouette} reporting the silhouette coefficient of the optimal
-clustering.  Coefficients < 0.5 indicate weak structure, and no clusters are
-returned.  If the number of unique elements of \code{x} is less than \code{maxCluster},
-all occurrences of each entry are assigned to an individual cluster.
+clustering.  Coefficients < 0.5 indicate weak structure, in which case all
+elements of \code{x} are assigned to a single cluster.  If the number of unique
+elements of \code{x} is less than \code{maxCluster}, all occurrences of each entry
+are assigned to an individual cluster instead, with \code{silhouette} reported
+as \code{NA}.
 }
 \description{
 Calculate string similarity using the Levenshtein distance and return

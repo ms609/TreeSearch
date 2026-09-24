@@ -16,10 +16,7 @@ ConcordantInfo(tree, dataset)
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 }
 \value{
 \code{ConcordantInformation()} returns a named vector with elements:
@@ -35,18 +32,13 @@ a bifurcating tree, assuming no duplicate information or noise
 matrix to the cladistic information content of the tree, a measure of the
 redundancy of the matrix
 \item \code{ignored}: information content of characters whose signal and noise could
-not be calculated (too many states) and so are not included in the totals
-above.
+not be calculated, and so are not included in the totals above.
 }
 }
 \description{
 Details the amount of information in a phylogenetic dataset that is
 consistent with a specified phylogenetic tree, and the signal:noise
 ratio of the character matrix implied if the tree is true.
-}
-\details{
-Presently restricted to datasets whose characters contain a maximum of
-two parsimony-informative states.
 }
 \examples{
 data(congreveLamsdellMatrices)

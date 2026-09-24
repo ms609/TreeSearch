@@ -16,7 +16,12 @@ SuccessiveApproximations(
   searchIter = 500,
   ratchetIter = 5000,
   verbosity = 0,
-  suboptimal = 0.1
+  suboptimal = 0.1,
+  concavity = Inf,
+  constraint = NULL,
+  extended_iw = TRUE,
+  xpiwe_r = 0.5,
+  xpiwe_max_f = 5
 )
 
 SuccessiveWeights(tree, dataset)
@@ -25,10 +30,7 @@ SuccessiveWeights(tree, dataset)
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{outgroup}{if not NULL, taxa on which the tree should be rooted}
 
@@ -36,18 +38,82 @@ Additive (ordered) characters can be handled using
 
 \item{maxSuccIter}{maximum iterations of successive approximation}
 
-\item{ratchetHits}{maximum hits for parsimony ratchet}
+\item{ratchetHits}{Number of replicates.
+Internally capped at 100 and passed to the C++ engine as \code{maxReplicates}.}
 
-\item{searchHits}{maximum hits in tree search}
+\item{searchHits}{Convergence criterion: stop after finding this many
+trees with the best score.
+Internally capped at 10 and passed to the C++ engine as \code{targetHits}.}
 
-\item{searchIter}{maximum iterations in tree search}
+\item{searchIter}{Unused (retained for backward compatibility).}
 
-\item{ratchetIter}{maximum iterations of parsimony ratchet}
+\item{ratchetIter}{Controls ratchet intensity within each replicate.
+Converted to \code{ratchetCycles} (approximately \code{ratchetIter / 500},
+capped at 10).}
 
 \item{verbosity}{Integer specifying level of messaging; higher values give
-more detailed commentary on search progress. Set to \code{0} to run silently.}
+more detail. Set to \code{0} to run silently.
+At \code{1} (default) each replicate reports its score, pool size and hit count;
+at \code{2} and above each search phase reports on completion.
 
-\item{suboptimal}{retain trees that are this proportion less optimal than the optimal tree}
+On a large dataset a single phase can run for many minutes, during which
+neither level would print anything: on a 182-tip, 420-character matrix with
+inapplicable tokens throughout, one TBR phase took 582 s and one ratchet
+549 s, together 96\% of a 1173 s replicate.  A \emph{heartbeat} therefore reports
+from inside the long phases -- overwriting one console line at a terminal,
+or emitting discrete lines to a batch log -- so a slow search is
+distinguishable from a hung one.  See the environment variables below.}
+
+\item{suboptimal}{Retain trees that are this proportion less optimal
+than the optimal tree.}
+
+\item{concavity}{Determines the degree to which extra steps beyond the first
+are penalized.  Specify a numeric value to use implied weighting
+\insertCite{Goloboff1993}{TreeSearch}; \code{concavity} specifies \emph{k} in
+\emph{k} / (\emph{e} + \emph{k}). A value of 10 is recommended;
+TNT sets a default of 3, but this is too low in some circumstances
+\insertCite{Goloboff2018,Smith2019}{TreeSearch}.
+Better still explore the sensitivity of results under a range of
+concavity values, e.g. \code{k = 2 ^ (1:7)}.
+Specify \code{Inf} to weight each additional step equally.
+Specify \code{"profile"} to employ profile parsimony
+\insertCite{Faith2001}{TreeSearch}.}
+
+\item{constraint}{Either an object of class \code{phyDat}, in which case
+returned trees will be perfectly compatible with each character in
+\code{constraint}; or a tree of class \code{phylo}, all of whose nodes will occur
+in any output tree.
+A returned tree is compatible with a constraint character when some edge
+separates the taxa coded \code{1} from those coded \code{0}.  Taxa coded \verb{?}, and taxa
+that \code{constraint} does not mention, are unconstrained: they may fall on
+either side of that edge, and are not required to join either group.
+A character whose \code{1} or \code{0} group contains fewer than two taxa therefore
+constrains nothing -- every tree separates such a group from the rest -- and
+is ignored with a warning.  To group taxa, code the taxa they must be
+separated from as \code{0} rather than leaving them \verb{?}.
+Constraint searches are supported natively: all tree rearrangements
+are filtered to respect the constraint topology.
+Each constraint character is enforced as a single split, so one with more
+than two states is read as the split between its first and last state
+alone: taxa in an intermediate state are left unconstrained, with a warning.}
+
+\item{extended_iw}{Logical: if \code{TRUE} (default) and \code{concavity} is finite,
+apply the missing-entries correction of
+\insertCite{Goloboff2014;textual}{TreeSearch}.
+Characters with missing data receive a reduced effective concavity
+\emph{k_c} = \emph{k} / \emph{f_c}, making their weights drop off faster.
+This compensates for the artificially low homoplasy of poorly sampled
+characters.  Set \code{FALSE} for legacy Goloboff (1993) behaviour.
+Ignored when \code{concavity = Inf} (equal weights) or \code{"profile"}.}
+
+\item{xpiwe_r}{Numeric in (0, 1]: proportion of observed homoplasy
+expected in unobserved (missing) entries.  Default 0.5 (following TNT).
+Only used when \code{extended_iw = TRUE}.}
+
+\item{xpiwe_max_f}{Numeric >= 1: maximum extrapolation factor.
+Characters with very few observed entries are clamped so that the
+extrapolation factor does not exceed this value.  Default 5 (following
+TNT).  Only used when \code{extended_iw = TRUE}.}
 }
 \value{
 \code{SuccessiveApproximations()} returns a list of class \code{multiPhylo}
@@ -65,9 +131,11 @@ criterion \insertCite{Farris1969}{TreeSearch}.
 }
 \seealso{
 Other custom search functions:
+\code{\link[=BootstrapTree]{BootstrapTree()}},
 \code{\link[=EdgeListSearch]{EdgeListSearch()}},
 \code{\link[=Jackknife]{Jackknife()}},
-\code{\link[=MorphyBootstrap]{MorphyBootstrap()}}
+\code{\link[=PrepareData]{PrepareData()}},
+\code{\link[=SingleCharData]{SingleCharData()}}
 }
 \concept{custom search functions}
 \keyword{internal}

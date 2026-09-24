@@ -36,19 +36,6 @@ library("TreeSearch")
 
 Activate the graphical user interface by typing `EasyTrees()`.
 
-In Jan 2022, some users are reporting issues after loading trees from Nexus files.
-These arise due to an issue in the underlying "ape" package.
-To install a patched version, close and re-launch R and run:
-
-```r
-if (!require("remotes")) install.packages("remotes")
-remotes::install_github("ms609/ape@patch-3")
-```
-
-Windows users may need to install 
-[Rtools](https://cran.r-project.org/bin/windows/Rtools/) before
-installing from the GitHub source.
-
 ### For advanced users
 
 To get the latest development version from

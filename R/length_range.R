@@ -4,7 +4,7 @@
 #' any tree.
 #' 
 #' Ambiguous inapplicable states (e.g. `{0, -}`) are currently replaced with the
-#' plain inapplicable token `-`, reflecting the current behaviour of Morphy.
+#' plain inapplicable token `-`.
 #' 
 #' @param x An object of class `phyDat`;
 #' or a string to be coerced to a `phyDat` object via 
@@ -162,11 +162,11 @@ MinimumSteps <- function(x) {
 }
 
 #' @rdname MinimumLength
-#' @return `MaximumLength()` returns a vector of integers specifying the 
+#' @return `MaximumLength()` returns a vector of integers specifying the
 #' maximum number of steps that each character can attain in a parsimonious
 #' reconstruction on a tree.  Inapplicable tokens are not yet supported.
 #' @export
-MaximumLength <- function(x, compress = TRUE) {
+MaximumLength <- function(x, compress = FALSE) {
   UseMethod("MaximumLength")
 }
 
