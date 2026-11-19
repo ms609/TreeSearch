@@ -256,6 +256,7 @@ jobs:
           # "could not find function '%||%'". Pin the last good version there
           # until upstream fixes its declared R dependency (already done on
           # their dev branch). Remove once a fixed highs reaches CRAN.
+          # readxl >= 1.6.0 needs R 4.2; 1.5.0.1 is the last for R 4.1.
           # shinytest2=?ignore: see the note on the sense-check leg -- its
           # chromium sysreq costs ~70 s of apt per run and no Linux leg needs it.
           # Coreset url:: -- see the note on the sense-check leg: a prebuilt
@@ -266,6 +267,7 @@ jobs:
             shinytest2=?ignore
             ${{ matrix.config.r == '4.1' && 'url::https://ms609.github.io/packages/bin/linux/x86_64-4.1/Coreset_latest.tar.gz' || 'url::https://ms609.github.io/packages/bin/linux/aarch64-devel/Coreset_latest.tar.gz' }}
             ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
+            ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/readxl/readxl_1.5.0.1.tar.gz' || '' }}
 
       - name: Check package
         uses: r-lib/actions/check-r-package@v2
