@@ -43,7 +43,10 @@ name: R-CMD-check
 # -- giving a per-commit "did this build?" signal even under rapid iteration.
 
 # Waves:
-#   sense-check -> arm (cheapest), always runs, never cancelled. Fast signal.
+#   codemeta    -> PRs only, ~15 s; pushes a stale codemeta.json to the PR
+#                  branch and holds back later waves.
+#   sense-check -> arm (cheapest), never cancelled. Fast signal. Skipped only
+#                  when codemeta pushed (the fresh run covers the new head).
 #   core        -> Windows (+codecov) / R 4.1 / R devel; only if sense-check passed.
 #   shiny       -> EasyTrees shinytest2 suite, Windows; only if the app changed
 #                  and sense-check passed. Non-blocking (continue-on-error) until
@@ -51,10 +54,33 @@ name: R-CMD-check
 #   full        -> macOS x2 backstop; only once core is green.
 jobs:
   # ---------------------------------------------------------------------------
+  # PRs only: is codemeta.json current? If stale, pushes the regenerated file
+  # to the PR branch (as the codemeta-writer App, so the push starts a fresh
+  # run) and fails. See ms609/actions/update-codemeta.
+  # ---------------------------------------------------------------------------
+  codemeta:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5  # healthy run is ~15 s
+    permissions:
+      contents: read
+    outputs:
+      pushed: ${{ steps.codemeta.outputs.pushed }}
+
+    steps:
+      - id: codemeta
+        uses: ms609/actions/update-codemeta@main
+        with:
+          client-id: ${{ vars.CODEMETA_APP_ID }}
+          private-key: ${{ secrets.CODEMETA_APP_KEY }}
+
+  # ---------------------------------------------------------------------------
   # Wave 1: cheapest leg as a fail-fast sense-check. No concurrency group, so a
   # rapid follow-up push does NOT cancel it -- each commit gets its own signal.
   # ---------------------------------------------------------------------------
   sense-check:
+    needs: codemeta
+    if: ${{ !cancelled() && needs.codemeta.outputs.pushed != 'true' }}
     runs-on: ubuntu-24.04-arm
     name: sense-check (ubuntu-24.04-arm, release)
 
@@ -148,7 +174,7 @@ jobs:
   # and expose the result as an output the shiny job reads in its `if:`.
   # ---------------------------------------------------------------------------
   changes:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     name: detect app changes
     outputs:
       shiny: ${{ steps.filter.outputs.shiny }}
@@ -168,7 +194,10 @@ jobs:
   # passed. Per-leg concurrency so a superseding push cancels in-flight legs.
   # ---------------------------------------------------------------------------
   core:
-    needs: sense-check
+    needs: [sense-check, codemeta]
+    if: >-
+      !cancelled() && needs.sense-check.result == 'success' &&
+      contains(fromJSON('["success", "skipped"]'), needs.codemeta.result)
     runs-on: ${{ matrix.config.os }}
     name: ${{ matrix.config.os }} (${{ matrix.config.r }})
 
