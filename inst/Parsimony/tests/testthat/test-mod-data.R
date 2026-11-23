@@ -9,7 +9,7 @@ logging <- FALSE
 aJiffy <- 42
 typingJiffy <- 105
 aFewTrees <- 48L
-fastSampleAbove <- 1000L
+fastSampleAbove <- 512L
 LogMsg <- function(...) invisible(NULL)
 
 # Source the module under test (relative to tests/testthat/)
@@ -281,24 +281,24 @@ test_that("dataset observer clears incompatible trees on dataset switch", {
 })
 
 test_that("PrethinIndex() and WideSampleCode() agree", {
-  expect_null(PrethinIndex(1000, 48, maxTrees = 1000))
-  expect_null(PrethinIndex(5000, 6000, maxTrees = 1000))
-  expect_equal(PrethinIndex(10000, 48, maxTrees = 1000),
-               round(seq(1, 10000, length.out = 1000)))
-  expect_equal(anyDuplicated(PrethinIndex(1001, 48, maxTrees = 1000)), 0)
+  expect_null(PrethinIndex(512, 48, maxTrees = 512))
+  expect_null(PrethinIndex(5000, 6000, maxTrees = 512))
+  expect_equal(PrethinIndex(10000, 48, maxTrees = 512),
+               round(seq(1, 10000, length.out = 512)))
+  expect_equal(anyDuplicated(PrethinIndex(513, 48, maxTrees = 512)), 0)
   # Asking for more trees than the cap keeps that many, not the cap
-  expect_length(PrethinIndex(10000, 5000, maxTrees = 1000), 5000)
+  expect_length(PrethinIndex(10000, 5000, maxTrees = 512), 5000)
 
   # Small ranges log the unchanged pre-fix expression (download snapshots)
-  expect_equal(WideSampleCode("trees", c(77, 125), 48, maxTrees = 1000),
+  expect_equal(WideSampleCode("trees", c(77, 125), 48, maxTrees = 512),
                "trees <- WideSample(trees[77:125], 48)")
-  code <- WideSampleCode("allTrees", c(11, 10010), 48, maxTrees = 1000)
+  code <- WideSampleCode("allTrees", c(11, 10010), 48, maxTrees = 512)
   expect_equal(code, paste0("trees <- WideSample(allTrees[11:10010]",
-                            "[round(seq(1, 10000, length.out = 1000))], 48)"))
+                            "[round(seq(1, 10000, length.out = 512))], 48)"))
   allTrees <- 1:20000
   WideSample <- function(x, n) x
   eval(parse(text = code))
-  expect_equal(trees, (11:10010)[PrethinIndex(10000, 48, maxTrees = 1000)])
+  expect_equal(trees, (11:10010)[PrethinIndex(10000, 48, maxTrees = 512)])
 })
 
 # Upload a tree file through input$treeFile, recording notifications and
@@ -391,7 +391,7 @@ test_that("tree sets within the cap are thinned from every tree", {
   # Stub WideSample(): with 'highs' installed, the real one would run the
   # exact solver (up to 60 s); here we need only what it is given.
   nGiven <- NULL
-  out <- upload_trees(dotted_trees(60), maxTrees = 1000L,
+  out <- upload_trees(dotted_trees(60), maxTrees = 512L,
                       wideSample = function(trees, n) {
                         nGiven <<- length(trees)
                         trees[seq_len(n)]
@@ -404,7 +404,7 @@ test_that("tree sets within the cap are thinned from every tree", {
 })
 
 test_that("errors processing uploaded trees are shown, not swallowed", {
-  out <- upload_trees(dotted_trees(60), maxTrees = 1000L,
+  out <- upload_trees(dotted_trees(60), maxTrees = 512L,
                       wideSample = function(...) stop("boom"))
   types <- vapply(out$notes, `[[`, "", "type")
   texts <- vapply(out$notes, `[[`, "", "text")

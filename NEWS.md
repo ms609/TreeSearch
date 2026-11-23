@@ -1,7 +1,7 @@
 # To integrate into 2.0.0 notes
 
 - `EasyTrees()` no longer freezes for minutes, with no message, when loading
-  thousands of trees: trees are sampled from at most 1000 evenly spaced trees
+  thousands of trees: trees are sampled from at most 512 evenly spaced trees
   in the selected range, with a notification saying so, and errors that arise
   while processing loaded trees are now shown instead of ending the session.
 
