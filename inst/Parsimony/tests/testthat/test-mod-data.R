@@ -1,5 +1,8 @@
 library(shiny)
 library(shinyjs)
+# As global.R: the tree-file reader calls read.tree() / read.nexus() unqualified
+library(TreeTools)
+library(TreeSearch)
 
 # Stub globals that the module references from global.R
 # Must be in global env BEFORE source() so debounce() can find them
