@@ -23,7 +23,7 @@
 #' It is possible that a set of trees contains all possible resolutions of a
 #' particular clade, and a single other topology in which that clade does not
 #' exist &ndash; essentially two distinct solutions, one (_a_) which could be
-#' summarised with a summary tree that contains a polytomy, and another (_b_) 
+#' summarized with a summary tree that contains a polytomy, and another (_b_) 
 #' which could be summarized by a perfectly resolved tree.
 #' Neither of these scenarios is preferable under the principles of parsimony;
 #' but summary statistics (e.g. mean, median) will be strongly influenced by the
@@ -73,17 +73,19 @@
 #' 
 #' @template MRS
 #' @examples
-#' #' # Load data for analysis in R
+#' # Load data for analysis in R
 #' library("TreeTools")
 #' data("congreveLamsdellMatrices", package = "TreeSearch")
-#' 
+#'
 #' # Small dataset for demonstration purposes
 #' dataset <- congreveLamsdellMatrices[[42]][1:8, ]
+#'
+#' \donttest{ # The tree searches below take a few seconds to run
 #' bestTree <- MaximizeParsimony(dataset, verbosity = 0)[[1]]
-#' 
+#'
 #' # Calculate tip influence
-#' influence <- TaxonInfluence(dataset, ratchIt = 0, startIt = 0, verbos = 0)
-#' 
+#' influence <- TaxonInfluence(dataset, maxReplicates = 2, verbosity = 0)
+#'
 #' # Colour tip labels according to their influence
 #' upperBound <- 2 * TreeDist::ClusteringEntropy(
 #'   PectinateTree(NTip(dataset) - 1))
@@ -94,19 +96,23 @@
 #'   include.lowest = TRUE
 #' )
 #' palette <- hcl.colors(nBin, "inferno")
-#' 
+#'
 #' plot(bestTree, tip.color = palette[bin])
-#' PlotTools::SpectrumLegend(
-#'   "bottomleft",
-#'   palette = palette,
-#'   title = "Tip influence / bits",
-#'   legend = signif(seq(upperBound, 0, length.out = 4), 3),
-#'   bty = "n"
-#' )
+#' # SpectrumLegend() needs the PlotTools package (a Suggests)
+#' if (requireNamespace("PlotTools", quietly = TRUE)) {
+#'   PlotTools::SpectrumLegend(
+#'     "bottomleft",
+#'     palette = palette,
+#'     title = "Tip influence / bits",
+#'     legend = signif(seq(upperBound, 0, length.out = 4), 3),
+#'     bty = "n"
+#'   )
+#' }
+#' }
 #' @family tree scoring
 #' @importFrom ape read.nexus write.nexus
 #' @importFrom cli cli_alert_info cli_h1
-#' @importFrom fs path_sanitize
+
 #' @importFrom stats weighted.mean
 #' @importFrom TreeDist ClusteringInfoDistance
 #' @encoding UTF-8
@@ -131,7 +137,7 @@ TaxonInfluence <- function(
   }
   
   if (is.null(tree)) {
-    tree <- MaximizeParsimony(dataset, ...)
+    tree <- MaximizeParsimony(dataset, verbosity = verbosity, ...)
   }
   if (calcWeighted) {
     refWeights <- if (inherits(tree, "phylo") || length(tree) == 1) {
@@ -141,19 +147,15 @@ TaxonInfluence <- function(
     }
   }
   
-  startTree <- MakeTreeBinary(if (inherits(tree, "phylo")) {
-    tree
-  } else {
-    tree[[1]]
-  })
-  if (!inherits(startTree, "phylo")) {
+  refTree <- if (inherits(tree, "phylo")) tree else tree[[1]]
+  if (!inherits(refTree, "phylo")) {
     stop("`tree` must be an object / list of objects of class \"phylo\"")
   }
   
   # Return:
   vapply(names(dataset), function(leaf) {
     
-    leafFile <- paste0(savePath, path_sanitize(leaf), ".nex")
+    leafFile <- paste0(savePath, gsub("[/\\\\:*?\"<>|[:cntrl:]]", "_", leaf), ".nex")
     
     result <- if (useCache && file.exists(leafFile)) {
       if (verbosity > 1) {
@@ -171,7 +173,6 @@ TaxonInfluence <- function(
       }
       result <- unique(MaximizeParsimony(
         dataset = dataset[setdiff(names(dataset), leaf)],
-        tree = DropTip(startTree, leaf),
         verbosity = verbosity,
         ...
       ))
@@ -179,7 +180,27 @@ TaxonInfluence <- function(
         write.nexus(result, file = leafFile)
       }
     }
-    d <- matrix(Distance(tree, result), length(result))
+    # `Distance()`'s matrix orientation is not a documented contract: TreeDist
+    # returns dim (length(result), length(tree)) when tip labels mismatch
+    # (the path this function always takes) but (length(tree), length(result))
+    # when they match, so a user-supplied `Distance` could transpose silently.
+    # Normalize explicitly rather than assuming either orientation. (When
+    # length(result) == nTreeArg the two orientations are indistinguishable
+    # from shape alone; a transposed square result would pass through
+    # undetected, same as any shape-only check.)
+    # (`length()` of a single "phylo" counts its list components, not trees.)
+    nTreeArg <- if (inherits(tree, "phylo")) 1L else length(tree)
+    d <- as.matrix(Distance(tree, result))
+    expectedDim <- c(length(result), nTreeArg)
+    if (!identical(dim(d), expectedDim)) {
+      if (identical(dim(d), rev(expectedDim))) {
+        d <- t(d)
+      } else {
+        stop("`Distance(tree, result)` returned a ",
+             paste(dim(d), collapse = " x "), " matrix; expected ",
+             paste(expectedDim, collapse = " x "), ".")
+      }
+    }
     dwMean <- if (calcWeighted) {
       resWeights <- if (length(result) > 1) {
         colSums(as.matrix(Distance(result)))

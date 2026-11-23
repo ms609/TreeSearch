@@ -1,0 +1,65 @@
+# Extended test suite — Tier 3 stress / bench / timing tests.
+# Runs weekly (Sundays, 3am) and on-demand.
+# Sets TREESEARCH_EXTENDED_TESTS=true so skip_extended() guards are lifted.
+# See tests/testing-strategy.md for full tiering documentation.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * 0'  # Sundays, 3am
+
+name: extended-tests
+
+jobs:
+  extended-tests:
+    runs-on: ubuntu-24.04
+
+    env:
+      NOT_CRAN: 'true'
+      TREESEARCH_EXTENDED_TESTS: 'true'
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      RSPM: "https://packagemanager.posit.co/cran/__linux__/noble/latest"
+
+    steps:
+      - name: Checkout git repo
+        uses: actions/checkout@v6
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: Install apt packages
+        run: sudo apt-get install -y texlive-latex-base texlive-fonts-recommended
+
+      - name: Set up R dependencies
+        uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: check
+
+      - name: Build and install package
+        run: R CMD INSTALL .
+        shell: bash
+
+      - name: Run extended test suite
+        run: |
+          Rscript -e "
+            library(testthat)
+            library(TreeSearch)
+            test_dir('tests/testthat', filter = 'ts-',
+                     reporter = 'progress', stop_on_failure = TRUE)
+          "
+        shell: bash
+
+      - name: Notify on failure
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: 186,
+              body: 'Extended tests workflow has failed: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            });

@@ -14,7 +14,8 @@ reported, in a format accepted by \code{\link[TreeTools]{KeepTip}()}.}
 }
 \value{
 A vector specifying an integer, for each tree, which of \code{tips[-1]}
-is most closely related to \code{tips[1]}.
+is most closely related to \code{tips[1]}.  A tree in which the four tips form
+an unresolved (star) quartet contributes \code{NA} to this vector.
 }
 \description{
 Relationship between four taxa

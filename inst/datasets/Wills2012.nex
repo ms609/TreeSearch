@@ -577,7 +577,7 @@ BEGIN NOTES;
   TEXT CHARACTER=68 TEXT="Lemburg (1999) recognized this as a synapomorphy of lorciferans and extant priapulids.";
   TEXT CHARACTER=69 TEXT=" The presence of a flagellum in spermatozoa is a metazoan symplesiomorphy, but a flagellum is lacking from the spermatozoa of nematodes and nematomorphs (Schmidt-Rhaesa 1998).";
   TEXT CHARACTER=64 TEXT="Lemburg (1999) recognizes the presence of this character as a synapomorphy of Megaintroverta (Priapulopsis + Acanthopriapulus + Priapulus).";
-  TEXT CHARACTER=63 TEXT="Lemburg (1999) recognised the presence of this character as a synapomorphy of (extant) Priapulida. However, it has since been demonstrated that the larvae of nematomorphs also possess six pharyngeal retractor muscles (Kristensen, 2003; Muller et al., 2004). ";
+  TEXT CHARACTER=63 TEXT="Lemburg (1999) recognized the presence of this character as a synapomorphy of (extant) Priapulida. However, it has since been demonstrated that the larvae of nematomorphs also possess six pharyngeal retractor muscles (Kristensen, 2003; Muller et al., 2004). ";
   
   TEXT CHARACTER=56 TEXT="Lemburg (1999) recognized this as a synapomorphy of Introverta (Nematoda + Nematomorpha + Kinorhyncha + Loricifera + Priapulida).";
   TEXT CHARACTER=58 TEXT="Lemburg (1999) recognizes the presence of this character as a synapomorphy of (extant) Priapulida.";

@@ -107,8 +107,8 @@ tree <- TreeTools::RootTree(tree, 1)
 tree <- TreeTools::Preorder(tree)
 }
 \references{
-The algorithm is summarized in
-\insertRef{Felsenstein2004}{TreeSearch}
+\insertCite{Felsenstein2004}{TreeSearch}
+\insertAllCited{}
 }
 \seealso{
 Other tree rearrangement functions:

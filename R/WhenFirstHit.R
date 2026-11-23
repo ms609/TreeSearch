@@ -28,7 +28,7 @@
 WhenFirstHit <- function(trees) {
   if (is.null(attr(trees, "firstHit"))) {
     treeNames <- names(trees)
-    pattern <- "(seed|start|ratch\\d+|final)_\\d+"
+    pattern <- "^(seed|start|ratch\\d+|final)_\\d+$"
     if (length(grep(pattern, treeNames, perl = TRUE)) == length(trees)) {
       whenHit <- gsub(pattern, "\\1", treeNames, perl = TRUE)
       

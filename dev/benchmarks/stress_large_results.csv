@@ -1,0 +1,4 @@
+"file","n_tips","n_chars","strategy","score1","score2","time1","time2","pool1","reps1"
+"project175.nex",165,71,"thorough",419,424,1.86,1.85,100,1
+"project3763.nex",205,103,"default",1643,1513,14.58,17.88,100,1
+"syab07204.nex",225,748,"default",11785,11933,41.83,35.32,8,1

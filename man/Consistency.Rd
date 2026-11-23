@@ -8,10 +8,7 @@ Consistency(dataset, tree, nRelabel = 0, compress = FALSE)
 }
 \arguments{
 \item{dataset}{A phylogenetic data matrix of \pkg{phangorn} class
-\code{phyDat}, whose names correspond to the labels of any accompanying tree.
-Perhaps load into R using \code{\link[TreeTools]{ReadAsPhyDat}()}.
-Additive (ordered) characters can be handled using
-\code{\link[TreeTools]{Decompose}()}.}
+\code{phyDat}, whose names correspond to the labels of any accompanying tree.}
 
 \item{tree}{A tree of class \code{\link[ape:read.tree]{phylo}}.}
 
@@ -31,6 +28,15 @@ consistency index (\code{ci}),
 retention index (\code{ri}),
 rescaled consistency index (\code{rc}) and
 relative homoplasy index (\code{rhi}).
+\code{ci} is \code{NaN} for a constant character, for which both the observed and
+minimum length are zero.
+\code{ri} and \code{rc} are \code{NaN} when the maximum and minimum length coincide, as
+for a constant or an autapomorphic character.
+\code{rhi} is \code{NA} throughout if \code{nRelabel = 0}, as it is then not calculated.
+Otherwise \code{rhi} is \code{NaN} when the observed length already equals the
+minimum length and the median length under random leaf relabelling also
+equals the minimum; if only the median length equals the minimum, \code{rhi}
+is \code{Inf}.
 }
 \description{
 \code{Consistency()} calculates the consistency "index" and retention index

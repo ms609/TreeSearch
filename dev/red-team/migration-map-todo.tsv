@@ -1,0 +1,13 @@
+old_id	status	ref	title
+T-280	issue	agent-issues/TreeSearch#27	AltHom Phase 1: `AlternativeHomology` S3 class & core recoding (MVP)
+T-281	issue	agent-issues/TreeSearch#28	AltHom Phase 2: Constraints & options
+T-282	issue	agent-issues/TreeSearch#29	AltHom Phase 3: Wire into `MaximizeParsimony()` search pipeline
+T-283	issue	agent-issues/TreeSearch#30	AltHom Phase 4: External inapplicability
+T-284	issue	agent-issues/TreeSearch#31	AltHom Phase 5: Combination pruning
+T-285	issue	agent-issues/TreeSearch#32	AltHom Phase 6: Implied weighting support
+T-286	issue	agent-issues/TreeSearch#33	AltHom Phase 7: Mixed `AlternativeHomology` + `CharacterHierarchy`
+T-287	issue	agent-issues/TreeSearch#34	AltHom Phase 8: Static alignment fallback
+T-288	issue	agent-issues/TreeSearch#35	AltHom Phase 9: Documentation & vignette
+T-290	issue	agent-issues/TreeSearch#36	GPU-accelerated batch tree scoring
+T-291	issue	agent-issues/TreeSearch#37	GPU-parallel independent search replicates
+T-300	issue	agent-issues/TreeSearch#38	Lazy `apply_tbr_move` rescore in `tbr_search`

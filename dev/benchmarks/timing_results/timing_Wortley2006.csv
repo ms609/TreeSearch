@@ -1,0 +1,16 @@
+"dataset","target","engine","config","seed","score","over","wall_s"
+"Wortley2006",480,"TreeSearch","default",1,479,-1,2.4
+"Wortley2006",480,"TreeSearch","default",2,479,-1,2.5
+"Wortley2006",480,"TreeSearch","default",3,479,-1,1.8
+"Wortley2006",480,"TreeSearch","thorough",1,479,-1,3.5
+"Wortley2006",480,"TreeSearch","thorough",2,479,-1,2.7
+"Wortley2006",480,"TreeSearch","thorough",3,479,-1,2.7
+"Wortley2006",480,"TNT","mult-basic",1,479,-1,0.2
+"Wortley2006",480,"TNT","mult-basic",2,479,-1,0.2
+"Wortley2006",480,"TNT","mult-basic",3,479,-1,0.2
+"Wortley2006",480,"TNT","xmult-default",1,482,2,0.1
+"Wortley2006",480,"TNT","xmult-default",2,481,1,0.1
+"Wortley2006",480,"TNT","xmult-default",3,480,0,0.1
+"Wortley2006",480,"TNT","xmult-level10",1,479,-1,1.1
+"Wortley2006",480,"TNT","xmult-level10",2,479,-1,1
+"Wortley2006",480,"TNT","xmult-level10",3,479,-1,1.1

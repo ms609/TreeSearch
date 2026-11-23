@@ -30,12 +30,10 @@
 #' edge <- tree$edge
 #' parent <- edge[, 1]
 #' child <- edge[, 2]
-#' dataset <- PhyDat2Morphy(Lobo.phy)
+#' dataset <- PrepareData(Lobo.phy)
 #' RearrangeEdges(parent, child, dataset, EdgeSwapper = RootedNNISwap)
-#' # Remember to free memory:
-#' dataset <- UnloadMorphy(dataset)
 #' @export
-RearrangeEdges <- function (parent, child, dataset, TreeScorer = MorphyLength,
+RearrangeEdges <- function (parent, child, dataset, TreeScorer = EdgeListScore,
                             EdgeSwapper, 
                             scoreToBeat = TreeScorer(parent, child, dataset, ...),
                             iter = "?", hits = 0L, verbosity = 0L, ...) {
