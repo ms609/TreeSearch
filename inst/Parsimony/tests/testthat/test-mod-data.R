@@ -388,8 +388,16 @@ test_that("large uploaded tree sets are thinned from evenly spaced trees", {
 })
 
 test_that("tree sets within the cap are thinned from every tree", {
-  out <- upload_trees(dotted_trees(60), maxTrees = 1000L)
+  # Stub WideSample(): with 'highs' installed, the real one would run the
+  # exact solver (up to 60 s); here we need only what it is given.
+  nGiven <- NULL
+  out <- upload_trees(dotted_trees(60), maxTrees = 1000L,
+                      wideSample = function(trees, n) {
+                        nGiven <<- length(trees)
+                        trees[seq_len(n)]
+                      })
   expect_false("error" %in% vapply(out$notes, `[[`, "", "type"))
+  expect_equal(nGiven, 60)
   expect_length(out$trees, 48)
   expect_equal(grep("WideSample(", out$code, fixed = TRUE, value = TRUE),
                "trees <- WideSample(allTrees[1:60], 48)")
