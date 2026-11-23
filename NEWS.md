@@ -1,5 +1,10 @@
 # To integrate into 2.0.0 notes
 
+- `EasyTrees()` no longer freezes for minutes, with no message, when loading
+  thousands of trees: trees are sampled from at most 1000 evenly spaced trees
+  in the selected range, with a notification saying so, and errors that arise
+  while processing loaded trees are now shown instead of ending the session.
+
 - C++ code no longer executes the x86 POPCNT instruction on CPUs that lack
   it, which crashed R with "illegal operation" on some virtual machines
   (ms609/TreeTools#287). Requires TreeTools > 2.4.1.

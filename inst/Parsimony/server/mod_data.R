@@ -7,6 +7,35 @@
 #
 # Returns a list of reactives/functions consumed by other modules/source'd files.
 
+# Indices of the evenly spaced trees that WideSample() thins from when a tree
+# range holds more than `maxTrees` (and more than the `nTree` requested);
+# NULL when every tree can be used.  Evenly spaced, not random, so the logged
+# R code reproduces the selection without the RNG.
+PrethinIndex <- function(nTrees, nTree, maxTrees = fastSampleAbove) {
+  keep <- max(maxTrees, nTree)
+  if (nTrees <= keep) {
+    # Return:
+    return(NULL)
+  }
+  # Return:
+  round(seq(1, nTrees, length.out = keep))
+}
+
+# R code reproducing the WideSample() thinning of `treesVar[range]`,
+# including any pre-thinning by PrethinIndex().
+WideSampleCode <- function(treesVar, range, nTree,
+                           maxTrees = fastSampleAbove) {
+  nRanged <- range[2] - range[1] + 1L
+  keep <- max(maxTrees, nTree)
+  # Return:
+  paste0(
+    "trees <- WideSample(", treesVar, "[", range[1], ":", range[2], "]",
+    if (nRanged > keep) {
+      paste0("[round(seq(1, ", nRanged, ", length.out = ", keep, "))]")
+    },
+    ", ", nTree, ")")
+}
+
 data_ui <- function(id) {
   ns <- NS(id)
   list(
@@ -196,19 +225,35 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
         }
       } else {
         rangedTrees <- r$allTrees[r$treeRange[1]:r$treeRange[2]]
+        nRanged <- length(rangedTrees)
+        # Large sets: WideSample()'s distance matrix would freeze the app for
+        # minutes, so sample from evenly spaced trees instead.
+        prethin <- PrethinIndex(nRanged, r$nTree)
+        if (!is.null(prethin)) {
+          rangedTrees <- rangedTrees[prethin]
+        }
         # Seed before WideSample() so its Grasp/exact tiers' tie-breaks are
         # reproducible from the logged set.seed() call (T-360).
         thinningSeed <- sample.int(.Machine$integer.max, 1L)
         set.seed(thinningSeed)
-        thinnedTrees <- WideSample(rangedTrees, r$nTree)
+        thinnedTrees <- withProgress(
+          message = paste("Sampling", r$nTree, "of", nRanged, "trees"),
+          value = 0.5,
+          WideSample(rangedTrees, r$nTree)
+        )
 
         if (!is.null(r$allTrees) && !identical(r$trees, thinnedTrees)) {
           r$thinningSeed <- thinningSeed
           LogCode(paste0("set.seed(", thinningSeed, ")"))
-          LogCode(paste0(
-            "trees <- WideSample(allTrees[",
-            r$treeRange[1], ":", r$treeRange[2],
-            "], ", r$nTree, ")"))
+          LogCode(WideSampleCode("allTrees", r$treeRange, r$nTree))
+          if (!is.null(prethin)) {
+            Notification(paste0(
+              "Sampled ", r$nTree, " trees from ", length(prethin),
+              " evenly spaced among ", nRanged, ". Narrow the tree range to ",
+              max(fastSampleAbove, r$nTree),
+              " or fewer trees to sample from every tree."),
+              type = "message", duration = 10)
+          }
         }
       }
 
@@ -610,13 +655,32 @@ data_server <- function(id, r, parent_session, callbacks, log_fns) {
         LogCode(paste0("treeFile <- \"", LastFile("tree"), "\""))
         LogCode(paste0("newTrees <- ", r$readTreeFile))
 
-        UpdateAllTrees(newTrees)
+        # An error here would otherwise escape the observer and end the
+        # session, greying out the app with no message.
+        loaded <- tryCatch({
+          UpdateAllTrees(newTrees)
+          TRUE
+        }, error = function(e) {
+          # UpdateAllTrees() records newTrees before it fails: forget them, so
+          # that re-uploading the file is not skipped as "unchanged".
+          r$newTrees <- NULL
+          Notification(paste("Read", length(newTrees),
+                             "trees, but could not process them:",
+                             conditionMessage(e)),
+                       type = "error", duration = NULL)
+          FALSE
+        })
 
-        removeModal()
-        Notification(paste("Loaded", length(r$trees), "trees"),
-                     type = "message")
-        # Button labels reactively managed by mod_search.R
-        parentShow("displayConfig")
+        if (loaded) {
+          removeModal()
+          Notification(paste("Loaded", length(r$allTrees), "trees",
+                             if (length(r$trees) < length(r$allTrees)) {
+                               paste0("(", length(r$trees), " sampled)")
+                             }),
+                       type = "message")
+          # Button labels reactively managed by mod_search.R
+          parentShow("displayConfig")
+        }
       }
     })
 

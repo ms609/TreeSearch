@@ -157,11 +157,7 @@
             if (!is.null(r$thinningSeed)) {
               paste0("set.seed(", r$thinningSeed, ")")
             },
-            paste0(
-              "trees <- WideSample(trees[",
-              r$treeRange[1], ":", r$treeRange[2],
-              "], ", r$nTree, ")"
-            )
+            WideSampleCode("trees", r$treeRange, r$nTree)
           )
         }
       ))

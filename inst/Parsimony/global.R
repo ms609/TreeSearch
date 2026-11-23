@@ -94,6 +94,10 @@ Icon <- function(...) icon(..., class = "fas")
 aJiffy <- 42 # ms, default debounce period for input sliders etc
 typingJiffy <- 2.5 * aJiffy # slightly slower if might be typing
 aFewTrees <- 48L # Too many and rogues / tree space are slowed
+# WideSample() thins from at most this many (evenly spaced) trees.  Its
+# all-pairs distance matrix grows as n^2: 2 s for 1000 trees of 183 leaves, but
+# ~3 min for 10 000, during which the app froze with no feedback.
+fastSampleAbove <- 1000L
 NO_OUTGROUP <- "! TREESEARCH_no outgroup specified ."
 
 palettes <- list("#7a6c36",
