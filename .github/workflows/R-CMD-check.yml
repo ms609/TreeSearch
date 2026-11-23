@@ -260,10 +260,8 @@ jobs:
           # Coreset url:: -- see the note on the sense-check leg: a prebuilt
           # binary from ms609/packages' build-maxmin workflow, picked per
           # this matrix's (arch, R version) combo (x86_64+4.1 vs aarch64+devel).
-          # readxl (Suggests; guarded by requireNamespace) now needs R >= 4.2.
           extra-packages: |
             phangorn=?ignore-before-r=4.1.0
-            readxl=?ignore-before-r=4.2.0
             shinytest2=?ignore
             ${{ matrix.config.r == '4.1' && 'url::https://ms609.github.io/packages/bin/linux/x86_64-4.1/Coreset_latest.tar.gz' || 'url::https://ms609.github.io/packages/bin/linux/aarch64-devel/Coreset_latest.tar.gz' }}
             ${{ matrix.config.r == '4.1' && 'url::https://cran.r-project.org/src/contrib/Archive/highs/highs_1.12.0-3.tar.gz' || '' }}
