@@ -1,5 +1,8 @@
 library(shiny)
 library(shinyjs)
+# As global.R: the tree-file reader calls read.tree() / read.nexus() unqualified
+library(TreeTools)
+library(TreeSearch)
 
 # Stub globals that the module references from global.R
 # Must be in global env BEFORE source() so debounce() can find them
@@ -9,6 +12,7 @@ logging <- FALSE
 aJiffy <- 42
 typingJiffy <- 105
 aFewTrees <- 48L
+fastSampleAbove <- 512L
 LogMsg <- function(...) invisible(NULL)
 
 # Source the module under test (relative to tests/testthat/)
@@ -277,4 +281,139 @@ test_that("dataset observer clears incompatible trees on dataset switch", {
                   label = "incompatible trees should be cleared on dataset switch")
     }
   )
+})
+
+test_that("PrethinIndex() and WideSampleCode() agree", {
+  expect_null(PrethinIndex(512, 48, maxTrees = 512))
+  expect_null(PrethinIndex(5000, 6000, maxTrees = 512))
+  expect_equal(PrethinIndex(10000, 48, maxTrees = 512),
+               round(seq(1, 10000, length.out = 512)))
+  expect_equal(anyDuplicated(PrethinIndex(513, 48, maxTrees = 512)), 0)
+  # Asking for more trees than the cap keeps that many, not the cap
+  expect_length(PrethinIndex(10000, 5000, maxTrees = 512), 5000)
+
+  # Small ranges log the unchanged pre-fix expression (download snapshots)
+  expect_equal(WideSampleCode("trees", c(77, 125), 48, maxTrees = 512),
+               "trees <- WideSample(trees[77:125], 48)")
+  code <- WideSampleCode("allTrees", c(11, 10010), 48, maxTrees = 512)
+  expect_equal(code, paste0("trees <- WideSample(allTrees[11:10010]",
+                            "[round(seq(1, 10000, length.out = 512))], 48)"))
+  allTrees <- 1:20000
+  WideSample <- function(x, n) x
+  eval(parse(text = code))
+  expect_equal(trees, (11:10010)[PrethinIndex(10000, 48, maxTrees = 512)])
+})
+
+# Upload a tree file through input$treeFile, recording notifications and
+# logged code.  Large tree sets froze EasyTrees() for minutes with no message:
+# WideSample() built a 10 000 x 10 000 distance matrix (2026-11 report).
+upload_trees <- function(trees, maxTrees, wideSample = NULL) {
+  modEnv <- environment(data_server)
+  oldMax <- get("fastSampleAbove", modEnv)
+  oldNotification <- get("Notification", modEnv)
+  on.exit({
+    assign("fastSampleAbove", oldMax, envir = modEnv)
+    assign("Notification", oldNotification, envir = modEnv)
+    if (exists("WideSample", envir = modEnv, inherits = FALSE)) {
+      rm("WideSample", envir = modEnv)
+    }
+  })
+  rec <- new.env()
+  rec$notes <- list()
+  rec$code <- character(0)
+  assign("fastSampleAbove", maxTrees, envir = modEnv)
+  assign("Notification", function(ui, ..., type = "default") {
+    rec$notes[[length(rec$notes) + 1L]] <- list(text = ui, type = type)
+  }, envir = modEnv)
+  if (!is.null(wideSample)) {
+    assign("WideSample", wideSample, envir = modEnv)
+  }
+  log_fns <- stub_log_fns
+  log_fns$LogCode <- function(...) rec$code <- c(rec$code, ...)
+
+  treeFile <- tempfile(fileext = ".nex")
+  on.exit(unlink(treeFile), add = TRUE)
+  ape::write.nexus(trees, file = treeFile)
+
+  r <- make_data_state(readTreeFile = NULL, thinningSeed = NULL)
+  shiny::testServer(
+    data_server,
+    args = list(r = r, parent_session = shiny::MockShinySession$new(),
+                callbacks = stub_callbacks, log_fns = log_fns),
+    {
+      session$setInputs(nTree = 48L)
+      session$setInputs(treeFile = data.frame(name = "trees.nex",
+                                              datapath = treeFile))
+      rec$allTrees <- r$allTrees
+      rec$trees <- r$trees
+      rec$newTrees <- r$newTrees
+      rec$readTreeFile <- r$readTreeFile
+    }
+  )
+  as.list(rec)
+}
+
+dotted_trees <- function(nTree) {
+  # Punctuated labels as in the reporting MorphoBank matrix
+  tips <- c("Cf._Peytoia", "Cricocosmia_n._sp.", "Scolecofurca_",
+            "MAOTIANSHANIA_cylindrica", paste0("t", 5:9))
+  set.seed(0)
+  trees <- ape::rmtree(nTree, length(tips), tip.label = tips)
+  for (i in seq_along(trees)) trees[[i]][["edge.length"]] <- NULL
+  trees
+}
+
+test_that("large uploaded tree sets are thinned from evenly spaced trees", {
+  trees <- dotted_trees(60)
+  out <- upload_trees(trees, maxTrees = 20L)
+
+  types <- vapply(out$notes, `[[`, "", "type")
+  texts <- vapply(out$notes, `[[`, "", "text")
+  expect_false("error" %in% types)
+  expect_equal(out$readTreeFile, "read.nexus(treeFile)")
+  expect_length(out$allTrees, 60)
+  expect_setequal(out$allTrees[[1]]$tip.label, trees[[1]]$tip.label)
+  # nTree (48) exceeds maxTrees (20), so 48 evenly spaced trees are kept
+  expect_length(out$trees, 48)
+  keep <- round(seq(1, 60, length.out = 48))
+  expect_equal(unname(out$trees), unname(out$allTrees[keep]))
+  expect_true(any(grepl("Sampled 48 trees from 48 evenly spaced among 60",
+                        texts, fixed = TRUE)))
+  expect_true(any(grepl("Loaded 60 trees (48 sampled)", texts, fixed = TRUE)))
+
+  # Logged code reproduces the selection
+  logged <- grep("WideSample(", out$code, fixed = TRUE, value = TRUE)
+  expect_equal(logged, paste0("trees <- WideSample(allTrees[1:60]",
+                              "[round(seq(1, 60, length.out = 48))], 48)"))
+  allTrees <- out$allTrees
+  eval(parse(text = logged))
+  expect_equal(unname(trees), unname(out$trees))
+})
+
+test_that("tree sets within the cap are thinned from every tree", {
+  # Stub WideSample(): with 'highs' installed, the real one would run the
+  # exact solver (up to 60 s); here we need only what it is given.
+  nGiven <- NULL
+  out <- upload_trees(dotted_trees(60), maxTrees = 512L,
+                      wideSample = function(trees, n) {
+                        nGiven <<- length(trees)
+                        trees[seq_len(n)]
+                      })
+  expect_false("error" %in% vapply(out$notes, `[[`, "", "type"))
+  expect_equal(nGiven, 60)
+  expect_length(out$trees, 48)
+  expect_equal(grep("WideSample(", out$code, fixed = TRUE, value = TRUE),
+               "trees <- WideSample(allTrees[1:60], 48)")
+})
+
+test_that("errors processing uploaded trees are shown, not swallowed", {
+  out <- upload_trees(dotted_trees(60), maxTrees = 512L,
+                      wideSample = function(...) stop("boom"))
+  types <- vapply(out$notes, `[[`, "", "type")
+  texts <- vapply(out$notes, `[[`, "", "text")
+  expect_equal(types, "error")
+  expect_match(texts, "Read 60 trees, but could not process them: boom",
+               fixed = TRUE)
+  # Forgotten, so that a re-upload is not skipped as "unchanged"
+  expect_null(out$newTrees)
 })

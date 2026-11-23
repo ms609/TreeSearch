@@ -2,7 +2,7 @@
 
 > **This file is the curated "lessons learned" — not the operational machinery.**
 > The live rotation now lives under `dev/red-team/` (per the `/red-team` skill):
-> - `dev/red-team/focus-areas.md` — the 10-area rotation table + per-area `start_tier`
+> - `dev/red-team/focus-areas.md` — the scope table (files + key questions)
 > - `dev/red-team/log.md` — append-only round log + `last_focus:` pointer
 > - `dev/red-team/findings.md` — verified OPEN findings
 >

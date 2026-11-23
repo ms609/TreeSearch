@@ -14,27 +14,20 @@
 #include <cstdint>
 #include <vector>
 #include <unordered_set>
+#include <TreeTools/SplitList.h> /* for count_bits() */
+
+#ifndef TREETOOLS_POPCOUNT_DISPATCH
+#error "TreeSearch needs TreeTools > 2.4.1, whose count_bits() checks for POPCNT"
+#endif
 
 namespace ts {
 
-// Hardware POPCNT via inline asm (no -mpopcnt flag needed).
-// Same approach as TreeDist::popcnt64 — emits the instruction directly,
-// avoiding the software Hamming weight fallback that __builtin_popcountll
-// compiles to without -mpopcnt.
+// Population count: POPCNT where the CPU has it, checked once at load time,
+// otherwise the portable builtin. Executing POPCNT unconditionally (as the
+// inline asm here used to) raises SIGILL on x86-64 CPUs without it, such as
+// QEMU's default qemu64 model (ms609/TreeTools#287).
 inline int popcount64(uint64_t x) {
-#if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
-  uint64_t result;
-  __asm__ ("popcnt %1, %0" : "=r" (result) : "r" (x));
-  return static_cast<int>(result);
-#elif defined(_MSC_VER) && defined(_M_X64)
-  return static_cast<int>(__popcnt64(x));
-#else
-  // Fallback: software Hamming weight (non-x86-64 platforms)
-  x = x - ((x >> 1) & 0x5555555555555555ULL);
-  x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
-  return static_cast<int>(
-    (((x + (x >> 4)) & 0x0F0F0F0F0F0F0F0FULL) * 0x0101010101010101ULL) >> 56);
-#endif
+  return static_cast<int>(TreeTools::count_bits(x));
 }
 
 // Portable count-trailing-zeros for uint64_t (undefined for x == 0)

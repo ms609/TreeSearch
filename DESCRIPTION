@@ -51,7 +51,7 @@ Imports:
   Rdpack (>= 0.7),
   stats,
   TreeDist (>= 2.6.3),
-  TreeTools (>= 2.4.1),
+  TreeTools (> 2.4.1),
   utils,
 Suggests:
   cluster,
@@ -144,7 +144,9 @@ Collate:
 RdMacros: Rdpack
 LinkingTo:
   Rcpp,
-  TreeTools,
+  TreeTools (> 2.4.1),
+Remotes:
+  ms609/TreeTools,
 SystemRequirements: C++17
 LazyData: true
 ByteCompile: true
